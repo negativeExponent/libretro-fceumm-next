@@ -67,8 +67,6 @@ int FCEU_InitVirtualVideo(void)
 
 #include "drawing.h"
 
-void FCEUI_SaveSnapshot(void) { }
-
 void FCEU_PutImage(void)
 {
 	if (GameInfo->type == GIT_NSF)
