@@ -33,66 +33,54 @@ static SFORMAT StateRegs[] = {
    { 0 }
 };
 
-static void Sync(void)
-{
-   if (latche & 0x200)
-   {
-      if (latche & 1) /* NROM 128 */
-      {
-         setprg16(0x8000, latche >> 2);
-         setprg16(0xC000, latche >> 2);
-      }
-      else /* NROM-256 */
-         setprg32(0x8000, latche >> 3);
-   }
-   else /* UxROM */
-   {
-      setprg16(0x8000, latche >> 2);
-      setprg16(0xC000, (latche >> 2) | 7 | (isKN35A && latche &0x100? 8: 0));
-   }
-   setmirror(((latche >> 1) & 1) ^ 1);
+static void Sync(void) {
+	if (latche & 0x200) {
+		if (latche & 1) { /* NROM 128 */
+			setprg16(0x8000, latche >> 2);
+			setprg16(0xC000, latche >> 2);
+		} else /* NROM-256 */
+			setprg32(0x8000, latche >> 3);
+	} else { /* UxROM */
+		setprg16(0x8000, latche >> 2);
+		setprg16(0xC000, (latche >> 2) | 7 | (isKN35A && latche & 0x100 ? 8 : 0));
+	}
+	setmirror(((latche >> 1) & 1) ^ 1);
 }
 
-static DECLFR(M380Read)
-{
-   if (latche & 0x100 && !isKN35A)
-      return dipswitch;
-   return CartBR(A);
+static DECLFR(M380Read) {
+	if (latche & 0x100 && !isKN35A)
+		return dipswitch;
+	return CartBR(A);
 }
 
-static DECLFW(M380Write)
-{
-   latche = A;
-   Sync();
+static DECLFW(M380Write) {
+	latche = A;
+	Sync();
 }
 
-static void M380Reset(void)
-{
-   dipswitch = (dipswitch + 1) & 0xF;
-   latche = 0;
-   Sync();
+static void M380Reset(void) {
+	dipswitch = (dipswitch + 1) & 0xF;
+	latche = 0;
+	Sync();
 }
 
-static void M380Power(void)
-{
-   dipswitch = 0;
-   latche = 0;
-   Sync();
-   setchr8(0);
-   SetReadHandler(0x8000, 0xFFFF, M380Read);
-   SetWriteHandler(0x8000, 0xFFFF, M380Write);
+static void M380Power(void) {
+	dipswitch = 0;
+	latche = 0;
+	Sync();
+	setchr8(0);
+	SetReadHandler(0x8000, 0xFFFF, M380Read);
+	SetWriteHandler(0x8000, 0xFFFF, M380Write);
 }
 
-static void StateRestore(int version)
-{
-   Sync();
+static void StateRestore(int version) {
+	Sync();
 }
 
-void Mapper380_Init(CartInfo *info)
-{
-   isKN35A = info->iNES2 && info->submapper == 1;
-   info->Power = M380Power;
-   info->Reset = M380Reset;
-   GameStateRestore = StateRestore;
-   AddExState(&StateRegs, ~0, 0, 0);
+void Mapper380_Init(CartInfo *info) {
+	isKN35A = info->iNES2 && info->submapper == 1;
+	info->Power = M380Power;
+	info->Reset = M380Reset;
+	GameStateRestore = StateRestore;
+	AddExState(&StateRegs, ~0, 0, 0);
 }

@@ -56,10 +56,18 @@ static void Sync(void) {
 			setchr1(i << 10, chr);
 	}
 	switch (mirr) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+		case 0:
+			setmirror(MI_V);
+			break;
+		case 1:
+			setmirror(MI_H);
+			break;
+		case 2:
+			setmirror(MI_0);
+			break;
+		case 3:
+			setmirror(MI_1);
+			break;
 	}
 }
 
@@ -78,15 +86,38 @@ static DECLFW(M253Write) {
 		if (sar)
 			chrhi[ind] = V >> 4;
 		Sync();
-	} else
+	} else {
 		switch (A) {
-		case 0x8010: prg[0] = V; Sync(); break;
-		case 0xA010: prg[1] = V; Sync(); break;
-		case 0x9400: mirr = V & 3; Sync(); break;
-		case 0xF000: X6502_IRQEnd(FCEU_IQEXT); IRQLatch &= 0xF0; IRQLatch |= V & 0xF; break;
-		case 0xF004: X6502_IRQEnd(FCEU_IQEXT); IRQLatch &= 0x0F; IRQLatch |= V << 4; break;
-		case 0xF008: X6502_IRQEnd(FCEU_IQEXT); IRQClock = 0; IRQCount = IRQLatch; IRQa = V & 2; break;
+			case 0x8010:
+				prg[0] = V;
+				Sync();
+				break;
+			case 0xA010:
+				prg[1] = V;
+				Sync();
+				break;
+			case 0x9400:
+				mirr = V & 3;
+				Sync();
+				break;
+			case 0xF000:
+				X6502_IRQEnd(FCEU_IQEXT);
+				IRQLatch &= 0xF0;
+				IRQLatch |= V & 0xF;
+				break;
+			case 0xF004:
+				X6502_IRQEnd(FCEU_IQEXT);
+				IRQLatch &= 0x0F;
+				IRQLatch |= V << 4;
+				break;
+			case 0xF008:
+				X6502_IRQEnd(FCEU_IQEXT);
+				IRQClock = 0;
+				IRQCount = IRQLatch;
+				IRQa = V & 2;
+				break;
 		}
+	}
 }
 
 static void M253Power(void) {
@@ -108,7 +139,7 @@ static void M253Close(void) {
 }
 
 static void M253IRQ(int a) {
-	#define LCYCS 341
+#define LCYCS 341
 	if (IRQa) {
 		IRQClock += a * 3;
 		if (IRQClock >= LCYCS) {
@@ -135,12 +166,12 @@ void Mapper253_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	CHRRAMSIZE = 2048;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

@@ -51,9 +51,15 @@ static DECLFW(M34Write) {
 		regs[0] = V;
 	else
 		switch (A) {
-		case 0x7ffd: regs[0] = V; break;
-		case 0x7ffe: regs[1] = V; break;
-		case 0x7fff: regs[2] = V; break;
+			case 0x7ffd:
+				regs[0] = V;
+				break;
+			case 0x7ffe:
+				regs[1] = V;
+				break;
+			case 0x7fff:
+				regs[2] = V;
+				break;
 		}
 	Sync();
 }
@@ -85,7 +91,7 @@ void Mapper34_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

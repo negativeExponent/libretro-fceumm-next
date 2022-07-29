@@ -59,7 +59,7 @@ static void M370MW(uint8 V) {
 		setmirror((V & 1) ^ 1);
 }
 
-static DECLFR(M370Read) {;
+static DECLFR(M370Read) {
 	return (EXPREGS[1] << 7);
 }
 

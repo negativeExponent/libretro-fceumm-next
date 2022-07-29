@@ -18,7 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/* NES 2.0 Mapper 403 denotes the 89433 circuit board with up to 1 MiB PRG-ROM and 32 KiB of CHR-RAM, bankable with 8 KiB granularity.
+/* NES 2.0 Mapper 403 denotes the 89433 circuit board with up to 1 MiB PRG-ROM and 32 KiB of CHR-RAM, bankable with 8
+ * KiB granularity.
  *
  * Tetris Family - 玩家 19-in-1 智瑟實典 (NO-1683)
  * Sachen Superpack (versions A-C)
@@ -29,15 +30,15 @@
 static uint8 reg[3];
 
 static void Sync(void) {
-	uint8 prg  = reg[0];
-	uint8 chr  = reg[1];
+	uint8 prg = reg[0];
+	uint8 chr = reg[1];
 	uint8 mode = reg[2];
 
 	/* NROM-128 */
 	if (mode & 1) {
 		setprg16(0x8000, prg >> 1);
 		setprg16(0xC000, prg >> 1);
-	/* NROM-256 */
+		/* NROM-256 */
 	} else
 		setprg32(0x8000, prg >> 2);
 	setchr8(chr);

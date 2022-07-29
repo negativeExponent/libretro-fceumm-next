@@ -41,8 +41,8 @@ static void Sync(void) {
 
 static DECLFW(M104WriteBank) {
 	if ((V & 8) > 0) {
-		preg[0]  = ((V << 4) & 0x70) | (preg[0] & 0x0F);
-		preg[1]  = ((V << 4) & 0x70) | 0x0F;
+		preg[0] = ((V << 4) & 0x70) | (preg[0] & 0x0F);
+		preg[1] = ((V << 4) & 0x70) | 0x0F;
 		Sync();
 	}
 }
@@ -80,7 +80,7 @@ void Mapper104_Init(CartInfo *info) {
 	AddExState(&StateRegs, ~0, 0, 0);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

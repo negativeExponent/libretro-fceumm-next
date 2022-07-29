@@ -38,14 +38,16 @@ static void Sync(void) {
 }
 
 static DECLFW(M431Write) {
-	if (A < 0xC000) outer_bank = V;
-    else inner_bank = V;
+	if (A < 0xC000)
+		outer_bank = V;
+	else
+		inner_bank = V;
 	Sync();
 }
 
 static void M431Power(void) {
-    inner_bank = 0;
-    outer_bank = 0;
+	inner_bank = 0;
+	outer_bank = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M431Write);

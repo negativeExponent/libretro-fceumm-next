@@ -30,25 +30,25 @@ static SFORMAT StateRegs[] =
 };
 
 static void Sync(void) {
-	uint8 mode  = ((regs[0] >> 2) & 2) | ((regs[1] >> 6) & 1);
-	uint8 bank  = ((regs[1] << 5) & 0x20) | ((regs[1] >> 1) & 0x18);
+	uint8 mode = ((regs[0] >> 2) & 2) | ((regs[1] >> 6) & 1);
+	uint8 bank = ((regs[1] << 5) & 0x20) | ((regs[1] >> 1) & 0x18);
 	uint8 block = (regs[0] & 7);
 	switch (mode) {
-	case 0: /* UNROM */
-		setprg16(0x8000, bank | block);
-		setprg16(0xC000, bank | 7);
-		break;
-	case 1:
-		setprg16(0x8000, bank | block & 0xFE);
-		setprg16(0xC000, bank | 7);
-		break;
-	case 2: /* NROM-128 */
-		setprg16(0x8000, bank | block);
-		setprg16(0xC000, bank | block);
-		break;
-	case 3: /* NROM-256 */
-		setprg32(0x8000, (bank | block) >> 1);
-		break;
+		case 0: /* UNROM */
+			setprg16(0x8000, bank | block);
+			setprg16(0xC000, bank | 7);
+			break;
+		case 1:
+			setprg16(0x8000, bank | block & 0xFE);
+			setprg16(0xC000, bank | 7);
+			break;
+		case 2: /* NROM-128 */
+			setprg16(0x8000, bank | block);
+			setprg16(0xC000, bank | block);
+			break;
+		case 3: /* NROM-256 */
+			setprg32(0x8000, (bank | block) >> 1);
+			break;
 	}
 	setchr8(0);
 	setmirror(((regs[1] >> 7) & 1) ^ 1);

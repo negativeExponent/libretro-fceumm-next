@@ -56,10 +56,18 @@ static void Sync(void) {
 	uint8 prgOuterBank = (exRegs[0] & 0x38) << 1;
 
 	switch (exRegs[1] & 3) {
-	case 0: prgMask = 0x3F; break;
-	case 1: prgMask = 0x1F; break;
-	case 2: prgMask = 0x2F; break;
-	case 3: prgMask = 0x0F; break;
+		case 0:
+			prgMask = 0x3F;
+			break;
+		case 1:
+			prgMask = 0x1F;
+			break;
+		case 2:
+			prgMask = 0x2F;
+			break;
+		case 3:
+			prgMask = 0x0F;
+			break;
 	}
 
 	setprg8(0x6000, (preg[3] & prgMask) | prgOuterBank);
@@ -70,24 +78,24 @@ static void Sync(void) {
 
 	if (!UNIFchrrama) {
 		switch (mapperNum) {
-		case 359: {
-			uint8 i;
-			uint8 chrMask = (exRegs[1] & 0x40) ? 0xFF : 0x7F;
-			uint16 chrOuterBank = (exRegs[3] << 7);
-			
-			for (i = 0; i < 8; i++)
-				setchr1(i << 10, (creg[i] & chrMask) | chrOuterBank);
-		} break;
-		case 540:
-			setchr2(0x0000, creg[0]);
-			setchr2(0x0800, creg[1]);
-			setchr2(0x1000, creg[6]);
-			setchr2(0x1800, creg[7]);
-			break;
+			case 359: {
+				uint8 i;
+				uint8 chrMask = (exRegs[1] & 0x40) ? 0xFF : 0x7F;
+				uint16 chrOuterBank = (exRegs[3] << 7);
+
+				for (i = 0; i < 8; i++)
+					setchr1(i << 10, (creg[i] & chrMask) | chrOuterBank);
+			} break;
+			case 540:
+				setchr2(0x0000, creg[0]);
+				setchr2(0x0800, creg[1]);
+				setchr2(0x1000, creg[6]);
+				setchr2(0x1800, creg[7]);
+				break;
 		}
 	} else
 		setchr8(0);
-	
+
 	if (exRegs[2] & 2)
 		setmirror(MI_0 + (exRegs[2] & 1));
 	else
@@ -96,30 +104,32 @@ static void Sync(void) {
 
 static DECLFW(M359WriteIRQ) {
 	switch (A & 0xF003) {
-	case 0xC000:
-		if (IRQAutoEnable) IRQa = 0;
-		IRQCount16 &= 0xFF00;
-		IRQCount16 |= V;
-		IRQReload = 1;
-		X6502_IRQEnd(FCEU_IQEXT);
-		break;
-	case 0xC001:
-		if (IRQAutoEnable) IRQa = 1;
-		IRQCount16 &= 0x00FF;
-		IRQCount16 |= (V << 8);
-		IRQLatch = V;
-		X6502_IRQEnd(FCEU_IQEXT);
-		break;
-	case 0xC002:
-		IRQa = (V & 1);
-		irqPA12 = (V & 2) >> 1;
-		IRQAutoEnable = (V & 4) >> 2; 
-		X6502_IRQEnd(FCEU_IQEXT);
-		break;
-	case 0xC003:
-		IRQa = (V & 1);
-		X6502_IRQEnd(FCEU_IQEXT);
-		break;
+		case 0xC000:
+			if (IRQAutoEnable)
+				IRQa = 0;
+			IRQCount16 &= 0xFF00;
+			IRQCount16 |= V;
+			IRQReload = 1;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
+		case 0xC001:
+			if (IRQAutoEnable)
+				IRQa = 1;
+			IRQCount16 &= 0x00FF;
+			IRQCount16 |= (V << 8);
+			IRQLatch = V;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
+		case 0xC002:
+			IRQa = (V & 1);
+			irqPA12 = (V & 2) >> 1;
+			IRQAutoEnable = (V & 4) >> 2;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
+		case 0xC003:
+			IRQa = (V & 1);
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
 	}
 }
 
@@ -182,7 +192,7 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper359_Init(CartInfo* info) {
+void Mapper359_Init(CartInfo *info) {
 	mapperNum = 359;
 	info->Power = M359Power;
 	info->Reset = M359Reset;
@@ -192,7 +202,7 @@ void Mapper359_Init(CartInfo* info) {
 	AddExState(&StateRegs, ~0, 0, 0);
 }
 
-void Mapper540_Init(CartInfo* info) {
+void Mapper540_Init(CartInfo *info) {
 	mapperNum = 540;
 	info->Power = M359Power;
 	MapIRQHook = M359CPUHook;

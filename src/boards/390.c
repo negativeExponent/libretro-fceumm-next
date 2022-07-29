@@ -34,21 +34,21 @@ static SFORMAT StateRegs[] =
 
 static void Sync(void) {
 	switch ((regs[1] >> 4) & 3) {
-	case 0:
-	case 1:
-		/* UNROM */
-		setprg16(0x8000, regs[1]);
-		setprg16(0xC000, regs[1] | 7);
-		break;
-	case 2:
-		/* Maybe unused, NROM-256? */
-		setprg32(0x8000, regs[1] >> 1);
-		break;
-	case 3:
-		/* NROM-128 */
-		setprg16(0x8000, regs[1]);
-		setprg16(0xC000, regs[1]);
-		break;
+		case 0:
+		case 1:
+			/* UNROM */
+			setprg16(0x8000, regs[1]);
+			setprg16(0xC000, regs[1] | 7);
+			break;
+		case 2:
+			/* Maybe unused, NROM-256? */
+			setprg32(0x8000, regs[1] >> 1);
+			break;
+		case 3:
+			/* NROM-128 */
+			setprg16(0x8000, regs[1]);
+			setprg16(0xC000, regs[1]);
+			break;
 	}
 	setchr8(regs[0]);
 	setmirror(((regs[0] & 0x20) >> 5) ^ 1);

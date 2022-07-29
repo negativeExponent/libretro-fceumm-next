@@ -31,7 +31,7 @@ static SFORMAT StateRegs[] =
 	{ 0 }
 };
 
-static void Sync(void) {	
+static void Sync(void) {
 	uint8 chr = (regs[0] >> 4) & 7;
 	uint8 prg = (regs[1] >> 3) & 7;
 	uint8 dec = (regs[1] >> 4) & 4;
@@ -42,7 +42,7 @@ static void Sync(void) {
 }
 
 static DECLFW(HP898FWrite) {
-	if((A & 0x6000) == 0x6000) {
+	if ((A & 0x6000) == 0x6000) {
 		regs[(A & 4) >> 2] = V;
 		Sync();
 	}
@@ -50,8 +50,12 @@ static DECLFW(HP898FWrite) {
 
 static DECLFW(HP898FWriteEx) {
 	switch (A & 4) {
-	case 0:	regs[0] = V; break; /* CHR */
-	case 4:	regs[1] = (V & 0xC0) | ((V >> 2) & 6) | ((V & 0x20) ? 1 : 0); break; /* PRG */
+		case 0:
+			regs[0] = V;
+			break; /* CHR */
+		case 4:
+			regs[1] = (V & 0xC0) | ((V >> 2) & 6) | ((V & 0x20) ? 1 : 0);
+			break; /* PRG */
 	}
 	Sync();
 }

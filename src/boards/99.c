@@ -35,7 +35,7 @@ static void Sync(void) {
 	setchr8((latch >> 2) & 1);
 	setprg8r(0x10, 0x6000, 0);
 	setprg32(0x8000, 0);
-	setprg8(0x8000, latch & 4);			/* Special for VS Gumshoe */
+	setprg8(0x8000, latch & 4); /* Special for VS Gumshoe */
 }
 
 static DECLFW(M99Write) {
@@ -69,7 +69,7 @@ void Mapper99_Init(CartInfo *info) {
 	info->Close = M99Close;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

@@ -55,9 +55,9 @@ static DECLFR(M539Read) {
 	case 0x60: case 0x62: case 0x64: case 0x65: case 0x82: case 0xC0: case 0xC1: case 0xC2:
 	case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7: case 0xC8: case 0xC9: case 0xCA:
 	case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF: case 0xD0: case 0xD1: case 0xDF:
-		return WRAM[GetWRAMAddress(A)];
-	default:
-		return CartBR(A);
+			return WRAM[GetWRAMAddress(A)];
+		default:
+			return CartBR(A);
 	}
 }
 
@@ -66,22 +66,22 @@ static DECLFW(M539Write) {
 	case 0x60: case 0x62: case 0x64: case 0x65: case 0x82: case 0xC0: case 0xC1: case 0xC2:
 	case 0xC3: case 0xC4: case 0xC5: case 0xC6: case 0xC7: case 0xC8: case 0xC9: case 0xCA:
 	case 0xCB: case 0xCC: case 0xCD: case 0xCE: case 0xCF: case 0xD0: case 0xD1: case 0xDF:
-		WRAM[GetWRAMAddress(A)] = V;
-		break;
-	default:
-		switch (A & 0xF000) {
-		case 0xA000:
-			preg = V;
-			Sync();
+			WRAM[GetWRAMAddress(A)] = V;
 			break;
-		case 0xF000:
-			if ((A & 0x25) == 0x25) {
-				mirr = V;
-				Sync();
+		default:
+			switch (A & 0xF000) {
+				case 0xA000:
+					preg = V;
+					Sync();
+					break;
+				case 0xF000:
+					if ((A & 0x25) == 0x25) {
+						mirr = V;
+						Sync();
+					}
+					break;
 			}
 			break;
-		}
-		break;
 	}
 }
 

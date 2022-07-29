@@ -41,16 +41,16 @@ static void BMC411120CCW(uint32 A, uint8 V) {
 
 static void BMC411120CPW(uint32 A, uint8 V) {
 	uint32 mask = isK3088 ? 0x07 : 0x03;
-	if (EXPREGS[0] & (isK3088 ? 8 : (8 | reset_flag))) { 	/* 32K Mode */
+	if (EXPREGS[0] & (isK3088 ? 8 : (8 | reset_flag))) { /* 32K Mode */
 		if (A == 0x8000)
 			/* bit 0-1 of register should be used as outer bank regardless of banking modes */
 			setprg32(A, ((EXPREGS[0] >> 4) & 3) | ((EXPREGS[0] & mask) << 2));
-	} else													/* MMC3 Mode */
+	} else /* MMC3 Mode */
 		setprg8(A, (V & 0x0F) | ((EXPREGS[0] & mask) << 4));
 }
 
 static DECLFW(BMC411120CLoWrite) {
-/*	printf("Wr: A:%04x V:%02x\n", A, V); */
+	/*	printf("Wr: A:%04x V:%02x\n", A, V); */
 	EXPREGS[0] = A;
 	FixMMC3PRG(MMC3_cmd);
 	FixMMC3CHR(MMC3_cmd);

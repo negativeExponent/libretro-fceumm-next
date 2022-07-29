@@ -27,7 +27,8 @@ static uint8 *CHRRAM;
 static uint32 CHRRAMSIZE;
 
 static int getPRGBank(int bank) {
-	if ((~bank & 1) && (MMC3_cmd & 0x40)) bank ^= 2;
+	if ((~bank & 1) && (MMC3_cmd & 0x40))
+		bank ^= 2;
 	return (bank & 2) ? 0xFE | (bank & 1) : DRegBuf[6 | (bank & 1)];
 }
 
@@ -40,30 +41,30 @@ static void M393CW(uint32 A, uint8 V) {
 
 static void M393PW(uint32 A, uint8 V) {
 	switch ((EXPREGS[0] >> 4) & 3) {
-	case 0:
-	case 1:
-		setprg8(A, (V & 0x0F) | (EXPREGS[0] << 4));
-		break;
-	case 2:
-		setprg32(0x8000, ((getPRGBank(0) >> 2) & 3) | (EXPREGS[0] << 2));
-		break;
-	case 3:
-		setprg16(0x8000, (EXPREGS[0] << 3) | (EXPREGS[1] &7));
-		setprg16(0xC000, (EXPREGS[0] << 3) | 7);
-		break;
+		case 0:
+		case 1:
+			setprg8(A, (V & 0x0F) | (EXPREGS[0] << 4));
+			break;
+		case 2:
+			setprg32(0x8000, ((getPRGBank(0) >> 2) & 3) | (EXPREGS[0] << 2));
+			break;
+		case 3:
+			setprg16(0x8000, (EXPREGS[0] << 3) | (EXPREGS[1] & 7));
+			setprg16(0xC000, (EXPREGS[0] << 3) | 7);
+			break;
 	}
 }
 
 static DECLFW(M393Write8) {
 	switch (A & 0xE000) {
-	case 0x8000:
-	case 0xA000:
-		MMC3_CMDWrite(A, V);
-		break;
-	case 0xC000:
-	case 0xE000:
-		MMC3_IRQWrite(A, V);
-		break;
+		case 0x8000:
+		case 0xA000:
+			MMC3_CMDWrite(A, V);
+			break;
+		case 0xC000:
+		case 0xE000:
+			MMC3_IRQWrite(A, V);
+			break;
 	}
 
 	EXPREGS[1] = V;

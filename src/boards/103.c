@@ -82,7 +82,8 @@ static DECLFW(M103Write2) {
 
 static void M103Power(void) {
 	FDSSoundPower();
-	reg0 = reg1 = 0; reg2 = 0;
+	reg0 = reg1 = 0;
+	reg2 = 0;
 	Sync();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, M103RamWrite0);
@@ -109,7 +110,7 @@ void Mapper103_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 16384;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

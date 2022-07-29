@@ -39,15 +39,15 @@ static void M411CW(uint32 A, uint8 V) {
 
 static void M411PW(uint32 A, uint8 V) {
 	/* NROM Mode */
-	if (EXPREGS[0] & 0x40)
-	{
-		uint32 bank = (EXPREGS[0] & 1) | ((EXPREGS[0] >> 2) & 2) | (EXPREGS[0] & 4) | (EXPREGS[1] & 8) | ((EXPREGS[1] >> 2) & 0x10);
+	if (EXPREGS[0] & 0x40) {
+		uint32 bank = (EXPREGS[0] & 1) | ((EXPREGS[0] >> 2) & 2) | (EXPREGS[0] & 4) | (EXPREGS[1] & 8) |
+		    ((EXPREGS[1] >> 2) & 0x10);
 
 		/* NROM-256 */
 		if (EXPREGS[0] & 0x02) {
 			setprg32(0x8000, bank >> 1);
 
-		/* NROM-128 */
+			/* NROM-128 */
 		} else {
 			setprg16(0x8000, bank);
 			setprg16(0xC000, bank);
@@ -55,8 +55,7 @@ static void M411PW(uint32 A, uint8 V) {
 	}
 
 	/* MMC3 Mode */
-	else
-	{
+	else {
 		uint32 mask = (EXPREGS[1] & 2) ? 0x1F : 0x0F;
 		V &= mask;
 		setprg8(A, V | ((EXPREGS[1] << 1) & 0x10) | ((EXPREGS[1] >> 1) & 0x20));

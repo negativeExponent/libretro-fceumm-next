@@ -59,7 +59,7 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper533_Init(CartInfo* info) {
+void Mapper533_Init(CartInfo *info) {
 	info->Power = M533Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);

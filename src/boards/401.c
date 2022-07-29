@@ -29,7 +29,7 @@ static uint8 dipswitch = 0;
 
 static void M401CW(uint32 A, uint8 V) {
 	uint32 mask = (0xFF >> (~EXPREGS[2] & 0xF));
-	uint32 bank  = (EXPREGS[0] | ((EXPREGS[2] << 4) & 0xF00));
+	uint32 bank = (EXPREGS[0] | ((EXPREGS[2] << 4) & 0xF00));
 	setchr1(A, (V & mask) | bank);
 }
 
@@ -38,9 +38,9 @@ static void M401PW(uint32 A, uint8 V) {
 		/* openbus */
 	} else {
 		uint32 mask = (~EXPREGS[3] & 0x1F);
-		uint32 bank  = (EXPREGS[1] & 0x1F) | (EXPREGS[2] & 0x80) |
-			((dipswitch & 2) ? (EXPREGS[2] & 0x20) : ((EXPREGS[1] >> 1) & 0x20)) |
-			((dipswitch & 4) ? (EXPREGS[2] & 0x40) : ((EXPREGS[1] << 1) & 0x40));
+		uint32 bank = (EXPREGS[1] & 0x1F) | (EXPREGS[2] & 0x80) |
+		    ((dipswitch & 2) ? (EXPREGS[2] & 0x20) : ((EXPREGS[1] >> 1) & 0x20)) |
+		    ((dipswitch & 4) ? (EXPREGS[2] & 0x40) : ((EXPREGS[1] << 1) & 0x40));
 		setprg8(A, (V & mask) | bank);
 	}
 }

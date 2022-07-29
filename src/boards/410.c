@@ -44,7 +44,7 @@ static void M410PW(uint32 A, uint8 V) {
 	MV |= EXPREGS[1];
 	MV |= ((EXPREGS[2] & 0x40) << 2);
 	setprg8(A, MV);
-/*	FCEU_printf("1:%02x 2:%02x 3:%02x A=%04x V=%03x\n",EXPREGS[1],EXPREGS[2],EXPREGS[3],A,MV); */
+	/*	FCEU_printf("1:%02x 2:%02x 3:%02x A=%04x V=%03x\n",EXPREGS[1],EXPREGS[2],EXPREGS[3],A,MV); */
 }
 
 static DECLFW(M410Write) {
@@ -83,7 +83,7 @@ void Mapper410_Init(CartInfo *info) {
 	info->Close = M410Close;
 	AddExState(EXPREGS, 5, 0, "EXPR");
 
-	CHRRAM = (uint8*)FCEU_gmalloc(8192);
+	CHRRAM = (uint8 *)FCEU_gmalloc(8192);
 	SetupCartCHRMapping(0x10, CHRRAM, 8192, 1);
 	AddExState(CHRRAM, 8192, 0, "CRAM");
 }

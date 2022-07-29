@@ -55,10 +55,10 @@ static DECLFW(M82Write) {
 		regs[A & 7] = V;
 	else
 		switch (A) {
-		case 0x7ef6: ctrl = V & 3; break;
-		case 0x7efa: regs[6] = V >> 2; break;
-		case 0x7efb: regs[7] = V >> 2; break;
-		case 0x7efc: regs[8] = V >> 2; break;
+			case 0x7ef6: ctrl = V & 3; break;
+			case 0x7efa: regs[6] = V >> 2; break;
+			case 0x7efb: regs[7] = V >> 2; break;
+			case 0x7efc: regs[8] = V >> 2; break;
 		}
 	Sync();
 }
@@ -67,7 +67,7 @@ static void M82Power(void) {
 	Sync();
 	SetReadHandler(0x6000, 0xffff, CartBR);
 	SetWriteHandler(0x6000, 0x7fff, CartBW);
-	SetWriteHandler(0x7ef0, 0x7efc, M82Write);	/* external WRAM might end at $73FF */
+	SetWriteHandler(0x7ef0, 0x7efc, M82Write); /* external WRAM might end at $73FF */
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
@@ -86,7 +86,7 @@ void Mapper82_Init(CartInfo *info) {
 	info->Close = M82Close;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

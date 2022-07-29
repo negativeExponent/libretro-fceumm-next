@@ -63,11 +63,13 @@ static DECLFW(M225Write) {
 
 static DECLFW(M225LoWrite) {
 	/* e.g. 115-in-1 [p1][!] CRC32 0xb39d30b4 */
-	if (A & 0x800) extraRAM[A & 3] = V & 0x0F;
+	if (A & 0x800)
+		extraRAM[A & 3] = V & 0x0F;
 }
 
 static DECLFR(M225LoRead) {
-	if (A & 0x800) return extraRAM[A & 3];
+	if (A & 0x800)
+		return extraRAM[A & 3];
 	return X.DB;
 }
 

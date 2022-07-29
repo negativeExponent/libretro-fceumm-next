@@ -32,7 +32,7 @@ static void BMC8IN1CW(uint32 A, uint8 V) {
 }
 
 static void BMC8IN1PW(uint32 A, uint8 V) {
-	if(EXPREGS[0] & 0x10) {		/* MMC3 mode */
+	if (EXPREGS[0] & 0x10) { /* MMC3 mode */
 		setprg8(A, ((EXPREGS[0] & 0xC) << 2) | (V & 0xF));
 	} else {
 		setprg32(0x8000, EXPREGS[0] & 0xF);
@@ -40,12 +40,12 @@ static void BMC8IN1PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(BMC8IN1Write) {
-	if(A & 0x1000) {
+	if (A & 0x1000) {
 		EXPREGS[0] = V;
 		FixMMC3PRG(MMC3_cmd);
 		FixMMC3CHR(MMC3_cmd);
 	} else {
-		if(A < 0xC000)
+		if (A < 0xC000)
 			MMC3_CMDWrite(A, V);
 		else
 			MMC3_IRQWrite(A, V);

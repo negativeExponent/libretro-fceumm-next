@@ -75,8 +75,8 @@ static void M269Power(void) {
 }
 
 static uint8 unscrambleCHR(uint8 data) {
-	return 	((data & 0x01) << 6) | ((data & 0x02) << 3) | ((data & 0x04) << 0) | ((data & 0x08) >> 3) |
-			((data & 0x10) >> 3) | ((data & 0x20) >> 2) | ((data & 0x40) >> 1) | ((data & 0x80) << 0);
+	return ((data & 0x01) << 6) | ((data & 0x02) << 3) | ((data & 0x04) << 0) | ((data & 0x08) >> 3) |
+	    ((data & 0x10) >> 3) | ((data & 0x20) >> 2) | ((data & 0x40) >> 1) | ((data & 0x80) << 0);
 }
 
 void Mapper269_Init(CartInfo *info) {
@@ -90,7 +90,7 @@ void Mapper269_Init(CartInfo *info) {
 	AddExState(EXPREGS, 5, 0, "EXPR");
 
 	CHRROMSIZE = PRGsize[0];
-	CHRROM = (uint8*)FCEU_gmalloc(CHRROMSIZE);
+	CHRROM = (uint8 *)FCEU_gmalloc(CHRROMSIZE);
 	/* unscramble CHR data from PRG */
 	for (i = 0; i < CHRROMSIZE; i++)
 		CHRROM[i] = unscrambleCHR(PRGptr[0][i]);

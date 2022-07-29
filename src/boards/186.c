@@ -40,22 +40,27 @@ static void Sync(void) {
 }
 
 static DECLFW(M186Write) {
-	if (A & 0x4203) regs[A & 3] = V;
+	if (A & 0x4203)
+		regs[A & 3] = V;
 	Sync();
 }
 
 static DECLFR(M186Read) {
 	switch (A) {
-	case 0x4200: return 0x00; break;
-	case 0x4201: return 0x00; break;
-	case 0x4202: return 0x40; break;
-	case 0x4203: return 0x00; break;
+		case 0x4200:
+			return 0x00;
+		case 0x4201:
+			return 0x00;
+		case 0x4202:
+			return 0x40;
+		case 0x4203:
+			return 0x00;
 	}
 	return 0xFF;
 }
 
 static DECLFR(ASWRAM) {
-	return(SWRAM[A - 0x4400]);
+	return (SWRAM[A - 0x4400]);
 }
 static DECLFW(BSWRAM) {
 	SWRAM[A - 0x4400] = V;
@@ -88,7 +93,7 @@ void Mapper186_Init(CartInfo *info) {
 	info->Power = M186Power;
 	info->Close = M186Close;
 	GameStateRestore = M186Restore;
-	WRAM = (uint8*)FCEU_gmalloc(32768);
+	WRAM = (uint8 *)FCEU_gmalloc(32768);
 	SetupCartPRGMapping(0x10, WRAM, 32768, 1);
 	AddExState(WRAM, 32768, 0, "WRAM");
 	AddExState(StateRegs, ~0, 0, 0);

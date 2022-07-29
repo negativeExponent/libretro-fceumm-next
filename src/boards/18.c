@@ -39,7 +39,8 @@ static SFORMAT StateRegs[] =
 
 static void Sync(void) {
 	int i;
-	for (i = 0; i < 8; i++) setchr1(i << 10, creg[i]);
+	for (i = 0; i < 8; i++)
+		setchr1(i << 10, creg[i]);
 	setprg8r(0x10, 0x6000, 0);
 	setprg8(0x8000, preg[0]);
 	setprg8(0xA000, preg[1]);
@@ -53,13 +54,33 @@ static void Sync(void) {
 
 static DECLFW(M18WriteIRQ) {
 	switch (A & 0xF003) {
-	case 0xE000: IRQLatch &= 0xFFF0; IRQLatch |= (V & 0x0f) << 0x0; break;
-	case 0xE001: IRQLatch &= 0xFF0F; IRQLatch |= (V & 0x0f) << 0x4; break;
-	case 0xE002: IRQLatch &= 0xF0FF; IRQLatch |= (V & 0x0f) << 0x8; break;
-	case 0xE003: IRQLatch &= 0x0FFF; IRQLatch |= (V & 0x0f) << 0xC; break;
-	case 0xF000: IRQCount = IRQLatch; break;
-	case 0xF001: IRQa = V & 1; X6502_IRQEnd(FCEU_IQEXT); break;
-	case 0xF002: mirr = V & 3; Sync(); break;
+		case 0xE000:
+			IRQLatch &= 0xFFF0;
+			IRQLatch |= (V & 0x0f) << 0x0;
+			break;
+		case 0xE001:
+			IRQLatch &= 0xFF0F;
+			IRQLatch |= (V & 0x0f) << 0x4;
+			break;
+		case 0xE002:
+			IRQLatch &= 0xF0FF;
+			IRQLatch |= (V & 0x0f) << 0x8;
+			break;
+		case 0xE003:
+			IRQLatch &= 0x0FFF;
+			IRQLatch |= (V & 0x0f) << 0xC;
+			break;
+		case 0xF000:
+			IRQCount = IRQLatch;
+			break;
+		case 0xF001:
+			IRQa = V & 1;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
+		case 0xF002:
+			mirr = V & 3;
+			Sync();
+			break;
 	}
 }
 
@@ -120,7 +141,7 @@ void Mapper18_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {
@@ -130,4 +151,3 @@ void Mapper18_Init(CartInfo *info) {
 
 	AddExState(&StateRegs, ~0, 0, 0);
 }
-

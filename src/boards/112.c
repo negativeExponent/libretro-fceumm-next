@@ -50,10 +50,21 @@ static void Sync(void) {
 
 static DECLFW(M112Write) {
 	switch (A) {
-	case 0xe000: mirror = V & 1; Sync();; break;
-	case 0x8000: cmd = V & 7; break;
-	case 0xa000: reg[cmd] = V; Sync(); break;
-	case 0xc000: bank = V; Sync(); break;
+		case 0xe000:
+			mirror = V & 1;
+			Sync();
+			break;
+		case 0x8000:
+			cmd = V & 7;
+			break;
+		case 0xa000:
+			reg[cmd] = V;
+			Sync();
+			break;
+		case 0xc000:
+			bank = V;
+			Sync();
+			break;
 	}
 }
 
@@ -72,7 +83,7 @@ static void M112Power(void) {
 	SetWriteHandler(0x4020, 0x5FFF, M112Write);
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-        FCEU_CheatAddRAM(8, 0x6000, WRAM);
+	FCEU_CheatAddRAM(8, 0x6000, WRAM);
 }
 
 static void StateRestore(int version) {
@@ -83,7 +94,7 @@ void Mapper112_Init(CartInfo *info) {
 	info->Power = M112Power;
 	info->Close = M112Close;
 	GameStateRestore = StateRestore;
-	WRAM = (uint8*)FCEU_gmalloc(8192);
+	WRAM = (uint8 *)FCEU_gmalloc(8192);
 	SetupCartPRGMapping(0x10, WRAM, 8192, 1);
 	AddExState(WRAM, 8192, 0, "WRAM");
 	AddExState(&StateRegs, ~0, 0, 0);

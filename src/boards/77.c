@@ -66,7 +66,7 @@ void Mapper77_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	CHRRAMSIZE = 6 * 1024;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 

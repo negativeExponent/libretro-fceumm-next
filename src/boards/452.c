@@ -18,9 +18,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
- 
+
 /* DS-9-27. Absolutely insane PCB that overlays 8 KiB of WRAM into a selectable position between $8000 and $E000. */
- 
+
 #include "mapinc.h"
 
 static uint8 *WRAM;
@@ -28,59 +28,56 @@ static uint32 WRAMSIZE;
 static uint8 latch[2];
 
 static void Mapper452_Sync(void) {
-	uint8 wramBank = latch[1] >>3 &6 |8;
-	if (latch[1] &2) {
-		setprg8(0x8000, latch[0] >>1);
-		setprg8(0xA000, latch[0] >>1);
-		setprg8(0xC000, latch[0] >>1);
-		setprg8(0xE000, latch[0] >>1);
-		setprg8r(0x10, (wramBank ^4) <<12, 0);
-	} else
-	if (latch[1] &8) {
-		setprg8(0x8000, latch[0] >>1 |0);
-		setprg8(0xA000, latch[0] >>1 |1);
-		setprg8(0xC000, latch[0] >>1 |2);
-		setprg8(0xE000, latch[0] >>1 |3 | latch[1] &4);
+	uint8 wramBank = latch[1] >> 3 & 6 | 8;
+	if (latch[1] & 2) {
+		setprg8(0x8000, latch[0] >> 1);
+		setprg8(0xA000, latch[0] >> 1);
+		setprg8(0xC000, latch[0] >> 1);
+		setprg8(0xE000, latch[0] >> 1);
+		setprg8r(0x10, (wramBank ^ 4) << 12, 0);
+	} else if (latch[1] & 8) {
+		setprg8(0x8000, latch[0] >> 1 | 0);
+		setprg8(0xA000, latch[0] >> 1 | 1);
+		setprg8(0xC000, latch[0] >> 1 | 2);
+		setprg8(0xE000, latch[0] >> 1 | 3 | latch[1] & 4);
 	} else {
-		setprg16(0x8000, latch[0] >>2);
+		setprg16(0x8000, latch[0] >> 2);
 		setprg16(0xC000, 0);
 	}
-	setprg8r(0x10, wramBank <<12, 0);
+	setprg8r(0x10, wramBank << 12, 0);
 	setchr8(0);
-	setmirror(latch [1] &1 ^1);
-	
+	setmirror(latch[1] & 1 ^ 1);
 }
 
 static DECLFW(Mapper452_WriteLatch) {
-	latch[0] =A &0xFF;
-	latch[1] =V;
+	latch[0] = A & 0xFF;
+	latch[1] = V;
 	Mapper452_Sync();
 	/* Do not relay to CartBW, as RAM mapped to locations other than $8000-$DFFF are not write-enabled. */
 }
 
 static void Mapper452_Reset(void) {
-	latch[0] =latch[1] =0;
+	latch[0] = latch[1] = 0;
 	Mapper452_Sync();
 }
 
 static void Mapper452_Power(void) {
-	
-	latch[0] =latch[1] =0;
+	latch[0] = latch[1] = 0;
 	Mapper452_Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xDFFF, Mapper452_WriteLatch);
 	SetWriteHandler(0xE000, 0xFFFF, CartBW);
-    FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
 static void Mapper452_Close(void) {
-   if (WRAM)
-      FCEU_gfree(WRAM);
-   WRAM = NULL;
+	if (WRAM)
+		FCEU_gfree(WRAM);
+	WRAM = NULL;
 }
 
 static void StateRestore(int version) {
-   Mapper452_Sync();
+	Mapper452_Sync();
 }
 
 void Mapper452_Init(CartInfo *info) {
@@ -90,7 +87,7 @@ void Mapper452_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*) FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

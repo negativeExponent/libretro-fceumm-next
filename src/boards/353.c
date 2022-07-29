@@ -23,11 +23,11 @@
  * The PCB code is 81-03-05-C.
  */
 
+#include "../fds_apu.h"
 #include "mapinc.h"
 #include "mmc3.h"
-#include "../fds_apu.h"
 
-static uint8* CHRRAM = NULL;
+static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSIZE;
 static uint8 PPUCHRBus;
 static uint8 MIR[8];
@@ -50,10 +50,10 @@ static void M353PW(uint32 A, uint8 V) {
 	} else {
 		if ((EXPREGS[0] == 3) && !(DRegBuf[0] & 0x80)) {
 			switch (A & 0xF000) {
-			case 0xC000:
-			case 0xE000:
-				bank = DRegBuf[6 + ((A >> 13) & 1)] | 0x70;
-				break;
+				case 0xC000:
+				case 0xE000:
+					bank = DRegBuf[6 + ((A >> 13) & 1)] | 0x70;
+					break;
 			}
 		} else {
 			bank &= 0x1F;
@@ -116,7 +116,7 @@ static void M353Close(void) {
 	CHRRAM = NULL;
 }
 
-void Mapper353_Init(CartInfo* info) {
+void Mapper353_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 128, 8, info->battery);
 	cwrap = M353CW;
 	pwrap = M353PW;
@@ -128,7 +128,7 @@ void Mapper353_Init(CartInfo* info) {
 	AddExState(EXPREGS, 1, 0, "EXPR");
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

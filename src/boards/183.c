@@ -48,10 +48,18 @@ static void SyncPrg(void) {
 
 static void SyncMirr(void) {
 	switch (mirr) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+		case 0:
+			setmirror(MI_V);
+			break;
+		case 1:
+			setmirror(MI_H);
+			break;
+		case 2:
+			setmirror(MI_0);
+			break;
+		case 3:
+			setmirror(MI_1);
+			break;
 	}
 }
 
@@ -75,16 +83,41 @@ static DECLFW(M183Write) {
 		int index = (((A >> 11) - 6) | (A >> 3)) & 7;
 		chr[index] = (chr[index] & (0xF0 >> (A & 4))) | ((V & 0x0F) << (A & 4));
 		SyncChr();
-	} else switch (A & 0xF80C) {
-		case 0x8800: prg[0] = V; SyncPrg(); break;
-		case 0xA800: prg[1] = V; SyncPrg(); break;
-		case 0xA000: prg[2] = V; SyncPrg(); break;
-		case 0x9800: mirr = V & 3; SyncMirr(); break;
-		case 0xF000: IRQCount = ((IRQCount & 0xF0) | (V & 0xF)); break;
-		case 0xF004: IRQCount = ((IRQCount & 0x0F) | ((V & 0xF) << 4)); break;
-		case 0xF008: IRQa = V; if (!V) IRQPre = 0; X6502_IRQEnd(FCEU_IQEXT); break;
-		case 0xF00C: IRQPre = 16; break;
+	} else {
+		switch (A & 0xF80C) {
+			case 0x8800:
+				prg[0] = V;
+				SyncPrg();
+				break;
+			case 0xA800:
+				prg[1] = V;
+				SyncPrg();
+				break;
+			case 0xA000:
+				prg[2] = V;
+				SyncPrg();
+				break;
+			case 0x9800:
+				mirr = V & 3;
+				SyncMirr();
+				break;
+			case 0xF000:
+				IRQCount = ((IRQCount & 0xF0) | (V & 0xF));
+				break;
+			case 0xF004:
+				IRQCount = ((IRQCount & 0x0F) | ((V & 0xF) << 4));
+				break;
+			case 0xF008:
+				IRQa = V;
+				if (!V)
+					IRQPre = 0;
+				X6502_IRQEnd(FCEU_IQEXT);
+				break;
+			case 0xF00C:
+				IRQPre = 16;
+				break;
 		}
+	}
 }
 
 static void M183IRQCounter(void) {

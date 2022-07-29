@@ -67,7 +67,7 @@ static DECLFR(M237Read) {
 
 static void M237Power(void) {
 	Sync();
-	SetReadHandler (0x8000, 0xFFFF, M237Read);
+	SetReadHandler(0x8000, 0xFFFF, M237Read);
 	SetWriteHandler(0x8000, 0xFFFF, M237Write);
 }
 

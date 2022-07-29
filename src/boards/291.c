@@ -29,7 +29,7 @@ static void M291PW(uint32 A, uint8 V) {
 	if (EXPREGS[0] & 0x20)
 		setprg32(0x8000, ((EXPREGS[0] >> 1) & 3) | ((EXPREGS[0] >> 4) & 4));
 	else
-		setprg8(A, (V & 0x0F) |  ((EXPREGS[0] >> 2) & 0x10));
+		setprg8(A, (V & 0x0F) | ((EXPREGS[0] >> 2) & 0x10));
 }
 
 static DECLFW(M291Write) {

@@ -48,8 +48,14 @@ static DECLFR(M57Read) {
 
 static DECLFW(M57Write) {
 	switch (A & 0x8800) {
-		case 0x8000: regs[0] = V; Sync(); break;
-		case 0x8800: regs[1] = V; Sync(); break;
+		case 0x8000:
+			regs[0] = V;
+			Sync();
+			break;
+		case 0x8800:
+			regs[1] = V;
+			Sync();
+			break;
 	}
 }
 

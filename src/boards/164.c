@@ -39,99 +39,88 @@ static SFORMAT StateRegs[] =
         { 0 }
 };
 
-static void sync()
-{
-   uint8 prgLow  = reg[0] &0x0F | reg[0] >>1 &0x10;
-   uint8 prgHigh = reg[1] <<5;
-   switch (reg[0] >>5 &2 | reg[0] >>4 &1)
-   {
-      case 0: /* UNROM-512 */
-         setprg16(0x8000, prgHigh | prgLow);
-         setprg16(0xC000, prgHigh |   0x1F);
-         break;
-      case 1: /* Open Bus on Yancheng cy2000-3 PCB, expansion cartridge on the Dongda PEC-9588 */
-         break;
-      case 2: /* UNROM-448+64. Very strange mode, used for the LOGO program on the Dongda PEC-9588 */
-         setprg16(0x8000, prgHigh | prgLow);
-         setprg16(0xC000, prgHigh |(prgLow >=0x1C? 0x1C: 0x1E));
-         break;
-      case 3: /* UNROM-128 or BNROM */
-         if (prgLow &0x10)
-         {
-            setprg16(0x8000, prgHigh | prgLow <<1 &0x10 | prgLow &0x0F);
-            setprg16(0xC000, prgHigh | prgLow <<1 &0x10 |         0x0F);
-         }
-         else
-            setprg32(0x8000, prgHigh >>1 | prgLow);
-         break;
-   }
-   setprg8r(0x10, 0x6000, 0);
+static void sync() {
+	uint8 prgLow = reg[0] & 0x0F | reg[0] >> 1 & 0x10;
+	uint8 prgHigh = reg[1] << 5;
+	switch (reg[0] >> 5 & 2 | reg[0] >> 4 & 1) {
+		case 0: /* UNROM-512 */
+			setprg16(0x8000, prgHigh | prgLow);
+			setprg16(0xC000, prgHigh | 0x1F);
+			break;
+		case 1: /* Open Bus on Yancheng cy2000-3 PCB, expansion cartridge on the Dongda PEC-9588 */
+			break;
+		case 2: /* UNROM-448+64. Very strange mode, used for the LOGO program on the Dongda PEC-9588 */
+			setprg16(0x8000, prgHigh | prgLow);
+			setprg16(0xC000, prgHigh | (prgLow >= 0x1C ? 0x1C : 0x1E));
+			break;
+		case 3: /* UNROM-128 or BNROM */
+			if (prgLow & 0x10) {
+				setprg16(0x8000, prgHigh | prgLow << 1 & 0x10 | prgLow & 0x0F);
+				setprg16(0xC000, prgHigh | prgLow << 1 & 0x10 | 0x0F);
+			} else
+				setprg32(0x8000, prgHigh >> 1 | prgLow);
+			break;
+	}
+	setprg8r(0x10, 0x6000, 0);
 
-   setchr8(0);
-   PEC586Hack = !!(reg[0] &0x80);
+	setchr8(0);
+	PEC586Hack = !!(reg[0] & 0x80);
 
-   setmirror(reg[0] &0x10 && ~reg[3] &0x80? MI_H: MI_V);
+	setmirror(reg[0] & 0x10 && ~reg[3] & 0x80 ? MI_H : MI_V);
 
-   eeprom_93C66_write(reg[2] &0x10, reg[2] &0x04, reg[2] &0x01);
+	eeprom_93C66_write(reg[2] & 0x10, reg[2] & 0x04, reg[2] & 0x01);
 }
 
-static DECLFR(readReg)
-{
-   return eeprom_93C66_read()? 0x00: 0x04;
+static DECLFR(readReg) {
+	return eeprom_93C66_read() ? 0x00 : 0x04;
 }
 
-static DECLFW(writeReg)
-{
-   reg[A >>8 &7] = V;
-   sync();
+static DECLFW(writeReg) {
+	reg[A >> 8 & 7] = V;
+	sync();
 }
 
-static void power(void)
-{
-   memset(reg, 0, sizeof(reg));
-   eeprom_93C66_init();
-   sync();
-   SetReadHandler (0x5400, 0x57FF, readReg);
-   SetWriteHandler(0x5000, 0x57FF, writeReg);
-   SetReadHandler (0x6000, 0xFFFF, CartBR);
-   SetWriteHandler(0x6000, 0x7FFF, CartBW);
+static void power(void) {
+	memset(reg, 0, sizeof(reg));
+	eeprom_93C66_init();
+	sync();
+	SetReadHandler(0x5400, 0x57FF, readReg);
+	SetWriteHandler(0x5000, 0x57FF, writeReg);
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 }
 
-static void reset(void)
-{
-   memset(reg, 0, sizeof(reg));
-   sync();
+static void reset(void) {
+	memset(reg, 0, sizeof(reg));
+	sync();
 }
 
-static void close(void)
-{
-   if (WRAM)
-      FCEU_gfree(WRAM);
-   WRAM = NULL;
+static void close(void) {
+	if (WRAM)
+		FCEU_gfree(WRAM);
+	WRAM = NULL;
 }
 
-static void StateRestore(int version)
-{
-   sync();
+static void StateRestore(int version) {
+	sync();
 }
 
-void Mapper164_Init (CartInfo *info)
-{
-   info->Power   = power;
-   info->Reset   = reset;
-   info->Close   = close;
+void Mapper164_Init(CartInfo *info) {
+	info->Power = power;
+	info->Reset = reset;
+	info->Close = close;
 
-   GameStateRestore = StateRestore;
-   AddExState(StateRegs, ~0, 0, 0);
+	GameStateRestore = StateRestore;
+	AddExState(StateRegs, ~0, 0, 0);
 
-   WRAMSIZE = info->iNES2? (info->PRGRamSize + (info->PRGRamSaveSize &~0x7FF)): 8192;
-   WRAM = (uint8*) FCEU_gmalloc(WRAMSIZE);
-   SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
-   AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-   FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+	WRAMSIZE = info->iNES2 ? (info->PRGRamSize + (info->PRGRamSaveSize & ~0x7FF)) : 8192;
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
+	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 
-   eeprom_93C66_storage = eeprom_data;
-   info->battery = 1;
-   info->SaveGame[0] = eeprom_data;
-   info->SaveGameLen[0] = 512;
+	eeprom_93C66_storage = eeprom_data;
+	info->battery = 1;
+	info->SaveGame[0] = eeprom_data;
+	info->SaveGameLen[0] = 512;
 }

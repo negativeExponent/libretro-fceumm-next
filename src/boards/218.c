@@ -26,9 +26,9 @@ static void M218Power(void) {
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
-void Mapper218_Init(CartInfo* info) {
+void Mapper218_Init(CartInfo *info) {
 	if (head.ROM_type & 0x08)
-		SetupCartMirroring(MI_0 + (head.ROM_type & 0x01), 1,  NULL);
+		SetupCartMirroring(MI_0 + (head.ROM_type & 0x01), 1, NULL);
 	SetupCartCHRMapping(0, NTARAM, 2048, 1);
 	info->Power = M218Power;
 }

@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "mapinc.h"
 #include "../fds_apu.h"
+#include "mapinc.h"
 
 static uint8 latche, latcheinit, bus_conflict;
 static uint16 addrreg0, addrreg1;
@@ -28,7 +28,7 @@ static uint32 WRAMSIZE;
 static void (*WSync)(void);
 
 static DECLFW(LatchWrite) {
-/*	FCEU_printf("bs %04x %02x\n",A,V); */
+	/*	FCEU_printf("bs %04x %02x\n",A,V); */
 	if (bus_conflict)
 		latche = V & CartBR(A);
 	else
@@ -59,7 +59,8 @@ static void StateRestore(int version) {
 	WSync();
 }
 
-static void Latch_Init(CartInfo *info, void (*proc)(void), uint8 init, uint16 adr0, uint16 adr1, uint8 wram, uint8 busc) {
+static void Latch_Init(CartInfo *info, void (*proc)(void), uint8 init, uint16 adr0, uint16 adr1, uint8 wram,
+                       uint8 busc) {
 	bus_conflict = busc;
 	latcheinit = init;
 	addrreg0 = adr0;
@@ -70,7 +71,7 @@ static void Latch_Init(CartInfo *info, void (*proc)(void), uint8 init, uint16 ad
 	GameStateRestore = StateRestore;
 	if (wram) {
 		WRAMSIZE = 8192;
-		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		if (info->battery) {
 			info->SaveGame[0] = WRAM;
@@ -92,7 +93,7 @@ static DECLFW(NROMWrite) {
 #endif
 
 static void NROMPower(void) {
-	setprg8r(0x10, 0x6000, 0);	/* Famili BASIC (v3.0) need it (uses only 4KB), FP-BASIC uses 8KB */
+	setprg8r(0x10, 0x6000, 0); /* Famili BASIC (v3.0) need it (uses only 4KB), FP-BASIC uses 8KB */
 	setprg16(0x8000, 0);
 	setprg16(0xC000, 1);
 	setchr8(0);
@@ -103,9 +104,9 @@ static void NROMPower(void) {
 
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 
-	#ifdef DEBUG_MAPPER
+#ifdef DEBUG_MAPPER
 	SetWriteHandler(0x4020, 0xFFFF, NROMWrite);
-	#endif
+#endif
 }
 
 void NROM_Init(CartInfo *info) {
@@ -113,7 +114,7 @@ void NROM_Init(CartInfo *info) {
 	info->Close = LatchClose;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	if (info->battery) {
 		info->SaveGame[0] = WRAM;
@@ -141,7 +142,7 @@ void UNROM_Init(CartInfo *info) {
 static void CNROMSync(void) {
 	setchr8(latche);
 	setprg32(0x8000, 0);
-	setprg8r(0x10, 0x6000, 0);	/* Hayauchy IGO uses 2Kb or RAM */
+	setprg8r(0x10, 0x6000, 0); /* Hayauchy IGO uses 2Kb or RAM */
 }
 
 void CNROM_Init(CartInfo *info) {
@@ -329,10 +330,16 @@ static void M97Sync(void) {
 	setprg16(0x8000, ~0);
 	setprg16(0xc000, latche & 15);
 	switch (latche >> 6) {
-	case 0: break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_V); break;
-	case 3: break;
+		case 0:
+			break;
+		case 1:
+			setmirror(MI_H);
+			break;
+		case 2:
+			setmirror(MI_V);
+			break;
+		case 3:
+			break;
 	}
 	setchr8(((latche >> 1) & 1) | ((latche << 1) & 2));
 }
@@ -368,7 +375,7 @@ void Mapper107_Init(CartInfo *info) {
 static void M113Sync(void) {
 	setprg32(0x8000, (latche >> 3) & 7);
 	setchr8(((latche >> 3) & 8) | (latche & 7));
-/*	setmirror(latche>>7);*/ /* only for HES 6in1 */
+	/*	setmirror(latche>>7);*/ /* only for HES 6in1 */
 }
 
 void Mapper113_Init(CartInfo *info) {
@@ -387,7 +394,7 @@ static void M152Sync(void) {
 	setprg16(0x8000, (latche >> 4) & 7);
 	setprg16(0xc000, ~0);
 	setchr8(latche & 0xf);
-	setmirror(MI_0 + ((latche >> 7) & 1));	/* Saint Seiya...hmm. */
+	setmirror(MI_0 + ((latche >> 7) & 1)); /* Saint Seiya...hmm. */
 }
 
 void Mapper152_Init(CartInfo *info) {
@@ -451,7 +458,7 @@ static void M241Sync(void) {
 	setchr8(0);
 	setprg8r(0x10, 0x6000, 0);
 	if (latche & 0x80)
-		setprg32(0x8000, latche | 8);	/* no 241 actually, but why not afterall? */
+		setprg32(0x8000, latche | 8); /* no 241 actually, but why not afterall? */
 	else
 		setprg32(0x8000, latche);
 }
@@ -586,8 +593,8 @@ void BMCK3046_Init(CartInfo *info) {
 /* Mapper 429: LIKO BBG-235-8-1B/Milowork FCFC1 */
 
 static void Mapper429_Sync(void) {
-	setprg32(0x8000, latche >>2);
-	setchr8(latche &3);
+	setprg32(0x8000, latche >> 2);
+	setchr8(latche & 3);
 }
 
 static void Mapper429_Reset(void) {

@@ -35,36 +35,31 @@ static SFORMAT StateRegs[] =
 
 static void Sync(void) {
 	setprg8(0x6000, reg);
-    setprg8(0x8000, 10);
-    setprg8(0xA000, 11);
-    setprg8(0xC000, 6);
-    setprg8(0xE000, 7);
-    setchr8(reg);
+	setprg8(0x8000, 10);
+	setprg8(0xA000, 11);
+	setprg8(0xC000, 6);
+	setprg8(0xE000, 7);
+	setchr8(reg);
 }
 
 static DECLFR(M554Read) {
-    int A1 = A &~1;
-    if ((A >= 0xCAB6) && (A <= 0xCAD7))
-    {
-        reg = (A >> 2) & 0x0F;
-        Sync();
-    }
-    else if ((A1 == 0xEBE2) || (A1 == 0xEE32))
-    {
-        reg = (A >> 2) & 0x0F;
-        Sync();
-    }
-    else if (A1 == 0xFFFC)
-    {
-        reg = (A >> 2) & 0x0F;
-        Sync();
-    }
-    return CartBR(A);
+	int A1 = A & ~1;
+	if ((A >= 0xCAB6) && (A <= 0xCAD7)) {
+		reg = (A >> 2) & 0x0F;
+		Sync();
+	} else if ((A1 == 0xEBE2) || (A1 == 0xEE32)) {
+		reg = (A >> 2) & 0x0F;
+		Sync();
+	} else if (A1 == 0xFFFC) {
+		reg = (A >> 2) & 0x0F;
+		Sync();
+	}
+	return CartBR(A);
 }
 
 static void M554Power(void) {
 	Sync();
-    SetReadHandler(0x6000, 0xFFFF, M554Read);
+	SetReadHandler(0x6000, 0xFFFF, M554Read);
 }
 
 static void StateRestore(int version) {

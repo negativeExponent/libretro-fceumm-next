@@ -43,14 +43,26 @@ static void Sync(void) {
 
 static DECLFW(UNL3DBlockWrite) {
 	switch (A) {
-/* 4800 32 */
-/* 4900 37 */
-/* 4a00 01 */
-/* 4e00 18 */
-	case 0x4800: reg[0] = V; break;
-	case 0x4900: reg[1] = V; break;
-	case 0x4a00: reg[2] = V; break;
-	case 0x4e00: reg[3] = V; IRQCount = Count; IRQPause = Pause; IRQa = 1; X6502_IRQEnd(FCEU_IQEXT); break;
+			/* 4800 32 */
+			/* 4900 37 */
+			/* 4a00 01 */
+			/* 4e00 18 */
+		case 0x4800:
+			reg[0] = V;
+			break;
+		case 0x4900:
+			reg[1] = V;
+			break;
+		case 0x4a00:
+			reg[2] = V;
+			break;
+		case 0x4e00:
+			reg[3] = V;
+			IRQCount = Count;
+			IRQPause = Pause;
+			IRQa = 1;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
 	}
 }
 

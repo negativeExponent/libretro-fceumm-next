@@ -26,33 +26,33 @@
 static uint8 dipswitch;
 
 static void M334PW(uint32 A, uint8 V) {
-    setprg32(0x8000, EXPREGS[0] >> 1);
+	setprg32(0x8000, EXPREGS[0] >> 1);
 }
 
 static DECLFW(M334Write) {
-    if (!(A & 1)) {
-        EXPREGS[0] = V;
-        FixMMC3PRG(MMC3_cmd);
-    }
+	if (!(A & 1)) {
+		EXPREGS[0] = V;
+		FixMMC3PRG(MMC3_cmd);
+	}
 }
 
 static DECLFR(M334Read) {
-    if (A & 2)
-        return ((X.DB & 0xFE) | (dipswitch & 1));
-    return X.DB;
+	if (A & 2)
+		return ((X.DB & 0xFE) | (dipswitch & 1));
+	return X.DB;
 }
 
 static void M334Reset(void) {
-    dipswitch++;
+	dipswitch++;
 	EXPREGS[0] = 0;
 	MMC3RegReset();
 }
 
 static void M334Power(void) {
-    dipswitch = 0;
+	dipswitch = 0;
 	EXPREGS[0] = 0;
 	GenMMC3Power();
-    SetReadHandler(0x6000, 0x7FFF, M334Read);
+	SetReadHandler(0x6000, 0x7FFF, M334Read);
 	SetWriteHandler(0x6000, 0x7FFF, M334Write);
 }
 

@@ -86,38 +86,104 @@ static DECLFR(M80RamRead) {
 
 static DECLFW(M80Write) {
 	switch (A) {
-	case 0x7EF0: creg[0] = V; mcache[0] = mcache[1] = V >> 7; Sync(); break;
-	case 0x7EF1: creg[1] = V; mcache[2] = mcache[3] = V >> 7; Sync(); break;
-	case 0x7EF2: creg[2] = V; mcache[4] = V >> 7; Sync(); break;
-	case 0x7EF3: creg[3] = V; mcache[5] = V >> 7; Sync(); break;
-	case 0x7EF4: creg[4] = V; mcache[6] = V >> 7; Sync(); break;
-	case 0x7EF5: creg[5] = V; mcache[7] = V >> 7; Sync(); break;
-	case 0x7EF6: mirr = V & 1; Sync(); break;
-	case 0x7EF8: wram_enable = V; break;
-	case 0x7EFA:
-	case 0x7EFB: preg[0] = V; Sync(); break;
-	case 0x7EFC:
-	case 0x7EFD: preg[1] = V; Sync(); break;
-	case 0x7EFE:
-	case 0x7EFF: preg[2] = V; Sync(); break;
+		case 0x7EF0:
+			creg[0] = V;
+			mcache[0] = mcache[1] = V >> 7;
+			Sync();
+			break;
+		case 0x7EF1:
+			creg[1] = V;
+			mcache[2] = mcache[3] = V >> 7;
+			Sync();
+			break;
+		case 0x7EF2:
+			creg[2] = V;
+			mcache[4] = V >> 7;
+			Sync();
+			break;
+		case 0x7EF3:
+			creg[3] = V;
+			mcache[5] = V >> 7;
+			Sync();
+			break;
+		case 0x7EF4:
+			creg[4] = V;
+			mcache[6] = V >> 7;
+			Sync();
+			break;
+		case 0x7EF5:
+			creg[5] = V;
+			mcache[7] = V >> 7;
+			Sync();
+			break;
+		case 0x7EF6:
+			mirr = V & 1;
+			Sync();
+			break;
+		case 0x7EF8: wram_enable = V; break;
+		case 0x7EFA:
+		case 0x7EFB:
+			preg[0] = V;
+			Sync();
+			break;
+		case 0x7EFC:
+		case 0x7EFD:
+			preg[1] = V;
+			Sync();
+			break;
+		case 0x7EFE:
+		case 0x7EFF:
+			preg[2] = V;
+			Sync();
+			break;
 	}
 }
 
 static DECLFW(M95Write) {
 	switch (A & 0xF001) {
-	case 0x8000: cmd = V; break;
-	case 0x8001:
-		switch (cmd & 0x07) {
-		case 0: creg[0] = V & 0x1F; mcache[0] = mcache[1] = (V >> 5) & 1; Sync(); break;
-		case 1: creg[1] = V & 0x1F; mcache[2] = mcache[3] = (V >> 5) & 1; Sync(); break;
-		case 2: creg[2] = V & 0x1F; mcache[4] = (V >> 5) & 1; Sync(); break;
-		case 3: creg[3] = V & 0x1F; mcache[5] = (V >> 5) & 1; Sync(); break;
-		case 4: creg[4] = V & 0x1F; mcache[6] = (V >> 5) & 1; Sync(); break;
-		case 5: creg[5] = V & 0x1F; mcache[7] = (V >> 5) & 1; Sync(); break;
-		case 6: preg[0] = V; Sync(); break;
-		case 7: preg[1] = V; Sync(); break;
-		}
-		Sync();
+		case 0x8000: cmd = V; break;
+		case 0x8001:
+			switch (cmd & 0x07) {
+				case 0:
+					creg[0] = V & 0x1F;
+					mcache[0] = mcache[1] = (V >> 5) & 1;
+					Sync();
+					break;
+				case 1:
+					creg[1] = V & 0x1F;
+					mcache[2] = mcache[3] = (V >> 5) & 1;
+					Sync();
+					break;
+				case 2:
+					creg[2] = V & 0x1F;
+					mcache[4] = (V >> 5) & 1;
+					Sync();
+					break;
+				case 3:
+					creg[3] = V & 0x1F;
+					mcache[5] = (V >> 5) & 1;
+					Sync();
+					break;
+				case 4:
+					creg[4] = V & 0x1F;
+					mcache[6] = (V >> 5) & 1;
+					Sync();
+					break;
+				case 5:
+					creg[5] = V & 0x1F;
+					mcache[7] = (V >> 5) & 1;
+					Sync();
+					break;
+				case 6:
+					preg[0] = V;
+					Sync();
+					break;
+				case 7:
+					preg[1] = V;
+					Sync();
+					break;
+			}
+			Sync();
 	}
 }
 

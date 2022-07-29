@@ -25,7 +25,7 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8* CHRRAM = NULL;
+static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSIZE = 0;
 
 static void M356CW(uint32 A, uint8 V) {
@@ -33,9 +33,8 @@ static void M356CW(uint32 A, uint8 V) {
 		uint8 NV = V;
 		if (EXPREGS[2] & 8)
 			NV &= (1 << ((EXPREGS[2] & 7) + 1)) - 1;
-		else
-		if (EXPREGS[2])
-			NV &= 0;	/* hack ;( don't know exactly how it should be */
+		else if (EXPREGS[2])
+			NV &= 0; /* hack ;( don't know exactly how it should be */
 		NV |= EXPREGS[0] | ((EXPREGS[2] & 0xF0) << 4);
 		setchr1(A, NV);
 	} else
@@ -87,7 +86,7 @@ static void M356Power(void) {
 	SetWriteHandler(0x6000, 0x7FFF, M356Write);
 }
 
-void Mapper356_Init(CartInfo* info) {
+void Mapper356_Init(CartInfo *info) {
 	GenMMC3_Init(info, 128, 128, 0, 0);
 	cwrap = M356CW;
 	pwrap = M356PW;
@@ -98,7 +97,7 @@ void Mapper356_Init(CartInfo* info) {
 	AddExState(EXPREGS, 5, 0, "EXPR");
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

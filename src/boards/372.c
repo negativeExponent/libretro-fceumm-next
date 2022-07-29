@@ -36,24 +36,25 @@ static void M372CW(uint32 A, uint8 V) {
 		if (EXPREGS[2] & 8)
 			NV &= (1 << ((EXPREGS[2] & 7) + 1)) - 1;
 		else if (EXPREGS[2])
-			NV &= 0;	/* hack ;( don't know exactly how it should be */
+			NV &= 0; /* hack ;( don't know exactly how it should be */
 		NV |= EXPREGS[0] | ((EXPREGS[2] & 0xF0) << 4);
 		if (EXPREGS[2] & 0x20)
 			setchr1r(0x10, A, V);
 		else
 			setchr1(A, NV);
 	} else
-		/* setchr8(0); */		/* i don't know what cart need this, but a new one need other lol */
+		/* FIXME */
+		/* setchr8(0); */ /* i don't know what cart need this, but a new one need other lol */
 		setchr1(A, V);
 }
 
 static void M372PW(uint32 A, uint8 V) {
 	uint32 MV = V & ((EXPREGS[3] & 0x3F) ^ 0x3F);
 	MV |= EXPREGS[1];
-	if(UNIFchrrama)
+	if (UNIFchrrama)
 		MV |= ((EXPREGS[2] & 0x40) << 2);
 	setprg8(A, MV);
-/*	FCEU_printf("1:%02x 2:%02x 3:%02x A=%04x V=%03x\n",EXPREGS[1],EXPREGS[2],EXPREGS[3],A,MV); */
+	/*	FCEU_printf("1:%02x 2:%02x 3:%02x A=%04x V=%03x\n",EXPREGS[1],EXPREGS[2],EXPREGS[3],A,MV); */
 }
 
 static DECLFW(M372Write) {
@@ -104,7 +105,7 @@ void Mapper372_Init(CartInfo *info) {
 	info->Power = M372Power;
 	info->Close = M372Close;
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 	AddExState(EXPREGS, 5, 0, "EXPR");

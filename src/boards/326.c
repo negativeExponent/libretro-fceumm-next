@@ -65,9 +65,18 @@ static void FixNTAR(void) {
 
 static DECLFW(M326Write) {
 	switch (A & 0xE010) {
-	case 0x8000: PRG[0] = V; SyncPRG(); break;
-	case 0xA000: PRG[1] = V; SyncPRG(); break;
-	case 0xC000: PRG[2] = V; SyncPRG(); break;
+		case 0x8000:
+			PRG[0] = V;
+			SyncPRG();
+			break;
+		case 0xA000:
+			PRG[1] = V;
+			SyncPRG();
+			break;
+		case 0xC000:
+			PRG[2] = V;
+			SyncPRG();
+			break;
 	}
 
 	A &= 0x801F;
