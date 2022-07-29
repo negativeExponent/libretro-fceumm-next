@@ -53,13 +53,13 @@ static void Sync(void) {
 }
 
 static DECLFW(M368WritePRG) {
-    preg = V & 7;
-    Sync();
+	preg = V & 7;
+	Sync();
 }
 
 static DECLFW(M368WriteIRQ) {
 	latch = V & 0x53;
-    IRQa = V & 1;
+	IRQa = V & 1;
 	if (!IRQa) {
 		IRQCount = 0;
 		X6502_IRQEnd(FCEU_IQEXT);
@@ -67,7 +67,7 @@ static DECLFW(M368WriteIRQ) {
 }
 
 static DECLFR(M368Read) {
-    return (latch | 0xBA);
+	return (latch | 0xBA);
 }
 
 static void M368Power(void) {
@@ -75,9 +75,9 @@ static void M368Power(void) {
 	latch = 0;
 	IRQa = IRQCount = 0;
 	Sync();
-    SetReadHandler(0x4122, 0x4122, M368Read);
+	SetReadHandler(0x4122, 0x4122, M368Read);
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
-    SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x4022, 0x4022, M368WritePRG);
 	SetWriteHandler(0x4120, 0x4120, M368WritePRG);
 	SetWriteHandler(0x4122, 0x4122, M368WriteIRQ);

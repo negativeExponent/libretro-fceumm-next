@@ -38,22 +38,28 @@ static SFORMAT StateRegs[] = {
 
 void SyncMirror() {
 	switch (mode & 3) {
-	case 0: setmirror(MI_0); break;
-	case 1: setmirror(MI_1); break;
-	case 2: setmirror(MI_V); break;
-	case 3: setmirror(MI_H); break;
+		case 0:
+			setmirror(MI_0);
+			break;
+		case 1:
+			setmirror(MI_1);
+			break;
+		case 2:
+			setmirror(MI_V);
+			break;
+		case 3:
+			setmirror(MI_H);
+			break;
 	}
 }
 
-void Mirror(uint8 value)
-{
+void Mirror(uint8 value) {
 	if ((mode & 2) == 0) {
 		mode &= 0xfe;
 		mode |= value >> 4 & 1;
 	}
 	SyncMirror();
 }
-
 
 static void Sync() {
 	uint8 prglo = 0;
@@ -64,61 +70,61 @@ static void Sync() {
 	/* this can probably be rolled up, but i have no motivation to do so
 	 * until it's been tested */
 	switch (mode & 0x3c) {
-	/* 32K modes */
-	case 0x00:
-	case 0x04:
-		prglo = outb;
-		prghi = outb | 1;
-		break;
-	case 0x10:
-	case 0x14:
-		prglo = (outb & ~2) | (prg << 1 & 2);
-		prghi = (outb & ~2) | (prg << 1 & 2) | 1;
-		break;
-	case 0x20:
-	case 0x24:
-		prglo = (outb & ~6) | (prg << 1 & 6);
-		prghi = (outb & ~6) | (prg << 1 & 6) | 1;
-		break;
-	case 0x30:
-	case 0x34:
-		prglo = (outb & ~14) | (prg << 1 & 14);
-		prghi = (outb & ~14) | (prg << 1 & 14) | 1;
-		break;
-	/* bottom fixed modes */
-	case 0x08:
-		prglo = outb;
-		prghi = outb | (prg & 1);
-		break;
-	case 0x18:
-		prglo = outb;
-		prghi = (outb & ~2) | (prg & 3);
-		break;
-	case 0x28:
-		prglo = outb;
-		prghi = (outb & ~6) | (prg & 7);
-		break;
-	case 0x38:
-		prglo = outb;
-		prghi = (outb & ~14) | (prg & 15);
-		break;
-	/* top fixed modes */
-	case 0x0c:
-		prglo = outb | (prg & 1);
-		prghi = outb | 1;
-		break;
-	case 0x1c:
-		prglo = (outb & ~2) | (prg & 3);
-		prghi = outb | 1;
-		break;
-	case 0x2c:
-		prglo = (outb & ~6) | (prg & 7);
-		prghi = outb | 1;
-		break;
-	case 0x3c:
-		prglo = (outb & ~14) | (prg & 15);
-		prghi = outb | 1;
-		break;
+		/* 32K modes */
+		case 0x00:
+		case 0x04:
+			prglo = outb;
+			prghi = outb | 1;
+			break;
+		case 0x10:
+		case 0x14:
+			prglo = (outb & ~2) | (prg << 1 & 2);
+			prghi = (outb & ~2) | (prg << 1 & 2) | 1;
+			break;
+		case 0x20:
+		case 0x24:
+			prglo = (outb & ~6) | (prg << 1 & 6);
+			prghi = (outb & ~6) | (prg << 1 & 6) | 1;
+			break;
+		case 0x30:
+		case 0x34:
+			prglo = (outb & ~14) | (prg << 1 & 14);
+			prghi = (outb & ~14) | (prg << 1 & 14) | 1;
+			break;
+		/* bottom fixed modes */
+		case 0x08:
+			prglo = outb;
+			prghi = outb | (prg & 1);
+			break;
+		case 0x18:
+			prglo = outb;
+			prghi = (outb & ~2) | (prg & 3);
+			break;
+		case 0x28:
+			prglo = outb;
+			prghi = (outb & ~6) | (prg & 7);
+			break;
+		case 0x38:
+			prglo = outb;
+			prghi = (outb & ~14) | (prg & 15);
+			break;
+		/* top fixed modes */
+		case 0x0c:
+			prglo = outb | (prg & 1);
+			prghi = outb | 1;
+			break;
+		case 0x1c:
+			prglo = (outb & ~2) | (prg & 3);
+			prghi = outb | 1;
+			break;
+		case 0x2c:
+			prglo = (outb & ~6) | (prg & 7);
+			prghi = outb | 1;
+			break;
+		case 0x3c:
+			prglo = (outb & ~14) | (prg & 15);
+			prghi = outb | 1;
+			break;
 	}
 
 	prglo &= prg_mask_16k;
@@ -135,25 +141,25 @@ static DECLFW(WriteEXP) {
 
 static DECLFW(WritePRG) {
 	switch (reg) {
-	case 0x00:
-		chr = V & 3;
-		Mirror(V);
-		Sync();
-		break;
-	case 0x01:
-		prg = V & 15;
-		Mirror(V);
-		Sync();
-		break;
-	case 0x80:
-		mode = V & 63;
-		SyncMirror();
-		Sync();
-		break;
-	case 0x81:
-		outer = V & 63;
-		Sync();
-		break;
+		case 0x00:
+			chr = V & 3;
+			Mirror(V);
+			Sync();
+			break;
+		case 0x01:
+			prg = V & 15;
+			Mirror(V);
+			Sync();
+			break;
+		case 0x80:
+			mode = V & 63;
+			SyncMirror();
+			Sync();
+			break;
+		case 0x81:
+			outer = V & 63;
+			Sync();
+			break;
 	}
 }
 
@@ -162,11 +168,11 @@ static void M28Power(void) {
 	prg = 15;
 	Sync();
 	prg_mask_16k = PRGsize[0] - 1;
-	SetWriteHandler(0x5000,0x5FFF,WriteEXP);
-	SetWriteHandler(0x8000,0xFFFF,WritePRG);
-	SetReadHandler(0x8000,0xFFFF,CartBR);
-	SetReadHandler(0x6000,0x7FFF,CartBR);
-	SetWriteHandler(0x6000,0x7FFF,CartBW);
+	SetWriteHandler(0x5000, 0x5FFF, WriteEXP);
+	SetWriteHandler(0x8000, 0xFFFF, WritePRG);
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
+	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 }
 
 static void M28Reset(void) {
@@ -179,9 +185,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper28_Init(CartInfo* info) {
-	info->Power=M28Power;
-	info->Reset=M28Reset;
-	GameStateRestore=StateRestore;
+void Mapper28_Init(CartInfo *info) {
+	info->Power = M28Power;
+	info->Reset = M28Reset;
+	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

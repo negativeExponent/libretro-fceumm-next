@@ -46,7 +46,7 @@ static SFORMAT StateRegs[] =
 };
 
 static void Sync(void) {
-/*	FCEU_printf("P0:%02x P1:%02x outerbank:%02x\n", pregs[0], pregs[1], outerbank);*/
+	/*	FCEU_printf("P0:%02x P1:%02x outerbank:%02x\n", pregs[0], pregs[1], outerbank);*/
 	setprg8(0x8000, pregs[0] | (outerbank & 6) << 3);
 	setprg8(0xa000, pregs[1] | (outerbank & 6) << 3);
 	setprg8(0xc000,      0xE | (outerbank & 6) << 3);
@@ -62,22 +62,37 @@ static void Sync(void) {
 
 static DECLFW(M91Write0) {
 	switch (A & 7) {
-	case 0:
-	case 1:
-	case 2:
-	case 3: cregs[A & 3] = V; Sync(); break;
-	case 4:
-	case 5: mirr = V & 1; Sync(); break;
-	default: /*FCEU_printf("A:%04x V:%02x\n", A, V);*/ break;
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+			cregs[A & 3] = V;
+			Sync();
+			break;
+		case 4:
+		case 5:
+			mirr = V & 1;
+			Sync();
+			break;
+		default: /*FCEU_printf("A:%04x V:%02x\n", A, V);*/ break;
 	}
 }
 
 static DECLFW(M91Write1) {
 	switch (A & 3) {
-	case 0:
-	case 1: pregs[A & 1] = V; Sync(); break;
-	case 2: IRQa = IRQCount = 0; X6502_IRQEnd(FCEU_IQEXT); break;
-	case 3: IRQa = 1; X6502_IRQEnd(FCEU_IQEXT); break;
+		case 0:
+		case 1:
+			pregs[A & 1] = V;
+			Sync();
+			break;
+		case 2:
+			IRQa = IRQCount = 0;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
+		case 3:
+			IRQa = 1;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
 	}
 }
 
@@ -110,7 +125,8 @@ static void StateRestore(int version) {
 void Mapper91_Init(CartInfo *info) {
 	submapper = 0;
 	/* Super Fighter III */
-	if (info->submapper == 1) submapper = info->submapper;
+	if (info->submapper == 1)
+		submapper = info->submapper;
 	info->Power = M91Power;
 	GameHBIRQHook = M91IRQHook;
 	GameStateRestore = StateRestore;

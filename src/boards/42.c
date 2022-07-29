@@ -47,17 +47,31 @@ static void Sync(void) {
 
 static DECLFW(M42Write) {
 	switch (A & 0xE003) {
-	case 0x8000: creg = V; Sync(); break;
-	case 0xE000: preg = V & 0x0F; Sync(); break;
-	case 0xE001: mirr = ((V >> 3) & 1) ^ 1; Sync(); break;
-	case 0xE002: IRQa = V & 2; if (!IRQa) IRQCount = 0; X6502_IRQEnd(FCEU_IQEXT); break;
+		case 0x8000:
+			creg = V;
+			Sync();
+			break;
+		case 0xE000:
+			preg = V & 0x0F;
+			Sync();
+			break;
+		case 0xE001:
+			mirr = ((V >> 3) & 1) ^ 1;
+			Sync();
+			break;
+		case 0xE002:
+			IRQa = V & 2;
+			if (!IRQa)
+				IRQCount = 0;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
 	}
 }
 
 static void M42Power(void) {
 	FDSSoundPower();
 	preg = 0;
-	mirr = 1;	/* Ai Senshi Nicol actually has fixed mirroring, but mapper forcing it's default value now */
+	mirr = 1; /* Ai Senshi Nicol actually has fixed mirroring, but mapper forcing it's default value now */
 	Sync();
 	SetReadHandler(0x6000, 0xffff, CartBR);
 	SetWriteHandler(0x6000, 0xffff, M42Write);
@@ -66,7 +80,8 @@ static void M42Power(void) {
 static void FP_FASTAPASS(1) M42IRQHook(int a) {
 	if (IRQa) {
 		IRQCount += a;
-		if (IRQCount >= 32768) IRQCount -= 32768;
+		if (IRQCount >= 32768)
+			IRQCount -= 32768;
 		if (IRQCount >= 24576)
 			X6502_IRQBegin(FCEU_IQEXT);
 		else

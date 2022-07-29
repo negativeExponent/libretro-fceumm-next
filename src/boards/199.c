@@ -44,12 +44,20 @@ static void M199CW(uint32 A, uint8 V) {
 }
 
 static void M199MW(uint8 V) {
-/*	FCEU_printf("%02x\n",V); */
+	/*	FCEU_printf("%02x\n",V); */
 	switch (V & 3) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+		case 0:
+			setmirror(MI_V);
+			break;
+		case 1:
+			setmirror(MI_H);
+			break;
+		case 2:
+			setmirror(MI_0);
+			break;
+		case 3:
+			setmirror(MI_1);
+			break;
 	}
 }
 
@@ -58,8 +66,7 @@ static DECLFW(M199Write) {
 		EXPREGS[MMC3_cmd & 3] = V;
 		FixMMC3PRG(MMC3_cmd);
 		FixMMC3CHR(MMC3_cmd);
-	} else
-	if (A < 0xC000)
+	} else if (A < 0xC000)
 		MMC3_CMDWrite(A, V);
 	else
 		MMC3_IRQWrite(A, V);
@@ -90,7 +97,7 @@ void Mapper199_Init(CartInfo *info) {
 	info->Close = M199Close;
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 

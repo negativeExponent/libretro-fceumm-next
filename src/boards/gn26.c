@@ -27,9 +27,9 @@
 #include "mmc3.h"
 
 static void BMCGN26CW(uint32 A, uint8 V) {
-	int chrAND = EXPREGS[0]&0x04? 0xFF: 0x7F;
-	int chrOR  = EXPREGS[0] <<7;
-	setchr1(A, V &chrAND | chrOR &~chrAND);
+	int chrAND = EXPREGS[0] & 0x04 ? 0xFF : 0x7F;
+	int chrOR = EXPREGS[0] << 7;
+	setchr1(A, V & chrAND | chrOR & ~chrAND);
 }
 
 static void BMCGN26PW(uint32 A, uint8 V) {
@@ -41,7 +41,7 @@ static void BMCGN26PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(BMCGN26Write) {
-	if (A001B &0x80 && ~A001B &0x40) {
+	if (A001B & 0x80 && ~A001B & 0x40) {
 		EXPREGS[0] = A;
 		FixMMC3PRG(MMC3_cmd);
 		FixMMC3CHR(MMC3_cmd);

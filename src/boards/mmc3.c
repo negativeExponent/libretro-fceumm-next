@@ -33,7 +33,7 @@ static uint32 WRAMSIZE;
 static uint8 *CHRRAM;
 static uint32 CHRRAMSIZE;
 uint8 DRegBuf[8];
-uint8 EXPREGS[8];	/* For bootleg games, mostly. */
+uint8 EXPREGS[8]; /* For bootleg games, mostly. */
 uint8 A000B, A001B;
 uint8 mmc3opts = 0;
 
@@ -95,7 +95,8 @@ void FixMMC3CHR(int V) {
 	cwrap(cbase ^ 0x1800, DRegBuf[4]);
 	cwrap(cbase ^ 0x1c00, DRegBuf[5]);
 
-	if (mwrap) mwrap(A000B);
+	if (mwrap)
+		mwrap(A000B);
 }
 
 void MMC3RegReset(void) {
@@ -115,68 +116,77 @@ void MMC3RegReset(void) {
 }
 
 DECLFW(MMC3_CMDWrite) {
-/*	FCEU_printf("bs %04x %02x\n",A,V); */
+	/*	FCEU_printf("bs %04x %02x\n",A,V); */
 	switch (A & 0xE001) {
-	case 0x8000:
-		if ((V & 0x40) != (MMC3_cmd & 0x40))
-			FixMMC3PRG(V);
-		if ((V & 0x80) != (MMC3_cmd & 0x80))
-			FixMMC3CHR(V);
-		MMC3_cmd = V;
-		break;
-	case 0x8001:
-	{
-		int cbase = (MMC3_cmd & 0x80) << 5;
-		DRegBuf[MMC3_cmd & 0x7] = V;
-		switch (MMC3_cmd & 0x07) {
-		case 0:
-			cwrap((cbase ^ 0x000), V & (~1));
-			cwrap((cbase ^ 0x400), V | 1);
+		case 0x8000:
+			if ((V & 0x40) != (MMC3_cmd & 0x40))
+				FixMMC3PRG(V);
+			if ((V & 0x80) != (MMC3_cmd & 0x80))
+				FixMMC3CHR(V);
+			MMC3_cmd = V;
 			break;
-		case 1:
-			cwrap((cbase ^ 0x800), V & (~1));
-			cwrap((cbase ^ 0xC00), V | 1);
-			break;
-		case 2:
-			cwrap(cbase ^ 0x1000, V);
-			break;
-		case 3:
-			cwrap(cbase ^ 0x1400, V);
-			break;
-		case 4:
-			cwrap(cbase ^ 0x1800, V);
-			break;
-		case 5:
-			cwrap(cbase ^ 0x1C00, V);
-			break;
-		case 6:
-			if (MMC3_cmd & 0x40)
-				pwrap(0xC000, V);
-			else
-				pwrap(0x8000, V);
-			break;
-		case 7:
-			pwrap(0xA000, V);
+		case 0x8001: {
+			int cbase = (MMC3_cmd & 0x80) << 5;
+			DRegBuf[MMC3_cmd & 0x7] = V;
+			switch (MMC3_cmd & 0x07) {
+				case 0:
+					cwrap((cbase ^ 0x000), V & (~1));
+					cwrap((cbase ^ 0x400), V | 1);
+					break;
+				case 1:
+					cwrap((cbase ^ 0x800), V & (~1));
+					cwrap((cbase ^ 0xC00), V | 1);
+					break;
+				case 2:
+					cwrap(cbase ^ 0x1000, V);
+					break;
+				case 3:
+					cwrap(cbase ^ 0x1400, V);
+					break;
+				case 4:
+					cwrap(cbase ^ 0x1800, V);
+					break;
+				case 5:
+					cwrap(cbase ^ 0x1C00, V);
+					break;
+				case 6:
+					if (MMC3_cmd & 0x40)
+						pwrap(0xC000, V);
+					else
+						pwrap(0x8000, V);
+					break;
+				case 7:
+					pwrap(0xA000, V);
+					break;
+			}
 			break;
 		}
-		break;
-	}
-	case 0xA000:
-		if (mwrap) mwrap(V);
-		break;
-	case 0xA001:
-		A001B = V;
-		break;
+		case 0xA000:
+			if (mwrap)
+				mwrap(V);
+			break;
+		case 0xA001:
+			A001B = V;
+			break;
 	}
 }
 
 DECLFW(MMC3_IRQWrite) {
-/*	FCEU_printf("%04x:%04x\n",A,V); */
+	/*	FCEU_printf("%04x:%04x\n",A,V); */
 	switch (A & 0xE001) {
-	case 0xC000: IRQLatch = V; break;
-	case 0xC001: IRQReload = 1; break;
-	case 0xE000: X6502_IRQEnd(FCEU_IQEXT); IRQa = 0; break;
-	case 0xE001: IRQa = 1; break;
+		case 0xC000:
+			IRQLatch = V;
+			break;
+		case 0xC001:
+			IRQReload = 1;
+			break;
+		case 0xE000:
+			X6502_IRQEnd(FCEU_IQEXT);
+			IRQa = 0;
+			break;
+		case 0xE001:
+			IRQa = 1;
+			break;
 	}
 }
 
@@ -199,12 +209,14 @@ static void MMC3_hb(void) {
 }
 
 static void MMC3_hb_KickMasterHack(void) {
-	if (scanline == 238) ClockMMC3Counter();
+	if (scanline == 238)
+		ClockMMC3Counter();
 	ClockMMC3Counter();
 }
 
 static void MMC3_hb_PALStarWarsHack(void) {
-	if (scanline == 240) ClockMMC3Counter();
+	if (scanline == 240)
+		ClockMMC3Counter();
 	ClockMMC3Counter();
 }
 
@@ -214,14 +226,14 @@ void GenMMC3Restore(int version) {
 }
 
 static void GENCWRAP(uint32 A, uint8 V) {
-	setchr1(A, V);			/* Business Wars NEEDS THIS for 8K CHR-RAM */
+	setchr1(A, V); /* Business Wars NEEDS THIS for 8K CHR-RAM */
 }
 
 static void GENPWRAP(uint32 A, uint8 V) {
-   /* [NJ102] Mo Dao Jie (C) has 1024Mb MMC3 BOARD, maybe something other will be broken
-    * also HengGe BBC-2x boards enables this mode as default board mode at boot up
-    */
-   setprg8(A, (V & 0x7F));
+	/* [NJ102] Mo Dao Jie (C) has 1024Mb MMC3 BOARD, maybe something other will be broken
+	 * also HengGe BBC-2x boards enables this mode as default board mode at boot up
+	 */
+	setprg8(A, (V & 0x7F));
 }
 
 static void GENMWRAP(uint8 V) {
@@ -238,11 +250,12 @@ static DECLFW(MBWRAMMMC6) {
 }
 
 static DECLFR(MAWRAMMMC6) {
-	return(WRAM[A & 0x3ff]);
+	return (WRAM[A & 0x3ff]);
 }
 
 void GenMMC3Power(void) {
-	if (UNIFchrrama) setchr8(0);
+	if (UNIFchrrama)
+		setchr8(0);
 
 	SetWriteHandler(0x8000, 0xBFFF, MMC3_CMDWrite);
 	SetWriteHandler(0xC000, 0xFFFF, MMC3_IRQWrite);
@@ -256,7 +269,7 @@ void GenMMC3Power(void) {
 			SetReadHandler(0x7000, 0x7FFF, MAWRAMMMC6);
 			SetWriteHandler(0x7000, 0x7FFF, MBWRAMMMC6);
 		} else {
-         FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+			FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 			SetWriteHandler(0x6000, 0x6000 + ((WRAMSIZE - 1) & 0x1fff), CartBW);
 			SetReadHandler(0x6000, 0x6000 + ((WRAMSIZE - 1) & 0x1fff), CartBR);
 			setprg8r(0x10, 0x6000, 0);
@@ -290,7 +303,7 @@ void GenMMC3_Init(CartInfo *info, int prg, int chr, int wram, int battery) {
 
 	if (wram) {
 		mmc3opts |= 1;
-		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}
@@ -307,11 +320,11 @@ void GenMMC3_Init(CartInfo *info, int prg, int chr, int wram, int battery) {
 	info->Reset = MMC3RegReset;
 	info->Close = GenMMC3Close;
 
-	if (info->CRC32 == 0x5104833e)		/* Kick Master */
+	if (info->CRC32 == 0x5104833e) /* Kick Master */
 		GameHBIRQHook = MMC3_hb_KickMasterHack;
 	else if (info->CRC32 == 0x5a6860f1 || info->CRC32 == 0xae280e20) /* Shougi Meikan '92/'93 */
 		GameHBIRQHook = MMC3_hb_KickMasterHack;
-	else if (info->CRC32 == 0xfcd772eb)	/* PAL Star Wars, similar problem as Kick Master. */
+	else if (info->CRC32 == 0xfcd772eb) /* PAL Star Wars, similar problem as Kick Master. */
 		GameHBIRQHook = MMC3_hb_PALStarWarsHack;
 	else
 		GameHBIRQHook = MMC3_hb;
@@ -325,7 +338,7 @@ void GenMMC3_Init(CartInfo *info, int prg, int chr, int wram, int battery) {
 
 /* ---------------------------- Mapper 4 -------------------------------- */
 
-static int hackm4 = 0;	/* For Karnov, maybe others.  BLAH.  Stupid iNES format.*/
+static int hackm4 = 0; /* For Karnov, maybe others.  BLAH.  Stupid iNES format.*/
 
 static void M4Power(void) {
 	GenMMC3Power();
@@ -337,7 +350,9 @@ void Mapper4_Init(CartInfo *info) {
 	int ws = 8;
 
 	if ((info->CRC32 == 0x93991433 || info->CRC32 == 0xaf65aa84)) {
-		FCEU_printf("Low-G-Man can not work normally in the iNES format.\nThis game has been recognized by its CRC32 value, and the appropriate changes will be made so it will run.\nIf you wish to hack this game, you should use the UNIF format for your hack.\n\n");
+		FCEU_printf("Low-G-Man can not work normally in the iNES format.\nThis game has been recognized by its CRC32 "
+		            "value, and the appropriate changes will be made so it will run.\nIf you wish to hack this game, "
+		            "you should use the UNIF format for your hack.\n\n");
 		ws = 0;
 	}
 	if (info->CRC32 == 0x97b6cb19)
@@ -435,15 +450,18 @@ void Mapper37_Init(CartInfo *info) {
 
 static void M44PW(uint32 A, uint8 V) {
 	uint32 NV = V;
-	if (EXPREGS[0] >= 6) NV &= 0x1F;
-	else NV &= 0x0F;
+	if (EXPREGS[0] >= 6)
+		NV &= 0x1F;
+	else
+		NV &= 0x0F;
 	NV |= EXPREGS[0] << 4;
 	setprg8(A, NV);
 }
 
 static void M44CW(uint32 A, uint8 V) {
 	uint32 NV = V;
-	if (EXPREGS[0] < 6) NV &= 0x7F;
+	if (EXPREGS[0] < 6)
+		NV &= 0x7F;
 	NV |= EXPREGS[0] << 7;
 	setchr1(A, NV);
 }
@@ -474,12 +492,12 @@ void Mapper44_Init(CartInfo *info) {
 /* ---------------------------- Mapper 45 ------------------------------- */
 
 static void M45CW(uint32 A, uint8 V) {
-	if (CHRsize[0] ==8192)
+	if (CHRsize[0] == 8192)
 		setchr1(A, V);
 	else {
-		int chrAND =0xFF >>(~EXPREGS[2] &0xF);
-		int chrOR  =EXPREGS[0] | EXPREGS[2] <<4 &0xF00;
-		setchr1(A, V &chrAND | chrOR &~chrAND);
+		int chrAND = 0xFF >> (~EXPREGS[2] & 0xF);
+		int chrOR = EXPREGS[0] | EXPREGS[2] << 4 & 0xF00;
+		setchr1(A, V & chrAND | chrOR & ~chrAND);
 	}
 }
 
@@ -488,16 +506,16 @@ static DECLFR(M45ReadOB) {
 }
 
 static void M45PW(uint32 A, uint8 V) {
-	int prgAND =~EXPREGS[3] &0x3F;
-	int prgOR  =EXPREGS[1] | EXPREGS[2] <<2 &0x300;
-	setprg8(A, V &prgAND | prgOR &~prgAND);
+	int prgAND = ~EXPREGS[3] & 0x3F;
+	int prgOR = EXPREGS[1] | EXPREGS[2] << 2 & 0x300;
+	setprg8(A, V & prgAND | prgOR & ~prgAND);
 
 	/* Some multicarts select between five different menus by connecting one of the higher address lines to PRG /CE.
 	   The menu code selects between menus by checking which of the higher address lines disables PRG-ROM when set. */
-	if (PRGsize[0] <0x200000 && EXPREGS[5] ==1 && EXPREGS[1] &0x80 ||
-	    PRGsize[0] <0x200000 && EXPREGS[5] ==2 && EXPREGS[2] &0x40 ||
-	    PRGsize[0] <0x100000 && EXPREGS[5] ==3 && EXPREGS[1] &0x40 ||
-	    PRGsize[0] <0x100000 && EXPREGS[5] ==4 && EXPREGS[2] &0x20)
+	if (PRGsize[0] < 0x200000 && EXPREGS[5] == 1 && EXPREGS[1] & 0x80 ||
+	    PRGsize[0] < 0x200000 && EXPREGS[5] == 2 && EXPREGS[2] & 0x40 ||
+	    PRGsize[0] < 0x100000 && EXPREGS[5] == 3 && EXPREGS[1] & 0x40 ||
+	    PRGsize[0] < 0x100000 && EXPREGS[5] == 4 && EXPREGS[2] & 0x20)
 		SetReadHandler(0x8000, 0xFFFF, M45ReadOB);
 	else
 		SetReadHandler(0x8000, 0xFFFF, CartBR);
@@ -572,7 +590,7 @@ static void M47Power(void) {
 	EXPREGS[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, M47Write);
-/*	SetReadHandler(0x6000,0x7FFF,0); */
+	/*	SetReadHandler(0x6000,0x7FFF,0); */
 }
 
 void Mapper47_Init(CartInfo *info) {
@@ -657,8 +675,9 @@ static void M52PW(uint32 A, uint8 V) {
 
 static void M52CW(uint32 A, uint8 V) {
 	uint32 mask = 0xFF ^ ((EXPREGS[0] & 0x40) << 1);
-/*	uint32 bank = (((EXPREGS[0]>>3)&4)|((EXPREGS[0]>>1)&2)|((EXPREGS[0]>>6)&(EXPREGS[0]>>4)&1))<<7; */
-	uint32 bank = (((EXPREGS[0] >> 4) & 2) | (EXPREGS[0] & 4) | ((EXPREGS[0] >> 6) & (EXPREGS[0] >> 4) & 1)) << 7;	/* actually 256K CHR banks index bits is inverted! */
+	/*	uint32 bank = (((EXPREGS[0]>>3)&4)|((EXPREGS[0]>>1)&2)|((EXPREGS[0]>>6)&(EXPREGS[0]>>4)&1))<<7; */
+	uint32 bank = (((EXPREGS[0] >> 4) & 2) | (EXPREGS[0] & 4) |
+		((EXPREGS[0] >> 6) & (EXPREGS[0] >> 4) & 1)) << 7; /* actually 256K CHR banks index bits is inverted! */
 	setchr1(A, bank | (V & mask));
 }
 
@@ -708,7 +727,7 @@ void Mapper76_Init(CartInfo *info) {
 /* ---------------------------- Mapper 74 ------------------------------- */
 
 static void M74CW(uint32 A, uint8 V) {
-	if ((V == 8) || (V == 9))	/* Di 4 Ci - Ji Qi Ren Dai Zhan (As).nes, Ji Jia Zhan Shi (As).nes */
+	if ((V == 8) || (V == 9)) /* Di 4 Ci - Ji Qi Ren Dai Zhan (As).nes, Ji Jia Zhan Shi (As).nes */
 		setchr1r(0x10, A, V);
 	else
 		setchr1r(0, A, V);
@@ -718,7 +737,7 @@ void Mapper74_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 8, info->battery);
 	cwrap = M74CW;
 	CHRRAMSIZE = 2048;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
@@ -747,25 +766,63 @@ static void M114CWRAP(uint32 A, uint8 V) {
 
 static DECLFW(M114Write) {
 	switch (A & 0xE001) {
-	case 0x8001: MMC3_CMDWrite(0xA000, V); break;
-	case 0xA000: MMC3_CMDWrite(0x8000, (V & 0xC0) | (m114_perm[V & 7])); cmdin = 1; break;
-	case 0xC000: if (!cmdin) break; MMC3_CMDWrite(0x8001, V); cmdin = 0; break;
-	case 0xA001: IRQLatch = V; break;
-	case 0xC001: IRQReload = 1; break;
-	case 0xE000: X6502_IRQEnd(FCEU_IQEXT); IRQa = 0; break;
-	case 0xE001: IRQa = 1; break;
+		case 0x8001:
+			MMC3_CMDWrite(0xA000, V);
+			break;
+		case 0xA000:
+			MMC3_CMDWrite(0x8000, (V & 0xC0) | (m114_perm[V & 7]));
+			cmdin = 1;
+			break;
+		case 0xC000:
+			if (!cmdin)
+				break;
+			MMC3_CMDWrite(0x8001, V);
+			cmdin = 0;
+			break;
+		case 0xA001:
+			IRQLatch = V;
+			break;
+		case 0xC001:
+			IRQReload = 1;
+			break;
+		case 0xE000:
+			X6502_IRQEnd(FCEU_IQEXT);
+			IRQa = 0;
+			break;
+		case 0xE001:
+			IRQa = 1;
+			break;
 	}
 }
 
 static DECLFW(BoogermanWrite) {
 	switch (A & 0xE001) {
-	case 0x8001: if (!cmdin) break; MMC3_CMDWrite(0x8001, V); cmdin = 0; break;
-	case 0xA000: MMC3_CMDWrite(0x8000, (V & 0xC0) | (boogerman_perm[V & 7])); cmdin = 1; break;
-	case 0xA001: IRQReload = 1; break;
-	case 0xC000: MMC3_CMDWrite(0xA000, V); break;
-	case 0xC001: IRQLatch = V; break;
-	case 0xE000: X6502_IRQEnd(FCEU_IQEXT); IRQa = 0; break;
-	case 0xE001: IRQa = 1; break;
+		case 0x8001:
+			if (!cmdin)
+				break;
+			MMC3_CMDWrite(0x8001, V);
+			cmdin = 0;
+			break;
+		case 0xA000:
+			MMC3_CMDWrite(0x8000, (V & 0xC0) | (boogerman_perm[V & 7]));
+			cmdin = 1;
+			break;
+		case 0xA001:
+			IRQReload = 1;
+			break;
+		case 0xC000:
+			MMC3_CMDWrite(0xA000, V);
+			break;
+		case 0xC001:
+			IRQLatch = V;
+			break;
+		case 0xE000:
+			X6502_IRQEnd(FCEU_IQEXT);
+			IRQa = 0;
+			break;
+		case 0xE001:
+			IRQa = 1;
+			break;
 	}
 }
 
@@ -796,7 +853,7 @@ static void M114Reset(void) {
 void Mapper114_Init(CartInfo *info) {
 	isRevB = 0;
 	/* Use NES 2.0 submapper to identify scrambling pattern, otherwise CRC32 for Boogerman and test rom */
-	type_Boogerman = info->iNES2? (info->submapper ==1): (info->CRC32 ==0x80eb1839 || info->CRC32 ==0x071e4ee8);
+	type_Boogerman = info->iNES2 ? (info->submapper == 1) : (info->CRC32 == 0x80eb1839 || info->CRC32 == 0x071e4ee8);
 
 	GenMMC3_Init(info, 256, 256, 0, 0);
 	pwrap = M114PWRAP;
@@ -812,7 +869,7 @@ void Mapper114_Init(CartInfo *info) {
 static void M115PW(uint32 A, uint8 V) {
 	if (EXPREGS[0] & 0x80) {
 		if (EXPREGS[0] & 0x20)
-			setprg32(0x8000, (EXPREGS[0] & 0x0F) >> 1);	/* real hardware tests, info 100% now lol */
+			setprg32(0x8000, (EXPREGS[0] & 0x0F) >> 1); /* real hardware tests, info 100% now lol */
 		else {
 			setprg16(0x8000, (EXPREGS[0] & 0x0F));
 			setprg16(0xC000, (EXPREGS[0] & 0x0F));
@@ -827,7 +884,7 @@ static void M115CW(uint32 A, uint8 V) {
 
 static DECLFW(M115Write) {
 	if (A == 0x5080)
-		EXPREGS[2] = V;	/* Extra prot hardware 2-in-1 mode */
+		EXPREGS[2] = V; /* Extra prot hardware 2-in-1 mode */
 	else if (A == 0x6000)
 		EXPREGS[0] = V;
 	else if (A == 0x6001)
@@ -882,9 +939,9 @@ void Mapper119_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 64, 0, 0);
 	cwrap = TQWRAP;
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
-   AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
+	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
 
 /* ---------------------------- Mapper 165 ------------------------------ */
@@ -938,7 +995,7 @@ void Mapper165_Init(CartInfo *info) {
 	PPU_hook = M165PPU;
 	info->Power = M165Power;
 	CHRRAMSIZE = 4096;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 	AddExState(EXPREGS, 4, 0, "EXPR");
@@ -954,7 +1011,7 @@ void Mapper191_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 8, info->battery);
 	cwrap = M191CW;
 	CHRRAMSIZE = 2048;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
@@ -963,8 +1020,8 @@ void Mapper191_Init(CartInfo *info) {
 
 static void M192CW(uint32 A, uint8 V) {
 	/* Ying Lie Qun Xia Zhuan (Chinese),
-	* You Ling Xing Dong (China) (Unl) [this will be mistakenly headered as m074 sometimes]
-	*/
+	 * You Ling Xing Dong (China) (Unl) [this will be mistakenly headered as m074 sometimes]
+	 */
 	if ((V == 8) || (V == 9) || (V == 0xA) || (V == 0xB))
 		setchr1r(0x10, A, V);
 	else
@@ -975,7 +1032,7 @@ void Mapper192_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 8, info->battery);
 	cwrap = M192CW;
 	CHRRAMSIZE = 4096;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
@@ -983,7 +1040,7 @@ void Mapper192_Init(CartInfo *info) {
 /* ---------------------------- Mapper 194 ------------------------------- */
 
 static void M194CW(uint32 A, uint8 V) {
-	if (V <= 1)	/* Dai-2-Ji - Super Robot Taisen (As).nes */
+	if (V <= 1) /* Dai-2-Ji - Super Robot Taisen (As).nes */
 		setchr1r(0x10, A, V);
 	else
 		setchr1r(0, A, V);
@@ -993,14 +1050,14 @@ void Mapper194_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 8, info->battery);
 	cwrap = M194CW;
 	CHRRAMSIZE = 2048;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
 
 /* ---------------------------- Mapper 195 ------------------------------- */
 static void M195CW(uint32 A, uint8 V) {
-	if (V <= 3)	/* Crystalis (c).nes, Captain Tsubasa Vol 2 - Super Striker (C) */
+	if (V <= 3) /* Crystalis (c).nes, Captain Tsubasa Vol 2 - Super Striker (C) */
 		setchr1r(0x10, A, V);
 	else
 		setchr1r(0, A, V);
@@ -1018,7 +1075,7 @@ void Mapper195_Init(CartInfo *info) {
 	cwrap = M195CW;
 	info->Power = M195Power;
 	CHRRAMSIZE = 4096;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
@@ -1038,7 +1095,7 @@ static void M196PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(Mapper196Write) {
-	A =A &0xF000 | (!!(A &0xE) ^(A &1));
+	A = A & 0xF000 | (!!(A & 0xE) ^ (A & 1));
 	if (A >= 0xC000)
 		MMC3_IRQWrite(A, V);
 	else
@@ -1119,7 +1176,7 @@ void Mapper197_Init(CartInfo *info) {
 /* ---------------------------- Mapper 198 ------------------------------- */
 
 static void M198PW(uint32 A, uint8 V) {
-	if (V >= 0x50)	/* Tenchi o Kurau II - Shokatsu Koumei Den (J) (C).nes */
+	if (V >= 0x50) /* Tenchi o Kurau II - Shokatsu Koumei Den (J) (C).nes */
 		setprg8(A, V & 0x4F);
 	else
 		setprg8(A, V);
@@ -1173,7 +1230,7 @@ static void M205Power(void) {
 	EXPREGS[0] = EXPREGS[1] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x6fff, M205Write0);
-	SetWriteHandler(0x7000, 0x7fff, M205Write1);	/* OK-411 boards, the same logic, but data latched, 2-in-1 frankenstein */
+	SetWriteHandler(0x7000, 0x7fff, M205Write1); /* OK-411 boards, the same logic, but data latched, 2-in-1 frankenstein */
 }
 
 void Mapper205_Init(CartInfo *info) {
@@ -1189,12 +1246,10 @@ void Mapper205_Init(CartInfo *info) {
 
 /* Mapper 361 and 366, previously assigned as Mapper 205 */
 static void GN45PW(uint32 A, uint8 V) {
-/* GN-30A - \ED\E0\F7\E0\EB\FC\ED\E0\FF \EC\E0\F1\EA\E0 \E4\EE\EB\E6\ED\E0 \E1\FB\F2\FC 1F + \E0\EF\EF\E0\F0\E0\F2\ED\FB\E9 \EF\E5\F0\E5\EA\EB\FE\F7\E0\F2\E5\EB\FC \ED\E0 \F8\E8\ED\E5 \E0\E4\F0\E5\F1\E0 */
 	setprg8(A, (V & 0x0f) | EXPREGS[0]);
 }
 
 static void GN45CW(uint32 A, uint8 V) {
-/* GN-30A - \ED\E0\F7\E0\EB\FC\ED\E0\FF \EC\E0\F1\EA\E0 \E4\EE\EB\E6\ED\E0 \E1\FB\F2\FC FF */
 	setchr1(A, (V & 0x7F) | (EXPREGS[0] << 3));
 }
 
@@ -1225,7 +1280,7 @@ static void GN45Reset(void) {
 static void GN45Power(void) {
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x6fff, GN45Write0);
-	SetWriteHandler(0x7000, 0x7fff, GN45Write1);	/* OK-411 boards, the same logic, but data latched, 2-in-1 frankenstein */
+	SetWriteHandler(0x7000, 0x7fff, GN45Write1); /* OK-411 boards, the same logic, but data latched, 2-in-1 frankenstein */
 }
 
 void GN45_Init(CartInfo *info) {
@@ -1240,7 +1295,7 @@ void GN45_Init(CartInfo *info) {
 /* ---------------------------- Mapper 245 ------------------------------ */
 
 static void M245CW(uint32 A, uint8 V) {
-	if (!UNIFchrrama)	/* Yong Zhe Dou E Long - Dragon Quest VI (As).nes NEEDS THIS for RAM cart */
+	if (!UNIFchrrama) /* Yong Zhe Dou E Long - Dragon Quest VI (As).nes NEEDS THIS for RAM cart */
 		setchr1(A, V & 7);
 	EXPREGS[0] = V;
 	FixMMC3PRG(MMC3_cmd);
@@ -1335,8 +1390,12 @@ static DECLFR(MR254WRAM) {
 
 static DECLFW(M254Write) {
 	switch (A) {
-	case 0x8000: EXPREGS[0] = 0xff; break;
-	case 0xA001: EXPREGS[1] = V; break;
+		case 0x8000:
+			EXPREGS[0] = 0xff;
+			break;
+		case 0xA001:
+			EXPREGS[1] = V;
+			break;
 	}
 	MMC3_CMDWrite(A, V);
 }
@@ -1403,9 +1462,9 @@ void TQROM_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 64, 0, 0);
 	cwrap = TQWRAP;
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
-   AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
+	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
 
 void HKROM_Init(CartInfo *info) {

@@ -41,15 +41,15 @@ static SFORMAT StateRegs[] = {
 
 static void Sync(void) {
 	switch (mode) {
-	case 1:
-		/* bnrom */
-		setprg32(0x8000, (preg[1] << 2) | (preg[0] & 3));
-		break;
-	default:
-		/* unrom */
-		setprg16(0x8000, (preg[1] << 3) | (preg[0] & 7));
-		setprg16(0xC000, (preg[1] << 3) | 7);
-		break;
+		case 1:
+			/* bnrom */
+			setprg32(0x8000, (preg[1] << 2) | (preg[0] & 3));
+			break;
+		default:
+			/* unrom */
+			setprg16(0x8000, (preg[1] << 3) | (preg[0] & 7));
+			setprg16(0xC000, (preg[1] << 3) | 7);
+			break;
 	}
 	setchr8(0);
 	setmirror(mirr ^ 1);
@@ -90,7 +90,7 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper382_Init(CartInfo* info) {
+void Mapper382_Init(CartInfo *info) {
 	info->Power = M382Power;
 	info->Reset = M382Reset;
 	GameStateRestore = StateRestore;

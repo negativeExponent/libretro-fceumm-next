@@ -42,27 +42,27 @@ static void M68NTfix(void) {
 	if ((!UNIFchrrama) && (mirr & 0x10)) {
 		PPUNTARAM = 0;
 		switch (mirr & 3) {
-		case 0:
-			vnapage[0] = vnapage[2] = CHRptr[0] + (((nt1 | 128) & CHRmask1[0]) << 10);
-			vnapage[1] = vnapage[3] = CHRptr[0] + (((nt2 | 128) & CHRmask1[0]) << 10);
-			break;
-		case 1:
-			vnapage[0] = vnapage[1] = CHRptr[0] + (((nt1 | 128) & CHRmask1[0]) << 10);
-			vnapage[2] = vnapage[3] = CHRptr[0] + (((nt2 | 128) & CHRmask1[0]) << 10);
-			break;
-		case 2:
-			vnapage[0] = vnapage[1] = vnapage[2] = vnapage[3] = CHRptr[0] + (((nt1 | 128) & CHRmask1[0]) << 10);
-			break;
-		case 3:
-			vnapage[0] = vnapage[1] = vnapage[2] = vnapage[3] = CHRptr[0] + (((nt2 | 128) & CHRmask1[0]) << 10);
-			break;
+			case 0:
+				vnapage[0] = vnapage[2] = CHRptr[0] + (((nt1 | 128) & CHRmask1[0]) << 10);
+				vnapage[1] = vnapage[3] = CHRptr[0] + (((nt2 | 128) & CHRmask1[0]) << 10);
+				break;
+			case 1:
+				vnapage[0] = vnapage[1] = CHRptr[0] + (((nt1 | 128) & CHRmask1[0]) << 10);
+				vnapage[2] = vnapage[3] = CHRptr[0] + (((nt2 | 128) & CHRmask1[0]) << 10);
+				break;
+			case 2:
+				vnapage[0] = vnapage[1] = vnapage[2] = vnapage[3] = CHRptr[0] + (((nt1 | 128) & CHRmask1[0]) << 10);
+				break;
+			case 3:
+				vnapage[0] = vnapage[1] = vnapage[2] = vnapage[3] = CHRptr[0] + (((nt2 | 128) & CHRmask1[0]) << 10);
+				break;
 		}
 	} else
 		switch (mirr & 3) {
-		case 0: setmirror(MI_V); break;
-		case 1: setmirror(MI_H); break;
-		case 2: setmirror(MI_0); break;
-		case 3: setmirror(MI_1); break;
+			case 0: setmirror(MI_V); break;
+			case 1: setmirror(MI_H); break;
+			case 2: setmirror(MI_0); break;
+			case 3: setmirror(MI_1); break;
 		}
 }
 
@@ -153,7 +153,7 @@ void Mapper68_Init(CartInfo *info) {
 	info->Close = M68Close;
 	GameStateRestore = StateRestore;
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	if (info->battery) {
 		info->SaveGame[0] = WRAM;

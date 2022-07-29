@@ -52,17 +52,35 @@ static DECLFW(M117Write) {
 	} else if ((A >= 0xA000) && (A <= 0xA007)) {
 		chrreg[A & 7] = V;
 		Sync();
-	} else switch (A) {
-		case 0xc001: IRQLatch = V; break;
-		case 0xc003: IRQCount = IRQLatch; IRQa |= 2; break;
-		case 0xe000: IRQa &= ~1; IRQa |= V & 1; X6502_IRQEnd(FCEU_IQEXT); break;
-		case 0xc002: X6502_IRQEnd(FCEU_IQEXT); break;
-		case 0xd000: mirror = V & 1;
+	} else {
+		switch (A) {
+			case 0xc001:
+				IRQLatch = V;
+				break;
+			case 0xc003:
+				IRQCount = IRQLatch;
+				IRQa |= 2;
+				break;
+			case 0xe000:
+				IRQa &= ~1;
+				IRQa |= V & 1;
+				X6502_IRQEnd(FCEU_IQEXT);
+				break;
+			case 0xc002:
+				X6502_IRQEnd(FCEU_IQEXT);
+				break;
+			case 0xd000:
+				mirror = V & 1;
+				break;
 		}
+	}
 }
 
 static void M117Power(void) {
-	prgreg[0] = ~3; prgreg[1] = ~2; prgreg[2] = ~1; prgreg[3] = ~0;
+	prgreg[0] = ~3;
+	prgreg[1] = ~2;
+	prgreg[2] = ~1;
+	prgreg[3] = ~0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M117Write);
@@ -88,4 +106,3 @@ void Mapper117_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
-

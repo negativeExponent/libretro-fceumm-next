@@ -36,26 +36,26 @@ static void Sync(void) {
 	uint32 preg[4];
 	uint32 bank = (latched & 0x3F) << 1;
 	switch (latchea & 0x03) {
-	case 0:
-		preg[0] = bank + 0;
-		preg[1] = bank + 1;
-		preg[2] = bank + 2;
-		preg[3] = bank + 3;
-		break;
-	case 2:
-		bank = bank | (latched >> 7);
-		preg[0] = bank;
-		preg[1] = bank;
-		preg[2] = bank;
-		preg[3] = bank;
-		break;
-	case 1:
-	case 3:
-		preg[0] = bank + 0;
-		preg[1] = bank + 1;
-		preg[2] = (((latchea & 0x02) == 0) ? (bank | 0xE) : bank) + 0;
-		preg[3] = (((latchea & 0x02) == 0) ? (bank | 0xE) : bank) + 1;
-		break;
+		case 0:
+			preg[0] = bank + 0;
+			preg[1] = bank + 1;
+			preg[2] = bank + 2;
+			preg[3] = bank + 3;
+			break;
+		case 2:
+			bank = bank | (latched >> 7);
+			preg[0] = bank;
+			preg[1] = bank;
+			preg[2] = bank;
+			preg[3] = bank;
+			break;
+		case 1:
+		case 3:
+			preg[0] = bank + 0;
+			preg[1] = bank + 1;
+			preg[2] = (((latchea & 0x02) == 0) ? (bank | 0xE) : bank) + 0;
+			preg[3] = (((latchea & 0x02) == 0) ? (bank | 0xE) : bank) + 1;
+			break;
 	}
 
 	setprg8(0x8000, preg[0]);
@@ -69,10 +69,11 @@ static void Sync(void) {
 static DECLFW(M15Write) {
 	latchea = A;
 	latched = V;
-	/* cah4e3 02.10.19 once again, there may be either two similar mapper 15 exist. the one for 110in1 or 168in1 carts with complex multi game features.
-	   and another implified version for subor/waixing chinese originals and hacks with no different modes, working only in mode 0 and which does not
-	   expect there is any CHR write protection. protecting CHR writes only for mode 3 fixes the problem, all roms may be run on the same source again. */
-	if((latchea & 3) == 3)
+	/* cah4e3 02.10.19 once again, there may be either two similar mapper 15 exist. the one for 110in1 or 168in1 carts
+	   with complex multi game features. and another implified version for subor/waixing chinese originals and hacks
+	   with no different modes, working only in mode 0 and which does not expect there is any CHR write protection.
+	   protecting CHR writes only for mode 3 fixes the problem, all roms may be run on the same source again. */
+	if ((latchea & 3) == 3)
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
 	else
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
@@ -92,7 +93,7 @@ static void M15Power(void) {
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	SetWriteHandler(0x8000, 0xFFFF, M15Write);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-    FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 	Sync();
 }
 
@@ -114,7 +115,7 @@ void Mapper15_Init(CartInfo *info) {
 	info->Close = M15Close;
 	GameStateRestore = StateRestore;
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	if (info->battery) {
 		info->SaveGame[0] = WRAM;
@@ -123,4 +124,3 @@ void Mapper15_Init(CartInfo *info) {
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	AddExState(&StateRegs, ~0, 0, 0);
 }
-

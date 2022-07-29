@@ -52,7 +52,7 @@ static void Sync(void) {
 }
 
 static DECLFW(UNLBJ56Write) {
-/*	FCEU_printf("Wr: A:%04x V:%02x\n", A, V); */
+	/*	FCEU_printf("Wr: A:%04x V:%02x\n", A, V); */
 	A &= 0xF00F;
 	if (A <= 0x8007) {
 		creg[A & 0x07] = V;
@@ -62,14 +62,14 @@ static DECLFW(UNLBJ56Write) {
 		Sync();
 	} else {
 		switch (A & 0x0F) {
-		case 0x0D:
-		case 0x0F:
-			/* One of these two acknowledges a pending IRQ, and the other
-			 * resets to IRQ counter to zero. Because they are always written
-			 * to one after the other, it's not clear which one does which. */
-			X6502_IRQEnd(FCEU_IQEXT);
-			IRQCount = 0;
-			break;
+			case 0x0D:
+			case 0x0F:
+				/* One of these two acknowledges a pending IRQ, and the other
+				 * resets to IRQ counter to zero. Because they are always written
+				 * to one after the other, it's not clear which one does which. */
+				X6502_IRQEnd(FCEU_IQEXT);
+				IRQCount = 0;
+				break;
 		}
 	}
 }
@@ -108,7 +108,7 @@ void UNLBJ56_Init(CartInfo *info) {
 	MapIRQHook = UNLBJ56IRQHook;
 	GameStateRestore = StateRestore;
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	if (info->battery) {
 		info->SaveGame[0] = WRAM;

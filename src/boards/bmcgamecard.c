@@ -40,8 +40,8 @@ static SFORMAT StateRegs[] =
 
 static void Sync(void) {
 	uint8 mirroring = m350 ? ((latche >> 7) & 1) : ((latche >> 5) & 1);
-	uint8 mode      = m350 ? ((latche >> 5) & 0x03) : ((latche >> 6) & 0x03);
-	uint8 base      = m350 ? ((latche & 0x40) ? (latche & 0x20) : 0) : 0;
+	uint8 mode = m350 ? ((latche >> 5) & 0x03) : ((latche >> 6) & 0x03);
+	uint8 base = m350 ? ((latche & 0x40) ? (latche & 0x20) : 0) : 0;
 
 	setchr8(0);
 	setprg8(0x6000, 1);

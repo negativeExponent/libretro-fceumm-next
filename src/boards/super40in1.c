@@ -42,17 +42,15 @@ static void Sync(void) {
 	if (preg & 8) {
 		setprg16(0x8000, prg);
 		setprg16(0xc000, prg);
-	}
-	else
+	} else
 		setprg32(0x8000, prg >> 1);
-	
+
 	setchr8((chr &~mask) | (latch &mask));          	/* This "inner CHR bank" substitutes the respective bit(s) of the creg register. */
-	
 	setmirror(((preg >> 4) & 1) ^ 1);
 }
 
 static DECLFR(BMCWSRead) {
-	if ((creg >> 6) & (dipSwitch &3))
+	if ((creg >> 6) & (dipSwitch & 3))
 		return X.DB;
 	return CartBR(A);
 }
@@ -62,18 +60,24 @@ static DECLFW(BMCWSWrite) {
 		return;
 
 	switch (A & 1) {
-		case 0: preg = V; Sync(); break;
-		case 1: creg = V; Sync(); break;
+		case 0:
+			preg = V;
+			Sync();
+			break;
+		case 1:
+			creg = V;
+			Sync();
+			break;
 	}
 }
 
 static DECLFW(LatchWrite) {
-	latch =V;
+	latch = V;
 	Sync();
 }
 
 static void MBMCWSPower(void) {
-	dipSwitch =0;
+	dipSwitch = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, BMCWSRead);
 	SetWriteHandler(0x6000, 0x7FFF, BMCWSWrite);
@@ -81,14 +85,14 @@ static void MBMCWSPower(void) {
 }
 
 static void BMCWSReset(void) {
-	dipSwitch++;		/* Soft-resetting cycles through solder pad or DIP switch settings */
+	dipSwitch++; /* Soft-resetting cycles through solder pad or DIP switch settings */
 	if (dipSwitch == 3)
-		dipSwitch = 0; 	/* Only 00b, 01b and 10b settings are valid */
-	
+		dipSwitch = 0; /* Only 00b, 01b and 10b settings are valid */
+
 	/* Always reset to menu */
-	preg =0;
-	creg =0;
-	latch =0;
+	preg = 0;
+	creg = 0;
+	latch = 0;
 	Sync();
 }
 

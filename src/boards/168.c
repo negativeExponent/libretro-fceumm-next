@@ -45,8 +45,7 @@ static DECLFW(M168Write) {
 	Sync();
 }
 
-static DECLFW(M168Dummy) {
-}
+static DECLFW(M168Dummy) { }
 
 static void M168Power(void) {
 	reg = 0;
@@ -75,7 +74,7 @@ void Mapper168_Init(CartInfo *info) {
 	AddExState(&StateRegs, ~0, 0, 0);
 
 	CHRRAMSIZE = 8192 * 8;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 }

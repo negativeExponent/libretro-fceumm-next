@@ -18,37 +18,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
- 
+
 /* S-009. UNROM plus outer bank register at $6000-$7FFF. */
- 
+
 #include "mapinc.h"
 
 static uint16 latch;
 
-static void Mapper434_Sync(void) {	
+static void Mapper434_Sync(void) {
 	setprg16(0x8000, latch);
-	setprg16(0xC000, latch |7);
+	setprg16(0xC000, latch | 7);
 	setchr8(0);
-	setmirror(latch >>8 &1);
+	setmirror(latch >> 8 & 1);
 }
 
 static DECLFW(Mapper434_WriteOuterBank) {
-	latch =latch &7 | V <<3;
+	latch = latch & 7 | V << 3;
 	Mapper434_Sync();
 }
 
 static DECLFW(Mapper434_WriteInnerBank) {
-	latch =latch &~7 | V &CartBR(A) &7;
+	latch = latch & ~7 | V & CartBR(A) & 7;
 	Mapper434_Sync();
 }
 
 static void Mapper434_Reset(void) {
-	latch =0;
+	latch = 0;
 	Mapper434_Sync();
 }
 
 static void Mapper434_Power(void) {
-	latch =0;
+	latch = 0;
 	Mapper434_Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, Mapper434_WriteOuterBank);

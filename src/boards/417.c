@@ -36,36 +36,56 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-    int i;
-    setprg8(0x8000, preg[0]);
-    setprg8(0xA000, preg[1]);
-    setprg8(0xC000, preg[2]);
-    setprg8(0xE000, ~0);
-    for (i = 0; i < 8; i++) setchr1(i << 10, creg[i]);
-    setmirrorw(nt[0] & 1, nt[1] & 1, nt[2] & 1, nt[3] & 1);
+	int i;
+	setprg8(0x8000, preg[0]);
+	setprg8(0xA000, preg[1]);
+	setprg8(0xC000, preg[2]);
+	setprg8(0xE000, ~0);
+	for (i = 0; i < 8; i++)
+		setchr1(i << 10, creg[i]);
+	setmirrorw(nt[0] & 1, nt[1] & 1, nt[2] & 1, nt[3] & 1);
 }
 
 static DECLFW(M417Write) {
-    switch ((A >> 4) & 7) {
-    case 0: preg[A & 3] = V; Sync(); break;
-    case 1: creg[0 | (A & 3)] = V; Sync(); break;
-    case 2: creg[4 | (A & 3)] = V; Sync(); break;break;
-    case 3: IRQCount = 0; IRQa = 1; break;
-    case 4: IRQa = 0; X6502_IRQEnd(FCEU_IQEXT); break;
-    case 5: nt[A & 3] = V; Sync(); break;
-    }
+	switch ((A >> 4) & 7) {
+		case 0:
+			preg[A & 3] = V;
+			Sync();
+			break;
+		case 1:
+			creg[0 | (A & 3)] = V;
+			Sync();
+			break;
+		case 2:
+			creg[4 | (A & 3)] = V;
+			Sync();
+			break;
+			break;
+		case 3:
+			IRQCount = 0;
+			IRQa = 1;
+			break;
+		case 4:
+			IRQa = 0;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
+		case 5:
+			nt[A & 3] = V;
+			Sync();
+			break;
+	}
 }
 
 static void M417Power(void) {
 	Sync();
-    SetReadHandler(0x8000, 0xFFFF, CartBR);
-    SetWriteHandler(0x8000, 0xFFFF, M417Write);
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, M417Write);
 }
 
 static void M417IRQHook(int a) {
-    IRQCount += a;
-    if (IRQa && IRQCount > 1024)
-        X6502_IRQBegin(FCEU_IQEXT);
+	IRQCount += a;
+	if (IRQa && IRQCount > 1024)
+		X6502_IRQBegin(FCEU_IQEXT);
 }
 
 static void StateRestore(int version) {
@@ -74,7 +94,7 @@ static void StateRestore(int version) {
 
 void Mapper417_Init(CartInfo *info) {
 	info->Power = M417Power;
-    MapIRQHook = M417IRQHook;
+	MapIRQHook = M417IRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

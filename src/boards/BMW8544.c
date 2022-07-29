@@ -27,35 +27,35 @@
 #include "mmc3.h"
 
 static void UNLBMW8544PW(uint32 A, uint8 V) {
-	if(A == 0x8000)
-		setprg8(A,EXPREGS[0] & 0x1F);	/* the real hardware has this bank overrided with it's own register,
-										 * but MMC3 prg swap still works and you can actually change bank C000 at the same time if use 0x46 cmd
-										 */
+	if (A == 0x8000)
+		setprg8(A, EXPREGS[0] & 0x1F); /* the real hardware has this bank overrided with it's own register,
+		                                * but MMC3 prg swap still works and you can actually change bank C000 at the
+		                                * same time if use 0x46 cmd
+		                                */
 	else
-		setprg8(A,V);
+		setprg8(A, V);
 }
 
 static void UNLBMW8544CW(uint32 A, uint8 V) {
-	if(A == 0x0000)
-		setchr2(0x0000,(V >> 1) ^ EXPREGS[1]);
+	if (A == 0x0000)
+		setchr2(0x0000, (V >> 1) ^ EXPREGS[1]);
 	else if (A == 0x0800)
-		setchr2(0x0800,(V >> 1) | ((EXPREGS[2] & 0x40) << 1));
+		setchr2(0x0800, (V >> 1) | ((EXPREGS[2] & 0x40) << 1));
 	else if (A == 0x1000)
 		setchr4(0x1000, EXPREGS[2] & 0x3F);
-
 }
 
 static DECLFW(UNLBMW8544ProtWrite) {
-	if(!(A & 1)) {
+	if (!(A & 1)) {
 		EXPREGS[0] = V;
 		FixMMC3PRG(MMC3_cmd);
 	}
 }
 
 static DECLFR(UNLBMW8544ProtRead) {
-	if(!fceuindbg) {
-		if(!(A & 1)) {
-			if((EXPREGS[0] & 0xE0) == 0xC0) {
+	if (!fceuindbg) {
+		if (!(A & 1)) {
+			if ((EXPREGS[0] & 0xE0) == 0xC0) {
 				EXPREGS[1] = ARead[0x6a](0x6a);	/* program can latch some data from the BUS, but I can't say how exactly, */
 			} else {							/* without more equipment and skills ;) probably here we can try to get any write */
 				EXPREGS[2] = ARead[0xff](0xff);	/* before the read operation */

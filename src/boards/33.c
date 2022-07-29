@@ -52,24 +52,62 @@ static void Sync(void) {
 static DECLFW(M33Write) {
 	A &= 0xF003;
 	switch (A) {
-	case 0x8000: regs[0] = V & 0x3F; if (!is48) mirr = ((V >> 6) & 1) ^ 1; Sync(); break;
-	case 0x8001: regs[1] = V & 0x3F; Sync(); break;
-	case 0x8002: regs[2] = V; Sync(); break;
-	case 0x8003: regs[3] = V; Sync(); break;
-	case 0xA000: regs[4] = V; Sync(); break;
-	case 0xA001: regs[5] = V; Sync(); break;
-	case 0xA002: regs[6] = V; Sync(); break;
-	case 0xA003: regs[7] = V; Sync(); break;
+		case 0x8000:
+			regs[0] = V & 0x3F;
+			if (!is48)
+				mirr = ((V >> 6) & 1) ^ 1;
+			Sync();
+			break;
+		case 0x8001:
+			regs[1] = V & 0x3F;
+			Sync();
+			break;
+		case 0x8002:
+			regs[2] = V;
+			Sync();
+			break;
+		case 0x8003:
+			regs[3] = V;
+			Sync();
+			break;
+		case 0xA000:
+			regs[4] = V;
+			Sync();
+			break;
+		case 0xA001:
+			regs[5] = V;
+			Sync();
+			break;
+		case 0xA002:
+			regs[6] = V;
+			Sync();
+			break;
+		case 0xA003:
+			regs[7] = V;
+			Sync();
+			break;
 	}
 }
 
 static DECLFW(M48Write) {
 	switch (A & 0xF003) {
-	case 0xC000: IRQLatch = V; break;
-	case 0xC001: IRQCount = IRQLatch; break;
-	case 0xC003: IRQa = 0; X6502_IRQEnd(FCEU_IQEXT); break;
-	case 0xC002: IRQa = 1; break;
-	case 0xE000: mirr = ((V >> 6) & 1) ^ 1; Sync(); break;
+		case 0xC000:
+			IRQLatch = V;
+			break;
+		case 0xC001:
+			IRQCount = IRQLatch;
+			break;
+		case 0xC003:
+			IRQa = 0;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
+		case 0xC002:
+			IRQa = 1;
+			break;
+		case 0xE000:
+			mirr = ((V >> 6) & 1) ^ 1;
+			Sync();
+			break;
 	}
 }
 
@@ -114,4 +152,3 @@ void Mapper48_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
-

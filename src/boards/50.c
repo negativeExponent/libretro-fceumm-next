@@ -45,8 +45,16 @@ static void Sync(void) {
 
 static DECLFW(M50Write) {
 	switch (A & 0xD160) {
-	case 0x4120: IRQa = V & 1; if (!IRQa) IRQCount = 0; X6502_IRQEnd(FCEU_IQEXT); break;
-	case 0x4020: reg = ((V & 1) << 2) | ((V & 2) >> 1) | ((V & 4) >> 1) | (V & 8); Sync(); break;
+		case 0x4120:
+			IRQa = V & 1;
+			if (!IRQa)
+				IRQCount = 0;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
+		case 0x4020:
+			reg = ((V & 1) << 2) | ((V & 2) >> 1) | ((V & 4) >> 1) | (V & 8);
+			Sync();
+			break;
 	}
 }
 
@@ -57,8 +65,7 @@ static void M50Power(void) {
 	SetWriteHandler(0x4020, 0x5fff, M50Write);
 }
 
-static void M50Reset(void) {
-}
+static void M50Reset(void) { }
 
 static void FP_FASTAPASS(1) M50IRQHook(int a) {
 	if (IRQa) {

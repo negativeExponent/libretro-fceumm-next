@@ -43,41 +43,41 @@ static SFORMAT StateRegs[] = {
 
 static void SyncPRG(uint32 A, uint8 V) {
 	switch (mode) {
-	case 0x00:
-	case 0x01: /* NROM */
-		setprg32(0x8000, mode & 0x01);
-		break;
-	case 0x13: /* Mapper 40 */
-		setprg8r(0, 0x6000, 0x0E);
-		setprg8(0x8000, 0x0C);
-		setprg8(0xa000, 0x0D);
-		setprg8(0xc000, smb2_reg | 0x08);
-		setprg8(0xe000, 0x0F);
-		break;
-	case 0x37: /* MMC3 128 PRG */
-		setprg8r(0x10, 0x6000, 0);
-		setprg8(A, (V & 0x0F) | 0x10);
-		break;
-	case 0xFF: /* MMC3 256 PRG */
-		setprg8r(0x10, 0x6000, 0);
-		setprg8(A, (V & 0x1F) | 0x20);
-		break;
+		case 0x00:
+		case 0x01: /* NROM */
+			setprg32(0x8000, mode & 0x01);
+			break;
+		case 0x13: /* Mapper 40 */
+			setprg8r(0, 0x6000, 0x0E);
+			setprg8(0x8000, 0x0C);
+			setprg8(0xa000, 0x0D);
+			setprg8(0xc000, smb2_reg | 0x08);
+			setprg8(0xe000, 0x0F);
+			break;
+		case 0x37: /* MMC3 128 PRG */
+			setprg8r(0x10, 0x6000, 0);
+			setprg8(A, (V & 0x0F) | 0x10);
+			break;
+		case 0xFF: /* MMC3 256 PRG */
+			setprg8r(0x10, 0x6000, 0);
+			setprg8(A, (V & 0x1F) | 0x20);
+			break;
 	}
 }
 
 static void SyncCHR(uint32 A, uint8 V) {
 	switch (mode) {
-	case 0x00:
-	case 0x01: /* NROM */
-	case 0x13: /* Mapper 40 */
-		setchr8(mode & 0x03);
-		break;
-	case 0x37: /* MMC3 128 CHR */
-		setchr1(A, (V & 0x7F) | 0x80);
-		break;
-	case 0xFF: /* MMC3 256 CHR */
-		setchr1(A, (V & 0xFF) | 0x100);
-		break;
+		case 0x00:
+		case 0x01: /* NROM */
+		case 0x13: /* Mapper 40 */
+			setchr8(mode & 0x03);
+			break;
+		case 0x37: /* MMC3 128 CHR */
+			setchr1(A, (V & 0x7F) | 0x80);
+			break;
+		case 0xFF: /* MMC3 256 CHR */
+			setchr1(A, (V & 0xFF) | 0x100);
+			break;
 	}
 }
 
@@ -92,43 +92,43 @@ static DECLFW(M369WriteLo) {
 static DECLFW(M369Write) {
 	if (mode == 0x13) {
 		switch (A & 0xE000) {
-		case 0x8000:
-			smb2j_enabled = 0;
-			smb2j_count = 0;
-			X6502_IRQEnd(FCEU_IQEXT);
-			break;
-		case 0xA000:
-			smb2j_enabled = 1;
-			break;
-		case 0xE000:
-			smb2_reg = V & 7;
-			FixMMC3PRG(MMC3_cmd);
-			FixMMC3CHR(MMC3_cmd);
-			break;
+			case 0x8000:
+				smb2j_enabled = 0;
+				smb2j_count = 0;
+				X6502_IRQEnd(FCEU_IQEXT);
+				break;
+			case 0xA000:
+				smb2j_enabled = 1;
+				break;
+			case 0xE000:
+				smb2_reg = V & 7;
+				FixMMC3PRG(MMC3_cmd);
+				FixMMC3CHR(MMC3_cmd);
+				break;
 		}
 	} else {
 		switch (A & 0xE001) {
-		case 0x8000:
-		case 0x8001:
-		case 0xA000:
-		case 0xA001:
-			MMC3_CMDWrite(A, V);
-			FixMMC3PRG(MMC3_cmd);
-			FixMMC3CHR(MMC3_cmd);
-			break;
-		case 0xC000:
-			mmc3_latch = V;
-			break;
-		case 0xC001:
-			mmc3_reload = 1;
-			break;
-		case 0xE000:
-			X6502_IRQEnd(FCEU_IQEXT);
-			mmc3_enabled = 0;
-			break;
-		case 0xE001:
-			mmc3_enabled = 1;
-			break;
+			case 0x8000:
+			case 0x8001:
+			case 0xA000:
+			case 0xA001:
+				MMC3_CMDWrite(A, V);
+				FixMMC3PRG(MMC3_cmd);
+				FixMMC3CHR(MMC3_cmd);
+				break;
+			case 0xC000:
+				mmc3_latch = V;
+				break;
+			case 0xC001:
+				mmc3_reload = 1;
+				break;
+			case 0xE000:
+				X6502_IRQEnd(FCEU_IQEXT);
+				mmc3_enabled = 0;
+				break;
+			case 0xE001:
+				mmc3_enabled = 1;
+				break;
 		}
 	}
 }
@@ -152,7 +152,7 @@ static void MMC3IRQHook(void) {
 
 	if (mode == 0x13)
 		return;
-	
+
 	if (!count || mmc3_reload) {
 		mmc3_count = mmc3_latch;
 		mmc3_reload = 0;

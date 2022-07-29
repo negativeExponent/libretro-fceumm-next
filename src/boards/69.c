@@ -53,10 +53,10 @@ static void Sync(void) {
 	for (i = 0; i < 8; i++)
 		setchr1(i << 10, creg[i]);
 	switch (mirr & 3) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+		case 0: setmirror(MI_V); break;
+		case 1: setmirror(MI_H); break;
+		case 2: setmirror(MI_0); break;
+		case 3: setmirror(MI_1); break;
 	}
 }
 
@@ -78,22 +78,70 @@ static DECLFW(M69Write0) {
 
 static DECLFW(M69Write1) {
 	switch (cmdreg) {
-	case 0x0: creg[0] = V; Sync(); break;
-	case 0x1: creg[1] = V; Sync(); break;
-	case 0x2: creg[2] = V; Sync(); break;
-	case 0x3: creg[3] = V; Sync(); break;
-	case 0x4: creg[4] = V; Sync(); break;
-	case 0x5: creg[5] = V; Sync(); break;
-	case 0x6: creg[6] = V; Sync(); break;
-	case 0x7: creg[7] = V; Sync(); break;
-	case 0x8: preg[3] = V; Sync(); break;
-	case 0x9: preg[0] = V; Sync(); break;
-	case 0xA: preg[1] = V; Sync(); break;
-	case 0xB: preg[2] = V; Sync(); break;
-	case 0xC: mirr = V & 3; Sync();break;
-	case 0xD: IRQa = V; X6502_IRQEnd(FCEU_IQEXT); break;
-	case 0xE: IRQCount &= 0xFF00; IRQCount |= V; break;
-	case 0xF: IRQCount &= 0x00FF; IRQCount |= V << 8; break;
+		case 0x0:
+			creg[0] = V;
+			Sync();
+			break;
+		case 0x1:
+			creg[1] = V;
+			Sync();
+			break;
+		case 0x2:
+			creg[2] = V;
+			Sync();
+			break;
+		case 0x3:
+			creg[3] = V;
+			Sync();
+			break;
+		case 0x4:
+			creg[4] = V;
+			Sync();
+			break;
+		case 0x5:
+			creg[5] = V;
+			Sync();
+			break;
+		case 0x6:
+			creg[6] = V;
+			Sync();
+			break;
+		case 0x7:
+			creg[7] = V;
+			Sync();
+			break;
+		case 0x8:
+			preg[3] = V;
+			Sync();
+			break;
+		case 0x9:
+			preg[0] = V;
+			Sync();
+			break;
+		case 0xA:
+			preg[1] = V;
+			Sync();
+			break;
+		case 0xB:
+			preg[2] = V;
+			Sync();
+			break;
+		case 0xC:
+			mirr = V & 3;
+			Sync();
+			break;
+		case 0xD:
+			IRQa = V;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
+		case 0xE:
+			IRQCount &= 0xFF00;
+			IRQCount |= V;
+			break;
+		case 0xF:
+			IRQCount &= 0x00FF;
+			IRQCount |= V << 8;
+			break;
 	}
 }
 
@@ -138,19 +186,30 @@ static DECLFW(M69SWrite1) {
 	GameExpSound.Fill = AYSound;
 	GameExpSound.HiFill = AYSoundHQ;
 	switch (sndcmd) {
-	case 0:
-	case 1:
-	case 8: if (sfun[0]) sfun[0](); break;
-	case 2:
-	case 3:
-	case 9: if (sfun[1]) sfun[1](); break;
-	case 4:
-	case 5:
-	case 10: if (sfun[2]) sfun[2](); break;
-	case 7:
-		if (sfun[0]) sfun[0]();
-		if (sfun[1]) sfun[1]();
-		break;
+		case 0:
+		case 1:
+		case 8:
+			if (sfun[0])
+				sfun[0]();
+			break;
+		case 2:
+		case 3:
+		case 9:
+			if (sfun[1])
+				sfun[1]();
+			break;
+		case 4:
+		case 5:
+		case 10:
+			if (sfun[2])
+				sfun[2]();
+			break;
+		case 7:
+			if (sfun[0])
+				sfun[0]();
+			if (sfun[1])
+				sfun[1]();
+			break;
 	}
 	sreg[sndcmd] = V;
 }
@@ -165,7 +224,8 @@ static void DoAYSQ(int x) {
 
 	start = CAYBC[x];
 	end = (SOUNDTS << 16) / soundtsinc;
-	if (end <= start) return;
+	if (end <= start)
+		return;
 	CAYBC[x] = end;
 
 	if (amp && !(sreg[0x7] & (1 << x)))
@@ -294,7 +354,9 @@ static void M69IRQHook(int a) {
 	if (IRQa) {
 		IRQCount -= a;
 		if (IRQCount <= 0) {
-			X6502_IRQBegin(FCEU_IQEXT); IRQa = 0; IRQCount = 0xFFFF;
+			X6502_IRQBegin(FCEU_IQEXT);
+			IRQa = 0;
+			IRQCount = 0xFFFF;
 		}
 	}
 }
@@ -308,7 +370,7 @@ void Mapper69_Init(CartInfo *info) {
 	info->Close = M69Close;
 	MapIRQHook = M69IRQHook;
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

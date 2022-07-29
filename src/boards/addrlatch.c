@@ -61,7 +61,8 @@ static void StateRestore(int version) {
 	WSync();
 }
 
-static void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint16 linit, uint16 adr0, uint16 adr1, uint8 wram) {
+static void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint16 linit, uint16 adr0, uint16 adr1,
+                       uint8 wram) {
 	latcheinit = linit;
 	addrreg0 = adr0;
 	addrreg1 = adr1;
@@ -76,7 +77,7 @@ static void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint16
 	info->Close = LatchClose;
 	if (wram) {
 		WRAMSIZE = 8192;
-		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		if (info->battery) {
 			hasBattery = 1;
@@ -117,7 +118,7 @@ static DECLFW(BMCD1038Write) {
 static void BMCD1038Reset(void) {
 	dipswitch++;
 	dipswitch &= 3;
-	
+
 	/* Always reset to menu */
 	latche = 0;
 	BMCD1038Sync();
@@ -125,7 +126,7 @@ static void BMCD1038Reset(void) {
 
 static void BMCD1038Power(void) {
 	LatchPower();
-	
+
 	/* Trap latch writes to enforce the "Lock" bit */
 	SetWriteHandler(0x8000, 0xFFFF, BMCD1038Write);
 }
@@ -157,20 +158,20 @@ void Mapper58_Init(CartInfo *info) {
 /* One more forgotten mapper */
 /* Formerly, an incorrect implementation of BMC-T3H53 */
 /*static void M59Sync(void) {
-	setprg32(0x8000, (latche >> 4) & 7);
-	setchr8(latche & 0x7);
-	setmirror((latche >> 3) & 1);
+    setprg32(0x8000, (latche >> 4) & 7);
+    setchr8(latche & 0x7);
+    setmirror((latche >> 3) & 1);
 }
 
 static DECLFR(M59Read) {
-	if (latche & 0x100)
-		return 0;
-	else
-		return CartBR(A);
+    if (latche & 0x100)
+        return 0;
+    else
+        return CartBR(A);
 }
 
 void Mapper59_Init(CartInfo *info) {
-	Latch_Init(info, M59Sync, M59Read, 0x0000, 0x8000, 0xFFFF, 0);
+    Latch_Init(info, M59Sync, M59Read, 0x0000, 0x8000, 0xFFFF, 0);
 }*/
 
 /*------------------ Map 061 ---------------------------*/
@@ -213,8 +214,8 @@ static void M63Sync(void) {
 	setprg8(0x8000, (prg_bank | (mode ? 0 : prg16 | 0)));
 	setprg8(0xA000, (prg_bank | (mode ? 1 : prg16 | 1)));
 	setprg8(0xC000, (prg_bank | (mode ? 2 : prg16 | 0)));
-	setprg8(0xE000, ((latche & 0x800) ? ((latche & 0x7C) | ((latche & 6) ? 3 : 1)) :
-					(prg_bank | (mode ? 3 : (prg16 | 1)))));
+	setprg8(0xE000,
+	        ((latche & 0x800) ? ((latche & 0x7C) | ((latche & 6) ? 3 : 1)) : (prg_bank | (mode ? 3 : (prg16 | 1)))));
 	setchr8(0);
 	setmirror((latche & 1) ^ 1);
 }
@@ -235,13 +236,21 @@ static void M92Sync(void) {
 	setprg16(0x8000, 0);
 	if (latche >= 0x9000) {
 		switch (reg) {
-		case 0xD0: setprg16(0xc000, latche & 15); break;
-		case 0xE0: setchr8(latche & 15); break;
+			case 0xD0:
+				setprg16(0xc000, latche & 15);
+				break;
+			case 0xE0:
+				setchr8(latche & 15);
+				break;
 		}
 	} else {
 		switch (reg) {
-		case 0xB0: setprg16(0xc000, latche & 15); break;
-		case 0x70: setchr8(latche & 15); break;
+			case 0xB0:
+				setprg16(0xc000, latche & 15);
+				break;
+			case 0x70:
+				setchr8(latche & 15);
+				break;
 		}
 	}
 }
@@ -282,7 +291,8 @@ static void M201Sync(void) {
 
 void Mapper201_Init(CartInfo *info) {
 	submapper = 0;
-	if (info->submapper > 0) submapper = info->submapper;
+	if (info->submapper > 0)
+		submapper = info->submapper;
 	Latch_Init(info, M201Sync, NULL, 0xFFFF, 0x8000, 0xFFFF, 0);
 }
 
@@ -458,14 +468,11 @@ static void M242Sync(void) {
 	uint32 S = latche & 1;
 	uint32 p = (latche >> 2) & 0x1F;
 	uint32 L = (latche >> 9) & 1;
-	
+
 	if (M242TwoChips) {
-		if (latche &0x600)
-		{	/* First chip */
-			p &= 0x1F; 
-		}
-		else
-		{	/* Second chip */
+		if (latche & 0x600) { /* First chip */
+			p &= 0x1F;
+		} else { /* Second chip */
 			p &= 0x07;
 			p += 0x20;
 		}
@@ -510,7 +517,7 @@ static void M242Sync(void) {
 }
 
 void Mapper242_Init(CartInfo *info) {
-	M242TwoChips = info->PRGRomSize &0x20000 && info->PRGRomSize >0x20000;
+	M242TwoChips = info->PRGRomSize & 0x20000 && info->PRGRomSize > 0x20000;
 	Latch_Init(info, M242Sync, NULL, 0x0000, 0x8000, 0xFFFF, 1);
 }
 
@@ -636,11 +643,11 @@ void BMCNTD03_Init(CartInfo *info) {
 
 static void BMCG146Sync(void) {
 	setchr8(0);
-	if (latche & 0x800) {		/* UNROM mode */
+	if (latche & 0x800) { /* UNROM mode */
 		setprg16(0x8000, (latche & 0x1F) | (latche & ((latche & 0x40) >> 6)));
 		setprg16(0xC000, (latche & 0x18) | 7);
 	} else {
-		if (latche & 0x40) {	/* 16K mode */
+		if (latche & 0x40) { /* 16K mode */
 			setprg16(0x8000, latche & 0x1F);
 			setprg16(0xC000, latche & 0x1F);
 		} else {
@@ -658,7 +665,7 @@ void BMCG146_Init(CartInfo *info) {
 /* NES 2.0 mapper 341 is used for a simple 4-in-1 multicart */
 
 static void BMCTJ03Sync(void) {
-	uint8 mirr = latche &(PRGsize[0] &0x40000? 0x800: 0x200)? MI_H: MI_V;
+	uint8 mirr = latche & (PRGsize[0] & 0x40000 ? 0x800 : 0x200) ? MI_H : MI_V;
 	uint8 bank = latche >> 8;
 
 	setprg32(0x8000, bank);
@@ -688,35 +695,30 @@ void BMCSA005A_Init(CartInfo *info) {
 
 /* -------------- 831019C J-2282 ------------------------ */
 
-static void J2282Sync(void)
-{
-    setchr8(0);
+static void J2282Sync(void) {
+	setchr8(0);
 
-    if ((latche & 0x40)) {
-        uint8 bank = (latche >> 0) & 0x1F;
-        setprg16(0x8000, bank);
-        setprg16(0xC000, bank);
-    }
-    else
-    {
-        uint8 bank;
-        if (latche & 0x800)
-	{
-            setprg8(0x6000, ((latche << 1) & 0x3F) | 3);
-        }
-        bank = (latche >> 1) & 0x1F;
-        setprg32(0x8000, bank);
-    }
+	if ((latche & 0x40)) {
+		uint8 bank = (latche >> 0) & 0x1F;
+		setprg16(0x8000, bank);
+		setprg16(0xC000, bank);
+	} else {
+		uint8 bank;
+		if (latche & 0x800) {
+			setprg8(0x6000, ((latche << 1) & 0x3F) | 3);
+		}
+		bank = (latche >> 1) & 0x1F;
+		setprg32(0x8000, bank);
+	}
 
-    if (latche & 0x80)
-        setmirror(0);
-    else
-        setmirror(1);
+	if (latche & 0x80)
+		setmirror(0);
+	else
+		setmirror(1);
 }
 
-void J2282_Init(CartInfo *info)
-{
-    Latch_Init(info, J2282Sync, NULL, 0x0000, 0x8000, 0xFFFF, 0);
+void J2282_Init(CartInfo *info) {
+	Latch_Init(info, J2282Sync, NULL, 0x0000, 0x8000, 0xFFFF, 0);
 }
 
 /* -------------- Mapper 409 ------------------------ */
@@ -732,9 +734,9 @@ void Mapper409_Init(CartInfo *info) {
 
 /*------------------ Map 435 ---------------------------*/
 static void M435Sync(void) {
-	int p =latche >>2 &0x1F | latche >>3 &0x20 | latche >>4 &0x40;
-	if (latche &0x200) {
-		if (latche &0x001) {
+	int p = latche >> 2 & 0x1F | latche >> 3 & 0x20 | latche >> 4 & 0x40;
+	if (latche & 0x200) {
+		if (latche & 0x001) {
 			setprg16(0x8000, p);
 			setprg16(0xC000, p);
 		} else {
@@ -745,12 +747,12 @@ static void M435Sync(void) {
 		setprg16(0xC000, p | 7);
 	}
 
-	if (latche &0x800)
+	if (latche & 0x800)
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
 	else
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
 
-	setmirror(latche &0x002? MI_H: MI_V);
+	setmirror(latche & 0x002 ? MI_H : MI_V);
 	setchr8(0);
 }
 

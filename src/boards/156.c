@@ -54,24 +54,43 @@ static void Sync(void) {
 
 static DECLFW(M156Write) {
 	switch (A) {
-	case 0xC000:
-	case 0xC001:
-	case 0xC002:
-	case 0xC003: chrlo[A & 3] = V; Sync(); break;
-	case 0xC004:
-	case 0xC005:
-	case 0xC006:
-	case 0xC007: chrhi[A & 3] = V; Sync(); break;
-	case 0xC008:
-	case 0xC009:
-	case 0xC00A:
-	case 0xC00B: chrlo[4 + (A & 3)] = V; Sync(); break;
-	case 0xC00C:
-	case 0xC00D:
-	case 0xC00E:
-	case 0xC00F: chrhi[4 + (A & 3)] = V; Sync(); break;
-	case 0xC010: prg = V; Sync(); break;
-	case 0xC014: mirr = V; mirrisused = 1; Sync(); break;
+		case 0xC000:
+		case 0xC001:
+		case 0xC002:
+		case 0xC003:
+			chrlo[A & 3] = V;
+			Sync();
+			break;
+		case 0xC004:
+		case 0xC005:
+		case 0xC006:
+		case 0xC007:
+			chrhi[A & 3] = V;
+			Sync();
+			break;
+		case 0xC008:
+		case 0xC009:
+		case 0xC00A:
+		case 0xC00B:
+			chrlo[4 + (A & 3)] = V;
+			Sync();
+			break;
+		case 0xC00C:
+		case 0xC00D:
+		case 0xC00E:
+		case 0xC00F:
+			chrhi[4 + (A & 3)] = V;
+			Sync();
+			break;
+		case 0xC010:
+			prg = V;
+			Sync();
+			break;
+		case 0xC014:
+			mirr = V;
+			mirrisused = 1;
+			Sync();
+			break;
 	}
 }
 
@@ -92,7 +111,7 @@ static void M156Power(void) {
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	SetWriteHandler(0xC000, 0xCFFF, M156Write);
-        FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
 static void M156Close(void) {
@@ -111,7 +130,7 @@ void Mapper156_Init(CartInfo *info) {
 	info->Close = M156Close;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

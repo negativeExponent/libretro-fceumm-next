@@ -21,44 +21,44 @@
 #include "mmc3.h"
 
 static void Mapper467_PRGWrap(uint32 A, uint8 V) {
-	if (EXPREGS[0] &0x20) {
-		int prgAND =EXPREGS[0] &0x40? 0x0F: 0x03;
-		int prgOR  =EXPREGS[0] <<1 &0x3C | 0x40;
-		setprg8(A, V &prgAND | prgOR &~prgAND);
-	} else
-	if (~A &0x2000)
-		setprg16(A, EXPREGS[0] &0x1F);
+	if (EXPREGS[0] & 0x20) {
+		int prgAND = EXPREGS[0] & 0x40 ? 0x0F : 0x03;
+		int prgOR = EXPREGS[0] << 1 & 0x3C | 0x40;
+		setprg8(A, V & prgAND | prgOR & ~prgAND);
+	} else if (~A & 0x2000)
+		setprg16(A, EXPREGS[0] & 0x1F);
 }
 
 static void Mapper467_CHRWrap(uint32 A, uint8 V) {
-	if (~A &0x0800) {
-		A =A &~0x400 | A <<1 &0x800;
-		if (EXPREGS[0] &0x40)
-			setchr2(A, V |0x100);
+	if (~A & 0x0800) {
+		A = A & ~0x400 | A << 1 & 0x800;
+		if (EXPREGS[0] & 0x40)
+			setchr2(A, V | 0x100);
 		else
-			setchr2(A, V &~3 | A >>11 &3);
+			setchr2(A, V & ~3 | A >> 11 & 3);
 	}
 }
 
 static DECLFW(Mapper467_WriteExtra) {
-	EXPREGS[0] =V;
+	EXPREGS[0] = V;
 	FixMMC3PRG(MMC3_cmd);
 	FixMMC3CHR(MMC3_cmd);
-	setmirror(EXPREGS[0] &0x80? MI_H: MI_V);
+	setmirror(EXPREGS[0] & 0x80 ? MI_H : MI_V);
 }
 
 static DECLFW(Mapper467_WriteMMC3) {
-	if (~A &1) V &=0x3F;
+	if (~A & 1)
+		V &= 0x3F;
 	MMC3_CMDWrite(A, V);
 }
 
 static void Mapper467_Reset(void) {
-	EXPREGS[0] =0;
+	EXPREGS[0] = 0;
 	MMC3RegReset();
 }
 
 static void Mapper467_Power(void) {
-	EXPREGS[0] =0;
+	EXPREGS[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x8000, 0x8FFF, Mapper467_WriteMMC3);
 	SetWriteHandler(0x9000, 0x9FFF, Mapper467_WriteExtra);

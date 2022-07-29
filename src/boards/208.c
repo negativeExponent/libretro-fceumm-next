@@ -75,7 +75,7 @@ static DECLFW(M208ProtWrite) {
 }
 
 static DECLFR(M208ProtRead) {
-	return(EXPREGS[(A & 0x3)]);
+	return (EXPREGS[(A & 0x3)]);
 }
 
 static void M208Power(void) {

@@ -34,23 +34,22 @@ static SFORMAT StateRegs[] =
 };
 
 static void Sync(void) {
-	if (reg[0] &2) { /* UNROM */
-		setprg16(0x8000, latch &7 | reg[1] &~7);
-		setprg16(0xC000,        7 | reg[1] &~7);
-	} else
-	if (reg[0] &1)   /* NROM-256 */
-		setprg32(0x8000, reg[1] >>1);
-	else {           /* NROM-128 */
+	if (reg[0] & 2) { /* UNROM */
+		setprg16(0x8000, latch & 7 | reg[1] & ~7);
+		setprg16(0xC000, 7 | reg[1] & ~7);
+	} else if (reg[0] & 1) /* NROM-256 */
+		setprg32(0x8000, reg[1] >> 1);
+	else { /* NROM-128 */
 		setprg16(0x8000, reg[1]);
 		setprg16(0xC000, reg[1]);
 	}
-	SetupCartCHRMapping(0, CHRptr[0], 0x2000, !(reg[0] &4)); /* CHR-RAM write-protect */
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, !(reg[0] & 4)); /* CHR-RAM write-protect */
 	setchr8(0);
-	setmirror(!(reg[0] &8));
+	setmirror(!(reg[0] & 8));
 }
 
 static DECLFW(WriteReg) {
-	reg[A &1] =V;
+	reg[A & 1] = V;
 	Sync();
 }
 
@@ -60,7 +59,7 @@ static DECLFW(WriteLatch) {
 }
 
 static void BMC60311CPower(void) {
-	latch =reg[0] =reg[1] =0;
+	latch = reg[0] = reg[1] = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x6001, WriteReg);
@@ -68,7 +67,7 @@ static void BMC60311CPower(void) {
 }
 
 static void BMC60311CReset(void) {
-	latch =reg[0] =reg[1] =0;
+	latch = reg[0] = reg[1] = 0;
 	Sync();
 }
 

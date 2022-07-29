@@ -53,10 +53,22 @@ static void Sync(void) {
 static DECLFW(M106Write) {
 	A &= 0xF;
 	switch (A) {
-	case 0xD: IRQa = 0; IRQCount = 0; X6502_IRQEnd(FCEU_IQEXT); break;
-	case 0xE: IRQCount = (IRQCount & 0xFF00) | V; break;
-	case 0xF: IRQCount = (IRQCount & 0x00FF) | (V << 8); IRQa = 1; break;
-	default: reg[A] = V; Sync(); break;
+		case 0xD:
+			IRQa = 0;
+			IRQCount = 0;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
+		case 0xE:
+			IRQCount = (IRQCount & 0xFF00) | V;
+			break;
+		case 0xF:
+			IRQCount = (IRQCount & 0x00FF) | (V << 8);
+			IRQa = 1;
+			break;
+		default:
+			reg[A] = V;
+			Sync();
+			break;
 	}
 }
 
@@ -69,8 +81,7 @@ static void M106Power(void) {
 	SetWriteHandler(0x8000, 0xFFFF, M106Write);
 }
 
-static void M106Reset(void) {
-}
+static void M106Reset(void) { }
 
 static void M106Close(void) {
 	if (WRAM)
@@ -100,7 +111,7 @@ void Mapper106_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

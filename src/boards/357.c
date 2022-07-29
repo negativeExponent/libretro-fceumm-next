@@ -64,8 +64,14 @@ static void Sync(void) {
 
 static DECLFW(M357WriteLo) {
 	switch (A & 0x71ff) {
-		case 0x4022: preg[0] = V & 7; Sync(); break;
-		case 0x4120: preg[1] = V & 1; Sync(); break;
+		case 0x4022:
+			preg[0] = V & 7;
+			Sync();
+			break;
+		case 0x4120:
+			preg[1] = V & 1;
+			Sync();
+			break;
 	}
 }
 

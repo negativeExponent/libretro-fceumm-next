@@ -60,17 +60,36 @@ static DECLFW(M252Write) {
 		Sync();
 	} else
 		switch (A & 0xF00C) {
-		case 0x8000:
-		case 0x8004:
-		case 0x8008:
-		case 0x800C: preg[0] = V; Sync(); break;
-		case 0xA000:
-		case 0xA004:
-		case 0xA008:
-		case 0xA00C: preg[1] = V; Sync(); break;
-		case 0xF000: X6502_IRQEnd(FCEU_IQEXT); IRQLatch &= 0xF0; IRQLatch |= V & 0xF; break;
-		case 0xF004: X6502_IRQEnd(FCEU_IQEXT); IRQLatch &= 0x0F; IRQLatch |= V << 4; break;
-		case 0xF008: X6502_IRQEnd(FCEU_IQEXT); IRQClock = 0; IRQCount = IRQLatch; IRQa = V & 2; break;
+			case 0x8000:
+			case 0x8004:
+			case 0x8008:
+			case 0x800C:
+				preg[0] = V;
+				Sync();
+				break;
+			case 0xA000:
+			case 0xA004:
+			case 0xA008:
+			case 0xA00C:
+				preg[1] = V;
+				Sync();
+				break;
+			case 0xF000:
+				X6502_IRQEnd(FCEU_IQEXT);
+				IRQLatch &= 0xF0;
+				IRQLatch |= V & 0xF;
+				break;
+			case 0xF004:
+				X6502_IRQEnd(FCEU_IQEXT);
+				IRQLatch &= 0x0F;
+				IRQLatch |= V << 4;
+				break;
+			case 0xF008:
+				X6502_IRQEnd(FCEU_IQEXT);
+				IRQClock = 0;
+				IRQCount = IRQLatch;
+				IRQa = V & 2;
+				break;
 		}
 }
 
@@ -84,7 +103,7 @@ static void M252Power(void) {
 }
 
 static void M252IRQ(int a) {
-	#define LCYCS 341
+#define LCYCS 341
 	if (IRQa) {
 		IRQClock += a * 3;
 		if (IRQClock >= LCYCS) {
@@ -118,12 +137,12 @@ void Mapper252_Init(CartInfo *info) {
 	MapIRQHook = M252IRQ;
 
 	CHRRAMSIZE = 2048;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

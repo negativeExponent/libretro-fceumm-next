@@ -33,16 +33,15 @@ static SFORMAT StateRegs[] =
 	{ 0 }
 };
 
-static void M319Sync (void) {
-	if (reg[1] &0x40)
-		setprg32(0x8000, reg[1] >>3 &3);
-	else
-	{
-		setprg16(0x8000, reg[1] >>2 &6 | reg[1] >>5 &1);
-		setprg16(0xC000, reg[1] >>2 &6 | reg[1] >>5 &1);
+static void M319Sync(void) {
+	if (reg[1] & 0x40)
+		setprg32(0x8000, reg[1] >> 3 & 3);
+	else {
+		setprg16(0x8000, reg[1] >> 2 & 6 | reg[1] >> 5 & 1);
+		setprg16(0xC000, reg[1] >> 2 & 6 | reg[1] >> 5 & 1);
 	}
-	setchr8(reg[0] >>4 &~(reg[0] <<2 &4) | latch <<2 &(reg[0] <<2 &4));
-	setmirror(reg[1] >>7);
+	setchr8(reg[0] >> 4 & ~(reg[0] << 2 & 4) | latch << 2 & (reg[0] << 2 & 4));
+	setmirror(reg[1] >> 7);
 }
 
 static void StateRestore(int version) {
@@ -54,23 +53,23 @@ static DECLFR(M319ReadPad) {
 }
 
 static DECLFW(M319WriteReg) {
-	reg[A >>2 &1] =V;
+	reg[A >> 2 & 1] = V;
 	M319Sync();
 }
 
 static DECLFW(M319WriteLatch) {
-	latch =V;
+	latch = V;
 	M319Sync();
 }
 
 static void M319Reset(void) {
-	reg[0] =reg[1] =latch =0;
-	pad ^=0x40;
+	reg[0] = reg[1] = latch = 0;
+	pad ^= 0x40;
 	M319Sync();
 }
 
 static void M319Power(void) {
-	reg[0] =reg[1] =latch =pad =0;
+	reg[0] = reg[1] = latch = pad = 0;
 	M319Sync();
 	SetReadHandler(0x5000, 0x5FFF, M319ReadPad);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);

@@ -34,11 +34,11 @@ static uint8 cpu410x[16], ppu201x[16], apu40xx[64];
 
 /* IRQ Registers */
 static uint8 IRQCount, IRQa, IRQReload;
-#define IRQLatch cpu410x[0x1]	/* accc cccc, a = 0, AD12 switching, a = 1, HSYNC switching */
+#define IRQLatch cpu410x[0x1] /* accc cccc, a = 0, AD12 switching, a = 1, HSYNC switching */
 
 /* MMC3 Registers */
-#define mmc3cmd  cpu410x[0x5]	/* pcv- ----, p - program swap, c - video swap, v - internal VRAM enable */
-#define mirror   cpu410x[0x6]	/* ---- ---m, m = 0 - H, m = 1 - V */
+#define mmc3cmd cpu410x[0x5] /* pcv- ----, p - program swap, c - video swap, v - internal VRAM enable */
+#define mirror cpu410x[0x6] /* ---- ---m, m = 0 - H, m = 1 - V */
 
 /* APU Registers */
 static uint8 pcm_enable = 0, pcm_irq = 0;
@@ -126,109 +126,155 @@ static void Sync(void) {
 }
 
 static const uint8 cpuMangle[16][4] = {
-	{ 0, 1, 2, 3 }, 	/* Submapper 0: Normal                                  */
-	{ 0, 1, 2, 3 }, 	/* Submapper 1: Waixing VT03                            */
-	{ 1, 0, 2, 3 }, 	/* Submapper 2: Trump Grand                             */
-	{ 0, 1, 2, 3 }, 	/* Submapper 3: Zechess                                 */
-	{ 0, 1, 2, 3 }, 	/* Submapper 4: Qishenglong                             */
-	{ 0, 1, 2, 3 }, 	/* Submapper 5: Waixing VT02                            */
-	{ 0, 1, 2, 3 }, 	/* Submapper 6: unused so far                           */
-	{ 0, 1, 2, 3 }, 	/* Submapper 7: unused so far                           */
-	{ 0, 1, 2, 3 }, 	/* Submapper 8: unused so far                           */
-	{ 0, 1, 2, 3 }, 	/* Submapper 9: unused so far                           */
-	{ 0, 1, 2, 3 }, 	/* Submapper A: unused so far                           */
-	{ 0, 1, 2, 3 }, 	/* Submapper B: unused so far                           */
-	{ 0, 1, 2, 3 }, 	/* Submapper C: unused so far                           */
-	{ 0, 1, 2, 3 }, 	/* Submapper D: Cube Tech (CPU opcode encryption only)  */
-	{ 0, 1, 2, 3 }, 	/* Submapper E: Karaoto (CPU opcode encryption only)    */
-	{ 0, 1, 2, 3 }  	/* Submapper F: Jungletac (CPU opcode encryption only)  */
+	{ 0, 1, 2, 3 }, /* Submapper 0: Normal                                  */
+	{ 0, 1, 2, 3 }, /* Submapper 1: Waixing VT03                            */
+	{ 1, 0, 2, 3 }, /* Submapper 2: Trump Grand                             */
+	{ 0, 1, 2, 3 }, /* Submapper 3: Zechess                                 */
+	{ 0, 1, 2, 3 }, /* Submapper 4: Qishenglong                             */
+	{ 0, 1, 2, 3 }, /* Submapper 5: Waixing VT02                            */
+	{ 0, 1, 2, 3 }, /* Submapper 6: unused so far                           */
+	{ 0, 1, 2, 3 }, /* Submapper 7: unused so far                           */
+	{ 0, 1, 2, 3 }, /* Submapper 8: unused so far                           */
+	{ 0, 1, 2, 3 }, /* Submapper 9: unused so far                           */
+	{ 0, 1, 2, 3 }, /* Submapper A: unused so far                           */
+	{ 0, 1, 2, 3 }, /* Submapper B: unused so far                           */
+	{ 0, 1, 2, 3 }, /* Submapper C: unused so far                           */
+	{ 0, 1, 2, 3 }, /* Submapper D: Cube Tech (CPU opcode encryption only)  */
+	{ 0, 1, 2, 3 }, /* Submapper E: Karaoto (CPU opcode encryption only)    */
+	{ 0, 1, 2, 3 } /* Submapper F: Jungletac (CPU opcode encryption only)  */
 };
 static DECLFW(UNLOneBusWriteCPU410X) {
-/*	FCEU_printf("CPU %04x:%04x\n",A,V); */
-	A &=0xF;
+	/*	FCEU_printf("CPU %04x:%04x\n",A,V); */
+	A &= 0xF;
 	switch (A) {
-	case 0x1: IRQLatch = V & 0xfe; break;	/* не по даташиту */
-	case 0x2: IRQReload = 1; break;
-	case 0x3: X6502_IRQEnd(FCEU_IQEXT); IRQa = 0; break;
-	case 0x4: IRQa = 1; break;
-	default:
-		if (A >=0x7 && A <=0xA) A =0x7 +cpuMangle[submapper][A -0x7];
-		cpu410x[A] = V;
-		Sync();
+		case 0x1:
+			IRQLatch = V & 0xfe;
+			break; /* пїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ */
+		case 0x2:
+			IRQReload = 1;
+			break;
+		case 0x3:
+			X6502_IRQEnd(FCEU_IQEXT);
+			IRQa = 0;
+			break;
+		case 0x4:
+			IRQa = 1;
+			break;
+		default:
+			if (A >= 0x7 && A <= 0xA)
+				A = 0x7 + cpuMangle[submapper][A - 0x7];
+			cpu410x[A] = V;
+			Sync();
 	}
 }
 
 static const uint8 ppuMangle[16][6] = {
-	{ 0, 1, 2, 3, 4, 5 }, 	/* Submapper 0: Normal                                  */
-	{ 1, 0, 5, 4, 3, 2 }, 	/* Submapper 1: Waixing VT03                            */
-	{ 0, 1, 2, 3, 4, 5 }, 	/* Submapper 2: Trump Grand                             */
-	{ 5, 4, 3, 2, 0, 1 }, 	/* Submapper 3: Zechess                                 */
-	{ 2, 5, 0, 4, 3, 1 }, 	/* Submapper 4: Qishenglong                             */
-	{ 1, 0, 5, 4, 3, 2 }, 	/* Submapper 5: Waixing VT02                            */
-	{ 0, 1, 2, 3, 4, 5 }, 	/* Submapper 6: unused so far                           */
-	{ 0, 1, 2, 3, 4, 5 }, 	/* Submapper 7: unused so far                           */
-	{ 0, 1, 2, 3, 4, 5 }, 	/* Submapper 8: unused so far                           */
-	{ 0, 1, 2, 3, 4, 5 }, 	/* Submapper 9: unused so far                           */
-	{ 0, 1, 2, 3, 4, 5 }, 	/* Submapper A: unused so far                           */
-	{ 0, 1, 2, 3, 4, 5 }, 	/* Submapper B: unused so far                           */
-	{ 0, 1, 2, 3, 4, 5 }, 	/* Submapper C: unused so far                           */
-	{ 0, 1, 2, 3, 4, 5 }, 	/* Submapper D: Cube Tech (CPU opcode encryption only)  */
-	{ 0, 1, 2, 3, 4, 5 }, 	/* Submapper E: Karaoto (CPU opcode encryption only)    */
-	{ 0, 1, 2, 3, 4, 5 }  	/* Submapper F: Jungletac (CPU opcode encryption only)  */
+	{ 0, 1, 2, 3, 4, 5 }, /* Submapper 0: Normal                                  */
+	{ 1, 0, 5, 4, 3, 2 }, /* Submapper 1: Waixing VT03                            */
+	{ 0, 1, 2, 3, 4, 5 }, /* Submapper 2: Trump Grand                             */
+	{ 5, 4, 3, 2, 0, 1 }, /* Submapper 3: Zechess                                 */
+	{ 2, 5, 0, 4, 3, 1 }, /* Submapper 4: Qishenglong                             */
+	{ 1, 0, 5, 4, 3, 2 }, /* Submapper 5: Waixing VT02                            */
+	{ 0, 1, 2, 3, 4, 5 }, /* Submapper 6: unused so far                           */
+	{ 0, 1, 2, 3, 4, 5 }, /* Submapper 7: unused so far                           */
+	{ 0, 1, 2, 3, 4, 5 }, /* Submapper 8: unused so far                           */
+	{ 0, 1, 2, 3, 4, 5 }, /* Submapper 9: unused so far                           */
+	{ 0, 1, 2, 3, 4, 5 }, /* Submapper A: unused so far                           */
+	{ 0, 1, 2, 3, 4, 5 }, /* Submapper B: unused so far                           */
+	{ 0, 1, 2, 3, 4, 5 }, /* Submapper C: unused so far                           */
+	{ 0, 1, 2, 3, 4, 5 }, /* Submapper D: Cube Tech (CPU opcode encryption only)  */
+	{ 0, 1, 2, 3, 4, 5 }, /* Submapper E: Karaoto (CPU opcode encryption only)    */
+	{ 0, 1, 2, 3, 4, 5 } /* Submapper F: Jungletac (CPU opcode encryption only)  */
 };
 static DECLFW(UNLOneBusWritePPU201X) {
-/*	FCEU_printf("PPU %04x:%04x\n",A,V); */
-	A &=0x0F;
-	if (A >=2 && A <=7) A =2 +ppuMangle[submapper][A -2];
+	/*	FCEU_printf("PPU %04x:%04x\n",A,V); */
+	A &= 0x0F;
+	if (A >= 2 && A <= 7)
+		A = 2 + ppuMangle[submapper][A - 2];
 	ppu201x[A] = V;
 	Sync();
 }
 
 static const uint8 mmc3Mangle[16][8] = {
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper 0: Normal                                 */
-	{ 5, 4, 3, 2, 1, 0, 6, 7 }, 	/* Submapper 1: Waixing VT03                           */
-	{ 0, 1, 2, 3, 4, 5, 7, 6 }, 	/* Submapper 2: Trump Grand                            */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper 3: Zechess                                */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper 4: Qishenglong                            */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper 5: Waixing VT02                           */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper 6: unused so far                          */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper 7: unused so far                          */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper 8: unused so far                          */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper 9: unused so far                          */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper A: unused so far                          */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper B: unused so far                          */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper C: unused so far                          */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper D: Cube Tech (CPU opcode encryption only) */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }, 	/* Submapper E: Karaoto (CPU opcode encryption only)   */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 }  	/* Submapper F: Jungletac (CPU opcode encryption only) */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper 0: Normal                                 */
+	{ 5, 4, 3, 2, 1, 0, 6, 7 }, /* Submapper 1: Waixing VT03                           */
+	{ 0, 1, 2, 3, 4, 5, 7, 6 }, /* Submapper 2: Trump Grand                            */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper 3: Zechess                                */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper 4: Qishenglong                            */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper 5: Waixing VT02                           */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper 6: unused so far                          */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper 7: unused so far                          */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper 8: unused so far                          */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper 9: unused so far                          */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper A: unused so far                          */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper B: unused so far                          */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper C: unused so far                          */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper D: Cube Tech (CPU opcode encryption only) */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper E: Karaoto (CPU opcode encryption only)   */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 } /* Submapper F: Jungletac (CPU opcode encryption only) */
 };
 static DECLFW(UNLOneBusWriteMMC3) {
-/*	FCEU_printf("MMC %04x:%04x\n",A,V); */
+	/*	FCEU_printf("MMC %04x:%04x\n",A,V); */
 	switch (A & 0xe001) {
-	case 0x8000: 
-		V =V &0xF8 | mmc3Mangle[submapper][V &0x07];
-		mmc3cmd = (mmc3cmd & 0x38) | (V & 0xc7);
-		Sync();
-		break;
-	case 0x8001:
-	{
-		switch (mmc3cmd & 7) {
-		case 0: ppu201x[0x6] = V; CSync(); break;
-		case 1: ppu201x[0x7] = V; CSync(); break;
-		case 2: ppu201x[0x2] = V; CSync(); break;
-		case 3: ppu201x[0x3] = V; CSync(); break;
-		case 4: ppu201x[0x4] = V; CSync(); break;
-		case 5: ppu201x[0x5] = V; CSync(); break;
-		case 6: cpu410x[0x7] = V; PSync(); break;
-		case 7: cpu410x[0x8] = V; PSync(); break;
+		case 0x8000:
+			V = V & 0xF8 | mmc3Mangle[submapper][V & 0x07];
+			mmc3cmd = (mmc3cmd & 0x38) | (V & 0xc7);
+			Sync();
+			break;
+		case 0x8001: {
+			switch (mmc3cmd & 7) {
+				case 0:
+					ppu201x[0x6] = V;
+					CSync();
+					break;
+				case 1:
+					ppu201x[0x7] = V;
+					CSync();
+					break;
+				case 2:
+					ppu201x[0x2] = V;
+					CSync();
+					break;
+				case 3:
+					ppu201x[0x3] = V;
+					CSync();
+					break;
+				case 4:
+					ppu201x[0x4] = V;
+					CSync();
+					break;
+				case 5:
+					ppu201x[0x5] = V;
+					CSync();
+					break;
+				case 6:
+					cpu410x[0x7] = V;
+					PSync();
+					break;
+				case 7:
+					cpu410x[0x8] = V;
+					PSync();
+					break;
+			}
+			break;
 		}
-		break;
-	}
-	case 0xa000: mirror = V; CSync(); break;
-	case 0xc000: IRQLatch = V & 0xfe; break;
-	case 0xc001: IRQReload = 1; break;
-	case 0xe000: X6502_IRQEnd(FCEU_IQEXT); IRQa = 0; break;
-	case 0xe001: IRQa = 1; break;
+		case 0xa000:
+			mirror = V;
+			CSync();
+			break;
+		case 0xc000:
+			IRQLatch = V & 0xfe;
+			break;
+		case 0xc001:
+			IRQReload = 1;
+			break;
+		case 0xe000:
+			X6502_IRQEnd(FCEU_IQEXT);
+			IRQa = 0;
+			break;
+		case 0xe001:
+			IRQa = 1;
+			break;
 	}
 }
 
@@ -249,28 +295,28 @@ static DECLFW(UNLOneBusWriteAPU40XX) {
 /*	if(((A & 0x3f)!=0x16) && ((apu40xx[0x30] & 0x10) || ((A & 0x3f)>0x17)))FCEU_printf("APU %04x:%04x\n",A,V); */
 	apu40xx[A & 0x3f] = V;
 	switch (A & 0x3f) {
-	case 0x12:
-		if (apu40xx[0x30] & 0x10) {
-			pcm_addr = V << 6;
-		}
-		break;
-	case 0x13:
-		if (apu40xx[0x30] & 0x10) {
-			pcm_size = (V << 4) + 1;
-		}
-		break;
-	case 0x15:
-		if (apu40xx[0x30] & 0x10) {
-			pcm_enable = V & 0x10;
-			if (pcm_irq) {
-				X6502_IRQEnd(FCEU_IQEXT);
-				pcm_irq = 0;
+		case 0x12:
+			if (apu40xx[0x30] & 0x10) {
+				pcm_addr = V << 6;
 			}
-			if (pcm_enable)
-				pcm_latch = pcm_clock;
-			V &= 0xef;
-		}
-		break;
+			break;
+		case 0x13:
+			if (apu40xx[0x30] & 0x10) {
+				pcm_size = (V << 4) + 1;
+			}
+			break;
+		case 0x15:
+			if (apu40xx[0x30] & 0x10) {
+				pcm_enable = V & 0x10;
+				if (pcm_irq) {
+					X6502_IRQEnd(FCEU_IQEXT);
+					pcm_irq = 0;
+				}
+				if (pcm_enable)
+					pcm_latch = pcm_clock;
+				V &= 0xef;
+			}
+			break;
 	}
 	defapuwrite[A & 0x3f](A, V);
 }
@@ -279,11 +325,11 @@ static DECLFR(UNLOneBusReadAPU40XX) {
 	uint8 result = defapuread[A & 0x3f](A);
 /*	FCEU_printf("read %04x, %02x\n",A,result); */
 	switch (A & 0x3f) {
-	case 0x15:
-		if (apu40xx[0x30] & 0x10) {
-			result = (result & 0x7f) | pcm_irq;
-		}
-		break;
+		case 0x15:
+			if (apu40xx[0x30] & 0x10) {
+				result = (result & 0x7f) | pcm_irq;
+			}
+			break;
 	}
 	return result;
 }
@@ -299,7 +345,7 @@ static void UNLOneBusCpuHook(int a) {
 				pcm_enable = 0;
 				X6502_IRQBegin(FCEU_IQEXT);
 			} else {
-				uint16 addr = pcm_addr | ((apu40xx[0x30]^3) << 14);
+				uint16 addr = pcm_addr | ((apu40xx[0x30] ^ 3) << 14);
 				uint8 raw_pcm = ARead[addr](addr) >> 1;
 				defapuwrite[0x11](0x4011, raw_pcm);
 				pcm_addr++;
@@ -363,16 +409,15 @@ void UNLOneBus_Init(CartInfo *info) {
 	info->Close = UNLOneBus_Close;
 
 	if (info->iNES2)
-		submapper =info->submapper;
+		submapper = info->submapper;
 	else
-		submapper =(((*(uint32*)&(info->MD5)) == 0x305fcdc3) ||	((*(uint32*)&(info->MD5)) == 0x6abfce8e))? 2: 0; /* PowerJoy Supermax Carts */
+		submapper = (((*(uint32 *)&(info->MD5)) == 0x305fcdc3) || ((*(uint32 *)&(info->MD5)) == 0x6abfce8e)) ? 2 : 0; /* PowerJoy Supermax Carts */
 
 	GameHBIRQHook = UNLOneBusIRQHook;
 	MapIRQHook = UNLOneBusCpuHook;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
-	
-	WRAM = (uint8*)FCEU_gmalloc(8192);
+
+	WRAM = (uint8 *)FCEU_gmalloc(8192);
 	SetupCartPRGMapping(0x10, WRAM, 8192, 1);
 }
-

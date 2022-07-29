@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- * 
+ *
  * NES 2.0 Mapper 396 - BMC-830752C
  * 1995 Super 8-in-1 (JY-050 rev0)
  * Super 8-in-1 Gold Card Series (JY-085)
@@ -28,7 +28,7 @@
 
 static uint8 reg[2];
 
-static void Sync (void) {
+static void Sync(void) {
 	setprg16(0x8000, reg[1] << 3 | reg[0] & 7);
 	setprg16(0xC000, reg[1] << 3 | 7);
 	setchr8(0);

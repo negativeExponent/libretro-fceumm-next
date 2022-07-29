@@ -39,7 +39,7 @@ static void Sync(void) {
 		setprg16(0x8000, (latche & 0x1f));
 		setprg16(0xC000, (latche & 0x1f));
 	}
-    setmirror(((latche >> 6) & 1) ^ 1);
+	setmirror(((latche >> 6) & 1) ^ 1);
 	setchr8(0);
 }
 

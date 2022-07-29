@@ -45,32 +45,50 @@ static void Sync(void) {
 	setchr2(0x1000, creg[2]);
 	setchr2(0x1800, creg[3]);
 	switch (mirr) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+		case 0: setmirror(MI_V); break;
+		case 1: setmirror(MI_H); break;
+		case 2: setmirror(MI_0); break;
+		case 3: setmirror(MI_1); break;
 	}
 }
 
 static DECLFW(M67Write) {
 	switch (A & 0xF800) {
-	case 0x8800: creg[0] = V; Sync(); break;
-	case 0x9800: creg[1] = V; Sync(); break;
-	case 0xA800: creg[2] = V; Sync(); break;
-	case 0xB800: creg[3] = V; Sync(); break;
-	case 0xC000:
-	case 0xC800:
-		IRQCount &= 0xFF << (suntoggle << 3);
-		IRQCount |= V << ((suntoggle ^ 1) << 3);
-		suntoggle ^= 1;
-		break;
-	case 0xD800:
-		suntoggle = 0;
-		IRQa = V & 0x10;
-		X6502_IRQEnd(FCEU_IQEXT);
-		break;
-	case 0xE800: mirr = V & 3; Sync(); break;
-	case 0xF800: preg = V; Sync(); break;
+		case 0x8800:
+			creg[0] = V;
+			Sync();
+			break;
+		case 0x9800:
+			creg[1] = V;
+			Sync();
+			break;
+		case 0xA800:
+			creg[2] = V;
+			Sync();
+			break;
+		case 0xB800:
+			creg[3] = V;
+			Sync();
+			break;
+		case 0xC000:
+		case 0xC800:
+			IRQCount &= 0xFF << (suntoggle << 3);
+			IRQCount |= V << ((suntoggle ^ 1) << 3);
+			suntoggle ^= 1;
+			break;
+		case 0xD800:
+			suntoggle = 0;
+			IRQa = V & 0x10;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
+		case 0xE800:
+			mirr = V & 3;
+			Sync();
+			break;
+		case 0xF800:
+			preg = V;
+			Sync();
+			break;
 	}
 }
 
@@ -102,4 +120,3 @@ void Mapper67_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
-

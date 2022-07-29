@@ -59,8 +59,7 @@ static void M193Power(void) {
 	SetWriteHandler(0x8000, 0xFFFF, CartBW);
 }
 
-static void M193Reset(void) {
-}
+static void M193Reset(void) { }
 
 static void StateRestore(int version) {
 	Sync();

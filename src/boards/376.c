@@ -22,17 +22,19 @@
 #include "mmc3.h"
 
 static void Mapper376CW(uint32 A, uint8 V) {
-	uint32 base = (EXPREGS[0] &0x40? 0x080: 0x000) | (EXPREGS[1] &0x01? 0x100: 0x000);
+	uint32 base = (EXPREGS[0] & 0x40 ? 0x080 : 0x000) | (EXPREGS[1] & 0x01 ? 0x100 : 0x000);
 	setchr1(A, base | (V & 0x7F));
 }
 
 static void Mapper376PW(uint32 A, uint8 V) {
-	uint32 base = (EXPREGS[0] &0x07) | (EXPREGS[0] &0x40? 0x08: 0x00) | (EXPREGS[1] &0x01? 0x10: 0x00);
+	uint32 base = (EXPREGS[0] & 0x07) | (EXPREGS[0] & 0x40 ? 0x08 : 0x00) | (EXPREGS[1] & 0x01 ? 0x10 : 0x00);
 	if (EXPREGS[0] & 0x80) {
-		if (EXPREGS[0] &0x20) {
-			if (A ==0x8000) setprg32(A, base >>1);
+		if (EXPREGS[0] & 0x20) {
+			if (A == 0x8000)
+				setprg32(A, base >> 1);
 		} else {
-			if (A ==0x8000 || A ==0xC000) setprg16(A, base);
+			if (A == 0x8000 || A == 0xC000)
+				setprg16(A, base);
 		}
 	} else
 		setprg8(A, (base << 1) | (V & 0x0F));

@@ -121,7 +121,7 @@ static void UNL8237PW(uint32 A, uint8 V) {
 }
 
 static DECLFR(UNL8237ProtRead) {
-	return protarray[EXPREGS[3]][A &7] &0x0F | 0x50;
+	return protarray[EXPREGS[3]][A & 7] & 0x0F | 0x50;
 }
 
 static DECLFW(UNL8237Write) {
@@ -138,10 +138,22 @@ static DECLFW(UNL8237Write) {
 
 static DECLFW(UNL8237ExWrite) {
 	switch (A & 0xF007) {
-	case 0x5000: EXPREGS[0] = V; FixMMC3PRG(MMC3_cmd); FixMMC3CHR(MMC3_cmd); break;
-	case 0x5001: EXPREGS[1] = V; FixMMC3PRG(MMC3_cmd); FixMMC3CHR(MMC3_cmd); break;
-	case 0x5002: EXPREGS[3] = V; break;
-	case 0x5007: EXPREGS[2] = V; break;
+		case 0x5000:
+			EXPREGS[0] = V;
+			FixMMC3PRG(MMC3_cmd);
+			FixMMC3CHR(MMC3_cmd);
+			break;
+		case 0x5001:
+			EXPREGS[1] = V;
+			FixMMC3PRG(MMC3_cmd);
+			FixMMC3CHR(MMC3_cmd);
+			break;
+		case 0x5002:
+			EXPREGS[3] = V;
+			break;
+		case 0x5007:
+			EXPREGS[2] = V;
+			break;
 	}
 }
 
@@ -151,7 +163,7 @@ static void UNL8237Power(void) {
 	EXPREGS[3] = 7;
 	GenMMC3Power();
 	SetWriteHandler(0x8000, 0xFFFF, UNL8237Write);
-	SetReadHandler (0x5000, 0x5FFF, UNL8237ProtRead);
+	SetReadHandler(0x5000, 0x5FFF, UNL8237ProtRead);
 	SetWriteHandler(0x5000, 0x5FFF, UNL8237ExWrite);
 }
 

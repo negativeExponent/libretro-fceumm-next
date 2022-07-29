@@ -33,87 +33,80 @@ static SFORMAT StateRegs[] =
         { 0 }
 };
 
-static void sync()
-{
-   setprg32(0x8000, reg[2] <<4 | reg[0] &0x0C                                        /* PRG A17-A20 always normal from $5000 and $5200 */
-                  | ( reg[3] &0x04                ?         0x00 : 0x02)             /* PRG A16 is 1       if $5300.2=0                */
-		  | ( reg[3] &0x04                ?(reg[0] &0x02): 0x00)             /* PRG A16 is $5000.1 if %5300.2=1                */
-		  | (                 reg[3] &0x01?         0x00 : reg[1] >>1 &0x01) /* PRG A15 is $5100.1 if               $5300.0=0  */
-		  | (~reg[3] &0x04 && reg[3] &0x01?         0x01 : 0x00)             /* PRG A15 is 1       if $5300.2=0 and $5300.0=1  */
-		  | ( reg[3] &0x04 && reg[3] &0x01?(reg[0] &0x01): 0x00)             /* PRG A15 is $5000.0 if $5300.2=1 and $5300.0=1  */
-   );
-   setprg8r(0x10, 0x6000, 0);
-   if (~reg[0] &0x80)
-      setchr8(0);
+static void sync() {
+	setprg32(0x8000,
+	         reg[2] << 4 | reg[0] & 0x0C                                       /* PRG A17-A20 always normal from $5000 and $5200 */
+	             | (reg[3] & 0x04 ? 0x00 : 0x02)                               /* PRG A16 is 1       if $5300.2=0                */
+	             | (reg[3] & 0x04 ? (reg[0] & 0x02) : 0x00)                    /* PRG A16 is $5000.1 if %5300.2=1                */
+	             | (reg[3] & 0x01 ? 0x00 : reg[1] >> 1 & 0x01)                 /* PRG A15 is $5100.1 if               $5300.0=0  */
+	             | (~reg[3] & 0x04 && reg[3] & 0x01 ? 0x01 : 0x00)             /* PRG A15 is 1       if $5300.2=0 and $5300.0=1  */
+	             | (reg[3] & 0x04 && reg[3] & 0x01 ? (reg[0] & 0x01) : 0x00)   /* PRG A15 is $5000.0 if $5300.2=1 and $5300.0=1  */
+	);
+	setprg8r(0x10, 0x6000, 0);
+	if (~reg[0] & 0x80)
+		setchr8(0);
 }
 
 static void hblank(void) {
-   if (reg[0] &0x80 && scanline <239)
-   {  /* Actual hardware cannot look at the current scanline number, but instead latches PA09 on PA13 rises. This does not seem possible with the current PPU emulation however. */
-      setchr4(0x0000, scanline >=127? 1: 0);
-      setchr4(0x1000, scanline >=127? 1: 0);
-   }
-   else
-      setchr8(0);
+	if (reg[0] & 0x80 &&
+	    scanline < 239) { /* Actual hardware cannot look at the current scanline number, but instead latches PA09 on
+		                     PA13 rises. This does not seem possible with the current PPU emulation however. */
+		setchr4(0x0000, scanline >= 127 ? 1 : 0);
+		setchr4(0x1000, scanline >= 127 ? 1 : 0);
+	} else
+		setchr8(0);
 }
 
-static DECLFR(readReg)
-{
-   return 0x00;
+static DECLFR(readReg) {
+	return 0x00;
 }
 
-static DECLFW(writeReg)
-{
-   reg[A >>8 &3] = V;
-   sync();
+static DECLFW(writeReg) {
+	reg[A >> 8 & 3] = V;
+	sync();
 }
 
-static void power(void)
-{
-   memset(reg, 0, sizeof(reg));
-   sync();
-   SetReadHandler (0x5000, 0x57FF, readReg);
-   SetWriteHandler(0x5000, 0x57FF, writeReg);
-   SetReadHandler (0x6000, 0xFFFF, CartBR);
-   SetWriteHandler(0x6000, 0x7FFF, CartBW);
+static void power(void) {
+	memset(reg, 0, sizeof(reg));
+	sync();
+	SetReadHandler(0x5000, 0x57FF, readReg);
+	SetWriteHandler(0x5000, 0x57FF, writeReg);
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 }
 
-static void reset(void)
-{
-   memset(reg, 0, sizeof(reg));
-   sync();
+static void reset(void) {
+	memset(reg, 0, sizeof(reg));
+	sync();
 }
 
-static void close(void)
-{
-   if (WRAM)
-      FCEU_gfree(WRAM);
-   WRAM = NULL;
+static void close(void) {
+	if (WRAM)
+		FCEU_gfree(WRAM);
+	WRAM = NULL;
 }
 
-static void StateRestore(int version)
-{
-   sync();
+static void StateRestore(int version) {
+	sync();
 }
 
-void Mapper162_Init (CartInfo *info)
-{
-   info->Power   = power;
-   info->Reset   = reset;
-   info->Close   = close;
-   GameHBIRQHook = hblank;
+void Mapper162_Init(CartInfo *info) {
+	info->Power = power;
+	info->Reset = reset;
+	info->Close = close;
+	GameHBIRQHook = hblank;
 
-   GameStateRestore = StateRestore;
-   AddExState(StateRegs, ~0, 0, 0);
+	GameStateRestore = StateRestore;
+	AddExState(StateRegs, ~0, 0, 0);
 
-   WRAMSIZE = info->iNES2? (info->PRGRamSize + info->PRGRamSaveSize): 8192;
-   WRAM = (uint8*) FCEU_gmalloc(WRAMSIZE);
-   SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
-   AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-   FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+	WRAMSIZE = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) : 8192;
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
+	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 
-   if (info->battery) {
-      info->SaveGame[0] = WRAM;
-      info->SaveGameLen[0] = WRAMSIZE;
-   }
+	if (info->battery) {
+		info->SaveGame[0] = WRAM;
+		info->SaveGameLen[0] = WRAMSIZE;
+	}
 }

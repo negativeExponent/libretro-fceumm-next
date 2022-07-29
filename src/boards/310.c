@@ -31,32 +31,36 @@ static SFORMAT K1053_state[] =
 	{ 0 }
 };
 
-static void K1053_sync (void) {
-	int prg =regData[0] &0x3F | regAddr <<4 &~0x3F;
+static void K1053_sync(void) {
+	int prg = regData[0] & 0x3F | regAddr << 4 & ~0x3F;
 	int chrWritable;
-	switch(regAddr &3) {
-		case 0:	setprg32(0x8000, prg >>1);
-			chrWritable =0;
+	switch (regAddr & 3) {
+		case 0:
+			setprg32(0x8000, prg >> 1);
+			chrWritable = 0;
 			break;
-		case 1:	setprg16(0x8000, prg);
-			setprg16(0xC000, prg |7);
-			chrWritable =1;
+		case 1:
+			setprg16(0x8000, prg);
+			setprg16(0xC000, prg | 7);
+			chrWritable = 1;
 			break;
-		case 2:	prg =prg <<1 | regData[0] >>7;
+		case 2:
+			prg = prg << 1 | regData[0] >> 7;
 			setprg8(0x8000, prg);
 			setprg8(0xA000, prg);
 			setprg8(0xC000, prg);
 			setprg8(0xE000, prg);
-			chrWritable =1;
+			chrWritable = 1;
 			break;
-		case 3:	setprg16(0x8000, prg);
+		case 3:
+			setprg16(0x8000, prg);
 			setprg16(0xC000, prg);
-			chrWritable =0;
-			break;			
+			chrWritable = 0;
+			break;
 	}
 	SetupCartCHRMapping(0, CHRptr[0], 0x8000, chrWritable);
 	setchr8(regData[1]);
-	setmirror(regData[0] &0x40? MI_H: MI_V);
+	setmirror(regData[0] & 0x40 ? MI_H : MI_V);
 }
 
 static void K1053_restore(int version) {
@@ -64,13 +68,14 @@ static void K1053_restore(int version) {
 }
 
 static DECLFW(K1053_write) {
-	regData[A >>14 &1] =V;
-	if (A &0x4000) regAddr=A &0xFF;
+	regData[A >> 14 & 1] = V;
+	if (A & 0x4000)
+		regAddr = A & 0xFF;
 	K1053_sync();
 }
 
 static void K1053_reset(void) {
-	regData[0] =regData[1] =regAddr =0;
+	regData[0] = regData[1] = regAddr = 0;
 	K1053_sync();
 }
 

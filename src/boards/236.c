@@ -30,29 +30,24 @@ static SFORMAT StateRegs[] =
 	{ 0 }
 };
 
-static void Sync(void)
-{
+static void Sync(void) {
 	int prg;
 	int chr;
-	if (chrramvariant)
-	{
-		prg = reg[1] &7 | reg[0] <<3;
+	if (chrramvariant) {
+		prg = reg[1] & 7 | reg[0] << 3;
 		chr = 0;
-	}
-	else
-	{
+	} else {
 		prg = reg[1] & 0x0F;
 		chr = reg[0] & 0x0F;
 	}
-	switch (reg[1] >>4 &3)
-	{
+	switch (reg[1] >> 4 & 3) {
 		case 0:
 		case 1:
 			setprg16(0x8000, prg);
-			setprg16(0xC000, prg |7);
+			setprg16(0xC000, prg | 7);
 			break;
 		case 2:
-			setprg32(0x8000, prg >>1);
+			setprg32(0x8000, prg >> 1);
 			break;
 		case 3:
 			setprg16(0x8000, prg);
@@ -60,25 +55,22 @@ static void Sync(void)
 			break;
 	}
 	setchr8(chr);
-	setmirror((reg[0] >>5 &1) ^1);
+	setmirror((reg[0] >> 5 & 1) ^ 1);
 }
 
-static DECLFR(M236Read)
-{
-	if ((reg[1] >>4 &3) ==1)
-		return CartBR(A &~0xF | dip &0xF);
+static DECLFR(M236Read) {
+	if ((reg[1] >> 4 & 3) == 1)
+		return CartBR(A & ~0xF | dip & 0xF);
 	else
 		return CartBR(A);
 }
 
-static DECLFW(M236WriteReg)
-{
-	reg[A >>14 &1] =A &0xFF;
+static DECLFW(M236WriteReg) {
+	reg[A >> 14 & 1] = A & 0xFF;
 	Sync();
 }
 
-static void M236Power(void)
-{
+static void M236Power(void) {
 	dip = 0;
 	reg[0] = 0;
 	reg[1] = 0;
@@ -87,8 +79,7 @@ static void M236Power(void)
 	SetReadHandler(0x8000, 0xFFFF, M236Read);
 }
 
-static void M236Reset(void)
-{
+static void M236Reset(void) {
 	++dip;
 	/* Soft-reset returns to menu */
 	reg[0] = 0;
@@ -96,13 +87,11 @@ static void M236Reset(void)
 	Sync();
 }
 
-static void StateRestore(int version)
-{
+static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper236_Init(CartInfo *info)
-{
+void Mapper236_Init(CartInfo *info) {
 	info->Power = M236Power;
 	info->Reset = M236Reset;
 	AddExState(&StateRegs, ~0, 0, 0);
