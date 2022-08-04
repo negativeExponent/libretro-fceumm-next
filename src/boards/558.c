@@ -36,21 +36,21 @@ static SFORMAT StateRegs[] = {
 };
 
 static void sync() {
-	setprg32(0x8000, reg[1] << 4 | reg[0] & 0xF | (reg[3] & 0x04 ? 0x00 : 0x03));
+	setprg32(0x8000, (reg[1] << 4) | (reg[0] & 0xF) | ((reg[3] & 0x04) ? 0x00 : 0x03));
 	setprg8r(0x10, 0x6000, 0);
 	if (~reg[0] & 0x80)
 		setchr8(0);
 
 	if (haveEEPROM)
-		eeprom_93C66_write(reg[2] & 0x04, reg[2] & 0x02, reg[2] & 0x01);
+		eeprom_93C66_write((reg[2] & 0x04), (reg[2] & 0x02), (reg[2] & 0x01));
 }
 
 static void hblank(void) {
-	if (reg[0] & 0x80 &&
-	    scanline < 239) { /* Actual hardware cannot look at the current scanline number, but instead latches PA09 on
+	if ((reg[0] & 0x80) &&
+	    (scanline < 239)) { /* Actual hardware cannot look at the current scanline number, but instead latches PA09 on
 		                     PA13 rises. This does not seem possible with the current PPU emulation however. */
-		setchr4(0x0000, scanline >= 127 ? 1 : 0);
-		setchr4(0x1000, scanline >= 127 ? 1 : 0);
+		setchr4(0x0000, (scanline >= 127) ? 1 : 0);
+		setchr4(0x1000, (scanline >= 127) ? 1 : 0);
 	} else
 		setchr8(0);
 }
@@ -66,11 +66,11 @@ static DECLFW(writeReg) {
 	uint8 index = A >> 8 & 3;
 
 	/* D0 and D1 are connected to the ASIC in reverse order, so swap once */
-	V = V & ~3 | V >> 1 & 1 | V << 1 & 2;
+	V = (V & ~3) | (V >> 1 & 1) | (V << 1 & 2);
 
 	/* Swap bits of registers 0-2 again if the "swap bits" bit is set. Exclude register 2 on when PRG-ROM is 1 MiB. */
-	if (reg[3] & 0x02 && index <= (ROM_size == 64 ? 1 : 2))
-		V = V & ~3 | V >> 1 & 1 | V << 1 & 2;
+	if ((reg[3] & 0x02) && index <= (ROM_size == 64 ? 1 : 2))
+		V = (V & ~3) | (V >> 1 & 1) | (V << 1 & 2);
 
 	reg[index] = V;
 	sync();

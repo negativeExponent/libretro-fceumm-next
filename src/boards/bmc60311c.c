@@ -35,8 +35,8 @@ static SFORMAT StateRegs[] =
 
 static void Sync(void) {
 	if (reg[0] & 2) { /* UNROM */
-		setprg16(0x8000, latch & 7 | reg[1] & ~7);
-		setprg16(0xC000, 7 | reg[1] & ~7);
+		setprg16(0x8000, (latch & 7) | (reg[1] & ~7));
+		setprg16(0xC000, 7 | (reg[1] & ~7));
 	} else if (reg[0] & 1) /* NROM-256 */
 		setprg32(0x8000, reg[1] >> 1);
 	else { /* NROM-128 */

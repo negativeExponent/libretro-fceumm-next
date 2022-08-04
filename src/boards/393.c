@@ -29,14 +29,14 @@ static uint32 CHRRAMSIZE;
 static int getPRGBank(int bank) {
 	if ((~bank & 1) && (MMC3_cmd & 0x40))
 		bank ^= 2;
-	return (bank & 2) ? 0xFE | (bank & 1) : DRegBuf[6 | (bank & 1)];
+	return (bank & 2) ? (0xFE | (bank & 1)) : DRegBuf[6 | (bank & 1)];
 }
 
 static void M393CW(uint32 A, uint8 V) {
 	if (EXPREGS[0] & 8)
 		setchr8r(0x10, 0);
 	else
-		setchr1(A, V & 0xFF | EXPREGS[0] << 8);
+		setchr1(A, (V & 0xFF) | (EXPREGS[0] << 8));
 }
 
 static void M393PW(uint32 A, uint8 V) {

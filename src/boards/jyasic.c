@@ -76,35 +76,35 @@ static uint8 rev(uint8_t val) {
 }
 
 static void syncPRG(int AND, int OR) {
-	uint8_t prgLast = mode[0] & 0x04 ? prg[3] : 0xFF;
+	uint8_t prgLast = (mode[0] & 0x04) ? prg[3] : 0xFF;
 	uint8_t prg6000 = 0;
 	switch (mode[0] & 0x03) {
 		case 0:
-			setprg32(0x8000, prgLast & AND >> 2 | OR >> 2);
-			prg6000 = prg[3] << 2 | 3;
+			setprg32(0x8000, (prgLast & (AND >> 2)) | (OR >> 2));
+			prg6000 = (prg[3] << 2) | 3;
 			break;
 		case 1:
-			setprg16(0x8000, prg[1] & AND >> 1 | OR >> 1);
-			setprg16(0xC000, prgLast & AND >> 1 | OR >> 1);
-			prg6000 = prg[3] << 1 | 1;
+			setprg16(0x8000, (prg[1] & (AND >> 1)) | (OR >> 1));
+			setprg16(0xC000, (prgLast & (AND >> 1)) | (OR >> 1));
+			prg6000 = (prg[3] << 1) | 1;
 			break;
 		case 2:
-			setprg8(0x8000, prg[0] & AND | OR);
-			setprg8(0xA000, prg[1] & AND | OR);
-			setprg8(0xC000, prg[2] & AND | OR);
-			setprg8(0xE000, prgLast & AND | OR);
+			setprg8(0x8000, (prg[0] & AND) | OR);
+			setprg8(0xA000, (prg[1] & AND) | OR);
+			setprg8(0xC000, (prg[2] & AND) | OR);
+			setprg8(0xE000, (prgLast & AND) | OR);
 			prg6000 = prg[3];
 			break;
 		case 3:
-			setprg8(0x8000, rev(prg[0]) & AND | OR);
-			setprg8(0xA000, rev(prg[1]) & AND | OR);
-			setprg8(0xC000, rev(prg[2]) & AND | OR);
-			setprg8(0xE000, rev(prgLast) & AND | OR);
+			setprg8(0x8000, (rev(prg[0]) & AND) | OR);
+			setprg8(0xA000, (rev(prg[1]) & AND) | OR);
+			setprg8(0xC000, (rev(prg[2]) & AND) | OR);
+			setprg8(0xE000, (rev(prgLast) & AND) | OR);
 			prg6000 = rev(prg[3]);
 			break;
 	}
 	if (mode[0] & 0x80) /* Map ROM */
-		setprg8(0x6000, prg6000 & AND | OR);
+		setprg8(0x6000, (prg6000 & AND) | OR);
 	else if (WRAMSIZE) /* Otherwise map WRAM if it exists */
 		setprg8r(0x10, 0x6000, 0);
 }
@@ -114,24 +114,24 @@ static void syncCHR(int AND, int OR) {
 	if (mode[3] & 0x80 && (mode[0] & 0x18) == 0x08) {
 		int chrBank;
 		for (chrBank = 0; chrBank < 8; chrBank += 4)
-			setchr4(0x400 * chrBank, chr[latch[chrBank / 4] & 2 | chrBank] & AND >> 2 | OR >> 2);
+			setchr4(0x400 * chrBank, (chr[(latch[chrBank / 4] & 2) | chrBank] & (AND >> 2)) | (OR >> 2));
 	} else {
 		int chrBank;
 		switch (mode[0] & 0x18) {
 			case 0x00: /* 8 KiB CHR mode[0] */
-				setchr8(chr[0] & AND >> 3 | OR >> 3);
+				setchr8((chr[0] & (AND >> 3)) | (OR >> 3));
 				break;
 			case 0x08: /* 4 KiB CHR mode[0] */
 				for (chrBank = 0; chrBank < 8; chrBank += 4)
-					setchr4(0x400 * chrBank, chr[chrBank] & AND >> 2 | OR >> 2);
+					setchr4(0x400 * chrBank, (chr[chrBank] & (AND >> 2)) | (OR >> 2));
 				break;
 			case 0x10:
 				for (chrBank = 0; chrBank < 8; chrBank += 2)
-					setchr2(0x400 * chrBank, chr[chrBank] & AND >> 1 | OR >> 1);
+					setchr2(0x400 * chrBank, (chr[chrBank] & (AND >> 1)) | (OR >> 1));
 				break;
 			case 0x18:
 				for (chrBank = 0; chrBank < 8; chrBank += 1)
-					setchr1(0x400 * chrBank, chr[chrBank] & AND | OR);
+					setchr1(0x400 * chrBank, (chr[chrBank] & AND) | OR);
 				break;
 		}
 	}
@@ -149,10 +149,10 @@ static void syncNT(int AND, int OR) {
 			int ntBank;
 			for (ntBank = 0; ntBank < 4; ntBank++) {
 				/* Then replace with ROM nametables if such are generally enabled */
-				int vromHere = (nt[ntBank] & 0x80) ^ (mode[2] & 0x80) | (mode[0] & 0x40);
+				int vromHere = ((nt[ntBank] & 0x80) ^ (mode[2] & 0x80)) | (mode[0] & 0x40);
 				/* ROM nametables are used either when globally enabled via D000.6 or per-bank via B00x.7 vs. D002.7 */
 				if (vromHere)
-					setntamem(CHRptr[0] + 0x400 * ((nt[ntBank] & AND | OR) & CHRmask1[0]), 0, ntBank);
+					setntamem(CHRptr[0] + 0x400 * (((nt[ntBank] & AND) | OR) & CHRmask1[0]), 0, ntBank);
 			}
 		}
 	} else
@@ -197,16 +197,15 @@ static DECLFW(trapCPUWrite) {
 }
 
 static void FP_FASTAPASS(1) trapPPUAddressChange(uint32 A) {
-	if ((irqControl & 0x03) == 0x02 && lastPPUAddress != A) {
+	if (((irqControl & 0x03) == 0x02) && (lastPPUAddress != A)) {
 		int i;
 		for (i = 0; i < 2; i++)
 			clockIRQ(); /* Clock IRQ counter on PPU "reads" */
 	}
-	if (mode[3] & 0x80 && (mode[0] & 0x18) == 0x08 && ((A & 0x2FF0) == 0xFD0 || (A & 0x2FF0) == 0xFE0)) {
+	if ((mode[3] & 0x80) && ((mode[0] & 0x18) == 0x08) && (((A & 0x2FF0) == 0xFD0) || ((A & 0x2FF0) == 0xFE0))) {
 		/* If MMC4 mode[0] is enabled, and CHR mode[0] is 4 KiB, and tile FD or FE is being fetched ... */
-		latch[A >> 12 & 1] =
-		    (A >> 10 & 4) | (A >> 4 & 2); /* ... switch the left or right pattern table's latch to 0 (FD) or 2 (FE),
-		                                     being used as an offset for the CHR register index. */
+		latch[(A >> 12) & 1] = ((A >> 10) & 4) | ((A >> 4) & 2); /* switch the left or right pattern table's latch to 0 (FD) or 2 (FE),
+																  * being used as an offset for the CHR register index. */
 		sync();
 	}
 	lastPPUAddress = A;
@@ -229,7 +228,7 @@ static void FP_FASTAPASS(1) cpuCycle(int a) {
 
 static DECLFR(readALU_DIP) {
 	if ((A & 0x3FF) == 0 && A != 0x5800) /* 5000, 5400, 5C00: read solder pad setting */
-		return dipSwitch | X.DB & 0x3F;
+		return dipSwitch | (X.DB & 0x3F);
 
 	if (A & 0x800)
 		switch (A & 3) {
@@ -271,20 +270,20 @@ static DECLFW(writePRG) {
 }
 
 static DECLFW(writeCHRLow) {
-	chr[A & 7] = chr[A & 7] & 0xFF00 | V;
+	chr[A & 7] = (chr[A & 7] & 0xFF00) | V;
 	sync();
 }
 
 static DECLFW(writeCHRHigh) {
-	chr[A & 7] = chr[A & 7] & 0x00FF | V << 8;
+	chr[A & 7] = (chr[A & 7] & 0x00FF) | V << 8;
 	sync();
 }
 
 static DECLFW(writeNT) {
 	if (~A & 4)
-		nt[A & 3] = nt[A & 3] & 0xFF00 | V;
+		nt[A & 3] = (nt[A & 3] & 0xFF00) | V;
 	else
-		nt[A & 3] = nt[A & 3] & 0x00FF | V << 8;
+		nt[A & 3] = (nt[A & 3] & 0x00FF) | V << 8;
 	sync();
 }
 
@@ -424,13 +423,13 @@ void JYASIC_init(CartInfo *info) {
 }
 
 static void syncSingleCart(void) {
-	syncPRG(0x3F, mode[3] << 5 & ~0x3F);
+	syncPRG(0x3F, (mode[3] << 5) & ~0x3F);
 	if (mode[3] & 0x20) {
-		syncCHR(0x1FF, mode[3] << 6 & 0x600);
-		syncNT(0x1FF, mode[3] << 6 & 0x600);
+		syncCHR(0x1FF, (mode[3] << 6) & 0x600);
+		syncNT(0x1FF, (mode[3] << 6) & 0x600);
 	} else {
-		syncCHR(0x0FF, mode[3] << 8 & 0x100 | mode[3] << 6 & 0x600);
-		syncNT(0x0FF, mode[3] << 8 & 0x100 | mode[3] << 6 & 0x600);
+		syncCHR(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 6) & 0x600));
+		syncNT(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 6) & 0x600));
 	}
 }
 void Mapper35_Init(CartInfo *info) {
@@ -474,13 +473,13 @@ void Mapper281_Init(CartInfo *info) {
 }
 
 static void sync282(void) {
-	syncPRG(0x1F, mode[3] << 4 & ~0x1F);
+	syncPRG(0x1F, (mode[3] << 4) & ~0x1F);
 	if (mode[3] & 0x20) {
-		syncCHR(0x1FF, mode[3] << 6 & 0x600);
-		syncNT(0x1FF, mode[3] << 6 & 0x600);
+		syncCHR(0x1FF, (mode[3] << 6) & 0x600);
+		syncNT(0x1FF, (mode[3] << 6) & 0x600);
 	} else {
-		syncCHR(0x0FF, mode[3] << 8 & 0x100 | mode[3] << 6 & 0x600);
-		syncNT(0x0FF, mode[3] << 8 & 0x100 | mode[3] << 6 & 0x600);
+		syncCHR(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 6) & 0x600));
+		syncNT(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 6) & 0x600));
 	}
 }
 
@@ -505,13 +504,13 @@ void Mapper295_Init(CartInfo *info) {
 }
 
 void sync358(void) {
-	syncPRG(0x1F, mode[3] << 4 & ~0x1F);
+	syncPRG(0x1F, (mode[3] << 4) & ~0x1F);
 	if (mode[3] & 0x20) {
-		syncCHR(0x1FF, mode[3] << 7 & 0x600);
-		syncNT(0x1FF, mode[3] << 7 & 0x600);
+		syncCHR(0x1FF, (mode[3] << 7) & 0x600);
+		syncNT(0x1FF, (mode[3] << 7) & 0x600);
 	} else {
-		syncCHR(0x0FF, mode[3] << 8 & 0x100 | mode[3] << 7 & 0x600);
-		syncNT(0x0FF, mode[3] << 8 & 0x100 | mode[3] << 7 & 0x600);
+		syncCHR(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 7) & 0x600));
+		syncNT(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 7) & 0x600));
 	}
 }
 
@@ -523,13 +522,13 @@ void Mapper358_Init(CartInfo *info) {
 }
 
 void sync386(void) {
-	syncPRG(0x1F, mode[3] << 4 & 0x20 | mode[3] << 3 & 0x40);
+	syncPRG(0x1F, ((mode[3] << 4) & 0x20) | ((mode[3] << 3) & 0x40));
 	if (mode[3] & 0x20) {
-		syncCHR(0x1FF, mode[3] << 7 & 0x600);
-		syncNT(0x1FF, mode[3] << 7 & 0x600);
+		syncCHR(0x1FF, (mode[3] << 7) & 0x600);
+		syncNT(0x1FF, (mode[3] << 7) & 0x600);
 	} else {
-		syncCHR(0x0FF, mode[3] << 8 & 0x100 | mode[3] << 7 & 0x600);
-		syncNT(0x0FF, mode[3] << 8 & 0x100 | mode[3] << 7 & 0x600);
+		syncCHR(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 7) & 0x600));
+		syncNT(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 7) & 0x600));
 	}
 }
 
@@ -541,13 +540,13 @@ void Mapper386_Init(CartInfo *info) {
 }
 
 void sync387(void) {
-	syncPRG(0x0F, mode[3] << 3 & 0x10 | mode[3] << 2 & 0x20);
+	syncPRG(0x0F, ((mode[3] << 3) & 0x10) | ((mode[3] << 2) & 0x20));
 	if (mode[3] & 0x20) {
-		syncCHR(0x1FF, mode[3] << 7 & 0x600);
-		syncNT(0x1FF, mode[3] << 7 & 0x600);
+		syncCHR(0x1FF, (mode[3] << 7) & 0x600);
+		syncNT(0x1FF, (mode[3] << 7) & 0x600);
 	} else {
-		syncCHR(0x0FF, mode[3] << 8 & 0x100 | mode[3] << 7 & 0x600);
-		syncNT(0x0FF, mode[3] << 8 & 0x100 | mode[3] << 7 & 0x600);
+		syncCHR(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 7) & 0x600));
+		syncNT(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 7) & 0x600));
 	}
 }
 
@@ -559,14 +558,14 @@ void Mapper387_Init(CartInfo *info) {
 }
 
 void sync388(void) {
-	syncPRG(0x1F, mode[3] << 3 & 0x60);
+	syncPRG(0x1F, (mode[3] << 3) & 0x60);
 
 	if (mode[3] & 0x20) {
-		syncCHR(0x1FF, mode[3] << 8 & 0x200);
-		syncNT(0x1FF, mode[3] << 8 & 0x200);
+		syncCHR(0x1FF, (mode[3] << 8) & 0x200);
+		syncNT(0x1FF, (mode[3] << 8) & 0x200);
 	} else {
-		syncCHR(0x0FF, mode[3] << 8 & 0x100 | mode[3] << 8 & 0x200);
-		syncNT(0x0FF, mode[3] << 8 & 0x100 | mode[3] << 8 & 0x200);
+		syncCHR(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 8) & 0x200));
+		syncNT(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 8) & 0x200));
 	}
 }
 
@@ -578,7 +577,7 @@ void Mapper388_Init(CartInfo *info) {
 }
 
 void sync397(void) {
-	syncPRG(0x1F, mode[3] << 4 & ~0x1F);
+	syncPRG(0x1F, (mode[3] << 4) & ~0x1F);
 	syncCHR(0x7F, mode[3] << 7);
 	syncNT(0x7F, mode[3] << 7);
 }
@@ -592,11 +591,11 @@ void Mapper397_Init(CartInfo *info) {
 
 void sync421(void) {
 	if (mode[3] & 0x04)
-		syncPRG(0x3F, mode[3] << 4 & ~0x3F);
+		syncPRG(0x3F, (mode[3] << 4) & ~0x3F);
 	else
-		syncPRG(0x1F, mode[3] << 4 & ~0x1F);
-	syncCHR(0x1FF, mode[3] << 8 & 0x300);
-	syncNT(0x1FF, mode[3] << 8 & 0x300);
+		syncPRG(0x1F, (mode[3] << 4) & ~0x1F);
+	syncCHR(0x1FF, (mode[3] << 8) & 0x300);
+	syncNT(0x1FF, (mode[3] << 8) & 0x300);
 }
 
 void Mapper421_Init(CartInfo *info) {
@@ -610,35 +609,35 @@ void Mapper421_Init(CartInfo *info) {
 static uint8 HSK007Reg[4];
 void sync394(void) /* Called when J.Y. ASIC is active */
 {
-	int prgAND = HSK007Reg[3] & 0x10 ? 0x1F : 0x0F;
-	int chrAND = HSK007Reg[3] & 0x80 ? 0xFF : 0x7F;
-	int prgOR = HSK007Reg[3] << 1 & 0x010 | HSK007Reg[1] << 5 & 0x020;
-	int chrOR = HSK007Reg[3] << 1 & 0x080 | HSK007Reg[1] << 8 & 0x100;
+	int prgAND = (HSK007Reg[3] & 0x10) ? 0x1F : 0x0F;
+	int chrAND = (HSK007Reg[3] & 0x80) ? 0xFF : 0x7F;
+	int prgOR = ((HSK007Reg[3] << 1) & 0x010) | ((HSK007Reg[1] << 5) & 0x020);
+	int chrOR = ((HSK007Reg[3] << 1) & 0x080) | ((HSK007Reg[1] << 8) & 0x100);
 	syncPRG(0x1F, prgOR);
 	syncCHR(0xFF, chrOR);
 	syncNT(0xFF, chrOR);
 }
 static void Mapper394_PWrap(uint32 A, uint8 V) {
-	int prgAND = HSK007Reg[3] & 0x10 ? 0x1F : 0x0F;
-	int prgOR = HSK007Reg[3] << 1 & 0x010 | HSK007Reg[1] << 5 & 0x020;
+	int prgAND = (HSK007Reg[3] & 0x10) ? 0x1F : 0x0F;
+	int prgOR = ((HSK007Reg[3] << 1) & 0x010) | ((HSK007Reg[1] << 5) & 0x020);
 	if (HSK007Reg[1] & 0x08)
-		setprg8(A, V & prgAND | prgOR & ~prgAND);
+		setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
 	else if (A == 0x8000)
-		setprg32(A, (prgOR | HSK007Reg[3] << 1 & 0x0F) >> 2);
+		setprg32(A, (prgOR | ((HSK007Reg[3] << 1) & 0x0F)) >> 2);
 }
 static void Mapper394_CWrap(uint32 A, uint8 V) {
-	int chrAND = HSK007Reg[3] & 0x80 ? 0xFF : 0x7F;
-	int chrOR = HSK007Reg[3] << 1 & 0x080 | HSK007Reg[1] << 8 & 0x100;
-	setchr1(A, V & chrAND | chrOR & ~chrAND);
+	int chrAND = (HSK007Reg[3] & 0x80) ? 0xFF : 0x7F;
+	int chrOR = ((HSK007Reg[3] << 1) & 0x080) | ((HSK007Reg[1] << 8) & 0x100);
+	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 static DECLFW(Mapper394_Write) {
 	uint8 oldMode = HSK007Reg[1];
 	A &= 3;
 	HSK007Reg[A] = V;
 	if (A == 1) {
-		if (~oldMode & 0x10 && V & 0x10)
+		if ((~oldMode & 0x10) && (V & 0x10))
 			JYASIC_power();
-		if (oldMode & 0x10 && ~V & 0x10) {
+		if ((oldMode & 0x10) && (~V & 0x10)) {
 			JYASIC_restoreWriteHandlers();
 			GenMMC3Power();
 		}

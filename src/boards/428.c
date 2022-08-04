@@ -44,7 +44,7 @@ static void Sync(void) {
 		setprg16(0xC000, (regs[1] & 0xE0) >> 5);
 	}
 
-	setchr8(((regs[1] & 0x07) & ~mask) | regs[0] & mask);
+	setchr8(((regs[1] & 0x07) & ~mask) | (regs[0] & mask));
 
 	setmirror((regs[1] & 0x8) ? 0 : 1);
 }

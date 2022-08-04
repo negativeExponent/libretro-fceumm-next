@@ -27,17 +27,17 @@ static void Mapper294_sync(void) {
 	setprg16(0x8000, latch);
 	setprg16(0xC000, latch | 7);
 	setchr8(0);
-	setmirror(latch & 0x80 ? MI_H : MI_V);
+	setmirror((latch & 0x80) ? MI_H : MI_V);
 }
 
 static DECLFW(Mapper294_writeInnerBank) {
-	latch = latch & ~7 | V & 7;
+	latch = (latch & ~7) | (V & 7);
 	Mapper294_sync();
 }
 
 static DECLFW(Mapper294_writeOuterBank) {
 	if (A & 0x100) {
-		latch = latch & 7 | V << 3;
+		latch = (latch & 7) | V << 3;
 		Mapper294_sync();
 	}
 }

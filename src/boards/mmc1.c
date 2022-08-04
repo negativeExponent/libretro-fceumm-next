@@ -696,7 +696,7 @@ static uint8_t outerBank;
 
 static void M404PRG16(uint32 A, uint8 V) {
 	uint8 mask = outerBank & 0x40 ? 0x07 : 0x0F;
-	setprg16(A, (V & mask) | (outerBank << 3) & ~mask);
+	setprg16(A, (V & mask) | ((outerBank << 3) & ~mask));
 }
 
 static void M404CHR4(uint32 A, uint8 V) {

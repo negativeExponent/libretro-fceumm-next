@@ -40,8 +40,8 @@ static void Sync(void) {
 			setprg16(0xC000, bank);
 		}
 	} else { /* UNROM mode */
-		setprg16(0x8000, regs[1] << 1 | regs[3] & 7);
-		setprg16(0xC000, regs[1] << 1 | 7);
+		setprg16(0x8000, (regs[1] << 1) | (regs[3] & 7));
+		setprg16(0xC000, (regs[1] << 1) | 7);
 	}
 	if (regs[0] & 0x20)
 		setmirror(MI_H);

@@ -32,7 +32,7 @@ static SFORMAT K1053_state[] =
 };
 
 static void K1053_sync(void) {
-	int prg = regData[0] & 0x3F | regAddr << 4 & ~0x3F;
+	int prg = (regData[0] & 0x3F) | ((regAddr << 4) & ~0x3F);
 	int chrWritable;
 	switch (regAddr & 3) {
 		case 0:
@@ -60,7 +60,7 @@ static void K1053_sync(void) {
 	}
 	SetupCartCHRMapping(0, CHRptr[0], 0x8000, chrWritable);
 	setchr8(regData[1]);
-	setmirror(regData[0] & 0x40 ? MI_H : MI_V);
+	setmirror((regData[0] & 0x40) ? MI_H : MI_V);
 }
 
 static void K1053_restore(int version) {
@@ -68,7 +68,7 @@ static void K1053_restore(int version) {
 }
 
 static DECLFW(K1053_write) {
-	regData[A >> 14 & 1] = V;
+	regData[(A >> 14) & 1] = V;
 	if (A & 0x4000)
 		regAddr = A & 0xFF;
 	K1053_sync();

@@ -32,37 +32,37 @@ static uint8 dipSwitch;
 
 static void wrapPRG(uint32 A, uint8 V) {
 	int prgAND = (EXPREGS[0] & 0x40) ? 0x0F : 0x1F; /* 128 KiB or 256 KiB inner PRG bank selection */
-	int prgOR = (EXPREGS[0] << 4 & 0x70 | EXPREGS[0] << 3 & 0x180) & ~prgAND; /* outer PRG bank */
+	int prgOR = (((EXPREGS[0] << 4) & 0x70) | ((EXPREGS[0] << 3) & 0x180)) & ~prgAND; /* outer PRG bank */
 	switch (EXPREGS[3] & 3) {
 		case 0: /* MMC3 PRG mode */
 			break;
 		case 1:
 		case 2: /* NROM-128 mode: MMC3 register 6 applies throughout $8000-$FFFF, MMC3 A13 replaced with CPU A13. */
-			V = DRegBuf[6] & ~1 | A >> 13 & 1;
-			setprg8(A ^ 0x4000, V & prgAND | prgOR);	/* wrapPRG is only called with A containing the switchable banks, so we need to
+			V = (DRegBuf[6] & ~1) | ((A >> 13) & 1);
+			setprg8(A ^ 0x4000, (V & prgAND) | prgOR);	/* wrapPRG is only called with A containing the switchable banks, so we need to
 														manually switch the normally fixed banks in this mode as well. */
 			break;
 		case 3: /* NROM-256 mode: MMC3 register 6 applies throughout $8000-$FFFF, MMC3 A13-14 replaced with CPU A13-14. */
-			V = DRegBuf[6] & ~3 | A >> 13 & 3;
-			setprg8(A ^ 0x4000, (V ^ 2) & prgAND | prgOR);	/* wrapPRG is only called with A containing the switchable banks, so we need to manually
+			V = (DRegBuf[6] & ~3) | ((A >> 13) & 3);
+			setprg8(A ^ 0x4000, ((V ^ 2) & prgAND) | prgOR);	/* wrapPRG is only called with A containing the switchable banks, so we need to manually
 															switch the normally fixed banks in this mode as well. */
 			break;
 	}
-	setprg8(A, V & prgAND | prgOR);
+	setprg8(A, (V & prgAND) | prgOR);
 }
 
 static void wrapCHR(uint32 A, uint8 V) {
 	int chrAND = EXPREGS[0] & 0x80 ? 0x7F : 0xFF; /* 128 KiB or 256 KiB innter CHR bank selection */
 	int chrOR; /* outer CHR bank */
 	if (reverseCHR_A18_A19) /* Mapper 126 swaps CHR A18 and A19 */
-		chrOR = (EXPREGS[0] << 4 & 0x080 | EXPREGS[0] << 3 & 0x100 | EXPREGS[0] << 5 & 0x200) & ~chrAND;
+		chrOR = ((EXPREGS[0] << 4) & 0x080) | ((EXPREGS[0] << 3) & 0x100) | ((EXPREGS[0] << 5) & 0x200);
 	else
-		chrOR = EXPREGS[0] << 4 & 0x380 & ~chrAND;
+		chrOR = (EXPREGS[0] << 4) & 0x380;
 
 	if (EXPREGS[3] & 0x10) /* CNROM mode: 8 KiB inner CHR bank comes from outer bank register #2 */
-		setchr8(EXPREGS[2] & (chrAND >> 3) | chrOR >> 3);
+		setchr8((EXPREGS[2] & (chrAND >> 3)) | ((chrOR & ~chrAND) >> 3));
 	else /* MMC3 CHR mode */
-		setchr1(A, (V & chrAND) | chrOR);
+		setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 
 static DECLFW(writeWRAM) {
@@ -73,7 +73,7 @@ static DECLFW(writeWRAM) {
 		FixMMC3CHR(MMC3_cmd);
 	} else if ((A & 3) == 2) {
 		/* Lock bit set: Only update the bottom one or two bits of the CNROM bank */
-		int latchMask = EXPREGS[2] & 0x10 ? 1 : 3; /* 16 or 32 KiB inner CHR bank selection */
+		int latchMask = (EXPREGS[2] & 0x10) ? 1 : 3; /* 16 or 32 KiB inner CHR bank selection */
 		EXPREGS[2] &= ~latchMask;
 		EXPREGS[2] |= V & latchMask;
 		FixMMC3CHR(MMC3_cmd);
@@ -84,7 +84,7 @@ static DECLFW(writeWRAM) {
 static DECLFR(readDIP) {
 	uint8 result = CartBR(A);
 	if (EXPREGS[1] & 1)
-		result = result & ~3 | dipSwitch & 3; /* Replace bottom two bits with solder pad or DIP switch setting if so selected */
+		result = (result & ~3) | (dipSwitch & 3); /* Replace bottom two bits with solder pad or DIP switch setting if so selected */
 	return result;
 }
 

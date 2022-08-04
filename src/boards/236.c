@@ -34,7 +34,7 @@ static void Sync(void) {
 	int prg;
 	int chr;
 	if (chrramvariant) {
-		prg = reg[1] & 7 | reg[0] << 3;
+		prg = (reg[1] & 7) | (reg[0] << 3);
 		chr = 0;
 	} else {
 		prg = reg[1] & 0x0F;
@@ -55,18 +55,18 @@ static void Sync(void) {
 			break;
 	}
 	setchr8(chr);
-	setmirror((reg[0] >> 5 & 1) ^ 1);
+	setmirror(((reg[0] >> 5) & 1) ^ 1);
 }
 
 static DECLFR(M236Read) {
-	if ((reg[1] >> 4 & 3) == 1)
-		return CartBR(A & ~0xF | dip & 0xF);
+	if (((reg[1] >> 4) & 3) == 1)
+		return CartBR((A & ~0xF) | (dip & 0xF));
 	else
 		return CartBR(A);
 }
 
 static DECLFW(M236WriteReg) {
-	reg[A >> 14 & 1] = A & 0xFF;
+	reg[(A >> 14) & 1] = A & 0xFF;
 	Sync();
 }
 

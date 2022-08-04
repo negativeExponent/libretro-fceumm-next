@@ -30,14 +30,14 @@ static SFORMAT StateRegs[] =
 
 static void Sync(void) {
 	if (regs[0] & 0x20) { /* NROM-128 */
-		setprg16(0x8000, regs[0] >> 2 & 0x20 | regs[0] & 0x1F);
-		setprg16(0xC000, regs[0] >> 2 & 0x20 | regs[0] & 0x1F);
+		setprg16(0x8000, ((regs[0] >> 2) & 0x20) | (regs[0] & 0x1F));
+		setprg16(0xC000, ((regs[0] >> 2) & 0x20) | (regs[0] & 0x1F));
 	} else { /* UNROM */
-		setprg16(0x8000, regs[0] >> 2 & 0x20 | regs[0] | regs[1] & 7);
-		setprg16(0xC000, regs[0] >> 2 & 0x20 | regs[0] | 7);
+		setprg16(0x8000, ((regs[0] >> 2) & 0x20) | regs[0] | (regs[1] & 7));
+		setprg16(0xC000, ((regs[0] >> 2) & 0x20) | regs[0] | 7);
 	}
 	setchr8(0);
-	setmirror((regs[0] & 0x40 || regs[0] & 0x20 && regs[0] & 0x04) ? MI_H : MI_V);
+	setmirror(((regs[0] & 0x40) || ((regs[0] & 0x20) && (regs[0] & 0x04))) ? MI_H : MI_V);
 }
 
 static DECLFW(M340Write) {

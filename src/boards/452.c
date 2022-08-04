@@ -28,7 +28,7 @@ static uint32 WRAMSIZE;
 static uint8 latch[2];
 
 static void Mapper452_Sync(void) {
-	uint8 wramBank = latch[1] >> 3 & 6 | 8;
+	uint8 wramBank = ((latch[1] >> 3) & 6) | 8;
 	if (latch[1] & 2) {
 		setprg8(0x8000, latch[0] >> 1);
 		setprg8(0xA000, latch[0] >> 1);
@@ -36,17 +36,17 @@ static void Mapper452_Sync(void) {
 		setprg8(0xE000, latch[0] >> 1);
 		setprg8r(0x10, (wramBank ^ 4) << 12, 0);
 	} else if (latch[1] & 8) {
-		setprg8(0x8000, latch[0] >> 1 | 0);
-		setprg8(0xA000, latch[0] >> 1 | 1);
-		setprg8(0xC000, latch[0] >> 1 | 2);
-		setprg8(0xE000, latch[0] >> 1 | 3 | latch[1] & 4);
+		setprg8(0x8000, (latch[0] >> 1) | 0);
+		setprg8(0xA000, (latch[0] >> 1) | 1);
+		setprg8(0xC000, (latch[0] >> 1) | 2);
+		setprg8(0xE000, (latch[0] >> 1) | 3 | (latch[1] & 4));
 	} else {
 		setprg16(0x8000, latch[0] >> 2);
 		setprg16(0xC000, 0);
 	}
 	setprg8r(0x10, wramBank << 12, 0);
 	setchr8(0);
-	setmirror(latch[1] & 1 ^ 1);
+	setmirror((latch[1] & 1) ^ 1);
 }
 
 static DECLFW(Mapper452_WriteLatch) {

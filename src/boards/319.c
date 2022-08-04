@@ -35,12 +35,12 @@ static SFORMAT StateRegs[] =
 
 static void M319Sync(void) {
 	if (reg[1] & 0x40)
-		setprg32(0x8000, reg[1] >> 3 & 3);
+		setprg32(0x8000, (reg[1] >> 3) & 3);
 	else {
-		setprg16(0x8000, reg[1] >> 2 & 6 | reg[1] >> 5 & 1);
-		setprg16(0xC000, reg[1] >> 2 & 6 | reg[1] >> 5 & 1);
+		setprg16(0x8000, ((reg[1] >> 2) & 6) | ((reg[1] >> 5) & 1));
+		setprg16(0xC000, ((reg[1] >> 2) & 6) | ((reg[1] >> 5) & 1));
 	}
-	setchr8(reg[0] >> 4 & ~(reg[0] << 2 & 4) | latch << 2 & (reg[0] << 2 & 4));
+	setchr8(((reg[0] >> 4) & ~((reg[0] << 2) & 4)) | ((latch << 2) & ((reg[0] << 2) & 4)));
 	setmirror(reg[1] >> 7);
 }
 
