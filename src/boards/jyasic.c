@@ -175,19 +175,42 @@ static void syncNT(int AND, int OR) {
 
 static void clockIRQ(void) {
 	uint8_t mask = irqControl & 0x04 ? 0x07 : 0xFF;
-	if (irqEnabled)
+	bool clockIrqCounter = false;
+	uint8 prescaler = irqPrescaler & mask;
+
+	if (irqEnabled) {
 		switch (irqControl & 0xC0) {
 			case 0x40:
-				irqPrescaler = (irqPrescaler & ~mask) | (++irqPrescaler & mask);
-				if ((irqPrescaler & mask) == 0x00 && (irqControl & 0x08 ? irqCounter : ++irqCounter) == 0x00)
-					X6502_IRQBegin(FCEU_IQEXT);
+				prescaler++;
+				if((prescaler & mask) == 0) {
+					clockIrqCounter = true;
+				}
 				break;
 			case 0x80:
-				irqPrescaler = (irqPrescaler & ~mask) | (--irqPrescaler & mask);
-				if ((irqPrescaler & mask) == mask && (irqControl & 0x08 ? irqCounter : --irqCounter) == 0xFF)
-					X6502_IRQBegin(FCEU_IQEXT);
-				break;
+				if(--prescaler == 0) {
+					clockIrqCounter = true;
+				}
 		}
+
+		irqPrescaler = (irqPrescaler & ~mask) | (prescaler & mask);
+
+		if (clockIrqCounter) {
+			switch (irqControl & 0xC0) {
+				case 0x40:
+					if ((irqControl & 0x08) == 0)
+						irqCounter++;
+					if (irqCounter == 0x00)
+						X6502_IRQBegin(FCEU_IQEXT);
+					break;
+				case 0x80:
+					if ((irqControl & 0x08) == 0)
+						irqCounter--;
+					if (irqCounter == 0xFF)
+						X6502_IRQBegin(FCEU_IQEXT);
+					break;
+			}
+		}
+	}
 }
 
 static DECLFW(trapCPUWrite) {

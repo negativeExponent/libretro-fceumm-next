@@ -257,7 +257,10 @@ static void FP_FASTAPASS(1) cpuCycle(int a) {
 
 static void horizontalBlanking(void) {
 	if (~reg[0] & 2) { /* MMC3 mode */
-		MMC3_count = !MMC3_count ? MMC3_reload : --MMC3_count;
+		if (MMC3_count == 0)
+			MMC3_count = MMC3_reload;
+		else
+			MMC3_count--;
 		if (!MMC3_count && MMC3_irq)
 			X6502_IRQBegin(FCEU_IQEXT);
 	}
