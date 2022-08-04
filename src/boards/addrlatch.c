@@ -734,7 +734,7 @@ void Mapper409_Init(CartInfo *info) {
 
 /*------------------ Map 435 ---------------------------*/
 static void M435Sync(void) {
-	int p = latche >> 2 & 0x1F | latche >> 3 & 0x20 | latche >> 4 & 0x40;
+	int p = ((latche >> 2) & 0x1F) | ((latche >> 3) & 0x20) | ((latche >> 4) & 0x40);
 	if (latche & 0x200) {
 		if (latche & 0x001) {
 			setprg16(0x8000, p);

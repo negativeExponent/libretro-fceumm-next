@@ -27,24 +27,24 @@ static uint8 dip;
 
 static void Mapper443_PRGWrap(uint32 A, uint8 V) {
 	int prgAND = 0x0F;
-	int prgOR = EXPREGS[0] << 4 & 0x20 | EXPREGS[0] & 0x10;
+	int prgOR = ((EXPREGS[0] << 4) & 0x20) | (EXPREGS[0] & 0x10);
 	if (EXPREGS[0] & 0x04) {
 		if (~A & 0x4000) {
-			setprg8(A, (~EXPREGS[0] & 0x08 ? ~2 : ~0) & V & prgAND | prgOR & ~prgAND);
-			setprg8(A | 0x4000, (~EXPREGS[0] & 0x08 ? 2 : 0) | V & prgAND | prgOR & ~prgAND);
+			setprg8(A, ((((~EXPREGS[0] & 0x08) ? ~2 : ~0) & V) & prgAND) | (prgOR & ~prgAND));
+			setprg8(A | 0x4000, ((~EXPREGS[0] & 0x08) ? 2 : 0) | (V & prgAND) | (prgOR & ~prgAND));
 		}
 	} else
-		setprg8(A, V & prgAND | prgOR & ~prgAND);
+		setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
 }
 
 static void Mapper443_CHRWrap(uint32 A, uint8 V) {
 	int chrAND = 0xFF;
 	int chrOR = EXPREGS[0] << 8;
-	setchr1(A, V & chrAND | chrOR & ~chrAND);
+	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 
 static DECLFR(Mapper443_Read) {
-	return (EXPREGS[0] & 0x0C) == 0x08 ? dip : CartBR(A);
+	return (((EXPREGS[0] & 0x0C) == 0x08) ? dip : CartBR(A));
 }
 
 static DECLFW(Mapper443_Write) {

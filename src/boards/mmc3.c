@@ -496,8 +496,8 @@ static void M45CW(uint32 A, uint8 V) {
 		setchr1(A, V);
 	else {
 		int chrAND = 0xFF >> (~EXPREGS[2] & 0xF);
-		int chrOR = EXPREGS[0] | EXPREGS[2] << 4 & 0xF00;
-		setchr1(A, V & chrAND | chrOR & ~chrAND);
+		int chrOR = EXPREGS[0] | ((EXPREGS[2] << 4) & 0xF00);
+		setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 	}
 }
 
@@ -507,15 +507,15 @@ static DECLFR(M45ReadOB) {
 
 static void M45PW(uint32 A, uint8 V) {
 	int prgAND = ~EXPREGS[3] & 0x3F;
-	int prgOR = EXPREGS[1] | EXPREGS[2] << 2 & 0x300;
-	setprg8(A, V & prgAND | prgOR & ~prgAND);
+	int prgOR = EXPREGS[1] | ((EXPREGS[2] << 2) & 0x300);
+	setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
 
 	/* Some multicarts select between five different menus by connecting one of the higher address lines to PRG /CE.
 	   The menu code selects between menus by checking which of the higher address lines disables PRG-ROM when set. */
-	if (PRGsize[0] < 0x200000 && EXPREGS[5] == 1 && EXPREGS[1] & 0x80 ||
-	    PRGsize[0] < 0x200000 && EXPREGS[5] == 2 && EXPREGS[2] & 0x40 ||
-	    PRGsize[0] < 0x100000 && EXPREGS[5] == 3 && EXPREGS[1] & 0x40 ||
-	    PRGsize[0] < 0x100000 && EXPREGS[5] == 4 && EXPREGS[2] & 0x20)
+	if ((PRGsize[0] < 0x200000 && EXPREGS[5] == 1 && (EXPREGS[1] & 0x80)) ||
+	    (PRGsize[0] < 0x200000 && EXPREGS[5] == 2 && (EXPREGS[2] & 0x40)) ||
+	    (PRGsize[0] < 0x100000 && EXPREGS[5] == 3 && (EXPREGS[1] & 0x40)) ||
+	    (PRGsize[0] < 0x100000 && EXPREGS[5] == 4 && (EXPREGS[2] & 0x20)))
 		SetReadHandler(0x8000, 0xFFFF, M45ReadOB);
 	else
 		SetReadHandler(0x8000, 0xFFFF, CartBR);
@@ -1095,7 +1095,7 @@ static void M196PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(Mapper196Write) {
-	A = A & 0xF000 | (!!(A & 0xE) ^ (A & 1));
+	A = (A & 0xF000) | (!!(A & 0xE) ^ (A & 1));
 	if (A >= 0xC000)
 		MMC3_IRQWrite(A, V);
 	else

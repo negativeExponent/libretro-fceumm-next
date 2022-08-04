@@ -26,13 +26,13 @@
 
 static void Mapper436_PWrap(uint32 A, uint8 V) {
 	if (EXPREGS[0] & 0x01)
-		setprg8(A, V & 0x0F | EXPREGS[0] >> 2 & 0x30);
+		setprg8(A, (V & 0x0F) | ((EXPREGS[0] >> 2) & 0x30));
 	else if (A == 0x8000)
 		setprg32(A, (EXPREGS[0] >> 4));
 }
 
 static void Mapper436_CWrap(uint32 A, uint8 V) {
-	setchr1(A, V & 0x7F | EXPREGS[0] << 1 & ~0x7F);
+	setchr1(A, (V & 0x7F) | ((EXPREGS[0] << 1) & ~0x7F));
 }
 
 static DECLFW(Mapper436_Write) {

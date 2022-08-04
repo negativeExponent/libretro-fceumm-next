@@ -73,28 +73,28 @@ static void sync() {
 		} else /* NROM-256 */
 			setprg32r(chip, 0x8000, prgOR >> 2);
 	} else if (~reg[0] & 0x02) { /* MMC3 mode */
-		setprg8r(chip, 0x8000 ^ (MMC3_index << 8 & 0x4000), MMC3_reg[6] & prgAND | prgOR & ~prgAND);
-		setprg8r(chip, 0xA000,                              MMC3_reg[7] & prgAND | prgOR & ~prgAND);
-		setprg8r(chip, 0xC000 ^ (MMC3_index << 8 & 0x4000),        0xFE & prgAND | prgOR & ~prgAND);
-		setprg8r(chip, 0xE000,                                     0xFF & prgAND | prgOR & ~prgAND);
+		setprg8r(chip, 0x8000 ^ (MMC3_index << 8 & 0x4000), (MMC3_reg[6] & prgAND) | (prgOR & ~prgAND));
+		setprg8r(chip, 0xA000,                              (MMC3_reg[7] & prgAND) | (prgOR & ~prgAND));
+		setprg8r(chip, 0xC000 ^ (MMC3_index << 8 & 0x4000), (       0xFE & prgAND) | (prgOR & ~prgAND));
+		setprg8r(chip, 0xE000,                              (       0xFF & prgAND) | (prgOR & ~prgAND));
 	} else if (reg[0] & 0x01) { /* VRC4 mode */
-		setprg8r(chip, 0x8000 ^ (VRC4_misc << 13 & 0x4000), VRC4_prg[0] & prgAND | prgOR & ~prgAND);
-		setprg8r(chip, 0xA000,                              VRC4_prg[1] & prgAND | prgOR & ~prgAND);
-		setprg8r(chip, 0xC000 ^ (VRC4_misc << 13 & 0x4000),        0xFE & prgAND | prgOR & ~prgAND);
-		setprg8r(chip, 0xE000,                                     0xFF & prgAND | prgOR & ~prgAND);
+		setprg8r(chip, 0x8000 ^ (VRC4_misc << 13 & 0x4000), (VRC4_prg[0] & prgAND) | (prgOR & ~prgAND));
+		setprg8r(chip, 0xA000,                              (VRC4_prg[1] & prgAND) | (prgOR & ~prgAND));
+		setprg8r(chip, 0xC000 ^ (VRC4_misc << 13 & 0x4000), (       0xFE & prgAND) | (prgOR & ~prgAND));
+		setprg8r(chip, 0xE000,                              (       0xFF & prgAND) | (prgOR & ~prgAND));
 	} else { /* MMC1 mode */
 		prgAND >>= 1;
 		prgOR >>= 1;
 		if (MMC1_reg[0] & 0x8) { /* 16 KiB mode */
 			if (MMC1_reg[0] & 0x04) { /* OR logic */
-				setprg16r(chip, 0x8000, MMC1_reg[3] & prgAND | prgOR & ~prgAND);
-				setprg16r(chip, 0xC000,        0xFF & prgAND | prgOR & ~prgAND);
+				setprg16r(chip, 0x8000, (MMC1_reg[3] & prgAND) | (prgOR & ~prgAND));
+				setprg16r(chip, 0xC000, (       0xFF & prgAND) | (prgOR & ~prgAND));
 			} else { /* AND logic */
-				setprg16r(chip, 0x8000,        0x00 & prgAND | prgOR & ~prgAND);
-				setprg16r(chip, 0xC000, MMC1_reg[3] & prgAND | prgOR & ~prgAND);
+				setprg16r(chip, 0x8000, (       0x00 & prgAND) | (prgOR & ~prgAND));
+				setprg16r(chip, 0xC000, (MMC1_reg[3] & prgAND) | (prgOR & ~prgAND));
 			}
 		} else
-			setprg32(0x8000, (MMC1_reg[3] & prgAND | prgOR & ~prgAND) >> 1);
+			setprg32(0x8000, ((MMC1_reg[3] & prgAND) | (prgOR & ~prgAND)) >> 1);
 	}
 
 	chrAND = reg[2] & 0x10 ? 0x1F : reg[2] & 0x20 ? 0x7F : 0xFF;
@@ -104,39 +104,39 @@ static void sync() {
 	else if (reg[2] & 0x40) /* CNROM mode */
 		setchr8(chrOR >> 3);
 	else if (~reg[0] & 0x02) { /* MMC3 mode */
-		setchr1(0x0000 ^ (MMC3_index << 5 & 0x1000), (MMC3_reg[0] & 0xFE) & chrAND | chrOR & ~chrAND);
-		setchr1(0x0400 ^ (MMC3_index << 5 & 0x1000), (MMC3_reg[0] | 0x01) & chrAND | chrOR & ~chrAND);
-		setchr1(0x0800 ^ (MMC3_index << 5 & 0x1000), (MMC3_reg[1] & 0xFE) & chrAND | chrOR & ~chrAND);
-		setchr1(0x0C00 ^ (MMC3_index << 5 & 0x1000), (MMC3_reg[1] | 0x01) & chrAND | chrOR & ~chrAND);
-		setchr1(0x1000 ^ (MMC3_index << 5 & 0x1000),          MMC3_reg[2] & chrAND | chrOR & ~chrAND);
-		setchr1(0x1400 ^ (MMC3_index << 5 & 0x1000),          MMC3_reg[3] & chrAND | chrOR & ~chrAND);
-		setchr1(0x1800 ^ (MMC3_index << 5 & 0x1000),          MMC3_reg[4] & chrAND | chrOR & ~chrAND);
-		setchr1(0x1C00 ^ (MMC3_index << 5 & 0x1000),          MMC3_reg[5] & chrAND | chrOR & ~chrAND);
+		setchr1(0x0000 ^ (MMC3_index << 5 & 0x1000), ((MMC3_reg[0] & 0xFE) & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x0400 ^ (MMC3_index << 5 & 0x1000), ((MMC3_reg[0] | 0x01) & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x0800 ^ (MMC3_index << 5 & 0x1000), ((MMC3_reg[1] & 0xFE) & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x0C00 ^ (MMC3_index << 5 & 0x1000), ((MMC3_reg[1] | 0x01) & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x1000 ^ (MMC3_index << 5 & 0x1000), (         MMC3_reg[2] & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x1400 ^ (MMC3_index << 5 & 0x1000), (         MMC3_reg[3] & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x1800 ^ (MMC3_index << 5 & 0x1000), (         MMC3_reg[4] & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x1C00 ^ (MMC3_index << 5 & 0x1000), (         MMC3_reg[5] & chrAND) | (chrOR & ~chrAND));
 	} else if (reg[0] & 0x01) { /* VRC4 mode */
-		setchr1(0x0000, VRC4_chr[0] & chrAND | chrOR & ~chrAND);
-		setchr1(0x0400, VRC4_chr[1] & chrAND | chrOR & ~chrAND);
-		setchr1(0x0800, VRC4_chr[2] & chrAND | chrOR & ~chrAND);
-		setchr1(0x0C00, VRC4_chr[3] & chrAND | chrOR & ~chrAND);
-		setchr1(0x1000, VRC4_chr[4] & chrAND | chrOR & ~chrAND);
-		setchr1(0x1400, VRC4_chr[5] & chrAND | chrOR & ~chrAND);
-		setchr1(0x1800, VRC4_chr[6] & chrAND | chrOR & ~chrAND);
-		setchr1(0x1C00, VRC4_chr[7] & chrAND | chrOR & ~chrAND);
+		setchr1(0x0000, (VRC4_chr[0] & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x0400, (VRC4_chr[1] & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x0800, (VRC4_chr[2] & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x0C00, (VRC4_chr[3] & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x1000, (VRC4_chr[4] & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x1400, (VRC4_chr[5] & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x1800, (VRC4_chr[6] & chrAND) | (chrOR & ~chrAND));
+		setchr1(0x1C00, (VRC4_chr[7] & chrAND) | (chrOR & ~chrAND));
 	} else { /* MMC1 mode */
 		chrAND >>= 2;
 		chrOR >>= 2;
 		if (MMC1_reg[0] & 0x10) { /* 4 KiB mode */
-			setchr4(0x0000, MMC1_reg[1] & chrAND | chrOR & ~chrAND);
-			setchr4(0x1000, MMC1_reg[2] & chrAND | chrOR & ~chrAND);
+			setchr4(0x0000, (MMC1_reg[1] & chrAND) | (chrOR & ~chrAND));
+			setchr4(0x1000, (MMC1_reg[2] & chrAND) | (chrOR & ~chrAND));
 		} else /* 8 KiB mode */
-			setchr8((MMC1_reg[1] & chrAND | chrOR & ~chrAND) >> 1);
+			setchr8(((MMC1_reg[1] & chrAND) | (chrOR & ~chrAND)) >> 1);
 	}
 
 	if (~reg[0] & 0x02) /* MMC3 mode */
-		setmirror(MMC3_mirroring & 1 ^ 1);
+		setmirror((MMC3_mirroring & 1) ^ 1);
 	else if (reg[0] & 0x01) /* VRC4 mode */
-		setmirror(VRC4_mirroring & 3 ^ (VRC4_mirroring & 2 ? 0 : 1));
+		setmirror((VRC4_mirroring & 3) ^ (VRC4_mirroring & 2 ? 0 : 1));
 	else /* MMC1 mode */
-		setmirror(MMC1_reg[0] & 3 ^ 3);
+		setmirror((MMC1_reg[0] & 3) ^ 3);
 }
 
 static DECLFW(writeMMC3) {
@@ -192,7 +192,7 @@ static DECLFW(writeMMC1) {
 
 static DECLFW(writeVRC4) {
 	uint8 index;
-	A = A & 0xF000 | (A & 0x800 ? ((A & 8 ? 1 : 0) | (A & 4 ? 2 : 0)) : ((A & 4 ? 1 : 0) | (A & 8 ? 2 : 0)));
+	A = (A & 0xF000) | (A & 0x800 ? ((A & 8 ? 1 : 0) | (A & 4 ? 2 : 0)) : ((A & 4 ? 1 : 0) | (A & 8 ? 2 : 0)));
 	switch (A & 0xF000) {
 		case 0x8000:
 		case 0xA000:
@@ -209,10 +209,10 @@ static DECLFW(writeVRC4) {
 		case 0xF000:
 			switch (A & 3) {
 				case 0:
-					VRCIRQ_latch = VRCIRQ_latch & 0xF0 | V & 0x0F;
+					VRCIRQ_latch = (VRCIRQ_latch & 0xF0) | (V & 0x0F);
 					break;
 				case 1:
-					VRCIRQ_latch = VRCIRQ_latch & 0x0F | V << 4;
+					VRCIRQ_latch = (VRCIRQ_latch & 0x0F) | V << 4;
 					break;
 				case 2:
 					VRCIRQ_mode = V;
@@ -223,17 +223,17 @@ static DECLFW(writeVRC4) {
 					X6502_IRQEnd(FCEU_IQEXT);
 					break;
 				case 3:
-					VRCIRQ_mode = VRCIRQ_mode & ~0x02 | VRCIRQ_mode << 1 & 0x02;
+					VRCIRQ_mode = (VRCIRQ_mode & ~0x02) | (VRCIRQ_mode << 1 & 0x02);
 					X6502_IRQEnd(FCEU_IQEXT);
 					break;
 			}
 			break;
 		default:
-			index = (A - 0xB000) >> 11 | A >> 1 & 1;
+			index = (A - 0xB000) >> 11 | (A >> 1 & 1);
 			if (A & 1)
-				VRC4_chr[index] = VRC4_chr[index] & 0x0F | V << 4;
+				VRC4_chr[index] = (VRC4_chr[index] & 0x0F) | V << 4;
 			else
-				VRC4_chr[index] = VRC4_chr[index] & ~0x0F | V & 0x0F;
+				VRC4_chr[index] = (VRC4_chr[index] & ~0x0F) | (V & 0x0F);
 			sync();
 			break;
 	}

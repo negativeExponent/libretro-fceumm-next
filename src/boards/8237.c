@@ -121,7 +121,7 @@ static void UNL8237PW(uint32 A, uint8 V) {
 }
 
 static DECLFR(UNL8237ProtRead) {
-	return protarray[EXPREGS[3]][A & 7] & 0x0F | 0x50;
+	return (protarray[EXPREGS[3]][A & 7] & 0x0F) | 0x50;
 }
 
 static DECLFW(UNL8237Write) {

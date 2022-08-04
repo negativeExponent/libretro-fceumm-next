@@ -33,7 +33,7 @@ static int32 IRQCount;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
-static uint8 is2kbank, dbzParty, isYoko;
+static uint8 is2kbank, dbzParty;
 
 static SFORMAT StateRegs[] =
 {
@@ -87,20 +87,20 @@ static void M83Sync(void) {
 			setchr1(x << 10, reg[x] | ((bank & 0x30) << 4));
 	}
 	setprg8r(0x10, 0x6000, 0);
-	switch (mode >>3 &3) {
+	switch ((mode >> 3) & 3) {
 		case 0:
 			setprg16(0x8000, bank);
-			setprg16(0xC000, bank |0x0F);
+			setprg16(0xC000, bank | 0x0F);
 			break;
 		case 1:
-			setprg32(0x8000, bank >>1);
+			setprg32(0x8000, bank >> 1);
 			break;
 		case 2:
 		case 3:
-			setprg8(0x8000, bank <<1 &~0x1F | reg[8] &0x1F);
-			setprg8(0xA000, bank <<1 &~0x1F | reg[9] &0x1F);
-			setprg8(0xC000, bank <<1 &~0x1F | reg[10]&0x1F);
-			setprg8(0xE000, bank <<1 &~0x1F |         0x1F);
+			setprg8(0x8000, ((bank << 1) & ~0x1F) | (reg[8] & 0x1F));
+			setprg8(0xA000, ((bank << 1) & ~0x1F) | (reg[9] & 0x1F));
+			setprg8(0xC000, ((bank << 1) & ~0x1F) | (reg[10] & 0x1F));
+			setprg8(0xE000, ((bank << 1) & ~0x1F) | 0x1F);
 			break;
 	}
 }
@@ -231,15 +231,15 @@ void Mapper83_Init(CartInfo *info) {
 	GameStateRestore = M83StateRestore;
 
 	if (info->iNES2) {
-		is2kbank =info->submapper ==1;
-		dbzParty =info->submapper ==2;
+		is2kbank = info->submapper == 1;
+		dbzParty = info->submapper == 2;
 	} else {
-		is2kbank = info->CHRRomSize ==512*1024;
-		dbzParty = info->PRGRomSize ==1024*1024;
+		is2kbank = info->CHRRomSize == (512 * 1024);
+		dbzParty = info->PRGRomSize == (1024 * 1024);
 	}
 	if (dbzParty) {
 		WRAMSIZE = 8192;
-		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}

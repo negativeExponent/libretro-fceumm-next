@@ -22,20 +22,20 @@
 
 static void Mapper467_PRGWrap(uint32 A, uint8 V) {
 	if (EXPREGS[0] & 0x20) {
-		int prgAND = EXPREGS[0] & 0x40 ? 0x0F : 0x03;
-		int prgOR = EXPREGS[0] << 1 & 0x3C | 0x40;
-		setprg8(A, V & prgAND | prgOR & ~prgAND);
+		int prgAND = (EXPREGS[0] & 0x40) ? 0x0F : 0x03;
+		int prgOR = ((EXPREGS[0] << 1) & 0x3C) | 0x40;
+		setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
 	} else if (~A & 0x2000)
 		setprg16(A, EXPREGS[0] & 0x1F);
 }
 
 static void Mapper467_CHRWrap(uint32 A, uint8 V) {
 	if (~A & 0x0800) {
-		A = A & ~0x400 | A << 1 & 0x800;
+		A = (A & ~0x400) | ((A << 1) & 0x800);
 		if (EXPREGS[0] & 0x40)
 			setchr2(A, V | 0x100);
 		else
-			setchr2(A, V & ~3 | A >> 11 & 3);
+			setchr2(A, (V & ~3) | ((A >> 11) & 3));
 	}
 }
 

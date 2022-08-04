@@ -141,33 +141,32 @@ static void SyncCHR(void) {
 		                                 the outer bank or from the MMC3. */
 
 		if (MMC3_EXTENDED) {
-			cwrap(cbase ^ 0x0000, mmc3_regs[0] & mask | outer);
-			cwrap(cbase ^ 0x0400, mmc3_regs[10] & mask | outer);
-			cwrap(cbase ^ 0x0800, mmc3_regs[1] & mask | outer);
-			cwrap(cbase ^ 0x0c00, mmc3_regs[11] & mask | outer);
+			cwrap(cbase ^ 0x0000, (mmc3_regs[0]  & mask) | outer);
+			cwrap(cbase ^ 0x0400, (mmc3_regs[10] & mask) | outer);
+			cwrap(cbase ^ 0x0800, (mmc3_regs[1]  & mask) | outer);
+			cwrap(cbase ^ 0x0c00, (mmc3_regs[11] & mask) | outer);
 
-			cwrap(cbase ^ 0x1000, mmc3_regs[2] & mask | outer);
-			cwrap(cbase ^ 0x1400, mmc3_regs[3] & mask | outer);
-			cwrap(cbase ^ 0x1800, mmc3_regs[4] & mask | outer);
-			cwrap(cbase ^ 0x1c00, mmc3_regs[5] & mask | outer);
+			cwrap(cbase ^ 0x1000, (mmc3_regs[2] & mask) | outer);
+			cwrap(cbase ^ 0x1400, (mmc3_regs[3] & mask) | outer);
+			cwrap(cbase ^ 0x1800, (mmc3_regs[4] & mask) | outer);
+			cwrap(cbase ^ 0x1c00, (mmc3_regs[5] & mask) | outer);
 		} else {
-			cwrap(cbase ^ 0x0000, (mmc3_regs[0] & 0xFE) & mask | outer);
-			cwrap(cbase ^ 0x0400, (mmc3_regs[0] | 0x01) & mask | outer);
-			cwrap(cbase ^ 0x0800, (mmc3_regs[1] & 0xFE) & mask | outer);
-			cwrap(cbase ^ 0x0C00, (mmc3_regs[1] | 0x01) & mask | outer);
+			cwrap(cbase ^ 0x0000, ((mmc3_regs[0] & 0xFE) & mask) | outer);
+			cwrap(cbase ^ 0x0400, ((mmc3_regs[0] | 0x01) & mask) | outer);
+			cwrap(cbase ^ 0x0800, ((mmc3_regs[1] & 0xFE) & mask) | outer);
+			cwrap(cbase ^ 0x0C00, ((mmc3_regs[1] | 0x01) & mask) | outer);
 
-			cwrap(cbase ^ 0x1000, mmc3_regs[2] & mask | outer);
-			cwrap(cbase ^ 0x1400, mmc3_regs[3] & mask | outer);
-			cwrap(cbase ^ 0x1800, mmc3_regs[4] & mask | outer);
-			cwrap(cbase ^ 0x1c00, mmc3_regs[5] & mask | outer);
+			cwrap(cbase ^ 0x1000, (mmc3_regs[2] & mask) | outer);
+			cwrap(cbase ^ 0x1400, (mmc3_regs[3] & mask) | outer);
+			cwrap(cbase ^ 0x1800, (mmc3_regs[4] & mask) | outer);
+			cwrap(cbase ^ 0x1c00, (mmc3_regs[5] & mask) | outer);
 		}
 	}
 }
 
 static void SyncPRG(void) {
-	uint32 mask =
-	    0x3F >> PRG_MODE; /* For PRG modes 0-2, the mode# decides how many bits of the inner 8 KiB bank are used. This
-	                         is greatly relevant to map the correct bank that contains the reset vectors. */
+	uint32 mask = 0x3F >> PRG_MODE;	/* For PRG modes 0-2, the mode# decides how many bits of the inner 8 KiB bank are used. This
+									is greatly relevant to map the correct bank that contains the reset vectors. */
 	uint32 prg_base = fk23_regs[1] & 0x7F; /* The bits for the first 2 MiB are the same between all the variants. */
 	switch (subType) {
 		case 1: /* FK-xxx */
@@ -175,8 +174,8 @@ static void SyncPRG(void) {
 				mask = 0xFF; /* Mode 0 allows the MMC3 to address 2 MiB rather than the usual 512 KiB. */
 			break;
 		case 2: /* FS005 */
-			prg_base |= fk23_regs[0] << 4 & 0x080 | fk23_regs[0] << 1 & 0x100 | fk23_regs[2] << 3 & 0x600 |
-			    fk23_regs[2] << 6 & 0x800;
+			prg_base |= ((fk23_regs[0] << 4) & 0x080) | ((fk23_regs[0] << 1) & 0x100) | ((fk23_regs[2] << 3) & 0x600) |
+			    ((fk23_regs[2] << 6) & 0x800);
 			break;
 		case 3: /* JX9003B */
 			if (PRG_MODE == 0)
@@ -184,10 +183,10 @@ static void SyncPRG(void) {
 			prg_base |= fk23_regs[5] << 7;
 			break;
 		case 4: /* GameStar Smart Genius Deluxe */
-			prg_base |= fk23_regs[2] & 0x80;
+			prg_base |= (fk23_regs[2] & 0x80);
 			break;
 		case 5: /* HST-162 */
-			prg_base = prg_base & 0x1F | fk23_regs[5] << 5;
+			prg_base = (prg_base & 0x1F) | (fk23_regs[5] << 5);
 			break;
 	}
 
@@ -202,15 +201,15 @@ static void SyncPRG(void) {
 			                                       the outer bank or from the MMC3.  */
 
 			if (MMC3_EXTENDED) {
-				setprg8(0x8000 ^ cbase, mmc3_regs[6] & mask | prg_base);
-				setprg8(0xA000,         mmc3_regs[7] & mask | prg_base);
-				setprg8(0xC000 ^ cbase, mmc3_regs[8] & mask | prg_base);
-				setprg8(0xE000,         mmc3_regs[9] & mask | prg_base);
+				setprg8(0x8000 ^ cbase, (mmc3_regs[6] & mask) | prg_base);
+				setprg8(0xA000,         (mmc3_regs[7] & mask) | prg_base);
+				setprg8(0xC000 ^ cbase, (mmc3_regs[8] & mask) | prg_base);
+				setprg8(0xE000,         (mmc3_regs[9] & mask) | prg_base);
 			} else {
 				setprg8(0x8000 ^ cbase, (mmc3_regs[6] & mask) | prg_base);
 				setprg8(0xA000,         (mmc3_regs[7] & mask) | prg_base);
 				setprg8(0xC000 ^ cbase, (0xFE         & mask) | prg_base);
-            setprg8(0xE000,         (0xFF         & mask) | prg_base);
+				setprg8(0xE000,         (0xFF         & mask) | prg_base);
 			}
 			break;
 		}
@@ -222,7 +221,7 @@ static void SyncPRG(void) {
 			setprg32(0x8000, (prg_base >> 1));
 			break;
 		case 5: /* UNROM */
-			setprg16(0x8000, latch & 0x07 | prg_base & ~0x07);
+			setprg16(0x8000, (latch & 0x07) | (prg_base & ~0x07));
 			setprg16(0xC000, 0x07 | prg_base);
 			break;
 	}
@@ -506,11 +505,11 @@ void Mapper176_Init(CartInfo *info) { /* .NES file */
 
 			/* Distinguishing subType 1 from subType 0 is important for the correct reset vector location.
 			   It is safe to assume subType 1 except for the following-sized ROMs. */
-			subType = (ROM_size == 128 && VROM_size == 256 || /* 2048+2048 */
-			           ROM_size == 128 && VROM_size == 128 || /* 2048+1024 */
-			           ROM_size == 128 && VROM_size == 64 || /* 2048+512 */
-			           ROM_size == 128 && VROM_size == 0 || /* 2048+0 */
-			           ROM_size == 64 && VROM_size == 64) ? /* 1024+512 */
+			subType = ((ROM_size == 128 && VROM_size == 256) || /* 2048+2048 */
+			           (ROM_size == 128 && VROM_size == 128) || /* 2048+1024 */
+			           (ROM_size == 128 && VROM_size == 64) || /* 2048+512 */
+			           (ROM_size == 128 && VROM_size == 0) || /* 2048+0 */
+			           (ROM_size == 64 && VROM_size == 64)) ? /* 1024+512 */
                 0 : 1;
 
 			/* Detect heuristically whether the address mask should be changed on every soft reset */

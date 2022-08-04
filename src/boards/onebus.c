@@ -217,7 +217,7 @@ static DECLFW(UNLOneBusWriteMMC3) {
 	/*	FCEU_printf("MMC %04x:%04x\n",A,V); */
 	switch (A & 0xe001) {
 		case 0x8000:
-			V = V & 0xF8 | mmc3Mangle[submapper][V & 0x07];
+			V = (V & 0xF8) | mmc3Mangle[submapper][V & 0x07];
 			mmc3cmd = (mmc3cmd & 0x38) | (V & 0xc7);
 			Sync();
 			break;

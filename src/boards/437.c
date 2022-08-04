@@ -29,16 +29,16 @@ static void Mapper437_Sync(void) {
 	setprg16(0x8000, latch);
 	setprg16(0xC000, latch | 7);
 	setchr8(0);
-	setmirror(latch >> 6 & 1 ^ 1);
+	setmirror(((latch >> 6) & 1) ^ 1);
 }
 
 static DECLFW(Mapper437_WriteOuterBank) {
-	latch = latch & 7 | A << 3;
+	latch = (latch & 7) | (A << 3);
 	Mapper437_Sync();
 }
 
 static DECLFW(Mapper437_WriteInnerBank) {
-	latch = latch & ~7 | V & CartBR(A) & 7;
+	latch = (latch & ~7) | ((V & CartBR(A)) & 7);
 	Mapper437_Sync();
 }
 

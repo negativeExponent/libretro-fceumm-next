@@ -33,7 +33,7 @@ static void Mapper438_Sync(void) {
 		setprg16(0xC000, latch[0] >> 1);
 	}
 	setchr8(latch[1] >> 1);
-	setmirror(latch[1] & 1 ^ 1);
+	setmirror((latch[1] & 1) ^ 1);
 }
 
 static DECLFW(Mapper438_WriteLatch) {

@@ -547,7 +547,7 @@ static void BMCA65ASSync(void) {
 			setprg16(0xC000, ((latche & 0x30) >> 1) | 7);
 		} else {
 			setprg16(0x8000, latche & 0x0F);
-			setprg16(0xC000, latche & 0x0F | 7);
+			setprg16(0xC000, (latche & 0x0F) | 7);
 		}
 	}
 	setchr8(0);

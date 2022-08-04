@@ -39,7 +39,7 @@ static void Sync(void) {
 			setprg16(0xC000, bank | 7);
 			break;
 		case 1:
-			setprg16(0x8000, bank | block & 0xFE);
+			setprg16(0x8000, bank | (block & 0xFE));
 			setprg16(0xC000, bank | 7);
 			break;
 		case 2: /* NROM-128 */

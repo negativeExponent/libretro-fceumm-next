@@ -29,21 +29,21 @@ static uint8 pads;
 static uint8 dip;
 
 static void Mapper444_PRGWrap(uint32 A, uint8 V) {
-	int prgAND = pads & 4 && EXPREGS[0] & 0x02 ? 0x1F : 0x0F;
+	int prgAND = ((pads & 4) && (EXPREGS[0] & 0x02)) ? 0x1F : 0x0F;
 	int prgOR = EXPREGS[0] << 4;
 	if (EXPREGS[0] & 0x04) {
 		if (~A & 0x4000) {
-			setprg8(A, (~EXPREGS[0] & 0x08 ? ~2 : ~0) & V & prgAND | prgOR & ~prgAND);
-			setprg8(A | 0x4000, (~EXPREGS[0] & 0x08 ? 2 : 0) | V & prgAND | prgOR & ~prgAND);
+			setprg8(A, ((((~EXPREGS[0] & 0x08) ? ~2 : ~0) & V) & prgAND) | (prgOR & ~prgAND));
+			setprg8(A | 0x4000, ((~EXPREGS[0] & 0x08) ? 2 : 0) | (V & prgAND) | (prgOR & ~prgAND));
 		}
 	} else
-		setprg8(A, V & prgAND | prgOR & ~prgAND);
+		setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
 }
 
 static void Mapper444_CHRWrap(uint32 A, uint8 V) {
-	int chrAND = pads & 1 ? 0xFF : 0x7F;
-	int chrOR = EXPREGS[0] << 7 & (pads & 1 ? 0x00 : 0x80) | EXPREGS[0] << (pads & 2 ? 4 : 7) & 0x100;
-	setchr1(A, V & chrAND | chrOR & ~chrAND);
+	int chrAND = (pads & 1) ? 0xFF : 0x7F;
+	int chrOR = ((EXPREGS[0] << 7) & ((pads & 1) ? 0x00 : 0x80)) | ((EXPREGS[0] << ((pads & 2) ? 4 : 7)) & 0x100);
+	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 
 static DECLFR(Mapper444_Read) {
