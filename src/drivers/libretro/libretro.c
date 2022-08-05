@@ -47,17 +47,22 @@
 #define MAX_PORTS 2   /* max controller ports,
                        * port 0 for player 1/3, port 1 for player 2/4 */
 
-#define RETRO_DEVICE_AUTO        RETRO_DEVICE_JOYPAD
-#define RETRO_DEVICE_GAMEPAD     RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
-#define RETRO_DEVICE_ZAPPER      RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  0)
-#define RETRO_DEVICE_ARKANOID    RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  1)
+#define DEVICE_AUTO        RETRO_DEVICE_JOYPAD
+#define DEVICE_GAMEPAD     RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 0)
+#define DEVICE_HYPERSHOT   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 1)
+#define DEVICE_4PLAYER     RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
+#define DEVICE_POWERPADA   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 3)
+#define DEVICE_POWERPADB   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 4)
+#define DEVICE_FTRAINERA   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 5)
+#define DEVICE_FTRAINERB   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 6)
+#define DEVICE_QUIZKING    RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 7)
+#define DEVICE_SNESGAMEPAD RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 8)
+#define DEVICE_VIRTUALBOY  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 9)
 
-#define RETRO_DEVICE_FC_ARKANOID RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  2)
-#define RETRO_DEVICE_FC_OEKAKIDS RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  3)
-#define RETRO_DEVICE_FC_SHADOW   RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  4)
-#define RETRO_DEVICE_FC_4PLAYERS RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 2)
-#define RETRO_DEVICE_FC_HYPERSHOT RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 3)
-#define RETRO_DEVICE_FC_AUTO     RETRO_DEVICE_JOYPAD
+#define DEVICE_ZAPPER      RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  0)
+#define DEVICE_ARKANOID    RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  1)
+#define DEVICE_OEKAKIDS    RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  2)
+#define DEVICE_SHADOW      RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  3)
 
 #define NES_WIDTH   256
 #define NES_HEIGHT  240
@@ -121,7 +126,6 @@ static const keymap turbomap[] = {
 static const keymap bindmap[] = {
    { RETRO_DEVICE_ID_JOYPAD_A, JOY_A },
    { RETRO_DEVICE_ID_JOYPAD_B, JOY_B },
-   { RETRO_DEVICE_ID_JOYPAD_L3, JOY_A | JOY_B },
    { RETRO_DEVICE_ID_JOYPAD_SELECT, JOY_SELECT },
    { RETRO_DEVICE_ID_JOYPAD_START, JOY_START },
    { RETRO_DEVICE_ID_JOYPAD_UP, JOY_UP },
@@ -133,6 +137,7 @@ static const keymap bindmap[] = {
 typedef struct {
    bool enable_4player;                /* four-score / 4-player adapter used */
    bool up_down_allowed;               /* disabled simultaneous up+down and left+right dpad combinations */
+   bool needs_update;
 
    /* turbo related */
    uint32_t turbo_enabler[MAX_PLAYERS];
@@ -142,8 +147,12 @@ typedef struct {
 
    /* input data */
    uint32_t JSReturn;                  /* player input data, 1 byte per player (1-4) */
+   uint32_t JoyButtons[2];
    uint32_t MouseData[MAX_PORTS][3];   /* nes mouse data */
    uint32_t FamicomData[3];            /* Famicom expansion port data */
+   uint32_t PowerPadData[2];           /* NES Power Pad data */
+   uint32_t FTrainerData;              /* Expansion: Family Trainer Data */
+   uint8_t QuizKingData;               /* Expansion: Quiz King Data */
 } NES_INPUT_T;
 
 static NES_INPUT_T nes_input = { 0 };
@@ -1033,158 +1042,336 @@ void retro_set_input_state(retro_input_state_t cb)
    input_cb = cb;
 }
 
-static void update_nes_controllers(unsigned port, unsigned device)
+static void addDesc(struct retro_input_descriptor *p, unsigned port, unsigned id, const char *description)
 {
-   nes_input.type[port] = device;
+   p->port = port;
+   p->device = RETRO_DEVICE_JOYPAD;
+   p->index = 0;
+   p->id = id;
+   p->description = description;
+}
 
-   if (port < 4)
+static void update_input_descriptors(void)
+{
+   struct retro_input_descriptor desc[128] = { 0 };
+
+   int i, port;
+
+   for (i = 0, port = 0; port < 5; port++)
    {
-      switch (device)
+      if (nes_input.type[port] == DEVICE_GAMEPAD || nes_input.type[port] == RETRO_DEVICE_JOYPAD || nes_input.type[port] == DEVICE_SNESGAMEPAD)
       {
-      case RETRO_DEVICE_NONE:
-         FCEUI_SetInput(port, SI_NONE, &Dummy, 0);
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" );
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" );
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" );
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" );
+         if(nes_input.type[port] == DEVICE_SNESGAMEPAD) {
+            addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_A, "A");
+            addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_B, "B");
+            addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_X, "X");
+            addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_Y, "Y");
+            addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_L, "L");
+            addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_R, "R");
+         }
+         else
+         {
+            addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_B, "B" );
+            addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_A, "A" );
+            addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_X, "Turbo A" );
+            addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_Y, "Turbo B" );
+         }
+
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" );
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_START,  "Start" );
+
+         if (port == 0)
+         {
+            addDesc(&desc[i++], 0, RETRO_DEVICE_ID_JOYPAD_L,      "(FDS) Disk Side Change" );
+            addDesc(&desc[i++], 0, RETRO_DEVICE_ID_JOYPAD_R,      "(FDS) Insert/Eject Disk" );
+            addDesc(&desc[i++], 0, RETRO_DEVICE_ID_JOYPAD_R2,     "(VS) Insert Coin" );
+            addDesc(&desc[i++], 0, RETRO_DEVICE_ID_JOYPAD_L3,     "(Famicom) Microphone (P2)" );
+
+            if (palette_switch_enabled)
+               addDesc(&desc[i++], 0, RETRO_DEVICE_ID_JOYPAD_L2,  "Switch Palette (+ Left/Right)" );
+         }
+      }
+      else if (nes_input.type[port] == DEVICE_FTRAINERA || nes_input.type[port] == DEVICE_FTRAINERB ||
+         nes_input.type[port] == DEVICE_POWERPADA || nes_input.type[port] == DEVICE_POWERPADB)
+      {
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_B,      "B1");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_A,      "B2");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_Y,      "B3");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_X,      "B4");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_L,      "B5");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_R,      "B6");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_LEFT,   "B7");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "B8");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_UP,     "B9");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_DOWN,   "B10");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_SELECT, "B11");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_START,  "B12");
+      }
+      else if (nes_input.type[port] == DEVICE_QUIZKING)
+      {
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_B, "B1");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_A, "B2");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_Y, "B3");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_X, "B4");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_L, "B5");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_R, "B6");
+      }
+      else if(nes_input.type[port] == DEVICE_VIRTUALBOY)
+      {
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_B,      "Right D-Pad Down");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_Y,      "Right D-Pad Left");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_START,  "Start");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_UP,     "Left D-Pad Up");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_DOWN,   "Left D-Pad Down");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_LEFT,   "Left D-Pad Left");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "Left D-Pad Right");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_A,      "Right D-Pad Right");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_X,      "Right D-Pad Up");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_L,      "Left Trigger");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_R,      "Right Trigger");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_L2,     "B");
+         addDesc(&desc[i++], port, RETRO_DEVICE_ID_JOYPAD_R2,     "A");
+      }
+   }
+
+   environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
+}
+
+static void set_input(unsigned port)
+{
+   int type;
+   int attrib;
+   void *inputDPtr;
+
+   if (port <= 1)
+   {
+      type = 0;
+      attrib = 0;
+      inputDPtr = 0;
+
+      switch(nes_input.type[port])
+      {
+         case RETRO_DEVICE_NONE:
+            type = SI_UNSET;
+            inputDPtr = &Dummy;
+            FCEU_printf(" Player %u: None Connected\n", port + 1);
+            break;
+         case RETRO_DEVICE_JOYPAD:
+         case DEVICE_GAMEPAD:
+            type = SI_GAMEPAD;
+            inputDPtr = &nes_input.JSReturn;
+            FCEU_printf(" Player %u: Standard Gamepad\n", port + 1);
+            break;
+         case DEVICE_ARKANOID:
+            type = SI_ARKANOID;
+            inputDPtr = &nes_input.MouseData[port];
+            FCEU_printf(" Player %u: Arkanoid\n", port + 1);
+            break;
+         case DEVICE_ZAPPER:
+            type = SI_ZAPPER;
+            attrib = 1;
+            inputDPtr = &nes_input.MouseData[port];
+            FCEU_printf(" Player %u: Zapper\n", port + 1);
+            break;
+         case DEVICE_POWERPADA:
+         case DEVICE_POWERPADB:
+            type = SI_POWERPADA ? (SI_POWERPADA) : (SI_POWERPADB);
+            inputDPtr = &nes_input.PowerPadData[port];
+            FCEU_printf(" Player %u: Power Pad %s\n", port + 1, SI_POWERPADA ? "A" : "B");
+            break;
+         case DEVICE_SNESGAMEPAD:
+            type = SI_SNES_GAMEPAD;
+            inputDPtr = &nes_input.JoyButtons[port];
+            FCEU_printf(" Player %u: SNES Gamepad\n", port + 1);
+            break;
+         case DEVICE_VIRTUALBOY:
+            type = SI_VIRTUALBOY;
+            inputDPtr = &nes_input.JoyButtons[port];
+            FCEU_printf(" Player %u: Virtual Boy Controller\n", port + 1);
+            break;
+      }
+
+      FCEUI_SetInput(port, type, inputDPtr, attrib);
+   }
+   else if (port <= 3)
+   {
+      /* nes_input.type[port] = device;*/
+      if (nes_input.type[port] == DEVICE_GAMEPAD)
+         FCEU_printf(" Player %u: Standard Gamepad\n", port + 1);
+      else
          FCEU_printf(" Player %u: None Connected\n", port + 1);
-         break;
-      case RETRO_DEVICE_ZAPPER:
-         FCEUI_SetInput(port, SI_ZAPPER, nes_input.MouseData[port], 1);
-         FCEU_printf(" Player %u: Zapper\n", port + 1);
-         break;
-      case RETRO_DEVICE_ARKANOID:
-         FCEUI_SetInput(port, SI_ARKANOID, nes_input.MouseData[port], 0);
-         FCEU_printf(" Player %u: Arkanoid\n", port + 1);
-         break;
-      case RETRO_DEVICE_GAMEPAD:
-      default:
-         nes_input.type[port] = RETRO_DEVICE_GAMEPAD;
-         FCEUI_SetInput(port, SI_GAMEPAD, &nes_input.JSReturn, 0);
-         FCEU_printf(" Player %u: Gamepad\n", port + 1);
-         break;
-      }
    }
-
-   if (port == 4)
+   else
    {
-      switch (device)
+      /* famicom expansion port */
+      type = 0;
+      attrib = 0;
+      inputDPtr = 0;
+
+      switch (nes_input.type[4])
       {
-      case RETRO_DEVICE_FC_ARKANOID:
-         FCEUI_SetInputFC(SIFC_ARKANOID, nes_input.FamicomData, 0);
-         FCEU_printf(" Famicom Expansion: Arkanoid\n");
-         break;
-      case RETRO_DEVICE_FC_SHADOW:
-         FCEUI_SetInputFC(SIFC_SHADOW, nes_input.FamicomData, 1);
-         FCEU_printf(" Famicom Expansion: (Bandai) Hyper Shot\n");
-         break;
-      case RETRO_DEVICE_FC_OEKAKIDS:
-         FCEUI_SetInputFC(SIFC_OEKAKIDS, nes_input.FamicomData, 1);
-         FCEU_printf(" Famicom Expansion: Oeka Kids Tablet\n");
-         break;
-      case RETRO_DEVICE_FC_4PLAYERS:
-         FCEUI_SetInputFC(SIFC_4PLAYER, &nes_input.JSReturn, 0);
-         FCEU_printf(" Famicom Expansion: Famicom 4-Player Adapter\n");
-         break;
-      case RETRO_DEVICE_FC_HYPERSHOT:
-         FCEUI_SetInputFC(SIFC_HYPERSHOT, nes_input.FamicomData, 0);
-         FCEU_printf(" Famicom Expansion: Konami Hyper Shot\n");
-         break;
-      case RETRO_DEVICE_NONE:
-      default:
-         FCEUI_SetInputFC(SIFC_NONE, &Dummy, 0);
-         FCEU_printf(" Famicom Expansion: None Connected\n");
-         break;
+         case DEVICE_ARKANOID:
+            type = SIFC_ARKANOID;
+            inputDPtr = nes_input.FamicomData;
+            FCEU_printf(" Famicom Expansion: Arkanoid\n");
+            break;
+         case DEVICE_SHADOW:
+            type = SIFC_SHADOW;
+            inputDPtr = nes_input.FamicomData;
+            attrib = 1;
+            FCEU_printf(" Famicom Expansion: (Bandai) Hyper Shot\n");
+            break;
+         case DEVICE_OEKAKIDS:
+            type = SIFC_OEKAKIDS;
+            inputDPtr = nes_input.FamicomData;
+            attrib = 1;
+            FCEU_printf(" Famicom Expansion: Oeka Kids Tablet\n");
+            break;
+         case DEVICE_4PLAYER:
+            type = SIFC_4PLAYER;
+            inputDPtr = &nes_input.JSReturn;
+            FCEU_printf(" Famicom Expansion: Famicom 4-Player Adapter\n");
+            break;
+         case DEVICE_HYPERSHOT:
+            type = SIFC_HYPERSHOT;
+            inputDPtr = nes_input.FamicomData;
+            FCEU_printf(" Famicom Expansion: Konami Hyper Shot\n");
+            break;
+         case DEVICE_FTRAINERA:
+         case DEVICE_FTRAINERB:
+            type = SIFC_FTRAINERA ? (DEVICE_FTRAINERA) : (DEVICE_FTRAINERB);
+            inputDPtr = &nes_input.FTrainerData;
+            FCEU_printf(" Famicom Expansion: Family Trainer %s\n", SIFC_FTRAINERA ? "A" : "B");
+            break;
+         case DEVICE_QUIZKING:
+            type = SIFC_QUIZKING;
+            inputDPtr = &nes_input.QuizKingData;
+            FCEU_printf(" Famicom Expansion: Quiz King\n");
+            break;
+         case RETRO_DEVICE_NONE:
+         default:
+            type = SIFC_NONE, 
+            inputDPtr = &Dummy;
+            FCEU_printf(" Famicom Expansion: None Connected\n");
+            break;
       }
-   }
-}
 
-static unsigned nes_to_libretro(int d)
-{
-   switch(d)
-   {
-   case SI_UNSET:
-   case SI_GAMEPAD:
-      return RETRO_DEVICE_GAMEPAD;
-   case SI_NONE:
-      return RETRO_DEVICE_NONE;
-   case SI_ZAPPER:
-      return RETRO_DEVICE_ZAPPER;
-   case SI_ARKANOID:
-      return RETRO_DEVICE_ARKANOID;
+      FCEUI_SetInputFC(type, inputDPtr, attrib);
    }
 
-   return (RETRO_DEVICE_GAMEPAD);
-}
+   if (nes_input.type[4] != DEVICE_4PLAYER && (nes_input.type[2] == DEVICE_GAMEPAD || nes_input.type[3] == DEVICE_GAMEPAD))
+      FCEUI_DisableFourScore(0);
+   else
+      FCEUI_DisableFourScore(1);
 
-static unsigned fc_to_libretro(int d)
-{
-   switch(d)
-   {
-   case SIFC_UNSET:
-   case SIFC_NONE:
-      return RETRO_DEVICE_NONE;
-   case SIFC_ARKANOID:
-      return RETRO_DEVICE_FC_ARKANOID;
-   case SIFC_SHADOW:
-      return RETRO_DEVICE_FC_SHADOW;
-   case SIFC_OEKAKIDS:
-      return RETRO_DEVICE_FC_OEKAKIDS;
-   case SIFC_4PLAYER:
-      return RETRO_DEVICE_FC_4PLAYERS;
-   case SIFC_HYPERSHOT:
-      return RETRO_DEVICE_FC_HYPERSHOT;
-   }
-
-   return (RETRO_DEVICE_NONE);
+   /* check if famicom 4player adapter is used */
+   if (nes_input.type[4] == DEVICE_4PLAYER)
+      FCEUI_DisableFourScore(1);
 }
 
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
-   if (port < 5)
+   if (port >= 5)
+      return;
+   
+   if (device == DEVICE_AUTO)
    {
-      if (port < 2) /* player 1-2 */
+      if (port <= 1)
       {
-         if (device != RETRO_DEVICE_AUTO)
-            update_nes_controllers(port, device);
-         else
-            update_nes_controllers(port, nes_to_libretro(GameInfo->input[port]));
+         switch (GameInfo->input[port])
+         {
+            case SI_GAMEPAD:
+               nes_input.type[port] = DEVICE_GAMEPAD;
+               break;
+            case SI_ZAPPER:
+               nes_input.type[port] = DEVICE_ZAPPER;
+               break;
+            case SI_ARKANOID:
+               nes_input.type[port] = DEVICE_ARKANOID;
+               break;
+            case SI_POWERPADA:
+               nes_input.type[port] = DEVICE_POWERPADA;
+               break;
+            case SI_POWERPADB:
+               nes_input.type[port] = DEVICE_POWERPADB;
+               break;
+            case SI_SNES_GAMEPAD:
+               nes_input.type[port] = DEVICE_SNESGAMEPAD;
+               break;
+            case SI_VIRTUALBOY:
+               nes_input.type[port] = DEVICE_VIRTUALBOY;
+               break;
+            default:
+            case SI_UNSET:
+            case SI_NONE:
+            case SI_MOUSE:
+               /* unsupported devices */
+               nes_input.type[port] = DEVICE_GAMEPAD;
+               break;
+         }
+      }
+      else if (port <= 3)
+      {
+         nes_input.type[port] = RETRO_DEVICE_NONE;
+
+         if (nes_input.enable_4player || nes_input.type[4] == DEVICE_4PLAYER)
+         {
+            nes_input.type[port] = DEVICE_GAMEPAD;
+         }
       }
       else
       {
-         if (port < 4) /* player 3-4 */
+         /* famicom expansion port */
+         switch (GameInfo->inputfc)
          {
-            /* This section automatically enables 4players support
-             * when player 3 or 4 used */
-
-            nes_input.type[port] = RETRO_DEVICE_NONE;
-
-            if (device == RETRO_DEVICE_AUTO)
-            {
-               if (nes_input.enable_4player)
-                  nes_input.type[port] = RETRO_DEVICE_GAMEPAD;
-            }
-            else if (device == RETRO_DEVICE_GAMEPAD)
-               nes_input.type[port] = RETRO_DEVICE_GAMEPAD;
-
-            FCEU_printf(" Player %u: %s\n", port + 1,
-               (nes_input.type[port] == RETRO_DEVICE_NONE) ? "None Connected" : "Gamepad");
+            case SIFC_UNSET:
+            case SIFC_NONE:
+               nes_input.type[4] = RETRO_DEVICE_NONE;
+               break;
+            case SIFC_ARKANOID:
+               nes_input.type[4] = DEVICE_ARKANOID;
+               break;
+            case SIFC_SHADOW:
+               nes_input.type[4] = DEVICE_SHADOW;
+               break;
+            case SIFC_4PLAYER:
+               nes_input.type[4] = DEVICE_4PLAYER;
+               break;
+            case SIFC_HYPERSHOT:
+               nes_input.type[4] = DEVICE_HYPERSHOT;
+               break;
+            case SIFC_OEKAKIDS:
+               nes_input.type[4] = DEVICE_OEKAKIDS;
+               break;
+            case SIFC_FTRAINERA:
+               nes_input.type[4] = DEVICE_FTRAINERA;
+               break;
+            case SIFC_FTRAINERB:
+               nes_input.type[4] = DEVICE_FTRAINERB;
+               break;
+            case SIFC_QUIZKING:
+               nes_input.type[4] = DEVICE_QUIZKING;
+               break;
+            default:
+               /* unsupported input device */
+               nes_input.type[4] = RETRO_DEVICE_NONE;
+               break;
          }
-         else /* do famicom controllers here */
-         {
-            if (device != RETRO_DEVICE_FC_AUTO)
-               update_nes_controllers(4, device);
-            else
-               update_nes_controllers(4, fc_to_libretro(GameInfo->inputfc));
-         }
-
-         if (nes_input.type[2] == RETRO_DEVICE_GAMEPAD
-         || nes_input.type[3] == RETRO_DEVICE_GAMEPAD)
-            FCEUI_DisableFourScore(0);
-         else
-            FCEUI_DisableFourScore(1);
-
-         /* check if famicom 4player adapter is used */
-         if (nes_input.type[4] == RETRO_DEVICE_FC_4PLAYERS)
-            FCEUI_DisableFourScore(1);
       }
    }
+   else
+   {
+      nes_input.type[port] = device;
+   }
+
+   set_input(port);
+
+   nes_input.needs_update = true;
 }
 
 /* Core options 'update display' callback */
@@ -1390,48 +1577,60 @@ void retro_set_environment(retro_environment_t cb)
    struct retro_vfs_interface_info vfs_iface_info;
 
    static const struct retro_controller_description pads1[] = {
-      { "Auto",    RETRO_DEVICE_AUTO },
-      { "Gamepad", RETRO_DEVICE_GAMEPAD },
-      { "Zapper",  RETRO_DEVICE_ZAPPER },
+      { "Auto",         DEVICE_AUTO },
+      { "Gamepad",      DEVICE_GAMEPAD },
+      { "Arkanoid",     DEVICE_ARKANOID },
+      { "Zapper",       DEVICE_ZAPPER },
+      { "Power Pad A",  DEVICE_POWERPADA },
+      { "Power Pad B",  DEVICE_POWERPADB },
+      { "SNES Gamepad", DEVICE_SNESGAMEPAD },
+      { "Virtual Boy",  DEVICE_VIRTUALBOY },
       { 0, 0 },
    };
 
    static const struct retro_controller_description pads2[] = {
-      { "Auto",     RETRO_DEVICE_AUTO },
-      { "Gamepad",  RETRO_DEVICE_GAMEPAD },
-      { "Arkanoid", RETRO_DEVICE_ARKANOID },
-      { "Zapper",   RETRO_DEVICE_ZAPPER },
+      { "Auto",         DEVICE_AUTO },
+      { "Gamepad",      DEVICE_GAMEPAD },
+      { "Arkanoid",     DEVICE_ARKANOID },
+      { "Zapper",       DEVICE_ZAPPER },
+      { "Power Pad A",  DEVICE_POWERPADA },
+      { "Power Pad B",  DEVICE_POWERPADB },
+      { "SNES Gamepad", DEVICE_SNESGAMEPAD },
+      { "Virtual Boy",  DEVICE_VIRTUALBOY },
       { 0, 0 },
    };
 
    static const struct retro_controller_description pads3[] = {
-      { "Auto",     RETRO_DEVICE_AUTO },
-      { "Gamepad",  RETRO_DEVICE_GAMEPAD },
+      { "Auto",     DEVICE_AUTO },
+      { "Gamepad",  DEVICE_GAMEPAD },
       { 0, 0 },
    };
 
    static const struct retro_controller_description pads4[] = {
-      { "Auto",     RETRO_DEVICE_AUTO },
-      { "Gamepad",  RETRO_DEVICE_GAMEPAD },
+      { "Auto",     DEVICE_AUTO },
+      { "Gamepad",  DEVICE_GAMEPAD },
       { 0, 0 },
    };
 
    static const struct retro_controller_description pads5[] = {
-      { "Auto",                  RETRO_DEVICE_FC_AUTO },
-      { "Arkanoid",              RETRO_DEVICE_FC_ARKANOID },
-      { "(Bandai) Hyper Shot",   RETRO_DEVICE_FC_SHADOW },
-      { "(Konami) Hyper Shot",   RETRO_DEVICE_FC_HYPERSHOT },
-      { "Oeka Kids Tablet",      RETRO_DEVICE_FC_OEKAKIDS },
-      { "4-Player Adapter",      RETRO_DEVICE_FC_4PLAYERS },
+      { "Auto",                  DEVICE_AUTO },
+      { "Arkanoid",              DEVICE_ARKANOID },
+      { "Bandai Hyper Shot",     DEVICE_SHADOW },
+      { "Konami Hyper Shot",     DEVICE_HYPERSHOT },
+      { "Oeka Kids Tablet",      DEVICE_OEKAKIDS },
+      { "4-Player Adapter",      DEVICE_4PLAYER },
+      { "Family Trainer A",      DEVICE_FTRAINERA },
+      { "Family Trainer B",      DEVICE_FTRAINERB },
+      { "Quiz King",             DEVICE_QUIZKING },
       { 0, 0 },
    };
 
    static const struct retro_controller_info ports[] = {
-      { pads1, 3 },
-      { pads2, 4 },
+      { pads1, 8 },
+      { pads2, 8 },
       { pads3, 2 },
       { pads4, 2 },
-      { pads5, 6 },
+      { pads5, 9 },
       { 0, 0 },
    };
 
@@ -2034,6 +2233,78 @@ static void check_variables(bool startup)
    update_option_visibility();
 }
 
+static const unsigned powerpad_map[] = {
+   RETRO_DEVICE_ID_JOYPAD_B,
+   RETRO_DEVICE_ID_JOYPAD_A,
+   RETRO_DEVICE_ID_JOYPAD_Y,
+   RETRO_DEVICE_ID_JOYPAD_X,
+   RETRO_DEVICE_ID_JOYPAD_L,
+   RETRO_DEVICE_ID_JOYPAD_R,
+   RETRO_DEVICE_ID_JOYPAD_LEFT,
+   RETRO_DEVICE_ID_JOYPAD_RIGHT,
+   RETRO_DEVICE_ID_JOYPAD_UP,
+   RETRO_DEVICE_ID_JOYPAD_DOWN,
+   RETRO_DEVICE_ID_JOYPAD_SELECT,
+   RETRO_DEVICE_ID_JOYPAD_START
+};
+
+static const unsigned ftrainer_map[] = {
+   RETRO_DEVICE_ID_JOYPAD_B,
+   RETRO_DEVICE_ID_JOYPAD_A,
+   RETRO_DEVICE_ID_JOYPAD_Y,
+   RETRO_DEVICE_ID_JOYPAD_X,
+   RETRO_DEVICE_ID_JOYPAD_L,
+   RETRO_DEVICE_ID_JOYPAD_R,
+   RETRO_DEVICE_ID_JOYPAD_LEFT,
+   RETRO_DEVICE_ID_JOYPAD_RIGHT,
+   RETRO_DEVICE_ID_JOYPAD_UP,
+   RETRO_DEVICE_ID_JOYPAD_DOWN,
+   RETRO_DEVICE_ID_JOYPAD_SELECT,
+   RETRO_DEVICE_ID_JOYPAD_START
+};
+
+static const unsigned quizking_map[] = {
+   RETRO_DEVICE_ID_JOYPAD_B,
+   RETRO_DEVICE_ID_JOYPAD_A,
+   RETRO_DEVICE_ID_JOYPAD_Y,
+   RETRO_DEVICE_ID_JOYPAD_X,
+   RETRO_DEVICE_ID_JOYPAD_L,
+   RETRO_DEVICE_ID_JOYPAD_R
+};
+
+static uint32 update_PowerPad(int w)
+{
+   int x;
+   uint32 r = 0;
+
+   for (x = 0; x < 12; x++)
+      r |= input_cb(w, RETRO_DEVICE_JOYPAD, 0, powerpad_map[x]) ? (1 << x) : 0;
+
+   return r;
+}
+
+static void update_FTrainer(void)
+{
+   int x;
+   uint32 r = 0;
+
+   for (x = 0; x < 12; x++)
+      r |= input_cb(4, RETRO_DEVICE_JOYPAD, 0, ftrainer_map[x]) ? (1 << x) : 0;
+
+   nes_input.FTrainerData = r;
+}
+
+static void update_QuizKing(void)
+{
+   int x;
+   uint8 r = 0;
+
+   for (x = 0; x < 6; x++)
+      r |= input_cb(4, RETRO_DEVICE_JOYPAD, 0, quizking_map[x]) ? (1 << x) : 0;
+
+   nes_input.QuizKingData = r;
+}
+
 static int mzx = 0, mzy = 0;
 
 void get_mouse_input(unsigned port, uint32_t *zapdata)
@@ -2146,81 +2417,69 @@ static void FCEUD_UpdateInput(void)
    {
       int i              = 0;
       uint8_t input_buf  = 0;
-      int player_enabled = (nes_input.type[player] == RETRO_DEVICE_GAMEPAD) ||
+      int player_enabled = (nes_input.type[player] == DEVICE_GAMEPAD) ||
             (nes_input.type[player] == RETRO_DEVICE_JOYPAD);
 
       if (player_enabled)
       {
-         int16_t ret;
+         int16_t ret = 0;
+         bool dpad_enabled = true;
+         static int last_pressed_keys = 0;
 
          if (libretro_supports_bitmasks)
          {
-            bool dpad_enabled = true;
-
             ret = input_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
-
-            /* If palette switching is enabled, check if
-             * player 1 has the L2 button held down */
-            if ((player == 0) &&
-                palette_switch_enabled &&
-                (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L2)))
-            {
-               /* D-Pad left/right are used to switch palettes */
-               palette_prev = (bool)(ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT));
-               palette_next = (bool)(ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT));
-
-               /* Regular D-Pad input is disabled */
-               dpad_enabled = false;
-            }
-
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_A))
-               input_buf |= JOY_A;
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B))
-               input_buf |= JOY_B;
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L3))
-               input_buf |= JOY_A | JOY_B;
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
-               input_buf |= JOY_SELECT;
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
-               input_buf |= JOY_START;
-
-            if (dpad_enabled)
-            {
-               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_UP))
-                  input_buf |= JOY_UP;
-               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_DOWN))
-                  input_buf |= JOY_DOWN;
-               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT))
-                  input_buf |= JOY_LEFT;
-               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT))
-                  input_buf |= JOY_RIGHT;
-            }
          }
          else
          {
-            for (i = 0; i < MAX_BUTTONS; i++)
-               input_buf |= input_cb(player, RETRO_DEVICE_JOYPAD, 0,
-                     bindmap[i].retro) ? bindmap[i].nes : 0;
+            for (i = 0; i <= RETRO_DEVICE_ID_JOYPAD_R3; i++)
+               ret |= input_cb(player, RETRO_DEVICE_JOYPAD, 0, i) ? (1 << i) : 0;
+         }
 
-            /* If palette switching is enabled, check if
-             * player 1 has the L2 button held down */
-            if ((player == 0) &&
-                palette_switch_enabled &&
-                input_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2))
-            {
-               /* D-Pad left/right are used to switch palettes */
-               palette_prev = (bool)(input_buf & JOY_LEFT);
-               palette_next = (bool)(input_buf & JOY_RIGHT);
+         /* If palette switching is enabled, check if
+          * player 1 has the L2 button held down */
+         if ((player == 0) &&
+             palette_switch_enabled &&
+                (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L2)))
+         {
+            /* D-Pad left/right are used to switch palettes */
+            palette_prev = (bool)(ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT));
+            palette_next = (bool)(ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT));
 
-               /* Regular D-Pad input is disabled */
-               input_buf &= ~(JOY_UP | JOY_DOWN | JOY_LEFT | JOY_RIGHT);
-            }
+            /* Regular D-Pad input is disabled */
+            dpad_enabled = false;
+         }
+
+         if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_A))
+            input_buf |= JOY_A;
+         if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B))
+            input_buf |= JOY_B;
+         if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
+            input_buf |= JOY_SELECT;
+         if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
+            input_buf |= JOY_START;
+
+         if (dpad_enabled)
+         {
+            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_UP))
+               input_buf |= JOY_UP;
+            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_DOWN))
+               input_buf |= JOY_DOWN;
+            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT))
+               input_buf |= JOY_LEFT;
+            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT))
+               input_buf |= JOY_RIGHT;
+         }
+
+         if (player == 0)
+         {
+            if (!(last_pressed_keys & (1 << RETRO_DEVICE_ID_JOYPAD_L3)) && (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L3)))
+               replaceP2StartWithMicrophone = !replaceP2StartWithMicrophone;
+            last_pressed_keys = ret;
          }
 
          /* Turbo A and Turbo B buttons are
           * mapped to Joypad X and Joypad Y
-          * in RetroArch joypad.
-          * Turbo A+B button is mapped to R3
           * in RetroArch joypad.
           *
           * We achieve this by keeping track of
@@ -2242,7 +2501,7 @@ static void FCEUD_UpdateInput(void)
             /* Handle Turbo A, B & A+B buttons */
             for (i = 0; i < TURBO_BUTTONS; i++)
             {
-               if (input_cb(player, RETRO_DEVICE_JOYPAD, 0, turbomap[i].retro) || input_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3))
+               if (input_cb(player, RETRO_DEVICE_JOYPAD, 0, turbomap[i].retro))
                {
                   if (!turbo_button_toggle[player][i])
                      input_buf |= turbomap[i].nes;
@@ -2270,24 +2529,103 @@ static void FCEUD_UpdateInput(void)
    /* other inputs*/
    for (port = 0; port < MAX_PORTS; port++)
    {
-      switch (nes_input.type[port])
+      int x;
+      int device = nes_input.type[port];
+
+      switch (device)
       {
-         case RETRO_DEVICE_ARKANOID:
-         case RETRO_DEVICE_ZAPPER:
+         case DEVICE_ARKANOID:
+         case DEVICE_ZAPPER:
             get_mouse_input(port, nes_input.MouseData[port]);
             break;
+         case DEVICE_POWERPADA:
+         case DEVICE_POWERPADB:
+            nes_input.PowerPadData[port] = update_PowerPad(port);
+            break;
+         case DEVICE_SNESGAMEPAD:
+         case DEVICE_VIRTUALBOY:
+         {
+            int i;
+            int ret = 0;
+            nes_input.JoyButtons[port] = 0;
+            for (i = 0; i <= RETRO_DEVICE_ID_JOYPAD_R3; i++)
+               ret |= input_cb(port, RETRO_DEVICE_JOYPAD, 0, i) ? (1 << i) : 0;
+
+            nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_UP)) ? JOY_UP : 0;
+            nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_DOWN)) ? JOY_DOWN : 0;
+            nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT)) ? JOY_LEFT : 0;
+            nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT)) ? JOY_RIGHT : 0;
+
+            if (!nes_input.up_down_allowed)
+            {
+               if ((nes_input.JoyButtons[port] & JOY_UP) && (nes_input.JoyButtons[port] & JOY_DOWN))
+                  nes_input.JoyButtons[port] &= ~(JOY_UP | JOY_DOWN);
+               if ((nes_input.JoyButtons[port] & JOY_LEFT) && (nes_input.JoyButtons[port] & JOY_RIGHT))
+                  nes_input.JoyButtons[port] &= ~(JOY_LEFT | JOY_RIGHT);
+            }
+
+            if (nes_input.type[port] == DEVICE_SNESGAMEPAD)
+            {
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B)) ? (1 << 0) : 0;
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_Y)) ? (1 << 1) : 0;
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_A)) ? (1 << 8) : 0;
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_X)) ? (1 << 9) : 0;
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L)) ? (1 << 10) : 0;
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R)) ? (1 << 11) : 0;
+            }
+            else if (nes_input.type[port] == DEVICE_VIRTUALBOY)
+            {
+               #define RIGHT_DPAD_DOWN    (1 << 0)
+               #define RIGHT_DPAD_LEFT    (1 << 1)
+               #define RIGHT_DPAD_RIGHT   (1 << 8)
+               #define RIGHT_DPAD_UP      (1 << 9)
+
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B)) ? (1 << 0) : 0;     /* Right D-pad Down */
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_Y)) ? (1 << 1) : 0;     /* Right D-pad Left */
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_A)) ? (1 << 8) : 0;     /* Right D-pad Right */
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_X)) ? (1 << 9) : 0;     /* Right D-pad Up */
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L)) ? (1 << 10) : 0;    /* Rear Left Trigger */
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R)) ? (1 << 11) : 0;    /* Rear Left Trigger */
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L2)) ? (1 << 12) : 0;   /* B */
+               nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_R2)) ? (1 << 13) : 0;   /* A */
+
+               if (!nes_input.up_down_allowed)
+               {
+                  if ((nes_input.JoyButtons[port] & RIGHT_DPAD_DOWN) && (nes_input.JoyButtons[port] & RIGHT_DPAD_UP))
+                     nes_input.JoyButtons[port] &= ~(RIGHT_DPAD_DOWN | RIGHT_DPAD_UP);
+                  if ((nes_input.JoyButtons[port] & RIGHT_DPAD_LEFT) && (nes_input.JoyButtons[port] & RIGHT_DPAD_RIGHT))
+                     nes_input.JoyButtons[port] &= ~(RIGHT_DPAD_LEFT | RIGHT_DPAD_RIGHT);
+               }
+
+               #undef RIGHT_DPAD_DOWN
+               #undef RIGHT_DPAD_LEFT
+               #undef RIGHT_DPAD_RIGHT
+               #undef RIGHT_DPAD_UP
+            }
+
+            nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT)) ? JOY_SELECT : 0;
+            nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START)) ? JOY_START : 0;
+
+         } break;
       }
    }
 
    /* famicom inputs */
    switch (nes_input.type[4])
    {
-      case RETRO_DEVICE_FC_ARKANOID:
-      case RETRO_DEVICE_FC_OEKAKIDS:
-      case RETRO_DEVICE_FC_SHADOW:
+      case DEVICE_ARKANOID:
+      case DEVICE_OEKAKIDS:
+      case DEVICE_SHADOW:
          get_mouse_input(0, nes_input.FamicomData);
          break;
-      case RETRO_DEVICE_FC_HYPERSHOT:
+      case DEVICE_FTRAINERA:
+      case DEVICE_FTRAINERB:
+         update_FTrainer();
+         break;
+      case DEVICE_QUIZKING:
+         update_QuizKing();
+         break;
+      case DEVICE_HYPERSHOT:
       {
          static int toggle;
          int i;
@@ -2517,6 +2855,14 @@ void retro_run(void)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       check_variables(false);
+   
+   if (nes_input.needs_update)
+   {
+      /* since you can only update input descriptors all at once, its better to place this callback here,
+       * so descriptor labels can be updated in real-time when inputs gets changed */
+      nes_input.needs_update = false;
+      update_input_descriptors();
+   }
 
    FCEUD_UpdateInput();
    FCEUI_Emulate(&gfx, &sound, &ssize, 0);
@@ -2935,125 +3281,6 @@ bool retro_load_game(const struct retro_game_info *info)
    size_t famicom_4p_len = sizeof(famicom_4p_db_list) / sizeof(famicom_4p_db_list[0]);
    enum retro_pixel_format rgb565;
 
-   struct retro_input_descriptor desc[] = {
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "(VSSystem) Insert Coin" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "(FDS) Disk Side Change" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "(FDS) Insert/Eject Disk" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 0 },
-   };
-
-   struct retro_input_descriptor desc_ps[] = { /* ps: palette switching */
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,     "Switch Palette (+ Left/Right)" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "(VSSystem) Insert Coin" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "(FDS) Disk Side Change" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "(FDS) Insert/Eject Disk" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 0 },
-   };
-
    size_t desc_base = 64;
    struct retro_memory_descriptor descs[64 + 4];
    struct retro_memory_map        mmaps;
@@ -3156,15 +3383,12 @@ bool retro_load_game(const struct retro_game_info *info)
       return false;
    }
 
-   if (palette_switch_enabled)
-      environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc_ps);
-   else
-      environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
-
    for (i = 0; i < MAX_PORTS; i++) {
       FCEUI_SetInput(i, SI_GAMEPAD, &nes_input.JSReturn, 0);
-      nes_input.type[i] = RETRO_DEVICE_JOYPAD;
+      nes_input.type[i] = DEVICE_GAMEPAD;
    }
+
+   update_input_descriptors();
 
    external_palette_exist = ipalette;
    if (external_palette_exist)
@@ -3274,6 +3498,9 @@ bool retro_load_game(const struct retro_game_info *info)
    mmaps.descriptors = descs;
    mmaps.num_descriptors = i;
    environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &mmaps);
+
+   /* make sure we run input descriptors */
+   nes_input.needs_update = true;
 
    return true;
 }
