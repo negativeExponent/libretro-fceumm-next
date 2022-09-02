@@ -34,9 +34,9 @@ static uint8 reg[8];
 static uint8 eeprom_data[512];
 static SFORMAT StateRegs[] =
 {
-        { reg,           8, "REGS" },
-        { eeprom_data, 512, "EEPR" },
-        { 0 }
+	{ reg, 8, "REGS" },
+	{ eeprom_data, 512, "EEPR" },
+	{ 0 }
 };
 
 static void sync() {

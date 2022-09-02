@@ -60,11 +60,8 @@ static SFORMAT JYASIC_stateRegs[] = {
 	{ mode ,         4,                  "TKCO" },
 	{ prg,           4,                  "PRGB" },
 	{ latch,         2,                  "CLTC" },
-	{ chr,           8*2,                "CHRB" },
-	{ &nt[0],        2 | FCEUSTATE_RLSB, "NMS0" },
-	{ &nt[1],        2 | FCEUSTATE_RLSB, "NMS1" },
-	{ &nt[2],        2 | FCEUSTATE_RLSB, "NMS2" },
-	{ &nt[3],        2 | FCEUSTATE_RLSB, "NMS3" },
+	{ chr,           16,                 "CHRB" },
+	{ nt,            8,                  "NMS0" },
 	{ &dipSwitch,    1,                  "TEKR" },
 	{ &adder,        1,                  "ADDE" },
 	{ 0 }

@@ -427,7 +427,7 @@ void MMC5Synco(void) {
 
 void MMC5_hb(int scanline) {
 	/* zero 24-jul-2014 - revised for newer understanding, to fix metal slader glory credits. see r7371 in bizhawk */
-	
+
 	int sl = scanline + 1;
 	int ppuon = (PPU[1] & 0x18);
 
@@ -706,28 +706,11 @@ static void GenMMC5Reset(void) {
 /* TODO: Clean this up. State variables are expanded for
  * big-endian compatibility when saving and loading states */
 static SFORMAT MMC5_StateRegs[] = {
-	{ &PRGBanks[0], 1, "PRG1" },
-	{ &PRGBanks[1], 1, "PRG2" },
-	{ &PRGBanks[2], 1, "PRG3" },
-	{ &PRGBanks[3], 1, "PRG4" },
-
-	{ &CHRBanksA[0], 2 | FCEUSTATE_RLSB, "CRA1" },
-	{ &CHRBanksA[1], 2 | FCEUSTATE_RLSB, "CRA2" },
-	{ &CHRBanksA[2], 2 | FCEUSTATE_RLSB, "CRA3" },
-	{ &CHRBanksA[3], 2 | FCEUSTATE_RLSB, "CRA4" },
-	{ &CHRBanksA[4], 2 | FCEUSTATE_RLSB, "CRA5" },
-	{ &CHRBanksA[5], 2 | FCEUSTATE_RLSB, "CRA6" },
-	{ &CHRBanksA[6], 2 | FCEUSTATE_RLSB, "CRA7" },
-	{ &CHRBanksA[7], 2 | FCEUSTATE_RLSB, "CRA8" },
-
-	{ &CHRBanksB[0], 2 | FCEUSTATE_RLSB, "CRB1" },
-	{ &CHRBanksB[1], 2 | FCEUSTATE_RLSB, "CRB2" },
-	{ &CHRBanksB[2], 2 | FCEUSTATE_RLSB, "CRB3" },
-	{ &CHRBanksB[3], 2 | FCEUSTATE_RLSB, "CRB4" },
-
+	{ PRGBanks, 4, "PREG" },
+	{ CHRBanksA, 16, "CHRA" },
+	{ CHRBanksB, 8, "CHRB" },
 	{ &WRAMPage, 1, "WRMP" },
-	{ &WRAMMaskEnable[0], 1, "WRM1" },
-	{ &WRAMMaskEnable[1], 1, "WRM2" },
+	{ WRAMMaskEnable, 2, "WRMK" },
 	{ &mmc5ABMode, 1, "ABMD" },
 	{ &IRQScanline, 1, "IRQS" },
 	{ &IRQEnable, 1, "IRQE" },
@@ -735,44 +718,22 @@ static SFORMAT MMC5_StateRegs[] = {
 	{ &NTAMirroring, 1, "NTAM" },
 	{ &NTFill, 1, "NTFL" },
 	{ &ATFill, 1, "ATFL" },
-
-	/* zero 17-apr-2013 - added */
 	{ &MMC5IRQR, 1, "IRQR" },
 	{ &MMC5LineCounter, 1, "LCTR" },
 	{ &mmc5psize, 1, "PSIZ" },
 	{ &mmc5vsize, 1, "VSIZ" },
-
-	{ &mul[0], 1, "MUL1" },
-	{ &mul[1], 1, "MUL2" },
-
-	{ &MMC5ROMWrProtect[0], 1, "WRP1" },
-	{ &MMC5ROMWrProtect[1], 1, "WRP2" },
-	{ &MMC5ROMWrProtect[2], 1, "WRP3" },
-	{ &MMC5ROMWrProtect[3], 1, "WRP4" },
-
-	{ &MMC5MemIn[0], 1, "MMI1" },
-	{ &MMC5MemIn[1], 1, "MMI2" },
-	{ &MMC5MemIn[2], 1, "MMI3" },
-	{ &MMC5MemIn[3], 1, "MMI4" },
-	{ &MMC5MemIn[4], 1, "MMI5" },
-
-	{ &MMC5Sound.wl[0], 2 | FCEUSTATE_RLSB, "SDW0" },
-	{ &MMC5Sound.wl[1], 2 | FCEUSTATE_RLSB, "SDW1" },
-	{ &MMC5Sound.env[0], 1, "SEV1" },
-	{ &MMC5Sound.env[1], 1, "SEV2" },
+	{ mul, 2, "MUL0" },
+	{ MMC5ROMWrProtect, 4, "PROT" },
+	{ MMC5MemIn, 5, "MEMN" },
+	{ MMC5Sound.wl, 4, "SDW0" },
+	{ MMC5Sound.env, 2, "SDEV" },
 	{ &MMC5Sound.enable, 1, "SDEN" },
-	{ &MMC5Sound.running, 1, "SDRU" },
-	{ &MMC5Sound.raw, 1, "SDRW" },
-	{ &MMC5Sound.rawcontrol, 1, "SDRC" },
-
-	/* zero 17-apr-2013 - added */
-	{ &MMC5Sound.dcount[0], 4 | FCEUSTATE_RLSB, "DCT0" },
-	{ &MMC5Sound.dcount[1], 4 | FCEUSTATE_RLSB, "DCT1" },
-	{ &MMC5Sound.BC[0], 4 | FCEUSTATE_RLSB, "BC00" },
-	{ &MMC5Sound.BC[1], 4 | FCEUSTATE_RLSB, "BC01" },
-	{ &MMC5Sound.BC[2], 4 | FCEUSTATE_RLSB, "BC02" },
-	{ &MMC5Sound.vcount[0], 4 | FCEUSTATE_RLSB, "VCT0" },
-	{ &MMC5Sound.vcount[1], 4 | FCEUSTATE_RLSB, "VCT1" },
+	{ &MMC5Sound.running, 1, "RUNN" },
+	{ &MMC5Sound.raw, 1, "RAW0" },
+	{ &MMC5Sound.rawcontrol, 1, "RAWC" },
+	{ MMC5Sound.dcount, 8, "DCNT" },
+	{ MMC5Sound.BC, 12, "SDBC" },
+	{ MMC5Sound.vcount, 8, "VCNT" },
 
 	{ 0 }
 };

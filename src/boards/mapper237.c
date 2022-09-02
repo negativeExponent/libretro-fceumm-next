@@ -33,8 +33,7 @@ static uint8 dipswitch;
 
 static SFORMAT StateRegs[] =
 {
-	{ &reg[0],    1, "REG0" },
-	{ &reg[1],    1, "REG1" },
+	{ reg, 2, "REGS" },
 	{ &dipswitch, 1, "DPSW" },
 	{ 0 }
 };

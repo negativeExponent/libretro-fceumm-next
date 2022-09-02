@@ -27,7 +27,7 @@ static uint8 regAddr;
 static SFORMAT K1053_state[] =
 {
 	{ regData, 2, "REGD" },
-	{&regAddr, 1, "REGA" },
+	{ &regAddr, 1, "REGA" },
 	{ 0 }
 };
 

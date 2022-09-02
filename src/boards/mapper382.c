@@ -31,8 +31,7 @@ static uint8 mirr;
 static uint8 lock;
 
 static SFORMAT StateRegs[] = {
-	{ &preg[0], 1, "PRG0" },
-	{ &preg[1], 1, "PRG1" },
+	{ preg, 2, "PREG" },
 	{ &mode, 1, "MODE" },
 	{ &mirr, 1, "MIRR" },
 	{ &lock, 1, "LOCK" },

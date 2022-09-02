@@ -57,7 +57,7 @@ static SFORMAT N106_StateRegs[] = {
 	{ PRG, 3, "PRG" },
 	{ CHR, 8, "CHR" },
 	{ NTAPage, 4, "NTA" },
-	{ &IRQCount, 2 | FCEUSTATE_RLSB, "IRQC" },
+	{ &IRQCount, 2, "IRQC" },
 	{ &IRQa, 1, "IRQA" },
 	{ &dopol, 1, "GORF" },
 	{ &gorfus, 1, "DOPO" },
@@ -245,23 +245,9 @@ static int32 CVBC;
 
 static SFORMAT N106_SStateRegs[] =
 {
-	{ &PlayIndex[0], 4 | FCEUSTATE_RLSB, "IDX0" },
-	{ &PlayIndex[1], 4 | FCEUSTATE_RLSB, "IDX1" },
-	{ &PlayIndex[2], 4 | FCEUSTATE_RLSB, "IDX2" },
-	{ &PlayIndex[3], 4 | FCEUSTATE_RLSB, "IDX3" },
-	{ &PlayIndex[4], 4 | FCEUSTATE_RLSB, "IDX4" },
-	{ &PlayIndex[5], 4 | FCEUSTATE_RLSB, "IDX5" },
-	{ &PlayIndex[6], 4 | FCEUSTATE_RLSB, "IDX6" },
-	{ &PlayIndex[7], 4 | FCEUSTATE_RLSB, "IDX7" },
-	{ &vcount[0], 4 | FCEUSTATE_RLSB, "VCT0" },
-	{ &vcount[1], 4 | FCEUSTATE_RLSB, "VCT1" },
-	{ &vcount[2], 4 | FCEUSTATE_RLSB, "VCT2" },
-	{ &vcount[3], 4 | FCEUSTATE_RLSB, "VCT3" },
-	{ &vcount[4], 4 | FCEUSTATE_RLSB, "VCT4" },
-	{ &vcount[5], 4 | FCEUSTATE_RLSB, "VCT5" },
-	{ &vcount[6], 4 | FCEUSTATE_RLSB, "VCT6" },
-	{ &vcount[7], 4 | FCEUSTATE_RLSB, "VCT7" },
-	{ &CVBC, 4 | FCEUSTATE_RLSB, "BC00" },
+	{ PlayIndex, 32, "IDX0" },
+	{ vcount, 32, "VCT0" },
+	{ &CVBC, 4, "BC00" },
 	{ 0 }
 };
 
