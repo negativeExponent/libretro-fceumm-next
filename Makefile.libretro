@@ -90,7 +90,7 @@ else ifeq ($(platform), osx)
 		CFLAGS   += $(TARGET_RULE)
 		LDFLAGS  += $(TARGET_RULE)
    endif
-	
+
 	OSXVER = `sw_vers -productVersion | cut -d. -f 2`
 	OSX_LT_MAVERICKS = `(( $(OSXVER) <= 9)) && echo "YES"`
 	ifeq ($(OSX_LT_MAVERICKS),YES)
@@ -228,7 +228,7 @@ else ifeq ($(platform), rpi2)
 	CFLAGS += -DARM
 	CFLAGS += -marm -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations
 	CFLAGS += -fomit-frame-pointer -fstrict-aliasing -ffast-math
-	
+
 # Raspberry Pi 3
 else ifeq ($(platform), rpi3)
 	TARGET := $(TARGET_NAME)_libretro.so
@@ -260,7 +260,7 @@ else ifneq (,$(filter $(platform), ps3 psl1ght))
     EXTERNAL_ZLIB = 1
     STATIC_LINKING = 1
     PLATFORM_DEFINES += -D__PS3__
-    
+
     ifeq ($(platform), psl1ght)
         PLATFORM_DEFINES += -D__PSL1GHT__
     endif
@@ -343,8 +343,8 @@ else ifeq ($(platform), libnx)
 # Platform affix = classic_<ISA>_<µARCH>
 # Help at https://modmyclassic.com/comp
 
-# (armv7 a7, hard point, neon based) ### 
-# NESC, SNESC, C64 mini 
+# (armv7 a7, hard point, neon based) ###
+# NESC, SNESC, C64 mini
 else ifeq ($(platform), classic_armv7_a7)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
@@ -373,7 +373,7 @@ else ifeq ($(platform), classic_armv7_a7)
 	    LDFLAGS += -static-libgcc -static-libstdc++
 	  endif
 	endif
-	
+
 # (armv8 a35, hard point, neon based) ###
 # Playstation Classic
 else ifeq ($(platform), classic_armv8_a35)
@@ -765,10 +765,10 @@ else ifneq (,$(findstring msvc,$(platform)))
 WARNING_DEFINES =
 LIBM :=
 else
-WARNING_DEFINES = -Wno-write-strings
+WARNING_DEFINES = -Wall -Wno-write-strings
 endif
 
-CFLAGS += $(fpic) $(WARNING_DEFINES) $(DEFINES) $(ENDIANNESS_DEFINES) 
+CFLAGS += $(fpic) $(WARNING_DEFINES) $(DEFINES) $(ENDIANNESS_DEFINES)
 LDFLAGS += $(LIBM)
 
 ifeq ($(platform), psp1)
@@ -786,12 +786,12 @@ else
 	LD = link.exe
 endif
 else ifeq ($(platform), switch)
-	OBJOUT   = -o 
+	OBJOUT   = -o
 	LINKOUT  = -o
 # libtransistor.mk sets LD for us
 else
 	OBJOUT   = -o
-	LINKOUT  = -o 
+	LINKOUT  = -o
 	LD = $(CC)
 endif
 

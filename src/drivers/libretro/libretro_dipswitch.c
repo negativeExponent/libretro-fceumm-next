@@ -1101,7 +1101,6 @@ static void make_core_options(struct retro_core_option_v2_definition *vs_core_op
 
    for (i = 0; i < numCoreOptions; i++)
    {
-      struct retro_core_option_value vars_empty = { NULL, NULL };
       const char *game_name = vsgame->game_name;
       const char *option_name = vsgame->core_options[i].option_name;
       char key[100] = {0};

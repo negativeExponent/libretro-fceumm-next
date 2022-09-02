@@ -123,17 +123,6 @@ static const keymap turbomap[] = {
    { RETRO_DEVICE_ID_JOYPAD_Y, JOY_B },
 };
 
-static const keymap bindmap[] = {
-   { RETRO_DEVICE_ID_JOYPAD_A, JOY_A },
-   { RETRO_DEVICE_ID_JOYPAD_B, JOY_B },
-   { RETRO_DEVICE_ID_JOYPAD_SELECT, JOY_SELECT },
-   { RETRO_DEVICE_ID_JOYPAD_START, JOY_START },
-   { RETRO_DEVICE_ID_JOYPAD_UP, JOY_UP },
-   { RETRO_DEVICE_ID_JOYPAD_DOWN, JOY_DOWN },
-   { RETRO_DEVICE_ID_JOYPAD_LEFT, JOY_LEFT },
-   { RETRO_DEVICE_ID_JOYPAD_RIGHT, JOY_RIGHT },
-};
-
 typedef struct {
    bool enable_4player;                /* four-score / 4-player adapter used */
    bool up_down_allowed;               /* disabled simultaneous up+down and left+right dpad combinations */
@@ -1255,7 +1244,7 @@ static void set_input(unsigned port)
             break;
          case RETRO_DEVICE_NONE:
          default:
-            type = SIFC_NONE, 
+            type = SIFC_NONE,
             inputDPtr = &Dummy;
             FCEU_printf(" Famicom Expansion: None Connected\n");
             break;
@@ -1278,7 +1267,7 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 {
    if (port >= 5)
       return;
-   
+
    if (device == DEVICE_AUTO)
    {
       if (port <= 1)
@@ -2529,7 +2518,6 @@ static void FCEUD_UpdateInput(void)
    /* other inputs*/
    for (port = 0; port < MAX_PORTS; port++)
    {
-      int x;
       int device = nes_input.type[port];
 
       switch (device)
@@ -2855,7 +2843,7 @@ void retro_run(void)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       check_variables(false);
-   
+
    if (nes_input.needs_update)
    {
       /* since you can only update input descriptors all at once, its better to place this callback here,

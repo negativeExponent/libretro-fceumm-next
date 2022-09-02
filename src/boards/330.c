@@ -94,7 +94,7 @@ static DECLFW(M330Write) {
 
 static void M330Power(void) {
 	int i;
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < 3; i++)
 		PRG[i] = i;
 	for (i = 0; i < 8; i++)
 		CHR[i] = i;
