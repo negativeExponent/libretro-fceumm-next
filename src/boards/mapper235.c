@@ -28,7 +28,7 @@ static uint32 PRGROMSize;
 
 static SFORMAT StateRegs[] =
 {
-	{ &cmdreg,  2 | FCEUSTATE_RLSB, "CREG" },
+	{ &cmdreg,  2, "CREG" },
 	{ &unrom,   1, "UNRM" },
 	{ &reg,     1, "UNRG" },
 	{ &openbus, 1, "OPNB" },

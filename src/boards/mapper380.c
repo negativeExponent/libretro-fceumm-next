@@ -28,7 +28,7 @@ static uint8 dipswitch;
 static uint8 isKN35A;
 
 static SFORMAT StateRegs[] = {
-   { &latche, 2 | FCEUSTATE_RLSB, "LATC" },
+   { &latche, 2, "LATC" },
    { &dipswitch, 1, "DPSW" },
    { 0 }
 };

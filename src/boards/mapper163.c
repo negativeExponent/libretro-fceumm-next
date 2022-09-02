@@ -29,8 +29,8 @@ static uint32 WRAMSIZE;
 static uint8 reg[4];
 static SFORMAT StateRegs[] =
 {
-        { reg, 4, "REGS" },
-        { 0 }
+    { reg, 4, "REGS" },
+    { 0 }
 };
 
 static void sync() {

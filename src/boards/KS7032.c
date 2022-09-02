@@ -42,7 +42,7 @@ static SFORMAT StateRegsKS7032[] =
 	{ &cmd, 1, "CMD" },
 	{ reg, 8, "REGS" },
 	{ &IRQa, 1, "IRQA" },
-	{ &IRQCount, 4 | FCEUSTATE_RLSB, "IRQC" },
+	{ &IRQCount, 4, "IRQC" },
 	{ 0 }
 };
 

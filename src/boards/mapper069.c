@@ -155,25 +155,15 @@ static void DoAYSQHQ(int x);
 static uint8 sndcmd, sreg[14];
 static int32 vcount[3];
 static int32 dcount[3];
-static int CAYBC[3];
+static int32 CAYBC[3];
 
 static SFORMAT SStateRegs[] =
 {
 	{ &sndcmd, 1, "SCMD" },
 	{ sreg, 14, "SREG" },
-
-/* Ignoring these sound state files for Wii since it causes states unable to load */
-#ifndef GEKKO
-	{ &dcount[0], 4 | FCEUSTATE_RLSB, "DCT0" },
-	{ &dcount[1], 4 | FCEUSTATE_RLSB, "DCT1" },
-	{ &dcount[2], 4 | FCEUSTATE_RLSB, "DCT2" },
-	{ &vcount[0], 4 | FCEUSTATE_RLSB, "VCT0" },
-	{ &vcount[1], 4 | FCEUSTATE_RLSB, "VCT1" },
-	{ &vcount[2], 4 | FCEUSTATE_RLSB, "VCT2" },
-	{ &CAYBC[0], 4 | FCEUSTATE_RLSB, "BC00" },
-	{ &CAYBC[1], 4 | FCEUSTATE_RLSB, "BC01" },
-	{ &CAYBC[2], 4 | FCEUSTATE_RLSB, "BC02" },
-#endif
+	{ dcount, 12, "DCNT" },
+	{ vcount, 12, "VCNT" },
+	{ CAYBC, 12, "BC00" },
 
 	{ 0 }
 };

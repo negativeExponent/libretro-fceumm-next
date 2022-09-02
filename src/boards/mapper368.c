@@ -36,7 +36,7 @@ static const uint8 banks[8] = { 4, 3, 5, 3, 6, 3, 7, 3 };
 
 static SFORMAT StateRegs[] =
 {
-	{ &IRQCount, 2 | FCEUSTATE_RLSB, "IRQC" },
+	{ &IRQCount, 2, "IRQC" },
 	{ &IRQa, 1, "IRQA" },
 	{ &latch, 1, "LATC" },
 	{ &preg, 1, "REG" },

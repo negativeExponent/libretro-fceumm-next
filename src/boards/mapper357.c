@@ -37,8 +37,8 @@ static const uint8 outer_bank[4] = { 0x00, 0x08, 0x10, 0x18 };
 
 static SFORMAT StateRegs[] =
 {
-	{ &IRQCount, 2 | FCEUSTATE_RLSB, "IRQC" },
-	{ &IRQa, 1 | FCEUSTATE_RLSB, "IRQA" },
+	{ &IRQCount, 2, "IRQC" },
+	{ &IRQa, 1, "IRQA" },
 	{ &dipswitch, 1, "DPSW" },
 	{ &preg, 4, "REG" },
 	{ 0 }

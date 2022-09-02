@@ -27,8 +27,8 @@ static uint16 cmd, bank;
 
 static SFORMAT StateRegs[] =
 {
-	{ &cmd, 2 | FCEUSTATE_RLSB, "CMD" },
-	{ &bank, 2 | FCEUSTATE_RLSB, "BANK" },
+	{ &cmd, 2, "CMD" },
+	{ &bank, 2, "BANK" },
 	{ 0 }
 };
 

@@ -37,7 +37,7 @@ static SFORMAT StateRegs[] = {
 	{ &mmc3_enabled, 1, "IRQA" },
 	{ &smb2_reg, 1, "MBRG" },
 	{ &smb2j_enabled, 1, "MIRQ" },
-	{ &smb2j_count, 2 | FCEUSTATE_RLSB, "MIQC" },
+	{ &smb2j_count, 2, "MIQC" },
 	{ 0 }
 };
 

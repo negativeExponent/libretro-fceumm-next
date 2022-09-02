@@ -35,25 +35,10 @@ static uint32 WRAMSIZE;
  * big-endian compatibility when saving and loading states */
 static SFORMAT StateRegs[] =
 {
-	{ &reg[0], 1, "REG0" },
-	{ &reg[1], 1, "REG1" },
-	{ &reg[2], 1, "REG2" },
-	{ &reg[3], 1, "REG3" },
-	{ &reg[4], 1, "REG4" },
-	{ &reg[5], 1, "REG5" },
-	{ &reg[6], 1, "REG6" },
-	{ &reg[7], 1, "REG7" },
-	{ &reg[8], 1, "REG8" },
-	{ &reg[9], 1, "REG9" },
-	{ &reg[10], 1, "REGA" },
-	{ &reg[11], 1, "REGB" },
-	{ &reg[12], 1, "REGC" },
-	{ &reg[13], 1, "REGD" },
-	{ &reg[14], 1, "REGE" },
-	{ &reg[15], 1, "REGF" },
+	{ reg, 16, "REGS" },
 	{ &IRQa, 1, "IRQA" },
-	{ &IRQCount, 2 | FCEUSTATE_RLSB, "IRQC" },
-	{ &IRQLatch, 2 | FCEUSTATE_RLSB, "IRQL" },	/* need for Famicom Jump II - Saikyou no 7 Nin (J) [!] */
+	{ &IRQCount, 2, "IRQC" },
+	{ &IRQLatch, 2, "IRQL" },	/* need for Famicom Jump II - Saikyou no 7 Nin (J) [!] */
 	{ 0 }
 };
 
@@ -459,7 +444,7 @@ int FCEUI_DatachSet(uint8 *rcode) {
 	}
 
 #ifdef INTERL2OF5
-	
+
 	BS(1); BS(1); BS(0); BS(0); /* 1 */
 	BS(1); BS(1); BS(0); BS(0); /* 1 */
 	BS(1); BS(1); BS(0); BS(0); /* 1 */
@@ -520,7 +505,7 @@ int FCEUI_DatachSet(uint8 *rcode) {
 			rcode[12] = csum + 0x30;	/* update check code to the input string as well */
 			rcode[13] = 0;
 			code[12] = csum;
-		} 
+		}
 		for (j = 0; j < 7; j++) {
 			BS(data_right[code[12]][j]);
 		}
@@ -578,7 +563,7 @@ static DECLFW(BarcodeWrite) {
 	A &= 0x0F;
 	switch (A) {
 	case 0x00: reg[0] = (V & 8) << 2; x24c01_write(reg[0xD] | reg[0]); break;		/* extra EEPROM x24C01 used in Battle Rush mini-cart */
-	case 0x08: 
+	case 0x08:
 	case 0x09: reg[A] = V; BarcodeSync(); break;
 	case 0x0A: X6502_IRQEnd(FCEU_IQEXT); IRQa = V & 1; IRQCount = IRQLatch; break;
 	case 0x0B: IRQLatch &= 0xFF00; IRQLatch |= V; break;
