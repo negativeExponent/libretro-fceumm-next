@@ -20,12 +20,11 @@
 
 #include "mapinc.h"
 #include "emu2413.h"
+#include "vrcirq.h"
 
 static int32 dwave = 0;
 static OPLL *VRC7Sound = NULL;
 static uint8 vrc7idx, preg[3], creg[8], mirr;
-static uint8 IRQLatch, IRQa, IRQd;
-static int32 IRQCount, CycleCount;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
@@ -35,11 +34,7 @@ static SFORMAT StateRegs[] =
 	{ preg, 3, "PREG" },
 	{ creg, 8, "CREG" },
 	{ &mirr, 1, "MIRR" },
-	{ &IRQa, 1, "IRQA" },
-	{ &IRQd, 1, "IRQD" },
-	{ &IRQLatch, 1, "IRQL" },
-	{ &IRQCount, 4, "IRQC" },
-	{ &CycleCount, 4, "CYCC" },
+
 	{ 0 }
 };
 
@@ -128,19 +123,9 @@ static DECLFW(VRC7Write) {
 		case 0x9000: preg[2] = V; Sync(); break;
 		case 0x9010: vrc7idx = V; break;
 		case 0xE000: mirr = V & 3; Sync(); break;
-		case 0xE010: IRQLatch = V; X6502_IRQEnd(FCEU_IQEXT); break;
-		case 0xF000:
-			IRQa = V & 2;
-			IRQd = V & 1;
-			if (V & 2)
-				IRQCount = IRQLatch;
-			CycleCount = 0;
-			X6502_IRQEnd(FCEU_IQEXT);
-			break;
-		case 0xF010:
-			IRQa = IRQd;
-			X6502_IRQEnd(FCEU_IQEXT);
-			break;
+		case 0xE010: VRCIRQ_Latch(V); break;
+		case 0xF000: VRCIRQ_Control(V); break;
+		case 0xF010: VRCIRQ_Acknowledge(); break;
 		}
 }
 
@@ -158,20 +143,6 @@ static void VRC7Close(void) {
 	WRAM = NULL;
 }
 
-static void VRC7IRQHook(int a) {
-	if (IRQa) {
-		CycleCount += a * 3;
-		while (CycleCount >= 341) {
-			CycleCount -= 341;
-			IRQCount++;
-			if (IRQCount == 0x100) {
-				IRQCount = IRQLatch;
-				X6502_IRQBegin(FCEU_IQEXT);
-			}
-		}
-	}
-}
-
 static void StateRestore(int version) {
 	Sync();
 
@@ -183,7 +154,7 @@ static void StateRestore(int version) {
 void Mapper85_Init(CartInfo *info) {
 	info->Power = VRC7Power;
 	info->Close = VRC7Close;
-	MapIRQHook = VRC7IRQHook;
+	VRCIRQ_Init();
 	WRAMSIZE = 8192;
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);

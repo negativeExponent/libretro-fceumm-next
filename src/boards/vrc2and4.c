@@ -23,14 +23,14 @@
  */
 
 #include "mapinc.h"
+#include "vrcirq.h"
 
 static uint8 isPirate, is22;
 static uint16 IRQCount;
 static uint8 IRQLatch, IRQa;
 static uint8 prgreg[4], chrreg[8];
 static uint16 chrhi[8];
-static uint8 regcmd, irqcmd, mirr, big_bank;
-static uint16 acount = 0;
+static uint8 regcmd, mirr, big_bank;
 
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
@@ -43,7 +43,6 @@ static SFORMAT StateRegs[] =
 	{ chrreg, 8, "CREG" },
 	{ chrhi, 16, "CHRH" },
 	{ &regcmd, 1, "CMDR" },
-	{ &irqcmd, 1, "CMDI" },
 	{ &mirr, 1, "MIRR" },
 	{ &prgMask, 1, "MAK" },
 	{ &big_bank, 1, "BIGB" },
@@ -120,10 +119,10 @@ static DECLFW(VRC24Write) {
 		case 0x9001: if (V != 0xFF) mirr = V; Sync(); break;
 		case 0x9002:
 		case 0x9003: regcmd = V; Sync(); break;
-        case 0xF000: X6502_IRQEnd(FCEU_IQEXT); IRQLatch &= 0xF0; IRQLatch |= V & 0xF; break;
-		case 0xF001: X6502_IRQEnd(FCEU_IQEXT); IRQLatch &= 0x0F; IRQLatch |= V << 4; break;
-		case 0xF002: X6502_IRQEnd(FCEU_IQEXT); acount = 0; IRQCount = IRQLatch; IRQa = V & 2; irqcmd = V & 1; break;
-		case 0xF003: X6502_IRQEnd(FCEU_IQEXT); IRQa = irqcmd; break;
+        case 0xF000: VRCIRQ_LatchNibble(V, 0); break;
+		case 0xF001: VRCIRQ_LatchNibble(V, 1); break;
+		case 0xF002: VRCIRQ_Control(V); break;
+		case 0xF003: VRCIRQ_Acknowledge(); break;
         }
 	}
 }
@@ -190,23 +189,6 @@ static void M25Power(void) {
 	VRC24PowerCommon(M22Write);
 }
 
-void FP_FASTAPASS(1) VRC24IRQHook(int a) {
-	#define LCYCS 341
-	if (IRQa) {
-		acount += a * 3;
-		if (acount >= LCYCS) {
-			while (acount >= LCYCS) {
-				acount -= LCYCS;
-				IRQCount++;
-				if (IRQCount & 0x100) {
-					X6502_IRQBegin(FCEU_IQEXT);
-					IRQCount = IRQLatch;
-				}
-			}
-		}
-	}
-}
-
 static void StateRestore(int version) {
 	Sync();
 }
@@ -219,8 +201,9 @@ static void VRC24Close(void) {
 
 static void VRC24_Init(CartInfo *info, uint32 hasWRAM) {
 	info->Close = VRC24Close;
-	MapIRQHook = VRC24IRQHook;
 	GameStateRestore = StateRestore;
+
+	VRCIRQ_Init();
 
 	prgMask = 0x1F;
 	prgreg[2] = ~1;
