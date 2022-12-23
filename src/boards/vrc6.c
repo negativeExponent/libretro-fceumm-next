@@ -22,11 +22,10 @@
  */
 
 #include "mapinc.h"
+#include "vrcirq.h"
 
 static uint8 is26;
 static uint8 prg[2], chr[8], mirr;
-static uint8 IRQLatch, IRQa, IRQd;
-static int32 IRQCount, CycleCount;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
@@ -35,11 +34,7 @@ static SFORMAT StateRegs[] =
 	{ prg, 2, "PRG" },
 	{ chr, 8, "CHR" },
 	{ &mirr, 1, "MIRR" },
-	{ &IRQa, 1, "IRQA" },
-	{ &IRQd, 1, "IRQD" },
-	{ &IRQLatch, 1, "IRQL" },
-	{ &IRQCount, 4, "IRQC" },
-	{ &CycleCount, 4, "CYCC" },
+
 	{ 0 }
 };
 
@@ -114,18 +109,9 @@ static DECLFW(VRC6Write) {
 	case 0xE001: chr[5] = V; Sync(); break;
 	case 0xE002: chr[6] = V; Sync(); break;
 	case 0xE003: chr[7] = V; Sync(); break;
-	case 0xF000: IRQLatch = V; X6502_IRQEnd(FCEU_IQEXT); break;
-	case 0xF001:
-		IRQa = V & 2;
-		IRQd = V & 1;
-		if (V & 2)
-			IRQCount = IRQLatch;
-		CycleCount = 0;
-		X6502_IRQEnd(FCEU_IQEXT);
-		break;
-	case 0xF002:
-		IRQa = IRQd;
-		X6502_IRQEnd(FCEU_IQEXT);
+	case 0xF000: VRCIRQ_Latch(V); break;
+	case 0xF001: VRCIRQ_Control(V); break;
+	case 0xF002: VRCIRQ_Acknowledge(); break;
 	}
 }
 
@@ -135,20 +121,6 @@ static void VRC6Power(void) {
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	SetWriteHandler(0x8000, 0xFFFF, VRC6Write);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
-}
-
-static void VRC6IRQHook(int a) {
-	if (IRQa) {
-		CycleCount += a * 3;
-		while (CycleCount >= 341) {
-			CycleCount -= 341;
-			IRQCount++;
-			if (IRQCount == 0x100) {
-				IRQCount = IRQLatch;
-				X6502_IRQBegin(FCEU_IQEXT);
-			}
-		}
-	}
 }
 
 static void VRC6Close(void) {
@@ -356,7 +328,7 @@ static void VRC6_ESI(void) {
 void Mapper24_Init(CartInfo *info) {
 	is26 = 0;
 	info->Power = VRC6Power;
-	MapIRQHook = VRC6IRQHook;
+	VRCIRQ_Init();
 	VRC6_ESI();
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
@@ -367,7 +339,7 @@ void Mapper26_Init(CartInfo *info) {
 	is26 = 1;
 	info->Power = VRC6Power;
 	info->Close = VRC6Close;
-	MapIRQHook = VRC6IRQHook;
+	VRCIRQ_Init();
 	VRC6_ESI();
 	GameStateRestore = StateRestore;
 
