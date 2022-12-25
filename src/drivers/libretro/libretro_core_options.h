@@ -168,11 +168,14 @@ struct retro_core_option_v2_definition option_defs[] = {
       NULL,
       "video",
       {
-         { "disabled", NULL },
-         { "enabled",  NULL },
+         { "0",  "None" },
+         { "4",  "4px" },
+         { "8",  "8px" },
+         { "12", "12px" },
+         { "16", "16px" },
          { NULL, NULL },
       },
-      "disabled",
+      "0",
    },
    {
       "fceumm_overscan_v",
@@ -182,11 +185,14 @@ struct retro_core_option_v2_definition option_defs[] = {
       NULL,
       "video",
       {
-         { "disabled", NULL },
-         { "enabled",  NULL },
+         { "0",  "None" },
+         { "4",  "4px" },
+         { "8",  "8px" },
+         { "12", "12px" },
+         { "16", "16px" },
          { NULL, NULL },
       },
-      "enabled",
+      "8",
    },
 #endif /* overscan options */
    {

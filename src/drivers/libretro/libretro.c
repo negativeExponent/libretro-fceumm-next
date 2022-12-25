@@ -92,8 +92,8 @@ retro_environment_t environ_cb = NULL;
 #ifdef PSP
 static bool crop_overscan;
 #else
-static bool crop_overscan_h;
-static bool crop_overscan_v;
+static unsigned crop_overscan_h;
+static unsigned crop_overscan_v;
 #endif
 
 static bool use_raw_palette;
@@ -1674,8 +1674,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    unsigned width  = NES_WIDTH  - (crop_overscan ? 16 : 0);
    unsigned height = NES_HEIGHT - (crop_overscan ? 16 : 0);
 #else
-   unsigned width  = NES_WIDTH  - (crop_overscan_h ? 16 : 0);
-   unsigned height = NES_HEIGHT - (crop_overscan_v ? 16 : 0);
+   unsigned width  = NES_WIDTH  - (crop_overscan_h << 1);
+   unsigned height = NES_HEIGHT - (crop_overscan_v << 1);
 #endif
 #ifdef HAVE_NTSC_FILTER
    info->geometry.base_width = (use_ntsc ? NES_NTSC_OUT_WIDTH(width) : width);
@@ -2033,7 +2033,7 @@ static void check_variables(bool startup)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      bool newval = (!strcmp(var.value, "enabled"));
+      unsigned newval = atoi(var.value);
       if (newval != crop_overscan_h)
       {
          crop_overscan_h = newval;
@@ -2045,7 +2045,7 @@ static void check_variables(bool startup)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      bool newval = (!strcmp(var.value, "enabled"));
+      unsigned newval = atoi(var.value);
       if (newval != crop_overscan_v)
       {
          crop_overscan_v = newval;
@@ -2766,10 +2766,10 @@ static void retro_run_blit(uint8_t *gfx)
       ps2->coreTexture->PSM = GS_PSM_T8;
       ps2->coreTexture->ClutPSM = GS_PSM_CT16;
       ps2->coreTexture->Filter = GS_FILTER_LINEAR;
-      ps2->padding = (struct retro_hw_ps2_insets){ crop_overscan_v ? 8.0f : 0.0f,
-                                                   crop_overscan_h ? 8.0f : 0.0f,
-                                                   crop_overscan_v ? 8.0f : 0.0f,
-                                                   crop_overscan_h ? 8.0f : 0.0f};
+      ps2->padding = (struct retro_hw_ps2_insets){ (float)crop_overscan_v,
+                                                   (float)crop_overscan_h,
+                                                   (float)crop_overscan_v,
+                                                   (float)crop_overscan_h};
    }
 
    ps2->coreTexture->Clut = (u32*)retro_palette;
@@ -2788,14 +2788,14 @@ static void retro_run_blit(uint8_t *gfx)
           NES_WIDTH, burst_phase, NES_WIDTH, NES_HEIGHT,
           ntsc_video_out, NES_NTSC_WIDTH * sizeof(uint16));
 
-      width    = NES_WIDTH - (crop_overscan_h ? 16 : 0);
+      width    = NES_WIDTH - (crop_overscan_h << 1);
       width    = NES_NTSC_OUT_WIDTH(width);
-      height   = NES_HEIGHT - (crop_overscan_v ? 16 : 0);
+      height   = NES_HEIGHT - (crop_overscan_v << 1);
       pitch    = width * sizeof(uint16_t);
 
       {
-         int32_t h_offset   = crop_overscan_h ?  NES_NTSC_OUT_WIDTH(8) : 0;
-         int32_t v_offset   = crop_overscan_v ? 8 : 0;
+         int32_t h_offset   = crop_overscan_h ? NES_NTSC_OUT_WIDTH(crop_overscan_h) : 0;
+         int32_t v_offset   = crop_overscan_v;
          const uint16_t *in = ntsc_video_out + h_offset + NES_NTSC_WIDTH * v_offset;
          uint16_t *out      = fceu_video_out;
 
@@ -2811,11 +2811,11 @@ static void retro_run_blit(uint8_t *gfx)
    else
 #endif /* HAVE_NTSC_FILTER */
    {
-      incr   += (crop_overscan_h ? 16 : 0);
-      width  -= (crop_overscan_h ? 16 : 0);
-      height -= (crop_overscan_v ? 16 : 0);
-      pitch  -= (crop_overscan_h ? 32 : 0);
-      gfx    += (crop_overscan_v ? ((crop_overscan_h ? 8 : 0) + 256 * 8) : (crop_overscan_h ? 8 : 0));
+      incr   += (crop_overscan_h << 1);
+      width  -= (crop_overscan_h << 1);
+      height -= (crop_overscan_v << 1);
+      pitch  -= (crop_overscan_h << 2);
+      gfx    += (crop_overscan_v ? (crop_overscan_h + 256 * crop_overscan_v) : crop_overscan_h);
 
       if (use_raw_palette)
       {
