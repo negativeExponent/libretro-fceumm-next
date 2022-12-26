@@ -1674,8 +1674,8 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
    unsigned width  = NES_WIDTH  - (crop_overscan ? 16 : 0);
    unsigned height = NES_HEIGHT - (crop_overscan ? 16 : 0);
 #else
-   unsigned width  = NES_WIDTH  - (crop_overscan_h << 1);
-   unsigned height = NES_HEIGHT - (crop_overscan_v << 1);
+   unsigned width  = NES_WIDTH  - (crop_overscan_h * 2);
+   unsigned height = NES_HEIGHT - (crop_overscan_v * 2);
 #endif
 #ifdef HAVE_NTSC_FILTER
    info->geometry.base_width = (use_ntsc ? NES_NTSC_OUT_WIDTH(width) : width);
@@ -2780,6 +2780,11 @@ static void retro_run_blit(uint8_t *gfx)
 #ifdef HAVE_NTSC_FILTER
    if (use_ntsc)
    {
+      uint16_t *in;
+      uint16_t *out;
+      int32_t h_offset;
+      int32_t v_offset;
+
       burst_phase ^= 1;
       if (ntsc_setup.merge_fields)
          burst_phase = 0;
@@ -2788,34 +2793,30 @@ static void retro_run_blit(uint8_t *gfx)
           NES_WIDTH, burst_phase, NES_WIDTH, NES_HEIGHT,
           ntsc_video_out, NES_NTSC_WIDTH * sizeof(uint16));
 
-      width    = NES_WIDTH - (crop_overscan_h << 1);
-      width    = NES_NTSC_OUT_WIDTH(width);
-      height   = NES_HEIGHT - (crop_overscan_v << 1);
+      width    = NES_NTSC_OUT_WIDTH(NES_WIDTH - (crop_overscan_h * 2));
+      height   = NES_HEIGHT - (crop_overscan_v * 2);
       pitch    = width * sizeof(uint16_t);
+      h_offset = crop_overscan_h ? NES_NTSC_OUT_WIDTH(crop_overscan_h) : 0;
+      v_offset = crop_overscan_v;
+      in       = ntsc_video_out + h_offset + NES_NTSC_WIDTH * v_offset;
+      out      = fceu_video_out;
 
-      {
-         int32_t h_offset   = crop_overscan_h ? NES_NTSC_OUT_WIDTH(crop_overscan_h) : 0;
-         int32_t v_offset   = crop_overscan_v;
-         const uint16_t *in = ntsc_video_out + h_offset + NES_NTSC_WIDTH * v_offset;
-         uint16_t *out      = fceu_video_out;
-
-         for (y = 0; y < height; y++)
-         {
-            memcpy(out, in, pitch);
-            in += NES_NTSC_WIDTH;
-            out += width;
-         }
+      for (y = 0; y < height; y++) {
+         memcpy(out, in, pitch);
+         in += NES_NTSC_WIDTH;
+         out += width;
       }
+
       video_cb(fceu_video_out, width, height, pitch);
    }
    else
 #endif /* HAVE_NTSC_FILTER */
    {
-      incr   += (crop_overscan_h << 1);
-      width  -= (crop_overscan_h << 1);
-      height -= (crop_overscan_v << 1);
-      pitch  -= (crop_overscan_h << 2);
-      gfx    += (crop_overscan_v ? (crop_overscan_h + 256 * crop_overscan_v) : crop_overscan_h);
+      incr   = (crop_overscan_h * 2);
+      width  = NES_WIDTH - (crop_overscan_h * 2);
+      height = NES_HEIGHT - (crop_overscan_v * 2);
+      pitch  = width * sizeof(uint16_t);
+      gfx   += (crop_overscan_v ? (crop_overscan_h + NES_WIDTH * crop_overscan_v) : crop_overscan_h);
 
       if (use_raw_palette)
       {
