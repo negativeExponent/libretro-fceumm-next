@@ -443,8 +443,10 @@ void FCEU_ResetVidSys(void)
    if (PAL)
       dendy = 0;
 
-   normal_scanlines = dendy ? 290 : 240;
-   totalscanlines = normal_scanlines + (overclock_enabled ? extrascanlines : 0);
+   ppu.normal_scanlines = dendy ? 290 : 240;
+   ppu.totalscanlines   = ppu.normal_scanlines;
+   if (ppu.overclock_enabled)
+      ppu.totalscanlines += ppu.extrascanlines;
 
 	FCEUPPU_SetVideoSystem(w || dendy);
 	SetSoundVariables();

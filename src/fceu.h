@@ -4,17 +4,7 @@
 #include "fceu-types.h"
 
 extern int fceuindbg;
-
-/* Overclocking-related */
-extern unsigned overclock_enabled;
-extern unsigned overclocked;
-extern unsigned skip_7bit_overclocking;
 extern unsigned DMC_7bit;
-extern unsigned totalscanlines;
-extern unsigned normal_scanlines;
-extern unsigned extrascanlines;
-extern unsigned vblankscanlines;
-
 /* Region selection */
 extern unsigned dendy;
 

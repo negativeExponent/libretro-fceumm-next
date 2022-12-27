@@ -158,16 +158,6 @@ const size_t PPU_BIT = 1ULL << 31ULL;
 
 extern uint8 NTARAM[0x800], PALRAM[0x20], SPRAM[0x100], PPU[4];
 
-/* overclock the console by adding dummy scanlines to PPU loop
- * disables DMC DMA and WaveHi filling for these dummies
- * doesn't work with new PPU */
-unsigned overclock_enabled = -1;
-unsigned overclocked = 0;
-unsigned skip_7bit_overclocking = 1; /* 7-bit samples have priority over overclocking */
-unsigned totalscanlines = 0;
-unsigned normal_scanlines = 240;
-unsigned extrascanlines = 0;
-unsigned vblankscanlines = 0;
 unsigned dendy = 0;
 
 static unsigned systemRegion = 0;
@@ -1957,33 +1947,33 @@ static void check_variables(bool startup)
       bool do_reinit = false;
 
       if (!strcmp(var.value, "disabled")
-            && overclock_enabled != 0)
+            && ppu.overclock_enabled != 0)
       {
-         skip_7bit_overclocking = 1;
-         extrascanlines         = 0;
-         vblankscanlines        = 0;
-         overclock_enabled      = 0;
+         ppu.skip_7bit_overclocking = 1;
+         ppu.extrascanlines         = 0;
+         ppu.vblankscanlines        = 0;
+         ppu.overclock_enabled      = 0;
          do_reinit              = true;
       }
       else if (!strcmp(var.value, "2x-Postrender"))
       {
-         skip_7bit_overclocking = 1;
-         extrascanlines         = 266;
-         vblankscanlines        = 0;
-         overclock_enabled      = 1;
+         ppu.skip_7bit_overclocking = 1;
+         ppu.extrascanlines         = 266;
+         ppu.vblankscanlines        = 0;
+         ppu.overclock_enabled      = 1;
          do_reinit              = true;
       }
       else if (!strcmp(var.value, "2x-VBlank"))
       {
-         skip_7bit_overclocking = 1;
-         extrascanlines         = 0;
-         vblankscanlines        = 266;
-         overclock_enabled      = 1;
+         ppu.skip_7bit_overclocking = 1;
+         ppu.extrascanlines         = 0;
+         ppu.vblankscanlines        = 266;
+         ppu.overclock_enabled      = 1;
          do_reinit              = true;
       }
 
-      normal_scanlines = dendy ? 290 : 240;
-      totalscanlines = normal_scanlines + (overclock_enabled ? extrascanlines : 0);
+      ppu.normal_scanlines = dendy ? 290 : 240;
+      ppu.totalscanlines = ppu.normal_scanlines + (ppu.overclock_enabled ? ppu.extrascanlines : 0);
 
       if (do_reinit && startup)
       {
@@ -3315,7 +3305,7 @@ bool retro_load_game(const struct retro_game_info *info)
 #ifdef FRONTEND_SUPPORTS_RGB565
    rgb565 = RETRO_PIXEL_FORMAT_RGB565;
    if(environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &rgb565))
-      log_cb.log(RETRO_LOG_INFO, "Frontend supports RGB565 - will use that instead of XRGB1555.\n");
+      log_cb.log(RETRO_LOG_INFO, " Frontend supports RGB565 - will use that instead of XRGB1555.\n");
 #endif
 
    /* initialize some of the default variables */
