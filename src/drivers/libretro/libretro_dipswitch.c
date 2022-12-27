@@ -1067,7 +1067,7 @@ static VSUNIGAME dipswitch_topgun = {
 enum {
    DPSW_NONE = 0,
    DPSW_VSUNI,
-   DPSW_NWC,
+   DPSW_NWC
 };
 
 static struct retro_core_option_v2_definition vscoreopt[MAX_CORE_OPTIONS];

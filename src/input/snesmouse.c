@@ -46,6 +46,10 @@ static uint8 ReadSNESMouse(int w) {
 }
 
 static void WriteSNESMouse(uint8 v) {
+	uint8 byte0;
+	uint8 byte1;
+	uint8 byte2;
+	uint8 byte3;
 	bool strobing = (v & 1);
 
 	if (SNESMouse.strobe && !strobing) {
@@ -74,12 +78,12 @@ static void WriteSNESMouse(uint8 v) {
 
 		/* FCEU_printf("SNES Mouse: %1d %3d, %1d %3d %1d x%1d\n",sx,dx,sy,dy,SNESMouse.mb,SNESMouse.sensitivity); */
 
-		uint8 byte0 = 0x00;
-		uint8 byte1 = 0x1 | /* signature */
+		byte0 = 0x00;
+		byte1 = 0x1 | /* signature */
 		    ((SNESMouse.sensitivity & 3) << 4) | /* sensitivity */
 		    ((SNESMouse.mb & 3) << 6); /* buttons */
-		uint8 byte2 = (uint8)(dy) | (sy ? 0x80 : 0x00);
-		uint8 byte3 = (uint8)(dx) | (sx ? 0x80 : 0x00);
+		byte2 = (uint8)(dy) | (sy ? 0x80 : 0x00);
+		byte3 = (uint8)(dx) | (sx ? 0x80 : 0x00);
 
 		SNESMouse.latch = (byte0 << 24) | (byte1 << 16) | (byte2 << 8) | (byte3 << 0);
 	}
