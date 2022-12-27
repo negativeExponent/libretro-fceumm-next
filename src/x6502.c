@@ -25,6 +25,7 @@
 #include "x6502.h"
 #include "fceu.h"
 #include "sound.h"
+#include "ppu.h"
 
 X6502 X;
 
@@ -54,7 +55,7 @@ void FP_FASTAPASS(1) (*MapIRQHook)(int a);
 	_tcount += __x;									\
 	_count -= __x * 48;								\
 	timestamp += __x;  \
-	if (!overclocked) sound_timestamp +=  __x; \
+	if (!ppu.overclocked) sound_timestamp +=  __x; \
 }
 
 static INLINE uint8 RdMemNorm(uint32 A) {
@@ -516,7 +517,7 @@ static void X6502_RunDebug(int32 cycles) {
 		_tcount = 0;
 		if (MapIRQHook) MapIRQHook(temp);
 
-      if (!overclocked)
+      if (!ppu.overclocked)
          FCEU_SoundCPUHook(temp);
 
 		_PC++;
@@ -613,7 +614,7 @@ void X6502_Run(int32 cycles)
 		temp = _tcount;
 		_tcount = 0;
 		if (MapIRQHook) MapIRQHook(temp);
-		if (!overclocked)
+		if (!ppu.overclocked)
 			FCEU_SoundCPUHook(temp);
 		X.PC = pbackus;
 		_PC++;
