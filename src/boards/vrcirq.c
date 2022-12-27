@@ -30,8 +30,8 @@ static void FP_FASTAPASS(1) VRCIRQ_IrqHook(int a)
 
 	while (count) {
 		count--;
-		IRQPrescaler -= 3;  /* IRQPrescaler ignored in irq cycle mode */
-		if (IRQm || IRQPrescaler < 0 && !IRQm) {
+		IRQPrescaler -= 3;
+		if (IRQm || (IRQPrescaler < 0 && !IRQm)) {
 			IRQPrescaler += 341;
 			if (IRQCount == 0xFF) {
 				X6502_IRQBegin(FCEU_IQEXT);
