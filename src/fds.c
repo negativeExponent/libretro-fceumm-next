@@ -118,7 +118,7 @@ void FDSGI(int h) {
 }
 
 static void FDSStateRestore(int version) {
-	int x;
+	uint32 x;
 
 	setmirror(((FDSRegs[5] & 8) >> 3) ^ 1);
 
@@ -616,7 +616,7 @@ static int SubLoad(FCEUFILE *fp) {
 }
 
 static void PreSave(void) {
-	int x;
+	uint32 x;
 	for (x = 0; x < TotalSides; x++) {
 		int b;
 		for (b = 0; b < 65500; b++)
@@ -625,7 +625,7 @@ static void PreSave(void) {
 }
 
 static void PostSave(void) {
-	int x;
+	uint32 x;
 	for (x = 0; x < TotalSides; x++) {
 		int b;
 		for (b = 0; b < 65500; b++)
@@ -746,7 +746,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 }
 
 void FDSClose(void) {
-	int x;
+	uint32 x;
 
 	if (!DiskWritten) return;
 
