@@ -576,7 +576,7 @@ static void FreeFDSMemory(void) {
 static int SubLoad(FCEUFILE *fp) {
 	struct md5_context md5;
 	uint8 header[16];
-	int x;
+	uint32 x;
 
 	FCEU_fread(header, 16, 1, fp);
 
@@ -635,7 +635,7 @@ static void PostSave(void) {
 
 int FDSLoad(const char *name, FCEUFILE *fp) {
 	FCEUFILE *zp;
-	int x;
+	uint32 x;
 
 	char *fn = FCEU_MakeFName(FCEUMKF_FDSROM, 0, 0);
 
