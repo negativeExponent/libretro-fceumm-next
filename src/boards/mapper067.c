@@ -102,10 +102,9 @@ static void M67Power(void) {
 void FP_FASTAPASS(1) M67IRQ(int a) {
 	if (IRQa) {
 		IRQCount -= a;
-		if (IRQCount <= 0) {
+		if (IRQCount < 0) {
 			X6502_IRQBegin(FCEU_IQEXT);
 			IRQa = 0;
-			IRQCount = 0xFFFF;
 		}
 	}
 }
