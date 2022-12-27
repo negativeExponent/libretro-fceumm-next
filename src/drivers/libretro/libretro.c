@@ -759,7 +759,7 @@ enum stereo_filter_type
 };
 static enum stereo_filter_type current_stereo_filter = STEREO_FILTER_NULL;
 
-#define STEREO_FILTER_DELAY_MS_DEFAULT 15.0f;
+#define STEREO_FILTER_DELAY_MS_DEFAULT 15.0f
 typedef struct
 {
    int32_t *samples;
