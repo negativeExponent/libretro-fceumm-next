@@ -341,7 +341,7 @@ void FCEUD_SoundToggle (void)
 }
 
 /*palette for FCEU*/
-#define PAL_INTERNAL sizeof(palettes) / sizeof(palettes[0]) /* Number of palettes in palettes[] */
+#define PAL_INTERNAL (int)(sizeof(palettes) / sizeof(palettes[0])) /* Number of palettes in palettes[] */
 #define PAL_DEFAULT  (PAL_INTERNAL + 1)
 #define PAL_RAW      (PAL_INTERNAL + 2)
 #define PAL_CUSTOM   (PAL_INTERNAL + 3)
@@ -2058,7 +2058,7 @@ static void check_variables(bool startup)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      unsigned oldval = aspect_ratio_par;
+      int oldval = aspect_ratio_par;
       if (!strcmp(var.value, "8:7 PAR")) {
         aspect_ratio_par = 1;
       } else if (!strcmp(var.value, "4:3")) {

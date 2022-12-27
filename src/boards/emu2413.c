@@ -332,7 +332,7 @@ static void makeDphaseARTable(void) {
 				dphaseARTable[AR][Rks] = 0;	/*EG_DP_WIDTH;*/
 				break;
 			default:
-				dphaseARTable[AR][Rks] = rate_adjust((3 * (RL + 4) << (RM + 1)));
+				dphaseARTable[AR][Rks] = rate_adjust((uint32)(3 * (RL + 4) << (RM + 1)));
 				break;
 			}
 		}
@@ -353,7 +353,7 @@ static void makeDphaseDRTable(void) {
 				dphaseDRTable[DR][Rks] = 0;
 				break;
 			default:
-				dphaseDRTable[DR][Rks] = rate_adjust((RL + 4) << (RM - 1));
+				dphaseDRTable[DR][Rks] = rate_adjust((uint32)((RL + 4) << (RM - 1)));
 				break;
 			}
 		}

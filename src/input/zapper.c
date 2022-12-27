@@ -28,7 +28,7 @@
 #define MAX_TOLERANCE 20
 static uint32 targetExpansion[MAX_TOLERANCE+1];
 #endif
-static uint32 tolerance;
+static int tolerance;
 
 typedef struct {
 	uint32 mzx, mzy, mzb;
@@ -167,7 +167,7 @@ static uint32 InefficientSqrt(uint32 z) {
 void FCEU_ZapperSetTolerance(int t)
 {
 #ifdef ROUNDED_TARGET
-	uint32 y;
+	int y;
 	tolerance = t <= MAX_TOLERANCE ? t : MAX_TOLERANCE;
 	for (y = 0; y <= tolerance; y++)
 		targetExpansion[y] = InefficientSqrt(tolerance*tolerance-y*y);
