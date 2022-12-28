@@ -54,8 +54,8 @@ void FP_FASTAPASS(1) (*MapIRQHook)(int a);
 	int __x = x;									\
 	_tcount += __x;									\
 	_count -= __x * 48;								\
-	timestamp += __x;  \
-	if (!ppu.overclocked) sound_timestamp +=  __x; \
+	timestamp += __x;                               \
+	if (!ppu.overclocked) sound_timestamp +=  __x;  \
 }
 
 static INLINE uint8 RdMemNorm(uint32 A) {
@@ -402,13 +402,14 @@ void X6502_Init(void) {
 	int x;
 
 	memset((void*)&X, 0, sizeof(X));
-	for (x = 0; x < 256; x++)
+	for (x = 0; x < 256; x++) {
 		if (!x)
 			ZNTable[x] = Z_FLAG;
 		else if (x & 0x80)
 			ZNTable[x] = N_FLAG;
 		else
 			ZNTable[x] = 0;
+	}
 	#ifdef FCEUDEF_DEBUGGER
 	X6502_Debug(0, 0, 0);
 	#endif
@@ -517,8 +518,8 @@ static void X6502_RunDebug(int32 cycles) {
 		_tcount = 0;
 		if (MapIRQHook) MapIRQHook(temp);
 
-      if (!ppu.overclocked)
-         FCEU_SoundCPUHook(temp);
+		if (!ppu.overclocked)
+			FCEU_SoundCPUHook(temp);
 
 		_PC++;
 		switch (b1) {
