@@ -493,7 +493,7 @@ static void X6502_RunDebug(int32 cycles) {
 			b1 = RdMem(_PC);
 			_PC++;
 			switch (b1) {
-				#include "ops.h"
+				#include "ops.inc"
 			}
 
 			timestamp = tsave;
@@ -522,7 +522,7 @@ static void X6502_RunDebug(int32 cycles) {
 
 		_PC++;
 		switch (b1) {
-			#include "ops.h"
+			#include "ops.inc"
 		}
 	}
 	#undef RdRAM
@@ -619,7 +619,7 @@ void X6502_Run(int32 cycles)
 		X.PC = pbackus;
 		_PC++;
 		switch (b1) {
-			#include "ops.h"
+			#include "ops.inc"
 		}
 	}
 

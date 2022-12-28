@@ -18,9 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _FCEU_OPS_H
-#define _FCEU_OPS_H
-
 case 0x00:  /* BRK */
 			_PC++;
 			PUSH(_PC>>8);
@@ -480,4 +477,3 @@ case 0xFC: LD_ABX(;);
 /* XAA - BIG QUESTION MARK HERE */
 case 0x8B: _A|=0xEE; _A&=_X; LD_IM(AND);
 /* endif */
-#endif
