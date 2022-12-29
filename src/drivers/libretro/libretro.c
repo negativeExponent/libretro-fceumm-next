@@ -2136,12 +2136,6 @@ static void check_variables(bool startup)
       if (strcmp(var.value, "disabled") &&
           (strlen(var.value) > 1))
       {
-         char value_str[3];
-
-         value_str[0] = var.value[0];
-         value_str[1] = var.value[1];
-         value_str[2] = '\0';
-
          filter_type     = STEREO_FILTER_DELAY;
          filter_delay_ms = (float)atoi(var.value);
 

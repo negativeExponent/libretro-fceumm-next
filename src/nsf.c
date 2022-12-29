@@ -311,6 +311,7 @@ static DECLFW(NSF_write) {
 
 	case 0x5FF6:
 	case 0x5FF7: if (!(NSFHeader.SoundChip & 4)) return;
+	/* fallthrough */
 	case 0x5FF8:
 	case 0x5FF9:
 	case 0x5FFA:

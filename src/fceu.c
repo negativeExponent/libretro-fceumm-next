@@ -23,10 +23,9 @@
 #include  <stdlib.h>
 #include  <stdarg.h>
 
-#include "fceu.h"
+#include  "fceu.h"
 #include  "fceu-types.h"
 #include  "x6502.h"
-#include  "fceu.h"
 #include  "ppu.h"
 #include  "sound.h"
 #include  "general.h"
@@ -325,11 +324,11 @@ void FCEUI_Kill(void) {
 }
 
 void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int skip) {
-	int r, ssize;
+	int ssize;
 
 	FCEU_UpdateInput();
 	if (geniestage != 1) FCEU_ApplyPeriodicCheats();
-	r = FCEUPPU_Loop(skip);
+	FCEUPPU_Loop(skip);
 
 	ssize = FlushEmulateSound();
 
