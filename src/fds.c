@@ -195,14 +195,14 @@ void FCEU_FDSSelect(void) {
 
 /* 2018/12/15 - update irq timings */
 static void FP_FASTAPASS(1) FDSFix(int a) {
-	if ((IRQa & 2) && (FDSRegs[3] & 0x1)) {
+	if (IRQa & 2) {
+		IRQCount -= a;
 		if (IRQCount <= 0) {
-			if (!(IRQa & 1))
-				IRQa &= ~2; /* does not clear latch, fix Druid */
-			IRQCount = IRQLatch;
 			X6502_IRQBegin(FCEU_IQEXT);
-		} else {
-			IRQCount -= a;
+			IRQCount = IRQLatch;
+			if (!(IRQa & 1)) {
+				IRQa &= ~2;
+			}
 		}
 	}
 
@@ -297,18 +297,19 @@ static DECLFW(FDSWrite) {
 		IRQLatch |= V << 8;
 		break;
 	case 0x4022:
+		IRQa = (V & 0x1);			/* irq repeat */
 		if (FDSRegs[3] & 0x1) {
-			IRQa = (V & 0x3);
-			if (IRQa & 2) {
-				IRQCount = IRQLatch;
-			} else {
-				X6502_IRQEnd(FCEU_IQEXT);
-				X6502_IRQEnd(FCEU_IQEXT2);
-			}
+			IRQa |= (V & 0x2);		/* irq enabled */
+		}
+		if (IRQa & 2) {
+			IRQCount = IRQLatch;
+		} else {
+			X6502_IRQEnd(FCEU_IQEXT);
 		}
 		break;
 	case 0x4023:
 		if (!(V & 1)) {
+			IRQa &= ~0x02;
 			X6502_IRQEnd(FCEU_IQEXT);
 			X6502_IRQEnd(FCEU_IQEXT2);
 		}
