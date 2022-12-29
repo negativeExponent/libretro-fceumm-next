@@ -690,7 +690,7 @@ static void RDoSQLQ(void) {
 }
 
 static void RDoTriangle(void) {
-	int32 V;
+	uint32 V;
 	int32 tcout;
 
 	tcout = (tristep & 0xF);

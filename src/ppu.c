@@ -519,9 +519,6 @@ static void FASTAPASS(1) RefreshLine(int lastpixel) {
 				tochange--;
 			}
 		} else if (MMC5HackCHRMode == 1 && (MMC5HackSPMode & 0x80)) {
-			int tochange = MMC5HackSPMode & 0x1F;
-			tochange -= firsttile;
-
 			#define PPUT_MMC5SP
 			#define PPUT_MMC5CHR1
 			for (X1 = firsttile; X1 < lasttile; X1++) {
