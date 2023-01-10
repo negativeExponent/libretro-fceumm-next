@@ -409,8 +409,8 @@ static void N106_Power(void) {
 	FixCRR();
 
 	if (!battery) {
-		FCEU_dwmemset(WRAM, 0, 8192);
-		FCEU_dwmemset(IRAM, 0, 128);
+		FCEU_MemoryRand(WRAM, sizeof(WRAM));
+		FCEU_MemoryRand(IRAM, sizeof(IRAM));
 	}
 	for (x = 0x40; x < 0x80; x++)
 		FixCache(x, IRAM[x]);
@@ -427,7 +427,9 @@ void Mapper19_Init(CartInfo *info) {
 
 	if (FSettings.SndRate)
 		Mapper19_ESI();
-
+	
+	FCEU_MemoryRand(WRAM, sizeof(WRAM));
+	FCEU_MemoryRand(IRAM, sizeof(IRAM));
 	AddExState(WRAM, 8192, 0, "WRAM");
 	AddExState(IRAM, 128, 0, "IRAM");
 	AddExState(N106_StateRegs, ~0, 0, 0);
@@ -450,6 +452,7 @@ void Mapper210_Init(CartInfo *info) {
 	is210 = 1;
 	GameStateRestore = Mapper210_StateRestore;
 	info->Power = N106_Power;
+	FCEU_MemoryRand(WRAM, sizeof(WRAM));
 	AddExState(WRAM, 8192, 0, "WRAM");
 	AddExState(N106_StateRegs, ~0, 0, 0);
 }

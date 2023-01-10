@@ -38,6 +38,7 @@ static void MALEEPower(void) {
 
 void MALEE_Init(CartInfo *info) {
 	info->Power = MALEEPower;
+	FCEU_MemoryRand(WRAM, sizeof(WRAM));
 	SetupCartPRGMapping(0x10, WRAM, 2048, 1);
 	AddExState(WRAM, 2048, 0, "WRAM");
 }

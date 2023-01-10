@@ -292,7 +292,7 @@ static void GenMMC1Power(void) {
 
 		/* clear non-battery-backed portion of WRAM */
 		if (NONSaveRAMSIZE)
-			FCEU_dwmemset(WRAM, 0, NONSaveRAMSIZE);
+			FCEU_MemoryRand(WRAM, NONSaveRAMSIZE);
 
 		SetReadHandler(0x6000, 0x7FFF, MAWRAM);
 		SetWriteHandler(0x6000, 0x7FFF, MBWRAM);
