@@ -353,7 +353,49 @@ void ResetNES(void)
 	X6502_Reset();
 }
 
+int ram_init_seed = 0;
 int option_ramstate = 0;
+
+uint64 splitmix64(uint32 input) {
+	uint64 z = (input + 0x9e3779b97f4a7c15);
+	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
+	z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
+	return z ^ (z >> 31);
+}
+
+static INLINE uint64 xoroshiro128plus_rotl(const uint64 x, int k) {
+	return (x << k) | (x >> (64 - k));
+}
+
+uint64 xoroshiro128plus_s[2];
+void xoroshiro128plus_seed(uint32 input)
+{
+/* http://xoroshiro.di.unimi.it/splitmix64.c */
+	uint64 x = input;
+
+	uint64 z = (x += 0x9e3779b97f4a7c15);
+	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
+	z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
+	xoroshiro128plus_s[0] = z ^ (z >> 31);
+	
+	z = (x += 0x9e3779b97f4a7c15);
+	z = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
+	z = (z ^ (z >> 27)) * 0x94d049bb133111eb;
+	xoroshiro128plus_s[1] = z ^ (z >> 31);
+}
+
+/* http://vigna.di.unimi.it/xorshift/xoroshiro128plus.c */
+uint64 xoroshiro128plus_next() {
+	const uint64 s0 = xoroshiro128plus_s[0];
+	uint64 s1 = xoroshiro128plus_s[1];
+	const uint64 result = s0 + s1;
+
+	s1 ^= s0;
+	xoroshiro128plus_s[0] = xoroshiro128plus_rotl(s0, 55) ^ s1 ^ (s1 << 14); /* a, b */
+	xoroshiro128plus_s[1] = xoroshiro128plus_rotl(s1, 36); /* c */
+
+	return result;
+}
 
 void FCEU_MemoryRand(uint8 *ptr, uint32 size)
 {
@@ -368,12 +410,12 @@ void FCEU_MemoryRand(uint8 *ptr, uint32 size)
 		*ptr = (x & 1) ? 0x55 : 0xAA;	/* F-15 Sity War HISCORE is screwed... */
 										/* 1942 SCORE/HISCORE is screwed... */
 #endif
-		uint8_t v = 0;
+		uint8 v = 0;
 		switch (option_ramstate)
 		{
 		case 0: v = 0xff; break;
 		case 1: v = 0x00; break;
-		case 2: v = (uint8_t)rand(); break;
+		case 2: v = (uint8)(xoroshiro128plus_next()); break;
 		}
 		*ptr = v;
 		x++;
@@ -390,6 +432,11 @@ void PowerNES(void)
 {
 	if (!GameInfo)
       return;
+	
+	/* reseed random, unless we're in a movie */
+	ram_init_seed = rand() ^ (uint32)xoroshiro128plus_next();
+	/* always reseed the PRNG with the current seed, for deterministic results (for that seed) */
+	xoroshiro128plus_seed(ram_init_seed);
 
 	FCEU_CheatResetRAM();
 	FCEU_CheatAddRAM(2, 0, RAM);
