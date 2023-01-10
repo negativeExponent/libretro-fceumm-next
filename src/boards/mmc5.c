@@ -92,6 +92,7 @@ static uint32 WRAMSIZE = 0;
 static uint8 *WRAM = NULL;
 static uint8 *MMC5fill = NULL;
 static uint8 *ExRAM = NULL;
+static uint8 MMC5battery = 0;
 
 static uint8 MMC5WRAMsize; /* configuration, not state */
 static uint8 MMC5WRAMIndex[8]; /* configuration, not state */
@@ -670,7 +671,7 @@ void NSFMMC5_Close(void) {
 	ExRAM = NULL;
 }
 
-static void GenMMC5Reset(void) {
+static void GenMMC5Power(void) {
 	int x;
 
 	for (x = 0; x < 4; x++) PRGBanks[x] = ~0;
@@ -682,6 +683,18 @@ static void GenMMC5Reset(void) {
 	CHRMode = 0;
 
 	NTAMirroring = NTFill = ATFill = 0xFF;
+
+	/* MMC5fill is and 8-bit tile index, and a 2-bit attribute implented as a mirrored nametable */
+	uint8 nval = MMC5fill[0x000];
+	uint8 aval = MMC5fill[0x3C0] & 3; aval = aval | (aval << 2) | (aval << 4) | (aval << 6);
+	FCEU_dwmemset(MMC5fill + 0x000, nval | (nval<<8) | (nval<<16) | (nval<<24), 0x3C0);
+	FCEU_dwmemset(MMC5fill + 0x3C0, aval | (aval<<8) | (aval<<16) | (aval<<24), 0x040);
+
+	if(MMC5battery == 0) {
+		FCEU_MemoryRand(WRAM, MMC5WRAMsize * 8 * 1024);
+		FCEU_MemoryRand(MMC5fill,1024);
+		FCEU_MemoryRand(ExRAM,1024);
+	}
 
 	MMC5Synco();
 
@@ -741,12 +754,16 @@ static SFORMAT MMC5_StateRegs[] = {
 static void GenMMC5_Init(CartInfo *info, int wsize, int battery) {
 	if (wsize) {
 		WRAM = (uint8*)FCEU_gmalloc(wsize * 1024);
+		FCEU_MemoryRand(WRAM, wsize * 1024);
 		SetupCartPRGMapping(0x10, WRAM, wsize * 1024, 1);
 		AddExState(WRAM, wsize * 1024, 0, "WRAM");
 	}
 
 	MMC5fill = (uint8*)FCEU_gmalloc(1024);
 	ExRAM = (uint8*)FCEU_gmalloc(1024);
+
+	FCEU_MemoryRand(MMC5fill, 1024);
+	FCEU_MemoryRand(ExRAM, 1024);
 
 	AddExState(ExRAM, 1024, 0, "ERAM");
 	AddExState(&MMC5HackSPMode, 1, 0, "SPLM");
@@ -758,8 +775,9 @@ static void GenMMC5_Init(CartInfo *info, int wsize, int battery) {
 	MMC5WRAMsize = wsize ? (wsize / 8) : 0;
 	BuildWRAMSizeTable();
 	GameStateRestore = MMC5_StateRestore;
-	info->Power = GenMMC5Reset;
+	info->Power = GenMMC5Power;
 
+	MMC5battery = battery;
 	if (battery) {
 		info->SaveGame[0] = WRAM;
 		if (wsize <= 16)

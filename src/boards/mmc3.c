@@ -275,11 +275,11 @@ void GenMMC3Power(void) {
 			setprg8r(0x10, 0x6000, 0);
 		}
 		if (!(mmc3opts & 2))
-			FCEU_dwmemset(WRAM, 0, WRAMSIZE);
+			FCEU_MemoryRand(WRAM, WRAMSIZE);
 	}
 	MMC3RegReset();
 	if (CHRRAM)
-		FCEU_dwmemset(CHRRAM, 0, CHRRAMSIZE);
+		FCEU_MemoryRand(CHRRAM, CHRRAMSIZE);
 }
 
 void GenMMC3Close(void) {
