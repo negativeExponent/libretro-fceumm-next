@@ -23,8 +23,8 @@
 
 static uint8 *DummyCHR = NULL;
 static uint8 datareg;
-static void (*Sync)(void);
 
+static uint8 submapper = 0;
 
 static SFORMAT StateRegs[] =
 {
@@ -42,19 +42,13 @@ static SFORMAT StateRegs[] =
 7  0x20, 0x21 - Seicross
 */
 
-static void Sync185(void) {
-	/* little dirty eh? ;_) */
-	if ((datareg & 3) && (datareg != 0x13)) /* 1, 2, 3, 4, 5, 6 */
+static void Sync(void) {
+	if ((submapper != 4 && (datareg & 3) != 0 && datareg != 0x13) || /* 1, 2, 3, 4, 5, 6 */
+		(submapper == 4 && (datareg & 1) == 0)) { /* 7 */
 		setchr8(0);
-	else
+	} else {
 		setchr8r(0x10, 0);
-}
-
-static void Sync181(void) {
-	if (!(datareg & 1)) /* 7 */
-		setchr8(0);
-	else
-		setchr8r(0x10, 0);
+	}
 }
 
 static DECLFW(MWrite) {
@@ -62,7 +56,7 @@ static DECLFW(MWrite) {
 	Sync();
 }
 
-static void MPower(void) {
+static void M185Power(void) {
 	datareg = 0;
 	Sync();
 	setprg16(0x8000, 0);
@@ -71,35 +65,22 @@ static void MPower(void) {
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
-static void MClose(void) {
+static void M185Close(void) {
 	if (DummyCHR)
 		FCEU_gfree(DummyCHR);
 	DummyCHR = NULL;
 }
 
-static void MRestore(int version) {
+static void StateRestore(int version) {
 	Sync();
 }
 
 void Mapper185_Init(CartInfo *info) {
 	int x;
-	Sync = Sync185;
-	info->Power = MPower;
-	info->Close = MClose;
-	GameStateRestore = MRestore;
-	DummyCHR = (uint8 *)FCEU_gmalloc(8192);
-	for (x = 0; x < 8192; x++)
-		DummyCHR[x] = 0xff;
-	SetupCartCHRMapping(0x10, DummyCHR, 8192, 0);
-	AddExState(StateRegs, ~0, 0, 0);
-}
-
-void Mapper181_Init(CartInfo *info) {
-	int x;
-	Sync = Sync181;
-	info->Power = MPower;
-	info->Close = MClose;
-	GameStateRestore = MRestore;
+	info->Power = M185Power;
+	info->Close = M185Close;
+	submapper = info->submapper;
+	GameStateRestore = StateRestore;
 	DummyCHR = (uint8 *)FCEU_gmalloc(8192);
 	for (x = 0; x < 8192; x++)
 		DummyCHR[x] = 0xff;

@@ -599,11 +599,11 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                         178, Mapper178_Init         )
 /*    INES_BOARD( "",                            179, Mapper179_Init ) */
 	INES_BOARD( "",                         180, Mapper180_Init         )
-	INES_BOARD( "",                         181, Mapper181_Init         )
+/*	INES_BOARD( "",                         181, Mapper181_Init         ) */ /* fceux' exclusive mapper to handle Seicross V2, now moved to Mapper 185,sub 4 */
 /*    INES_BOARD( "",                            182, Mapper182_Init ) */    /* Deprecated, dupe of Mapper 114 */
 	INES_BOARD( "",                         183, Mapper183_Init         )
 	INES_BOARD( "",                         184, Mapper184_Init         )
-	INES_BOARD( "",                         185, Mapper185_Init         )
+	INES_BOARD( "CNROM+CopyProtection",     185, Mapper185_Init         )
 	INES_BOARD( "",                         186, Mapper186_Init         )
 	INES_BOARD( "",                         187, Mapper187_Init         )
 	INES_BOARD( "",                         188, Mapper188_Init         )
