@@ -45,7 +45,7 @@ static void sync() {
 		eeprom_93C66_write((reg[2] & 0x04), (reg[2] & 0x02), (reg[2] & 0x01));
 }
 
-static void hblank(void) {
+static void M558HBIRQHook(void) {
 	if ((reg[0] & 0x80) &&
 	    (scanline < 239)) { /* Actual hardware cannot look at the current scanline number, but instead latches PA09 on
 		                     PA13 rises. This does not seem possible with the current PPU emulation however. */
@@ -76,7 +76,7 @@ static DECLFW(writeReg) {
 	sync();
 }
 
-static void power(void) {
+static void M558Power(void) {
 	memset(reg, 0, sizeof(reg));
 	if (haveEEPROM)
 		eeprom_93C66_init();
@@ -87,12 +87,12 @@ static void power(void) {
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 }
 
-static void reset(void) {
+static void M558Reset(void) {
 	memset(reg, 0, sizeof(reg));
 	sync();
 }
 
-static void close(void) {
+static void M558Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
@@ -103,10 +103,10 @@ static void StateRestore(int version) {
 }
 
 void Mapper558_Init(CartInfo *info) {
-	info->Power = power;
-	info->Reset = reset;
-	info->Close = close;
-	GameHBIRQHook = hblank;
+	info->Power = M558Power;
+	info->Reset = M558Reset;
+	info->Close = M558Close;
+	GameHBIRQHook = M558HBIRQHook;
 
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, 0);

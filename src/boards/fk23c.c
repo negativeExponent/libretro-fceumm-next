@@ -368,7 +368,7 @@ static DECLFW(Write8000) {
 	}
 }
 
-static void IRQHook(void) {
+static void M176HBIRQHook(void) {
 	if (!irq_count || irq_reload)
 		irq_count = irq_latch;
 	else
@@ -380,7 +380,7 @@ static void IRQHook(void) {
 	irq_reload = 0;
 }
 
-static void Reset(void) {
+static void M176Reset(void) {
 	/* this little hack makes sure that we try all the dip switch settings eventually, if we reset enough */
 	if (dipsw_enable) {
 		dipswitch = (dipswitch + 1) & 7;
@@ -407,7 +407,7 @@ static void Reset(void) {
 	Sync();
 }
 
-static void Power(void) {
+static void M176Power(void) {
 	fk23_regs[0] = fk23_regs[1] = fk23_regs[2] = fk23_regs[3] = fk23_regs[4] = fk23_regs[5] = fk23_regs[6] =
 	    fk23_regs[7] = 0;
 	mmc3_regs[0] = 0;
@@ -441,7 +441,7 @@ static void Power(void) {
 	}
 }
 
-static void Close(void) {
+static void M176Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
@@ -457,10 +457,10 @@ static void StateRestore(int version) {
 
 void Init(CartInfo *info) {
 	/* Initialization for iNES and UNIF. subType and dipsw_enable must have been set. */
-	info->Power = Power;
-	info->Reset = Reset;
-	info->Close = Close;
-	GameHBIRQHook = IRQHook;
+	info->Power = M176Power;
+	info->Reset = M176Reset;
+	info->Close = M176Close;
+	GameHBIRQHook = M176HBIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, 0);
 

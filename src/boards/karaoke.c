@@ -42,7 +42,7 @@ static DECLFR(ExtDev) {
 	return(3);
 }
 
-static void Power(void) {
+static void M118Power(void) {
 	latche = 0;
 	Sync();
 	setchr8(0);
@@ -57,7 +57,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper188_Init(CartInfo *info) {
-	info->Power = Power;
+	info->Power = M118Power;
 	GameStateRestore = StateRestore;
 	AddExState(&latche, 1, 0, "LATC");
 }

@@ -40,7 +40,7 @@ static void sync() {
 		setchr8(0);
 }
 
-static void hblank(void) {
+static void M163HBIRQHook(void) {
 	if ((reg[0] & 0x80) &&
 	    (scanline < 239)) { /* Actual hardware cannot look at the current scanline number, but instead latches PA09 on
 		                     PA13 rises. This does not seem possible with the current PPU emulation however. */
@@ -70,7 +70,7 @@ static DECLFW(writeReg) {
 	sync();
 }
 
-static void power(void) {
+static void M163Power(void) {
 	memset(reg, 0, sizeof(reg));
 	sync();
 	SetReadHandler(0x5000, 0x57FF, readReg);
@@ -79,12 +79,12 @@ static void power(void) {
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 }
 
-static void reset(void) {
+static void M163Reset(void) {
 	memset(reg, 0, sizeof(reg));
 	sync();
 }
 
-static void close(void) {
+static void M163Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
@@ -95,10 +95,10 @@ static void StateRestore(int version) {
 }
 
 void Mapper163_Init(CartInfo *info) {
-	info->Power = power;
-	info->Reset = reset;
-	info->Close = close;
-	GameHBIRQHook = hblank;
+	info->Power = M163Power;
+	info->Reset = M163Reset;
+	info->Close = M163Close;
+	GameHBIRQHook = M163HBIRQHook;
 
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, 0);
