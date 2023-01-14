@@ -80,7 +80,7 @@ static DECLFW(writeReg) {
 	sync();
 }
 
-static void power(void) {
+static void M164Power(void) {
 	memset(reg, 0, sizeof(reg));
 	eeprom_93C66_init();
 	sync();
@@ -90,12 +90,12 @@ static void power(void) {
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 }
 
-static void reset(void) {
+static void M164Reset(void) {
 	memset(reg, 0, sizeof(reg));
 	sync();
 }
 
-static void close(void) {
+static void M164Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
@@ -106,9 +106,9 @@ static void StateRestore(int version) {
 }
 
 void Mapper164_Init(CartInfo *info) {
-	info->Power = power;
-	info->Reset = reset;
-	info->Close = close;
+	info->Power = M164Power;
+	info->Reset = M164Reset;
+	info->Close = M164Close;
 
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, 0);

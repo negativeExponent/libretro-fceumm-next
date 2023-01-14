@@ -118,7 +118,7 @@ static DECLFR(M216Read5000) {
 	return 0;
 }
 
-static void Power(void) {
+static void M216Power(void) {
 	prg_reg = 0;
 	chr_reg = 0;
 	Sync();
@@ -130,7 +130,7 @@ static void Power(void) {
 
 
 void Mapper216_Init(CartInfo *info) {
-	info->Power = Power;
+	info->Power = M216Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

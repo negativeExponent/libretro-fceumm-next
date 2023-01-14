@@ -92,13 +92,13 @@ static DECLFW(writeIRQ) {
 	MMC3_IRQWrite(A, V ^ 0xFF);
 }
 
-static void reset(void) {
+static void ResetCommon(void) {
 	dipSwitch++; /* Soft-resetting cycles through solder pad or DIP switch settings */
 	EXPREGS[0] = EXPREGS[1] = EXPREGS[2] = EXPREGS[3] = 0;
 	MMC3RegReset();
 }
 
-static void power(void) {
+static void PowerCommon(void) {
 	dipSwitch = 0;
 	EXPREGS[0] = EXPREGS[1] = EXPREGS[2] = EXPREGS[3] = 0;
 	GenMMC3Power();
@@ -108,13 +108,13 @@ static void power(void) {
 		SetWriteHandler(0xC000, 0xDFFF, writeIRQ); /* Mapper 534 inverts the MMC3 scanline counter reload value */
 }
 
-static void init(CartInfo *info) {
+static void InitCommon(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 8, info->battery);
 	cwrap = wrapCHR;
 	pwrap = wrapPRG;
 
-	info->Power = power;
-	info->Reset = reset;
+	info->Power = PowerCommon;
+	info->Reset = ResetCommon;
 
 	AddExState(EXPREGS, 4, 0, "EXPR");
 	AddExState(&dipSwitch, 1, 0, "DPSW");
@@ -123,17 +123,17 @@ static void init(CartInfo *info) {
 void Mapper126_Init(CartInfo *info) {
 	reverseCHR_A18_A19 = 1;
 	invertC000 = 0;
-	init(info);
+	InitCommon(info);
 }
 
 void Mapper422_Init(CartInfo *info) {
 	reverseCHR_A18_A19 = 0;
 	invertC000 = 0;
-	init(info);
+	InitCommon(info);
 }
 
 void Mapper534_Init(CartInfo *info) {
 	reverseCHR_A18_A19 = 0;
 	invertC000 = 1;
-	init(info);
+	InitCommon(info);
 }

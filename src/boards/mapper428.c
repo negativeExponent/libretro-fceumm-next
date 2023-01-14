@@ -63,7 +63,7 @@ static DECLFR(ReadLo) {
 	return hrd_flag;
 }
 
-static void Power(void) {
+static void M428Power(void) {
 	hrd_flag = 0; /* Solder pad, selecting different menus */
 
 	regs[0] = 0;
@@ -81,7 +81,7 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-static void Reset(void) {
+static void M428Reset(void) {
 	hrd_flag++;
 	hrd_flag &= 3;
 
@@ -94,11 +94,8 @@ static void Reset(void) {
 
 void Mapper428_Init(CartInfo *info) {
 	hrd_flag = 0;
-
-	Sync();
-
-	info->Power = Power;
-	info->Reset = Reset;
+	info->Power = M428Power;
+	info->Reset = M428Reset;
 	AddExState(&StateRegs, ~0, 0, 0);
 	GameStateRestore = StateRestore;
 }
