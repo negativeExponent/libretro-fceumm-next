@@ -30,7 +30,7 @@ static uint16 VRC4_chr[8];
 static uint8 VRCIRQ_latch;
 static uint8 VRCIRQ_mode;
 static uint8 VRCIRQ_count;
-static signed short int VRCIRQ_cycles;
+static int16 VRCIRQ_cycles;
 static uint8 *CHRRAM = NULL;
 static uint8 *PRGCHR = NULL;
 
@@ -67,11 +67,18 @@ static void sync() {
 	int chip = reg[2] & 0x01 && CHRRAM ? 0x10 : 0x00;
 
 	if (reg[2] & 0x10) { /* NROM mode */
-		if (reg[2] & 0x04) { /* NROM-128 */
-			setprg16r(chip, 0x8000, prgOR >> 1);
-			setprg16r(chip, 0xC000, prgOR >> 1);
-		} else /* NROM-256 */
-			setprg32r(chip, 0x8000, prgOR >> 2);
+		if (reg[2] & 0x08) { /* NROM-64 */
+			setprg8r(chip, 0x8000, prgOR);
+			setprg8r(chip, 0xA000, prgOR);
+			setprg8r(chip, 0xC000, prgOR);
+			setprg8r(chip, 0xE000, prgOR);
+		} else {
+			if (reg[2] & 0x04) { /* NROM-128 */
+				setprg16r(chip, 0x8000, prgOR >> 1);
+				setprg16r(chip, 0xC000, prgOR >> 1);
+			} else /* NROM-256 */
+				setprg32r(chip, 0x8000, prgOR >> 2);
+		}
 	} else if (~reg[0] & 0x02) { /* MMC3 mode */
 		setprg8r(chip, 0x8000 ^ (MMC3_index << 8 & 0x4000), (MMC3_reg[6] & prgAND) | (prgOR & ~prgAND));
 		setprg8r(chip, 0xA000,                              (MMC3_reg[7] & prgAND) | (prgOR & ~prgAND));
@@ -97,7 +104,7 @@ static void sync() {
 			setprg32(0x8000, ((MMC1_reg[3] & prgAND) | (prgOR & ~prgAND)) >> 1);
 	}
 
-	chrAND = reg[2] & 0x10 ? 0x1F : reg[2] & 0x20 ? 0x7F : 0xFF;
+	chrAND = reg[2] & 0x10 && ~reg[2] & 0x20 ? 0x1F : reg[2] & 0x20 ? 0x7F : 0xFF;
 	chrOR = reg[0] << 1;
 	if (reg[2] & 0x01) /* CHR RAM mode */
 		setchr8r(0x10, 0);
@@ -298,6 +305,11 @@ static DECLFW(writeReg) {
 	sync();
 }
 
+static DECLFW(writeFDSMirroring) {
+	MMC3_mirroring = V >> 3 & 1;
+	sync();
+}
+
 static void Mapper351_power(void) {
 	int i;
 	for (i = 0; i < 4; i++)
@@ -319,6 +331,7 @@ static void Mapper351_power(void) {
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetReadHandler(0x5000, 0x5FFF, readDIP);
 	SetWriteHandler(0x5000, 0x5FFF, writeReg);
+	SetWriteHandler(0x4025, 0x4025, writeFDSMirroring);
 	applyMode();
 	sync();
 }
