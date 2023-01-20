@@ -18,8 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "../fds_apu.h"
 #include "mapinc.h"
+#include "../fds_apu.h"
 
 static uint8 latche, latcheinit, bus_conflict;
 static uint16 addrreg0, addrreg1;
@@ -450,8 +450,8 @@ void Mapper240_Init(CartInfo *info) {
 }
 
 /*------------------ Map 241 ---------------------------*/
-/* Mapper 7 mostly, but with SRAM or maybe prot circuit
- * figure out, which games do need 5xxx area reading
+/* Mapper 7 mostly, but with SRAM or maybe prot circuit.
+ * figure out, which games do need 5xxx area reading.
  */
 
 static void M241Sync(void) {
