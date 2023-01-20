@@ -154,26 +154,6 @@ void Mapper58_Init(CartInfo *info) {
 	Latch_Init(info, M58Sync, NULL, 0x0000, 0x8000, 0xFFFF, 0);
 }
 
-/*------------------ Map 059 ---------------------------*/
-/* One more forgotten mapper */
-/* Formerly, an incorrect implementation of BMC-T3H53 */
-/*static void M59Sync(void) {
-    setprg32(0x8000, (latche >> 4) & 7);
-    setchr8(latche & 0x7);
-    setmirror((latche >> 3) & 1);
-}
-
-static DECLFR(M59Read) {
-    if (latche & 0x100)
-        return 0;
-    else
-        return CartBR(A);
-}
-
-void Mapper59_Init(CartInfo *info) {
-    Latch_Init(info, M59Sync, M59Read, 0x0000, 0x8000, 0xFFFF, 0);
-}*/
-
 /*------------------ Map 061 ---------------------------*/
 static void M61Sync(void) {
 	if (((latche & 0x10) << 1) ^ (latche & 0x20)) {
@@ -351,10 +331,6 @@ static void M212Sync(void) {
 void Mapper212_Init(CartInfo *info) {
 	Latch_Init(info, M212Sync, M212Read, 0x0000, 0x8000, 0xFFFF, 0);
 }
-
-/*------------------ Map 213 ---------------------------*/
-
-/*                SEE MAPPER 58                         */
 
 /*------------------ Map 214 ---------------------------*/
 
