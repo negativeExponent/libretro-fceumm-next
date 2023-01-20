@@ -25,71 +25,76 @@
 
 static uint8 *WRAM;
 static uint32 WRAMSIZE;
-static uint8 latch[2];
+static uint8 latch_data;
+static uint16 latch_addr;
 
-static void Mapper452_Sync(void) {
-	uint8 wramBank = ((latch[1] >> 3) & 6) | 8;
-	if (latch[1] & 2) {
-		setprg8(0x8000, latch[0] >> 1);
-		setprg8(0xA000, latch[0] >> 1);
-		setprg8(0xC000, latch[0] >> 1);
-		setprg8(0xE000, latch[0] >> 1);
+static void Sync(void) {
+	uint8 wramBank = ((latch_data >> 3) & 6) | 8;
+	uint16 prgbank = latch_addr >> 1;
+	if (latch_data & 2) {
+		setprg8(0x8000, prgbank);
+		setprg8(0xA000, prgbank);
+		setprg8(0xC000, prgbank);
+		setprg8(0xE000, prgbank);
 		setprg8r(0x10, (wramBank ^ 4) << 12, 0);
-	} else if (latch[1] & 8) {
-		setprg8(0x8000, (latch[0] >> 1) | 0);
-		setprg8(0xA000, (latch[0] >> 1) | 1);
-		setprg8(0xC000, (latch[0] >> 1) | 2);
-		setprg8(0xE000, (latch[0] >> 1) | 3 | (latch[1] & 4));
+	} else if (latch_data & 8) {
+		setprg8(0x8000, (prgbank & ~1) | 0);
+		setprg8(0xA000, (prgbank & ~1) | 1);
+		setprg8(0xC000, (prgbank & ~1) | 2);
+		setprg8(0xE000, 3 | (prgbank & ~1)
+			| (latch_data & 4)
+			| ((latch_data & 0x04) && (latch_data & 0x40) ? 8 : 0));
 	} else {
-		setprg16(0x8000, latch[0] >> 2);
+		setprg16(0x8000, latch_addr >> 2);
 		setprg16(0xC000, 0);
 	}
-	setprg8r(0x10, wramBank << 12, 0);
+	setprg8r(0x10, (wramBank << 12), 0);
 	setchr8(0);
-	setmirror((latch[1] & 1) ^ 1);
+	setmirror((latch_data & 1) ^ 1);
 }
 
-static DECLFW(Mapper452_WriteLatch) {
-	latch[0] = A & 0xFF;
-	latch[1] = V;
-	Mapper452_Sync();
+static DECLFW(M452Write) {
+	latch_addr = A & 0xFFF;
+	latch_data = V;
+	Sync();
 	/* Do not relay to CartBW, as RAM mapped to locations other than $8000-$DFFF are not write-enabled. */
 }
 
-static void Mapper452_Reset(void) {
-	latch[0] = latch[1] = 0;
-	Mapper452_Sync();
+static void M452Reset(void) {
+	latch_addr = latch_data = 0;
+	Sync();
 }
 
-static void Mapper452_Power(void) {
-	latch[0] = latch[1] = 0;
-	Mapper452_Sync();
+static void M452Power(void) {
+	latch_addr = latch_data = 0;
+	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xDFFF, Mapper452_WriteLatch);
+	SetWriteHandler(0x8000, 0xDFFF, M452Write);
 	SetWriteHandler(0xE000, 0xFFFF, CartBW);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void Mapper452_Close(void) {
+static void M452Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
 }
 
 static void StateRestore(int version) {
-	Mapper452_Sync();
+	Sync();
 }
 
 void Mapper452_Init(CartInfo *info) {
-	info->Reset = Mapper452_Reset;
-	info->Power = Mapper452_Power;
-	info->Close = Mapper452_Close;
+	info->Reset      = M452Reset;
+	info->Power      = M452Power;
+	info->Close      = M452Close;
 	GameStateRestore = StateRestore;
 
-	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAMSIZE         = 8192;
+	WRAM             = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
-	AddExState(&latch, 2, 0, "LATC");
+	AddExState(&latch_addr, 2, 0, "ADDR");
+	AddExState(&latch_data, 1, 0, "DATA");
 }
