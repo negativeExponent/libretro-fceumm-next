@@ -667,6 +667,7 @@ void BMCSFGAME4IN1_Init(CartInfo *info) {
 }
 
 /* ---------------------------- Mapper 52 ------------------------------- */
+/* Submapper 13 - CHR-ROM + CHR-RAM */
 static void M52PW(uint32 A, uint8 V) {
 	uint32 mask = 0x1F ^ ((EXPREGS[0] & 8) << 1);
 	uint32 bank = ((EXPREGS[0] & 6) | ((EXPREGS[0] >> 3) & EXPREGS[0] & 1)) << 4;
@@ -678,7 +679,8 @@ static void M52CW(uint32 A, uint8 V) {
 	/*	uint32 bank = (((EXPREGS[0]>>3)&4)|((EXPREGS[0]>>1)&2)|((EXPREGS[0]>>6)&(EXPREGS[0]>>4)&1))<<7; */
 	uint32 bank = (((EXPREGS[0] >> 4) & 2) | (EXPREGS[0] & 4) |
 		((EXPREGS[0] >> 6) & (EXPREGS[0] >> 4) & 1)) << 7; /* actually 256K CHR banks index bits is inverted! */
-	setchr1(A, bank | (V & mask));
+	uint8 ram = CHRRAM && ((EXPREGS[0] & 3) == 3);
+	setchr1r(ram ? 0x10 : 0, A, bank | (V & mask));
 }
 
 static DECLFW(M52Write) {
@@ -710,6 +712,12 @@ void Mapper52_Init(CartInfo *info) {
 	info->Reset = M52Reset;
 	info->Power = M52Power;
 	AddExState(EXPREGS, 2, 0, "EXPR");
+	if (info->iNES2 && (info->submapper == 13)) {
+		CHRRAMSIZE = info->CHRRamSize ? info->CHRRamSize : 8192;
+		CHRRAM     = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+		SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
+		AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
+	}
 }
 
 /* ---------------------------- Mapper 76 ------------------------------- */
