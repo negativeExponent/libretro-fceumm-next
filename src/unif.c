@@ -366,8 +366,8 @@ struct _unif_db {
 
 static struct _unif_db unif_db[] = {
 	{ 0x03ed6963ca50e1d8ULL, "A65AS",          1,   -1, -1 },
-	{ 0x616851e56946893bULL, "RESETNROM-XIN1", 0, MI_V, -1 }, /* Sheng Tian 2-in-1(Unl,ResetBase)[p1].unf */
-	{ 0x4cd729b5ae23a3cfULL, "RESETNROM-XIN1", 0, MI_H, -1 }, /* Sheng Tian 2-in-1(Unl,ResetBase)[p2].unf */
+	{ 0x616851e56946893bULL, "RESETNROM-XIN1", 1,   -1, -1 }, /* Sheng Tian 2-in-1(Unl,ResetBase)[p1].unf */
+	{ 0x4cd729b5ae23a3cfULL, "RESETNROM-XIN1", 1,   -1, -1 }, /* Sheng Tian 2-in-1(Unl,ResetBase)[p2].unf */
 
 	{ 0, NULL, -1, -1, -1 } /* end of the line */
 };
@@ -585,7 +585,7 @@ static BMAPPING bmap[] = {
 	{ "80013-B",                    274, BMC80013B_Init,        0 },
 	{ "TH2131-1",                   308, UNLTH21311_Init,       0 },
 	{ "LH51",                       309, LH51_Init,             0 },
-	{ "RESETNROM-XIN1",         NO_INES, BMCRESETNROMXIN1_Init, 0 }, /* split roms */
+	{ "RESETNROM-XIN1",             343, BMCRESETNROMXIN1_Init, 0 }, /* split roms */
 	{ "RESET-TXROM",                313, BMCRESETTXROM_Init,    0 },
 	{ "K-3088",                     287, BMCK3088_Init,         0 },
 	{ "FARID_SLROM_8-IN-1",         323, FARIDSLROM8IN1_Init,   0 },
@@ -597,7 +597,7 @@ static BMAPPING bmap[] = {
 	{ "K-3006",                     339, BMCK3006_Init,         0 },
 	{ "K-3036",                     340, BMCK3036_Init,         0 },
 	{ "KS7021A",                    525, UNLKS7021A_Init,       0 },
-	{ "KS106C",                 NO_INES, BMCKS106C_Init,        0 }, /* split roms */
+	{ "KS106C",                     352, BMCKS106C_Init,        0 },
 	{ "900218",                     524, BTL900218_Init,        0 },
 	{ "JC-016-2",                   205, Mapper205_Init,        0 },
 	{ "AX-40G",                     527, UNLAX40G_Init,         0 },
