@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,18 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* NES 2.0 Mapper 343
- * BMC-RESETNROM-XIN1
- * - Sheng Tian 2-in-1(Unl,ResetBase)[p1] - Kung Fu (Spartan X), Super Mario Bros (alt)
- * - Sheng Tian 2-in-1(Unl,ResetBase)[p2] - B-Wings, Twin-bee
- *
+/*
+ * NES 2.0 Mapper 352
  * BMC-KS106C
- * - Kaiser 4-in-1(Unl,KS106C)[p1] - B-Wings, Kung Fu, 1942, SMB1 (wrong mirroring)
+ * - Kaiser 4-in-1(Unl,KS106C)[p1] - B-Wings, Kung Fu, 1942, SMB1
  */
 
 #include "mapinc.h"
 
-static uint8 gameblock, limit;
+static uint8 gameblock;
 
 static SFORMAT StateRegs[] =
 {
@@ -38,19 +35,19 @@ static SFORMAT StateRegs[] =
 };
 
 static void Sync(void) {
-	setchr8(gameblock);
 	setprg32(0x8000, gameblock);
+	setchr8(gameblock);
+	setmirror(gameblock & 1);
 }
 
-static void BMCRESETNROMXIN1Power(void) {
+static void KS106CPower(void) {
 	gameblock = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
-static void BMCRESETNROMXIN1Reset(void) {
+static void KS106CReset(void) {
 	gameblock++;
-	gameblock &= limit;
 	Sync();
 }
 
@@ -58,18 +55,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void BMCRESETNROMXIN1_Init(CartInfo *info) {
-	limit = 0x01;
-	info->Power = BMCRESETNROMXIN1Power;
-	info->Reset = BMCRESETNROMXIN1Reset;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
-}
-
 void BMCKS106C_Init(CartInfo *info) {
-	limit = 0x03;
-	info->Power = BMCRESETNROMXIN1Power;
-	info->Reset = BMCRESETNROMXIN1Reset;
+	info->Power = KS106CPower;
+	info->Reset = KS106CReset;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
