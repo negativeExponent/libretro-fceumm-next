@@ -25,13 +25,13 @@
 
 static void M432CW(uint32 A, uint8 V) {
 	int chrAND = (EXPREGS[1] & 0x04) ? 0x7F : 0xFF;
-	int chrOR  = (EXPREGS[1] << 7) & 0x080 | (EXPREGS[1] << 5) & 0x100 | (EXPREGS[1] << 4) & 0x200;
+	int chrOR  = ((EXPREGS[1] << 7) & 0x080) | (EXPREGS[1] << 5) & 0x100 | ((EXPREGS[1] << 4) & 0x200);
 	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 
 static void M432PW(uint32 A, uint8 V) {
 	int prgAND = (EXPREGS[1] & 0x02) ? 0x0F : 0x1F;
-	int prgOR  = ((EXPREGS[1] << 4) & 0x10) | (EXPREGS[1] << 1) & 0x60;
+	int prgOR  = ((EXPREGS[1] << 4) & 0x10) | ((EXPREGS[1] << 1) & 0x60);
 	if (EXPREGS[1] & 0x40) { /* NROM */
 		if (EXPREGS[1] & 0x80) { /* NROM-256 */
 			setprg8(0x8000, ((DRegBuf[6] & ~2) & prgAND) | (prgOR & ~prgAND));
