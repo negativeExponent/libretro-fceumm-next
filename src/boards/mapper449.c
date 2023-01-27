@@ -32,7 +32,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 prgbank = latch_addr >> 2 & 0x1F | latch_addr >> 3 & 0x20;
+	uint8 prgbank = ((latch_addr >> 2) & 0x1F) | ((latch_addr >> 3) & 0x20);
 	if (~latch_addr & 0x080) {
 		setprg16(0x8000, prgbank);
 		setprg16(0xC000, prgbank | 7);
