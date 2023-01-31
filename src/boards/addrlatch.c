@@ -31,29 +31,30 @@ static void BMCD1038Sync(void) {
 	if (latch.addr & 0x80) {
 		setprg16(0x8000, (latch.addr & 0x70) >> 4);
 		setprg16(0xC000, (latch.addr & 0x70) >> 4);
-	} else
+	} else {
 		setprg32(0x8000, (latch.addr & 0x60) >> 5);
+	}
 	setchr8(latch.addr & 7);
 	setmirror(((latch.addr & 8) >> 3) ^ 1);
 }
 
 static DECLFR(BMCD1038Read) {
-	if (latch.addr & 0x100)
-		return dipswitch;
-	else
-		return CartBR(A);
+	if (latch.addr & 0x100) {
+		return (X.DB & ~3) | (dipswitch & 3);
+	}
+	return CartBR(A);
 }
 
 static DECLFW(BMCD1038Write) {
-	/* Only recognize the latch write if the lock bit has not been set. Needed for NT-234 "Road Fighter" */
-	if (~latch.addr & 0x200)
+	/* Only recognize the latch write if the lock bit has not been set. */
+	/* Needed for NT-234 "Road Fighter" */
+	if (~latch.addr & 0x200) {
 		LatchWrite(A, V);
+	}
 }
 
 static void BMCD1038Reset(void) {
 	dipswitch++;
-	dipswitch &= 3;
-
 	/* Always reset to menu */
 	latch.addr = 0;
 	BMCD1038Sync();
