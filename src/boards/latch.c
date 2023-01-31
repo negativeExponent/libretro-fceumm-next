@@ -38,8 +38,14 @@ DECLFW(LatchWrite) {
 	WSync();
 }
 
+void LatchHardReset() {
+	latch.addr = 0;
+	latch.data = 0;
+	WSync();
+}
+
 void LatchPower(void) {
-	latch.addr = latch.data = 0;
+	LatchHardReset();
 	WSync();
 	if (WRAM) {
 		SetReadHandler(0x6000, 0xFFFF, CartBR);

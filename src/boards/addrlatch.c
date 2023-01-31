@@ -22,7 +22,8 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint32 dipswitch;
+static uint32 dipswitch = 0;
+static uint32 submapper = 0;
 
 /*------------------ BMCD1038 ---------------------------*/
 /* iNES Mapper 59 */
@@ -89,6 +90,7 @@ static void M58Sync(void) {
 
 void Mapper58_Init(CartInfo *info) {
 	Latch_Init(info, M58Sync, NULL, 0, 0);
+	info->Reset = LatchHardReset;
 }
 
 /*------------------ Map 061 ---------------------------*/
@@ -105,6 +107,7 @@ static void M61Sync(void) {
 
 void Mapper61_Init(CartInfo *info) {
 	Latch_Init(info, M61Sync, NULL, 0, 0);
+	info->Reset = LatchHardReset;
 }
 
 /*------------------ Map 063 ---------------------------*/
@@ -117,30 +120,36 @@ void Mapper61_Init(CartInfo *info) {
 static uint16 openBus   = 0;
 static uint8 hasBattery = 0;
 
+extern uint32 ROM_size;
+
 static DECLFR(M63Read) {
-	if (A < 0xC000)
-		if (openBus)
-			return X.DB;
+	if (openBus)
+		return X.DB;
 	return CartBR(A);
 }
 
 static void M63Sync(void) {
-	uint16 mode = latch.addr & 2;
-	uint16 prg_bank = (latch.addr & 0x3F8) >> 1;
-	uint16 prg16 = (latch.addr & 4) >> 1;
-
-	openBus = ((latch.addr & 0x300) == 0x300);
-	setprg8(0x8000, (prg_bank | (mode ? 0 : prg16 | 0)));
-	setprg8(0xA000, (prg_bank | (mode ? 1 : prg16 | 1)));
-	setprg8(0xC000, (prg_bank | (mode ? 2 : prg16 | 0)));
-	setprg8(0xE000,
-	        ((latch.addr & 0x800) ? ((latch.addr & 0x7C) | ((latch.addr & 6) ? 3 : 1)) : (prg_bank | (mode ? 3 : (prg16 | 1)))));
+	uint8 prg_mask = (submapper == 0) ? 0xFF : 0x7F;
+	uint8 prg_bank = (latch.addr >> 2) & prg_mask;
+	uint8 chr_protect = (latch.addr & ((submapper == 0) ? 0x400 : 0x200)) == 0;
+	if (latch.addr & 2) {
+		setprg32(0x8000, prg_bank >> 1);
+	} else {
+		setprg16(0x8000, prg_bank);
+		setprg16(0xC000, prg_bank);
+	}
 	setchr8(0);
 	setmirror((latch.addr & 1) ^ 1);
+	/* return openbus for unpopulated rom banks */
+	openBus = prg_bank >= ROM_size;
+	/* chr-ram protect */
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, chr_protect);
 }
 
 void Mapper63_Init(CartInfo *info) {
 	Latch_Init(info, M63Sync, M63Read, 0, 0);
+	info->Reset = LatchHardReset;
+	submapper = info->submapper;
 }
 
 /*------------------ Map 092 ---------------------------*/
@@ -203,7 +212,6 @@ void Mapper200_Init(CartInfo *info) {
 /* 2020-3-6 - Support for 21-in-1 (CF-043) (2006-V) (Unl) [p1].nes which has mixed mirroring
  * found at the time labeled as submapper 15
  * 0x05658DED 128K PRG, 32K CHR */
-static uint32 submapper = 0;
 static void M201Sync(void) {
 	if (latch.addr & 8 || submapper == 15) {
 		setprg32(0x8000, latch.addr & 3);
