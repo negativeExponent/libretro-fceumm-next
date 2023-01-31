@@ -224,14 +224,14 @@ void Mapper201_Init(CartInfo *info) {
 /*------------------ Map 202 ---------------------------*/
 
 static void M202Sync(void) {
-	/* According to more carefull hardware tests and PCB study */
-	int32 mirror = latch.addr & 1;
-	int32 bank = (latch.addr >> 1) & 0x7;
-	int32 select = (mirror & (bank >> 2));
-	setprg16(0x8000, select ? (bank & 6) | 0 : bank);
-	setprg16(0xc000, select ? (bank & 6) | 1 : bank);
-	setmirror(mirror ^ 1);
-	setchr8(bank);
+	if ((latch.addr & 0x9) == 0x09) {
+		setprg32(0x8000, latch.addr >> 2);
+	} else {
+		setprg16(0x8000, latch.addr >> 1);
+		setprg16(0xC000, latch.addr >> 1);
+	}
+	setchr8(latch.addr >> 1);
+	setmirror((latch.addr & 1) ^ 1);
 }
 
 void Mapper202_Init(CartInfo *info) {
