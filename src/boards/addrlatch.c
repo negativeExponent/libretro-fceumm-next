@@ -80,8 +80,9 @@ static void M58Sync(void) {
 	if (latch.addr & 0x40) {
 		setprg16(0x8000, latch.addr & 7);
 		setprg16(0xC000, latch.addr & 7);
-	} else
+	} else {
 		setprg32(0x8000, (latch.addr >> 1) & 3);
+	}
 	setchr8((latch.addr >> 3) & 7);
 	setmirror(((latch.addr & 0x80) >> 7) ^ 1);
 }
@@ -92,11 +93,12 @@ void Mapper58_Init(CartInfo *info) {
 
 /*------------------ Map 061 ---------------------------*/
 static void M61Sync(void) {
-	if (((latch.addr & 0x10) << 1) ^ (latch.addr & 0x20)) {
-		setprg16(0x8000, ((latch.addr & 0xF) << 1) | (((latch.addr & 0x20) >> 4)));
-		setprg16(0xC000, ((latch.addr & 0xF) << 1) | (((latch.addr & 0x20) >> 4)));
-	} else
+	if (latch.addr & 0x10) {
+		setprg16(0x8000, ((latch.addr & 0xF) << 1) | ((latch.addr & 0x20) >> 5));
+		setprg16(0xC000, ((latch.addr & 0xF) << 1) | ((latch.addr & 0x20) >> 5));
+	} else {
 		setprg32(0x8000, latch.addr & 0xF);
+	}
 	setchr8(0);
 	setmirror(((latch.addr >> 7) & 1) ^ 1);
 }
