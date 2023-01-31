@@ -256,10 +256,7 @@ void Mapper204_Init(CartInfo *info) {
 /*------------------ Map 212 ---------------------------*/
 
 static DECLFR(M212Read) {
-	uint8 ret = CartBROB(A);
-	if ((A & 0xE010) == 0x6000)
-		ret |= 0x80;
-	return ret;
+	return X.DB | ((A & 0x10) ? 0 : 0x80);
 }
 
 static void M212Sync(void) {
@@ -273,8 +270,14 @@ static void M212Sync(void) {
 	setmirror(((latch.addr >> 3) & 1) ^ 1);
 }
 
+static void M212Power() {
+	LatchPower();
+	SetReadHandler(0x6000, 0x7FFF, M212Read);
+}
+
 void Mapper212_Init(CartInfo *info) {
 	Latch_Init(info, M212Sync, M212Read, 0, 0);
+	info->Power = M212Power;
 }
 
 /*------------------ Map 214 ---------------------------*/
