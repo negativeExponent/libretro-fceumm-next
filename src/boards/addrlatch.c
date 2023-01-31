@@ -200,12 +200,13 @@ static void M200Sync(void) {
 	setprg16(0x8000, latch.addr & 7);
 	setprg16(0xC000, latch.addr & 7);
 	setchr8(latch.addr & 7);
-	setmirror(((latch.addr >> 3) & 1) ^ 1);
+	setmirror(((latch.addr >> ((submapper == 0) ? 3 : 2)) & 1) ^ 1);
 }
 
 void Mapper200_Init(CartInfo *info) {
 	/* TODO: init was ~0 */
 	Latch_Init(info, M200Sync, NULL, 0, 0);
+	submapper = info->submapper;
 }
 
 /*------------------ Map 201 ---------------------------*/
