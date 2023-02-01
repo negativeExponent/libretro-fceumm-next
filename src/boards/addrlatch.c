@@ -295,12 +295,13 @@ void Mapper214_Init(CartInfo *info) {
 /*------------------ Map 217 ---------------------------*/
 
 static void M217Sync(void) {
-	setprg32(0x8000, (latch.addr >> 2) & 0x03);
-	setchr8(latch.addr & 0x0F);
+	setprg32(0x8000, latch.addr >> 2);
+	setchr8(latch.addr);
 }
 
 void Mapper217_Init(CartInfo *info) {
 	Latch_Init(info, M217Sync, NULL, 0, 0);
+	info->Reset = LatchHardReset;
 }
 
 /*------------------ Map 227 ---------------------------*/
@@ -348,9 +349,32 @@ static void M227Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
 }
 
+static DECLFR(M227Read) {
+	if ((latch.addr & 0x400) && dipswitch) {
+		A |= dipswitch;
+	}
+	return CartBROB(A);
+}
+
+static void M227Power() {
+	dipswitch = 0;
+	LatchPower();
+	SetReadHandler(0x8000, 0xFFFF, M227Read);
+}
+
+static void M227Reset() {
+	LatchHardReset();
+
+	dipswitch = (dipswitch + 1) & 0x0F;
+	M227Sync();
+}
+
 void Mapper227_Init(CartInfo *info) {
-	hasBattery = info->battery;
 	Latch_Init(info, M227Sync, NULL, 1, 0);
+	info->Power = M227Power;
+	info->Reset = M227Reset;
+	hasBattery = info->battery;
+	AddExState(&dipswitch, 1, 0, "PADS");
 }
 
 /*------------------ Map 229 ---------------------------*/
@@ -388,6 +412,7 @@ void Mapper231_Init(CartInfo *info) {
 }
 
 /*------------------ Map 242 ---------------------------*/
+
 static uint8 M242TwoChips;
 static void M242Sync(void) {
 	uint32 S = latch.addr & 1;
@@ -396,10 +421,10 @@ static void M242Sync(void) {
 
 	if (M242TwoChips) {
 		if (latch.addr & 0x600) { /* First chip */
-			p &= 0x1F;
+			p &= ((ROM_size & ~8) - 1);
 		} else { /* Second chip */
 			p &= 0x07;
-			p += 0x20;
+			p += (ROM_size & ~8);
 		}
 	}
 
@@ -441,10 +466,32 @@ static void M242Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
 }
 
+static DECLFR(M242Read) {
+	if (latch.addr & 0x100) {
+		A |= dipswitch;
+	}
+	return CartBROB(A);
+}
+
+static void M242Power() {
+	LatchPower();
+
+	dipswitch = 0;
+	SetReadHandler(0x8000, 0xFFFF, M242Read);
+}
+
+static void M242Reset() {
+	dipswitch = (dipswitch + 1) & 0x1F;
+	LatchHardReset();
+}
+
 void Mapper242_Init(CartInfo *info) {
-	hasBattery = info->battery;
-	M242TwoChips = info->PRGRomSize & 0x20000 && info->PRGRomSize > 0x20000;
 	Latch_Init(info, M242Sync, NULL, 1, 0);
+	info->Power  = M242Power;
+	info->Reset  = M242Reset;
+	M242TwoChips = info->PRGRomSize & 0x20000 && info->PRGRomSize > 0x20000;
+	hasBattery   = info->battery;
+	AddExState(&dipswitch, 1, 0, "PADS");
 }
 
 /*------------------ Map 288 ---------------------------*/
