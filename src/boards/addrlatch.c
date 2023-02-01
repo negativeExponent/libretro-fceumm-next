@@ -535,6 +535,7 @@ static void M385Sync(void) {
 
 void Mapper385_Init(CartInfo *info) {
 	Latch_Init(info, M385Sync, NULL, 0, 1);
+	info->Reset = LatchHardReset;
 }
 
 /*------------------ Map 541 ---------------------------*/
@@ -567,6 +568,7 @@ static void M541Power() {
 void Mapper541_Init(CartInfo *info) {
 	Latch_Init(info, M541Sync, NULL, 0, 0);
 	info->Power = M541Power;
+	info->Reset = LatchHardReset;
 }
 
 /*------------------ BMC-190in1 ---------------------------*/
@@ -624,6 +626,7 @@ static void BMCNTD03Sync(void) {
 
 void BMCNTD03_Init(CartInfo *info) {
 	Latch_Init(info, BMCNTD03Sync, NULL, 0, 0);
+	info->Reset = LatchHardReset;
 }
 
 /*-------------- BMCG-146 ------------------------*/
@@ -661,6 +664,7 @@ static void BMCTJ03Sync(void) {
 
 void BMCTJ03_Init(CartInfo *info) {
 	Latch_Init(info, BMCTJ03Sync, NULL, 0, 0);
+	info->Reset = LatchHardReset;
 }
 
 /*-------------- BMC-SA005-A ------------------------*/
@@ -676,6 +680,7 @@ static void BMCSA005ASync(void) {
 
 void BMCSA005A_Init(CartInfo *info) {
 	Latch_Init(info, BMCSA005ASync, NULL, 0, 0);
+	info->Reset = LatchHardReset;
 }
 
 /* -------------- 831019C J-2282 ------------------------ */
@@ -691,12 +696,18 @@ static void J2282Sync(void) {
 	} else {
 		setprg32(0x8000, (latch.addr & 0x1F) >> 1);
 	}
+	if ((latch.addr & 0x400) == 0) {
+		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
+	} else {
+		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
+	}
 	setchr8(0);
 	setmirror(((latch.addr >> 7) & 1) ^ 1);
 }
 
 void J2282_Init(CartInfo *info) {
 	Latch_Init(info, J2282Sync, NULL, 0, 0);
+	info->Reset = LatchHardReset;
 }
 
 /* -------------- Mapper 409 ------------------------ */
