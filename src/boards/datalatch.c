@@ -364,7 +364,6 @@ void Mapper538_Init(CartInfo *info) {
 	}
 	Latch_Init(info, M538Sync, NULL, 0, 0);
 	info->Power = M538Power;
-	
 }
 
 /* ------------------ A65AS (m285) --------------------------- */
@@ -416,6 +415,7 @@ static void BMC11160Sync(void) {
 
 void BMC11160_Init(CartInfo *info) {
 	Latch_Init(info, BMC11160Sync, NULL, 0, 0);
+	info->Reset = LatchHardReset;
 }
 
 /*------------------ BMC-K-3046 ---------------------------*/
@@ -430,6 +430,7 @@ static void BMCK3046Sync(void) {
 
 void BMCK3046_Init(CartInfo *info) {
 	Latch_Init(info, BMCK3046Sync, NULL, 0, 0);
+	info->Reset = LatchHardReset;
 }
 
 /*------ Mapper 429: LIKO BBG-235-8-1B/Milowork FCFC1 ----*/
