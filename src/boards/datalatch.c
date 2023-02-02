@@ -183,7 +183,7 @@ static void M89Sync(void) {
 }
 
 void Mapper89_Init(CartInfo *info) {
-	Latch_Init(info, M89Sync, NULL, 0, 0);
+	Latch_Init(info, M89Sync, NULL, 0, 1);
 }
 
 /*------------------ Map 93 ---------------------------*/
@@ -195,7 +195,7 @@ static void SSUNROMSync(void) {
 }
 
 void SUNSOFT_UNROM_Init(CartInfo *info) {
-	Latch_Init(info, SSUNROMSync, NULL, 0, 0);
+	Latch_Init(info, SSUNROMSync, NULL, 0, 1);
 }
 
 /*------------------ Map 94 ---------------------------*/
@@ -207,7 +207,7 @@ static void M94Sync(void) {
 }
 
 void Mapper94_Init(CartInfo *info) {
-	Latch_Init(info, M94Sync, NULL, 0, 0);
+	Latch_Init(info, M94Sync, NULL, 0, 1);
 }
 
 /*------------------ Map 97 ---------------------------*/
@@ -215,20 +215,8 @@ void Mapper94_Init(CartInfo *info) {
 static void M97Sync(void) {
 	setchr8(0);
 	setprg16(0x8000, ~0);
-	setprg16(0xc000, latch.data & 15);
-	switch (latch.data >> 6) {
-		case 0:
-			break;
-		case 1:
-			setmirror(MI_H);
-			break;
-		case 2:
-			setmirror(MI_V);
-			break;
-		case 3:
-			break;
-	}
-	setchr8(((latch.data >> 1) & 1) | ((latch.data << 1) & 2));
+	setprg16(0xc000, latch.data);
+	setmirror((latch.data >> 7) & 1);
 }
 
 void Mapper97_Init(CartInfo *info) {
