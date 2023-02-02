@@ -326,8 +326,8 @@ void Mapper381_Init(CartInfo *info) {
  */
 
 /* this code emulates rom dump with wrong bank order */
-/*static uint8 M538Banks[16] = { 0, 1, 2, 1, 3, 1, 4, 1, 5, 5, 1, 1, 6, 6, 7, 7 };
-static void M538Sync(void) {
+static uint8 M538Banks[16] = { 0, 1, 2, 1, 3, 1, 4, 1, 5, 5, 1, 1, 6, 6, 7, 7 };
+static void M538Sync_wrong_prg_order(void) {
 	setprg8(0x6000, (latch.data >> 1) | 8);
 	setprg8(0x8000, M538Banks[latch.data & 15]);
 	setprg8(0xA000, 14);
@@ -337,34 +337,34 @@ static void M538Sync(void) {
 	setmirror(1);
 }
 
-static void M538Power(void) {
-	FDSSoundPower();
-	LatchPower();
-}
-
-void Mapper538_Init(CartInfo *info) {
-	Latch_Init(info, M538Sync, 0, 0xC000, 0xCFFF, 1, 0);
-	info->Power = M538Power;
-}*/
-
 static void M538Sync(void) {
-	setprg8(0x6000, latch.data | 8);
-	setprg8(0x8000, (latch.data & 1) && ((~latch.data & 8) ? 10 : (latch.data & ~1)));
+	setprg8(0x6000, latch.data | 1);
+	setprg8(0x8000, (latch.data & 1) && (~latch.data & 8) ? 10 : (latch.data & ~1));
 	setprg8(0xA000, 13);
 	setprg8(0xC000, 14);
 	setprg8(0xE000, 15);
 	setchr8(0);
-	setmirror(1);
+	setmirror(MI_V);
+}
+
+static DECLFW(M538Write) {
+	LatchWrite(A, V);
 }
 
 static void M538Power(void) {
 	FDSSoundPower();
-	LatchPower();
+	LatchHardReset();
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0xC000, 0xDFFF, M538Write);
 }
 
 void Mapper538_Init(CartInfo *info) {
-	Latch_Init(info, M538Sync, NULL, 1, 0);
+	if (info->CRC32 == 0xA8C6D77D) {
+		Latch_Init(info, M538Sync_wrong_prg_order, NULL, 0, 0);
+	}
+	Latch_Init(info, M538Sync, NULL, 0, 0);
 	info->Power = M538Power;
+	
 }
 
 /* ------------------ A65AS (m285) --------------------------- */
