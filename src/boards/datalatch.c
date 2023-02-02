@@ -23,6 +23,8 @@
 #include "latch.h"
 #include "../fds_apu.h"
 
+static uint8 submapper = 0;
+
 /*------------------ Map 2 ---------------------------*/
 
 static void UNROMSync(void) {
@@ -109,7 +111,7 @@ static void CPROMSync(void) {
 }
 
 void CPROM_Init(CartInfo *info) {
-	Latch_Init(info, CPROMSync, NULL, 0, 0);
+	Latch_Init(info, CPROMSync, NULL, 0, 1);
 }
 
 /*------------------ Map 29 ---------------------------*/
@@ -136,7 +138,7 @@ static void MHROMSync(void) {
 }
 
 void MHROM_Init(CartInfo *info) {
-	Latch_Init(info, MHROMSync, NULL, 0, 0);
+	Latch_Init(info, MHROMSync, NULL, 0, 1);
 }
 
 /*------------------ Map 70 ---------------------------*/
@@ -148,20 +150,27 @@ static void M70Sync(void) {
 }
 
 void Mapper70_Init(CartInfo *info) {
-	Latch_Init(info, M70Sync, NULL, 0, 0);
+	Latch_Init(info, M70Sync, NULL, 0, 1);
 }
 
 /*------------------ Map 78 ---------------------------*/
 /* Should be two separate emulation functions for this "mapper".  Sigh.  URGE TO KILL RISING. */
+/* Submapper 1 - Uchuusen - Cosmo Carrier ( one-screen mirroring ) */
+/* Submapper 3 - Holy Diver ( horizontal/vertical mirroring ) */
 static void M78Sync(void) {
 	setprg16(0x8000, (latch.data & 7));
 	setprg16(0xc000, ~0);
 	setchr8(latch.data >> 4);
-	setmirror(MI_0 + ((latch.data >> 3) & 1));
+	if (submapper == 3) {
+		setmirror((latch.data >> 3) & 1);
+	} else {
+		setmirror(MI_0 + ((latch.data >> 3) & 1));
+	}
 }
 
 void Mapper78_Init(CartInfo *info) {
-	Latch_Init(info, M78Sync, NULL, 0, 0);
+	Latch_Init(info, M78Sync, NULL, 0, 1);
+	submapper = info->iNES2 ? info->submapper : 0;
 }
 
 /*------------------ Map 89 ---------------------------*/
