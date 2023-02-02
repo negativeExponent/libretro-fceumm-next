@@ -244,7 +244,7 @@ static void M152Sync(void) {
 }
 
 void Mapper152_Init(CartInfo *info) {
-	Latch_Init(info, M152Sync, NULL, 0, 0);
+	Latch_Init(info, M152Sync, NULL, 0, 1);
 }
 
 /*------------------ Map 180 ---------------------------*/
@@ -256,7 +256,7 @@ static void M180Sync(void) {
 }
 
 void Mapper180_Init(CartInfo *info) {
-	Latch_Init(info, M180Sync, NULL, 0, 0);
+	Latch_Init(info, M180Sync, NULL, 0, 1);
 }
 
 /*------------------ Map 203 ---------------------------*/
@@ -279,14 +279,12 @@ void Mapper203_Init(CartInfo *info) {
 static void M241Sync(void) {
 	setchr8(0);
 	setprg8r(0x10, 0x6000, 0);
-	if (latch.data & 0x80)
-		setprg32(0x8000, latch.data | 8); /* no 241 actually, but why not afterall? */
-	else
-		setprg32(0x8000, latch.data);
+	setprg32(0x8000, latch.data);
 }
 
 void Mapper241_Init(CartInfo *info) {
 	Latch_Init(info, M241Sync, NULL, 1, 0);
+	info->Reset = LatchHardReset;
 }
 
 /*------------------ Map 271 ---------------------------*/
