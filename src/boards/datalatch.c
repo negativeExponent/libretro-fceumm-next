@@ -74,7 +74,7 @@ void Mapper8_Init(CartInfo *info) {
 	Latch_Init(info, M8Sync, NULL, 0, 0);
 }
 
-/*------------------ Map 11 ---------------------------*/
+/*------------------ Map 11 / 144 ---------------------------*/
 
 static void M11Sync(void) {
 	setprg32(0x8000, latch.data & 0xF);
@@ -85,9 +85,19 @@ void Mapper11_Init(CartInfo *info) {
 	Latch_Init(info, M11Sync, NULL, 0, 0);
 }
 
+static DECLFW(M144Write) {
+    uint8 data = CartBR(A & (A | 1));
+	LatchWrite(A, data);
+}
+
+static void M144Power() {
+	LatchPower();
+	SetWriteHandler(0x8000, 0xFFFF, M144Write);
+}
+
 void Mapper144_Init(CartInfo *info) {
-	/* TODO: */
-	/* Latch_Init(info, M11Sync, 0, 0x8001, 0xFFFF, 0, 0); */
+	Latch_Init(info, M11Sync, NULL, 0, 1);
+    info->Power = M144Power;
 }
 
 /*------------------ Map 13 ---------------------------*/
