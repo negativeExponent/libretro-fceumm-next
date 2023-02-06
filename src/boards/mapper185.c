@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,17 +21,10 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
 static uint8 *DummyCHR = NULL;
-static uint8 datareg;
-
 static uint8 submapper = 0;
-
-static SFORMAT StateRegs[] =
-{
-	{ &datareg, 1, "DREG" },
-	{ 0 }
-};
 
 /*   on    off
 1  0x0F, 0xF0 - Bird Week
@@ -43,47 +37,29 @@ static SFORMAT StateRegs[] =
 */
 
 static void Sync(void) {
-	if ((submapper != 4 && (datareg & 3) != 0 && datareg != 0x13) || /* 1, 2, 3, 4, 5, 6 */
-		(submapper == 4 && (datareg & 1) == 0)) { /* 7 */
+	setprg32(0x8000, 0);
+	if ((submapper != 4 && (latch.data & 3) != 0 && latch.data != 0x13) || /* 1, 2, 3, 4, 5, 6 */
+		(submapper == 4 && (latch.data & 1) == 0)) { /* 7 */
 		setchr8(0);
 	} else {
 		setchr8r(0x10, 0);
 	}
 }
 
-static DECLFW(MWrite) {
-	datareg = V;
-	Sync();
-}
-
-static void M185Power(void) {
-	datareg = 0;
-	Sync();
-	setprg16(0x8000, 0);
-	setprg16(0xC000, ~0);
-	SetWriteHandler(0x8000, 0xFFFF, MWrite);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-}
-
 static void M185Close(void) {
+	LatchClose();
 	if (DummyCHR)
 		FCEU_gfree(DummyCHR);
 	DummyCHR = NULL;
 }
 
-static void StateRestore(int version) {
-	Sync();
-}
-
 void Mapper185_Init(CartInfo *info) {
 	int x;
-	info->Power = M185Power;
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Close = M185Close;
 	submapper = info->submapper;
-	GameStateRestore = StateRestore;
 	DummyCHR = (uint8 *)FCEU_gmalloc(8192);
 	for (x = 0; x < 8192; x++)
 		DummyCHR[x] = 0xff;
 	SetupCartCHRMapping(0x10, DummyCHR, 8192, 0);
-	AddExState(StateRegs, ~0, 0, 0);
 }

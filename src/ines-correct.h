@@ -797,7 +797,7 @@
 
 	{ 0x558c0dc3,  178, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Super 2-in-1 (Soccer Game & Crazy Dance) (Unl) [!].nes */
 	{ 0xc68363f6,  180, DEFAULT,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Crazy Climber (Japan).nes */
-	{ 0x0f05ff0a,  181, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Seicross (Japan) (Rev 1).nes */
+	{ 0x0f05ff0a,  185,       4, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Seicross (Japan) (Rev 1).nes */
 	{ 0x96ce586e,  189, DEFAULT, DFAULT8, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Street Fighter II - The World Warrior (Unl) [!].nes */
 	{ 0x0e76e4c1,  190, DEFAULT,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Magic Kid Googoo (Korea) (Unl).nes */
 	{ 0x555a555e,  191, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Sugoro Quest - Dice no Senshitachi (Ch).nes */
