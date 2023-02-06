@@ -20,41 +20,39 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
+#include "../ines.h"
 
-static uint16 cmdreg;
-static uint8 unrom, reg, openbus;
-
-static uint32 PRGROMSize;
+static uint8 unrom, openbus;
 
 static SFORMAT StateRegs[] =
 {
-	{ &cmdreg,  2, "CREG" },
-	{ &unrom,   1, "UNRM" },
-	{ &reg,     1, "UNRG" },
 	{ &openbus, 1, "OPNB" },
+	{ &unrom,   1, "UROM" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (unrom) {
-		uint8 PRGPageSize = PRGROMSize / 16384;
-		setprg16(0x8000, (PRGPageSize & 0xC0) | (reg & 7));
-		setprg16(0xC000, (PRGPageSize & 0xC0) | 7);
+	if (unrom) { /* Contra mode */
+		setprg16(0x8000, (ROM_size & 0xC0) | (latch.data & 7));
+		setprg16(0xC000, (ROM_size & 0xC0) | 7);
 		setchr8(0);
 		setmirror(MI_V);
 	} else {
-		uint8 bank = ((cmdreg & 0x300) >> 3) | (cmdreg & 0x1F);
-		if (cmdreg & 0x400)
+		uint8 bank = ((latch.addr & 0x300) >> 3) | (latch.addr & 0x1F);
+		if (latch.addr & 0x400) {
 			setmirror(MI_0);
-		else
-			setmirror(((cmdreg >> 13) & 1) ^ 1);
-		if (bank >= PRGROMSize / 32768)
+		} else {
+			setmirror(((latch.addr >> 13) & 1) ^ 1);
+		}
+		if (bank >= (ROM_size >> 1)) {
 			openbus = 1;
-		else if (cmdreg & 0x800) {
-			setprg16(0x8000, (bank << 1) | ((cmdreg >> 12) & 1));
-			setprg16(0xC000, (bank << 1) | ((cmdreg >> 12) & 1));
-		} else
+		} else if (latch.addr & 0x800) {
+			setprg16(0x8000, (bank << 1) | ((latch.addr >> 12) & 1));
+			setprg16(0xC000, (bank << 1) | ((latch.addr >> 12) & 1));
+		} else {
 			setprg32(0x8000, bank);
+		}
 		setchr8(0);
 	}
 }
@@ -67,36 +65,15 @@ static DECLFR(M235Read) {
 	return CartBR(A);
 }
 
-static DECLFW(M235Write) {
-	cmdreg = A;
-	reg = V;
-	Sync();
-}
-
 static void M235Reset(void) {
-	cmdreg = 0;
-	reg = 0;
-	if (PRGROMSize & 0x20000)
+	if ((ROM_size * 16384) & 0x20000) {
 		unrom = (unrom + 1) & 1;
-	Sync();
-}
-
-static void M235Power(void) {
-	SetWriteHandler(0x8000, 0xFFFF, M235Write);
-	SetReadHandler(0x8000, 0xFFFF, M235Read);
-	cmdreg = 0;
-	reg = 0;
-	Sync();
-}
-
-static void M235Restore(int version) {
-	Sync();
+	}
+	LatchHardReset();
 }
 
 void Mapper235_Init(CartInfo *info) {
+	Latch_Init(info, Sync, M235Read, 0, 0);
 	info->Reset = M235Reset;
-	info->Power = M235Power;
-	GameStateRestore = M235Restore;
 	AddExState(&StateRegs, ~0, 0, 0);
-	PRGROMSize = info->PRGRomSize;
 }
