@@ -4,6 +4,7 @@
  *  Copyright (C) 1998 BERO
  *  Copyright (C) 2002 Xodnizel
  *  Copyright (C) 2012 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,49 +29,43 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 reg, ppulatch;
+static uint8 ppulatch;
+static uint16 lastAddr;
 
 static SFORMAT StateRegs[] =
 {
-	{ &reg, 1, "REG" },
 	{ &ppulatch, 1, "PPUL" },
+	{ &lastAddr, 2, "LADR" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	setmirror(MI_0);
-	setprg32(0x8000, reg & 3);
-	setchr4(0x0000, (reg & 4) | ppulatch);
-	setchr4(0x1000, (reg & 4) | 3);
-}
-
-static DECLFW(M96Write) {
-	reg = V;
-	Sync();
+	setprg32(0x8000, latch.data & 3);
+	setchr4(0x0000, (latch.data & 4) | ppulatch);
+	setchr4(0x1000, (latch.data & 4) | 3);
 }
 
 static void FP_FASTAPASS(1) M96Hook(uint32 A) {
-	if ((A & 0x3000) == 0x2000) {
+	uint16 addr = A & 0x3000;
+	if ((lastAddr != 0x2000) && ((A & 0x3000) == 0x2000)) {
 		ppulatch = (A >> 8) & 3;
 		Sync();
 	}
+	lastAddr = addr;
 }
 
 static void M96Power(void) {
-	reg = ppulatch = 0;
-	Sync();
-	SetReadHandler(0x8000, 0xffff, CartBR);
-	SetWriteHandler(0x8000, 0xffff, M96Write);
-}
-
-static void StateRestore(int version) {
-	Sync();
+	ppulatch = 0;
+	lastAddr = 0;
+	LatchPower();
 }
 
 void Mapper96_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 0, 1);
 	info->Power = M96Power;
 	PPU_hook = M96Hook;
-	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
