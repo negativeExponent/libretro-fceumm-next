@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2002 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,19 +20,10 @@
  */
 
 #include "mapinc.h"
-
-#define CARD_EXTERNAL_INSERED 0x80
-
-static uint8 prg_reg;
-static uint8 chr_reg;
-static SFORMAT StateRegs[] =
-{
-	{ &prg_reg, 1, "PREG" },
-	{ &chr_reg, 1, "CREG" },
-	{ 0 }
-};
+#include "latch.h"
 
 #if 0
+#define CARD_EXTERNAL_INSERED 0x80
 
 cmd[0] = response on/off
 				0x00 - on
@@ -95,18 +87,8 @@ static uint8 sim0reset[0x1F] = {
 #endif
 
 static void Sync(void) {
-	setprg32(0x8000, prg_reg);
-	setchr8(chr_reg);
-}
-
-static void StateRestore(int version) {
-	Sync();
-}
-
-static DECLFW(M216WriteHi) {
-	prg_reg = A & 1;
-	chr_reg = (A & 0x0E) >> 1;
-	Sync();
+	setprg32(0x8000, latch.addr & 1);
+	setchr8(latch.addr >> 1);
 }
 
 static DECLFW(M216Write5000) {
@@ -119,18 +101,12 @@ static DECLFR(M216Read5000) {
 }
 
 static void M216Power(void) {
-	prg_reg = 0;
-	chr_reg = 0;
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M216WriteHi);
+	LatchPower();
 	SetWriteHandler(0x5000, 0x5000, M216Write5000);
 	SetReadHandler(0x5000, 0x5000, M216Read5000);
 }
 
-
 void Mapper216_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M216Power;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
 }
