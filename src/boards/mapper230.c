@@ -3,6 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
  *  Copyright (C) 2009 qeed
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,56 +24,45 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 latche, reset;
+static uint8 reset;
 static SFORMAT StateRegs[] =
 {
 	{ &reset, 1, "RST" },
-	{ &latche, 1, "LATC" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (reset) {
-		setprg16(0x8000, latche & 7);
+	if (reset) {  /* Contra mode */
+		setprg16(0x8000, latch.data & 7);
 		setprg16(0xC000, 7);
 		setmirror(MI_V);
-	} else {
-		uint32 bank = (latche & 0x1F) + 8;
-		if (latche & 0x20) {
+	} else { /* multicart mode */
+		uint32 bank = (latch.data & 0x1F) + 8;
+		if (latch.data & 0x20) {
 			setprg16(0x8000, bank);
 			setprg16(0xC000, bank);
 		} else
 			setprg32(0x8000, bank >> 1);
-		setmirror((latche >> 6) & 1);
+		setmirror((latch.data >> 6) & 1);
 	}
 	setchr8(0);
 }
 
-static DECLFW(M230Write) {
-	latche = V;
-	Sync();
-}
-
 static void M230Reset(void) {
 	reset ^= 1;
-	Sync();
+	LatchHardReset();
 }
 
 static void M230Power(void) {
-	latche = reset = 0;
-	Sync();
-	SetWriteHandler(0x8000, 0xFFFF, M230Write);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-}
-
-static void StateRestore(int version) {
-	Sync();
+	reset = 0;
+	LatchPower();
 }
 
 void Mapper230_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M230Power;
 	info->Reset = M230Reset;
-	AddExState(&StateRegs, ~0, 0, 0);
-	GameStateRestore = StateRestore;
+	AddExState(StateRegs, ~0, 0, 0);
 }
