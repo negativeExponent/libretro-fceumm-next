@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2011 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,55 +24,36 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 reg, mirr;
+static uint8 prg;
 
 static SFORMAT StateRegs[] =
 {
-	{ &reg, 1, "REGS" },
-	{ &mirr, 1, "MIRR" },
+	{ &prg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg16(0x8000, reg);
+	setprg16(0x8000, prg);
 	setprg16(0xc000, ~0);
-	setmirror(mirr);
+	setmirror((latch.data & 1) ^ 1);
 	setchr8(0);
 }
 
 static DECLFW(UNLKS7013BLoWrite) {
-	reg = V;
-	Sync();
-}
-
-static DECLFW(UNLKS7013BHiWrite) {
-	mirr = (V & 1) ^ 1;
+	prg = V;
 	Sync();
 }
 
 static void UNLKS7013BPower(void) {
-	reg = 0;
-	mirr = 0;
-	Sync();
+	prg = 0;
+	LatchPower();
 	SetWriteHandler(0x6000, 0x7FFF, UNLKS7013BLoWrite);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, UNLKS7013BHiWrite);
-}
-
-static void UNLKS7013BReset(void) {
-	reg = 0;
-	Sync();
-}
-
-static void StateRestore(int version) {
-	Sync();
 }
 
 void UNLKS7013B_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = UNLKS7013BPower;
-	info->Reset = UNLKS7013BReset;
-
-	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
