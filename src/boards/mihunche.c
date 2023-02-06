@@ -19,50 +19,15 @@
  */
 
 #include "mapinc.h"
-
-static uint16 latche;
-
-static SFORMAT StateRegs[] =
-{
-	{ &latche, 2, "LATC" },
-	{ 0 }
-};
+#include "latch.h"
 
 static void Sync(void) {
 	setprg32(0x8000, 0);
-	if(CHRsize[0] == 8192) {
-		setchr4(0x0000, latche & 1);
-		setchr4(0x1000, latche & 1);
-	} else {
-		setchr8(latche & 1);    /* actually, my bad, overdumped roms, the real CHR size if 8K */
-	}
-	setmirror(MI_0 + (latche & 1));
-}
-
-static DECLFW(UNLCC21Write1) {
-	latche = A;
-	Sync();
-}
-
-static DECLFW(UNLCC21Write2) {
-	latche = V;
-	Sync();
-}
-
-static void UNLCC21Power(void) {
-	latche = 0;
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8001, 0xFFFF, UNLCC21Write1);
-	SetWriteHandler(0x8000, 0x8000, UNLCC21Write2); /* another one many-in-1 mapper, there is a lot of similar carts with little different wirings */
-}
-
-static void StateRestore(int version) {
-	Sync();
+	setchr4(0x0000, ((latch.addr << 1) & 2) | (latch.addr & 1));
+	setchr4(0x1000, ((latch.addr << 1) & 2) | (latch.addr & 1));
+	setmirror(MI_0 + (latch.addr & 1));
 }
 
 void UNLCC21_Init(CartInfo *info) {
-	info->Power = UNLCC21Power;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	Latch_Init(info, Sync, NULL, 0, 0);
 }
