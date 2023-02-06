@@ -595,7 +595,7 @@ INES_BOARD_BEGIN()
     INES_BOARD( "NTDec 5-in-1",             174, Mapper174_Init )
 	INES_BOARD( "",                         175, Mapper175_Init         )
 	INES_BOARD( "BMCFK23C",                 176, Mapper176_Init         )
-	INES_BOARD( "",                         177, Mapper177_Init         )
+	INES_BOARD( "Hénggé Diànzǐ",            177, Mapper177_Init         )
 	INES_BOARD( "",                         178, Mapper178_Init         )
 /*    INES_BOARD( "",                            179, Mapper179_Init ) */
 	INES_BOARD( "",                         180, Mapper180_Init         )
