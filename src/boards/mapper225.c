@@ -29,75 +29,49 @@
 /* 2020-2-20 - merge mapper 255, re-implement extra RAM */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 extraRAM[4], prg, mode, chr, mirr;
+static uint8 extraRAM[4];
 
 static SFORMAT StateRegs[] =
 {
 	{ extraRAM, 4, "PROT" },
-	{ &prg, 1, "PRG" },
-	{ &chr, 1, "CHR" },
-	{ &mode, 1, "MODE" },
-	{ &mirr, 1, "MIRR" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (mode) {
-		setprg16(0x8000, prg);
-		setprg16(0xC000, prg);
+	if (latch.addr & 0x1000) {
+		setprg16(0x8000, ((latch.addr >> 8) & 0x40) | ((latch.addr >> 6) & 0x3F));
+		setprg16(0xC000, ((latch.addr >> 8) & 0x40) | ((latch.addr >> 6) & 0x3F));
 	} else
-		setprg32(0x8000, prg >> 1);
-	setchr8(chr);
-	setmirror(mirr ^ 1);
-}
-
-static DECLFW(M225Write) {
-	uint8 bank = (A >> 14) & 1;
-	mirr = (A >> 13) & 1;
-	mode = (A >> 12) & 1;
-	chr = (A & 0x3f) | (bank << 6);
-	prg = ((A >> 6) & 0x3f) | (bank << 6);
-	Sync();
+		setprg32(0x8000, ((latch.addr >> 9) & 0x20) | ((latch.addr >> 7) & 0x1F));
+	setchr8(((latch.addr >> 8) & 0x40) | (latch.addr & 0x3F));
+	setmirror(((latch.addr >> 13) & 1) ^ 1);
 }
 
 static DECLFW(M225LoWrite) {
 	/* e.g. 115-in-1 [p1][!] CRC32 0xb39d30b4 */
-	if (A & 0x800)
+	if (A & 0x800) {
 		extraRAM[A & 3] = V & 0x0F;
+	}
 }
 
 static DECLFR(M225LoRead) {
-	if (A & 0x800)
+	if (A & 0x800) {
 		return extraRAM[A & 3];
+	}
 	return X.DB;
 }
 
 static void M225Power(void) {
-	prg = 0;
-	mode = 0;
-	Sync();
+	LatchPower();
 	SetReadHandler(0x5000, 0x5fff, M225LoRead);
 	SetWriteHandler(0x5000, 0x5fff, M225LoWrite);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M225Write);
-}
-
-static void M225Reset(void) {
-	prg = 0;
-	mode = 0;
-	Sync();
-}
-
-static void StateRestore(int version) {
-	Sync();
 }
 
 void Mapper225_Init(CartInfo *info) {
-	info->Reset = M225Reset;
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M225Power;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
 }
 
 void Mapper255_Init(CartInfo *info) {
