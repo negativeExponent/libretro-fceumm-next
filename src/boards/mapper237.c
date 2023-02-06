@@ -27,59 +27,57 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 reg[2];
 static uint8 dipswitch;
 
 static SFORMAT StateRegs[] =
 {
-	{ reg, 2, "REGS" },
 	{ &dipswitch, 1, "DPSW" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 bank = (reg[1] & 0x07);
-	uint8 base = (reg[1] & 0x18) | ((reg[0] & 0x04) << 3);
-	uint8 mode = (reg[1] & 0xC0) >> 6;
+	uint8 bank = (latch.data & 0x07);
+	uint8 base = ((latch.addr << 3) & 0x20) | (latch.data & 0x18);
+	uint8 mode = (latch.data & 0xC0) >> 6;
 
 	setchr8(0);
 	setprg16(0x8000, base | (bank & ~(mode & 1)));
 	setprg16(0xC000, base | ((mode & 0x02) ? (bank | (mode & 0x01)) : 0x07));
-	setmirror(((reg[1] & 0x20) >> 5) ^ 1);
+	setmirror(((latch.data & 0x20) >> 5) ^ 1);
 }
 
 static DECLFW(M237Write) {
-	if (!(reg[0] & 0x02)) {
-		reg[0] = A & 0x0F;
-		reg[1] = (reg[1] & 0x07) | (V & 0xF8);
+	if (latch.addr & 0x02) {
+		latch.data &= ~0x07;
+		latch.data |= (V & 0x07);
+		Sync();
+	} else {
+		LatchWrite(A, V);
 	}
-	reg[1] = (reg[1] & 0xF8) | (V & 0x07);
-	Sync();
 }
 
 static DECLFR(M237Read) {
-	if (!(reg[0] & 0x02) && (reg[0] & 0x01))
+	if (latch.addr & 0x01) {
 		return dipswitch;
+	}
 	return CartBR(A);
 }
 
+static void M237Reset() {
+	dipswitch++;
+	dipswitch &= 3;
+	LatchHardReset();
+}
+
 static void M237Power(void) {
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, M237Read);
+	LatchPower();
 	SetWriteHandler(0x8000, 0xFFFF, M237Write);
 }
 
-static void M237Reset(void) {
-	reg[0] = reg[1] = 0;
-	Sync();
-}
-
-static void StateRestore(int version) {
-	Sync();
-}
-
 void Mapper237_Init(CartInfo *info) {
+#if 0
 	/* The menu system used by this cart seems to be configurable as 4 different types:
 	 * 0: 42-in-1
 	 * 1: 5,000-in-1
@@ -89,8 +87,9 @@ void Mapper237_Init(CartInfo *info) {
 	dipswitch = 0;
 	if ((info->CRC32) == 0x272709b9) /* Teletubbies Y2K (420-in-1) */
 		dipswitch = 2;
+#endif
+	Latch_Init(info, Sync, M237Read, 0, 0);
 	info->Power = M237Power;
 	info->Reset = M237Reset;
-	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
