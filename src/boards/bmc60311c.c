@@ -23,29 +23,45 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 latch, reg[2];
+static uint8 reg[2];
+static uint8 solderpad;
 
 static SFORMAT StateRegs[] =
 {
-	{ &latch, 1, "LATC" },
 	{ reg, 2, "REGS" },
+	{ &solderpad, 1, "PADS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (reg[0] & 2) { /* UNROM */
-		setprg16(0x8000, (latch & 7) | (reg[1] & ~7));
-		setprg16(0xC000, 7 | (reg[1] & ~7));
-	} else if (reg[0] & 1) /* NROM-256 */
-		setprg32(0x8000, reg[1] >> 1);
-	else { /* NROM-128 */
-		setprg16(0x8000, reg[1]);
-		setprg16(0xC000, reg[1]);
+	uint32 bank = reg[1] & 0x7F;
+	switch (reg[0] & 3) {
+	case 0: /* NROM-128 */
+		setprg16(0x8000, bank);
+		setprg16(0xC000, bank);
+		break;
+	case 1: /* NROM-256 */
+		setprg32(0x8000, bank >> 1);
+		break;
+	case 2: /* UNROM */
+		setprg16(0x8000, bank | (latch.data & 7));
+		setprg16(0xC000, bank | 7);
+		break;
+	case 3: /* A14-A16=1 regardless of CPU A14 */
+		setprg16(0x8000, bank | 7);
+		setprg16(0xC000, bank | 7);
+		break;
 	}
-	SetupCartCHRMapping(0, CHRptr[0], 0x2000, !(reg[0] & 4)); /* CHR-RAM write-protect */
+	/* CHR-RAM write-protect */
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, ((reg[0] >> 2) & 1) ^ 1);
 	setchr8(0);
-	setmirror(!(reg[0] & 8));
+	setmirror(((reg[0] >> 3) & 1) ^ 1);
+}
+
+static DECLFR(ReadPad) {
+	return (X.DB & ~3) | (solderpad & 3);
 }
 
 static DECLFW(WriteReg) {
@@ -53,31 +69,23 @@ static DECLFW(WriteReg) {
 	Sync();
 }
 
-static DECLFW(WriteLatch) {
-	latch = V;
-	Sync();
-}
-
 static void BMC60311CPower(void) {
-	latch = reg[0] = reg[1] = 0;
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x6001, WriteReg);
-	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
+	reg[0] = reg[1] = 0;
+	solderpad = 0;
+	LatchPower();
+	SetReadHandler(0x6000, 0x7FFF, ReadPad);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 static void BMC60311CReset(void) {
-	latch = reg[0] = reg[1] = 0;
-	Sync();
-}
-
-static void BMC60311CRestore(int version) {
-	Sync();
+	reg[0] = reg[1] = 0;
+	solderpad++;
+	LatchHardReset();
 }
 
 void BMC60311C_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = BMC60311CPower;
 	info->Reset = BMC60311CReset;
-	GameStateRestore = BMC60311CRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
