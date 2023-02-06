@@ -19,56 +19,30 @@
  */
 
 #include "mapinc.h"
-
-static uint8 latche;
+#include "latch.h"
 
 static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSIZE;
 
-static SFORMAT StateRegs[] =
-{
-	{ &latche, 1, "LATC" },
-	{ 0 }
-};
-
 static void Sync(void) {
-	setprg32(0x8000, latche & 7);
-	setchr2(0x0000, latche >> 4);
+	setprg32(0x8000, latch.data & 0x0F);
+	setchr2(0x0000, latch.data >> 4);
 	setchr2r(0x10, 0x0800, 2);
 	setchr4r(0x10, 0x1000, 0);
 }
 
-static DECLFW(M77Write) {
-	latche = V;
-	Sync();
-}
-
-static void M77Power(void) {
-	latche = 0;
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M77Write);
-}
-
 static void M77Close(void) {
+	LatchClose();
 	if (CHRRAM)
 		FCEU_gfree(CHRRAM);
 	CHRRAM = NULL;
 }
 
-static void StateRestore(int version) {
-	Sync();
-}
-
 void Mapper77_Init(CartInfo *info) {
-	info->Power = M77Power;
-	info->Close = M77Close;
-	GameStateRestore = StateRestore;
+	Latch_Init(info, Sync, NULL, 0, 1);
 
 	CHRRAMSIZE = 6 * 1024;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
-
-	AddExState(&StateRegs, ~0, 0, 0);
 }

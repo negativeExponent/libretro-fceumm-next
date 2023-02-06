@@ -57,7 +57,7 @@ void LatchPower(void) {
 	SetWriteHandler(0x8000, 0xFFFF, LatchWrite);
 }
 
-static void LatchClose(void) {
+void LatchClose(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
