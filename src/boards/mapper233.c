@@ -4,6 +4,7 @@
  *  Copyright (C) 2005 CaH4e3
  *  Copyright (C) 2009 qeed
  *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,28 +27,27 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 latche;
 static uint8 reset;
 
 static SFORMAT StateRegs[] =
 {
 	{ &reset, 1, "RST" },
-	{ &latche, 1, "LATC" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 bank = (latche & 0x1f) | (reset << 5);
+	uint8 bank = (latch.data & 0x1f) | (reset << 5);
 
-	if (!(latche & 0x20))
+	if (!(latch.data & 0x20))
 		setprg32(0x8000, bank >> 1);
 	else {
 		setprg16(0x8000, bank);
 		setprg16(0xC000, bank);
 	}
 
-	switch ((latche >> 6) & 3) {
+	switch ((latch.data >> 6) & 3) {
 		case 0:
 			setmirror(MI_0);
 			break;
@@ -65,31 +65,19 @@ static void Sync(void) {
 	setchr8(0);
 }
 
-static DECLFW(M233Write) {
-	latche = V;
-	Sync();
-}
-
 static void M233Power(void) {
-	latche = reset = 0;
-	Sync();
-	SetWriteHandler(0x8000, 0xFFFF, M233Write);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-}
-
-static void StateRestore(int version) {
-	Sync();
+	reset = 0;
+	LatchPower();
 }
 
 static void M233Reset(void) {
-	latche = 0;
 	reset ^= 1;
 	Sync();
 }
 
 void Mapper233_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M233Power;
 	info->Reset = M233Reset;
 	AddExState(&StateRegs, ~0, 0, 0);
-	GameStateRestore = StateRestore;
 }
