@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,60 +23,57 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint16 cmdreg;
 static uint8 reset;
 static SFORMAT StateRegs[] =
 {
-	{ &reset, 1, "REST" },
-	{ &cmdreg, 2, "CREG" },
+	{ &reset, 1, "PADS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint32 base = ((cmdreg & 0x060) | ((cmdreg & 0x100) >> 1)) >> 2;
-	uint32 bank = (cmdreg & 0x01C) >> 2;
-	uint32 lbank = (cmdreg & 0x200) ? 7 : ((cmdreg & 0x80) ? bank : 0);
+	uint32 bank = (latch.addr >> 2) & 0x1F;
+	switch (((latch.addr >> 8) & 2) | ((latch.addr >> 7) & 1)) {
+	case 0:
+		setprg16(0x8000, bank);
+		setprg16(0xC000, 0);	
+		break;
+	case 1:
+		setprg16(0x8000, bank);
+		setprg16(0xC000, bank);
+		break;
+	case 2:
+	case 3:
+		setprg16(0x8000, bank);
+		setprg16(0xC000, bank | 7);	
+		break;
+	}
 
-	setprg16(0x8000, base | bank);
-	setprg16(0xC000, base | lbank);
-	setmirror(((cmdreg & 2) >> 1) ^ 1);
+	setchr8(0);
+	setmirror(((latch.addr & 2) >> 1) ^ 1);
 }
 
 static DECLFR(UNL8157Read) {
-	if ((cmdreg & 0x100) && (PRGsize[0] < (1024 * 1024))) {
-		A = (A & 0xFFF0) + reset;
+	if ((latch.addr & 0x100) && (PRGsize[0] <= (512 * 1024))) {
+		A = (A & 0xFFFE) + reset;
 	}
 	return CartBR(A);
 }
 
-static DECLFW(UNL8157Write) {
-	cmdreg = A;
-	Sync();
-}
-
-static void UNL8157Power(void) {
-	setchr8(0);
-	SetWriteHandler(0x8000, 0xFFFF, UNL8157Write);
-	SetReadHandler(0x8000, 0xFFFF, UNL8157Read);
-	cmdreg = reset = 0;
-	Sync();
+static void UNL8157Power(void) {	
+	reset = 0;
+	LatchPower();
 }
 
 static void UNL8157Reset(void) {
-	cmdreg = reset = 0;
-	reset++;
-	reset &= 0x1F;
-	Sync();
-}
-
-static void UNL8157Restore(int version) {
-	Sync();
+	reset = !reset;
+	LatchHardReset();
 }
 
 void UNL8157_Init(CartInfo *info) {
+	Latch_Init(info, Sync, UNL8157Read, 0, 0);
 	info->Power = UNL8157Power;
 	info->Reset = UNL8157Reset;
-	GameStateRestore = UNL8157Restore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
