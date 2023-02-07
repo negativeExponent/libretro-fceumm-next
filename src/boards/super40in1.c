@@ -1,6 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright (C) 2019 Libretro Team
+ * Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,26 +19,27 @@
  */
 
 /* added 2019-5-23
+ * NES 2.0 Mapper 332
  * BMC-WS Used for  Super 40-in-1 multicart
  * https://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_332 */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 preg, creg, latch, dipSwitch;
+static uint8 preg, creg, dipSwitch;
 
 static SFORMAT StateRegs[] =
 {
 	{ &preg, 1, "PREG" },
 	{ &creg, 1, "CREG" },
-	{ &latch, 1, "LATC" },
 	{ &dipSwitch, 1, "DPSW" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	int prg = (preg & 7) | ((preg >> 3) & 0x08);		/* There is a high bit 3 of the PRG register that applies both to PRG and CHR */
-	int chr = (creg & 7) | ((preg >> 3) & 0x08);    	/* There is a high bit 3 of the PRG register that applies both to PRG and CHR */
-	int mask = (creg & 0x10)? 0: (creg & 0x20)? 1: 3;	/* There is an CNROM mode that takes either two or four inner CHR banks from a CNROM-like latch register at $8000-$FFFF. */
+	uint32 prg = (preg & 7) | ((preg >> 3) & 0x08);			/* There is a high bit 3 of the PRG register that applies both to PRG and CHR */
+	uint32 chr = (creg & 7) | ((preg >> 3) & 0x08);			/* There is a high bit 3 of the PRG register that applies both to PRG and CHR */
+	uint32 mask = (creg & 0x10)? 0: (creg & 0x20)? 1: 3;	/* There is an CNROM mode that takes either two or four inner CHR banks from a CNROM-like latch.data register at $8000-$FFFF. */
 
 	if (preg & 8) {
 		setprg16(0x8000, prg);
@@ -45,7 +47,7 @@ static void Sync(void) {
 	} else
 		setprg32(0x8000, prg >> 1);
 
-	setchr8((chr &~mask) | (latch &mask));          	/* This "inner CHR bank" substitutes the respective bit(s) of the creg register. */
+	setchr8((chr & ~mask) | (latch.data & mask));			/* This "inner CHR bank" substitutes the respective bit(s) of the creg register. */
 	setmirror(((preg >> 4) & 1) ^ 1);
 }
 
@@ -71,17 +73,13 @@ static DECLFW(BMCWSWrite) {
 	}
 }
 
-static DECLFW(LatchWrite) {
-	latch = V;
-	Sync();
-}
-
 static void MBMCWSPower(void) {
+	preg = 0;
+	creg = 0;
 	dipSwitch = 0;
-	Sync();
+	LatchPower();
 	SetReadHandler(0x8000, 0xFFFF, BMCWSRead);
 	SetWriteHandler(0x6000, 0x7FFF, BMCWSWrite);
-	SetWriteHandler(0x8000, 0xFFFF, LatchWrite);
 }
 
 static void BMCWSReset(void) {
@@ -92,17 +90,12 @@ static void BMCWSReset(void) {
 	/* Always reset to menu */
 	preg = 0;
 	creg = 0;
-	latch = 0;
-	Sync();
-}
-
-static void StateRestore(int version) {
-	Sync();
+	LatchHardReset();
 }
 
 void BMCWS_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Reset = BMCWSReset;
 	info->Power = MBMCWSPower;
-	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
