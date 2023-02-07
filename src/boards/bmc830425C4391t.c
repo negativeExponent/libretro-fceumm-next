@@ -1,6 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright (C) 2019 Libretro Team
+ * Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,56 +26,36 @@
  */
 
 #include "mapinc.h"
-
-static uint8 bank_size;
-static uint8 inner_bank;
-static uint8 outer_bank;
-
-static SFORMAT StateRegs[] =
-{
-	{ &inner_bank, 1, "INNB" },
-	{ &outer_bank, 1, "OUTB" },
-	{ &bank_size, 1, "SIZE" },
-	{ 0 }
-};
+#include "latch.h"
 
 static void Sync(void) {
-	setprg16(0x8000, (outer_bank << 3) | (inner_bank & bank_size));
-	setprg16(0xC000, (outer_bank << 3) | bank_size);
+	if (latch.addr & 0x10) { /* UNROM */
+		setprg16(0x8000, ((latch.addr << 3) & ~7) | (latch.data & 7));
+		setprg16(0xC000, ((latch.addr << 3) & ~7) | 7);
+	} else { /* UOROM */
+		setprg16(0x8000, ((latch.addr << 3) & ~7) | (latch.data & 0x0F));
+		setprg16(0xC000, ((latch.addr << 3) & ~7) | 0x0F);
+	}
 	setchr8(0);
+	setmirror(MI_V);
 }
 
 static DECLFW(M320Write) {
-	/* address mask is inconsistent with that is in the wiki. Mask should be
-	 * 0xFFE0 or Mermaid game will not work. */
 	if ((A & 0xFFE0) == 0xF0E0) {
-		outer_bank = (A & 0x0F);
-		bank_size = (A & 0x10) ? 0x07 : 0x0F;
+		LatchWrite(A, V);
+	} else {
+		latch.data = V;
+		Sync();
 	}
-	inner_bank = (V & 0x0F);
-	Sync();
 }
 
-static void M320Power(void) {
-	bank_size = 0x0F;
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
+static void M320Power() {
+	LatchPower();
 	SetWriteHandler(0x8000, 0xFFFF, M320Write);
 }
 
-static void M320Reset(void) {
-	inner_bank = outer_bank = 0;
-	bank_size = 0x0F;
-	Sync();
-}
-
-static void StateRestore(int version) {
-	Sync();
-}
-
 void BMC830425C4391T_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M320Power;
-	info->Reset = M320Reset;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	info->Reset = LatchHardReset;
 }
