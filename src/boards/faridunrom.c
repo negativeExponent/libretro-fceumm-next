@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,47 +25,30 @@
  */
 
 #include "mapinc.h"
-
-static uint8 latch;
-
-static SFORMAT StateRegs[] =
-{
-	{ &latch, 1, "LATC" },
-	{ 0 }
-};
+#include "latch.h"
 
 static void Sync(void) {
 	setchr8(0);
-	setprg16(0x8000, ((latch & 0x70) >> 1) | (latch & 0x07));
-	setprg16(0xC000, ((latch & 0x70) >> 1) | 0x07 );
+	setprg16(0x8000, ((latch.data & 0x70) >> 1) | (latch.data & 0x07));
+	setprg16(0xC000, ((latch.data & 0x70) >> 1) | 0x07 );
 }
 
 static DECLFW(FARIDUNROMWrite) {
-	V &= CartBR(A);
-	if ((V & 0x80) && !(latch & 0x80) && !(latch & 0x08))
-		latch = (latch & 0x87) | (V & 0x78);
-	latch = (latch & 0x78) | (V & 0x87);
-	Sync();
+	if ((V & 0x80) && !(latch.data & 0x80) && !(latch.data & 0x08)) {
+		LatchWrite(A, V);
+	} else {
+		latch.data = (latch.data & ~7) | (V & 7);
+		Sync();
+	}
 }
 
 static void FARIDUNROMPower(void) {
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	LatchPower();
 	SetWriteHandler(0x8000, 0xFFFF, FARIDUNROMWrite);
 }
 
-static void FARIDUNROMReset(void) {
-	latch &= ~0x78;
-	Sync();
-}
-
-static void StateRestore(int version) {
-	Sync();
-}
-
 void FARIDUNROM_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 0, 1);
 	info->Power = FARIDUNROMPower;
-	info->Reset = FARIDUNROMReset;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	info->Reset = LatchHardReset;
 }
