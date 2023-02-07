@@ -20,15 +20,14 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
 static uint8 reg[2];
-static uint8 latch;
 static uint8 pad;
 
 static SFORMAT StateRegs[] =
 {
 	{ reg, 2, "REG" },
-	{ &latch, 1, "LATC" },
 	{ &pad, 1, "PAD" },
 	{ 0 }
 };
@@ -40,12 +39,8 @@ static void M319Sync(void) {
 		setprg16(0x8000, ((reg[1] >> 2) & 6) | ((reg[1] >> 5) & 1));
 		setprg16(0xC000, ((reg[1] >> 2) & 6) | ((reg[1] >> 5) & 1));
 	}
-	setchr8(((reg[0] >> 4) & ~((reg[0] << 2) & 4)) | ((latch << 2) & ((reg[0] << 2) & 4)));
+	setchr8(((reg[0] >> 4) & ~((reg[0] << 2) & 4)) | ((latch.data << 2) & ((reg[0] << 2) & 4)));
 	setmirror(reg[1] >> 7);
-}
-
-static void StateRestore(int version) {
-	M319Sync();
 }
 
 static DECLFR(M319ReadPad) {
@@ -57,29 +52,22 @@ static DECLFW(M319WriteReg) {
 	M319Sync();
 }
 
-static DECLFW(M319WriteLatch) {
-	latch = V;
-	M319Sync();
-}
-
 static void M319Reset(void) {
-	reg[0] = reg[1] = latch = 0;
+	reg[0] = reg[1] = 0;
 	pad ^= 0x40;
 	M319Sync();
 }
 
 static void M319Power(void) {
-	reg[0] = reg[1] = latch = pad = 0;
-	M319Sync();
+	reg[0] = reg[1] = pad = 0;
+	LatchPower();
 	SetReadHandler(0x5000, 0x5FFF, M319ReadPad);
-	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, M319WriteReg);
-	SetWriteHandler(0x8000, 0xFFFF, M319WriteLatch);
 }
 
 void Mapper319_Init(CartInfo *info) {
+	Latch_Init(info, M319Sync, M319ReadPad, 0, 0);
 	info->Power = M319Power;
 	info->Reset = M319Reset;
-	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
