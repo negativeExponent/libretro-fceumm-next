@@ -21,6 +21,7 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
 static uint8 regs[4];
 
@@ -40,7 +41,7 @@ static void Sync(void) {
 			setprg16(0xC000, bank);
 		}
 	} else { /* UNROM mode */
-		setprg16(0x8000, (regs[1] << 1) | (regs[3] & 7));
+		setprg16(0x8000, (regs[1] << 1) | (latch.data & 7));
 		setprg16(0xC000, (regs[1] << 1) | 7);
 	}
 	if (regs[0] & 0x20)
@@ -58,19 +59,12 @@ static DECLFW(BMC64in1nrWriteLo) {
 	Sync();
 }
 
-static DECLFW(BMC64in1nrWriteHi) {
-	regs[3] = V;
-	Sync();
-}
-
 static void BMC64in1nrPower(void) {
 	regs[0] = 0x80;
 	regs[1] = 0x43;
 	regs[2] = regs[3] = 0;
-	Sync();
+	LatchPower();
 	SetWriteHandler(0x5000, 0x5FFF, BMC64in1nrWriteLo);
-	SetWriteHandler(0x8000, 0xFFFF, BMC64in1nrWriteHi);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
 static void BMC64in1nrReset(void) {
@@ -79,15 +73,12 @@ static void BMC64in1nrReset(void) {
 	regs[1] = 0x43;
 	regs[2] = regs[3] = 0;
 	Sync();
-}
 
-static void StateRestore(int version) {
-	Sync();
 }
 
 void BMC64in1nr_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = BMC64in1nrPower;
 	info->Reset = BMC64in1nrReset;
 	AddExState(&StateRegs, ~0, 0, 0);
-	GameStateRestore = StateRestore;
 }
