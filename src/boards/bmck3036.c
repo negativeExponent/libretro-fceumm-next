@@ -1,6 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright (C) 2019 Libretro Team
+ * Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,51 +20,27 @@
  */
 
 #include "mapinc.h"
-
-static uint8 regs[2];
-
-static SFORMAT StateRegs[] =
-{
-	{ regs,  2, "REGS" },
-	{ 0 }
-};
+#include "latch.h"
 
 static void Sync(void) {
-	if (regs[0] & 0x20) { /* NROM-128 */
-		setprg16(0x8000, ((regs[0] >> 2) & 0x20) | (regs[0] & 0x1F));
-		setprg16(0xC000, ((regs[0] >> 2) & 0x20) | (regs[0] & 0x1F));
+	if (latch.addr & 0x20) { /* NROM-128 */
+		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
+		if (latch.addr & 1) {
+			setprg16(0x8000, ((latch.addr >> 2) & 0x20) | (latch.addr & 0x1F));
+			setprg16(0xC000, ((latch.addr >> 2) & 0x20) | (latch.addr & 0x1F));
+		} else {
+			setprg32(0x8000, ((latch.addr >> 3) & 0x10) | ((latch.addr >> 1) & 0xF));
+		}
 	} else { /* UNROM */
-		setprg16(0x8000, ((regs[0] >> 2) & 0x20) | regs[0] | (regs[1] & 7));
-		setprg16(0xC000, ((regs[0] >> 2) & 0x20) | regs[0] | 7);
+		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
+		setprg16(0x8000, ((latch.addr >> 2) & 0x20) | latch.addr | (latch.data & 7));
+		setprg16(0xC000, ((latch.addr >> 2) & 0x20) | latch.addr | 7);
 	}
 	setchr8(0);
-	setmirror(((regs[0] & 0x40) || ((regs[0] & 0x20) && (regs[0] & 0x04))) ? MI_H : MI_V);
-}
-
-static DECLFW(M340Write) {
-	regs[0] = A & 0xFF;
-	regs[1] = V;
-	Sync();
-}
-
-static void BMCK3036Power(void) {
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M340Write);
-}
-
-static void BMCK3036Reset(void) {
-	regs[0] = regs[1] = 0;
-	Sync();
-}
-
-static void StateRestore(int version) {
-	Sync();
+	setmirror(((latch.addr & 0x40) || ((latch.addr & 0x20) && (latch.addr & 0x04))) ? MI_H : MI_V);
 }
 
 void BMCK3036_Init(CartInfo *info) {
-	info->Power = BMCK3036Power;
-	info->Reset = BMCK3036Reset;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	Latch_Init(info, Sync, NULL, 0, 0);
+	info->Reset = LatchHardReset;
 }
