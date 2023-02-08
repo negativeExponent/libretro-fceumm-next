@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- * Copyright (C) 2020
+ * Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,65 +22,49 @@
  * used on a 512 KiB multicart having 42 to 80,000 listed NROM and UNROM games. */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint16 latche;
 static uint8 dipswitch;
 static uint8 isKN35A;
 
 static SFORMAT StateRegs[] = {
-   { &latche, 2, "LATC" },
    { &dipswitch, 1, "DPSW" },
+
    { 0 }
 };
 
 static void Sync(void) {
-	if (latche & 0x200) {
-		if (latche & 1) { /* NROM 128 */
-			setprg16(0x8000, latche >> 2);
-			setprg16(0xC000, latche >> 2);
+	if (latch.addr & 0x200) {
+		if (latch.addr & 1) { /* NROM 128 */
+			setprg16(0x8000, latch.addr >> 2);
+			setprg16(0xC000, latch.addr >> 2);
 		} else /* NROM-256 */
-			setprg32(0x8000, latche >> 3);
+			setprg32(0x8000, latch.addr >> 3);
 	} else { /* UxROM */
-		setprg16(0x8000, latche >> 2);
-		setprg16(0xC000, (latche >> 2) | 7 | (isKN35A && latche & 0x100 ? 8 : 0));
+		setprg16(0x8000, latch.addr >> 2);
+		setprg16(0xC000, (latch.addr >> 2) | 7 | (isKN35A && latch.addr & 0x100 ? 8 : 0));
 	}
-	setmirror(((latche >> 1) & 1) ^ 1);
+
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, !(latch.addr & 0x80));
+	setchr8(0);
+	setmirror(((latch.addr >> 1) & 1) ^ 1);
 }
 
 static DECLFR(M380Read) {
-	if (latche & 0x100 && !isKN35A)
-		return dipswitch;
+	if (latch.addr & 0x100 && !isKN35A) {
+		A |= dipswitch;
+	}
 	return CartBR(A);
-}
-
-static DECLFW(M380Write) {
-	latche = A;
-	Sync();
 }
 
 static void M380Reset(void) {
 	dipswitch = (dipswitch + 1) & 0xF;
-	latche = 0;
-	Sync();
-}
-
-static void M380Power(void) {
-	dipswitch = 0;
-	latche = 0;
-	Sync();
-	setchr8(0);
-	SetReadHandler(0x8000, 0xFFFF, M380Read);
-	SetWriteHandler(0x8000, 0xFFFF, M380Write);
-}
-
-static void StateRestore(int version) {
-	Sync();
+	LatchHardReset();
 }
 
 void Mapper380_Init(CartInfo *info) {
+	Latch_Init(info, Sync, M380Read, 0, 0);
 	isKN35A = info->iNES2 && info->submapper == 1;
-	info->Power = M380Power;
 	info->Reset = M380Reset;
-	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
