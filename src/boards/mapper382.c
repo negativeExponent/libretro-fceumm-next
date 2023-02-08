@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2020
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,74 +24,43 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 preg[2];
-static uint8 mode;
-static uint8 mirr;
-static uint8 lock;
+static uint8 outerbank;
 
 static SFORMAT StateRegs[] = {
-	{ preg, 2, "PREG" },
-	{ &mode, 1, "MODE" },
-	{ &mirr, 1, "MIRR" },
-	{ &lock, 1, "LOCK" },
+	{ &outerbank, 1, "BANK"},
+
 	{ 0 }
 };
 
 static void Sync(void) {
-	switch (mode) {
+	if (!(outerbank & 0x20)) {
+		outerbank = latch.addr & 0x3F;
+	}
+	switch ((outerbank >> 3) & 1) {
 		case 1:
 			/* bnrom */
-			setprg32(0x8000, (preg[1] << 2) | (preg[0] & 3));
+			setprg32(0x8000, (outerbank<< 2) | (latch.data & 3));
 			break;
 		default:
 			/* unrom */
-			setprg16(0x8000, (preg[1] << 3) | (preg[0] & 7));
-			setprg16(0xC000, (preg[1] << 3) | 7);
+			setprg16(0x8000, (outerbank << 3) | (latch.data & 7));
+			setprg16(0xC000, (outerbank << 3) | 7);
 			break;
 	}
 	setchr8(0);
-	setmirror(mirr ^ 1);
-	/* FCEU_printf("inB[0]:%02x outB[1]:%02x mode:%02x mirr:%02x lock:%02x\n", preg[0], preg[1], mode, mirr, lock); */
+	setmirror(((outerbank >> 4) & 1) ^ 1);
+	/* FCEU_printf("inB[0]:%02x outB[1]:%02x mode:%02x mirr:%02x lock:%02x\n", latch.data, latch.addr, mode, mirr, lock); */
 }
 
-static DECLFW(M382Write) {
-	if (!lock) {
-		preg[1] = (A & 0x07);
-		mode = (A & 0x08) >> 3;
-		mirr = (A & 0x10) >> 4;
-		lock = (A & 0x20) >> 5;
-	}
-	/* inner bank subject to bus conflicts */
-	preg[0] = V & CartBR(A);
-	Sync();
-}
-
-static void M382Power(void) {
-	preg[0] = preg[1] = 0;
-	mode = 0;
-	mirr = 0;
-	lock = 0;
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M382Write);
-}
-
-static void M382Reset(void) {
-	preg[1] = 0;
-	mode = 0;
-	mirr = 0;
-	lock = 0;
-	Sync();
-}
-
-static void StateRestore(int version) {
-	Sync();
+static void M382Reset() {
+	outerbank = 0;
+	LatchHardReset();
 }
 
 void Mapper382_Init(CartInfo *info) {
-	info->Power = M382Power;
+	Latch_Init(info, Sync, NULL, 0, 1);
 	info->Reset = M382Reset;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }
