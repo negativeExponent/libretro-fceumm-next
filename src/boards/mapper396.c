@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2022
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,49 +25,33 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 reg[2];
+static uint8 outerbank;
+
+static SFORMAT StateRegs[] = {
+	{ &outerbank, 1, "BANK" },
+
+	{ 0 }
+};
 
 static void Sync(void) {
-	setprg16(0x8000, (reg[1] << 3) | (reg[0] & 7));
-	setprg16(0xC000, (reg[1] << 3) | 7);
+	if ((latch.addr & 0x6000) == 0x2000) {
+		outerbank = latch.data;
+	}
+	setprg16(0x8000, (outerbank << 3) | (latch.data & 7));
+	setprg16(0xC000, (outerbank << 3) | 7);
 	setchr8(0);
-	setmirror((reg[1] & 0x60) ? 0 : 1);
-}
-
-static DECLFW(M396WriteInnerBank) {
-	reg[0] = V;
-	Sync();
-}
-
-static DECLFW(M396WriteOuterBank) {
-	reg[1] = V;
-	Sync();
+	setmirror((outerbank & 0x60) ? 0 : 1);
 }
 
 static void M396Reset(void) {
-	reg[0] = 0x00;
-	reg[1] = 0x00;
-	Sync();
-}
-
-static void StateRestore(int version) {
-	Sync();
-}
-
-static void M396Power(void) {
-	reg[0] = 0x00;
-	reg[1] = 0x00;
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0x9FFF, M396WriteInnerBank);
-	SetWriteHandler(0xA000, 0xBFFF, M396WriteOuterBank);
-	SetWriteHandler(0xC000, 0xFFFF, M396WriteInnerBank);
+	outerbank = 0;
+	LatchHardReset();
 }
 
 void Mapper396_Init(CartInfo *info) {
-	info->Power = M396Power;
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Reset = M396Reset;
-	GameStateRestore = StateRestore;
-	AddExState(reg, 2, 0, "REGS");
+	AddExState(StateRegs, ~0, 0, NULL);
 }
