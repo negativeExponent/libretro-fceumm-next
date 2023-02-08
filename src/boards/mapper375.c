@@ -19,23 +19,18 @@
  */
 
 #include "mapinc.h"
-
-static uint8 *WRAM = NULL;
-static uint32 WRAMSIZE;
-
-static uint16 addrlatch;
-static uint8 datalatch;
+#include "latch.h"
 
 static void Sync(void) {
-	uint32 S = addrlatch & 1;
-	uint32 p = ((addrlatch >> 2) & 0x1F) + ((addrlatch & 0x100) >> 3) + ((addrlatch & 0x400) >> 4);
-	uint32 L = (addrlatch >> 9) & 1;
+	uint32 S = latch.addr & 1;
+	uint32 p = ((latch.addr >> 2) & 0x1F) + ((latch.addr & 0x100) >> 3) + ((latch.addr & 0x400) >> 4);
+	uint32 L = (latch.addr >> 9) & 1;
 	uint32 p_8000 = p;
 
-	if ((addrlatch >> 11) & 1)
-		p_8000 = (p & 0x7E) | (datalatch & 7);
+	if ((latch.addr >> 11) & 1)
+		p_8000 = (p & 0x7E) | (latch.data & 7);
 
-	if ((addrlatch >> 7) & 1) {
+	if ((latch.addr >> 7) & 1) {
 		if (S) {
 			setprg32(0x8000, p >> 1);
 		} else {
@@ -62,60 +57,34 @@ static void Sync(void) {
 		}
 	}
 
-	if ((addrlatch & 0x80) == 0x80)
+	if ((latch.addr & 0x80) == 0x80)
 		/* CHR-RAM write protect hack, needed for some multicarts */
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
 	else
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
 
-	setmirror(((addrlatch >> 1) & 1) ^ 1);
+	setmirror(((latch.addr >> 1) & 1) ^ 1);
 	setchr8(0);
 	setprg8r(0x10, 0x6000, 0);
 }
 
 static DECLFW(M375Write) {
-	if (addrlatch & 0x800)
-		datalatch = V;
-	else {
-		addrlatch = A;
-		datalatch = V;
+	if (latch.addr & 0x800) {
+		latch.data = V;
+	} else {
+		latch.addr = A;
+		latch.data = V;
 	}
-	Sync();
-}
-
-static void M375Reset(void) {
-	addrlatch = 0;
-	datalatch = 0;
 	Sync();
 }
 
 static void M375Power(void) {
-	addrlatch = 0;
-	datalatch = 0;
-	Sync();
-	setchr8(0);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	LatchPower();
 	SetWriteHandler(0x8000, 0xFFFF, M375Write);
-	if (WRAMSIZE) {
-		SetReadHandler(0x6000, 0xFFFF, CartBR);
-		SetWriteHandler(0x6000, 0x7FFF, CartBW);
-		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
-	}
-}
-
-static void StateRestore(int version) {
-	Sync();
 }
 
 void Mapper375_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 1, 0);
 	info->Power = M375Power;
-	info->Reset = M375Reset;
-	GameStateRestore = StateRestore;
-	AddExState(&addrlatch, 2, 0, "ADDR");
-	AddExState(&datalatch, 1, 0, "DATA");
-
-	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
-	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
-	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+	info->Reset = LatchHardReset;
 }
