@@ -19,16 +19,16 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 reg;
 static uint8 smb2j_reg;
 static uint8 IRQa;
 static uint16 IRQCount;
 
 static void Sync(void) {
-	if (reg & 8) {
-		uint8 prg = ((reg >> 5) & 1) | ((reg >> 6) & 2) | ((reg >> 1) & 4);
-		switch ((reg >> 6) & 3) {
+	if (latch.data & 8) {
+		uint8 prg = ((latch.data >> 5) & 1) | ((latch.data >> 6) & 2) | ((latch.data >> 1) & 4);
+		switch ((latch.data >> 6) & 3) {
 			case 0:
 				setprg8(0x8000, prg << 1);
 				setprg8(0xA000, prg << 1);
@@ -51,8 +51,8 @@ static void Sync(void) {
 		setprg8(0xE000, 0x3);
 	}
 	setprg8(0x6000, 0x7);
-	setchr8((reg >> 1) & 3);
-	setmirror(((reg >> 2) & 1) ^ 1);
+	setchr8((latch.data >> 1) & 3);
+	setmirror(((latch.data >> 2) & 1) ^ 1);
 }
 
 static DECLFW(M416Write4) {
@@ -70,17 +70,11 @@ static DECLFW(M416Write4) {
 	}
 }
 
-static DECLFW(M416Write8) {
-	reg = V;
-	Sync();
-}
-
 static void M416Power(void) {
-	reg = smb2j_reg = IRQa = IRQCount = 0;
-	Sync();
-	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4020, 0x5FFF, M416Write4);
-	SetWriteHandler(0x8000, 0x8000, M416Write8);
+	smb2j_reg = IRQa = IRQCount = 0;
+	LatchPower();
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
+	SetWriteHandler(0x4020, 0x4FFF, M416Write4);
 }
 
 static void FP_FASTAPASS(1) M416IRQHook(int a) {
@@ -94,15 +88,10 @@ static void FP_FASTAPASS(1) M416IRQHook(int a) {
 	}
 }
 
-static void StateRestore(int version) {
-	Sync();
-}
-
 void Mapper416_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M416Power;
 	MapIRQHook = M416IRQHook;
-	GameStateRestore = StateRestore;
-	AddExState(&reg, 1, 0, "REGS");
 	AddExState(&smb2j_reg, 1, 0, "SMBJ");
 	AddExState(&IRQa, 1, 0, "IRQa");
 	AddExState(&IRQCount, 2, 0, "IRQC");
