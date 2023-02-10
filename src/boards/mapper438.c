@@ -3,6 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
  *  Copyright (C) 2002 Xodnizel
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,45 +23,20 @@
 /* K-3071 */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 latch[2];
-
-static void Mapper438_Sync(void) {
-	if (latch[0] & 1)
-		setprg32(0x8000, latch[0] >> 2);
+static void Sync(void) {
+	if (latch.addr & 1)
+		setprg32(0x8000, latch.addr >> 2);
 	else {
-		setprg16(0x8000, latch[0] >> 1);
-		setprg16(0xC000, latch[0] >> 1);
+		setprg16(0x8000, latch.addr >> 1);
+		setprg16(0xC000, latch.addr >> 1);
 	}
-	setchr8(latch[1] >> 1);
-	setmirror((latch[1] & 1) ^ 1);
-}
-
-static DECLFW(Mapper438_WriteLatch) {
-	latch[0] = A & 0xFF;
-	latch[1] = V;
-	Mapper438_Sync();
-}
-
-static void Mapper438_Reset(void) {
-	latch[0] = latch[1] = 0;
-	Mapper438_Sync();
-}
-
-static void Mapper438_Power(void) {
-	latch[0] = latch[1] = 0;
-	Mapper438_Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, Mapper438_WriteLatch);
-}
-
-static void StateRestore(int version) {
-	Mapper438_Sync();
+	setchr8(latch.data >> 1);
+	setmirror((latch.data & 1) ^ 1);
 }
 
 void Mapper438_Init(CartInfo *info) {
-	info->Reset = Mapper438_Reset;
-	info->Power = Mapper438_Power;
-	GameStateRestore = StateRestore;
-	AddExState(&latch, 2, 0, "LATC");
+	Latch_Init(info, Sync, NULL, 0, 0);
+	info->Reset = LatchHardReset;
 }
