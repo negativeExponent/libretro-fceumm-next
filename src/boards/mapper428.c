@@ -22,6 +22,7 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
 static uint8 regs[4];
 static uint8 hrd_flag;
@@ -44,14 +45,9 @@ static void Sync(void) {
 		setprg16(0xC000, (regs[1] & 0xE0) >> 5);
 	}
 
-	setchr8(((regs[1] & 0x07) & ~mask) | (regs[0] & mask));
+	setchr8(((regs[1] & 0x07) & ~mask) | (latch.data & mask));
 
 	setmirror((regs[1] & 0x8) ? 0 : 1);
-}
-
-static DECLFW(WriteHi) {
-	regs[0] = V;
-	Sync();
 }
 
 static DECLFW(WriteLo) {
@@ -66,26 +62,19 @@ static DECLFR(ReadLo) {
 static void M428Power(void) {
 	hrd_flag = 0; /* Solder pad, selecting different menus */
 
-	regs[0] = 0;
 	regs[1] = 0;
 	regs[2] = 0;
 
-	Sync();
-	SetWriteHandler(0x8000, 0xFFFF, WriteHi);
-	SetWriteHandler(0x6001, 0x6002, WriteLo);
+	LatchPower();
+	SetWriteHandler(0x6000, 0x7FFF, WriteLo);
 	SetReadHandler(0x6000, 0x7FFF, ReadLo);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-}
-
-static void StateRestore(int version) {
-	Sync();
 }
 
 static void M428Reset(void) {
 	hrd_flag++;
 	hrd_flag &= 3;
 
-	regs[0] = 0;
 	regs[1] = 0;
 	regs[2] = 0;
 
@@ -93,9 +82,8 @@ static void M428Reset(void) {
 }
 
 void Mapper428_Init(CartInfo *info) {
-	hrd_flag = 0;
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M428Power;
 	info->Reset = M428Reset;
 	AddExState(&StateRegs, ~0, 0, 0);
-	GameStateRestore = StateRestore;
 }
