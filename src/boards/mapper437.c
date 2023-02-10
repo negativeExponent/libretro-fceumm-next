@@ -3,6 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
  *  Copyright (C) 2002 Xodnizel
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,46 +23,36 @@
 /* NTDEC TH2348 circuit board. UNROM plus outer bank register at $5FFx. */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 latch;
+static uint8 outer;
 
-static void Mapper437_Sync(void) {
-	setprg16(0x8000, latch);
-	setprg16(0xC000, latch | 7);
+static void Sync(void) {
+	setprg16(0x8000, (outer << 3) | (latch.data & 7));
+	setprg16(0xC000, (outer << 3) | 7);
 	setchr8(0);
-	setmirror(((latch >> 6) & 1) ^ 1);
+	setmirror(((outer >> 3) & 1) ^ 1);
 }
 
-static DECLFW(Mapper437_WriteOuterBank) {
-	latch = (latch & 7) | (A << 3);
-	Mapper437_Sync();
+static DECLFW(M437_WriteOuterBank) {
+	outer = A;
+	Sync();
 }
 
-static DECLFW(Mapper437_WriteInnerBank) {
-	latch = (latch & ~7) | ((V & CartBR(A)) & 7);
-	Mapper437_Sync();
+static void M437_Reset(void) {
+	outer = 0;
+	Sync();
 }
 
-static void Mapper437_Reset(void) {
-	latch = 0;
-	Mapper437_Sync();
-}
-
-static void Mapper437_Power(void) {
-	latch = 0;
-	Mapper437_Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x5000, 0x5FFF, Mapper437_WriteOuterBank);
-	SetWriteHandler(0x8000, 0xFFFF, Mapper437_WriteInnerBank);
-}
-
-static void StateRestore(int version) {
-	Mapper437_Sync();
+static void M437_Power(void) {
+	outer = 0;
+	LatchPower();
+	SetWriteHandler(0x5000, 0x5FFF, M437_WriteOuterBank);
 }
 
 void Mapper437_Init(CartInfo *info) {
-	info->Reset = Mapper437_Reset;
-	info->Power = Mapper437_Power;
-	GameStateRestore = StateRestore;
-	AddExState(&latch, 1, 0, "LATC");
+	Latch_Init(info, Sync, NULL, 0, 1);
+	info->Reset = M437_Reset;
+	info->Power = M437_Power;
+	AddExState(&outer, 1, 0, "OUTB");
 }
