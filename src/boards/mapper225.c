@@ -72,6 +72,7 @@ static void M225Power(void) {
 void Mapper225_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M225Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 }
 
 void Mapper255_Init(CartInfo *info) {

@@ -40,7 +40,7 @@ static void Sync(void) {
 	}
 	setchr8(0);
     if (reg[1] & 2) {
-        setmirror(MI_0 + (latch.data >> 4) & 1);
+        setmirror(MI_0 + ((latch.data >> 4) & 1));
     } else {
 	    setmirror(reg[1] & 1);
     }

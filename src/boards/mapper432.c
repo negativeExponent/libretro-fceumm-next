@@ -25,7 +25,7 @@
 
 static void M432CW(uint32 A, uint8 V) {
 	int chrAND = (EXPREGS[1] & 0x04) ? 0x7F : 0xFF;
-	int chrOR  = ((EXPREGS[1] << 7) & 0x080) | (EXPREGS[1] << 5) & 0x100 | ((EXPREGS[1] << 4) & 0x200);
+	int chrOR  = ((EXPREGS[1] << 7) & 0x080) | ((EXPREGS[1] << 5) & 0x100) | ((EXPREGS[1] << 4) & 0x200);
 	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 
