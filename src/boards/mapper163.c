@@ -33,7 +33,7 @@ static SFORMAT StateRegs[] =
     { 0 }
 };
 
-static void sync() {
+static void Sync() {
 	setprg32(0x8000, (reg[2] << 4) | (reg[0] & 0xF) | ((reg[3] & 0x04) ? 0x00 : 0x03));
 	setprg8r(0x10, 0x6000, 0);
 	if (~reg[0] & 0x80)
@@ -67,12 +67,12 @@ static DECLFW(writeReg) {
 	}                       /* If A0=0, write to register */
 	else
 		reg[index] = V;
-	sync();
+	Sync();
 }
 
 static void M163Power(void) {
 	memset(reg, 0, sizeof(reg));
-	sync();
+	Sync();
 	SetReadHandler(0x5000, 0x57FF, readReg);
 	SetWriteHandler(0x5000, 0x57FF, writeReg);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
@@ -81,7 +81,7 @@ static void M163Power(void) {
 
 static void M163Reset(void) {
 	memset(reg, 0, sizeof(reg));
-	sync();
+	Sync();
 }
 
 static void M163Close(void) {
@@ -91,7 +91,7 @@ static void M163Close(void) {
 }
 
 static void StateRestore(int version) {
-	sync();
+	Sync();
 }
 
 void Mapper163_Init(CartInfo *info) {
