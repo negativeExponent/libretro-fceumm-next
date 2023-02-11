@@ -23,7 +23,7 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-void 	(*sync)(void);
+static void 	(*WSync)(void);
 static uint8	allowExtendedMirroring;
 
 static uint8	mode[4];
@@ -226,7 +226,7 @@ static void FP_FASTAPASS(1) trapPPUAddressChange(uint32 A) {
 		/* If MMC4 mode[0] is enabled, and CHR mode[0] is 4 KiB, and tile FD or FE is being fetched ... */
 		latch[(A >> 12) & 1] = ((A >> 10) & 4) | ((A >> 4) & 2); /* switch the left or right pattern table's latch to 0 (FD) or 2 (FE),
 																  * being used as an offset for the CHR register index. */
-		sync();
+		WSync();
 	}
 	lastPPUAddress = A;
 }
@@ -286,17 +286,17 @@ static DECLFW(writeALU) {
 
 static DECLFW(writePRG) {
 	prg[A & 3] = V;
-	sync();
+	WSync();
 }
 
 static DECLFW(writeCHRLow) {
 	chr[A & 7] = (chr[A & 7] & 0xFF00) | V;
-	sync();
+	WSync();
 }
 
 static DECLFW(writeCHRHigh) {
 	chr[A & 7] = (chr[A & 7] & 0x00FF) | V << 8;
-	sync();
+	WSync();
 }
 
 static DECLFW(writeNT) {
@@ -304,7 +304,7 @@ static DECLFW(writeNT) {
 		nt[A & 3] = (nt[A & 3] & 0xFF00) | V;
 	else
 		nt[A & 3] = (nt[A & 3] & 0x00FF) | V << 8;
-	sync();
+	WSync();
 }
 
 static DECLFW(writeIRQ) {
@@ -358,7 +358,7 @@ static DECLFW(writeMode) {
 			mode[3] = V;
 			break;
 	}
-	sync();
+	WSync();
 }
 
 static void JYASIC_restoreWriteHandlers(void) {
@@ -400,7 +400,7 @@ static void JYASIC_power(void) {
 	latch[0] = 0;
 	latch[1] = 4;
 
-	sync();
+	WSync();
 }
 
 static void JYASIC_reset(void) {
@@ -414,7 +414,7 @@ static void JYASIC_close(void) {
 }
 
 static void JYASIC_restore(int version) {
-	sync();
+	WSync();
 }
 
 void JYASIC_init(CartInfo *info) {
@@ -455,27 +455,27 @@ static void syncSingleCart(void) {
 void Mapper35_Init(CartInfo *info) {
 	/* Basically mapper 90/209/211 with WRAM */
 	allowExtendedMirroring = 1;
-	sync = syncSingleCart;
+	WSync = syncSingleCart;
 	JYASIC_init(info);
 }
 void Mapper90_Init(CartInfo *info) {
 	/* Single cart, extended mirroring and ROM nametables disabled */
 	allowExtendedMirroring = 0;
-	sync = syncSingleCart;
+	WSync = syncSingleCart;
 	JYASIC_init(info);
 }
 
 void Mapper209_Init(CartInfo *info) {
 	/* Single cart, extended mirroring and ROM nametables enabled */
 	allowExtendedMirroring = 1;
-	sync = syncSingleCart;
+	WSync = syncSingleCart;
 	JYASIC_init(info);
 }
 
 void Mapper211_Init(CartInfo *info) {
 	/* Duplicate of mapper 209 */
 	allowExtendedMirroring = 1;
-	sync = syncSingleCart;
+	WSync = syncSingleCart;
 	JYASIC_init(info);
 }
 
@@ -488,7 +488,7 @@ static void sync281(void) {
 void Mapper281_Init(CartInfo *info) {
 	/* Multicart */
 	allowExtendedMirroring = 1;
-	sync = sync281;
+	WSync = sync281;
 	JYASIC_init(info);
 }
 
@@ -506,7 +506,7 @@ static void sync282(void) {
 void Mapper282_Init(CartInfo *info) {
 	/* Multicart */
 	allowExtendedMirroring = 1;
-	sync = sync282;
+	WSync = sync282;
 	JYASIC_init(info);
 }
 
@@ -519,7 +519,7 @@ void sync295(void) {
 void Mapper295_Init(CartInfo *info) {
 	/* Multicart */
 	allowExtendedMirroring = 1;
-	sync = sync295;
+	WSync = sync295;
 	JYASIC_init(info);
 }
 
@@ -537,7 +537,7 @@ void sync358(void) {
 void Mapper358_Init(CartInfo *info) {
 	/* Multicart */
 	allowExtendedMirroring = 1;
-	sync = sync358;
+	WSync = sync358;
 	JYASIC_init(info);
 }
 
@@ -555,7 +555,7 @@ void sync386(void) {
 void Mapper386_Init(CartInfo *info) {
 	/* Multicart */
 	allowExtendedMirroring = 1;
-	sync = sync386;
+	WSync = sync386;
 	JYASIC_init(info);
 }
 
@@ -573,7 +573,7 @@ void sync387(void) {
 void Mapper387_Init(CartInfo *info) {
 	/* Multicart */
 	allowExtendedMirroring = 1;
-	sync = sync387;
+	WSync = sync387;
 	JYASIC_init(info);
 }
 
@@ -592,7 +592,7 @@ void sync388(void) {
 void Mapper388_Init(CartInfo *info) {
 	/* Multicart */
 	allowExtendedMirroring = 0;
-	sync = sync388;
+	WSync = sync388;
 	JYASIC_init(info);
 }
 
@@ -605,7 +605,7 @@ void sync397(void) {
 void Mapper397_Init(CartInfo *info) {
 	/* Multicart */
 	allowExtendedMirroring = 1;
-	sync = sync397;
+	WSync = sync397;
 	JYASIC_init(info);
 }
 
@@ -621,7 +621,7 @@ void sync421(void) {
 void Mapper421_Init(CartInfo *info) {
 	/* Multicart */
 	allowExtendedMirroring = 1;
-	sync = sync421;
+	WSync = sync421;
 	JYASIC_init(info);
 }
 
@@ -661,7 +661,7 @@ static DECLFW(Mapper394_Write) {
 		}
 	} else {
 		if (HSK007Reg[1] & 0x10)
-			sync();
+			WSync();
 		else {
 			FixMMC3PRG(MMC3_cmd);
 			FixMMC3CHR(MMC3_cmd);
@@ -688,7 +688,7 @@ static void Mapper394_restore(int version) {
 
 		SetReadHandler(0x5000, 0x5FFF, readALU_DIP);
 		SetReadHandler(0x6000, 0xFFFF, CartBR);
-		sync();
+		WSync();
 	} else {
 		SetWriteHandler(0x8000, 0xBFFF, MMC3_CMDWrite);
 		SetWriteHandler(0xC000, 0xFFFF, MMC3_IRQWrite);
@@ -708,7 +708,7 @@ static void Mapper394_power(void) {
 
 void Mapper394_Init(CartInfo *info) {
 	allowExtendedMirroring = 1;
-	sync = sync394;
+	WSync = sync394;
 	JYASIC_init(info);
 	GenMMC3_Init(info, 128, 128, 0, 0);
 	pwrap = Mapper394_PWrap;
