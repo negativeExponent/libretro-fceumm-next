@@ -59,7 +59,7 @@ static SFORMAT stateRegs[] = {
 	{ 0 }
 };
 
-static void sync() {
+static void Sync() {
 	int chrAND;
 	int chrOR;
 	int prgAND = reg[2] & 0x04 ? 0x0F : 0x1F;
@@ -150,19 +150,19 @@ static DECLFW(writeMMC3) {
 	switch (A & 0xE001) {
 		case 0x8000:
 			MMC3_index = V;
-			sync();
+			Sync();
 			break;
 		case 0x8001:
 			MMC3_reg[MMC3_index & 7] = V;
-			sync();
+			Sync();
 			break;
 		case 0xA000:
 			MMC3_mirroring = V;
-			sync();
+			Sync();
 			break;
 		case 0xA001:
 			MMC3_wram = V;
-			sync();
+			Sync();
 			break;
 		case 0xC000:
 			MMC3_reload = V;
@@ -184,14 +184,14 @@ static DECLFW(writeMMC1) {
 	if (V & 0x80) {
 		MMC1_shift = MMC1_count = 0;
 		MMC1_reg[0] |= 0x0C;
-		sync();
+		Sync();
 	} else if (!MMC1_filter) {
 		MMC1_shift |= (V & 1) << MMC1_count++;
 		if (MMC1_count == 5) {
 			MMC1_reg[A >> 13 & 3] = MMC1_shift;
 			MMC1_count = 0;
 			MMC1_shift = 0;
-			sync();
+			Sync();
 		}
 	}
 	MMC1_filter = 2;
@@ -204,14 +204,14 @@ static DECLFW(writeVRC4) {
 		case 0x8000:
 		case 0xA000:
 			VRC4_prg[A >> 13 & 1] = V;
-			sync();
+			Sync();
 			break;
 		case 0x9000:
 			if (~A & 2)
 				VRC4_mirroring = V;
 			else if (~A & 1)
 				VRC4_misc = V;
-			sync();
+			Sync();
 			break;
 		case 0xF000:
 			switch (A & 3) {
@@ -241,7 +241,7 @@ static DECLFW(writeVRC4) {
 				VRC4_chr[index] = (VRC4_chr[index] & 0x0F) | V << 4;
 			else
 				VRC4_chr[index] = (VRC4_chr[index] & ~0x0F) | (V & 0x0F);
-			sync();
+			Sync();
 			break;
 	}
 }
@@ -290,7 +290,7 @@ static void applyMode() {
 
 static void Mapper351_restore(int version) {
 	applyMode();
-	sync();
+	Sync();
 }
 
 static DECLFR(readDIP) {
@@ -302,12 +302,12 @@ static DECLFW(writeReg) {
 	reg[A & 3] = V;
 	if ((reg[0] & 3) != previousMode)
 		applyMode();
-	sync();
+	Sync();
 }
 
 static DECLFW(writeFDSMirroring) {
 	MMC3_mirroring = V >> 3 & 1;
-	sync();
+	Sync();
 }
 
 static void Mapper351_power(void) {
@@ -333,7 +333,7 @@ static void Mapper351_power(void) {
 	SetWriteHandler(0x5000, 0x5FFF, writeReg);
 	SetWriteHandler(0x4025, 0x4025, writeFDSMirroring);
 	applyMode();
-	sync();
+	Sync();
 }
 
 static void Mapper351_reset(void) {
@@ -342,7 +342,7 @@ static void Mapper351_reset(void) {
 		reg[i] = 0;
 	dip++;
 	applyMode();
-	sync();
+	Sync();
 }
 
 static void Mapper351_close(void) {

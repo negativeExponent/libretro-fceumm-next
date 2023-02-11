@@ -35,7 +35,7 @@ static SFORMAT StateRegs[] = {
    { 0 }
 };
 
-static void sync() {
+static void Sync() {
 	setprg32(0x8000, (reg[1] << 4) | (reg[0] & 0xF) | ((reg[3] & 0x04) ? 0x00 : 0x03));
 	setprg8r(0x10, 0x6000, 0);
 	if (~reg[0] & 0x80)
@@ -73,14 +73,14 @@ static DECLFW(writeReg) {
 		V = (V & ~3) | (V >> 1 & 1) | (V << 1 & 2);
 
 	reg[index] = V;
-	sync();
+	Sync();
 }
 
 static void M558Power(void) {
 	memset(reg, 0, sizeof(reg));
 	if (haveEEPROM)
 		eeprom_93C66_init();
-	sync();
+	Sync();
 	SetReadHandler(0x5000, 0x57FF, readReg);
 	SetWriteHandler(0x5000, 0x57FF, writeReg);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
@@ -89,7 +89,7 @@ static void M558Power(void) {
 
 static void M558Reset(void) {
 	memset(reg, 0, sizeof(reg));
-	sync();
+	Sync();
 }
 
 static void M558Close(void) {
@@ -99,7 +99,7 @@ static void M558Close(void) {
 }
 
 static void StateRestore(int version) {
-	sync();
+	Sync();
 }
 
 void Mapper558_Init(CartInfo *info) {

@@ -39,7 +39,7 @@ static SFORMAT StateRegs[] =
 	{ 0 }
 };
 
-static void sync() {
+static void Sync() {
 	uint8 prgLow = (reg[0] & 0x0F) | ((reg[0] >> 1) & 0x10);
 	uint8 prgHigh = reg[1] << 5;
 	switch (((reg[0] >> 5) & 2) | ((reg[0] >> 4) & 1)) {
@@ -77,13 +77,13 @@ static DECLFR(readReg) {
 
 static DECLFW(writeReg) {
 	reg[(A >> 8) & 7] = V;
-	sync();
+	Sync();
 }
 
 static void M164Power(void) {
 	memset(reg, 0, sizeof(reg));
 	eeprom_93C66_init();
-	sync();
+	Sync();
 	SetReadHandler(0x5400, 0x57FF, readReg);
 	SetWriteHandler(0x5000, 0x57FF, writeReg);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
@@ -92,7 +92,7 @@ static void M164Power(void) {
 
 static void M164Reset(void) {
 	memset(reg, 0, sizeof(reg));
-	sync();
+	Sync();
 }
 
 static void M164Close(void) {
@@ -102,7 +102,7 @@ static void M164Close(void) {
 }
 
 static void StateRestore(int version) {
-	sync();
+	Sync();
 }
 
 void Mapper164_Init(CartInfo *info) {

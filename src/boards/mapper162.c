@@ -33,7 +33,7 @@ static SFORMAT StateRegs[] =
     { 0 }
 };
 
-static void sync() {
+static void Sync() {
 	setprg32(0x8000,
 	         (reg[2] << 4) | (reg[0] & 0x0C)                                   /* PRG A17-A20 always normal from $5000 and $5200 */
 	             | ((reg[3] & 0x04) ? 0x00 : 0x02)                               /* PRG A16 is 1       if $5300.2=0                */
@@ -63,12 +63,12 @@ static DECLFR(readReg) {
 
 static DECLFW(writeReg) {
 	reg[(A >> 8) & 3] = V;
-	sync();
+	Sync();
 }
 
 static void M162Power(void) {
 	memset(reg, 0, sizeof(reg));
-	sync();
+	Sync();
 	SetReadHandler(0x5000, 0x57FF, readReg);
 	SetWriteHandler(0x5000, 0x57FF, writeReg);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
@@ -77,7 +77,7 @@ static void M162Power(void) {
 
 static void M162Reset(void) {
 	memset(reg, 0, sizeof(reg));
-	sync();
+	Sync();
 }
 
 static void M162Close(void) {
@@ -87,7 +87,7 @@ static void M162Close(void) {
 }
 
 static void StateRestore(int version) {
-	sync();
+	Sync();
 }
 
 void Mapper162_Init(CartInfo *info) {
