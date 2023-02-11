@@ -26,41 +26,20 @@
  */
 
 #include "mapinc.h"
-
-static uint8 latche;
-
-static SFORMAT StateRegs[] = {
-	{ &latche, 1, "LATC" },
-	{ 0 }
-};
+#include "latch.h"
 
 static void Sync(void) {
 	setprg32(0x8000, 0);
-	setchr8((latche >> 4) & 1);
+	setchr8((latch.data >> 4) & 1);
 }
 
 static DECLFR(M533Read) {
-	return ((PRGptr[0][A] & 0xF0) | (latche >> 4));
-}
-
-static DECLFW(M533Write) {
-	latche = (V & CartBR(A));
-	Sync();
-}
-
-static void M533Power(void) {
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBROB);
-	SetReadHandler(0xE000, 0xEFFF, M533Read);
-	SetWriteHandler(0x8000, 0xFFFF, M533Write);
-}
-
-static void StateRestore(int version) {
-	Sync();
+	if ((A & 0xF000) == 0xE000) {
+		return ((PRGptr[0][0x6000 | A] & 0xF0) | (latch.data >> 4));
+	}
+	return CartBROB(A);
 }
 
 void Mapper533_Init(CartInfo *info) {
-	info->Power = M533Power;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	Latch_Init(info, Sync, M533Read, 0, 1);
 }
