@@ -28,7 +28,7 @@
 static uint8 reg[2];
 
 static void Sync(void) {
-	setprg16(0x8000, ((reg[0] >> 1) & ~7) | latch.data & 7);
+	setprg16(0x8000, ((reg[0] >> 1) & ~7) | (latch.data & 7));
 	setprg16(0xC000, ((reg[0] >> 1) & ~7) | 7);
 	setchr8(0);
 	setmirror(((latch.data >> 7) & 1) ^ 1);

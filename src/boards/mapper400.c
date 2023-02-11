@@ -41,7 +41,7 @@ static void Sync(void) {
     if (outer == 0x80) {
         /* use default mirroring */
     } else {
-        setmirror(outer >> 5 & 1 ^ 1);
+        setmirror(((outer >> 5) & 1) ^ 1);
     }
 }
 

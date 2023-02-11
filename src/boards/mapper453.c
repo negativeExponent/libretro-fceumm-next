@@ -31,7 +31,7 @@ static void Sync(void) {
 	if (latch.data & 0x40) {
 		setprg32(0x8000, ((latch.data >> 3) & 0x18) |  (latch.data & 7));
 	} else {
-		setprg16(0x8000, (((latch.data >> 2) & 0x38) | latch.data & 7));
+		setprg16(0x8000, ((latch.data >> 2) & 0x38) | (latch.data & 7));
 		setprg16(0xC000, (latch.data >> 2 & 0x38) | 7);
 	}
     setmirror(((latch.data >> 5) & 2) + (((latch.data >> 4) & 1) ^ 1));
