@@ -490,7 +490,7 @@ static BMAPPING bmap[] = {
 	{ "LH32",                       125, LH32_Init,             0 },
 	{ "LH53",                       535, LH53_Init,             0 },
 	{ "MALISB",                     325, UNLMaliSB_Init,        0 },
-	{ "MARIO1-MALEE2",               42, MALEE_Init,            0 },
+	{ "MARIO1-MALEE2",               55, MALEE_Init,            0 },
 	{ "MHROM",                       66, MHROM_Init,            0 },
 	{ "N625092",                    221, UNLN625092_Init,       0 },
 	{ "NROM",                         0, NROM_Init,             0 },
