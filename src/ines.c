@@ -473,7 +473,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "MMC3 BMC PIRATE D",         52, Mapper52_Init          )
 	INES_BOARD( "SUPERVISION 16-in-1",       53, Supervision16_Init     )
 /*    INES_BOARD( "",                         54, Mapper54_Init ) */
-/*    INES_BOARD( "",                         55, Mapper55_Init ) */
+    INES_BOARD( "MARIO1-MALEE2",             55, MALEE_Init )
 	INES_BOARD( "UNLKS202",                  56, UNLKS202_Init          )
 	INES_BOARD( "SIMBPLE BMC PIRATE A",      57, Mapper57_Init          )
 	INES_BOARD( "SIMBPLE BMC PIRATE B",      58, Mapper58_Init          )
