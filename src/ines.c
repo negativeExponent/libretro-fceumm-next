@@ -564,7 +564,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "TCA01",                    143, TCA01_Init             )
 	INES_BOARD( "AGCI 50282",               144, Mapper144_Init         )
 	INES_BOARD( "SA72007",                  145, SA72007_Init           )
-	INES_BOARD( "SA0161M",                  146, SA0161M_Init           )
+/*	INES_BOARD( "",                         146, SA0161M_Init           ) */ /* moved to mapper 79 */
 	INES_BOARD( "Sachen 3018 board",        147, Mapper147_Init         )
 	INES_BOARD( "SA0037",                   148, SA0037_Init            )
 	INES_BOARD( "SA0036",                   149, SA0036_Init            )

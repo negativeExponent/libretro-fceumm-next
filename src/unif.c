@@ -507,7 +507,7 @@ static BMAPPING bmap[] = {
 	{ "SA-0036",                    149, SA0036_Init,           0 },
 	{ "SA-0037",                    148, SA0037_Init,           0 },
 	{ "SA-009",                     160, SA009_Init,            0 },
-	{ "SA-016-1M",                  146, SA0161M_Init,          0 },
+	{ "SA-016-1M",                   79, Mapper79_Init,         0 },
 	{ "SA-72007",                   145, SA72007_Init,          0 },
 	{ "SA-72008",                   133, SA72008_Init,          0 },
 	{ "SA-9602B",                   513, SA9602B_Init,          BMCFLAG_32KCHRR },
@@ -601,7 +601,7 @@ static BMAPPING bmap[] = {
 	{ "900218",                     524, BTL900218_Init,        0 },
 	{ "JC-016-2",                   205, Mapper205_Init,        0 },
 	{ "AX-40G",                     527, UNLAX40G_Init,         0 },
-	{ "STREETFIGTER-GAME4IN1",  NO_INES, BMCSFGAME4IN1_Init,    0 }, /* mapper 49? submapper 1*/
+	{ "STREETFIGTER-GAME4IN1",       49, BMCSFGAME4IN1_Init,    0 }, /* mapper 49? submapper 1*/
 	{ "BJ-56",                      526, UNLBJ56_Init,          0 },
 	{ "L6IN1",                      345, BMCL6IN1_Init,         0 },
 	{ "CTC-12IN1",                  337, BMCCTC12IN1_Init,      0 },
