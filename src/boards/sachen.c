@@ -181,13 +181,6 @@ static void SA72008Synco(void) {
 	setchr8(latch[0] & 3);
 }
 
-void SA0161M_Init(CartInfo *info) {
-	WSync = SA0161MSynco;
-	GameStateRestore = SARestore;
-	info->Power = SAPower;
-	AddExState(&latch[0], 1, 0, "LATC");
-}
-
 void SA72007_Init(CartInfo *info) {
 	WSync = SA72007Synco;
 	GameStateRestore = SARestore;
