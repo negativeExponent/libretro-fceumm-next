@@ -21,7 +21,6 @@
 
 #include "mapinc.h"
 #include "latch.h"
-#include "../ines.h"
 
 static uint8 unrom, openbus;
 

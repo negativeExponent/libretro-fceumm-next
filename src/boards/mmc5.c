@@ -673,6 +673,8 @@ void NSFMMC5_Close(void) {
 
 static void GenMMC5Power(void) {
 	int x;
+	uint8 nval;
+	uint8 aval;
 
 	for (x = 0; x < 4; x++) PRGBanks[x] = ~0;
 	for (x = 0; x < 8; x++) CHRBanksA[x] = ~0;
@@ -685,8 +687,8 @@ static void GenMMC5Power(void) {
 	NTAMirroring = NTFill = ATFill = 0xFF;
 
 	/* MMC5fill is and 8-bit tile index, and a 2-bit attribute implented as a mirrored nametable */
-	uint8 nval = MMC5fill[0x000];
-	uint8 aval = MMC5fill[0x3C0] & 3; aval = aval | (aval << 2) | (aval << 4) | (aval << 6);
+	nval = MMC5fill[0x000];
+	aval = MMC5fill[0x3C0] & 3; aval = aval | (aval << 2) | (aval << 4) | (aval << 6);
 	FCEU_dwmemset(MMC5fill + 0x000, nval | (nval<<8) | (nval<<16) | (nval<<24), 0x3C0);
 	FCEU_dwmemset(MMC5fill + 0x3C0, aval | (aval<<8) | (aval<<16) | (aval<<24), 0x040);
 
