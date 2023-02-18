@@ -115,7 +115,7 @@ static void iNESGI(int h) {
 	case GI_CLOSE:
 		if (iNESCart.Close)
 			iNESCart.Close();
-		Cleanup()
+		Cleanup();
 		break;
 	}
 }
