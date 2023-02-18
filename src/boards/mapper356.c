@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
+ *  Copyright (C) 2023 - fixed mirroring
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,17 +26,15 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 *CHRRAM = NULL;
+static uint8 *CHRRAM     = NULL;
 static uint32 CHRRAMSIZE = 0;
+
+extern uint8 *ExtraNTARAM;
 
 static void M356CW(uint32 A, uint8 V) {
 	if (EXPREGS[2] & 0x20) {
-		uint8 NV = V;
-		if (EXPREGS[2] & 8)
-			NV &= (1 << ((EXPREGS[2] & 7) + 1)) - 1;
-		else if (EXPREGS[2])
-			NV &= 0; /* hack ;( don't know exactly how it should be */
-		NV |= EXPREGS[0] | ((EXPREGS[2] & 0xF0) << 4);
+		uint32 NV = V & (0xFF >> (~EXPREGS[2] & 0xF));
+		NV |= (EXPREGS[0] | ((EXPREGS[2] << 4) & 0xF00));
 		setchr1(A, NV);
 	} else
 		setchr8r(0x10, 0);
@@ -43,17 +42,17 @@ static void M356CW(uint32 A, uint8 V) {
 
 static void M356PW(uint32 A, uint8 V) {
 	uint8 MV = V & ((EXPREGS[3] & 0x3F) ^ 0x3F);
-	MV |= EXPREGS[1];
-	if (UNIFchrrama)
-		MV |= ((EXPREGS[2] & 0x40) << 2);
+	MV |= (EXPREGS[1] | ((EXPREGS[2] << 2) & 0x300));
 	setprg8(A, MV);
 }
 
 static void M356MW(uint8 V) {
-	if (EXPREGS[2] & 0x40)
-		SetupCartMirroring(4, 1, CHRRAM);
-	else
-		setmirror((V & 1) ^ 1);
+	if (EXPREGS[2] & 0x40) {
+		SetupCartMirroring(4, 1, ExtraNTARAM);
+	} else {
+		A000B = V;
+		SetupCartMirroring((V & 1) ^ 1, 0, 0);
+	}
 }
 
 static DECLFW(M356Write) {
@@ -79,7 +78,6 @@ static void M356Reset(void) {
 }
 
 static void M356Power(void) {
-	EXPREGS[4] = 0;
 	EXPREGS[0] = EXPREGS[1] = EXPREGS[3] = EXPREGS[4] = 0;
 	EXPREGS[2] = 0x0F;
 	GenMMC3Power();
@@ -87,7 +85,7 @@ static void M356Power(void) {
 }
 
 void Mapper356_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 128, 0, 0);
+	GenMMC3_Init(info, 512, 256, 0, 0);
 	cwrap = M356CW;
 	pwrap = M356PW;
 	mwrap = M356MW;
@@ -100,4 +98,9 @@ void Mapper356_Init(CartInfo *info) {
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
+
+	if (!ExtraNTARAM) {
+		ExtraNTARAM = (uint8 *)FCEU_gmalloc(2048);
+		AddExState(ExtraNTARAM, 2048, 0, "EXNR");
+	}
 }
