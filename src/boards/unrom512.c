@@ -1,7 +1,7 @@
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2014 CaitSith2
+ *  Copyright (C) 2014 CaitSith2, 2022 Cluster
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,209 +19,156 @@
  */
 
 /*
- * Roms still using NES 1.0 format should be loaded as 32K CHR RAM.
- * Roms defined under NES 2.0 should use the VRAM size field, defining 7, 8 or 9, based on how much VRAM should be present.
- * UNIF doesn't have this problem, because unique board names can define this information.
- * The UNIF names are UNROM-512-8K, UNROM-512-16K and UNROM-512-32K
+ * Roms still using NES 1.0 format should be loaded as 8K CHR RAM.
+ * Roms defined under NES 2.0 should use the VRAM size field, defining 7, 8 or 9, based on how much VRAM should be
+ * present. UNIF doesn't have this problem, because unique board names can define this information. The UNIF names are
+ * UNROM-512-8K, UNROM-512-16K and UNROM-512-32K
  *
  * The battery flag in the NES header enables flash,  Mirrror mode 2 Enables MI_0 and MI_1 mode.
  * Known games to use this board are:
  *    Battle Kid 2: Mountain of Torment (512K PRG, 8K CHR RAM, Horizontal Mirroring, Flash disabled)
  *    Study Hall (128K PRG (in 512K flash chip), 8K CHR RAM, Horizontal Mirroring, Flash enabled)
+ *    Nix: The Paradox Relic (512 PRG, 8K CHR RAM, Vertical Mirroring, Flash enabled)
  * Although Xmas 2013 uses a different board, where LEDs can be controlled (with writes to the $8000-BFFF space),
  * it otherwise functions identically.
- *
- * 17-10-20 - Works with Mystic Origins (Demo)
-*/
+  */
 
 #include "mapinc.h"
 
-/* Workaround for libretro api compatibility */
-#define ROM_size_max                32
-#define flashdata_size          (ROM_size_max * 0x4000)
-#define flash_write_count_size  (ROM_size_max * 4 * sizeof(uint32))
-static uint8 fceumm_flash_buf[flashdata_size + flash_write_count_size];
-static uint32 fceumm_flash_buf_size = sizeof(fceumm_flash_buf);
+#define ROM_CHIP          0x00
+#define CFI_CHIP          0x10
+#define FLASH_CHIP        0x11
+#define FLASH_SECTOR_SIZE (4 * 1024)
 
-static uint8 latche, latcheinit, bus_conflict, chrram_mask, software_id=0;
+static uint8 flash_save, flash_state, flash_id_mode, latche, bus_conflict;
 static uint16 latcha;
-static uint8 *flashdata = fceumm_flash_buf + flash_write_count_size;
-static uint32 *flash_write_count = (uint32*)fceumm_flash_buf;
-static uint8 *FlashPage[32];
-/* static uint32 *FlashWriteCountPage[32]; */
-/* static uint8 flashloaded = 0; */
+static uint8 *flash_data;
+static uint16 flash_buffer_a[10];
+static uint8 flash_buffer_v[10];
+static uint8 flash_id[2];
 
-static uint8 flash_save = 0, flash_state = 0, flash_mode = 0, flash_bank;
-static void (*WLSync)(void);
-static void (*WHSync)(void);
-
-static INLINE void setfpageptr(int s, uint32 A, uint8 *p) {
-	uint32 AB = A >> 11;
-	int x;
-
-	if (p)
-		for (x = (s >> 1) - 1; x >= 0; x--) {
-			FlashPage[AB + x] = p - A;
-		}
-	else
-		for (x = (s >> 1) - 1; x >= 0; x--) {
-			FlashPage[AB + x] = 0;
-		}
-}
-
-void setfprg16(uint32 A, uint32 V) {
-	if (PRGsize[0] >= 16384) {
-		V &= PRGmask16[0];
-		setfpageptr(16, A, flashdata ? (&flashdata[V << 14]) : 0);
+static void UNROM512_Sync() {
+	int chip;
+	if (flash_save) {
+		chip = !flash_id_mode ? FLASH_CHIP : CFI_CHIP;
 	} else {
-		int x;
-		uint32 VA = V << 3;
-
-		for (x = 0; x < 8; x++)
-			setfpageptr(2, A + (x << 11), flashdata ? (&flashdata[((VA + x) & PRGmask2[0]) << 11]) : 0);
+		chip = ROM_CHIP;
 	}
-}
-
-void inc_flash_write_count(uint8 bank, uint32 A) {
-	flash_write_count[(bank * 4) + ((A & 0x3000) >> 12)]++;
-	if (!flash_write_count[(bank * 4) + ((A & 0x3000) >> 12)])
-		flash_write_count[(bank * 4) + ((A & 0x3000) >> 12)]++;
-}
-
-uint32 GetFlashWriteCount(uint8 bank, uint32 A) {
-	return flash_write_count[(bank * 4) + ((A & 0x3000) >> 12)];
+	setprg16r(chip, 0x8000, latche & 0x1F);
+	setprg16r(chip, 0xc000, ~0);
+	setchr8((latche >> 5) & 3);
+	setmirror(MI_0 + ((latche >> 7) & 1));
 }
 
 static void StateRestore(int version) {
-	WHSync();
+	UNROM512_Sync();
 }
 
-static DECLFW(UNROM512LLatchWrite) {
-	latche = V;
-	latcha = A;
-	WLSync();
+static DECLFW(UNROM512FlashWrite) {
+	int i, offset, sector;
+	if (flash_state < sizeof(flash_buffer_a) / sizeof(flash_buffer_a[0])) {
+		flash_buffer_a[flash_state] = (A & 0x3FFF) | ((latche & 1) << 14);
+		flash_buffer_v[flash_state] = V;
+		flash_state++;
+
+		/* enter flash ID mode */
+		if ((flash_state == 2) && (flash_buffer_a[0] == 0x5555) && (flash_buffer_v[0] == 0xAA) &&
+		    (flash_buffer_a[1] == 0x2AAA) && (flash_buffer_v[1] == 0x55) && (flash_buffer_a[1] == 0x5555) &&
+		    (flash_buffer_v[1] == 0x90)) {
+			flash_id_mode = 0;
+			flash_state   = 0;
+		}
+
+		/* erase sector */
+		if ((flash_state == 6) && (flash_buffer_a[0] == 0x5555) && (flash_buffer_v[0] == 0xAA) &&
+		    (flash_buffer_a[1] == 0x2AAA) && (flash_buffer_v[1] == 0x55) && (flash_buffer_a[2] == 0x5555) &&
+		    (flash_buffer_v[2] == 0x80) && (flash_buffer_a[3] == 0x5555) && (flash_buffer_v[3] == 0xAA) &&
+		    (flash_buffer_a[4] == 0x2AAA) && (flash_buffer_v[4] == 0x55) && (flash_buffer_v[5] == 0x30)) {
+			offset = &Page[A >> 11][A] - flash_data;
+			sector = offset / FLASH_SECTOR_SIZE;
+			for (i = sector * FLASH_SECTOR_SIZE; i < (sector + 1) * FLASH_SECTOR_SIZE; i++) {
+				flash_data[i % PRGsize[ROM_CHIP]] = 0xFF;
+			}
+			FCEU_printf("Flash sector #%d is erased (0x%08x - 0x%08x).\n", sector, offset, offset + FLASH_SECTOR_SIZE);
+		}
+
+		/* erase chip */
+		if ((flash_state == 6) && (flash_buffer_a[0] == 0x5555) && (flash_buffer_v[0] == 0xAA) &&
+		    (flash_buffer_a[1] == 0x2AAA) && (flash_buffer_v[1] == 0x55) && (flash_buffer_a[2] == 0x5555) &&
+		    (flash_buffer_v[2] == 0x80) && (flash_buffer_a[3] == 0x5555) && (flash_buffer_v[3] == 0xAA) &&
+		    (flash_buffer_a[4] == 0x2AAA) && (flash_buffer_v[4] == 0x55) && (flash_buffer_a[4] == 0x5555) &&
+		    (flash_buffer_v[4] == 0x10)) {
+			memset(flash_data, 0xFF, PRGsize[ROM_CHIP]);
+			FCEU_printf("Flash chip erased.\n");
+			flash_state = 0;
+		}
+
+		/* write byte */
+		if ((flash_state == 4) && (flash_buffer_a[0] == 0x5555) && (flash_buffer_v[0] == 0xAA) &&
+		    (flash_buffer_a[1] == 0x2AAA) && (flash_buffer_v[1] == 0x55) && (flash_buffer_a[2] == 0x5555) &&
+		    (flash_buffer_v[2] == 0xA0)) {
+			offset = &Page[A >> 11][A] - flash_data;
+			if (CartBR(A) != 0xFF) {
+				FCEU_PrintError("Error: can't write to 0x%08x, flash sector is not erased.\n", offset);
+			} else {
+				CartBW(A, V);
+			}
+			flash_state = 0;
+		}
+	}
+
+	/* not a command */
+	if (((A & 0xFFF) != 0x0AAA) && ((A & 0xFFF) != 0x0555)) {
+		flash_state = 0;
+	}
+
+	/* reset */
+	if (V == 0xF0) {
+		flash_state   = 0;
+		flash_id_mode = 0;
+	}
+
+	UNROM512_Sync();
 }
 
 static DECLFW(UNROM512HLatchWrite) {
-	if (bus_conflict)
-		latche = (V == CartBR(A)) ? V : 0;
-	else
-		latche = V;
+	if (bus_conflict) {
+		V &= CartBR(A);
+	}
+	latche = V;
 	latcha = A;
-	WHSync();
-}
-
-static DECLFR(UNROM512LatchRead) {
-	uint8 flash_id[3] = { 0xB5, 0xB6, 0xB7 };
-	if (software_id) {
-		if (A & 1)
-			return flash_id[ROM_size >> 4];
-		else
-			return 0xBF;
-	}
-	if (flash_save) {
-		if (A < 0xC000) {
-			if (GetFlashWriteCount(flash_bank, A))
-				return FlashPage[A >> 11][A];
-		} else {
-			if (GetFlashWriteCount(ROM_size - 1, A))
-				return FlashPage[A >> 11][A];
-		}
-	}
-	return Page[A >> 11][A];
+	UNROM512_Sync();
 }
 
 static void UNROM512LatchPower(void) {
-	latche = latcheinit;
-	WHSync();
-	SetReadHandler(0x8000, 0xFFFF, UNROM512LatchRead);
-	if (!flash_save)
+	latche = 0;
+	UNROM512_Sync();
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	if (!flash_save) {
 		SetWriteHandler(0x8000, 0xFFFF, UNROM512HLatchWrite);
-	else
-	{
-		SetWriteHandler(0x8000, 0xBFFF, UNROM512LLatchWrite);
+	} else {
+		SetWriteHandler(0x8000, 0xBFFF, UNROM512FlashWrite);
 		SetWriteHandler(0xC000, 0xFFFF, UNROM512HLatchWrite);
 	}
 }
 
 static void UNROM512LatchClose(void) {
-}
-
-static void UNROM512LSync(void) {
-	int erase_a[5] = { 0x9555, 0xAAAA, 0x9555, 0x9555, 0xAAAA };
-	int erase_d[5] = { 0xAA, 0x55, 0x80, 0xAA, 0x55 };
-	int erase_b[5] = { 1, 0, 1, 1, 0 };
-
-	if (flash_mode==0) {
-		if ((latcha == erase_a[flash_state]) && (latche == erase_d[flash_state]) && (flash_bank == erase_b[flash_state])) {
-			flash_state++;
-			if (flash_state == 5) {
-				flash_mode = 1;
-			}
-		}
-		else if ((flash_state == 2) && (latcha == 0x9555) && (latche == 0xA0) && (flash_bank == 1)) {
-			flash_state++;
-			flash_mode = 2;
-		}
-		else if ((flash_state == 2) && (latcha == 0x9555) && (latche == 0x90) && (flash_bank == 1)) {
-			flash_state = 0;
-			software_id = 1;
-		} else {
-			if (latche == 0xF0)
-				software_id = 0;
-			flash_state = 0;
-		}
+	if (flash_data) {
+		FCEU_gfree(flash_data);
 	}
-	else if (flash_mode == 1) {	/* Chip Erase or Sector Erase */
-		if (latche == 0x30) {
-			inc_flash_write_count(flash_bank,latcha);
-			memset(&FlashPage[(latcha & 0xF000) >> 11][latcha & 0xF000], 0xFF, 0x1000);
-		}
-		else if (latche == 0x10) {
-			uint32 i;
-			for(i = 0; i < (ROM_size * 4); i++)
-				inc_flash_write_count(i >> 2,i << 12);
-			memset(flashdata, 0xFF, ROM_size * 0x4000);	/* Erasing the rom chip as instructed. Crash rate calulated to be 99.9% :) */
-		}
-		flash_state = 0;
-		flash_mode = 0;
-	}
-	else if (flash_mode == 2) {	/* Byte Program */
-		if (!GetFlashWriteCount(flash_bank, latcha)) {
-			inc_flash_write_count(flash_bank, latcha);
-			memcpy(&FlashPage[(latcha & 0xF000) >> 11][latcha & 0xF000], &Page[(latcha & 0xF000) >> 11][latcha & 0xF000], 0x1000);
-		}
-		FlashPage[latcha >> 11][latcha] &= latche;
-		flash_state = 0;
-		flash_mode = 0;
-	}
-}
-
-static void UNROM512HSync(void) {
-	flash_bank=latche&(ROM_size - 1);
-
-	setprg16(0x8000, flash_bank);
-	setprg16(0xc000, ~0);
-	setfprg16(0x8000, flash_bank);
-	setfprg16(0xC000, ~0);
-	setchr8r(0, (latche & chrram_mask) >> 5);
-	setmirror(MI_0 + (latche >> 7));
+	flash_data = NULL;
 }
 
 void UNROM512_Init(CartInfo *info) {
 	int mirror;
+	info->Power      = UNROM512LatchPower;
+	info->Close      = UNROM512LatchClose;
+	GameStateRestore = StateRestore;
 
-	memset(fceumm_flash_buf, 0x00, fceumm_flash_buf_size);
-	flash_state = 0;
-	flash_bank = 0;
-	flash_save = info->battery;
-
-	if (info->CHRRamSize == 8192)
-		chrram_mask = 0;
-	else if (info->CHRRamSize == 16384)
-		chrram_mask = 0x20;
-	else
-		chrram_mask = 0x60;
+	flash_state   = 0;
+	flash_id_mode = 0;
+	flash_save    = info->battery;
+	bus_conflict  = !info->battery; /* Is it required by any game? */
 
 	mirror = (head.ROM_type & 1) | ((head.ROM_type & 8) >> 2);
 	switch (mirror) {
@@ -238,24 +185,31 @@ void UNROM512_Init(CartInfo *info) {
 		SetupCartMirroring(4, 1, VROM + (info->CHRRamSize - 8192));
 		break;
 	}
-	bus_conflict = !info->battery;
-	latcheinit = 0;
-	WLSync = UNROM512LSync;
-	WHSync = UNROM512HSync;
-	info->Power = UNROM512LatchPower;
-	info->Close = UNROM512LatchClose;
-	GameStateRestore = StateRestore;
-	if (flash_save)
-	{
-		info->SaveGame[0] = fceumm_flash_buf;
-		info->SaveGameLen[0] = fceumm_flash_buf_size;
-		AddExState(flash_write_count,ROM_size * 4 * sizeof(uint32), 0, "FLASH_WRITE_COUNT");
-		AddExState(flashdata,ROM_size * 0x4000, 0, "FLASH_DATA");
-		AddExState(&flash_state, 1, 0, "FLASH_STATE");
-		AddExState(&flash_mode, 1, 0, "FLASH_MODE");
-		AddExState(&flash_bank, 1, 0, "FLASH_BANK");
-		AddExState(&latcha, 2, 0, "LATA");
+
+	if (flash_save) {
+		uint32 i;
+		/* Allocate memory for flash */
+		flash_data = (uint8 *)FCEU_gmalloc(PRGsize[ROM_CHIP]);
+		/* Copy ROM to flash data */
+		for (i = 0; i < PRGsize[ROM_CHIP]; i++) {
+			flash_data[i] = PRGptr[ROM_CHIP][i % PRGsize[ROM_CHIP]];
+		}
+		SetupCartPRGMapping(FLASH_CHIP, flash_data, PRGsize[ROM_CHIP], 1);
+		info->SaveGame[0]    = flash_data;
+		info->SaveGameLen[0] = PRGsize[ROM_CHIP];
+
+		flash_id[0] = 0xBF;
+		flash_id[1] = 0xB5 + (ROM_size >> 4);
+		SetupCartPRGMapping(CFI_CHIP, flash_id, sizeof(flash_id), 0);
+
+		AddExState(flash_data, PRGsize[ROM_CHIP], 0, "FLSH");
+		AddExState(&flash_state, 1, 0, "FLST");
+		AddExState(&flash_id_mode, 1, 0, "FLMD");
+		AddExState(flash_buffer_a, sizeof(flash_buffer_a), 0, "FLBA");
+		AddExState(flash_buffer_v, sizeof(flash_buffer_v), 0, "FLBV");
 	}
+
+	AddExState(&latcha, 2, 0, "LATA");
 	AddExState(&latche, 1, 0, "LATC");
 	AddExState(&bus_conflict, 1, 0, "BUSC");
 }
