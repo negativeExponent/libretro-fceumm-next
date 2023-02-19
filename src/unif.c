@@ -601,7 +601,7 @@ static BMAPPING bmap[] = {
 	{ "900218",                     524, BTL900218_Init,        0 },
 	{ "JC-016-2",                   205, Mapper205_Init,        0 },
 	{ "AX-40G",                     527, UNLAX40G_Init,         0 },
-	{ "STREETFIGTER-GAME4IN1",       49, BMCSFGAME4IN1_Init,    0 }, /* mapper 49? submapper 1*/
+	{ "STREETFIGTER-GAME4IN1",       49, Mapper49_Init,         0 }, /* mapper 49? submapper 1*/
 	{ "BJ-56",                      526, UNLBJ56_Init,          0 },
 	{ "L6IN1",                      345, BMCL6IN1_Init,         0 },
 	{ "CTC-12IN1",                  337, BMCCTC12IN1_Init,      0 },

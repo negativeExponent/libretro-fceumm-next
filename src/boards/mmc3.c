@@ -70,6 +70,10 @@ void GenMMC3_Init(CartInfo *info, int prg, int chr, int wram, int battery);
  * ----------------------------------------------------------------------
  */
 
+int MMC3CanWriteToWRAM() {
+	return ((A001B & 0x80) && !(A001B & 0x40));
+}
+
 void FixMMC3PRG(int V) {
 	if (V & 0x40) {
 		pwrap(0xC000, DRegBuf[6]);
@@ -611,22 +615,18 @@ static uint8 isUNIF = 0;
 
 static void M49PW(uint32 A, uint8 V) {
 	if (EXPREGS[0] & 1) {
-		V &= 0xF;
-		V |= (EXPREGS[0] & 0xC0) >> 2;
-		setprg8(A, V);
-	} else
-		setprg32(0x8000, (EXPREGS[0] >> 4) & 15);
+		setprg8(A, ((EXPREGS[0] >> 2) & ~0x0F) | (V & 0x0F));
+	} else {
+		setprg32(0x8000, (EXPREGS[0] >> 4) & 3);
+	}
 }
 
 static void M49CW(uint32 A, uint8 V) {
-	uint32 NV = V;
-	NV &= 0x7F;
-	NV |= (EXPREGS[0] & 0xC0) << 1;
-	setchr1(A, NV);
+	setchr1(A, ((EXPREGS[0] << 1) & 0x180) | (V & 0x7F));
 }
 
 static DECLFW(M49Write) {
-	if (A001B & 0x80) {
+	if (MMC3CanWriteToWRAM()) {
 		EXPREGS[0] = V;
 		FixMMC3PRG(MMC3_cmd);
 		FixMMC3CHR(MMC3_cmd);
@@ -634,36 +634,26 @@ static DECLFW(M49Write) {
 }
 
 static void M49Reset(void) {
-	EXPREGS[0] = isUNIF ? 0x41 : 0;
+	EXPREGS[0] = EXPREGS[1];
 	MMC3RegReset();
 }
 
 static void M49Power(void) {
-	EXPREGS[0] = isUNIF ? 0x41 : 0;
-	M49Reset();
+	EXPREGS[0] = EXPREGS[1];
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, M49Write);
-	SetReadHandler(0x6000, 0x7FFF, 0);
 }
 
 void Mapper49_Init(CartInfo *info) {
-	isUNIF = 0;
-	GenMMC3_Init(info, 512, 256, 0, 0);
+	GenMMC3_Init(info, 128, 128, 0, 0);
 	cwrap = M49CW;
 	pwrap = M49PW;
 	info->Reset = M49Reset;
 	info->Power = M49Power;
-	AddExState(EXPREGS, 1, 0, "EXPR");
-}
-
-void BMCSFGAME4IN1_Init(CartInfo *info) {
-	isUNIF = 1;
-	GenMMC3_Init(info, 512, 512, 0, 0);
-	cwrap = M49CW;
-	pwrap = M49PW;
-	info->Reset = M49Reset;
-	info->Power = M49Power;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(EXPREGS, 2, 0, "EXPR");
+	EXPREGS[1] = 0;
+	if (info->PRGCRC32 == 0x408EA235)
+		EXPREGS[1] = 0x41; /* Street Fighter II Game 4-in-1 */
 }
 
 /* ---------------------------- Mapper 52 ------------------------------- */

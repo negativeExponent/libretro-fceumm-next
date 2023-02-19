@@ -170,7 +170,6 @@ void UNLKS7021A_Init(CartInfo *info);		/* m525 */
 void BTL900218_Init(CartInfo *info);		/* m524 */
 void UNLAX40G_Init(CartInfo *info);			/* m527 */
 void BMCK3088_Init(CartInfo *info);			/* m287 */
-void BMCSFGAME4IN1_Init(CartInfo *info);	/* m049 */
 void UNLBJ56_Init(CartInfo *info);			/* m526 */
 void BMCL6IN1_Init(CartInfo *info);			/* m345 */
 
