@@ -20,7 +20,8 @@
 
 #include "mapinc.h"
 
-static uint8 bank, mode;
+static uint8 *CHRRAM;
+static uint8 bank, mode, submapper;
 static SFORMAT StateRegs[] =
 {
 	{ &bank, 1, "BANK" },
@@ -29,31 +30,33 @@ static SFORMAT StateRegs[] =
 };
 
 static void Sync(void) {
-	if (mode & 2) {
-		setprg8(0x6000, ((bank & 7) << 2) | 0x23);
-		setprg16(0x8000, (bank << 1) | 0);
-		setprg16(0xC000, (bank << 1) | 1);
+	if (submapper == 1) {
+		setprg8(0x6000, (bank << 1) | 0x23);
+		if (mode & 2)
+			setprg32(0x8000, bank >> 1);
+		else {
+			setprg16(0x8000, ((bank >> 2) & 0x10) | ((bank >> 1) & 0x08) | (bank & 7));
+			setprg16(0xC000, ((bank >> 2) & 0x10) | ((bank >> 1) & 0x08) | 7);
+		}
+	} else if (mode & 2) {
+		setprg8(0x6000, ((bank << 2) & 0x1C) | 0x23);
+		setprg32(0x8000, bank);
 	} else {
-		setprg8(0x6000, ((bank & 4) << 2) | 0x2F);
-		setprg16(0x8000, (bank << 1) | (mode >> 4));
-		setprg16(0xC000, ((bank & 0xC) << 1) | 7);
+		setprg8(0x6000, ((bank << 2) & 0x10) | 0x2F);
+		setprg16(0x8000, (bank << 1) | (bank >> 4));
+		setprg16(0xC000, (bank << 1) | 7);
 	}
-	if (mode == 0x12)
-		setmirror(MI_H);
-	else
-		setmirror(MI_V);
 	setchr8(0);
+	setmirror(((mode >> 4) & 1) ^ 1);
 }
 
 static DECLFW(M51WriteMode) {
-	mode = V & 0x12;
+	mode = V;
 	Sync();
 }
 
 static DECLFW(M51WriteBank) {
-	bank = V & 0x0F;
-	if (A & 0x4000)
-		mode = (mode & 2) | (V & 0x10);
+	bank = V;
 	Sync();
 }
 
@@ -81,4 +84,10 @@ void Mapper51_Init(CartInfo *info) {
 	info->Reset = M51Reset;
 	AddExState(&StateRegs, ~0, 0, 0);
 	GameStateRestore = StateRestore;
+	submapper        = info->submapper;
+	if (!UNIFchrrama && head.VROM_size) {
+		/* at least 1 variant has CHR-ROM which should be treated as CHR-RAM */
+		SetupCartCHRMapping(0, CHRptr[0], 8192, 1);
+		AddExState(CHRptr[0], 8192, 0, "CRAM");
+	}
 }
