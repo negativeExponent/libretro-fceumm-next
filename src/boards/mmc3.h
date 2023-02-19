@@ -18,6 +18,7 @@ void MMC3RegReset(void);
 void GenMMC3Close(void);
 void FixMMC3PRG(int V);
 void FixMMC3CHR(int V);
+int  MMC3CanWriteToWRAM();
 DECLFW(MMC3_CMDWrite);
 DECLFW(MMC3_IRQWrite);
 
