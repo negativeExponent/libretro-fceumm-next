@@ -20,7 +20,6 @@
 
 #include "mapinc.h"
 
-static uint8 *CHRRAM;
 static uint8 bank, mode, submapper;
 static SFORMAT StateRegs[] =
 {

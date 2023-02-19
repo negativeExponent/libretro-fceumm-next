@@ -611,8 +611,6 @@ void Mapper47_Init(CartInfo *info) {
  * BMC-STREETFIGTER-GAME4IN1 - Sic. $6000 set to $41 rather than $00 on power-up.
  */
 
-static uint8 isUNIF = 0;
-
 static void M49PW(uint32 A, uint8 V) {
 	if (EXPREGS[0] & 1) {
 		setprg8(A, ((EXPREGS[0] >> 2) & ~0x0F) | (V & 0x0F));
