@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* NES 2.0 Mapper 451 */
+/* NES 2.0 Mapper 406 */
 /* Uses flashrom to save high scores. */
 
 #include "mapinc.h"
@@ -28,72 +28,50 @@
 static uint8 *FLASHROM = NULL;
 static uint32 FLASHROM_size = 0;
 
-static void M451PW(uint32 A, uint8 V) {
-    switch (A & 0xE000) {
-    case 0x8000: V = 0; break;
-    case 0xE000: V = 0x30; break;
-    default: V &= 0x3F; break;
-    }
-    setprg8r(0x10, A, V);
+static uint8 submapper;
+
+static void M406PW(uint32 A, uint8 V) {
+    setprg8r(0x10, A, V & 0x3F);
 }
 
-static DECLFR(M451FlashRead) {
+static DECLFR(M406FlashRead) {
 	return FlashRead(A);
 }
 
-static DECLFW(M451FlashWrite) {
-	FlashWrite(A, V);
-	switch (A & 0xE000) {
-    case 0xA000:
-        MMC3_CMDWrite(0xA000, A & 1);
-        break;
-    case 0xC000:
-        A &= 0xFF;
-	    MMC3_IRQWrite(0xC000, A - 1);
-	    MMC3_IRQWrite(0xC001, 0);
-	    MMC3_IRQWrite(0xE000 + (A == 0xFF ? 0 : 1), 0);
-        break;
-    case 0xE000:
-		A = ((A << 2) & 8) | (A & 1);
-		MMC3_CMDWrite(0x8000, 0x40);
-		MMC3_CMDWrite(0x8001, (A << 3) | 0);
-		MMC3_CMDWrite(0x8000, 0x41);
-		MMC3_CMDWrite(0x8001, (A << 3) | 2);
-		MMC3_CMDWrite(0x8000, 0x42);
-		MMC3_CMDWrite(0x8001, (A << 3) | 4);
-		MMC3_CMDWrite(0x8000, 0x43);
-		MMC3_CMDWrite(0x8001, (A << 3) | 5);
-		MMC3_CMDWrite(0x8000, 0x44);
-		MMC3_CMDWrite(0x8001, (A << 3) | 6);
-		MMC3_CMDWrite(0x8000, 0x45);
-		MMC3_CMDWrite(0x8001, (A << 3) | 7);
-		MMC3_CMDWrite(0x8000, 0x46);
-		MMC3_CMDWrite(0x8001, 0x20 | A);
-		MMC3_CMDWrite(0x8000, 0x47);
-		MMC3_CMDWrite(0x8001, 0x10 | A);
-        break;
+static DECLFW(M406FlashWrite) {
+    FlashWrite(A, V);
+    if (submapper == 0) {
+        A = (A & 0xFFFC) | ((A << 1) & 2) | ((A >> 1) & 1);
+	} else if ((A <= 0x9000) || (A >= 0xE000)) {
+        A = A ^ 0x6000;
 	}
+    if (A >= 0xC000) {
+        MMC3_IRQWrite(A, V);
+    } else {
+        MMC3_CMDWrite(A, V);
+    }
 }
 
-static void M451Power(void) {
+static void M406Power(void) {
 	GenMMC3Power();
-	SetReadHandler(0x8000, 0xFFFF, M451FlashRead);
-	SetWriteHandler(0x8000, 0xFFFF, M451FlashWrite);
+	SetReadHandler(0x8000, 0xFFFF, M406FlashRead);
+	SetWriteHandler(0x8000, 0xFFFF, M406FlashWrite);
 }
 
-static void M451Close() {
+static void M406Close() {
     GenMMC3Close();
 	if (FLASHROM)
 		FCEU_free(FLASHROM);
 	FLASHROM = NULL;
 }
 
-void Mapper451_Init(CartInfo *info) {
+void Mapper406_Init(CartInfo *info) {
 	uint32 w, r;
 	GenMMC3_Init(info, 512, 256, 0, 0);
-	info->Power = M451Power;
-	info->Close = M451Close;
-    pwrap = M451PW;
+	info->Power = M406Power;
+	info->Close = M406Close;
+    pwrap = M406PW;
+    submapper = info->submapper;
 
 	FLASHROM_size = PRGsize[0];
 	FLASHROM = (uint8 *)FCEU_gmalloc(FLASHROM_size);
@@ -106,5 +84,9 @@ void Mapper451_Init(CartInfo *info) {
 		++r;
 	}
 	SetupCartPRGMapping(0x10, FLASHROM, FLASHROM_size, 0);
-	Flash_Init(FLASHROM, FLASHROM_size, 0x37, 0x86, 65536, 0x0555, 0x02AA);
+	if (submapper == 0) {
+		Flash_Init(FLASHROM, FLASHROM_size, 0xC2, 0xA4, 65536, 0x5555, 0x02AAA);
+	} else {
+		Flash_Init(FLASHROM, FLASHROM_size, 0x01, 0xA4, 65536, 0x5555, 0x02AAA);
+	}
 }
