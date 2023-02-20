@@ -54,19 +54,19 @@ static DECLFW(M451FlashWrite) {
 	    MMC3_IRQWrite(0xE000 + (A == 0xFF ? 0 : 1), 0);
         break;
     case 0xE000:
-		A = A << 2 & 8 | A & 1;
+		A = ((A << 2) & 8) | (A & 1);
 		MMC3_CMDWrite(0x8000, 0x40);
-		MMC3_CMDWrite(0x8001, A << 3 | 0);
+		MMC3_CMDWrite(0x8001, (A << 3) | 0);
 		MMC3_CMDWrite(0x8000, 0x41);
-		MMC3_CMDWrite(0x8001, A << 3 | 2);
+		MMC3_CMDWrite(0x8001, (A << 3) | 2);
 		MMC3_CMDWrite(0x8000, 0x42);
-		MMC3_CMDWrite(0x8001, A << 3 | 4);
+		MMC3_CMDWrite(0x8001, (A << 3) | 4);
 		MMC3_CMDWrite(0x8000, 0x43);
-		MMC3_CMDWrite(0x8001, A << 3 | 5);
+		MMC3_CMDWrite(0x8001, (A << 3) | 5);
 		MMC3_CMDWrite(0x8000, 0x44);
-		MMC3_CMDWrite(0x8001, A << 3 | 6);
+		MMC3_CMDWrite(0x8001, (A << 3) | 6);
 		MMC3_CMDWrite(0x8000, 0x45);
-		MMC3_CMDWrite(0x8001, A << 3 | 7);
+		MMC3_CMDWrite(0x8001, (A << 3) | 7);
 		MMC3_CMDWrite(0x8000, 0x46);
 		MMC3_CMDWrite(0x8001, 0x20 | A);
 		MMC3_CMDWrite(0x8000, 0x47);
@@ -84,7 +84,7 @@ static void M451Power(void) {
 static void M451Close() {
     GenMMC3Close();
 	if (FLASHROM)
-		free(FLASHROM);
+		FCEU_free(FLASHROM);
 	FLASHROM = NULL;
 }
 
@@ -92,6 +92,7 @@ void Mapper451_Init(CartInfo *info) {
 	uint32 w, r;
 	GenMMC3_Init(info, 512, 32, 0, 0);
 	info->Power = M451Power;
+	info->Close = M451Close;
     pwrap = M451PW;
 
 	FLASHROM_size = PRGsize[0];
