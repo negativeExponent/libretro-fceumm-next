@@ -94,6 +94,7 @@ void Mapper451_Init(CartInfo *info) {
 	info->Power = M451Power;
 	info->Close = M451Close;
     pwrap = M451PW;
+	MapIRQHook = FlashCPUHook;
 
 	FLASHROM_size = PRGsize[0];
 	FLASHROM = (uint8 *)FCEU_gmalloc(FLASHROM_size);

@@ -72,6 +72,7 @@ void Mapper406_Init(CartInfo *info) {
 	info->Close = M406Close;
     pwrap = M406PW;
     submapper = info->submapper;
+	MapIRQHook = FlashCPUHook;
 
 	FLASHROM_size = PRGsize[0];
 	FLASHROM = (uint8 *)FCEU_gmalloc(FLASHROM_size);

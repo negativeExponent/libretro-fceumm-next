@@ -24,13 +24,12 @@
 static uint8 *flash_data;
 static uint32 flash_size;
 
-static int32 time_out;
-
-static uint8 flash_id[2];
-static uint8 flash_state;
+static uint8  flash_id[2];
+static uint8  flash_state;
 static uint32 flash_addr1;
 static uint32 flash_addr2;
 static uint32 flash_sect_size;
+static int32  time_out;
 
 static SFORMAT FlashStateRegs[] = {
     { &flash_state, 1, "STAT" },
@@ -39,14 +38,14 @@ static SFORMAT FlashStateRegs[] = {
     { 0 }
 };
 
-#define PRG_OFFSET(A) (&Page[A >> 11][A] - flash_data)
+#define PRG_OFFSET(A) &Page[A >> 11][A] - flash_data
 
 DECLFR(FlashRead) {
 	if (flash_state == 0x90) {
         /* 0: manufacturer id */
         /* 1: model id */
         return flash_id[A & 1];
-	} else if (time_out) {
+	} else if (time_out > 0) {
 		return ((flash_data[PRG_OFFSET(A)] ^ ((time_out & 1) << 6)) & 0x77);
 	}
 	return flash_data[PRG_OFFSET(A)];
@@ -54,11 +53,11 @@ DECLFR(FlashRead) {
 
 DECLFW(FlashWrite) {
 	uint32 chip_address = PRG_OFFSET(A);
-	uint16 cmd = A & 0x7FFF;
+	uint32 cmd = A & 0x7FFF;
+	int i;
 
 	switch (flash_state) {
 	default:
-	case 0x00:
 	case 0x80:
 		if ((cmd == flash_addr1) && (V == 0xAA)) {
 			flash_state++;
@@ -80,20 +79,22 @@ DECLFW(FlashWrite) {
 		if (V == 0x30) {
 			/* sector erase */
 			if (chip_address < flash_size) {
-                int i;
 				chip_address &= ~(flash_sect_size - 1);
 				for (i = 0; i < flash_sect_size; i++) {
 					flash_data[chip_address + i] = 0xFF;
 				}
+				FCEU_printf("Flash sector #%d is erased (0x%08x - 0x%08x).\n", chip_address / flash_sect_size, chip_address, chip_address + flash_sect_size);
 				time_out = flash_sect_size;
 			}
 		} else if ((cmd == flash_addr1) && (V == 0x10)) {
-            int i;
 			/* chip erase */
 			for (i = 0; i <= flash_size; i++) {
 				flash_data[i] = 0xFF;
 			}
+			FCEU_printf("Flash chip erased.\n");
 			time_out = flash_size;
+		} else if (V == 0xF0) {
+			flash_state = 0;
 		}
 		break;
 	case 0x90:
@@ -108,11 +109,17 @@ DECLFW(FlashWrite) {
 		flash_state = 0;
 		break;
 	}
+
+	/* FCEU_printf("%04x:%02x cmd:%04x state:%02x addr1:%04x addr2:%04x\n", A, V, cmd, flash_state, flash_addr1, flash_addr2); */
 }
 
-void FlashCpuCycle(void) {
-	if (time_out && !--time_out) {
-		flash_state = 0;
+void FlashCPUHook(int a) {
+	if (time_out > 0) {
+		time_out -= a;
+		if (time_out <= 0) {
+			FCEU_printf("last state:%02x\n", flash_state);
+			flash_state = 0;
+		}
 	}
 }
 
