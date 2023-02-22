@@ -117,7 +117,6 @@ void FlashCPUHook(int a) {
 	if (time_out > 0) {
 		time_out -= a;
 		if (time_out <= 0) {
-			FCEU_printf("last state:%02x\n", flash_state);
 			flash_state = 0;
 		}
 	}
