@@ -864,7 +864,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "KS-701B (Kaiser FDS)",     549, Mapper549_Init )
 	INES_BOARD( "SACHEN 3013",              553, Mapper553_Init         )
 	INES_BOARD( "KS-7010",                  554, Mapper554_Init         )
-	INES_BOARD( "",                         550, Mapper550_Init         )
+	INES_BOARD( "JY820845C",                550, Mapper550_Init         )
 	INES_BOARD( "YC-03-09",                 558, Mapper558_Init         )
 INES_BOARD_END()
 
