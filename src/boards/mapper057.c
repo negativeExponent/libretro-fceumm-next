@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,14 +33,20 @@ static SFORMAT StateRegs[] =
 };
 
 static void Sync(void) {
-	if (regs[1] & 0x10)
-		setprg32(0x8000, (regs[1] >> 6) & 3);
-	else {
-		setprg16(0x8000, (regs[1] >> 5) & 7);
-		setprg16(0xC000, (regs[1] >> 5) & 7);
+	uint8 prg = (regs[1] >> 5) & 7;
+	uint8 outer_chr = ((regs[0] >> 3) & 8) | (regs[1] & 7);
+	if (regs[1] & 0x10) {
+		setprg32(0x8000, prg >> 1);
+	} else {
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg);
 	}
-	setmirror((regs[1] & 8) >> 3 ^ 1);
-	setchr8((regs[0] & 7) | (regs[1] & 7) | ((regs[0] & 0x40) >> 3));
+	if (regs[0] & 0x80) {
+		setchr8(outer_chr);
+	} else {
+		setchr8((outer_chr & ~3) | (regs[0] & 3));
+	}
+	setmirror(((regs[1] >> 3) & 1) ^ 1);
 }
 
 static DECLFR(M57Read) {
@@ -47,16 +54,12 @@ static DECLFR(M57Read) {
 }
 
 static DECLFW(M57Write) {
-	switch (A & 0x8800) {
-		case 0x8000:
-			regs[0] = V;
-			Sync();
-			break;
-		case 0x8800:
-			regs[1] = V;
-			Sync();
-			break;
+	if (A & 0x2000) {
+		regs[(A >> 11) & 1] = (regs[(A >> 11) & 1] & ~0x40) | (V & 0x40);
+	} else {
+		regs[(A >> 11) & 1] = V;
 	}
+	Sync();
 }
 
 static void M57Power(void) {
