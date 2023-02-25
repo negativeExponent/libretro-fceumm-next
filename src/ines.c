@@ -597,7 +597,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                         168, Mapper168_Init         )
 /*    INES_BOARD( "",                            169, Mapper169_Init ) */
 	INES_BOARD( "",                         170, Mapper170_Init         )
-	INES_BOARD( "",                         171, Mapper171_Init         )
+	INES_BOARD( "Kaiser 7058",              171, UNLKS7058_Init         )
 	INES_BOARD( "Super Mega P-4070",        172, Mapper172_Init         )
 	INES_BOARD( "Idea-Tek ET.xx",           173, Mapper173_Init         )
     INES_BOARD( "NTDec 5-in-1",             174, Mapper174_Init )

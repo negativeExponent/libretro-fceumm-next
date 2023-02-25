@@ -42,7 +42,7 @@ static void (*MMC1WRAMHook8)(void);
 
 static uint8 *WRAM = NULL;
 static uint8 *CHRRAM = NULL;
-static int is155, is171;
+static int is155;
 
 static uint32 MMC1GetCHRBank (uint32 bank) {
 	if (DRegs[0] & 0x10)	/* 4 KiB mode */
@@ -132,13 +132,12 @@ static void MMC1PRG(void) {
 }
 
 static void MMC1MIRROR(void) {
-	if (!is171)
-		switch (DRegs[0] & 3) {
-		case 2: setmirror(MI_V); break;
-		case 3: setmirror(MI_H); break;
-		case 0: setmirror(MI_0); break;
-		case 1: setmirror(MI_1); break;
-		}
+	switch (DRegs[0] & 3) {
+	case 2: setmirror(MI_V); break;
+	case 3: setmirror(MI_H); break;
+	case 0: setmirror(MI_0); break;
+	case 1: setmirror(MI_1); break;
+	}
 }
 
 static uint64 lreset;
@@ -355,13 +354,6 @@ void Mapper1_Init(CartInfo *info) {
 void Mapper155_Init(CartInfo *info) {
 	GenMMC1Init(info, 512, 256, 8, info->battery ? 8 : 0);
 	is155 = 1;
-}
-
-/* Same as mapper 1, with different (or without) mirroring control. */
-/* Kaiser KS7058 board, KS203 custom chip */
-void Mapper171_Init(CartInfo *info) {
-	GenMMC1Init(info, 32, 32, 0, 0);
-	is171 = 1;
 }
 
 void SAROM_Init(CartInfo *info) {
