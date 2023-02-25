@@ -176,7 +176,7 @@ void Mapper166_Init(CartInfo *);
 void Mapper167_Init(CartInfo *);
 void Mapper168_Init(CartInfo *);
 void Mapper170_Init(CartInfo *);
-void Mapper171_Init(CartInfo *);
+/* void Mapper171_Init(CartInfo *); */ /* Kaiser 7058 */
 void Mapper172_Init(CartInfo *);
 void Mapper173_Init(CartInfo *);
 void Mapper174_Init(CartInfo *);
@@ -358,5 +358,7 @@ void Mapper550_Init(CartInfo *);
 void Mapper553_Init(CartInfo *);
 void Mapper554_Init(CartInfo *);
 void Mapper558_Init(CartInfo *);
+
+void UNLKS7058_Init(CartInfo *);
 
 #endif
