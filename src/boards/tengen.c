@@ -26,9 +26,9 @@
 
 static uint8 cmd, mirr, regs[11];
 static uint8 rmode, IRQmode, IRQCount, IRQa, IRQLatch;
-
-static void (*cwrap)(uint32 A, uint8 V);
-static int _isM158;
+static uint8 M158PPUCHRBus;
+static uint8 M158MIR[8];
+static uint8 mapper;
 
 static SFORMAT StateRegs[] = {
 	{ regs, 11, "REGS" },
@@ -42,28 +42,12 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void FP_FASTAPASS(1) RAMBO1IRQHook(int a) {
-	static int32 smallcount;
-	if (IRQmode) {
-		smallcount += a;
-		while (smallcount >= 4) {
-			smallcount -= 4;
-			IRQCount--;
-			if (IRQCount == 0xFF)
-				if (IRQa) X6502_IRQBegin(FCEU_IQEXT);
-		}
-	}
-}
-
-static void RAMBO1HBHook(void) {
-	if ((!IRQmode) && (scanline != 240)) {
-		rmode = 0;
-		IRQCount--;
-		if (IRQCount == 0xFF) {
-			if (IRQa) {
-				rmode = 1;
-				X6502_IRQBegin(FCEU_IQEXT);
-			}
+static void cwrap(uint32 A, uint8 V) {
+	setchr1(A, V);
+	if (mapper == 158) {
+		M158MIR[A >> 10] = (V >> 7) & 1;
+		if (M158PPUCHRBus == (A >> 10)) {
+			setmirror(MI_0 + ((V >> 7) & 1));
 		}
 	}
 }
@@ -84,22 +68,22 @@ static void Sync(void) {
 	cwrap(0x1400, regs[3]);
 	cwrap(0x1800, regs[4]);
 	cwrap(0x1C00, regs[5]);
+
 	setprg8(0x8000, regs[6]);
 	setprg8(0xA000, regs[7]);
 	setprg8(0xC000, regs[10]);
 	setprg8(0xE000, ~0);
-	if (!_isM158)
-		setmirror(mirr);
-}
 
+	if (mapper != 158) {
+		setmirror(mirr);
+	}
+}
 
 static DECLFW(RAMBO1_Write) {
 	switch (A & 0xF001) {
 	case 0xA000:
-		if (!_isM158) {
-			mirr = (V & 1) ^ 1;
-			Sync();
-		}
+		mirr = (V & 1) ^ 1;
+		Sync();
 		break;
 	case 0x8000: cmd = V; break;
 	case 0x8001:
@@ -138,7 +122,6 @@ static void RAMBO1Power(void) {
 	regs[0] = regs[1] = regs[2] = regs[3] = regs[4] = regs[5] = ~0;
 	regs[6] = regs[7] = regs[8] = regs[9] = regs[10] = ~0;
 	Sync();
-	if (!_isM158) setmirror(1);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, RAMBO1_Write);
 }
@@ -147,7 +130,34 @@ static void StateRestore(int version) {
 	Sync();
 }
 
+static void FP_FASTAPASS(1) RAMBO1IRQHook(int a) {
+	static int32 smallcount;
+	if (IRQmode) {
+		smallcount += a;
+		while (smallcount >= 4) {
+			smallcount -= 4;
+			IRQCount--;
+			if (IRQCount == 0xFF)
+				if (IRQa) X6502_IRQBegin(FCEU_IQEXT);
+		}
+	}
+}
+
+static void RAMBO1HBHook(void) {
+	if ((!IRQmode) && (scanline != 240)) {
+		rmode = 0;
+		IRQCount--;
+		if (IRQCount == 0xFF) {
+			if (IRQa) {
+				rmode = 1;
+				X6502_IRQBegin(FCEU_IQEXT);
+			}
+		}
+	}
+}
+
 static void RAMBO1_Init(CartInfo *info) {
+	mapper = info->mapper;
 	info->Power = RAMBO1Power;
 	GameHBIRQHook = RAMBO1HBHook;
 	MapIRQHook = RAMBO1IRQHook;
@@ -155,37 +165,23 @@ static void RAMBO1_Init(CartInfo *info) {
 	AddExState(&StateRegs, ~0, 0, 0);
 }
 
-static void M64CWRAP(uint32 A, uint8 V) {
-	setchr1(A, V);
-}
+/* Mapper 64 */
 
 void Mapper64_Init(CartInfo *info) {
-	_isM158 = 0;
-	cwrap = M64CWRAP;
 	RAMBO1_Init(info);
 }
 
-static uint8 M158MIR[8];
-static uint8 PPUCHRBus;
+/* Mapper 158 - Alien Syndrome */
 
 static void FP_FASTAPASS(1) M158PPU(uint32 A) {
 	A &= 0x1FFF;
 	A >>= 10;
-	PPUCHRBus = A;
+	M158PPUCHRBus = A;
 	setmirror(MI_0 + M158MIR[A]);
 }
 
-static void M158CWRAP(uint32 A, uint8 V) {
-	M158MIR[A >> 10] = (V >> 7) & 1;
-	setchr1(A, V);
-	if (PPUCHRBus == (A >> 10))
-		setmirror(MI_0 + ((V >> 7) & 1));
-}
-
 void Mapper158_Init(CartInfo *info) {
-	_isM158 = 1;
-	cwrap = M158CWRAP;
-	PPU_hook = M158PPU;
 	RAMBO1_Init(info);
-	AddExState(&PPUCHRBus, 1, 0, "PPUC");
+	PPU_hook = M158PPU;
+	AddExState(&M158PPUCHRBus, 1, 0, "PPUC");
 }
