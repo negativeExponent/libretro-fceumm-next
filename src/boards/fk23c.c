@@ -23,17 +23,17 @@
 	176 - Standard
 	523 - Jncota KT-xxx, re-release of 封神榜꞉ 伏魔三太子: 1 KiB->2 KiB, 2 KiB->4 KiB CHR, hard-wired nametable mirroring)
 
-	Submappers:	
+	Submappers:
 	0 - Standard
 	1 - FK-xxx
 	2 - 外星 FS005/FS006
 	3 - JX9003B
 	4 - GameStar Smart Genius Deluxe
 	5 - HST-162
-	
+
 	Verified on real hardware:
 	"Legend of Kage" sets CNROM latch 1 and switches between CHR bank 0 and 1 using 5FF2, causing the wrong bank (1 instead of 0) during gameplay.
-	
+
 	Heuristic for detecting whether the DIP switch should be changed on every soft reset:
 	The first write to the $5xxx range is to $501x           => ROM always addresses $501x; changing the DIP switch on reset would break the emulation after reset, so don't do it.
 	The first write to the $5xxx range is to $5020 or higher => ROM either uses a DIP switch or writes to $5FFx for safety; changing the DIP switch on reset is possible.
@@ -170,16 +170,16 @@ static void SyncPRG(void) {
 	uint32 prg_base = fk23_regs[1] & 0x7F; /* The bits for the first 2 MiB are the same between all the variants. */
 	switch (subType) {
 		case 1: /* FK-xxx */
-			if (PRG_MODE == 0)
-				mask = 0xFF; /* Mode 0 allows the MMC3 to address 2 MiB rather than the usual 512 KiB. */
+			if (PRG_MODE == 7 || MMC3_EXTENDED)
+				mask = 0xFF; /* Mode 7 allows the MMC3 to address 2 MiB rather than the usual 512 KiB. */
 			break;
 		case 2: /* FS005 */
 			prg_base |= ((fk23_regs[0] << 4) & 0x080) | ((fk23_regs[0] << 1) & 0x100) | ((fk23_regs[2] << 3) & 0x600) |
 			    ((fk23_regs[2] << 6) & 0x800);
 			break;
 		case 3: /* JX9003B */
-			if (PRG_MODE == 0)
-				mask = 0xFF; /* Mode 0 allows the MMC3 to address 2 MiB rather than the usual 512 KiB. */
+			if (PRG_MODE == 7)
+				mask = 0xFF; /* Mode 7 allows the MMC3 to address 2 MiB rather than the usual 512 KiB. */
 			prg_base |= fk23_regs[5] << 7;
 			break;
 		case 4: /* GameStar Smart Genius Deluxe */
@@ -191,9 +191,13 @@ static void SyncPRG(void) {
 	}
 
 	switch (PRG_MODE) {
-		case 0: /* MMC3 with 512 KiB or 2 MiB addressable */
-		case 1: /* MMC3 with 256 KiB addressable */
-		case 2: /* MMC3 with 128 KiB addressable */
+		default:
+		/* 0: MMC3 with 512 KiB addressable */
+		/* 1: MMC3 with 256 KiB addressable */
+		/* 2: MMC3 with 128 KiB addressable */
+		/* 7: MMC3 with   2  MB addressable. Used byc at least on 2 games:
+			- 最终幻想 2 - 光明篇 (Final Fantasy 2 - Arc of Light)
+			- 梦幻仙境 - (Fantasy Wonderworld) */
 		{
 			uint32 cbase = (INVERT_PRG ? 0x4000 : 0);
 
@@ -231,8 +235,8 @@ static void SyncWRAM(void) {
 	/* TODO: WRAM Protected  mode when not in extended mode */
 	if (WRAM_ENABLED || WRAM_EXTENDED) {
 		if (WRAM_EXTENDED) {
-			setprg8r(0x10, 0x4000, (mmc3_wram & 0x03) + 1);
-			setprg8r(0x10, 0x6000, mmc3_wram & 0x03);
+			setprg8r(0x10, 0x4000, (mmc3_wram + 1) & 0x03);
+			setprg8r(0x10, 0x6000, (mmc3_wram + 0) & 0x03);
 		} else
 			setprg8r(0x10, 0x6000, 0);
 	}
@@ -387,8 +391,9 @@ static void M176Reset(void) {
 		FCEU_printf("BMCFK23C dipswitch set to $%04x\n", 0x5000 | 0x10 << dipswitch);
 	}
 
-	fk23_regs[0] = fk23_regs[1] = fk23_regs[2] = fk23_regs[3] = fk23_regs[4] = fk23_regs[5] = fk23_regs[6] =
+	fk23_regs[1] = fk23_regs[2] = fk23_regs[3] = fk23_regs[4] = fk23_regs[5] = fk23_regs[6] =
 	    fk23_regs[7] = 0;
+	fk23_regs[0] = (subType == 1 || subType == 3) ? 7 : 0;
 	mmc3_regs[0] = 0;
 	mmc3_regs[1] = 2;
 	mmc3_regs[2] = 4;
@@ -408,8 +413,9 @@ static void M176Reset(void) {
 }
 
 static void M176Power(void) {
-	fk23_regs[0] = fk23_regs[1] = fk23_regs[2] = fk23_regs[3] = fk23_regs[4] = fk23_regs[5] = fk23_regs[6] =
+	fk23_regs[1] = fk23_regs[2] = fk23_regs[3] = fk23_regs[4] = fk23_regs[5] = fk23_regs[6] =
 	    fk23_regs[7] = 0;
+	fk23_regs[0] = (subType == 1 || subType == 3) ? 7 : 0;
 	mmc3_regs[0] = 0;
 	mmc3_regs[1] = 2;
 	mmc3_regs[2] = 4;
@@ -435,6 +441,9 @@ static void M176Power(void) {
 		SetWriteHandler(0x4800, 0x4FFF, Write4800);
 
 	if (WRAMSIZE) {
+		if (subType == 2) {
+		    SetReadHandler(0x5000, 0x5FFF, CartBR);
+		}
 		SetReadHandler(0x6000, 0x7FFF, CartBR);
 		SetWriteHandler(0x6000, 0x7FFF, CartBW);
 		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
