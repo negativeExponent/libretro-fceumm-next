@@ -24,39 +24,39 @@
 #include "mmc3.h"
 
 static void Mapper391_PRGWrap(uint32 A, uint8 V) {
-	int prgAND = EXPREGS[0] & 0x08 ? 0x0F : 0x1F;
-	int prgOR = EXPREGS[0] << 4 & 0x30;
-	if (EXPREGS[0] & 0x20) {
+	int prgAND = mmc3.expregs[0] & 0x08 ? 0x0F : 0x1F;
+	int prgOR = mmc3.expregs[0] << 4 & 0x30;
+	if (mmc3.expregs[0] & 0x20) {
 		if (~A & 0x4000) {
-			setprg8(A, ((((EXPREGS[0] & 0x04) ? ~2 : ~0) & V) & prgAND) | (prgOR & ~prgAND));
-			setprg8(A | 0x4000, ((((EXPREGS[0] & 0x04) ? 2 : 0) | V) & prgAND) | (prgOR & ~prgAND));
+			setprg8(A, ((((mmc3.expregs[0] & 0x04) ? ~2 : ~0) & V) & prgAND) | (prgOR & ~prgAND));
+			setprg8(A | 0x4000, ((((mmc3.expregs[0] & 0x04) ? 2 : 0) | V) & prgAND) | (prgOR & ~prgAND));
 		}
 	} else
 		setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
 }
 
 static void Mapper391_CHRWrap(uint32 A, uint8 V) {
-	int chrAND = (EXPREGS[0] & 0x40) ? 0x7F : 0xFF;
-	int chrOR = ((EXPREGS[0] << 3) & 0x80) | ((EXPREGS[1] << 8) & 0x100);
+	int chrAND = (mmc3.expregs[0] & 0x40) ? 0x7F : 0xFF;
+	int chrOR = ((mmc3.expregs[0] << 3) & 0x80) | ((mmc3.expregs[1] << 8) & 0x100);
 	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 
 static DECLFW(Mapper391_Write) {
-	if (~EXPREGS[0] & 0x80) {
-		EXPREGS[0] = V;
-		EXPREGS[1] = ((A >> 8) & 0xFF);
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+	if (~mmc3.expregs[0] & 0x80) {
+		mmc3.expregs[0] = V;
+		mmc3.expregs[1] = ((A >> 8) & 0xFF);
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 }
 
 static void Mapper391_Reset(void) {
-	EXPREGS[0] = EXPREGS[1] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = 0;
 	MMC3RegReset();
 }
 
 static void Mapper391_Power(void) {
-	EXPREGS[0] = EXPREGS[1] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, Mapper391_Write);
 }
@@ -67,5 +67,5 @@ void Mapper391_Init(CartInfo *info) {
 	pwrap = Mapper391_PRGWrap;
 	info->Power = Mapper391_Power;
 	info->Reset = Mapper391_Reset;
-	AddExState(EXPREGS, 2, 0, "EXPR");
+	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }

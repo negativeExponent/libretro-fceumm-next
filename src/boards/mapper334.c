@@ -26,13 +26,13 @@
 static uint8 dipswitch;
 
 static void M334PW(uint32 A, uint8 V) {
-	setprg32(0x8000, EXPREGS[0] >> 1);
+	setprg32(0x8000, mmc3.expregs[0] >> 1);
 }
 
 static DECLFW(M334Write) {
 	if (!(A & 1)) {
-		EXPREGS[0] = V;
-		FixMMC3PRG(MMC3_cmd);
+		mmc3.expregs[0] = V;
+		FixMMC3PRG(mmc3.cmd);
 	}
 }
 
@@ -44,13 +44,13 @@ static DECLFR(M334Read) {
 
 static void M334Reset(void) {
 	dipswitch++;
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
 static void M334Power(void) {
 	dipswitch = 0;
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetReadHandler(0x6000, 0x7FFF, M334Read);
 	SetWriteHandler(0x6000, 0x7FFF, M334Write);
@@ -61,5 +61,5 @@ void Mapper334_Init(CartInfo *info) {
 	pwrap = M334PW;
 	info->Power = M334Power;
 	info->Reset = M334Reset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

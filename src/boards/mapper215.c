@@ -78,27 +78,27 @@ static void UNL8237CW(uint32 A, uint8 V) {
 	uint16 outer_bank;
 
 	if (submapper == 1)
-		outer_bank = ((EXPREGS[1] & 0xE) << 7);
+		outer_bank = ((mmc3.expregs[1] & 0xE) << 7);
 	else
-		outer_bank = ((EXPREGS[1] & 0xC) << 6);
+		outer_bank = ((mmc3.expregs[1] & 0xC) << 6);
 
-	if (EXPREGS[0] & 0x40)
-		setchr1(A, outer_bank | (V & 0x7F) | ((EXPREGS[1] & 0x20) << 2));
+	if (mmc3.expregs[0] & 0x40)
+		setchr1(A, outer_bank | (V & 0x7F) | ((mmc3.expregs[1] & 0x20) << 2));
 	else
 		setchr1(A, outer_bank | V);
 }
 
 static void UNL8237PW(uint32 A, uint8 V) {
-	uint8 outer_bank = ((EXPREGS[1] & 3) << 5);
+	uint8 outer_bank = ((mmc3.expregs[1] & 3) << 5);
 
 	if (submapper == 1)
-		outer_bank |= ((EXPREGS[1] & 8) << 4);
+		outer_bank |= ((mmc3.expregs[1] & 8) << 4);
 
-	if (EXPREGS[0] & 0x40) {
-		uint8 sbank = (EXPREGS[1] & 0x10);
-		if (EXPREGS[0] & 0x80) { /* NROM */
-			uint8 bank = (outer_bank >> 1) | (EXPREGS[0] & 0x7) | (sbank >> 1);
-			if (EXPREGS[0] & 0x20) /* NROM-256 */
+	if (mmc3.expregs[0] & 0x40) {
+		uint8 sbank = (mmc3.expregs[1] & 0x10);
+		if (mmc3.expregs[0] & 0x80) { /* NROM */
+			uint8 bank = (outer_bank >> 1) | (mmc3.expregs[0] & 0x7) | (sbank >> 1);
+			if (mmc3.expregs[0] & 0x20) /* NROM-256 */
 				setprg32(0x8000, bank >> 1);
 			else { /* NROM-128 */
 				setprg16(0x8000, bank);
@@ -107,9 +107,9 @@ static void UNL8237PW(uint32 A, uint8 V) {
 		} else
 			setprg8(A, outer_bank | (V & 0x0F) | sbank);
 	} else {
-		if (EXPREGS[0] & 0x80) { /* NROM */
-			uint8 bank = (outer_bank >> 1) | (EXPREGS[0] & 0xF);
-			if (EXPREGS[0] & 0x20) /* NROM-256 */
+		if (mmc3.expregs[0] & 0x80) { /* NROM */
+			uint8 bank = (outer_bank >> 1) | (mmc3.expregs[0] & 0xF);
+			if (mmc3.expregs[0] & 0x20) /* NROM-256 */
 				setprg32(0x8000, bank >> 1);
 			else { /* NROM-128 */
 				setprg16(0x8000, bank);
@@ -121,16 +121,16 @@ static void UNL8237PW(uint32 A, uint8 V) {
 }
 
 static DECLFR(UNL8237ProtRead) {
-	return (protarray[EXPREGS[3]][A & 7] & 0x0F) | 0x50;
+	return (protarray[mmc3.expregs[3]][A & 7] & 0x0F) | 0x50;
 }
 
 static DECLFW(UNL8237Write) {
 	uint8 dat = V;
-	uint8 adr = adrperm[EXPREGS[2]][((A >> 12) & 6) | (A & 1)];
+	uint8 adr = adrperm[mmc3.expregs[2]][((A >> 12) & 6) | (A & 1)];
 	uint16 addr = (adr & 1) | ((adr & 6) << 12) | 0x8000;
 	if (adr < 4) {
 		if (!adr)
-			dat = (dat & 0xC0) | (regperm[EXPREGS[2]][dat & 7]);
+			dat = (dat & 0xC0) | (regperm[mmc3.expregs[2]][dat & 7]);
 		MMC3_CMDWrite(addr, dat);
 	} else
 		MMC3_IRQWrite(addr, dat);
@@ -139,28 +139,28 @@ static DECLFW(UNL8237Write) {
 static DECLFW(UNL8237ExWrite) {
 	switch (A & 0xF007) {
 		case 0x5000:
-			EXPREGS[0] = V;
-			FixMMC3PRG(MMC3_cmd);
-			FixMMC3CHR(MMC3_cmd);
+			mmc3.expregs[0] = V;
+			FixMMC3PRG(mmc3.cmd);
+			FixMMC3CHR(mmc3.cmd);
 			break;
 		case 0x5001:
-			EXPREGS[1] = V;
-			FixMMC3PRG(MMC3_cmd);
-			FixMMC3CHR(MMC3_cmd);
+			mmc3.expregs[1] = V;
+			FixMMC3PRG(mmc3.cmd);
+			FixMMC3CHR(mmc3.cmd);
 			break;
 		case 0x5002:
-			EXPREGS[3] = V;
+			mmc3.expregs[3] = V;
 			break;
 		case 0x5007:
-			EXPREGS[2] = V;
+			mmc3.expregs[2] = V;
 			break;
 	}
 }
 
 static void UNL8237Power(void) {
-	EXPREGS[0] = EXPREGS[2] = 0;
-	EXPREGS[1] = 0x0F;
-	EXPREGS[3] = 7;
+	mmc3.expregs[0] = mmc3.expregs[2] = 0;
+	mmc3.expregs[1] = 0x0F;
+	mmc3.expregs[3] = 7;
 	GenMMC3Power();
 	SetWriteHandler(0x8000, 0xFFFF, UNL8237Write);
 	SetReadHandler(0x5000, 0x5FFF, UNL8237ProtRead);
@@ -168,9 +168,9 @@ static void UNL8237Power(void) {
 }
 
 static void UNL8237Reset(void) {
-	EXPREGS[0] = EXPREGS[2] = 0;
-	EXPREGS[1] = 0x0F;
-	EXPREGS[3] = 7;
+	mmc3.expregs[0] = mmc3.expregs[2] = 0;
+	mmc3.expregs[1] = 0x0F;
+	mmc3.expregs[3] = 7;
 	MMC3RegReset();
 }
 
@@ -180,7 +180,7 @@ void UNL8237_Init(CartInfo *info) {
 	pwrap = UNL8237PW;
 	info->Power = UNL8237Power;
 	info->Reset = UNL8237Reset;
-	AddExState(EXPREGS, 4, 0, "EXPR");
+	AddExState(mmc3.expregs, 4, 0, "EXPR");
 	if (info->iNES2)
 		submapper = info->submapper;
 }

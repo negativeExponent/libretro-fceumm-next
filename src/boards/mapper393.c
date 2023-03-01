@@ -27,30 +27,30 @@ static uint8 *CHRRAM;
 static uint32 CHRRAMSIZE;
 
 static int getPRGBank(int bank) {
-	if ((~bank & 1) && (MMC3_cmd & 0x40))
+	if ((~bank & 1) && (mmc3.cmd & 0x40))
 		bank ^= 2;
-	return (bank & 2) ? (0xFE | (bank & 1)) : DRegBuf[6 | (bank & 1)];
+	return (bank & 2) ? (0xFE | (bank & 1)) : mmc3.regs[6 | (bank & 1)];
 }
 
 static void M393CW(uint32 A, uint8 V) {
-	if (EXPREGS[0] & 8)
+	if (mmc3.expregs[0] & 8)
 		setchr8r(0x10, 0);
 	else
-		setchr1(A, (V & 0xFF) | (EXPREGS[0] << 8));
+		setchr1(A, (V & 0xFF) | (mmc3.expregs[0] << 8));
 }
 
 static void M393PW(uint32 A, uint8 V) {
-	switch ((EXPREGS[0] >> 4) & 3) {
+	switch ((mmc3.expregs[0] >> 4) & 3) {
 		case 0:
 		case 1:
-			setprg8(A, (V & 0x0F) | (EXPREGS[0] << 4));
+			setprg8(A, (V & 0x0F) | (mmc3.expregs[0] << 4));
 			break;
 		case 2:
-			setprg32(0x8000, ((getPRGBank(0) >> 2) & 3) | (EXPREGS[0] << 2));
+			setprg32(0x8000, ((getPRGBank(0) >> 2) & 3) | (mmc3.expregs[0] << 2));
 			break;
 		case 3:
-			setprg16(0x8000, (EXPREGS[0] << 3) | (EXPREGS[1] & 7));
-			setprg16(0xC000, (EXPREGS[0] << 3) | 7);
+			setprg16(0x8000, (mmc3.expregs[0] << 3) | (mmc3.expregs[1] & 7));
+			setprg16(0xC000, (mmc3.expregs[0] << 3) | 7);
 			break;
 	}
 }
@@ -67,26 +67,26 @@ static DECLFW(M393Write8) {
 			break;
 	}
 
-	EXPREGS[1] = V;
-	FixMMC3CHR(MMC3_cmd);
-	FixMMC3PRG(MMC3_cmd);
+	mmc3.expregs[1] = V;
+	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG(mmc3.cmd);
 }
 
 static DECLFW(M393Write6) {
-	EXPREGS[0] = A & 0xFF;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = A & 0xFF;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void M393Power(void) {
-	EXPREGS[0] = EXPREGS[1] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, M393Write6);
 	SetWriteHandler(0x8000, 0xFFFF, M393Write8);
 }
 
 static void M393Reset(void) {
-	EXPREGS[0] = EXPREGS[1] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = 0;
 	MMC3RegReset();
 }
 
@@ -108,5 +108,5 @@ void Mapper393_Init(CartInfo *info) {
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-	AddExState(EXPREGS, 2, 0, "EXPR");
+	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }

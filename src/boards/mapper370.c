@@ -29,7 +29,7 @@ static uint8 PPUCHRBus;
 static uint8 mirr[8];
 
 static void FP_FASTAPASS(1) M370PPU(uint32 A) {
-	if ((EXPREGS[0] & 7) == 1) {
+	if ((mmc3.expregs[0] & 7) == 1) {
 		A &= 0x1FFF;
 		A >>= 10;
 		PPUCHRBus = A;
@@ -38,47 +38,47 @@ static void FP_FASTAPASS(1) M370PPU(uint32 A) {
 }
 
 static void M370CW(uint32 A, uint8 V) {
-	uint8 mask = (EXPREGS[0] & 4) ? 0x7F : 0xFF;
+	uint8 mask = (mmc3.expregs[0] & 4) ? 0x7F : 0xFF;
 	/* FIXME: Mario VII, mask is reversed? */
-	if ((EXPREGS[0] & 7) == 6 && V & 0x80)
+	if ((mmc3.expregs[0] & 7) == 6 && V & 0x80)
 		mask = 0xFF;
 	mirr[A >> 10] = V >> 7;
-	setchr1(A, (V & mask) | ((EXPREGS[0] & 7) << 7));
-	if (((EXPREGS[0] & 7) == 1) && (PPUCHRBus == (A >> 10)))
+	setchr1(A, (V & mask) | ((mmc3.expregs[0] & 7) << 7));
+	if (((mmc3.expregs[0] & 7) == 1) && (PPUCHRBus == (A >> 10)))
 		setmirror(MI_0 + (V >> 7));
 }
 
 static void M370PW(uint32 A, uint8 V) {
-	uint8 mask = EXPREGS[0] & 0x20 ? 0x0F : 0x1F;
-	setprg8(A, (V & mask) | ((EXPREGS[0] & 0x38) << 1));
+	uint8 mask = mmc3.expregs[0] & 0x20 ? 0x0F : 0x1F;
+	setprg8(A, (V & mask) | ((mmc3.expregs[0] & 0x38) << 1));
 }
 
 static void M370MW(uint8 V) {
-	A000B = V;
-	if ((EXPREGS[0] & 7) != 1)
+	mmc3.mirroring = V;
+	if ((mmc3.expregs[0] & 7) != 1)
 		setmirror((V & 1) ^ 1);
 }
 
 static DECLFR(M370Read) {
-	return (EXPREGS[1] << 7);
+	return (mmc3.expregs[1] << 7);
 }
 
 static DECLFW(M370Write) {
-	EXPREGS[0] = (A & 0xFF);
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = (A & 0xFF);
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void M370Reset(void) {
-	EXPREGS[0] = 0;
-	EXPREGS[1] ^= 1;
-	FCEU_printf("solderpad=%02x\n", EXPREGS[1]);
+	mmc3.expregs[0] = 0;
+	mmc3.expregs[1] ^= 1;
+	FCEU_printf("solderpad=%02x\n", mmc3.expregs[1]);
 	MMC3RegReset();
 }
 
 static void M370Power(void) {
-	EXPREGS[0] = 0;
-	EXPREGS[1] = 1; /* start off with the 6-in-1 menu */
+	mmc3.expregs[0] = 0;
+	mmc3.expregs[1] = 1; /* start off with the 6-in-1 menu */
 	GenMMC3Power();
 	SetReadHandler(0x5000, 0x5FFF, M370Read);
 	SetWriteHandler(0x5000, 0x5FFF, M370Write);
@@ -92,5 +92,5 @@ void Mapper370_Init(CartInfo *info) {
 	PPU_hook = M370PPU;
 	info->Power = M370Power;
 	info->Reset = M370Reset;
-	AddExState(EXPREGS, 2, 0, "EXPR");
+	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }

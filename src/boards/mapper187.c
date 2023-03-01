@@ -26,17 +26,17 @@
 #include "mmc3.h"
 
 static void M187CW(uint32 A, uint8 V) {
-	if ((A & 0x1000) == ((MMC3_cmd & 0x80) << 5))
+	if ((A & 0x1000) == ((mmc3.cmd & 0x80) << 5))
 		setchr1(A, V | 0x100);
 	else
 		setchr1(A, V);
 }
 
 static void M187PW(uint32 A, uint8 V) {
-	if (EXPREGS[0] & 0x80) {
-		uint8 bank = EXPREGS[0] & 0x1F;
-		if (EXPREGS[0] & 0x20) {
-			if (EXPREGS[0] & 0x40)
+	if (mmc3.expregs[0] & 0x80) {
+		uint8 bank = mmc3.expregs[0] & 0x1F;
+		if (mmc3.expregs[0] & 0x20) {
+			if (mmc3.expregs[0] & 0x40)
 				setprg32(0x8000, bank >> 2);
 			else
 				setprg32(0x8000, bank >> 1); /* hacky hacky! two mappers in one! need real hw carts to test */
@@ -49,29 +49,29 @@ static void M187PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M187Write8000) {
-	EXPREGS[1] = 1;
+	mmc3.expregs[1] = 1;
 	MMC3_CMDWrite(A, V);
 }
 
 static DECLFW(M187Write8001) {
-	if (EXPREGS[1])
+	if (mmc3.expregs[1])
 		MMC3_CMDWrite(A, V);
 }
 
 static DECLFW(M187WriteLo) {
 	if ((A == 0x5000) || (A == 0x6000)) {
-		EXPREGS[0] = V;
-		FixMMC3PRG(MMC3_cmd);
+		mmc3.expregs[0] = V;
+		FixMMC3PRG(mmc3.cmd);
 	}
 }
 
 static uint8 prot_data[4] = { 0x83, 0x83, 0x42, 0x00 };
 static DECLFR(M187Read) {
-	return prot_data[EXPREGS[1] & 3];
+	return prot_data[mmc3.expregs[1] & 3];
 }
 
 static void M187Power(void) {
-	EXPREGS[0] = EXPREGS[1] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = 0;
 	GenMMC3Power();
 	SetReadHandler(0x5000, 0x5FFF, M187Read);
 	SetWriteHandler(0x5000, 0x6FFF, M187WriteLo);
@@ -84,5 +84,5 @@ void Mapper187_Init(CartInfo *info) {
 	pwrap = M187PW;
 	cwrap = M187CW;
 	info->Power = M187Power;
-	AddExState(EXPREGS, 3, 0, "EXPR");
+	AddExState(mmc3.expregs, 3, 0, "EXPR");
 }

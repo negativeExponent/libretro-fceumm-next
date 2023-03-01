@@ -32,25 +32,25 @@ static uint32 CHRROMSIZE;
 
 static void M269CW(uint32 A, uint8 V) {
 	uint16 NV = V;
-	if (EXPREGS[2] & 8)
-		NV &= (1 << ((EXPREGS[2] & 7) + 1)) - 1;
-	NV |= EXPREGS[0] | ((EXPREGS[2] & 0xF0) << 4);
+	if (mmc3.expregs[2] & 8)
+		NV &= (1 << ((mmc3.expregs[2] & 7) + 1)) - 1;
+	NV |= mmc3.expregs[0] | ((mmc3.expregs[2] & 0xF0) << 4);
 	setchr1(A, NV);
 }
 
 static void M269PW(uint32 A, uint8 V) {
-	uint16 MV = V & ((EXPREGS[3] & 0x3F) ^ 0x3F);
-	MV |= EXPREGS[1];
-	MV |= ((EXPREGS[3] & 0x40) << 2);
+	uint16 MV = V & ((mmc3.expregs[3] & 0x3F) ^ 0x3F);
+	MV |= mmc3.expregs[1];
+	MV |= ((mmc3.expregs[3] & 0x40) << 2);
 	setprg8(A, MV);
 }
 
 static DECLFW(M269Write5) {
-	if (!(EXPREGS[3] & 0x80)) {
-		EXPREGS[EXPREGS[4]] = V;
-		EXPREGS[4] = (EXPREGS[4] + 1) & 3;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+	if (!(mmc3.expregs[3] & 0x80)) {
+		mmc3.expregs[mmc3.expregs[4]] = V;
+		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 }
 
@@ -62,14 +62,14 @@ static void M269Close(void) {
 }
 
 static void M269Reset(void) {
-	EXPREGS[0] = EXPREGS[1] = EXPREGS[3] = EXPREGS[4] = 0;
-	EXPREGS[2] = 0x0F;
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = 0;
+	mmc3.expregs[2] = 0x0F;
 	MMC3RegReset();
 }
 
 static void M269Power(void) {
-	EXPREGS[0] = EXPREGS[1] = EXPREGS[3] = EXPREGS[4] = 0;
-	EXPREGS[2] = 0x0F;
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = 0;
+	mmc3.expregs[2] = 0x0F;
 	GenMMC3Power();
 	SetWriteHandler(0x5000, 0x5FFF, M269Write5);
 }
@@ -87,7 +87,7 @@ void Mapper269_Init(CartInfo *info) {
 	info->Power = M269Power;
 	info->Reset = M269Reset;
 	info->Close = M269Close;
-	AddExState(EXPREGS, 5, 0, "EXPR");
+	AddExState(mmc3.expregs, 5, 0, "EXPR");
 
 	CHRROMSIZE = PRGsize[0];
 	CHRROM = (uint8 *)FCEU_gmalloc(CHRROMSIZE);

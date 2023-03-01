@@ -26,7 +26,7 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-#define OUTER_BANK (((EXPREGS[0] & 0x20) >> 2) | (EXPREGS[0] & 0x06))
+#define OUTER_BANK (((mmc3.expregs[0] & 0x20) >> 2) | (mmc3.expregs[0] & 0x06))
 
 static void M377CW(uint32 A, uint8 V) {
 	setchr1(A, (V & 0x7F) | (OUTER_BANK << 6));
@@ -37,20 +37,20 @@ static void M377PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M377Write) {
-	if (!(EXPREGS[0] & 0x80)) {
-		EXPREGS[0] = V;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+	if (!(mmc3.expregs[0] & 0x80)) {
+		mmc3.expregs[0] = V;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 }
 
 static void M377Reset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
 static void M377Power(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, M377Write);
 }
@@ -61,5 +61,5 @@ void Mapper377_Init(CartInfo *info) {
 	pwrap = M377PW;
 	info->Reset = M377Reset;
 	info->Power = M377Power;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

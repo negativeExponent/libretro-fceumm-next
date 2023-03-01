@@ -49,18 +49,18 @@ static void Sync(void) {
 }
 
 static void UNLSL1632CW(uint32 A, uint8 V) {
-	int cbase = (MMC3_cmd & 0x80) << 5;
+	int cbase = (mmc3.cmd & 0x80) << 5;
 	int page0 = (bbrk & 0x08) << 5;
 	int page1 = (bbrk & 0x20) << 3;
 	int page2 = (bbrk & 0x80) << 1;
-	setchr1(cbase ^ 0x0000, page0 | (DRegBuf[0] & (~1)));
-	setchr1(cbase ^ 0x0400, page0 | DRegBuf[0] | 1);
-	setchr1(cbase ^ 0x0800, page0 | (DRegBuf[1] & (~1)));
-	setchr1(cbase ^ 0x0C00, page0 | DRegBuf[1] | 1);
-	setchr1(cbase ^ 0x1000, page1 | DRegBuf[2]);
-	setchr1(cbase ^ 0x1400, page1 | DRegBuf[3]);
-	setchr1(cbase ^ 0x1800, page2 | DRegBuf[4]);
-	setchr1(cbase ^ 0x1c00, page2 | DRegBuf[5]);
+	setchr1(cbase ^ 0x0000, page0 | (mmc3.regs[0] & (~1)));
+	setchr1(cbase ^ 0x0400, page0 | mmc3.regs[0] | 1);
+	setchr1(cbase ^ 0x0800, page0 | (mmc3.regs[1] & (~1)));
+	setchr1(cbase ^ 0x0C00, page0 | mmc3.regs[1] | 1);
+	setchr1(cbase ^ 0x1000, page1 | mmc3.regs[2]);
+	setchr1(cbase ^ 0x1400, page1 | mmc3.regs[3]);
+	setchr1(cbase ^ 0x1800, page2 | mmc3.regs[4]);
+	setchr1(cbase ^ 0x1c00, page2 | mmc3.regs[5]);
 }
 
 static DECLFW(UNLSL1632CMDWrite) {
@@ -68,8 +68,8 @@ static DECLFW(UNLSL1632CMDWrite) {
 		bbrk = V;
 	}
 	if (bbrk & 2) {
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 		if (A < 0xC000)
 			MMC3_CMDWrite(A, V);
 		else
@@ -91,8 +91,8 @@ static DECLFW(UNLSL1632CMDWrite) {
 
 static void StateRestore(int version) {
 	if (bbrk & 2) {
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	} else
 		Sync();
 }

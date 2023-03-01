@@ -24,27 +24,27 @@
 #include "mmc3.h"
 
 static void M516CW(uint32 A, uint8 V) {
-	/*    FCEU_printf("CHR: A:%04x V:%02x R0:%02x\n", A, V, EXPREGS[0]); */
-	setchr1(A, (V & 0x7F) | ((EXPREGS[0] << 5) & 0x180));
+	/*    FCEU_printf("CHR: A:%04x V:%02x R0:%02x\n", A, V, mmc3.expregs[0]); */
+	setchr1(A, (V & 0x7F) | ((mmc3.expregs[0] << 5) & 0x180));
 }
 
 static void M516PW(uint32 A, uint8 V) {
-	/*    FCEU_printf("PRG: A:%04x V:%02x R0:%02x\n", A, V, EXPREGS[0]); */
-	setprg8(A, (V & 0x0F) | ((EXPREGS[0] << 4) & 0x30));
+	/*    FCEU_printf("PRG: A:%04x V:%02x R0:%02x\n", A, V, mmc3.expregs[0]); */
+	setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] << 4) & 0x30));
 }
 
 static DECLFW(M516Write) {
-	/*    FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, EXPREGS[0]); */
+	/*    FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, mmc3.expregs[0]); */
 	if (A & 0x10) {
-		EXPREGS[0] = A & 0xF;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+		mmc3.expregs[0] = A & 0xF;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 	MMC3_CMDWrite(A, V);
 }
 
 static void M516Power(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x8000, 0xFFFF, M516Write);
 }
@@ -54,5 +54,5 @@ void Mapper516_Init(CartInfo *info) {
 	cwrap = M516CW;
 	pwrap = M516PW;
 	info->Power = M516Power;
-	AddExState(EXPREGS, 4, 0, "EXPR");
+	AddExState(mmc3.expregs, 4, 0, "EXPR");
 }

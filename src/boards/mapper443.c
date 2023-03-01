@@ -27,11 +27,11 @@ static uint8 dip;
 
 static void Mapper443_PRGWrap(uint32 A, uint8 V) {
 	int prgAND = 0x0F;
-	int prgOR = ((EXPREGS[0] << 4) & 0x20) | (EXPREGS[0] & 0x10);
-	if (EXPREGS[0] & 0x04) {
+	int prgOR = ((mmc3.expregs[0] << 4) & 0x20) | (mmc3.expregs[0] & 0x10);
+	if (mmc3.expregs[0] & 0x04) {
 		if (~A & 0x4000) {
-			setprg8(A, ((((~EXPREGS[0] & 0x08) ? ~2 : ~0) & V) & prgAND) | (prgOR & ~prgAND));
-			setprg8(A | 0x4000, ((~EXPREGS[0] & 0x08) ? 2 : 0) | (V & prgAND) | (prgOR & ~prgAND));
+			setprg8(A, ((((~mmc3.expregs[0] & 0x08) ? ~2 : ~0) & V) & prgAND) | (prgOR & ~prgAND));
+			setprg8(A | 0x4000, ((~mmc3.expregs[0] & 0x08) ? 2 : 0) | (V & prgAND) | (prgOR & ~prgAND));
 		}
 	} else
 		setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
@@ -39,30 +39,30 @@ static void Mapper443_PRGWrap(uint32 A, uint8 V) {
 
 static void Mapper443_CHRWrap(uint32 A, uint8 V) {
 	int chrAND = 0xFF;
-	int chrOR = EXPREGS[0] << 8;
+	int chrOR = mmc3.expregs[0] << 8;
 	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 
 static DECLFR(Mapper443_Read) {
-	return (((EXPREGS[0] & 0x0C) == 0x08) ? dip : CartBR(A));
+	return (((mmc3.expregs[0] & 0x0C) == 0x08) ? dip : CartBR(A));
 }
 
 static DECLFW(Mapper443_Write) {
-	EXPREGS[0] = A & 0xFF;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = A & 0xFF;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void Mapper443_Reset(void) {
 	dip++;
 	dip &= 15;
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
 static void Mapper443_Power(void) {
 	dip = 0;
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, Mapper443_Write);
 	SetReadHandler(0x8000, 0xFFFF, Mapper443_Read);
@@ -74,6 +74,6 @@ void Mapper443_Init(CartInfo *info) {
 	pwrap = Mapper443_PRGWrap;
 	info->Power = Mapper443_Power;
 	info->Reset = Mapper443_Reset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 	AddExState(&dip, 1, 0, "DIPS");
 }

@@ -22,14 +22,14 @@
 #include "mmc3.h"
 
 static void Mapper376CW(uint32 A, uint8 V) {
-	uint32 base = (EXPREGS[0] & 0x40 ? 0x080 : 0x000) | (EXPREGS[1] & 0x01 ? 0x100 : 0x000);
+	uint32 base = (mmc3.expregs[0] & 0x40 ? 0x080 : 0x000) | (mmc3.expregs[1] & 0x01 ? 0x100 : 0x000);
 	setchr1(A, base | (V & 0x7F));
 }
 
 static void Mapper376PW(uint32 A, uint8 V) {
-	uint32 base = (EXPREGS[0] & 0x07) | (EXPREGS[0] & 0x40 ? 0x08 : 0x00) | (EXPREGS[1] & 0x01 ? 0x10 : 0x00);
-	if (EXPREGS[0] & 0x80) {
-		if (EXPREGS[0] & 0x20) {
+	uint32 base = (mmc3.expregs[0] & 0x07) | (mmc3.expregs[0] & 0x40 ? 0x08 : 0x00) | (mmc3.expregs[1] & 0x01 ? 0x10 : 0x00);
+	if (mmc3.expregs[0] & 0x80) {
+		if (mmc3.expregs[0] & 0x20) {
 			if (A == 0x8000)
 				setprg32(A, base >> 1);
 		} else {
@@ -41,14 +41,14 @@ static void Mapper376PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(Mapper376Write) {
-	EXPREGS[A & 1] = V;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[A & 1] = V;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void Mapper376Reset(void) {
-	EXPREGS[0] = 0;
-	EXPREGS[1] = 0;
+	mmc3.expregs[0] = 0;
+	mmc3.expregs[1] = 0;
 	MMC3RegReset();
 }
 
@@ -63,5 +63,5 @@ void Mapper376_Init(CartInfo *info) {
 	cwrap = Mapper376CW;
 	info->Power = Mapper376Power;
 	info->Reset = Mapper376Reset;
-	AddExState(EXPREGS, 2, 0, "EXPR");
+	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }

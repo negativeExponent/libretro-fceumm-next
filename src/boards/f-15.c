@@ -34,17 +34,17 @@
 #include "mmc3.h"
 
 static void BMCF15PW(uint32 A, uint8 V) {
-	uint32 bank = EXPREGS[0] & 0xF;
-	uint32 mode = (EXPREGS[0] & 8) >> 3;
+	uint32 bank = mmc3.expregs[0] & 0xF;
+	uint32 mode = (mmc3.expregs[0] & 8) >> 3;
 	uint32 mask = ~(mode);
 	setprg16(0x8000, (bank & mask));
 	setprg16(0xC000, (bank & mask) | mode);
 }
 
 static DECLFW(BMCF15Write) {
-	if (A001B & 0x80) {
-		EXPREGS[0] = V & 0xF;
-		FixMMC3PRG(MMC3_cmd);
+	if (mmc3.wram & 0x80) {
+		mmc3.expregs[0] = V & 0xF;
+		FixMMC3PRG(mmc3.cmd);
 	}
 }
 
@@ -58,5 +58,5 @@ void BMCF15_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 0, 0);
 	pwrap = BMCF15PW;
 	info->Power = BMCF15Power;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

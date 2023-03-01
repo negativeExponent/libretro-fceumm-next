@@ -28,36 +28,36 @@
 static uint8 dipswitch = 0;
 
 static void M401CW(uint32 A, uint8 V) {
-	uint32 mask = (0xFF >> (~EXPREGS[2] & 0xF));
-	uint32 bank = (EXPREGS[0] | ((EXPREGS[2] << 4) & 0xF00));
+	uint32 mask = (0xFF >> (~mmc3.expregs[2] & 0xF));
+	uint32 bank = (mmc3.expregs[0] | ((mmc3.expregs[2] << 4) & 0xF00));
 	setchr1(A, (V & mask) | bank);
 }
 
 static void M401PW(uint32 A, uint8 V) {
-	if ((dipswitch & 1) && (EXPREGS[1] & 0x80)) {
+	if ((dipswitch & 1) && (mmc3.expregs[1] & 0x80)) {
 		/* openbus */
 	} else {
-		uint32 mask = (~EXPREGS[3] & 0x1F);
-		uint32 bank = (EXPREGS[1] & 0x1F) | (EXPREGS[2] & 0x80) |
-		    ((dipswitch & 2) ? (EXPREGS[2] & 0x20) : ((EXPREGS[1] >> 1) & 0x20)) |
-		    ((dipswitch & 4) ? (EXPREGS[2] & 0x40) : ((EXPREGS[1] << 1) & 0x40));
+		uint32 mask = (~mmc3.expregs[3] & 0x1F);
+		uint32 bank = (mmc3.expregs[1] & 0x1F) | (mmc3.expregs[2] & 0x80) |
+		    ((dipswitch & 2) ? (mmc3.expregs[2] & 0x20) : ((mmc3.expregs[1] >> 1) & 0x20)) |
+		    ((dipswitch & 4) ? (mmc3.expregs[2] & 0x40) : ((mmc3.expregs[1] << 1) & 0x40));
 		setprg8(A, (V & mask) | bank);
 	}
 }
 
 static DECLFR(M401Read) {
-	if ((dipswitch & 1) && (EXPREGS[1] & 0x80))
+	if ((dipswitch & 1) && (mmc3.expregs[1] & 0x80))
 		return X.DB;
 	return CartBR(A);
 }
 
 static DECLFW(M401Write) {
-	/* FCEU_printf("Wr A:%04x V:%02x index:%d\n", A, V, EXPREGS[4]); */
-	if (!(EXPREGS[3] & 0x40)) {
-		EXPREGS[EXPREGS[4]] = V;
-		EXPREGS[4] = (EXPREGS[4] + 1) & 3;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+	/* FCEU_printf("Wr A:%04x V:%02x index:%d\n", A, V, mmc3.expregs[4]); */
+	if (!(mmc3.expregs[3] & 0x40)) {
+		mmc3.expregs[mmc3.expregs[4]] = V;
+		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 	CartBW(A, V);
 }
@@ -65,21 +65,21 @@ static DECLFW(M401Write) {
 static void M401Reset(void) {
 	dipswitch = (dipswitch + 1) & 7;
 	FCEU_printf("dipswitch = %d\n", dipswitch);
-	EXPREGS[0] = 0x00;
-	EXPREGS[1] = 0x00;
-	EXPREGS[2] = 0x0F;
-	EXPREGS[3] = 0x00;
-	EXPREGS[4] = 0x00;
+	mmc3.expregs[0] = 0x00;
+	mmc3.expregs[1] = 0x00;
+	mmc3.expregs[2] = 0x0F;
+	mmc3.expregs[3] = 0x00;
+	mmc3.expregs[4] = 0x00;
 	MMC3RegReset();
 }
 
 static void M401Power(void) {
 	dipswitch = 7;
-	EXPREGS[0] = 0x00;
-	EXPREGS[1] = 0x00;
-	EXPREGS[2] = 0x0F;
-	EXPREGS[3] = 0x00;
-	EXPREGS[4] = 0x00;
+	mmc3.expregs[0] = 0x00;
+	mmc3.expregs[1] = 0x00;
+	mmc3.expregs[2] = 0x0F;
+	mmc3.expregs[3] = 0x00;
+	mmc3.expregs[4] = 0x00;
 	GenMMC3Power();
 	SetReadHandler(0x8000, 0xFFFF, M401Read);
 	SetWriteHandler(0x6000, 0x7FFF, M401Write);
@@ -91,6 +91,6 @@ void Mapper401_Init(CartInfo *info) {
 	pwrap = M401PW;
 	info->Power = M401Power;
 	info->Reset = M401Reset;
-	AddExState(EXPREGS, 5, 0, "EXPR");
+	AddExState(mmc3.expregs, 5, 0, "EXPR");
 	AddExState(&dipswitch, 1, 0, "DPSW");
 }

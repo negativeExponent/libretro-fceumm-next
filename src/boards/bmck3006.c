@@ -27,35 +27,35 @@
 #include "mmc3.h"
 
 static void BMCK3006CW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | (EXPREGS[0] & 0x18) << 4);
+	setchr1(A, (V & 0x7F) | (mmc3.expregs[0] & 0x18) << 4);
 }
 
 static void BMCK3006PW(uint32 A, uint8 V) {
-	if (EXPREGS[0] & 0x20) {				/* MMC3 mode */
-		setprg8(A, (V & 0x0F) | (EXPREGS[0] & 0x18) << 1);
+	if (mmc3.expregs[0] & 0x20) {				/* MMC3 mode */
+		setprg8(A, (V & 0x0F) | (mmc3.expregs[0] & 0x18) << 1);
 	} else {
-		if ((EXPREGS[0] & 0x07) == 0x06) {	/* NROM-256 */
-			setprg32(0x8000, (EXPREGS[0] >> 1) & 0x0F);
+		if ((mmc3.expregs[0] & 0x07) == 0x06) {	/* NROM-256 */
+			setprg32(0x8000, (mmc3.expregs[0] >> 1) & 0x0F);
 		} else {							/* NROM-128 */
-			setprg16(0x8000, EXPREGS[0] & 0x1F);
-			setprg16(0xC000, EXPREGS[0] & 0x1F);
+			setprg16(0x8000, mmc3.expregs[0] & 0x1F);
+			setprg16(0xC000, mmc3.expregs[0] & 0x1F);
 		}
 	}
 }
 
 static DECLFW(BMCK3006Write) {
-	EXPREGS[0] = A & 0x3F;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = A & 0x3F;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void BMCK3006Reset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
 static void BMCK3006Power(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, BMCK3006Write);
 }
@@ -66,5 +66,5 @@ void BMCK3006_Init(CartInfo *info) {
 	cwrap = BMCK3006CW;
 	info->Power = BMCK3006Power;
 	info->Reset = BMCK3006Reset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

@@ -30,28 +30,28 @@
 static uint8 *CHRRAM;
 
 static void M410CW(uint32 A, uint8 V) {
-	if (!(EXPREGS[2] & 0x40)) {
+	if (!(mmc3.expregs[2] & 0x40)) {
 		uint32 NV = V;
-		NV &= (1 << ((EXPREGS[2] & 7) + 1)) - 1;
-		NV |= EXPREGS[0] | ((EXPREGS[2] & 0xF0) << 4);
+		NV &= (1 << ((mmc3.expregs[2] & 7) + 1)) - 1;
+		NV |= mmc3.expregs[0] | ((mmc3.expregs[2] & 0xF0) << 4);
 		setchr1(A, NV);
 	} else
 		setchr8r(0x10, 0);
 }
 
 static void M410PW(uint32 A, uint8 V) {
-	uint32 MV = V & ((EXPREGS[3] & 0x3F) ^ 0x3F);
-	MV |= EXPREGS[1];
-	MV |= ((EXPREGS[2] & 0x40) << 2);
+	uint32 MV = V & ((mmc3.expregs[3] & 0x3F) ^ 0x3F);
+	MV |= mmc3.expregs[1];
+	MV |= ((mmc3.expregs[2] & 0x40) << 2);
 	setprg8(A, MV);
-	/*	FCEU_printf("1:%02x 2:%02x 3:%02x A=%04x V=%03x\n",EXPREGS[1],EXPREGS[2],EXPREGS[3],A,MV); */
+	/*	FCEU_printf("1:%02x 2:%02x 3:%02x A=%04x V=%03x\n",mmc3.expregs[1],mmc3.expregs[2],mmc3.expregs[3],A,MV); */
 }
 
 static DECLFW(M410Write) {
-	EXPREGS[EXPREGS[4]] = V;
-	EXPREGS[4] = (EXPREGS[4] + 1) & 3;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[mmc3.expregs[4]] = V;
+	mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void M410Close(void) {
@@ -62,15 +62,15 @@ static void M410Close(void) {
 }
 
 static void M410Reset(void) {
-	EXPREGS[0] = EXPREGS[1] = EXPREGS[3] = EXPREGS[4] = 0;
-	EXPREGS[2] = 0x0F;
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = 0;
+	mmc3.expregs[2] = 0x0F;
 	MMC3RegReset();
 }
 
 static void M410Power(void) {
 	GenMMC3Power();
-	EXPREGS[0] = EXPREGS[1] = EXPREGS[3] = EXPREGS[4] = 0;
-	EXPREGS[2] = 0x0F;
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = 0;
+	mmc3.expregs[2] = 0x0F;
 	SetWriteHandler(0x6000, 0x7FFF, M410Write);
 }
 
@@ -81,7 +81,7 @@ void Mapper410_Init(CartInfo *info) {
 	info->Reset = M410Reset;
 	info->Power = M410Power;
 	info->Close = M410Close;
-	AddExState(EXPREGS, 5, 0, "EXPR");
+	AddExState(mmc3.expregs, 5, 0, "EXPR");
 
 	CHRRAM = (uint8 *)FCEU_gmalloc(8192);
 	SetupCartCHRMapping(0x10, CHRRAM, 8192, 1);

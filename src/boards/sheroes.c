@@ -25,23 +25,23 @@ static uint8 *CHRRAM;
 static uint8 tekker;
 
 static void MSHCW(uint32 A, uint8 V) {
-	if (EXPREGS[0] & 0x40)
+	if (mmc3.expregs[0] & 0x40)
 		setchr8r(0x10, 0);
 	else {
 		if (A < 0x800)
-			setchr1(A, V | ((EXPREGS[0] & 8) << 5));
+			setchr1(A, V | ((mmc3.expregs[0] & 8) << 5));
 		else if (A < 0x1000)
-			setchr1(A, V | ((EXPREGS[0] & 4) << 6));
+			setchr1(A, V | ((mmc3.expregs[0] & 4) << 6));
 		else if (A < 0x1800)
-			setchr1(A, V | ((EXPREGS[0] & 1) << 8));
+			setchr1(A, V | ((mmc3.expregs[0] & 1) << 8));
 		else
-			setchr1(A, V | ((EXPREGS[0] & 2) << 7));
+			setchr1(A, V | ((mmc3.expregs[0] & 2) << 7));
 	}
 }
 
 static DECLFW(MSHWrite) {
-	EXPREGS[0] = V;
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = V;
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static DECLFR(MSHRead) {
@@ -75,6 +75,6 @@ void UNLSHeroes_Init(CartInfo *info) {
 	info->Close = MSHClose;
 	CHRRAM = (uint8*)FCEU_gmalloc(8192);
 	SetupCartCHRMapping(0x10, CHRRAM, 8192, 1);
-	AddExState(EXPREGS, 4, 0, "EXPR");
+	AddExState(mmc3.expregs, 4, 0, "EXPR");
 	AddExState(&tekker, 1, 0, "DIPSW");
 }

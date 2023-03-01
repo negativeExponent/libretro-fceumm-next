@@ -22,29 +22,29 @@
 #include "mmc3.h"
 
 static void M291CW(uint32 A, uint8 V) {
-	setchr1(A, V | ((EXPREGS[0] << 2) & 0x100));
+	setchr1(A, V | ((mmc3.expregs[0] << 2) & 0x100));
 }
 
 static void M291PW(uint32 A, uint8 V) {
-	if (EXPREGS[0] & 0x20)
-		setprg32(0x8000, ((EXPREGS[0] >> 1) & 3) | ((EXPREGS[0] >> 4) & 4));
+	if (mmc3.expregs[0] & 0x20)
+		setprg32(0x8000, ((mmc3.expregs[0] >> 1) & 3) | ((mmc3.expregs[0] >> 4) & 4));
 	else
-		setprg8(A, (V & 0x0F) | ((EXPREGS[0] >> 2) & 0x10));
+		setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] >> 2) & 0x10));
 }
 
 static DECLFW(M291Write) {
-	EXPREGS[0] = V;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = V;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void M291Reset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
 static void M291Power(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, M291Write);
 }
@@ -55,5 +55,5 @@ void Mapper291_Init(CartInfo *info) {
 	pwrap = M291PW;
 	info->Power = M291Power;
 	info->Reset = M291Reset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

@@ -32,29 +32,29 @@ static void BMCL6IN1CW(uint32 A, uint8 V) {
 }
 
 static void BMCL6IN1PW(uint32 A, uint8 V) {
-	if (EXPREGS[0] & 0x0C)
-		setprg8(A, (V & 0x0F) | (EXPREGS[0] & 0xC0) >> 2);
+	if (mmc3.expregs[0] & 0x0C)
+		setprg8(A, (V & 0x0F) | (mmc3.expregs[0] & 0xC0) >> 2);
 	else
-		setprg32(0x8000, ((EXPREGS[0] & 0xC0) >> 4) | (EXPREGS[0] & 0x03));
+		setprg32(0x8000, ((mmc3.expregs[0] & 0xC0) >> 4) | (mmc3.expregs[0] & 0x03));
 }
 
 static void BMCL6IN1MW(uint8 V) {
-	if (EXPREGS[0] & 0x20)
-		setmirror(MI_0 + ((EXPREGS[0] & 0x10) >> 1));
+	if (mmc3.expregs[0] & 0x20)
+		setmirror(MI_0 + ((mmc3.expregs[0] & 0x10) >> 1));
 	else {
-		A000B = V;
+		mmc3.mirroring = V;
 		setmirror((V & 1) ^ 1);
 	}
 }
 
 static DECLFW(BMCL6IN1Write) {
-	EXPREGS[0] = V;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = V;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void BMCL6IN1Reset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
@@ -70,5 +70,5 @@ void BMCL6IN1_Init(CartInfo *info) {
 	mwrap = BMCL6IN1MW;
 	info->Power = BMCL6IN1Power;
 	info->Reset = BMCL6IN1Reset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

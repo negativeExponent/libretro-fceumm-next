@@ -31,16 +31,16 @@ static uint32 CHRRAMSIZE;
 
 static void M199PW(uint32 A, uint8 V) {
 	setprg8(A, V);
-	setprg8(0xC000, EXPREGS[0]);
-	setprg8(0xE000, EXPREGS[1]);
+	setprg8(0xC000, mmc3.expregs[0]);
+	setprg8(0xE000, mmc3.expregs[1]);
 }
 
 static void M199CW(uint32 A, uint8 V) {
 	setchr1r((V < 8) ? 0x10 : 0x00, A, V);
-	setchr1r((DRegBuf[0] < 8) ? 0x10 : 0x00, 0x0000, DRegBuf[0]);
-	setchr1r((EXPREGS[2] < 8) ? 0x10 : 0x00, 0x0400, EXPREGS[2]);
-	setchr1r((DRegBuf[1] < 8) ? 0x10 : 0x00, 0x0800, DRegBuf[1]);
-	setchr1r((EXPREGS[3] < 8) ? 0x10 : 0x00, 0x0c00, EXPREGS[3]);
+	setchr1r((mmc3.regs[0] < 8) ? 0x10 : 0x00, 0x0000, mmc3.regs[0]);
+	setchr1r((mmc3.expregs[2] < 8) ? 0x10 : 0x00, 0x0400, mmc3.expregs[2]);
+	setchr1r((mmc3.regs[1] < 8) ? 0x10 : 0x00, 0x0800, mmc3.regs[1]);
+	setchr1r((mmc3.expregs[3] < 8) ? 0x10 : 0x00, 0x0c00, mmc3.expregs[3]);
 }
 
 static void M199MW(uint8 V) {
@@ -62,10 +62,10 @@ static void M199MW(uint8 V) {
 }
 
 static DECLFW(M199Write) {
-	if ((A == 0x8001) && (MMC3_cmd & 8)) {
-		EXPREGS[MMC3_cmd & 3] = V;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+	if ((A == 0x8001) && (mmc3.cmd & 8)) {
+		mmc3.expregs[mmc3.cmd & 3] = V;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	} else if (A < 0xC000)
 		MMC3_CMDWrite(A, V);
 	else
@@ -73,10 +73,10 @@ static DECLFW(M199Write) {
 }
 
 static void M199Power(void) {
-	EXPREGS[0] = ~1;
-	EXPREGS[1] = ~0;
-	EXPREGS[2] = 1;
-	EXPREGS[3] = 3;
+	mmc3.expregs[0] = ~1;
+	mmc3.expregs[1] = ~0;
+	mmc3.expregs[2] = 1;
+	mmc3.expregs[3] = 3;
 	GenMMC3Power();
 	SetWriteHandler(0x8000, 0xFFFF, M199Write);
 }
@@ -101,5 +101,5 @@ void Mapper199_Init(CartInfo *info) {
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 
-	AddExState(EXPREGS, 4, 0, "EXPR");
+	AddExState(mmc3.expregs, 4, 0, "EXPR");
 }

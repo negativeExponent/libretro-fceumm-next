@@ -28,45 +28,45 @@
 static uint8 dip;
 
 static void Mapper134_PRGWrap(uint32 A, uint8 V) {
-	int prgAND = (EXPREGS[1] & 0x04) ? 0x0F : 0x1F;
-	int prgOR = ((EXPREGS[1] << 4) & 0x30) | ((EXPREGS[0] << 2) & 0x40);
-	if (EXPREGS[1] & 0x80) { /* NROM mode */
-		if (EXPREGS[1] & 0x08) { /* NROM-128 mode */
-			setprg8(0x8000, (((DRegBuf[6] & ~1) | 0) & prgAND) | (prgOR & ~prgAND));
-			setprg8(0xA000, (((DRegBuf[6] & ~1) | 1) & prgAND) | (prgOR & ~prgAND));
-			setprg8(0xC000, (((DRegBuf[6] & ~1) | 0) & prgAND) | (prgOR & ~prgAND));
-			setprg8(0xE000, (((DRegBuf[6] & ~1) | 1) & prgAND) | (prgOR & ~prgAND));
+	int prgAND = (mmc3.expregs[1] & 0x04) ? 0x0F : 0x1F;
+	int prgOR = ((mmc3.expregs[1] << 4) & 0x30) | ((mmc3.expregs[0] << 2) & 0x40);
+	if (mmc3.expregs[1] & 0x80) { /* NROM mode */
+		if (mmc3.expregs[1] & 0x08) { /* NROM-128 mode */
+			setprg8(0x8000, (((mmc3.regs[6] & ~1) | 0) & prgAND) | (prgOR & ~prgAND));
+			setprg8(0xA000, (((mmc3.regs[6] & ~1) | 1) & prgAND) | (prgOR & ~prgAND));
+			setprg8(0xC000, (((mmc3.regs[6] & ~1) | 0) & prgAND) | (prgOR & ~prgAND));
+			setprg8(0xE000, (((mmc3.regs[6] & ~1) | 1) & prgAND) | (prgOR & ~prgAND));
 		} else { /* NROM-256 mode */
-			setprg8(0x8000, (((DRegBuf[6] & ~3) | 0) & prgAND) | (prgOR & ~prgAND));
-			setprg8(0xA000, (((DRegBuf[6] & ~3) | 1) & prgAND) | (prgOR & ~prgAND));
-			setprg8(0xC000, (((DRegBuf[6] & ~3) | 2) & prgAND) | (prgOR & ~prgAND));
-			setprg8(0xE000, (((DRegBuf[6] & ~3) | 3) & prgAND) | (prgOR & ~prgAND));
+			setprg8(0x8000, (((mmc3.regs[6] & ~3) | 0) & prgAND) | (prgOR & ~prgAND));
+			setprg8(0xA000, (((mmc3.regs[6] & ~3) | 1) & prgAND) | (prgOR & ~prgAND));
+			setprg8(0xC000, (((mmc3.regs[6] & ~3) | 2) & prgAND) | (prgOR & ~prgAND));
+			setprg8(0xE000, (((mmc3.regs[6] & ~3) | 3) & prgAND) | (prgOR & ~prgAND));
 		}
 	} else
 		setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
 }
 
 static void Mapper134_CHRWrap(uint32 A, uint8 V) {
-	int chrAND = (EXPREGS[1] & 0x40) ? 0x7F : 0xFF;
-	int chrOR = ((EXPREGS[1] << 3) & 0x180) | ((EXPREGS[0] << 4) & 0x200);
-	if (EXPREGS[0] & 0x08)
-		V = (EXPREGS[2] << 3) | ((A >> 10) & 7); /* In CNROM mode, outer bank register 2 replaces the MMC3's CHR registers,
+	int chrAND = (mmc3.expregs[1] & 0x40) ? 0x7F : 0xFF;
+	int chrOR = ((mmc3.expregs[1] << 3) & 0x180) | ((mmc3.expregs[0] << 4) & 0x200);
+	if (mmc3.expregs[0] & 0x08)
+		V = (mmc3.expregs[2] << 3) | ((A >> 10) & 7); /* In CNROM mode, outer bank register 2 replaces the MMC3's CHR registers,
 		                                      and CHR A10-A12 are PPU A10-A12. */
 	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 
 static DECLFR(Mapper134_Read) {
-	return (EXPREGS[0] & 0x40) ? dip : CartBR(A);
+	return (mmc3.expregs[0] & 0x40) ? dip : CartBR(A);
 }
 
 static DECLFW(Mapper134_Write) {
-	if (~EXPREGS[0] & 0x80) {
-		EXPREGS[A & 3] = V;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+	if (~mmc3.expregs[0] & 0x80) {
+		mmc3.expregs[A & 3] = V;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	} else if ((A & 3) == 2) {
-		EXPREGS[A & 3] = (EXPREGS[A & 3] & ~3) | (V & 3);
-		FixMMC3CHR(MMC3_cmd);
+		mmc3.expregs[A & 3] = (mmc3.expregs[A & 3] & ~3) | (V & 3);
+		FixMMC3CHR(mmc3.cmd);
 	}
 	CartBW(A, V);
 }
@@ -74,13 +74,13 @@ static DECLFW(Mapper134_Write) {
 static void Mapper134_Reset(void) {
 	dip++;
 	dip &= 15;
-	EXPREGS[0] = EXPREGS[1] = EXPREGS[2] = EXPREGS[3] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
 	MMC3RegReset();
 }
 
 static void Mapper134_Power(void) {
 	dip = 0;
-	EXPREGS[0] = EXPREGS[1] = EXPREGS[2] = EXPREGS[3] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, Mapper134_Write);
 	SetReadHandler(0x8000, 0xFFFF, Mapper134_Read);
@@ -92,6 +92,6 @@ void Mapper134_Init(CartInfo *info) {
 	pwrap = Mapper134_PRGWrap;
 	info->Power = Mapper134_Power;
 	info->Reset = Mapper134_Reset;
-	AddExState(EXPREGS, 4, 0, "EXPR");
+	AddExState(mmc3.expregs, 4, 0, "EXPR");
 	AddExState(&dip, 1, 0, "DIPS");
 }

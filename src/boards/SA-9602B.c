@@ -22,8 +22,8 @@
 #include "mmc3.h"
 
 static void SA9602BPW(uint32 A, uint8 V) {
-	setprg8(A, (EXPREGS[1] & 0xC0) | (V & 0x3F));
-	if (MMC3_cmd & 0x40)
+	setprg8(A, (mmc3.expregs[1] & 0xC0) | (V & 0x3F));
+	if (mmc3.cmd & 0x40)
 		setprg8(0x8000, 62);
 	else
 		setprg8(0xc000, 62);
@@ -32,11 +32,11 @@ static void SA9602BPW(uint32 A, uint8 V) {
 
 static DECLFW(SA9602BWrite) {
 	switch (A & 0xe001) {
-	case 0x8000: EXPREGS[0] = V; break;
+	case 0x8000: mmc3.expregs[0] = V; break;
 	case 0x8001:
-		if ((EXPREGS[0] & 7) < 6) {
-			EXPREGS[1] = V;
-			FixMMC3PRG(MMC3_cmd);
+		if ((mmc3.expregs[0] & 7) < 6) {
+			mmc3.expregs[1] = V;
+			FixMMC3PRG(mmc3.cmd);
 		}
 		break;
 	}
@@ -44,7 +44,7 @@ static DECLFW(SA9602BWrite) {
 }
 
 static void SA9602BPower(void) {
-	EXPREGS[0] = EXPREGS[1] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = 0;
 	GenMMC3Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xBFFF, SA9602BWrite);
@@ -53,9 +53,9 @@ static void SA9602BPower(void) {
 void SA9602B_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 0, 0, 0);
 	pwrap = SA9602BPW;
-	mmc3opts |= 2;
+	mmc3.opts |= 2;
 	info->SaveGame[0] = UNIFchrrama;
 	info->SaveGameLen[0] = 32 * 1024;
 	info->Power = SA9602BPower;
-	AddExState(EXPREGS, 2, 0, "EXPR");
+	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }

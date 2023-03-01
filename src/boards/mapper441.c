@@ -24,38 +24,38 @@
 #include "mmc3.h"
 
 static void M441PW(uint32 A, uint8 V) {
-	uint8 prgAND = (EXPREGS[0] & 0x08) ? 0x0F : 0x1F;
-	uint8 prgOR  = (EXPREGS[0] << 4) & 0x30;
-	if (EXPREGS[0] & 0x04) {
-		setprg8(0x8000, (prgOR & ~prgAND) | ((DRegBuf[6] & ~0x02) & prgAND));
-		setprg8(0xA000, (prgOR & ~prgAND) | ((DRegBuf[7] & ~0x02) & prgAND));
-		setprg8(0xC000, (prgOR & ~prgAND) | ((DRegBuf[6] |  0x02) & prgAND));
-		setprg8(0xE000, (prgOR & ~prgAND) | ((DRegBuf[7] |  0x02) & prgAND));
+	uint8 prgAND = (mmc3.expregs[0] & 0x08) ? 0x0F : 0x1F;
+	uint8 prgOR  = (mmc3.expregs[0] << 4) & 0x30;
+	if (mmc3.expregs[0] & 0x04) {
+		setprg8(0x8000, (prgOR & ~prgAND) | ((mmc3.regs[6] & ~0x02) & prgAND));
+		setprg8(0xA000, (prgOR & ~prgAND) | ((mmc3.regs[7] & ~0x02) & prgAND));
+		setprg8(0xC000, (prgOR & ~prgAND) | ((mmc3.regs[6] |  0x02) & prgAND));
+		setprg8(0xE000, (prgOR & ~prgAND) | ((mmc3.regs[7] |  0x02) & prgAND));
 	} else
 		setprg8(A, (prgOR & ~prgAND) | (V & prgAND));
 }
 
 static void M441CW(uint32 A, uint8 V) {
-	uint16 chrAND = (EXPREGS[0] & 0x40) ? 0x7F : 0xFF;
-	uint16 chrOR  = (EXPREGS[0] << 3) & 0x180;
+	uint16 chrAND = (mmc3.expregs[0] & 0x40) ? 0x7F : 0xFF;
+	uint16 chrOR  = (mmc3.expregs[0] << 3) & 0x180;
 	setchr1(A, (chrOR & ~chrAND) | (V & chrAND));
 }
 
 static DECLFW(M441Write) {
-	if (~EXPREGS[0] & 0x80) {
-		EXPREGS[0] = V;
-	    FixMMC3PRG(MMC3_cmd);
-	    FixMMC3CHR(MMC3_cmd);
+	if (~mmc3.expregs[0] & 0x80) {
+		mmc3.expregs[0] = V;
+	    FixMMC3PRG(mmc3.cmd);
+	    FixMMC3CHR(mmc3.cmd);
     }
 }
 
 static void M441Reset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
 static void M441Power(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, M441Write);
 }
@@ -66,5 +66,5 @@ void Mapper441_Init(CartInfo *info) {
 	pwrap       = M441PW;
 	info->Power = M441Power;
 	info->Reset = M441Reset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

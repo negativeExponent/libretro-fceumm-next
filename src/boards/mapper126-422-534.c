@@ -31,19 +31,19 @@ static uint8 invertC000;
 static uint8 dipSwitch;
 
 static void wrapPRG(uint32 A, uint8 V) {
-	int prgAND = (EXPREGS[0] & 0x40) ? 0x0F : 0x1F; /* 128 KiB or 256 KiB inner PRG bank selection */
-	int prgOR = (((EXPREGS[0] << 4) & 0x70) | ((EXPREGS[0] << 3) & 0x180)) & ~prgAND; /* outer PRG bank */
-	switch (EXPREGS[3] & 3) {
+	int prgAND = (mmc3.expregs[0] & 0x40) ? 0x0F : 0x1F; /* 128 KiB or 256 KiB inner PRG bank selection */
+	int prgOR = (((mmc3.expregs[0] << 4) & 0x70) | ((mmc3.expregs[0] << 3) & 0x180)) & ~prgAND; /* outer PRG bank */
+	switch (mmc3.expregs[3] & 3) {
 		case 0: /* MMC3 PRG mode */
 			break;
 		case 1:
 		case 2: /* NROM-128 mode: MMC3 register 6 applies throughout $8000-$FFFF, MMC3 A13 replaced with CPU A13. */
-			V = (DRegBuf[6] & ~1) | ((A >> 13) & 1);
+			V = (mmc3.regs[6] & ~1) | ((A >> 13) & 1);
 			setprg8(A ^ 0x4000, (V & prgAND) | prgOR);	/* wrapPRG is only called with A containing the switchable banks, so we need to
 														manually switch the normally fixed banks in this mode as well. */
 			break;
 		case 3: /* NROM-256 mode: MMC3 register 6 applies throughout $8000-$FFFF, MMC3 A13-14 replaced with CPU A13-14. */
-			V = (DRegBuf[6] & ~3) | ((A >> 13) & 3);
+			V = (mmc3.regs[6] & ~3) | ((A >> 13) & 3);
 			setprg8(A ^ 0x4000, ((V ^ 2) & prgAND) | prgOR);	/* wrapPRG is only called with A containing the switchable banks, so we need to manually
 															switch the normally fixed banks in this mode as well. */
 			break;
@@ -52,38 +52,38 @@ static void wrapPRG(uint32 A, uint8 V) {
 }
 
 static void wrapCHR(uint32 A, uint8 V) {
-	int chrAND = EXPREGS[0] & 0x80 ? 0x7F : 0xFF; /* 128 KiB or 256 KiB innter CHR bank selection */
+	int chrAND = mmc3.expregs[0] & 0x80 ? 0x7F : 0xFF; /* 128 KiB or 256 KiB innter CHR bank selection */
 	int chrOR; /* outer CHR bank */
 	if (reverseCHR_A18_A19) /* Mapper 126 swaps CHR A18 and A19 */
-		chrOR = ((EXPREGS[0] << 4) & 0x080) | ((EXPREGS[0] << 3) & 0x100) | ((EXPREGS[0] << 5) & 0x200);
+		chrOR = ((mmc3.expregs[0] << 4) & 0x080) | ((mmc3.expregs[0] << 3) & 0x100) | ((mmc3.expregs[0] << 5) & 0x200);
 	else
-		chrOR = (EXPREGS[0] << 4) & 0x380;
+		chrOR = (mmc3.expregs[0] << 4) & 0x380;
 
-	if (EXPREGS[3] & 0x10) /* CNROM mode: 8 KiB inner CHR bank comes from outer bank register #2 */
-		setchr8((EXPREGS[2] & (chrAND >> 3)) | ((chrOR & ~chrAND) >> 3));
+	if (mmc3.expregs[3] & 0x10) /* CNROM mode: 8 KiB inner CHR bank comes from outer bank register #2 */
+		setchr8((mmc3.expregs[2] & (chrAND >> 3)) | ((chrOR & ~chrAND) >> 3));
 	else /* MMC3 CHR mode */
 		setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 
 static DECLFW(writeWRAM) {
-	if (~EXPREGS[3] & 0x80) {
+	if (~mmc3.expregs[3] & 0x80) {
 		/* Lock bit clear: Update any outer bank register */
-		EXPREGS[A & 3] = V;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+		mmc3.expregs[A & 3] = V;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	} else if ((A & 3) == 2) {
 		/* Lock bit set: Only update the bottom one or two bits of the CNROM bank */
-		int latchMask = (EXPREGS[2] & 0x10) ? 1 : 3; /* 16 or 32 KiB inner CHR bank selection */
-		EXPREGS[2] &= ~latchMask;
-		EXPREGS[2] |= V & latchMask;
-		FixMMC3CHR(MMC3_cmd);
+		int latchMask = (mmc3.expregs[2] & 0x10) ? 1 : 3; /* 16 or 32 KiB inner CHR bank selection */
+		mmc3.expregs[2] &= ~latchMask;
+		mmc3.expregs[2] |= V & latchMask;
+		FixMMC3CHR(mmc3.cmd);
 	}
 	CartBW(A, V);
 }
 
 static DECLFR(readDIP) {
 	uint8 result = CartBR(A);
-	if (EXPREGS[1] & 1)
+	if (mmc3.expregs[1] & 1)
 		result = (result & ~3) | (dipSwitch & 3); /* Replace bottom two bits with solder pad or DIP switch setting if so selected */
 	return result;
 }
@@ -94,13 +94,13 @@ static DECLFW(writeIRQ) {
 
 static void ResetCommon(void) {
 	dipSwitch++; /* Soft-resetting cycles through solder pad or DIP switch settings */
-	EXPREGS[0] = EXPREGS[1] = EXPREGS[2] = EXPREGS[3] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
 	MMC3RegReset();
 }
 
 static void PowerCommon(void) {
 	dipSwitch = 0;
-	EXPREGS[0] = EXPREGS[1] = EXPREGS[2] = EXPREGS[3] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, writeWRAM);
 	SetReadHandler(0x8000, 0xFFFF, readDIP);
@@ -116,7 +116,7 @@ static void InitCommon(CartInfo *info) {
 	info->Power = PowerCommon;
 	info->Reset = ResetCommon;
 
-	AddExState(EXPREGS, 4, 0, "EXPR");
+	AddExState(mmc3.expregs, 4, 0, "EXPR");
 	AddExState(&dipSwitch, 1, 0, "DPSW");
 }
 
