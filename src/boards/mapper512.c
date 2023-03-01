@@ -35,16 +35,16 @@ static uint32 CHRRAMSIZE = 8192;
 extern uint8 *ExtraNTARAM;
 
 static void M512MW(uint8 V) {
-	if (EXPREGS[0] == 1) {
+	if (mmc3.expregs[0] == 1) {
 		SetupCartMirroring(4, 1, ExtraNTARAM);
 	} else {
-		A000B = V;
+		mmc3.mirroring = V;
 		SetupCartMirroring((V & 1) ^ 1, 0, 0);
 	}
 }
 
 static void M512CW(uint32 A, uint8 V) {
-	if (EXPREGS[0] & 2)
+	if (mmc3.expregs[0] & 2)
 		setchr1r(0x10, A, (V & 0x03));
 	else
 		setchr1(A, V);
@@ -56,8 +56,8 @@ static void M512PW(uint32 A, uint8 V) {
 
 static DECLFW(M512Write) {
 	if (A & 0x100) {
-		EXPREGS[0] = V & 3;
-		FixMMC3CHR(MMC3_cmd);
+		mmc3.expregs[0] = V & 3;
+		FixMMC3CHR(mmc3.cmd);
 	}
 }
 
@@ -69,7 +69,7 @@ static void M512Close(void) {
 }
 
 static void M512Power(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x4100, 0x4FFF, M512Write);
 }
@@ -81,7 +81,7 @@ void Mapper512_Init(CartInfo *info) {
 	mwrap = M512MW;
 	info->Power = M512Power;
 	info->Close = M512Close;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);

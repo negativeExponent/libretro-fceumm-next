@@ -25,29 +25,29 @@
 #include "mmc3.h"
 
 static void Mapper436_PWrap(uint32 A, uint8 V) {
-	if (EXPREGS[0] & 0x01)
-		setprg8(A, (V & 0x0F) | ((EXPREGS[0] >> 2) & 0x30));
+	if (mmc3.expregs[0] & 0x01)
+		setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] >> 2) & 0x30));
 	else if (A == 0x8000)
-		setprg32(A, (EXPREGS[0] >> 4));
+		setprg32(A, (mmc3.expregs[0] >> 4));
 }
 
 static void Mapper436_CWrap(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | ((EXPREGS[0] << 1) & ~0x7F));
+	setchr1(A, (V & 0x7F) | ((mmc3.expregs[0] << 1) & ~0x7F));
 }
 
 static DECLFW(Mapper436_Write) {
-	EXPREGS[0] = A & 0xFF;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = A & 0xFF;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void Mapper436_Reset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
 static void Mapper436_Power(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, Mapper436_Write);
 }
@@ -58,5 +58,5 @@ void Mapper436_Init(CartInfo *info) {
 	cwrap = Mapper436_CWrap;
 	info->Power = Mapper436_Power;
 	info->Reset = Mapper436_Reset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

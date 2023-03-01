@@ -36,28 +36,28 @@ static void M353PPU(uint32 A) {
 	A &= 0x1FFF;
 	A >>= 10;
 	PPUCHRBus = A;
-	if (EXPREGS[0] == 0)
+	if (mmc3.expregs[0] == 0)
 		setmirror(MI_0 + MIR[A]);
 }
 
 static void M353PW(uint32 A, uint8 V) {
 	uint8 bank = V;
 
-	if (EXPREGS[0] == 2) {
+	if (mmc3.expregs[0] == 2) {
 		bank &= 0x0F;
-		bank |= (DRegBuf[0] & 0x80) ? 0x10 : 0x00;
-		bank |= (EXPREGS[0] << 5);
+		bank |= (mmc3.regs[0] & 0x80) ? 0x10 : 0x00;
+		bank |= (mmc3.expregs[0] << 5);
 	} else {
-		if ((EXPREGS[0] == 3) && !(DRegBuf[0] & 0x80)) {
+		if ((mmc3.expregs[0] == 3) && !(mmc3.regs[0] & 0x80)) {
 			switch (A & 0xF000) {
 				case 0xC000:
 				case 0xE000:
-					bank = DRegBuf[6 + ((A >> 13) & 1)] | 0x70;
+					bank = mmc3.regs[6 + ((A >> 13) & 1)] | 0x70;
 					break;
 			}
 		} else {
 			bank &= 0x1F;
-			bank |= (EXPREGS[0] << 5);
+			bank |= (mmc3.expregs[0] << 5);
 		}
 	}
 
@@ -65,32 +65,32 @@ static void M353PW(uint32 A, uint8 V) {
 }
 
 static void M353CW(uint32 A, uint8 V) {
-	if ((EXPREGS[0] == 2) && (DRegBuf[0] & 0x80))
+	if ((mmc3.expregs[0] == 2) && (mmc3.regs[0] & 0x80))
 		setchr8r(0x10, 0);
 	else
-		setchr1(A, (V & 0x7F) | ((EXPREGS[0]) << 7));
+		setchr1(A, (V & 0x7F) | ((mmc3.expregs[0]) << 7));
 
 	MIR[A >> 10] = V >> 7;
-	if ((EXPREGS[0] == 0) && (PPUCHRBus == (A >> 10)))
+	if ((mmc3.expregs[0] == 0) && (PPUCHRBus == (A >> 10)))
 		setmirror(MI_0 + (V >> 7));
 }
 
 static void M353MW(uint8 V) {
-	if (EXPREGS[0] != 0) {
-		A000B = V;
+	if (mmc3.expregs[0] != 0) {
+		mmc3.mirroring = V;
 		setmirror((V & 1) ^ 1);
 	}
 }
 
 static DECLFW(M353Write) {
 	if (A & 0x80) {
-		EXPREGS[0] = (A >> 13) & 0x03;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+		mmc3.expregs[0] = (A >> 13) & 0x03;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	} else {
 		if (A < 0xC000) {
 			MMC3_CMDWrite(A, V);
-			FixMMC3PRG(MMC3_cmd);
+			FixMMC3PRG(mmc3.cmd);
 		} else
 			MMC3_IRQWrite(A, V);
 	}
@@ -98,13 +98,13 @@ static DECLFW(M353Write) {
 
 static void M353Power(void) {
 	FDSSoundPower();
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x8000, 0xFFFF, M353Write);
 }
 
 static void M353Reset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 	FDSSoundReset();
 }
@@ -125,7 +125,7 @@ void Mapper353_Init(CartInfo *info) {
 	info->Power = M353Power;
 	info->Close = M353Close;
 	info->Reset = M353Reset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

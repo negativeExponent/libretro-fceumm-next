@@ -29,30 +29,30 @@
 #include "mmc3.h"
 
 static void M395CW(uint32 A, uint8 V) {
-	uint8 mask = EXPREGS[1] & 0x40 ? 0x7F : 0xFF;
-	setchr1(A, (V & mask) | ((EXPREGS[1] & 0x10) << 3) | ((EXPREGS[0] & 0x30) << 4) | ((EXPREGS[1] & 0x20) << 5));
+	uint8 mask = mmc3.expregs[1] & 0x40 ? 0x7F : 0xFF;
+	setchr1(A, (V & mask) | ((mmc3.expregs[1] & 0x10) << 3) | ((mmc3.expregs[0] & 0x30) << 4) | ((mmc3.expregs[1] & 0x20) << 5));
 }
 
 static void M395PW(uint32 A, uint8 V) {
-	uint8 mask = EXPREGS[1] & 8 ? 0x0F : 0x1F;
-	setprg8(A, (V & mask) | ((EXPREGS[0] & 0x30) << 1) | ((EXPREGS[0] & 8) << 4) | ((EXPREGS[1] & 1) << 4));
+	uint8 mask = mmc3.expregs[1] & 8 ? 0x0F : 0x1F;
+	setprg8(A, (V & mask) | ((mmc3.expregs[0] & 0x30) << 1) | ((mmc3.expregs[0] & 8) << 4) | ((mmc3.expregs[1] & 1) << 4));
 }
 
 static DECLFW(M395Write) {
-	if (!(EXPREGS[1] & 0x80)) {
-		EXPREGS[(A >> 4) & 1] = V;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+	if (!(mmc3.expregs[1] & 0x80)) {
+		mmc3.expregs[(A >> 4) & 1] = V;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 }
 
 static void M395Reset(void) {
-	EXPREGS[0] = EXPREGS[1] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = 0;
 	MMC3RegReset();
 }
 
 static void M395Power(void) {
-	EXPREGS[0] = EXPREGS[1] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, M395Write);
 }
@@ -63,5 +63,5 @@ void Mapper395_Init(CartInfo *info) {
 	pwrap = M395PW;
 	info->Power = M395Power;
 	info->Reset = M395Reset;
-	AddExState(EXPREGS, 2, 0, "EXPR");
+	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }

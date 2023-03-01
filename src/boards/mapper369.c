@@ -84,8 +84,8 @@ static void SyncCHR(uint32 A, uint8 V) {
 static DECLFW(M369WriteLo) {
 	if ((A & 0xC100) == 0x4100) {
 		mode = V;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 }
 
@@ -102,8 +102,8 @@ static DECLFW(M369Write) {
 				break;
 			case 0xE000:
 				smb2_reg = V & 7;
-				FixMMC3PRG(MMC3_cmd);
-				FixMMC3CHR(MMC3_cmd);
+				FixMMC3PRG(mmc3.cmd);
+				FixMMC3CHR(mmc3.cmd);
 				break;
 		}
 	} else {
@@ -113,8 +113,8 @@ static DECLFW(M369Write) {
 			case 0xA000:
 			case 0xA001:
 				MMC3_CMDWrite(A, V);
-				FixMMC3PRG(MMC3_cmd);
-				FixMMC3CHR(MMC3_cmd);
+				FixMMC3PRG(mmc3.cmd);
+				FixMMC3CHR(mmc3.cmd);
 				break;
 			case 0xC000:
 				mmc3_latch = V;

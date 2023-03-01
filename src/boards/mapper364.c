@@ -23,23 +23,23 @@
 #include "mmc3.h"
 
 static void M364CW(uint32 A, uint8 V) {
-	V &= (EXPREGS[0] & 0x20) ? 0x7F : 0xFF;
-	setchr1(A, V | ((EXPREGS[0] << 4) & 0x100));
+	V &= (mmc3.expregs[0] & 0x20) ? 0x7F : 0xFF;
+	setchr1(A, V | ((mmc3.expregs[0] << 4) & 0x100));
 }
 
 static void M364PW(uint32 A, uint8 V) {
-	V &= (EXPREGS[0] & 0x20) ? 0x0F : 0x1F;
-	setprg8(A, V | ((EXPREGS[0] >> 1) & 0x20));
+	V &= (mmc3.expregs[0] & 0x20) ? 0x0F : 0x1F;
+	setprg8(A, V | ((mmc3.expregs[0] >> 1) & 0x20));
 }
 
 static DECLFW(M364Write) {
-	EXPREGS[0] = V;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = V;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void M364Power(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x7000, 0x7FFF, M364Write);
 }
@@ -49,5 +49,5 @@ void Mapper364_Init(CartInfo *info) {
 	pwrap = M364PW;
 	cwrap = M364CW;
 	info->Power = M364Power;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

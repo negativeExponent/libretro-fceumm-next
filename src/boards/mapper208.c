@@ -50,36 +50,36 @@ static const uint8 lut[256] = {
 
 static void M208PW(uint32 A, uint8 V) {
 	if (submapper == 1)
-		setprg32(0x8000, DRegBuf[6] >> 2);
+		setprg32(0x8000, mmc3.regs[6] >> 2);
 	else
-		setprg32(0x8000, (EXPREGS[5] & 0x1) | ((EXPREGS[5] >> 3) & 0x2));
+		setprg32(0x8000, (mmc3.expregs[5] & 0x1) | ((mmc3.expregs[5] >> 3) & 0x2));
 }
 
 static void M208MW(uint8 V) {
 	if (submapper == 1)
 		setmirror((V & 1) ^ 1);
 	else
-		setmirror(((EXPREGS[5] >> 5) & 1) ^ 1);
+		setmirror(((mmc3.expregs[5] >> 5) & 1) ^ 1);
 }
 
 static DECLFW(M208Write) {
-	EXPREGS[5] = V;
-	FixMMC3PRG(MMC3_cmd);
+	mmc3.expregs[5] = V;
+	FixMMC3PRG(mmc3.cmd);
 }
 
 static DECLFW(M208ProtWrite) {
 	if (A <= 0x57FF)
-		EXPREGS[4] = V;
+		mmc3.expregs[4] = V;
 	else
-		EXPREGS[(A & 0x03)] = V ^ lut[EXPREGS[4]];
+		mmc3.expregs[(A & 0x03)] = V ^ lut[mmc3.expregs[4]];
 }
 
 static DECLFR(M208ProtRead) {
-	return (EXPREGS[(A & 0x3)]);
+	return (mmc3.expregs[(A & 0x3)]);
 }
 
 static void M208Power(void) {
-	EXPREGS[5] = 0x11;
+	mmc3.expregs[5] = 0x11;
 	GenMMC3Power();
 	SetWriteHandler(0x4800, 0x4fff, M208Write);
 	SetWriteHandler(0x6800, 0x6fff, M208Write);
@@ -93,6 +93,6 @@ void Mapper208_Init(CartInfo *info) {
 	pwrap = M208PW;
 	mwrap = M208MW;
 	info->Power = M208Power;
-	AddExState(EXPREGS, 6, 0, "EXPR");
+	AddExState(mmc3.expregs, 6, 0, "EXPR");
 	submapper = info->submapper;
 }

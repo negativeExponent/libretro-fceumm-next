@@ -29,11 +29,11 @@
 static const uint8 lut[4] = { 0x00, 0x02, 0x02, 0x03 };
 
 static DECLFW(UNL6035052ProtWrite) {
-	EXPREGS[0] = lut[V & 3];
+	mmc3.expregs[0] = lut[V & 3];
 }
 
 static DECLFR(UNL6035052ProtRead) {
-	return EXPREGS[0];
+	return mmc3.expregs[0];
 }
 
 static void UNL6035052Power(void) {
@@ -45,5 +45,5 @@ static void UNL6035052Power(void) {
 void UNL6035052_Init(CartInfo *info) {
 	GenMMC3_Init(info, 128, 256, 0, 0);
 	info->Power = UNL6035052Power;
-	AddExState(EXPREGS, 6, 0, "EXPR");
+	AddExState(mmc3.expregs, 6, 0, "EXPR");
 }

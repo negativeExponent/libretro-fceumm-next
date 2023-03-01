@@ -24,9 +24,9 @@
 extern uint8 m114_perm[8];
 
 static void H2288PW(uint32 A, uint8 V) {
-	if (EXPREGS[0] & 0x40) {
-		uint8 bank = (EXPREGS[0] & 5) | ((EXPREGS[0] & 8) >> 2) | ((EXPREGS[0] & 0x20) >> 2);
-		if (EXPREGS[0] & 2)
+	if (mmc3.expregs[0] & 0x40) {
+		uint8 bank = (mmc3.expregs[0] & 5) | ((mmc3.expregs[0] & 8) >> 2) | ((mmc3.expregs[0] & 0x20) >> 2);
+		if (mmc3.expregs[0] & 2)
 			setprg32(0x8000, bank >> 1);
 		else {
 			setprg16(0x8000, bank);
@@ -46,15 +46,15 @@ static DECLFW(H2288WriteHi) {
 static DECLFW(H2288WriteLo) {
 	if (A & 0x800) {
 		if (A & 1)
-			EXPREGS[1] = V;
+			mmc3.expregs[1] = V;
 		else
-			EXPREGS[0] = V;
-		FixMMC3PRG(MMC3_cmd);
+			mmc3.expregs[0] = V;
+		FixMMC3PRG(mmc3.cmd);
 	}
 }
 
 static void H2288Power(void) {
-	EXPREGS[0] = EXPREGS[1] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = 0;
 	GenMMC3Power();
 /*	SetReadHandler(0x5000,0x5FFF,H2288Read); */
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
@@ -66,5 +66,5 @@ void UNLH2288_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 0, 0);
 	pwrap = H2288PW;
 	info->Power = H2288Power;
-	AddExState(EXPREGS, 2, 0, "EXPR");
+	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }

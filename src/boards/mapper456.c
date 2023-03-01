@@ -22,28 +22,28 @@
 #include "mmc3.h"
 
 static void Mapper456_PRGWrap(uint32 A, uint8 V) {
-	setprg8(A, (V & 0x0F) | (EXPREGS[0] << 4));
+	setprg8(A, (V & 0x0F) | (mmc3.expregs[0] << 4));
 }
 
 static void Mapper456_CHRWrap(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | (EXPREGS[0] << 7));
+	setchr1(A, (V & 0x7F) | (mmc3.expregs[0] << 7));
 }
 
 static DECLFW(Mapper456_Write) {
 	if (A & 0x100) {
-		EXPREGS[0] = V;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+		mmc3.expregs[0] = V;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 }
 
 static void Mapper456_Reset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
 static void Mapper456_Power(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x4020, 0x5FFF, Mapper456_Write);
 }
@@ -54,5 +54,5 @@ void Mapper456_Init(CartInfo *info) {
 	pwrap = Mapper456_PRGWrap;
 	info->Power = Mapper456_Power;
 	info->Reset = Mapper456_Reset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

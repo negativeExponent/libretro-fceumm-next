@@ -22,52 +22,52 @@
 #include "mmc3.h"
 
 static void UNLA9746PWrap(uint32 A, uint8 V) {
-	setprg8(A, (EXPREGS[1] << 4) | (V & 0x0F));
+	setprg8(A, (mmc3.expregs[1] << 4) | (V & 0x0F));
 }
 
 static void UNLA9746CWrap(uint32 A, uint8 V) {
-	setchr1(A, (EXPREGS[1] << 7) | (V & 0x7F));
+	setchr1(A, (mmc3.expregs[1] << 7) | (V & 0x7F));
 }
 
 static DECLFW(UNLA9746WriteOuter) {
 	switch (A & 1) {
 		case 0:
-			EXPREGS[1] = (EXPREGS[1] & ~1) | ((V >> 3) & 1);
+			mmc3.expregs[1] = (mmc3.expregs[1] & ~1) | ((V >> 3) & 1);
 			break;
 		case 1:
-			EXPREGS[1] = (EXPREGS[1] & ~2) | ((V >> 4) & 2);
+			mmc3.expregs[1] = (mmc3.expregs[1] & ~2) | ((V >> 4) & 2);
 			break;
 	}
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static DECLFW(UNLA9746WriteASIC) {
 	int index;
 
 	if (A & 1) { /* Register data */
-		if (~EXPREGS[0] & 0x20) { /* Scrambled mode inactive */
+		if (~mmc3.expregs[0] & 0x20) { /* Scrambled mode inactive */
 			MMC3_CMDWrite(A, V);
 		} else { /* Scrambled mode active */
-			if ((MMC3_cmd >= 0x08) && (MMC3_cmd <= 0x1F)) { /* Scrambled CHR register */
-				index = (MMC3_cmd - 8) >> 2;
-				if (MMC3_cmd & 1) { /* LSB nibble */
-					DRegBuf[index] &= ~0x0F;
-					DRegBuf[index] |= ((V >> 1) & 0x0F);
+			if ((mmc3.cmd >= 0x08) && (mmc3.cmd <= 0x1F)) { /* Scrambled CHR register */
+				index = (mmc3.cmd - 8) >> 2;
+				if (mmc3.cmd & 1) { /* LSB nibble */
+					mmc3.regs[index] &= ~0x0F;
+					mmc3.regs[index] |= ((V >> 1) & 0x0F);
 				} else { /* MSB nibble */
-					DRegBuf[index] &= ~0xF0;
-					DRegBuf[index] |= ((V << 4) & 0xF0);
+					mmc3.regs[index] &= ~0xF0;
+					mmc3.regs[index] |= ((V << 4) & 0xF0);
 				}
-				FixMMC3CHR(MMC3_cmd);
-			} else if ((MMC3_cmd >= 0x25) && (MMC3_cmd <= 0x26)) { /* Scrambled PRG register */
-				DRegBuf[6 | (MMC3_cmd & 1)] = ((V >> 5) & 1) | ((V >> 3) & 2) | ((V >> 1) & 4) | ((V << 1) & 8);
-				FixMMC3PRG(MMC3_cmd);
+				FixMMC3CHR(mmc3.cmd);
+			} else if ((mmc3.cmd >= 0x25) && (mmc3.cmd <= 0x26)) { /* Scrambled PRG register */
+				mmc3.regs[6 | (mmc3.cmd & 1)] = ((V >> 5) & 1) | ((V >> 3) & 2) | ((V >> 1) & 4) | ((V << 1) & 8);
+				FixMMC3PRG(mmc3.cmd);
 			}
 		}
 	} else { /* Register index */
 		MMC3_CMDWrite(A, V);
 		if (A & 2)
-			EXPREGS[0] = V;
+			mmc3.expregs[0] = V;
 	}
 }
 
@@ -75,14 +75,14 @@ static void UNLA9746Power(void) {
 	GenMMC3Power();
 	SetWriteHandler(0x5000, 0x5FFF, UNLA9746WriteOuter);
 	SetWriteHandler(0x8000, 0xBFFF, UNLA9746WriteASIC);
-	EXPREGS[0] = 0;
-	EXPREGS[1] = 3;
+	mmc3.expregs[0] = 0;
+	mmc3.expregs[1] = 3;
 	MMC3RegReset();
 }
 
 static void UNLA9746Reset(void) {
-	EXPREGS[0] = 0;
-	EXPREGS[1] = 3;
+	mmc3.expregs[0] = 0;
+	mmc3.expregs[1] = 3;
 	MMC3RegReset();
 }
 
@@ -92,5 +92,5 @@ void UNLA9746_Init(CartInfo *info) {
 	cwrap = UNLA9746CWrap;
 	info->Power = UNLA9746Power;
 	info->Reset = UNLA9746Reset;
-	AddExState(EXPREGS, 2, 0, "EXPR");
+	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }

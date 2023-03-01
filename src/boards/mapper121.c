@@ -29,54 +29,54 @@
 #include "mmc3.h"
 
 static void Sync() {
-	switch (EXPREGS[5] & 0x3F) {
+	switch (mmc3.expregs[5] & 0x3F) {
 		case 0x20:
-			EXPREGS[7] = 1;
-			EXPREGS[0] = EXPREGS[6];
+			mmc3.expregs[7] = 1;
+			mmc3.expregs[0] = mmc3.expregs[6];
 			break;
 		case 0x29:
-			EXPREGS[7] = 1;
-			EXPREGS[0] = EXPREGS[6];
+			mmc3.expregs[7] = 1;
+			mmc3.expregs[0] = mmc3.expregs[6];
 			break;
 		case 0x26:
-			EXPREGS[7] = 0;
-			EXPREGS[0] = EXPREGS[6];
+			mmc3.expregs[7] = 0;
+			mmc3.expregs[0] = mmc3.expregs[6];
 			break;
 		case 0x2B:
-			EXPREGS[7] = 1;
-			EXPREGS[0] = EXPREGS[6];
+			mmc3.expregs[7] = 1;
+			mmc3.expregs[0] = mmc3.expregs[6];
 			break;
 		case 0x2C:
-			EXPREGS[7] = 1;
-			if (EXPREGS[6])
-				EXPREGS[0] = EXPREGS[6];
+			mmc3.expregs[7] = 1;
+			if (mmc3.expregs[6])
+				mmc3.expregs[0] = mmc3.expregs[6];
 			break;
 		case 0x3C:
 		case 0x3F:
-			EXPREGS[7] = 1;
-			EXPREGS[0] = EXPREGS[6];
+			mmc3.expregs[7] = 1;
+			mmc3.expregs[0] = mmc3.expregs[6];
 			break;
 		case 0x28:
-			EXPREGS[7] = 0;
-			EXPREGS[1] = EXPREGS[6];
+			mmc3.expregs[7] = 0;
+			mmc3.expregs[1] = mmc3.expregs[6];
 			break;
 		case 0x2A:
-			EXPREGS[7] = 0;
-			EXPREGS[2] = EXPREGS[6];
+			mmc3.expregs[7] = 0;
+			mmc3.expregs[2] = mmc3.expregs[6];
 			break;
 		case 0x2F:
 			break;
 		default:
-			EXPREGS[5] = 0;
+			mmc3.expregs[5] = 0;
 			break;
 	}
 }
 
 static void M121CW(uint32 A, uint8 V) {
 	if (PRGsize[0] == CHRsize[0]) { /* A9713 multigame extension hack! */
-		setchr1(A, V | ((EXPREGS[3] & 0x80) << 1));
+		setchr1(A, V | ((mmc3.expregs[3] & 0x80) << 1));
 	} else {
-		if ((A & 0x1000) == ((MMC3_cmd & 0x80) << 5))
+		if ((A & 0x1000) == ((mmc3.cmd & 0x80) << 5))
 			setchr1(A, V | 0x100);
 		else
 			setchr1(A, V);
@@ -84,11 +84,11 @@ static void M121CW(uint32 A, uint8 V) {
 }
 
 static void M121PW(uint32 A, uint8 V) {
-	setprg8(A, (V & 0x1F) | ((EXPREGS[3] & 0x80) >> 2));
-	if (EXPREGS[5] & 0x3F) {
-		setprg8(0xE000, (EXPREGS[0]) | ((EXPREGS[3] & 0x80) >> 2));
-		setprg8(0xC000, (EXPREGS[1]) | ((EXPREGS[3] & 0x80) >> 2));
-		setprg8(0xA000, (EXPREGS[2]) | ((EXPREGS[3] & 0x80) >> 2));
+	setprg8(A, (V & 0x1F) | ((mmc3.expregs[3] & 0x80) >> 2));
+	if (mmc3.expregs[5] & 0x3F) {
+		setprg8(0xE000, (mmc3.expregs[0]) | ((mmc3.expregs[3] & 0x80) >> 2));
+		setprg8(0xC000, (mmc3.expregs[1]) | ((mmc3.expregs[3] & 0x80) >> 2));
+		setprg8(0xA000, (mmc3.expregs[2]) | ((mmc3.expregs[3] & 0x80) >> 2));
 	}
 }
 
@@ -96,50 +96,50 @@ static DECLFW(M121Write) {
 	/*	FCEU_printf("write: %04x:%04x\n",A&0xE003,V); */
 	switch (A & 0xE003) {
 		case 0x8000:
-/*		EXPREGS[5] = 0; */
+/*		mmc3.expregs[5] = 0; */
 /*		FCEU_printf("gen: %02x\n",V); */
 			MMC3_CMDWrite(A, V);
-			FixMMC3PRG(MMC3_cmd);
+			FixMMC3PRG(mmc3.cmd);
 			break;
 		case 0x8001:
-			EXPREGS[6] = ((V & 1) << 5) | ((V & 2) << 3) | ((V & 4) << 1) |
+			mmc3.expregs[6] = ((V & 1) << 5) | ((V & 2) << 3) | ((V & 4) << 1) |
 				((V & 8) >> 1) | ((V & 0x10) >> 3) | ((V & 0x20) >> 5);
-/*			FCEU_printf("bank: %02x (%02x)\n",V,EXPREGS[6]); */
-			if (!EXPREGS[7])
+/*			FCEU_printf("bank: %02x (%02x)\n",V,mmc3.expregs[6]); */
+			if (!mmc3.expregs[7])
 				Sync();
 			MMC3_CMDWrite(A, V);
-			FixMMC3PRG(MMC3_cmd);
+			FixMMC3PRG(mmc3.cmd);
 			break;
 		case 0x8003:
-			EXPREGS[5] = V;
-			/*		EXPREGS[7] = 0; */
-			/*		FCEU_printf("prot: %02x\n",EXPREGS[5]); */
+			mmc3.expregs[5] = V;
+			/*		mmc3.expregs[7] = 0; */
+			/*		FCEU_printf("prot: %02x\n",mmc3.expregs[5]); */
 			Sync();
 			MMC3_CMDWrite(0x8000, V);
-			FixMMC3PRG(MMC3_cmd);
+			FixMMC3PRG(mmc3.cmd);
 			break;
 	}
 }
 
 static uint8 prot_array[16] = { 0x83, 0x83, 0x42, 0x00 };
 static DECLFW(M121LoWrite) {
-	EXPREGS[4] = prot_array[V & 3]; /* 0x100 bit in address seems to be switch arrays 0, 2, 2, 3 (Contra Fighter) */
+	mmc3.expregs[4] = prot_array[V & 3]; /* 0x100 bit in address seems to be switch arrays 0, 2, 2, 3 (Contra Fighter) */
 	if ((A & 0x5180) == 0x5180) { /* A9713 multigame extension */
-		EXPREGS[3] = V;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+		mmc3.expregs[3] = V;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 	/*	FCEU_printf("write: %04x:%04x\n",A,V); */
 }
 
 static DECLFR(M121Read) {
-	/*	FCEU_printf("read:  %04x->\n",A,EXPREGS[0]); */
-	return EXPREGS[4];
+	/*	FCEU_printf("read:  %04x->\n",A,mmc3.expregs[0]); */
+	return mmc3.expregs[4];
 }
 
 static void M121Power(void) {
-	EXPREGS[3] = 0x80;
-	EXPREGS[5] = 0;
+	mmc3.expregs[3] = 0x80;
+	mmc3.expregs[5] = 0;
 	GenMMC3Power();
 	SetReadHandler(0x5000, 0x5FFF, M121Read);
 	SetWriteHandler(0x5000, 0x5FFF, M121LoWrite);
@@ -151,5 +151,5 @@ void Mapper121_Init(CartInfo *info) {
 	pwrap = M121PW;
 	cwrap = M121CW;
 	info->Power = M121Power;
-	AddExState(EXPREGS, 8, 0, "EXPR");
+	AddExState(mmc3.expregs, 8, 0, "EXPR");
 }

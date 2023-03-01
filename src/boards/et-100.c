@@ -45,39 +45,39 @@ static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSize;
 
 static void BMC1024CA1PW(uint32 A, uint8 V) {
-	if ((EXPREGS[0]>>3)&1)
-		setprg8(A, (V&0x1F) | ((EXPREGS[0] & 7) << 4));
+	if ((mmc3.expregs[0]>>3)&1)
+		setprg8(A, (V&0x1F) | ((mmc3.expregs[0] & 7) << 4));
 	else 
-		setprg8(A, (V&0x0F) | ((EXPREGS[0] & 7) << 4));
+		setprg8(A, (V&0x0F) | ((mmc3.expregs[0] & 7) << 4));
 }
 
 static void BMC1024CA1CW(uint32 A, uint8 V) {
-	if ((EXPREGS[0]>>4)&1)
+	if ((mmc3.expregs[0]>>4)&1)
 	 	setchr1r(0x10, A, V);
-	else if (((EXPREGS[0]>>5)&1) && ((EXPREGS[0]>>3)&1))
-		setchr1(A, V | ((EXPREGS[0] & 7) << 7));
+	else if (((mmc3.expregs[0]>>5)&1) && ((mmc3.expregs[0]>>3)&1))
+		setchr1(A, V | ((mmc3.expregs[0] & 7) << 7));
 	else
-	 	setchr1(A, (V&0x7F) | ((EXPREGS[0] & 7) << 7));
+	 	setchr1(A, (V&0x7F) | ((mmc3.expregs[0] & 7) << 7));
 }
 
 static DECLFW(BMC1024CA1Write) {
-	if (((A001B & 0xC0) == 0x80) && !(EXPREGS[0] & 7))
+	if (((mmc3.wram & 0xC0) == 0x80) && !(mmc3.expregs[0] & 7))
 	{
-		EXPREGS[0] = A & 0x3F;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+		mmc3.expregs[0] = A & 0x3F;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	} else {
 		CartBW(A, V);
 	}
 }
 
 static void BMC1024CA1Reset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
 static void BMC1024CA1Power(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, BMC1024CA1Write);
 }
@@ -100,5 +100,5 @@ void BMC1024CA1_Init(CartInfo *info) {
 	info->Power = BMC1024CA1Power;
 	info->Reset = BMC1024CA1Reset;
 	info->Close = BMC1024CA1Close;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

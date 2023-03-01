@@ -28,11 +28,11 @@
 #include "mmc3.h"
 
 static void BMCK3033CW(uint32 A, uint8 V) {
-	if (EXPREGS[2]) {
-		if (EXPREGS[3]) {
-			setchr1(A, (EXPREGS[1] << 8) | (V & 0xFF));
+	if (mmc3.expregs[2]) {
+		if (mmc3.expregs[3]) {
+			setchr1(A, (mmc3.expregs[1] << 8) | (V & 0xFF));
 		} else {
-			setchr1(A, (EXPREGS[1] << 7) | (V & 0x7F));
+			setchr1(A, (mmc3.expregs[1] << 7) | (V & 0x7F));
 		}
 	} else {
 		setchr1(A, (V & 0x7F));
@@ -40,30 +40,30 @@ static void BMCK3033CW(uint32 A, uint8 V) {
 }
 
 static void BMCK3033PW(uint32 A, uint8 V) {
-	if (EXPREGS[2]) {
-		if (EXPREGS[3]) {
-			setprg8(A, (EXPREGS[1] << 5) | (V & 0x1F));
+	if (mmc3.expregs[2]) {
+		if (mmc3.expregs[3]) {
+			setprg8(A, (mmc3.expregs[1] << 5) | (V & 0x1F));
 		} else {
-			setprg8(A, (EXPREGS[1] << 4) | (V & 0x0F));
+			setprg8(A, (mmc3.expregs[1] << 4) | (V & 0x0F));
 		}
 	} else {
-		uint32 base = (EXPREGS[1] << 3);
-		if (EXPREGS[0] & 0x03) {
-			setprg32(0x8000, base | EXPREGS[0] >> 1);
+		uint32 base = (mmc3.expregs[1] << 3);
+		if (mmc3.expregs[0] & 0x03) {
+			setprg32(0x8000, base | mmc3.expregs[0] >> 1);
 		} else {
-			setprg16(0x8000, base | EXPREGS[0]);
-			setprg16(0xC000, base | EXPREGS[0]);
+			setprg16(0x8000, base | mmc3.expregs[0]);
+			setprg16(0xC000, base | mmc3.expregs[0]);
 		}
 	}
 }
 
 static DECLFW(BMCK3033Write) {
-	EXPREGS[0] = (A & 0x07);
-	EXPREGS[1] = ((A & 0x18) >> 3) | ((A & 0x40) >> 4);
-	EXPREGS[2] = (A & 0x20);
-	EXPREGS[3] = (A & 0x80);
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = (A & 0x07);
+	mmc3.expregs[1] = ((A & 0x18) >> 3) | ((A & 0x40) >> 4);
+	mmc3.expregs[2] = (A & 0x20);
+	mmc3.expregs[3] = (A & 0x80);
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void BMCK3033Power(void) {
@@ -72,7 +72,7 @@ static void BMCK3033Power(void) {
 }
 
 static void BMCK3033Reset(void) {
-	EXPREGS[0] = EXPREGS[1] = EXPREGS[2] = EXPREGS[3] = 0;
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
 	MMC3RegReset();
 }
 
@@ -82,5 +82,5 @@ void BMCK3033_Init(CartInfo *info) {
 	cwrap = BMCK3033CW;
 	info->Power = BMCK3033Power;
 	info->Reset = BMCK3033Reset;
-	AddExState(EXPREGS, 4, 0, "EXPR");
+	AddExState(mmc3.expregs, 4, 0, "EXPR");
 }

@@ -36,34 +36,34 @@ static uint8 isK3088;
 
 static void BMC411120CCW(uint32 A, uint8 V) {
 	uint32 mask = isK3088 ? 0x07 : 0x03;
-	setchr1(A, V | ((EXPREGS[0] & mask) << 7));
+	setchr1(A, V | ((mmc3.expregs[0] & mask) << 7));
 }
 
 static void BMC411120CPW(uint32 A, uint8 V) {
 	uint32 mask = isK3088 ? 0x07 : 0x03;
-	if (EXPREGS[0] & (isK3088 ? 8 : (8 | reset_flag))) { /* 32K Mode */
+	if (mmc3.expregs[0] & (isK3088 ? 8 : (8 | reset_flag))) { /* 32K Mode */
 		if (A == 0x8000)
 			/* bit 0-1 of register should be used as outer bank regardless of banking modes */
-			setprg32(A, ((EXPREGS[0] >> 4) & 3) | ((EXPREGS[0] & mask) << 2));
+			setprg32(A, ((mmc3.expregs[0] >> 4) & 3) | ((mmc3.expregs[0] & mask) << 2));
 	} else /* MMC3 Mode */
-		setprg8(A, (V & 0x0F) | ((EXPREGS[0] & mask) << 4));
+		setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] & mask) << 4));
 }
 
 static DECLFW(BMC411120CLoWrite) {
 	/*	printf("Wr: A:%04x V:%02x\n", A, V); */
-	EXPREGS[0] = A;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = A;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void BMC411120CReset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	reset_flag ^= 4;
 	MMC3RegReset();
 }
 
 static void BMC411120CPower(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, BMC411120CLoWrite);
 }
@@ -75,7 +75,7 @@ void BMC411120C_Init(CartInfo *info) {
 	cwrap = BMC411120CCW;
 	info->Power = BMC411120CPower;
 	info->Reset = BMC411120CReset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }
 
 void BMCK3088_Init(CartInfo *info) {
@@ -85,5 +85,5 @@ void BMCK3088_Init(CartInfo *info) {
 	cwrap = BMC411120CCW;
 	info->Power = BMC411120CPower;
 	info->Reset = BMC411120CReset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

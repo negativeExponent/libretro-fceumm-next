@@ -28,7 +28,7 @@
 
 static void UNLBMW8544PW(uint32 A, uint8 V) {
 	if (A == 0x8000)
-		setprg8(A, EXPREGS[0] & 0x1F); /* the real hardware has this bank overrided with it's own register,
+		setprg8(A, mmc3.expregs[0] & 0x1F); /* the real hardware has this bank overrided with it's own register,
 		                                * but MMC3 prg swap still works and you can actually change bank C000 at the
 		                                * same time if use 0x46 cmd
 		                                */
@@ -38,29 +38,29 @@ static void UNLBMW8544PW(uint32 A, uint8 V) {
 
 static void UNLBMW8544CW(uint32 A, uint8 V) {
 	if (A == 0x0000)
-		setchr2(0x0000, (V >> 1) ^ EXPREGS[1]);
+		setchr2(0x0000, (V >> 1) ^ mmc3.expregs[1]);
 	else if (A == 0x0800)
-		setchr2(0x0800, (V >> 1) | ((EXPREGS[2] & 0x40) << 1));
+		setchr2(0x0800, (V >> 1) | ((mmc3.expregs[2] & 0x40) << 1));
 	else if (A == 0x1000)
-		setchr4(0x1000, EXPREGS[2] & 0x3F);
+		setchr4(0x1000, mmc3.expregs[2] & 0x3F);
 }
 
 static DECLFW(UNLBMW8544ProtWrite) {
 	if (!(A & 1)) {
-		EXPREGS[0] = V;
-		FixMMC3PRG(MMC3_cmd);
+		mmc3.expregs[0] = V;
+		FixMMC3PRG(mmc3.cmd);
 	}
 }
 
 static DECLFR(UNLBMW8544ProtRead) {
 	if (!fceuindbg) {
 		if (!(A & 1)) {
-			if ((EXPREGS[0] & 0xE0) == 0xC0) {
-				EXPREGS[1] = ARead[0x6a](0x6a);	/* program can latch some data from the BUS, but I can't say how exactly, */
+			if ((mmc3.expregs[0] & 0xE0) == 0xC0) {
+				mmc3.expregs[1] = ARead[0x6a](0x6a);	/* program can latch some data from the BUS, but I can't say how exactly, */
 			} else {							/* without more equipment and skills ;) probably here we can try to get any write */
-				EXPREGS[2] = ARead[0xff](0xff);	/* before the read operation */
+				mmc3.expregs[2] = ARead[0xff](0xff);	/* before the read operation */
 			}
-			FixMMC3CHR(MMC3_cmd & 0x7F);		/* there are more different behaviour of the board that's not used by game itself, so unimplemented here and */
+			FixMMC3CHR(mmc3.cmd & 0x7F);		/* there are more different behaviour of the board that's not used by game itself, so unimplemented here and */
 		}										/* actually will break the current logic ;) */
 	}
 	return 0;
@@ -77,5 +77,5 @@ void UNLBMW8544_Init(CartInfo *info) {
 	pwrap = UNLBMW8544PW;
 	cwrap = UNLBMW8544CW;
 	info->Power = UNLBMW8544Power;
-	AddExState(EXPREGS, 3, 0, "EXPR");
+	AddExState(mmc3.expregs, 3, 0, "EXPR");
 }

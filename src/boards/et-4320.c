@@ -47,31 +47,31 @@ static uint8 PPUCHRBus;
 static uint8 TKSMIR[8];
 
 static void BMC810131C_PW(uint32 A, uint8 V) {
-	if ((EXPREGS[0] >> 3) & 1)
-		setprg8(A, (V & 0x1F) | ((EXPREGS[0] & 7) << 4));
+	if ((mmc3.expregs[0] >> 3) & 1)
+		setprg8(A, (V & 0x1F) | ((mmc3.expregs[0] & 7) << 4));
 	else
-		setprg8(A, (V & 0x0F) | ((EXPREGS[0] & 7) << 4));
+		setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] & 7) << 4));
 }
 
 static void BMC810131C_CW(uint32 A, uint8 V) {
-	if ((EXPREGS[0] >> 4) & 1)
+	if ((mmc3.expregs[0] >> 4) & 1)
 		setchr1r(0x10, A, V);
-	else if (((EXPREGS[0] >> 5) & 1) && ((EXPREGS[0] >> 3) & 1))
-		setchr1(A, V | ((EXPREGS[0] & 7) << 7));
+	else if (((mmc3.expregs[0] >> 5) & 1) && ((mmc3.expregs[0] >> 3) & 1))
+		setchr1(A, V | ((mmc3.expregs[0] & 7) << 7));
 	else
-		setchr1(A, (V & 0x7F) | ((EXPREGS[0] & 7) << 7));
+		setchr1(A, (V & 0x7F) | ((mmc3.expregs[0] & 7) << 7));
 
 	TKSMIR[A >> 10] = V >> 7;
-	if (((EXPREGS[0] >> 3) & 1) && (PPUCHRBus == (A >> 10)))
+	if (((mmc3.expregs[0] >> 3) & 1) && (PPUCHRBus == (A >> 10)))
 		setmirror(MI_0 + (V >> 7));
 }
 
 static DECLFW(BMC810131C_Write) {
-	if (((A001B & 0xC0) == 0x80) && !(EXPREGS[0] & 7))
+	if (((mmc3.wram & 0xC0) == 0x80) && !(mmc3.expregs[0] & 7))
 	{
-		EXPREGS[0] = A & 0x3F;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+		mmc3.expregs[0] = A & 0x3F;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 	else {
 		CartBW(A, V);
@@ -79,12 +79,12 @@ static DECLFW(BMC810131C_Write) {
 }
 
 static void BMC810131C_Reset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
 static void BMC810131C_Power(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, BMC810131C_Write);
 }
@@ -100,7 +100,7 @@ static void TKSPPU(uint32 A) {
 	A &= 0x1FFF;
 	A >>= 10;
 	PPUCHRBus = A;
-	if ((EXPREGS[0] >> 3) & 1)
+	if ((mmc3.expregs[0] >> 3) & 1)
 		setmirror(MI_0 + TKSMIR[A]);
 }
 
@@ -116,5 +116,5 @@ void BMC810131C_Init(CartInfo *info) {
 	info->Power = BMC810131C_Power;
 	info->Reset = BMC810131C_Reset;
 	info->Close = BMC810131C_Close;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

@@ -23,7 +23,7 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-#define OUTER_BANK (((EXPREGS[0] & 0x20) >> 2) | (EXPREGS[0] & 0x06))
+#define OUTER_BANK (((mmc3.expregs[0] & 0x20) >> 2) | (mmc3.expregs[0] & 0x06))
 
 static void M267CW(uint32 A, uint8 V) {
 	setchr1(A, (V & 0x7F) | (OUTER_BANK << 6));
@@ -34,20 +34,20 @@ static void M267PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M267Write) {
-	if (!(EXPREGS[0] & 0x80)) {
-		EXPREGS[0] = V;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+	if (!(mmc3.expregs[0] & 0x80)) {
+		mmc3.expregs[0] = V;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 }
 
 static void M267Reset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
 static void M267Power(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, M267Write);
 }
@@ -58,5 +58,5 @@ void Mapper267_Init(CartInfo *info) {
 	pwrap = M267PW;
 	info->Reset = M267Reset;
 	info->Power = M267Power;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

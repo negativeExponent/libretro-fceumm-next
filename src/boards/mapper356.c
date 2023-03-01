@@ -32,35 +32,35 @@ static uint32 CHRRAMSIZE = 0;
 extern uint8 *ExtraNTARAM;
 
 static void M356CW(uint32 A, uint8 V) {
-	if (EXPREGS[2] & 0x20) {
-		uint32 NV = V & (0xFF >> (~EXPREGS[2] & 0xF));
-		NV |= (EXPREGS[0] | ((EXPREGS[2] << 4) & 0xF00));
+	if (mmc3.expregs[2] & 0x20) {
+		uint32 NV = V & (0xFF >> (~mmc3.expregs[2] & 0xF));
+		NV |= (mmc3.expregs[0] | ((mmc3.expregs[2] << 4) & 0xF00));
 		setchr1(A, NV);
 	} else
 		setchr8r(0x10, 0);
 }
 
 static void M356PW(uint32 A, uint8 V) {
-	uint8 MV = V & ((EXPREGS[3] & 0x3F) ^ 0x3F);
-	MV |= (EXPREGS[1] | ((EXPREGS[2] << 2) & 0x300));
+	uint8 MV = V & ((mmc3.expregs[3] & 0x3F) ^ 0x3F);
+	MV |= (mmc3.expregs[1] | ((mmc3.expregs[2] << 2) & 0x300));
 	setprg8(A, MV);
 }
 
 static void M356MW(uint8 V) {
-	if (EXPREGS[2] & 0x40) {
+	if (mmc3.expregs[2] & 0x40) {
 		SetupCartMirroring(4, 1, ExtraNTARAM);
 	} else {
-		A000B = V;
+		mmc3.mirroring = V;
 		SetupCartMirroring((V & 1) ^ 1, 0, 0);
 	}
 }
 
 static DECLFW(M356Write) {
-	if (!(EXPREGS[3] & 0x40)) {
-		EXPREGS[EXPREGS[4]] = V;
-		EXPREGS[4] = (EXPREGS[4] + 1) & 3;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+	if (!(mmc3.expregs[3] & 0x40)) {
+		mmc3.expregs[mmc3.expregs[4]] = V;
+		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 }
 
@@ -72,14 +72,14 @@ static void M356Close(void) {
 }
 
 static void M356Reset(void) {
-	EXPREGS[0] = EXPREGS[1] = EXPREGS[3] = EXPREGS[4] = 0;
-	EXPREGS[2] = 0x0F;
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = 0;
+	mmc3.expregs[2] = 0x0F;
 	MMC3RegReset();
 }
 
 static void M356Power(void) {
-	EXPREGS[0] = EXPREGS[1] = EXPREGS[3] = EXPREGS[4] = 0;
-	EXPREGS[2] = 0x0F;
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = 0;
+	mmc3.expregs[2] = 0x0F;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, M356Write);
 }
@@ -92,7 +92,7 @@ void Mapper356_Init(CartInfo *info) {
 	info->Reset = M356Reset;
 	info->Power = M356Power;
 	info->Close = M356Close;
-	AddExState(EXPREGS, 5, 0, "EXPR");
+	AddExState(mmc3.expregs, 5, 0, "EXPR");
 
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

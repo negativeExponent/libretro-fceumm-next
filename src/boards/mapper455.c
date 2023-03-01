@@ -22,10 +22,10 @@
 #include "mmc3.h"
 
 static void M455PW(uint32 A, uint8 V) {
-	uint8 prgAND = (EXPREGS[1] & 0x01) ? 0x1F : 0x0F;
-	uint8 prgOR  = ((EXPREGS[0] >> 2) & 0x07) | ((EXPREGS[1] << 1) & 0x08) | ((EXPREGS[0] >> 2) & 0x10);
-	if (EXPREGS[0] & 0x01) {
-		if (EXPREGS[0] & 0x02) {
+	uint8 prgAND = (mmc3.expregs[1] & 0x01) ? 0x1F : 0x0F;
+	uint8 prgOR  = ((mmc3.expregs[0] >> 2) & 0x07) | ((mmc3.expregs[1] << 1) & 0x08) | ((mmc3.expregs[0] >> 2) & 0x10);
+	if (mmc3.expregs[0] & 0x01) {
+		if (mmc3.expregs[0] & 0x02) {
 			setprg32(0x8000, prgOR >> 1);
 		} else {
 			setprg16(0x8000, prgOR);
@@ -37,29 +37,29 @@ static void M455PW(uint32 A, uint8 V) {
 }
 
 static void M455CW(uint32 A, uint8 V) {
-	uint8 chrAND = (EXPREGS[1] & 0x02) ? 0xFF : 0x7F;
-	uint8 chrOR  = ((EXPREGS[0] >> 2) & 0x07) | ((EXPREGS[1] << 1) & 0x08) | ((EXPREGS[0] >> 2) & 0x10);
+	uint8 chrAND = (mmc3.expregs[1] & 0x02) ? 0xFF : 0x7F;
+	uint8 chrOR  = ((mmc3.expregs[0] >> 2) & 0x07) | ((mmc3.expregs[1] << 1) & 0x08) | ((mmc3.expregs[0] >> 2) & 0x10);
 	setchr1(A, (V & chrAND) | ((chrOR << 4) & ~chrAND));
 }
 
 static DECLFW(M455Write) {
 	if (A & 0x100) {
-		EXPREGS[0] = V;
-		EXPREGS[1] = A & 0xFF;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+		mmc3.expregs[0] = V;
+		mmc3.expregs[1] = A & 0xFF;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 }
 
 static void M455Reset(void) {
-	EXPREGS[0] = 1;
-	EXPREGS[1] = 0;
+	mmc3.expregs[0] = 1;
+	mmc3.expregs[1] = 0;
 	MMC3RegReset();
 }
 
 static void M455Power(void) {
-	EXPREGS[0] = 1;
-	EXPREGS[1] = 0;
+	mmc3.expregs[0] = 1;
+	mmc3.expregs[1] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x4100, 0x5FFF, M455Write);
 }
@@ -70,5 +70,5 @@ void Mapper455_Init(CartInfo *info) {
 	pwrap       = M455PW;
 	info->Power = M455Power;
 	info->Reset = M455Reset;
-	AddExState(EXPREGS, 2, 0, "EXPR");
+	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }

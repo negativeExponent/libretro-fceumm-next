@@ -27,29 +27,29 @@
 #include "mmc3.h"
 
 static void BMCGN26CW(uint32 A, uint8 V) {
-	int chrAND = EXPREGS[0] & 0x04 ? 0xFF : 0x7F;
-	int chrOR = EXPREGS[0] << 7;
+	int chrAND = mmc3.expregs[0] & 0x04 ? 0xFF : 0x7F;
+	int chrOR = mmc3.expregs[0] << 7;
 	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 
 static void BMCGN26PW(uint32 A, uint8 V) {
-	if (EXPREGS[0] & 4) {
+	if (mmc3.expregs[0] & 4) {
 		if (A == 0x8000)
-			setprg32(0x8000, (EXPREGS[0] << 2) | (V >> 2));
+			setprg32(0x8000, (mmc3.expregs[0] << 2) | (V >> 2));
 	} else
-		setprg8(A, (EXPREGS[0] << 4) | (V & 0x0F));
+		setprg8(A, (mmc3.expregs[0] << 4) | (V & 0x0F));
 }
 
 static DECLFW(BMCGN26Write) {
-	if ((A001B & 0x80) && (~A001B & 0x40)) {
-		EXPREGS[0] = A;
-		FixMMC3PRG(MMC3_cmd);
-		FixMMC3CHR(MMC3_cmd);
+	if ((mmc3.wram & 0x80) && (~mmc3.wram & 0x40)) {
+		mmc3.expregs[0] = A;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
 }
 
 static void BMCGN26Reset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
@@ -64,5 +64,5 @@ void BMCGN26_Init(CartInfo *info) {
 	cwrap = BMCGN26CW;
 	info->Power = BMCGN26Power;
 	info->Reset = BMCGN26Reset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

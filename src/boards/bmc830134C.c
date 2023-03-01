@@ -28,30 +28,30 @@
 #include "mmc3.h"
 
 static void BMC830134CCW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0xFF) | ((EXPREGS[0] & 0x01) << 8) | ((EXPREGS[0] & 0x02) << 6) | ((EXPREGS[0] & 0x08) << 3));
+	setchr1(A, (V & 0xFF) | ((mmc3.expregs[0] & 0x01) << 8) | ((mmc3.expregs[0] & 0x02) << 6) | ((mmc3.expregs[0] & 0x08) << 3));
 }
 
 static void BMC830134CPW(uint32 A, uint8 V) {
-	if ((EXPREGS[0] & 0x06) == 0x06) {
+	if ((mmc3.expregs[0] & 0x06) == 0x06) {
 		if (A == 0x8000) {
-			setprg8(A, (V & 0x0F) | ((EXPREGS[0] & 0x06) << 3));
+			setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] & 0x06) << 3));
 			setprg8(0xC000, (V & 0x0F) | 0x32);
 		} else if (A == 0xA000) {
-			setprg8(A, (V & 0x0F) | ((EXPREGS[0] & 0x06) << 3));
+			setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] & 0x06) << 3));
 			setprg8(0xE000, (V & 0x0F) | 0x32);
 		}
 	} else
-		setprg8(A, (V & 0x0F) | ((EXPREGS[0] & 0x06) << 3));
+		setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] & 0x06) << 3));
 }
 
 static DECLFW(BMC830134CWrite) {
-	EXPREGS[0] = V;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = V;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void BMC830134CReset(void) {
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
@@ -66,5 +66,5 @@ void BMC830134C_Init(CartInfo *info) {
 	cwrap = BMC830134CCW;
 	info->Power = BMC830134CPower;
 	info->Reset = BMC830134CReset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

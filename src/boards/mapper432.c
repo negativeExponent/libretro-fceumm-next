@@ -24,25 +24,25 @@
 #include "mmc3.h"
 
 static void M432CW(uint32 A, uint8 V) {
-	int chrAND = (EXPREGS[1] & 0x04) ? 0x7F : 0xFF;
-	int chrOR  = ((EXPREGS[1] << 7) & 0x080) | ((EXPREGS[1] << 5) & 0x100) | ((EXPREGS[1] << 4) & 0x200);
+	int chrAND = (mmc3.expregs[1] & 0x04) ? 0x7F : 0xFF;
+	int chrOR  = ((mmc3.expregs[1] << 7) & 0x080) | ((mmc3.expregs[1] << 5) & 0x100) | ((mmc3.expregs[1] << 4) & 0x200);
 	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 
 static void M432PW(uint32 A, uint8 V) {
-	int prgAND = (EXPREGS[1] & 0x02) ? 0x0F : 0x1F;
-	int prgOR  = ((EXPREGS[1] << 4) & 0x10) | ((EXPREGS[1] << 1) & 0x60);
-	if (EXPREGS[1] & 0x40) { /* NROM */
-		if (EXPREGS[1] & 0x80) { /* NROM-256 */
-			setprg8(0x8000, ((DRegBuf[6] & ~2) & prgAND) | (prgOR & ~prgAND));
-			setprg8(0xA000, ((DRegBuf[7] & ~2) & prgAND) | (prgOR & ~prgAND));
-			setprg8(0xC000, ((DRegBuf[6] |  2) & prgAND) | (prgOR & ~prgAND));
-			setprg8(0xE000, ((DRegBuf[7] |  2) & prgAND) | (prgOR & ~prgAND));
+	int prgAND = (mmc3.expregs[1] & 0x02) ? 0x0F : 0x1F;
+	int prgOR  = ((mmc3.expregs[1] << 4) & 0x10) | ((mmc3.expregs[1] << 1) & 0x60);
+	if (mmc3.expregs[1] & 0x40) { /* NROM */
+		if (mmc3.expregs[1] & 0x80) { /* NROM-256 */
+			setprg8(0x8000, ((mmc3.regs[6] & ~2) & prgAND) | (prgOR & ~prgAND));
+			setprg8(0xA000, ((mmc3.regs[7] & ~2) & prgAND) | (prgOR & ~prgAND));
+			setprg8(0xC000, ((mmc3.regs[6] |  2) & prgAND) | (prgOR & ~prgAND));
+			setprg8(0xE000, ((mmc3.regs[7] |  2) & prgAND) | (prgOR & ~prgAND));
 		} else { /* NROM-128 */
-			setprg8(0x8000, (DRegBuf[6] & prgAND) | (prgOR & ~prgAND));
-			setprg8(0xA000, (DRegBuf[7] & prgAND) | (prgOR & ~prgAND));
-			setprg8(0xC000, (DRegBuf[6] & prgAND) | (prgOR & ~prgAND));
-			setprg8(0xE000, (DRegBuf[7] & prgAND) | (prgOR & ~prgAND));
+			setprg8(0x8000, (mmc3.regs[6] & prgAND) | (prgOR & ~prgAND));
+			setprg8(0xA000, (mmc3.regs[7] & prgAND) | (prgOR & ~prgAND));
+			setprg8(0xC000, (mmc3.regs[6] & prgAND) | (prgOR & ~prgAND));
+			setprg8(0xE000, (mmc3.regs[7] & prgAND) | (prgOR & ~prgAND));
 		}
 	} else { /* MMC3 */
 		setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
@@ -50,30 +50,30 @@ static void M432PW(uint32 A, uint8 V) {
 }
 
 static DECLFR(M432Read) {
-	if (EXPREGS[0] & 1 || ((EXPREGS[1] & 0x20) && (ROM_size < 64)))
-		return EXPREGS[2];
+	if (mmc3.expregs[0] & 1 || ((mmc3.expregs[1] & 0x20) && (ROM_size < 64)))
+		return mmc3.expregs[2];
 	return CartBR(A);
 }
 
 static DECLFW(M432Write) {
-	EXPREGS[A & 1] = V;
+	mmc3.expregs[A & 1] = V;
 	if (~A & 1 && ~V & 1 && ROM_size < 64)
-		EXPREGS[1] &= ~0x20; /* Writing 0 to register 0 clears register 1's DIP bit */
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+		mmc3.expregs[1] &= ~0x20; /* Writing 0 to register 0 clears register 1's DIP bit */
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void M432Reset(void) {
-	EXPREGS[0] = 0;
-	EXPREGS[1] = 0;
-	EXPREGS[2]++;
+	mmc3.expregs[0] = 0;
+	mmc3.expregs[1] = 0;
+	mmc3.expregs[2]++;
 	MMC3RegReset();
 }
 
 static void M432Power(void) {
-	EXPREGS[0] = 0;
-	EXPREGS[1] = 0;
-	EXPREGS[2] = 0;
+	mmc3.expregs[0] = 0;
+	mmc3.expregs[1] = 0;
+	mmc3.expregs[2] = 0;
 	GenMMC3Power();
 	SetReadHandler(0x8000, 0xFFFF, M432Read);
 	SetWriteHandler(0x6000, 0x7FFF, M432Write);
@@ -85,5 +85,5 @@ void Mapper432_Init(CartInfo *info) {
 	pwrap       = M432PW;
 	info->Power = M432Power;
 	info->Reset = M432Reset;
-	AddExState(EXPREGS, 3, 0, "EXPR");
+	AddExState(mmc3.expregs, 3, 0, "EXPR");
 }

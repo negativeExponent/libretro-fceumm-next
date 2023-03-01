@@ -32,19 +32,19 @@
 #include "mmc3.h"
 
 static void M411CW(uint32 A, uint8 V) {
-	uint32 mask = (EXPREGS[1] & 2) ? 0xFF : 0x7F;
+	uint32 mask = (mmc3.expregs[1] & 2) ? 0xFF : 0x7F;
 	V &= mask;
-	setchr1(A, V | ((EXPREGS[1] << 5) & 0x80) | ((EXPREGS[0] << 4) & 0x100));
+	setchr1(A, V | ((mmc3.expregs[1] << 5) & 0x80) | ((mmc3.expregs[0] << 4) & 0x100));
 }
 
 static void M411PW(uint32 A, uint8 V) {
 	/* NROM Mode */
-	if (EXPREGS[0] & 0x40) {
-		uint32 bank = (EXPREGS[0] & 1) | ((EXPREGS[0] >> 2) & 2) | (EXPREGS[0] & 4) | (EXPREGS[1] & 8) |
-		    ((EXPREGS[1] >> 2) & 0x10);
+	if (mmc3.expregs[0] & 0x40) {
+		uint32 bank = (mmc3.expregs[0] & 1) | ((mmc3.expregs[0] >> 2) & 2) | (mmc3.expregs[0] & 4) | (mmc3.expregs[1] & 8) |
+		    ((mmc3.expregs[1] >> 2) & 0x10);
 
 		/* NROM-256 */
-		if (EXPREGS[0] & 0x02) {
+		if (mmc3.expregs[0] & 0x02) {
 			setprg32(0x8000, bank >> 1);
 
 			/* NROM-128 */
@@ -56,21 +56,21 @@ static void M411PW(uint32 A, uint8 V) {
 
 	/* MMC3 Mode */
 	else {
-		uint32 mask = (EXPREGS[1] & 2) ? 0x1F : 0x0F;
+		uint32 mask = (mmc3.expregs[1] & 2) ? 0x1F : 0x0F;
 		V &= mask;
-		setprg8(A, V | ((EXPREGS[1] << 1) & 0x10) | ((EXPREGS[1] >> 1) & 0x20));
+		setprg8(A, V | ((mmc3.expregs[1] << 1) & 0x10) | ((mmc3.expregs[1] >> 1) & 0x20));
 	}
 }
 
 static DECLFW(M411Write5000) {
-	EXPREGS[A & 1] = V;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[A & 1] = V;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void M411Power(void) {
-	EXPREGS[0] = 0x80;
-	EXPREGS[1] = 0x82;
+	mmc3.expregs[0] = 0x80;
+	mmc3.expregs[1] = 0x82;
 	GenMMC3Power();
 	SetWriteHandler(0x5000, 0x5FFF, M411Write5000);
 }
@@ -80,5 +80,5 @@ void Mapper411_Init(CartInfo *info) {
 	pwrap = M411PW;
 	cwrap = M411CW;
 	info->Power = M411Power;
-	AddExState(EXPREGS, 2, 0, "EXPR");
+	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }

@@ -29,12 +29,12 @@ static uint8 pads;
 static uint8 dip;
 
 static void Mapper444_PRGWrap(uint32 A, uint8 V) {
-	int prgAND = ((pads & 4) && (EXPREGS[0] & 0x02)) ? 0x1F : 0x0F;
-	int prgOR = EXPREGS[0] << 4;
-	if (EXPREGS[0] & 0x04) {
+	int prgAND = ((pads & 4) && (mmc3.expregs[0] & 0x02)) ? 0x1F : 0x0F;
+	int prgOR = mmc3.expregs[0] << 4;
+	if (mmc3.expregs[0] & 0x04) {
 		if (~A & 0x4000) {
-			setprg8(A, ((((~EXPREGS[0] & 0x08) ? ~2 : ~0) & V) & prgAND) | (prgOR & ~prgAND));
-			setprg8(A | 0x4000, ((~EXPREGS[0] & 0x08) ? 2 : 0) | (V & prgAND) | (prgOR & ~prgAND));
+			setprg8(A, ((((~mmc3.expregs[0] & 0x08) ? ~2 : ~0) & V) & prgAND) | (prgOR & ~prgAND));
+			setprg8(A | 0x4000, ((~mmc3.expregs[0] & 0x08) ? 2 : 0) | (V & prgAND) | (prgOR & ~prgAND));
 		}
 	} else
 		setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
@@ -42,30 +42,30 @@ static void Mapper444_PRGWrap(uint32 A, uint8 V) {
 
 static void Mapper444_CHRWrap(uint32 A, uint8 V) {
 	int chrAND = (pads & 1) ? 0xFF : 0x7F;
-	int chrOR = ((EXPREGS[0] << 7) & ((pads & 1) ? 0x00 : 0x80)) | ((EXPREGS[0] << ((pads & 2) ? 4 : 7)) & 0x100);
+	int chrOR = ((mmc3.expregs[0] << 7) & ((pads & 1) ? 0x00 : 0x80)) | ((mmc3.expregs[0] << ((pads & 2) ? 4 : 7)) & 0x100);
 	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
 }
 
 static DECLFR(Mapper444_Read) {
-	return (EXPREGS[0] & 0x0C) == 0x08 ? dip : CartBR(A);
+	return (mmc3.expregs[0] & 0x0C) == 0x08 ? dip : CartBR(A);
 }
 
 static DECLFW(Mapper444_Write) {
-	EXPREGS[0] = A & 0xFF;
-	FixMMC3PRG(MMC3_cmd);
-	FixMMC3CHR(MMC3_cmd);
+	mmc3.expregs[0] = A & 0xFF;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
 static void Mapper444_Reset(void) {
 	dip++;
 	dip &= 3;
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	MMC3RegReset();
 }
 
 static void Mapper444_Power(void) {
 	dip = 0;
-	EXPREGS[0] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, Mapper444_Write);
 	SetReadHandler(0x8000, 0xFFFF, Mapper444_Read);
@@ -78,6 +78,6 @@ void Mapper444_Init(CartInfo *info) {
 	pwrap = Mapper444_PRGWrap;
 	info->Power = Mapper444_Power;
 	info->Reset = Mapper444_Reset;
-	AddExState(EXPREGS, 1, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 	AddExState(&dip, 1, 0, "DIPS");
 }
