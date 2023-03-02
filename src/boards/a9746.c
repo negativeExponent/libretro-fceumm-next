@@ -74,7 +74,7 @@ static DECLFW(UNLA9746WriteASIC) {
 static void UNLA9746Power(void) {
 	GenMMC3Power();
 	SetWriteHandler(0x5000, 0x5FFF, UNLA9746WriteOuter);
-	SetWriteHandler(0x8000, 0xBFFF, UNLA9746WriteASIC);
+	SetWriteHandler(0x8000, 0x9FFF, UNLA9746WriteASIC);
 	mmc3.expregs[0] = 0;
 	mmc3.expregs[1] = 3;
 	MMC3RegReset();
@@ -87,7 +87,7 @@ static void UNLA9746Reset(void) {
 }
 
 void UNLA9746_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 128, 0, 0);
+	GenMMC3_Init(info, 64, 512, 0, 0);
 	pwrap = UNLA9746PWrap;
 	cwrap = UNLA9746CWrap;
 	info->Power = UNLA9746Power;
