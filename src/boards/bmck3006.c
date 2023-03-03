@@ -44,9 +44,11 @@ static void BMCK3006PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(BMCK3006Write) {
-	mmc3.expregs[0] = A & 0x3F;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	if (MMC3CanWriteToWRAM()) {
+		mmc3.expregs[0] = A & 0x3F;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
+	}
 }
 
 static void BMCK3006Reset(void) {
