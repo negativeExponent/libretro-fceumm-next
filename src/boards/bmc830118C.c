@@ -18,33 +18,33 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* M-022 MMC3 based 830118C T-106 4M + 4M */
+/* NES 2.0 Mapper 348
+ * M-022 MMC3 based 830118C T-106 4M + 4M */
 
 #include "mapinc.h"
 #include "mmc3.h"
 
 static void BMC830118CCW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | ((mmc3.expregs[0] & 0x0c) << 5));
+	setchr1(A, ((mmc3.expregs[0] << 5) & 0x180) | (V & 0x7F));
 }
 
 static void BMC830118CPW(uint32 A, uint8 V) {
 	if ((mmc3.expregs[0] & 0x0C) == 0x0C) {
-		if (A == 0x8000) {
-			setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] & 0x0c) << 2));
-			setprg8(0xC000, (V & 0x0F) | 0x32);
-		} else if (A == 0xA000) {
-			setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] & 0x0c) << 2));
-			setprg8(0xE000, (V & 0x0F) | 0x32);
-		}
+		setprg8(0x8000, ((mmc3.expregs[0] << 2) & 0x30) | ((mmc3.regs[6] & ~2) & 0x0F));
+		setprg8(0xA000, ((mmc3.expregs[0] << 2) & 0x30) | ((mmc3.regs[7] & ~2) & 0x0F));
+		setprg8(0xC000, ((mmc3.expregs[0] << 2) & 0x30) | ((mmc3.regs[6] |  2) & 0x0F));
+		setprg8(0xE000, ((mmc3.expregs[0] << 2) & 0x30) | ((mmc3.regs[7] |  2) & 0x0F));
 	} else {
-		setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] & 0x0c) << 2));
+		setprg8(A, ((mmc3.expregs[0] << 2) & 0x30) | (V & 0x0F));
 	}
 }
 
 static DECLFW(BMC830118CLoWrite) {
-	mmc3.expregs[0] = V;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	if (MMC3CanWriteToWRAM()) {
+		mmc3.expregs[0] = V;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
+	}
 }
 
 static void BMC830118CReset(void) {
@@ -59,7 +59,7 @@ static void BMC830118CPower(void) {
 }
 
 void BMC830118C_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 128, 8, 0);
+	GenMMC3_Init(info, 128, 128, 0, 0);
 	pwrap = BMC830118CPW;
 	cwrap = BMC830118CCW;
 	info->Power = BMC830118CPower;
