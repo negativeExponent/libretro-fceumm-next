@@ -27,10 +27,6 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void BMCL6IN1CW(uint32 A, uint8 V) {
-	setchr8(V);
-}
-
 static void BMCL6IN1PW(uint32 A, uint8 V) {
 	if (mmc3.expregs[0] & 0x0C)
 		setprg8(A, (V & 0x0F) | (mmc3.expregs[0] & 0xC0) >> 2);
@@ -48,9 +44,11 @@ static void BMCL6IN1MW(uint8 V) {
 }
 
 static DECLFW(BMCL6IN1Write) {
-	mmc3.expregs[0] = V;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	if (MMC3CanWriteToWRAM()) {
+		mmc3.expregs[0] = V;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
+	}
 }
 
 static void BMCL6IN1Reset(void) {
@@ -64,9 +62,8 @@ static void BMCL6IN1Power(void) {
 }
 
 void BMCL6IN1_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 0, 1, 0);
+	GenMMC3_Init(info, 512, 8, 0, 0);
 	pwrap = BMCL6IN1PW;
-	cwrap = BMCL6IN1CW;
 	mwrap = BMCL6IN1MW;
 	info->Power = BMCL6IN1Power;
 	info->Reset = BMCL6IN1Reset;

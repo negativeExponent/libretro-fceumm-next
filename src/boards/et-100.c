@@ -21,6 +21,8 @@
  */
  
 /*
+    NES 2.0 mapper 327 is used for a 6-in-1 multicart. Its UNIF board name is BMC-10-24-C-A1.
+
 	MMC3-based multicart mapper with CHR RAM, CHR ROM and PRG RAM
 	
 	$6000-7FFF:	A~[011xxxxx xxMRSBBB]	Multicart reg
@@ -45,29 +47,29 @@ static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSize;
 
 static void BMC1024CA1PW(uint32 A, uint8 V) {
-	if ((mmc3.expregs[0]>>3)&1)
-		setprg8(A, (V&0x1F) | ((mmc3.expregs[0] & 7) << 4));
-	else 
-		setprg8(A, (V&0x0F) | ((mmc3.expregs[0] & 7) << 4));
+	if (mmc3.expregs[0] & 8)
+		setprg8(A, (V & 0x1F) | ((mmc3.expregs[0] & 7) << 4));
+	else
+		setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] & 7) << 4));
 }
 
 static void BMC1024CA1CW(uint32 A, uint8 V) {
-	if ((mmc3.expregs[0]>>4)&1)
-	 	setchr1r(0x10, A, V);
-	else if (((mmc3.expregs[0]>>5)&1) && ((mmc3.expregs[0]>>3)&1))
+	if ((mmc3.expregs[0] >> 4) & 1)
+		setchr1r(0x10, A, V);
+	else if (mmc3.expregs[0] & 0x20)
 		setchr1(A, V | ((mmc3.expregs[0] & 7) << 7));
 	else
-	 	setchr1(A, (V&0x7F) | ((mmc3.expregs[0] & 7) << 7));
+		setchr1(A, (V & 0x7F) | ((mmc3.expregs[0] & 7) << 7));
 }
 
 static DECLFW(BMC1024CA1Write) {
-	if (((mmc3.wram & 0xC0) == 0x80) && !(mmc3.expregs[0] & 7))
-	{
-		mmc3.expregs[0] = A & 0x3F;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
-	} else {
+	if (MMC3CanWriteToWRAM()) {
 		CartBW(A, V);
+		if ((mmc3.expregs[0] & 7) == 0) {
+			mmc3.expregs[0] = A & 0x3F;
+			FixMMC3PRG(mmc3.cmd);
+			FixMMC3CHR(mmc3.cmd);
+		}
 	}
 }
 

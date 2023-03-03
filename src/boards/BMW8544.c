@@ -17,9 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ * NES 2.0 Mapper 292 - UNIF UNL-DRAGONFIGHTER
  * "Dragon Fighter" protected MMC3 based custom mapper board
  * mostly hacky implementation, I can't verify if this mapper can read a RAM of the
  * console or watches the bus writes somehow.
+ * 
+ * TODO: needs updating
  *
  */
 
