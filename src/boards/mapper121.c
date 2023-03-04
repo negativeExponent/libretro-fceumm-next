@@ -147,7 +147,7 @@ static void M121Power(void) {
 }
 
 void Mapper121_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 256, 8, 0);
+	GenMMC3_Init(info, 128, 256, 0, 0);
 	pwrap = M121PW;
 	cwrap = M121CW;
 	info->Power = M121Power;

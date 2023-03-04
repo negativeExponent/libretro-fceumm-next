@@ -27,22 +27,22 @@
 #include "mmc3.h"
 
 static void BMCGN26CW(uint32 A, uint8 V) {
-	int chrAND = mmc3.expregs[0] & 0x04 ? 0xFF : 0x7F;
-	int chrOR = mmc3.expregs[0] << 7;
-	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
+	int chrAND = (mmc3.expregs[0] & 0x02) ? 0x7F : 0xFF;
+	int chrOR = (mmc3.expregs[0] & 3) << 7;
+	setchr1(A, chrOR | (V & chrAND));
 }
 
 static void BMCGN26PW(uint32 A, uint8 V) {
 	if (mmc3.expregs[0] & 4) {
-		if (A == 0x8000)
-			setprg32(0x8000, (mmc3.expregs[0] << 2) | (V >> 2));
-	} else
+		setprg32(0x8000, (mmc3.expregs[0] << 2) | ((mmc3.regs[6] & 0x0F) >> 2));
+	} else {
 		setprg8(A, (mmc3.expregs[0] << 4) | (V & 0x0F));
+	}
 }
 
 static DECLFW(BMCGN26Write) {
-	if ((mmc3.wram & 0x80) && (~mmc3.wram & 0x40)) {
-		mmc3.expregs[0] = A;
+	if (MMC3CanWriteToWRAM()) {
+		mmc3.expregs[0] = A & 0xFF;
 		FixMMC3PRG(mmc3.cmd);
 		FixMMC3CHR(mmc3.cmd);
 	}
@@ -59,7 +59,7 @@ static void BMCGN26Power(void) {
 }
 
 void BMCGN26_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 256, 1, 0);
+	GenMMC3_Init(info, 128, 256, 0, 0);
 	pwrap = BMCGN26PW;
 	cwrap = BMCGN26CW;
 	info->Power = BMCGN26Power;

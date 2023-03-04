@@ -42,15 +42,14 @@ static void BMCF15PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(BMCF15Write) {
-	if (mmc3.wram & 0x80) {
-		mmc3.expregs[0] = V & 0xF;
+	if (MMC3CanWriteToWRAM()) {
+		mmc3.expregs[0] = V;
 		FixMMC3PRG(mmc3.cmd);
 	}
 }
 
 static void BMCF15Power(void) {
 	GenMMC3Power();
-	SetWriteHandler(0x6000, 0x7FFF, BMCF15Write);
 	SetWriteHandler(0x6000, 0x7FFF, BMCF15Write);
 }
 
