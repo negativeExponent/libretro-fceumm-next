@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* iNES Mapper 123 - UNL-H2288 */
+
 #include "mapinc.h"
 #include "mmc3.h"
 
@@ -32,32 +34,28 @@ static void H2288PW(uint32 A, uint8 V) {
 			setprg16(0x8000, bank);
 			setprg16(0xC000, bank);
 		}
-	} else
+	} else {
 		setprg8(A, V & 0x3F);
+	}
 }
 
 static DECLFW(H2288WriteHi) {
-	switch (A & 0x8001) {
-	case 0x8000: MMC3_CMDWrite(0x8000, (V & 0xC0) | (m114_perm[V & 7])); break;
-	case 0x8001: MMC3_CMDWrite(0x8001, V); break;
+	if (!(A & 1)) {
+		V = (V & 0xC0) | (m114_perm[V & 7]);
 	}
+	MMC3_CMDWrite(A, V);
 }
 
 static DECLFW(H2288WriteLo) {
 	if (A & 0x800) {
-		if (A & 1)
-			mmc3.expregs[1] = V;
-		else
-			mmc3.expregs[0] = V;
+		mmc3.expregs[0] = V;
 		FixMMC3PRG(mmc3.cmd);
 	}
 }
 
 static void H2288Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
-/*	SetReadHandler(0x5000,0x5FFF,H2288Read); */
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x5000, 0x5FFF, H2288WriteLo);
 	SetWriteHandler(0x8000, 0x9FFF, H2288WriteHi);
 }
@@ -66,5 +64,5 @@ void UNLH2288_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 0, 0);
 	pwrap = H2288PW;
 	info->Power = H2288Power;
-	AddExState(mmc3.expregs, 2, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

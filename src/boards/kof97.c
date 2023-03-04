@@ -18,20 +18,25 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* NES 2.0 Mapper 263 - UNL-KOF97 */
+
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint32 unscrambleAddr(uint32 A) {
+	return ((A & 0xE000) | ((A >> 12) & 1));
+}
+
+static uint8 unscrambleData(uint8 V) {
+	return ((V & 0xD8) | ((V & 0x20) >> 4) | ((V & 4) << 3) | ((V & 2) >> 1) | ((V & 1) << 2));
+}
+
 static DECLFW(UNLKOF97CMDWrite) {
-	V = (V & 0xD8) | ((V & 0x20) >> 4) | ((V & 4) << 3) | ((V & 2) >> 1) | ((V & 1) << 2);	/* 76143502 */
-	if (A == 0x9000) A = 0x8001;
-	MMC3_CMDWrite(A, V);
+	MMC3_CMDWrite(unscrambleAddr(A), unscrambleData(V));
 }
 
 static DECLFW(UNLKOF97IRQWrite) {
-	V = (V & 0xD8) | ((V & 0x20) >> 4) | ((V & 4) << 3) | ((V & 2) >> 1) | ((V & 1) << 2);
-	if (A == 0xD000) A = 0xC001;
-	else if (A == 0xF000) A = 0xE001;
-	MMC3_IRQWrite(A, V);
+	MMC3_IRQWrite(unscrambleAddr(A), unscrambleData(V));
 }
 
 static void UNLKOF97Power(void) {
