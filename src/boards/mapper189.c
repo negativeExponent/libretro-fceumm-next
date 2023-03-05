@@ -22,23 +22,33 @@
 #include "mmc3.h"
 
 static void M189PW(uint32 A, uint8 V) {
-	setprg32(0x8000, mmc3.expregs[0] & 7);
+	setprg32(0x8000, mmc3.expregs[0] | (mmc3.expregs[0] >> 4));
 }
 
 static DECLFW(M189Write) {
-	mmc3.expregs[0] = V | (V >> 4);	/* actually, there is a two versions of 189 mapper with hi or lo bits bankswitching. */
-	FixMMC3PRG(mmc3.cmd);
+	if (A & 0x100) {
+		mmc3.expregs[0] = V;
+		FixMMC3PRG(mmc3.cmd);
+	}
+}
+
+static DECLFW(M189WRAMWrite) {
+	if (MMC3CanWriteToWRAM()) {
+		mmc3.expregs[0] = V;
+		FixMMC3PRG(mmc3.cmd);
+	}
 }
 
 static void M189Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = 0;
+	mmc3.expregs[0] = 0;
 	GenMMC3Power();
-	SetWriteHandler(0x4120, 0x7FFF, M189Write);
+	SetWriteHandler(0x4120, 0x5FFF, M189Write);
+	SetWriteHandler(0x6000, 0x7FFF, M189WRAMWrite);
 }
 
 void Mapper189_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 0, 0);
 	pwrap = M189PW;
 	info->Power = M189Power;
-	AddExState(mmc3.expregs, 2, 0, "EXPR");
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }
