@@ -38,10 +38,7 @@ static void FP_FASTAPASS(1) M370PPU(uint32 A) {
 }
 
 static void M370CW(uint32 A, uint8 V) {
-	uint8 mask = (mmc3.expregs[0] & 4) ? 0x7F : 0xFF;
-	/* FIXME: Mario VII, mask is reversed? */
-	if ((mmc3.expregs[0] & 7) == 6 && V & 0x80)
-		mask = 0xFF;
+	uint8 mask = (mmc3.expregs[0] & 4) ? 0xFF : 0x7F;
 	mirr[A >> 10] = V >> 7;
 	setchr1(A, (V & mask) | ((mmc3.expregs[0] & 7) << 7));
 	if (((mmc3.expregs[0] & 7) == 1) && (PPUCHRBus == (A >> 10)))
