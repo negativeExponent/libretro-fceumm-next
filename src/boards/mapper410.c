@@ -31,27 +31,26 @@ static uint8 *CHRRAM;
 
 static void M410CW(uint32 A, uint8 V) {
 	if (!(mmc3.expregs[2] & 0x40)) {
-		uint32 NV = V;
-		NV &= (1 << ((mmc3.expregs[2] & 7) + 1)) - 1;
-		NV |= mmc3.expregs[0] | ((mmc3.expregs[2] & 0xF0) << 4);
-		setchr1(A, NV);
+		uint32 mask = 0xFF >> (~mmc3.expregs[2] & 0xF);
+		uint32 base = ((mmc3.expregs[2] << 4) & 0xF00) | mmc3.expregs[0];
+		setchr1(A, (base & ~mask) | (V & mask));
 	} else
 		setchr8r(0x10, 0);
 }
 
 static void M410PW(uint32 A, uint8 V) {
-	uint32 MV = V & ((mmc3.expregs[3] & 0x3F) ^ 0x3F);
-	MV |= mmc3.expregs[1];
-	MV |= ((mmc3.expregs[2] & 0x40) << 2);
-	setprg8(A, MV);
-	/*	FCEU_printf("1:%02x 2:%02x 3:%02x A=%04x V=%03x\n",mmc3.expregs[1],mmc3.expregs[2],mmc3.expregs[3],A,MV); */
+	uint32 mask = ~mmc3.expregs[3] & 0x3F;
+	uint32 base = ((mmc3.expregs[2] << 2) & 0x300) | mmc3.expregs[1];
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(M410Write) {
-	mmc3.expregs[mmc3.expregs[4]] = V;
-	mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	if (!(mmc3.expregs[3] & 0x40)) {
+		mmc3.expregs[mmc3.expregs[4]] = V;
+		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
+		FixMMC3PRG(mmc3.cmd);        
+		FixMMC3CHR(mmc3.cmd);
+	}
 }
 
 static void M410Close(void) {
@@ -75,7 +74,7 @@ static void M410Power(void) {
 }
 
 void Mapper410_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 256, 8, info->battery);
+	GenMMC3_Init(info, 512, 256, 0, 0);
 	cwrap = M410CW;
 	pwrap = M410PW;
 	info->Reset = M410Reset;

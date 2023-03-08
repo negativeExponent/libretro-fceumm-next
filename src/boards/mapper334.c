@@ -30,9 +30,11 @@ static void M334PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M334Write) {
-	if (!(A & 1)) {
-		mmc3.expregs[0] = V;
-		FixMMC3PRG(mmc3.cmd);
+	if (MMC3CanWriteToWRAM()) {
+		if (!(A & 1)) {
+			mmc3.expregs[0] = V;
+			FixMMC3PRG(mmc3.cmd);
+		}
 	}
 }
 

@@ -33,17 +33,18 @@ extern uint8 *ExtraNTARAM;
 
 static void M356CW(uint32 A, uint8 V) {
 	if (mmc3.expregs[2] & 0x20) {
-		uint32 NV = V & (0xFF >> (~mmc3.expregs[2] & 0xF));
-		NV |= (mmc3.expregs[0] | ((mmc3.expregs[2] << 4) & 0xF00));
-		setchr1(A, NV);
-	} else
+		uint32 mask = 0xFF >> (~mmc3.expregs[2] & 0xF);
+		uint32 base = ((mmc3.expregs[2] << 4) & 0xF00) | mmc3.expregs[0];
+		setchr1(A, (base & ~mask) | (V & mask));
+	} else {
 		setchr8r(0x10, 0);
+	}
 }
 
 static void M356PW(uint32 A, uint8 V) {
-	uint8 MV = V & ((mmc3.expregs[3] & 0x3F) ^ 0x3F);
-	MV |= (mmc3.expregs[1] | ((mmc3.expregs[2] << 2) & 0x300));
-	setprg8(A, MV);
+	uint32 mask = ~mmc3.expregs[3] & 0x3F;
+	uint32 base = ((mmc3.expregs[2] << 2) & 0x300) | mmc3.expregs[1];
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void M356MW(uint8 V) {

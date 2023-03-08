@@ -24,11 +24,11 @@
  * Pocahontas Part 2
  * 2-in-1: Aladdin, EarthWorm Jim 2 (Super 808)
  * 2-in-1: The Lion King, Bomber Boy (GD-103)
- * 2-in-1 Super Golden Card: EarthWorm Jim 2, Boogerman (king002)
+ * 2-in-1: Super Golden Card: EarthWorm Jim 2, Boogerman (king002)
  * 2-in-1: Mortal Kombat 3 Extra 60, The Super Shinobi (king005)
  * 3-in-1: Boogerman, Adventure Island 3, Double Dragon 3 (Super 308)
- * 5-in-1 Golden Card: Aladdin, EarthWorm Jim 2, Garo Densetsu Special, Silkworm, Contra Force (SPC005)
- * 6-in-1 Golden Card: EarthWorm Jim 2, Mortal Kombat 3, Double Dragon 3, Contra 3, The Jungle Book, Turtles Tournament Fighters (SPC009)
+ * 5-in-1: Golden Card: Aladdin, EarthWorm Jim 2, Garo Densetsu Special, Silkworm, Contra Force (SPC005)
+ * 6-in-1: Golden Card: EarthWorm Jim 2, Mortal Kombat 3, Double Dragon 3, Contra 3, The Jungle Book, Turtles Tournament Fighters (SPC009)
  *
  * Submapper 1, UNIF board name UNL-8237A:
  * 9-in-1 High Standard Card: The Lion King, EarthWorm Jim 2, Aladdin, Boogerman, Somari, Turtles Tournament Fighters, Mortal Kombat 3, Captain Tsubasa 2, Taito Basketball (king001)

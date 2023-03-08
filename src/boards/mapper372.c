@@ -26,68 +26,45 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 WRAM[0x2000];
 static uint32 CHRRAMSIZE;
 static uint8 *CHRRAM;
 
 static void M372CW(uint32 A, uint8 V) {
-	if (!UNIFchrrama) {
-		uint32 NV = V;
-		if (mmc3.expregs[2] & 8)
-			NV &= (1 << ((mmc3.expregs[2] & 7) + 1)) - 1;
-		else if (mmc3.expregs[2])
-			NV &= 0; /* hack ;( don't know exactly how it should be */
-		NV |= mmc3.expregs[0] | ((mmc3.expregs[2] & 0xF0) << 4);
-		if (mmc3.expregs[2] & 0x20)
-			setchr1r(0x10, A, V);
-		else
-			setchr1(A, NV);
-	} else
-		/* FIXME */
-		/* setchr8(0); */ /* i don't know what cart need this, but a new one need other lol */
-		setchr1(A, V);
+	if (mmc3.expregs[2] & 0x20) {
+		setchr8r(0x10, 0);
+	} else {
+		uint32 mask = 0xFF >> (~mmc3.expregs[2] & 0xF);
+		uint32 base = ((mmc3.expregs[2] << 4) & 0xF00) | mmc3.expregs[0];
+		setchr1(A, (base & ~mask) | (V & mask));
+	}
 }
 
 static void M372PW(uint32 A, uint8 V) {
-	uint32 MV = V & ((mmc3.expregs[3] & 0x3F) ^ 0x3F);
-	MV |= mmc3.expregs[1];
-	if (UNIFchrrama)
-		MV |= ((mmc3.expregs[2] & 0x40) << 2);
-	setprg8(A, MV);
-	/*	FCEU_printf("1:%02x 2:%02x 3:%02x A=%04x V=%03x\n",mmc3.expregs[1],mmc3.expregs[2],mmc3.expregs[3],A,MV); */
+	uint32 mask = ~mmc3.expregs[3] & 0x3F;
+	uint32 base = ((mmc3.expregs[2] << 2) & 0x300) | mmc3.expregs[1];
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(M372Write) {
-	if (mmc3.expregs[3] & 0x40) {
-		WRAM[A - 0x6000] = V;
-		return;
+	if (!(mmc3.expregs[3] & 0x40)) {
+		mmc3.expregs[mmc3.expregs[4]] = V;
+		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
-	mmc3.expregs[mmc3.expregs[4]] = V;
-	mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
-}
-
-static DECLFR(M372Read) {
-	uint32 addr = 1 << (mmc3.expregs[5] + 4);
-	if (A & (addr | (addr - 1)))
-		return X.DB | 1;
-	else
-		return X.DB;
 }
 
 static void M372Reset(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = mmc3.expregs[4] = 0;
-	mmc3.expregs[5]++;
-	mmc3.expregs[5] &= 7;
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = 0;
+	mmc3.expregs[2] = 0x0F;
 	MMC3RegReset();
 }
 
 static void M372Power(void) {
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = 0;
+	mmc3.expregs[2] = 0x0F;
 	GenMMC3Power();
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = mmc3.expregs[4] = mmc3.expregs[5] = 0;
-	SetWriteHandler(0x5000, 0x7FFF, M372Write);
-	SetReadHandler(0x5000, 0x5FFF, M372Read);
+	SetWriteHandler(0x6000, 0x7FFF, M372Write);
 }
 
 static void M372Close(void) {
@@ -98,7 +75,7 @@ static void M372Close(void) {
 }
 
 void Mapper372_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 256, 8, info->battery);
+	GenMMC3_Init(info, 512, 256, 0, 0);
 	cwrap = M372CW;
 	pwrap = M372PW;
 	info->Reset = M372Reset;
