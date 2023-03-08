@@ -493,12 +493,13 @@ void Mapper44_Init(CartInfo *info) {
 /* ---------------------------- Mapper 45 ------------------------------- */
 
 static void M45CW(uint32 A, uint8 V) {
-	if (CHRsize[0] == 8192)
+	if (CHRsize[0] == 8192) {
+		/* assume chr-ram */
 		setchr1(A, V);
-	else {
-		int chrAND = 0xFF >> (~mmc3.expregs[2] & 0xF);
-		int chrOR = mmc3.expregs[0] | ((mmc3.expregs[2] << 4) & 0xF00);
-		setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
+	} else {
+		uint32 mask = 0xFF >> (~mmc3.expregs[2] & 0xF);
+		uint32 base = ((mmc3.expregs[2] << 4) & 0xF00) | mmc3.expregs[0];
+		setchr1(A, (base & ~mask) | (V & mask));
 	}
 }
 
@@ -507,30 +508,30 @@ static DECLFR(M45ReadOB) {
 }
 
 static void M45PW(uint32 A, uint8 V) {
-	int prgAND = ~mmc3.expregs[3] & 0x3F;
-	int prgOR = mmc3.expregs[1] | ((mmc3.expregs[2] << 2) & 0x300);
-	setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
+	uint32 mask = ~mmc3.expregs[3] & 0x3F;
+	uint32 base = ((mmc3.expregs[2] << 2) & 0x300) | mmc3.expregs[1];
+	setprg8(A, (base & ~mask) | (V & mask));
 
 	/* Some multicarts select between five different menus by connecting one of the higher address lines to PRG /CE.
 	   The menu code selects between menus by checking which of the higher address lines disables PRG-ROM when set. */
 	if ((PRGsize[0] < 0x200000 && mmc3.expregs[5] == 1 && (mmc3.expregs[1] & 0x80)) ||
 	    (PRGsize[0] < 0x200000 && mmc3.expregs[5] == 2 && (mmc3.expregs[2] & 0x40)) ||
 	    (PRGsize[0] < 0x100000 && mmc3.expregs[5] == 3 && (mmc3.expregs[1] & 0x40)) ||
-	    (PRGsize[0] < 0x100000 && mmc3.expregs[5] == 4 && (mmc3.expregs[2] & 0x20)))
-		SetReadHandler(0x8000, 0xFFFF, M45ReadOB);
-	else
+	    (PRGsize[0] < 0x100000 && mmc3.expregs[5] == 4 && (mmc3.expregs[2] & 0x20))) {
+		SetReadHandler(0x8000, 0xFFFF, M45ReadOB); 
+	} else {
 		SetReadHandler(0x8000, 0xFFFF, CartBR);
+	}
 }
 
 static DECLFW(M45Write) {
-	if (mmc3.expregs[3] & 0x40) {
-		WRAM[A - 0x6000] = V;
-		return;
+	CartBW(A, V);
+	if (!(mmc3.expregs[3] & 0x40)) {
+		mmc3.expregs[mmc3.expregs[4]] = V;
+		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
 	}
-	mmc3.expregs[mmc3.expregs[4]] = V;
-	mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
 }
 
 static DECLFR(M45Read) {
@@ -550,11 +551,12 @@ static void M45Reset(void) {
 }
 
 static void M45Power(void) {
-	GenMMC3Power();
 	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = mmc3.expregs[5] = 0;
 	mmc3.expregs[2] = 0x0F;
+	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, M45Write);
 	SetReadHandler(0x5000, 0x5FFF, M45Read);
+	SetReadHandler(0x8000, 0xFFFF, M45Read);
 }
 
 void Mapper45_Init(CartInfo *info) {

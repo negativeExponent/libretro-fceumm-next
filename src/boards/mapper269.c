@@ -31,21 +31,19 @@ static uint8 *CHRROM;
 static uint32 CHRROMSIZE;
 
 static void M269CW(uint32 A, uint8 V) {
-	uint16 NV = V;
-	if (mmc3.expregs[2] & 8)
-		NV &= (1 << ((mmc3.expregs[2] & 7) + 1)) - 1;
-	NV |= mmc3.expregs[0] | ((mmc3.expregs[2] & 0xF0) << 4);
-	setchr1(A, NV);
+	uint32 mask = 0xFF >> (~mmc3.expregs[2] & 0xF);
+	uint32 base = ((mmc3.expregs[2] << 4) & 0xF00) | mmc3.expregs[0];
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static void M269PW(uint32 A, uint8 V) {
-	uint16 MV = V & ((mmc3.expregs[3] & 0x3F) ^ 0x3F);
-	MV |= mmc3.expregs[1];
-	MV |= ((mmc3.expregs[3] & 0x40) << 2);
-	setprg8(A, MV);
+	uint32 mask = ~mmc3.expregs[3] & 0x3F;
+	uint32 base = ((mmc3.expregs[2] << 2) & 0x300) | mmc3.expregs[1];
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(M269Write5) {
+	CartBW(A, V);
 	if (!(mmc3.expregs[3] & 0x80)) {
 		mmc3.expregs[mmc3.expregs[4]] = V;
 		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
@@ -89,11 +87,13 @@ void Mapper269_Init(CartInfo *info) {
 	info->Close = M269Close;
 	AddExState(mmc3.expregs, 5, 0, "EXPR");
 
-	CHRROMSIZE = PRGsize[0];
-	CHRROM = (uint8 *)FCEU_gmalloc(CHRROMSIZE);
-	/* unscramble CHR data from PRG */
-	for (i = 0; i < CHRROMSIZE; i++)
-		CHRROM[i] = unscrambleCHR(PRGptr[0][i]);
-	SetupCartCHRMapping(0, CHRROM, CHRROMSIZE, 0);
-	AddExState(CHRROM, CHRROMSIZE, 0, "_CHR");
+	if (!VROM_size) {
+		CHRROMSIZE = PRGsize[0];
+		CHRROM = (uint8 *)FCEU_gmalloc(CHRROMSIZE);
+		/* unscramble CHR data from PRG */
+		for (i = 0; i < CHRROMSIZE; i++)
+			CHRROM[i] = unscrambleCHR(PRGptr[0][i]);
+		SetupCartCHRMapping(0, CHRROM, CHRROMSIZE, 0);
+		AddExState(CHRROM, CHRROMSIZE, 0, "_CHR");
+	}
 }
