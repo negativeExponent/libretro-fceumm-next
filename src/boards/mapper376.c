@@ -36,8 +36,9 @@ static void Mapper376PW(uint32 A, uint8 V) {
 			if (A == 0x8000 || A == 0xC000)
 				setprg16(A, base);
 		}
-	} else
-		setprg8(A, (base << 1) | (V & 0x0F));
+	} else {
+		setprg8(A, ((base << 1) & ~0x0F) | (V & 0x0F));
+	}
 }
 
 static DECLFW(Mapper376Write) {
@@ -54,11 +55,11 @@ static void Mapper376Reset(void) {
 
 static void Mapper376Power(void) {
 	GenMMC3Power();
-	SetWriteHandler(0x6000, 0x7FFF, Mapper376Write);
+	SetWriteHandler(0x7000, 0x7FFF, Mapper376Write);
 }
 
 void Mapper376_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 256, 1, 0);
+	GenMMC3_Init(info, 128, 256, 0, 0);
 	pwrap = Mapper376PW;
 	cwrap = Mapper376CW;
 	info->Power = Mapper376Power;
