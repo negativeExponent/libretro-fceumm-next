@@ -26,12 +26,6 @@
 static uint8 *CHRRAM;
 static uint32 CHRRAMSIZE;
 
-static int getPRGBank(int bank) {
-	if ((~bank & 1) && (mmc3.cmd & 0x40))
-		bank ^= 2;
-	return (bank & 2) ? (0xFE | (bank & 1)) : mmc3.regs[6 | (bank & 1)];
-}
-
 static void M393CW(uint32 A, uint8 V) {
 	if (mmc3.expregs[0] & 8)
 		setchr8r(0x10, 0);
@@ -46,7 +40,7 @@ static void M393PW(uint32 A, uint8 V) {
 			setprg8(A, (V & 0x0F) | (mmc3.expregs[0] << 4));
 			break;
 		case 2:
-			setprg32(0x8000, ((getPRGBank(0) >> 2) & 3) | (mmc3.expregs[0] << 2));
+			setprg32(0x8000, ((mmc3.regs[6] >> 2) & 3) | (mmc3.expregs[0] << 2));
 			break;
 		case 3:
 			setprg16(0x8000, (mmc3.expregs[0] << 3) | (mmc3.expregs[1] & 7));
@@ -73,9 +67,11 @@ static DECLFW(M393Write8) {
 }
 
 static DECLFW(M393Write6) {
-	mmc3.expregs[0] = A & 0xFF;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	if (MMC3CanWriteToWRAM()) {
+		mmc3.expregs[0] = A & 0xFF;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
+	}
 }
 
 static void M393Power(void) {
