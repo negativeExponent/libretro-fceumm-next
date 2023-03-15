@@ -33,13 +33,12 @@
 
 static void M411CW(uint32 A, uint8 V) {
 	uint32 mask = (mmc3.expregs[1] & 2) ? 0xFF : 0x7F;
-	V &= mask;
-	setchr1(A, V | ((mmc3.expregs[1] << 5) & 0x80) | ((mmc3.expregs[0] << 4) & 0x100));
+	setchr1(A, (V & mask) | ((mmc3.expregs[1] << 5) & 0x80) | ((mmc3.expregs[0] << 4) & 0x100));
 }
 
 static void M411PW(uint32 A, uint8 V) {
 	/* NROM Mode */
-	if (mmc3.expregs[0] & 0x40) {
+	if ((mmc3.expregs[0] & 0x40) && !(mmc3.expregs[0] & 0x20)) { /* $5xx0 bit 5 check required for JY-212 */
 		uint32 bank = (mmc3.expregs[0] & 1) | ((mmc3.expregs[0] >> 2) & 2) | (mmc3.expregs[0] & 4) | (mmc3.expregs[1] & 8) |
 		    ((mmc3.expregs[1] >> 2) & 0x10);
 
@@ -57,8 +56,7 @@ static void M411PW(uint32 A, uint8 V) {
 	/* MMC3 Mode */
 	else {
 		uint32 mask = (mmc3.expregs[1] & 2) ? 0x1F : 0x0F;
-		V &= mask;
-		setprg8(A, V | ((mmc3.expregs[1] << 1) & 0x10) | ((mmc3.expregs[1] >> 1) & 0x20));
+		setprg8(A, (V & mask) | ((mmc3.expregs[1] << 1) & 0x10) | ((mmc3.expregs[1] >> 1) & 0x20));
 	}
 }
 
