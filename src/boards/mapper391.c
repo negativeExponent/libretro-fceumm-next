@@ -24,29 +24,39 @@
 #include "mmc3.h"
 
 static void Mapper391_PRGWrap(uint32 A, uint8 V) {
-	int prgAND = mmc3.expregs[0] & 0x08 ? 0x0F : 0x1F;
-	int prgOR = mmc3.expregs[0] << 4 & 0x30;
-	if (mmc3.expregs[0] & 0x20) {
-		if (~A & 0x4000) {
-			setprg8(A, ((((mmc3.expregs[0] & 0x04) ? ~2 : ~0) & V) & prgAND) | (prgOR & ~prgAND));
-			setprg8(A | 0x4000, ((((mmc3.expregs[0] & 0x04) ? 2 : 0) | V) & prgAND) | (prgOR & ~prgAND));
+	uint8 mask = mmc3.expregs[0] & 0x08 ? 0x0F : 0x1F;
+	uint8 base = mmc3.expregs[0] << 4 & 0x30;
+	if (mmc3.expregs[0] & 0x20) {		/* GNROM-like PRG banking */
+		if (mmc3.expregs[0] & 0x04) {	/* NROM-256 */
+			setprg8(0x8000, (base & ~mask) | ((mmc3.regs[6] & ~3) & mask) | 0);
+			setprg8(0xA000, (base & ~mask) | ((mmc3.regs[7] & ~3) & mask) | 1);
+			setprg8(0xC000, (base & ~mask) | ((mmc3.regs[6] & ~3) & mask) | 2);
+			setprg8(0xE000, (base & ~mask) | ((mmc3.regs[7] & ~3) & mask) | 3);
+		} else {						/* NROM-128 */
+			setprg8(0x8000, (base & ~mask) | ((mmc3.regs[6] & ~1) & mask) | 0);
+			setprg8(0xA000, (base & ~mask) | ((mmc3.regs[7] & ~1) & mask) | 1);
+			setprg8(0xC000, (base & ~mask) | ((mmc3.regs[6] & ~1) & mask) | 0);
+			setprg8(0xE000, (base & ~mask) | ((mmc3.regs[7] & ~1) & mask) | 1);
 		}
-	} else
-		setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
+	} else {
+		setprg8(A, (base & ~mask) | (V & mask));
+	}
 }
 
 static void Mapper391_CHRWrap(uint32 A, uint8 V) {
-	int chrAND = (mmc3.expregs[0] & 0x40) ? 0x7F : 0xFF;
-	int chrOR = ((mmc3.expregs[0] << 3) & 0x80) | ((mmc3.expregs[1] << 8) & 0x100);
-	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
+	uint16 mask = (mmc3.expregs[0] & 0x40) ? 0x7F : 0xFF;
+	uint16 base = ((mmc3.expregs[0] << 3) & 0x80) | ((mmc3.expregs[1] << 8) & 0x100);
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(Mapper391_Write) {
-	if (~mmc3.expregs[0] & 0x80) {
-		mmc3.expregs[0] = V;
-		mmc3.expregs[1] = ((A >> 8) & 0xFF);
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+	if (MMC3CanWriteToWRAM()) {
+		if (~mmc3.expregs[0] & 0x80) {
+			mmc3.expregs[0] = V;
+			mmc3.expregs[1] = ((A >> 8) & 0xFF);
+			FixMMC3PRG(mmc3.cmd);
+			FixMMC3CHR(mmc3.cmd);
+		}
 	}
 }
 
