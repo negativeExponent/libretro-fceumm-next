@@ -76,8 +76,8 @@ static void M372Close(void) {
 
 void Mapper372_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 0, 0);
-	cwrap = M372CW;
-	pwrap = M372PW;
+	mmc3.cwrap = M372CW;
+	mmc3.pwrap = M372PW;
 	info->Reset = M372Reset;
 	info->Power = M372Power;
 	info->Close = M372Close;

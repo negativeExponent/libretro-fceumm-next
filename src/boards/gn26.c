@@ -60,8 +60,8 @@ static void BMCGN26Power(void) {
 
 void BMCGN26_Init(CartInfo *info) {
 	GenMMC3_Init(info, 128, 256, 0, 0);
-	pwrap = BMCGN26PW;
-	cwrap = BMCGN26CW;
+	mmc3.pwrap = BMCGN26PW;
+	mmc3.cwrap = BMCGN26CW;
 	info->Power = BMCGN26Power;
 	info->Reset = BMCGN26Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

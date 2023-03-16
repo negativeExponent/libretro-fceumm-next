@@ -79,8 +79,8 @@ static void BMCK3033Reset(void) {
 
 void BMCK3033_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 0, 0);
-	pwrap = BMCK3033PW;
-	cwrap = BMCK3033CW;
+	mmc3.pwrap = BMCK3033PW;
+	mmc3.cwrap = BMCK3033CW;
 	info->Power = BMCK3033Power;
 	info->Reset = BMCK3033Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

@@ -70,7 +70,7 @@ void Mapper406_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 0, 0);
 	info->Power = M406Power;
 	info->Close = M406Close;
-    pwrap = M406PW;
+    mmc3.pwrap = M406PW;
     submapper = info->submapper;
 	MapIRQHook = FlashCPUHook;
 

@@ -64,8 +64,8 @@ static void M441Power(void) {
 
 void Mapper441_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 0, 0);
-	cwrap       = M441CW;
-	pwrap       = M441PW;
+	mmc3.cwrap       = M441CW;
+	mmc3.pwrap       = M441PW;
 	info->Power = M441Power;
 	info->Reset = M441Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

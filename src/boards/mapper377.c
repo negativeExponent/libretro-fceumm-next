@@ -57,8 +57,8 @@ static void M377Power(void) {
 
 void Mapper377_Init(CartInfo *info) {
 	GenMMC3_Init(info, 128, 128, 0, 0);
-	cwrap = M377CW;
-	pwrap = M377PW;
+	mmc3.cwrap = M377CW;
+	mmc3.pwrap = M377PW;
 	info->Reset = M377Reset;
 	info->Power = M377Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

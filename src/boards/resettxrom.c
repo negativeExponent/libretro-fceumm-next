@@ -75,8 +75,8 @@ static void M313Power(void) {
 /* NES 2.0 313, UNIF BMC-RESET-TXROM */
 void BMCRESETTXROM_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 8, 0);
-	cwrap = M313CW;
-	pwrap = M313PW;
+	mmc3.cwrap = M313CW;
+	mmc3.pwrap = M313PW;
 	submapper = info->submapper;
 	info->Power = M313Power;
 	info->Reset = M313Reset;

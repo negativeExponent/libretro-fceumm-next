@@ -54,8 +54,8 @@ static void M267Power(void) {
 
 void Mapper267_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 128, 0, 0);
-	cwrap = M267CW;
-	pwrap = M267PW;
+	mmc3.cwrap = M267CW;
+	mmc3.pwrap = M267PW;
 	info->Reset = M267Reset;
 	info->Power = M267Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

@@ -77,8 +77,8 @@ static void UNLBMW8544Power(void) {
 
 void UNLBMW8544_Init(CartInfo *info) {
 	GenMMC3_Init(info, 128, 256, 0, 0);
-	pwrap = UNLBMW8544PW;
-	cwrap = UNLBMW8544CW;
+	mmc3.pwrap = UNLBMW8544PW;
+	mmc3.cwrap = UNLBMW8544CW;
 	info->Power = UNLBMW8544Power;
 	AddExState(mmc3.expregs, 3, 0, "EXPR");
 }

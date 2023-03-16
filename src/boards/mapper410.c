@@ -75,8 +75,8 @@ static void M410Power(void) {
 
 void Mapper410_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 0, 0);
-	cwrap = M410CW;
-	pwrap = M410PW;
+	mmc3.cwrap = M410CW;
+	mmc3.pwrap = M410PW;
 	info->Reset = M410Reset;
 	info->Power = M410Power;
 	info->Close = M410Close;

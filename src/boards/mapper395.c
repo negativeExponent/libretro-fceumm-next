@@ -59,8 +59,8 @@ static void M395Power(void) {
 
 void Mapper395_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 0, 0);
-	cwrap = M395CW;
-	pwrap = M395PW;
+	mmc3.cwrap = M395CW;
+	mmc3.pwrap = M395PW;
 	info->Power = M395Power;
 	info->Reset = M395Reset;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");

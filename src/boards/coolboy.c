@@ -144,8 +144,8 @@ static void COOLBOYPower(void) {
 
 void COOLBOY_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 8, 0);
-	pwrap = COOLBOYPW;
-	cwrap = COOLBOYCW;
+	mmc3.pwrap = COOLBOYPW;
+	mmc3.cwrap = COOLBOYCW;
 	info->Power = COOLBOYPower;
 	info->Reset = COOLBOYReset;
 	AddExState(mmc3.expregs, 4, 0, "EXPR");
@@ -168,8 +168,8 @@ static void MINDKIDSPower(void) {
 
 void MINDKIDS_Init(CartInfo *info) {
 	GenMMC3_Init(info, 2048, 256, 8, info->battery);
-	pwrap = COOLBOYPW;
-	cwrap = COOLBOYCW;
+	mmc3.pwrap = COOLBOYPW;
+	mmc3.cwrap = COOLBOYCW;
 	info->Power = MINDKIDSPower;
 	info->Reset = COOLBOYReset;
 	AddExState(mmc3.expregs, 4, 0, "EXPR");

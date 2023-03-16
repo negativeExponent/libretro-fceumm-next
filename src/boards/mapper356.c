@@ -87,9 +87,9 @@ static void M356Power(void) {
 
 void Mapper356_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 0, 0);
-	cwrap = M356CW;
-	pwrap = M356PW;
-	mwrap = M356MW;
+	mmc3.cwrap = M356CW;
+	mmc3.pwrap = M356PW;
+	mmc3.mwrap = M356MW;
 	info->Reset = M356Reset;
 	info->Power = M356Power;
 	info->Close = M356Close;

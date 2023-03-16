@@ -60,8 +60,8 @@ static void BMC830118CPower(void) {
 
 void BMC830118C_Init(CartInfo *info) {
 	GenMMC3_Init(info, 128, 128, 0, 0);
-	pwrap = BMC830118CPW;
-	cwrap = BMC830118CCW;
+	mmc3.pwrap = BMC830118CPW;
+	mmc3.cwrap = BMC830118CCW;
 	info->Power = BMC830118CPower;
 	info->Reset = BMC830118CReset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

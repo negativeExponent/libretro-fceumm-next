@@ -27,8 +27,6 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 *CHRRAM;
-
 static void M412CW(uint32 A, uint8 V) {
     if (mmc3.expregs[2] & 2) {
         setchr8(mmc3.expregs[0] >> 2);
@@ -74,8 +72,8 @@ static void M412Power(void) {
 
 void Mapper412_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 0, 0);
-	cwrap = M412CW;
-	pwrap = M412PW;
+	mmc3.cwrap = M412CW;
+	mmc3.pwrap = M412PW;
 	info->Reset = M412Reset;
 	info->Power = M412Power;
 	AddExState(mmc3.expregs, 4, 0, "EXPR");

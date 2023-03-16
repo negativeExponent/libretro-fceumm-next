@@ -64,8 +64,8 @@ static void BMCK3006Power(void) {
 
 void BMCK3006_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 512, 8, 0);
-	pwrap = BMCK3006PW;
-	cwrap = BMCK3006CW;
+	mmc3.pwrap = BMCK3006PW;
+	mmc3.cwrap = BMCK3006CW;
 	info->Power = BMCK3006Power;
 	info->Reset = BMCK3006Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

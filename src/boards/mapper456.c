@@ -50,8 +50,8 @@ static void Mapper456_Power(void) {
 
 void Mapper456_Init(CartInfo *info) {
 	GenMMC3_Init(info, 128, 128, 8, 0);
-	cwrap = Mapper456_CHRWrap;
-	pwrap = Mapper456_PRGWrap;
+	mmc3.cwrap = Mapper456_CHRWrap;
+	mmc3.pwrap = Mapper456_PRGWrap;
 	info->Power = Mapper456_Power;
 	info->Reset = Mapper456_Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

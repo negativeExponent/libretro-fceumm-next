@@ -88,8 +88,8 @@ static void Mapper134_Power(void) {
 
 void Mapper134_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8, info->battery);
-	cwrap = Mapper134_CHRWrap;
-	pwrap = Mapper134_PRGWrap;
+	mmc3.cwrap = Mapper134_CHRWrap;
+	mmc3.pwrap = Mapper134_PRGWrap;
 	info->Power = Mapper134_Power;
 	info->Reset = Mapper134_Reset;
 	AddExState(mmc3.expregs, 4, 0, "EXPR");
