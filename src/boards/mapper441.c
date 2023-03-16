@@ -42,11 +42,13 @@ static void M441CW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M441Write) {
-	if (~mmc3.expregs[0] & 0x80) {
-		mmc3.expregs[0] = V;
-	    FixMMC3PRG(mmc3.cmd);
-	    FixMMC3CHR(mmc3.cmd);
-    }
+	if (MMC3CanWriteToWRAM()) {
+		if (~mmc3.expregs[0] & 0x80) {
+			mmc3.expregs[0] = V;
+			FixMMC3PRG(mmc3.cmd);
+			FixMMC3CHR(mmc3.cmd);
+		}
+	}
 }
 
 static void M441Reset(void) {
