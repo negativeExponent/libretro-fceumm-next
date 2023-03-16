@@ -40,7 +40,11 @@ static DECLFW(M516Write) {
 		FixMMC3PRG(mmc3.cmd);
 		FixMMC3CHR(mmc3.cmd);
 	}
-	MMC3_CMDWrite(A, V);
+	if (A < 0xC000) {
+		MMC3_CMDWrite(A, V);
+	} else {
+		MMC3_IRQWrite(A, V);
+	}
 }
 
 static void M516Power(void) {
