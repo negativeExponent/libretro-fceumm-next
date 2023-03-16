@@ -35,8 +35,8 @@ static void Sync(void) {
 	switch (latch.addr & 7) {
 	case 0:
 	case 4:
-      setprg32(0x8000, bank >> 1);
-      break;
+	  setprg32(0x8000, bank >> 1);
+	  break;
 	case 1:
 		setprg16(0x8000, bank);
 		setprg16(0xC000, bank | 7);
@@ -67,13 +67,14 @@ static void Sync(void) {
 }
 
 static DECLFW(M354_WriteLatch) {
-   if (A >= (submapper == 1) ? 0xE000 : 0xF000) {
-	   LatchWrite(A, V);
-   }
+	uint32 adr = (submapper == 1) ? 0xE000 : 0xF000;
+	if (A >= adr) {
+		LatchWrite(A, V);
+	}
 }
 
 static void M354_Power(void) {
-   LatchPower();
+	LatchPower();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M354_WriteLatch);
 	Sync();
