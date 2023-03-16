@@ -56,11 +56,13 @@ static DECLFR(M432Read) {
 }
 
 static DECLFW(M432Write) {
-	mmc3.expregs[A & 1] = V;
-	if (~A & 1 && ~V & 1 && ROM_size < 64)
-		mmc3.expregs[1] &= ~0x20; /* Writing 0 to register 0 clears register 1's DIP bit */
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	if (MMC3CanWriteToWRAM()) {
+		mmc3.expregs[A & 1] = V;
+		if (~A & 1 && ~V & 1 && ROM_size < 64)
+			mmc3.expregs[1] &= ~0x20; /* Writing 0 to register 0 clears register 1's DIP bit */
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
+	}
 }
 
 static void M432Reset(void) {
