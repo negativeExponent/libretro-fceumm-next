@@ -88,8 +88,8 @@ static void UNLA9746Reset(void) {
 
 void UNLA9746_Init(CartInfo *info) {
 	GenMMC3_Init(info, 64, 512, 0, 0);
-	pwrap = UNLA9746PWrap;
-	cwrap = UNLA9746CWrap;
+	mmc3.pwrap = UNLA9746PWrap;
+	mmc3.cwrap = UNLA9746CWrap;
 	info->Power = UNLA9746Power;
 	info->Reset = UNLA9746Reset;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");

@@ -97,8 +97,8 @@ void BMC1024CA1_Init(CartInfo *info) {
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSize, 1);
 	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
-	pwrap = BMC1024CA1PW;
-	cwrap = BMC1024CA1CW;
+	mmc3.pwrap = BMC1024CA1PW;
+	mmc3.cwrap = BMC1024CA1CW;
 	info->Power = BMC1024CA1Power;
 	info->Reset = BMC1024CA1Reset;
 	info->Close = BMC1024CA1Close;

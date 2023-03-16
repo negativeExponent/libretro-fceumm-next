@@ -55,7 +55,7 @@ static void BMCF15Power(void) {
 
 void BMCF15_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 0, 0);
-	pwrap = BMCF15PW;
+	mmc3.pwrap = BMCF15PW;
 	info->Power = BMCF15Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

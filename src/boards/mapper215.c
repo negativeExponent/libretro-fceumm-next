@@ -176,8 +176,8 @@ static void UNL8237Reset(void) {
 
 void UNL8237_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 0, 0);
-	cwrap = UNL8237CW;
-	pwrap = UNL8237PW;
+	mmc3.cwrap = UNL8237CW;
+	mmc3.pwrap = UNL8237PW;
 	info->Power = UNL8237Power;
 	info->Reset = UNL8237Reset;
 	AddExState(mmc3.expregs, 4, 0, "EXPR");

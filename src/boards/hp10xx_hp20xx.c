@@ -158,9 +158,9 @@ static void BMCHPxxPower(void) {
 
 void BMCHPxx_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 8, 0);
-	cwrap = BMCHPxxCW;
-	pwrap = BMCHPxxPW;
-	mwrap = BMCHPxxMW;
+	mmc3.cwrap = BMCHPxxCW;
+	mmc3.pwrap = BMCHPxxPW;
+	mmc3.mwrap = BMCHPxxMW;
 	info->Power = BMCHPxxPower;
 	info->Reset = BMCHPxxReset;
 	AddExState(mmc3.expregs, 8, 0, "EXPR");

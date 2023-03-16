@@ -110,8 +110,8 @@ void BMC810131C_Init(CartInfo *info) {
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSize, 1);
 	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
-	pwrap = BMC810131C_PW;
-	cwrap = BMC810131C_CW;
+	mmc3.pwrap = BMC810131C_PW;
+	mmc3.cwrap = BMC810131C_CW;
 	PPU_hook = TKSPPU;
 	info->Power = BMC810131C_Power;
 	info->Reset = BMC810131C_Reset;

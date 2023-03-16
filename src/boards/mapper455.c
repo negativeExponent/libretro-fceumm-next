@@ -66,8 +66,8 @@ static void M455Power(void) {
 
 void Mapper455_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 0, 0);
-	cwrap       = M455CW;
-	pwrap       = M455PW;
+	mmc3.cwrap       = M455CW;
+	mmc3.pwrap       = M455PW;
 	info->Power = M455Power;
 	info->Reset = M455Reset;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");

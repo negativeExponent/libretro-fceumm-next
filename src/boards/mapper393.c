@@ -95,8 +95,8 @@ static void M393lose(void) {
 
 void Mapper393_Init(CartInfo *info) {
 	GenMMC3_Init(info, 1024, 512, 8, 0);
-	pwrap = M393PW;
-	cwrap = M393CW;
+	mmc3.pwrap = M393PW;
+	mmc3.cwrap = M393CW;
 	info->Power = M393Power;
 	info->Reset = M393Reset;
 	info->Close = M393lose;

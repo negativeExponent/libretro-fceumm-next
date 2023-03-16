@@ -83,8 +83,8 @@ static void M432Power(void) {
 
 void Mapper432_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 0, 0);
-	cwrap       = M432CW;
-	pwrap       = M432PW;
+	mmc3.cwrap       = M432CW;
+	mmc3.pwrap       = M432PW;
 	info->Power = M432Power;
 	info->Reset = M432Reset;
 	AddExState(mmc3.expregs, 3, 0, "EXPR");

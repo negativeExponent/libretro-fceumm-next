@@ -60,8 +60,8 @@ static void Mapper376Power(void) {
 
 void Mapper376_Init(CartInfo *info) {
 	GenMMC3_Init(info, 128, 256, 0, 0);
-	pwrap = Mapper376PW;
-	cwrap = Mapper376CW;
+	mmc3.pwrap = Mapper376PW;
+	mmc3.cwrap = Mapper376CW;
 	info->Power = Mapper376Power;
 	info->Reset = Mapper376Reset;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");

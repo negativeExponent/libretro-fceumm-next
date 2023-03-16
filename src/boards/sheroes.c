@@ -69,7 +69,7 @@ static void MSHClose(void) {
 
 void UNLSHeroes_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 512, 0, 0);
-	cwrap = MSHCW;
+	mmc3.cwrap = MSHCW;
 	info->Power = MSHPower;
 	info->Reset = MSHReset;
 	info->Close = MSHClose;

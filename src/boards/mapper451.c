@@ -93,7 +93,7 @@ void Mapper451_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 256, 0, 0);
 	info->Power = M451Power;
 	info->Close = M451Close;
-    pwrap = M451PW;
+    mmc3.pwrap = M451PW;
 	MapIRQHook = FlashCPUHook;
 
 	FLASHROM_size = PRGsize[0];

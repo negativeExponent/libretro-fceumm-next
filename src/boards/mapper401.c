@@ -87,8 +87,8 @@ static void M401Power(void) {
 
 void Mapper401_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 8, 0);
-	cwrap = M401CW;
-	pwrap = M401PW;
+	mmc3.cwrap = M401CW;
+	mmc3.pwrap = M401PW;
 	info->Power = M401Power;
 	info->Reset = M401Reset;
 	AddExState(mmc3.expregs, 5, 0, "EXPR");

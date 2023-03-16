@@ -55,8 +55,8 @@ static void M516Power(void) {
 
 void Mapper516_Init(CartInfo *info) {
 	GenMMC3_Init(info, 128, 128, 0, 0);
-	cwrap = M516CW;
-	pwrap = M516PW;
+	mmc3.cwrap = M516CW;
+	mmc3.pwrap = M516PW;
 	info->Power = M516Power;
 	AddExState(mmc3.expregs, 4, 0, "EXPR");
 }

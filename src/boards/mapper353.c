@@ -118,9 +118,9 @@ static void M353Close(void) {
 
 void Mapper353_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 128, 8, info->battery);
-	cwrap = M353CW;
-	pwrap = M353PW;
-	mwrap = M353MW;
+	mmc3.cwrap = M353CW;
+	mmc3.pwrap = M353PW;
+	mmc3.mwrap = M353MW;
 	PPU_hook = M353PPU;
 	info->Power = M353Power;
 	info->Close = M353Close;

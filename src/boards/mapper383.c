@@ -95,8 +95,8 @@ static void M383Power(void) {
 
 void Mapper383_Init(CartInfo *info) {
 	GenMMC3_Init(info, 128, 128, 8, 0);
-	pwrap = M383PRGWrap;
-	cwrap = M383CHRWrap;
+	mmc3.pwrap = M383PRGWrap;
+	mmc3.cwrap = M383CHRWrap;
 	info->Power = M383Power;
 	info->Reset = M383Reset;
 	AddExState(mmc3.expregs, 3, 0, "EXPR");

@@ -711,8 +711,8 @@ void Mapper394_Init(CartInfo *info) {
 	WSync = sync394;
 	JYASIC_init(info);
 	GenMMC3_Init(info, 128, 128, 0, 0);
-	pwrap = Mapper394_PWrap;
-	cwrap = Mapper394_CWrap;
+	mmc3.pwrap = Mapper394_PWrap;
+	mmc3.cwrap = Mapper394_CWrap;
 	info->Reset = Mapper394_power;
 	info->Power = Mapper394_power;
 	AddExState(HSK007Reg, 4, 0, "HSK ");

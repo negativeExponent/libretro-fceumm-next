@@ -74,8 +74,8 @@ static void Mapper444_Power(void) {
 void Mapper444_Init(CartInfo *info) {
 	pads = info->submapper; /* UNIF represents submapper 0 */
 	GenMMC3_Init(info, 256, 256, 0, 0);
-	cwrap = Mapper444_CHRWrap;
-	pwrap = Mapper444_PRGWrap;
+	mmc3.cwrap = Mapper444_CHRWrap;
+	mmc3.pwrap = Mapper444_PRGWrap;
 	info->Power = Mapper444_Power;
 	info->Reset = Mapper444_Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

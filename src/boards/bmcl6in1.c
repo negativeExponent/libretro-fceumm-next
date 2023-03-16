@@ -63,8 +63,8 @@ static void BMCL6IN1Power(void) {
 
 void BMCL6IN1_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 8, 0, 0);
-	pwrap = BMCL6IN1PW;
-	mwrap = BMCL6IN1MW;
+	mmc3.pwrap = BMCL6IN1PW;
+	mmc3.mwrap = BMCL6IN1MW;
 	info->Power = BMCL6IN1Power;
 	info->Reset = BMCL6IN1Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

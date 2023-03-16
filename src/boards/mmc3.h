@@ -8,6 +8,10 @@ typedef struct {
     uint8 wram;
     uint8 regs[8];
     uint8 expregs[8]; /* extra regs, mostly for pirate/multicart carts */
+
+    void (*pwrap)(uint32 A, uint8 V);
+    void (*cwrap)(uint32 A, uint8 V);
+    void (*mwrap)(uint8 V);
 } MMC3;
 
 extern MMC3 mmc3;
