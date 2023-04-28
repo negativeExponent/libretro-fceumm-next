@@ -552,7 +552,6 @@ static void M45Power(void) {
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7FFF, M45Write);
 	SetReadHandler(0x5000, 0x5FFF, M45Read);
-	SetReadHandler(0x8000, 0xFFFF, M45Read);
 }
 
 void Mapper45_Init(CartInfo *info) {
