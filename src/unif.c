@@ -625,6 +625,7 @@ static BMAPPING bmap[] = {
 	{ "DS-07",                      439, Mapper439_Init,        0 },
 	{ "K86B",                       439, Mapper439_Init,        0 },
 	{ "S-2009",                     434, Mapper434_Init,        0 },
+	{ "COOLGIRL",                   342, COOLGIRL_Init,         BMCFLAG_256KCHRR },
 
 	{ NULL, NO_INES, NULL, 0 }
 };
