@@ -179,6 +179,7 @@ void FARIDUNROM_Init(CartInfo *info);		/* m324 */
 void BMCK3033_Init(CartInfo *info);			/* mm22 */
 void BMC830134C_Init(CartInfo *info);		/* m315 */
 void BMCGN26_Init(CartInfo *info);			/* m344 */
+void COOLGIRL_Init(CartInfo *info);			/* m342 */
 
 void KG256_Init(CartInfo *info);
 void WAIXINGFS005_Init(CartInfo *info);
