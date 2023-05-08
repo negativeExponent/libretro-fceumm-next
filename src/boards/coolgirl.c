@@ -1,4 +1,4 @@
-/* FCEmm - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
 *
 * Copyright notice for this file:
 *  Copyright (C) 2022 Cluster
