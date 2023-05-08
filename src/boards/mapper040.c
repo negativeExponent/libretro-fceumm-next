@@ -25,22 +25,35 @@
 
 static uint8 reg;
 static uint32 IRQCount, IRQa;
+static uint8 outer_bank;
+static uint8 submapper;
 
 static SFORMAT StateRegs[] =
 {
 	{ &IRQCount, 4, "IRQC" },
 	{ &IRQa, 4, "IRQA" },
 	{ &reg, 1, "REG" },
+	{ &outer_bank, 1, "OUTB" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg8(0x6000, ~1);
-	setprg8(0x8000, ~3);
-	setprg8(0xa000, ~2);
-	setprg8(0xc000, reg);
-	setprg8(0xe000, ~0);
-	setchr8(0);
+	if (outer_bank & 8) {
+		if (outer_bank & 0x10) {
+			setprg32(0x8000, 2 | (outer_bank >> 6));
+		} else {
+			setprg16(0x8000, 4 | (outer_bank >> 5));
+			setprg16(0xC000, 4 | (outer_bank >> 5));
+		}
+	} else {
+		setprg8(0x6000, 6);
+		setprg8(0x8000, 4);
+		setprg8(0xa000, 5);
+		setprg8(0xc000, reg & 7);
+		setprg8(0xe000, 7);
+	}
+	setchr8((outer_bank >> 1) & 3);
+	setmirror((outer_bank & 1) ^ 1);
 }
 
 static DECLFW(M40Write) {
@@ -53,8 +66,15 @@ static DECLFW(M40Write) {
 		case 0xa000:
 			IRQa = 1;
 			break;
+		case 0xc000:
+			if (submapper == 1) {
+				outer_bank = A & 0xFF;
+				Sync();
+				
+			}
+			break;
 		case 0xe000:
-			reg = V & 7;
+			reg = V;
 			Sync();
 			break;
 	}
@@ -62,12 +82,19 @@ static DECLFW(M40Write) {
 
 static void M40Power(void) {
 	reg = 0;
+	outer_bank = 0;
+	IRQCount = IRQa = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xffff, CartBR);
 	SetWriteHandler(0x8000, 0xffff, M40Write);
 }
 
-static void M40Reset(void) { }
+static void M40Reset(void) {
+	reg = 0;
+	outer_bank = 0;
+	IRQCount = IRQa = 0;
+	Sync();
+ }
 
 static void FP_FASTAPASS(1) M40IRQHook(int a) {
 	if (IRQa) {
@@ -89,5 +116,6 @@ void Mapper40_Init(CartInfo *info) {
 	info->Power = M40Power;
 	MapIRQHook = M40IRQHook;
 	GameStateRestore = StateRestore;
+	submapper = info->submapper;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
