@@ -514,7 +514,9 @@ static DECLFW(COOLGIRL_WRITE) {
 		case 6:
 			flags = V >> 5;
 			mapper = (mapper & 0x20) | (V & 0x1F);
-			FCEU_printf("%04x:%02x mapper:%5d (%04x) flags:%02x\n", A, V, mapper, mapper, flags);
+			if (lockout) {
+				FCEU_printf("Mapper: %02X/%02X\n", mapper, flags);
+			}
 			break;
 		case 7:
 			lockout = V >> 7;
@@ -524,7 +526,6 @@ static DECLFW(COOLGIRL_WRITE) {
 			can_write_flash = (V & 4) >> 2;
 			can_write_chr = (V & 2) >> 1;
 			sram_enabled = V & 1;
-			FCEU_printf("%04x:%02x mapper:%5d (%04x) flags:%02x\n", A, V, mapper, mapper, flags);
 			switch (mapper) {
 			case 14:
 				prg_bank_b = 1;
@@ -535,6 +536,9 @@ static DECLFW(COOLGIRL_WRITE) {
 			case 23:
 				map_rom_on_6000 = 1;
 				break;
+			}
+			if (lockout) {
+				FCEU_printf("Mapper: %02X/%02X\n", mapper, flags);
 			}
 			break;
 		}
