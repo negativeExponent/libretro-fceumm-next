@@ -515,7 +515,7 @@ static DECLFW(COOLGIRL_WRITE) {
 			flags = V >> 5;
 			mapper = (mapper & 0x20) | (V & 0x1F);
 			if (lockout) {
-				FCEU_printf("Mapper: %02X/%02X\n", mapper, flags);
+				FCEU_printf("Mapper: %3d/%02X\n", mapper, flags);
 			}
 			break;
 		case 7:
@@ -538,7 +538,7 @@ static DECLFW(COOLGIRL_WRITE) {
 				break;
 			}
 			if (lockout) {
-				FCEU_printf("Mapper: %02X/%02X\n", mapper, flags);
+				FCEU_printf("Mapper: %3d/%02X\n", mapper, flags);
 			}
 			break;
 		}
@@ -713,7 +713,7 @@ static DECLFW(COOLGIRL_WRITE) {
 				chr_bank_a = (chr_bank_a & 0xE7) | ((V & 0x0C) << 1);
 			}
 		}
-	} else { /* $8000-$FFFF */ 
+	} else { /* $8000-$FFFF */
 		/* Mapper #2 - UxROM */
 		/* flag0 - mapper #71 - for Fire Hawk only. */
 		/* other mapper-#71 games are UxROM */
@@ -1339,12 +1339,36 @@ static DECLFW(COOLGIRL_WRITE) {
 		flag1 - divides CHR bank select by two (mapper #22, VRC2a)
 		*/
 		if (mapper == 24) {
-			uint8_t vrc_2b_hi = ((A >> 1) & 1) | ((A >> 3) & 1) | ((A >> 5) & 1) | ((A >> 7) & 1);
-			uint8_t vrc_2b_low = (A & 1) | ((A >> 2) & 1) | ((A >> 4) & 1) | ((A >> 6) & 1);
-
-			switch (((A >> 10) & 0x1C) |
+#if 1
+			/* Compatibility code - for rom variants using the older firmware */
+			uint8 vrc_2b_hi = ((A >> 1) & 1) | ((A >> 3) & 1) | ((A >> 5) & 1) | ((A >> 7) & 1);
+			uint8 vrc_2b_low = (A & 1) | ((A >> 2) & 1) | ((A >> 4) & 1) | ((A >> 6) & 1);
+			uint8 vrc_2b_addr =
 			    (((flags & 1) ? vrc_2b_low : vrc_2b_hi) << 1) |
-			    ((flags & 1) ? vrc_2b_hi : vrc_2b_low)) {
+			    ((flags & 1) ? vrc_2b_hi : vrc_2b_low);
+#endif
+#if 0
+			/* Updated code, not compatible with earlier VRC24 cart variants */
+			uint8 vrc_2b_hi =
+				(flags & 5) == 0 ?
+				(((A >> 7) & 1) | ((A >> 2) & 1)) /* mapper #21 */
+				: (flags & 5) == 1 ?
+				(A & 1) /* mapper #22 */
+				: (flags & 5) == 4 ?
+				(((A >> 5) & 1) | ((A >> 3) & 1) | ((A >> 1) & 1)) /* mapper #23 */
+				: (((A >> 2) & 1) | (A & 1)); /* mapper #25 */
+			uint8 vrc_2b_low =
+				(flags & 5) == 0 ?
+				(((A >> 6) & 1) | ((A >> 1) & 1)) /* mapper #21 */
+				: (flags & 5) == 1 ?
+				((A >> 1) & 1) /* mapper #22 */
+				: (flags & 5) == 4 ?
+				(((A >> 4) & 1) | ((A >> 2) & 1) | (A & 1)) /* mapper #23 */
+				: (((A >> 3) & 1) | ((A >> 1) & 1)); /* mapper #25 */
+			uint8 vrc_2b_addr = (vrc_2b_hi << 1) | vrc_2b_low;
+#endif
+
+			switch (((A >> 10) & 0x1C) | vrc_2b_addr) {
 			case 0: /* $8000-$8003, PRG0 */
 			case 1:
 			case 2:
@@ -1419,8 +1443,7 @@ static DECLFW(COOLGIRL_WRITE) {
 				break;
 			}
 			if ((A & 0x7000) == 0x7000) {
-				switch ((((flags & 1) ? vrc_2b_low : vrc_2b_hi) << 1) |
-				    ((flags & 1) ? vrc_2b_hi : vrc_2b_low))	{
+				switch (vrc_2b_addr)	{
 				case 0: /* IRQ latch low */
 					vrc4_irq_latch = (vrc4_irq_latch & 0xF0) | (V & 0x0F);
 					break;
