@@ -276,7 +276,7 @@ static void M212Power() {
 }
 
 void Mapper212_Init(CartInfo *info) {
-	Latch_Init(info, M212Sync, M212Read, 0, 0);
+	Latch_Init(info, M212Sync, NULL, 0, 0);
 	info->Power = M212Power;
 }
 
