@@ -227,6 +227,7 @@ static uint8 flash_buffer_v[10];
 static uint8 cfi_mode = 0;
 
 static uint8 show_error_log = 0;
+static uint8 vrc24_compatibility = 0;
 
 /* Micron 4-gbit memory CFI data */
 const uint8 cfi_data[] = {
@@ -1339,34 +1340,37 @@ static DECLFW(COOLGIRL_WRITE) {
 		flag1 - divides CHR bank select by two (mapper #22, VRC2a)
 		*/
 		if (mapper == 24) {
-#if 1
-			/* Compatibility code - for rom variants using the older firmware */
-			uint8 vrc_2b_hi = ((A >> 1) & 1) | ((A >> 3) & 1) | ((A >> 5) & 1) | ((A >> 7) & 1);
-			uint8 vrc_2b_low = (A & 1) | ((A >> 2) & 1) | ((A >> 4) & 1) | ((A >> 6) & 1);
-			uint8 vrc_2b_addr =
-			    (((flags & 1) ? vrc_2b_low : vrc_2b_hi) << 1) |
-			    ((flags & 1) ? vrc_2b_hi : vrc_2b_low);
-#endif
-#if 0
-			/* Updated code, not compatible with earlier VRC24 cart variants */
-			uint8 vrc_2b_hi =
-				(flags & 5) == 0 ?
-				(((A >> 7) & 1) | ((A >> 2) & 1)) /* mapper #21 */
-				: (flags & 5) == 1 ?
-				(A & 1) /* mapper #22 */
-				: (flags & 5) == 4 ?
-				(((A >> 5) & 1) | ((A >> 3) & 1) | ((A >> 1) & 1)) /* mapper #23 */
-				: (((A >> 2) & 1) | (A & 1)); /* mapper #25 */
-			uint8 vrc_2b_low =
-				(flags & 5) == 0 ?
-				(((A >> 6) & 1) | ((A >> 1) & 1)) /* mapper #21 */
-				: (flags & 5) == 1 ?
-				((A >> 1) & 1) /* mapper #22 */
-				: (flags & 5) == 4 ?
-				(((A >> 4) & 1) | ((A >> 2) & 1) | (A & 1)) /* mapper #23 */
-				: (((A >> 3) & 1) | ((A >> 1) & 1)); /* mapper #25 */
-			uint8 vrc_2b_addr = (vrc_2b_hi << 1) | vrc_2b_low;
-#endif
+			uint8 vrc_2b_hi = 0;
+			uint8 vrc_2b_low = 0;
+			uint8 vrc_2b_addr = 0;
+
+			if (vrc24_compatibility) {
+				/* Compatibility code - for rom variants using the older firmware */
+				vrc_2b_hi = ((A >> 1) & 1) | ((A >> 3) & 1) | ((A >> 5) & 1) | ((A >> 7) & 1);
+				vrc_2b_low = (A & 1) | ((A >> 2) & 1) | ((A >> 4) & 1) | ((A >> 6) & 1);
+				vrc_2b_addr =
+			        (((flags & 1) ? vrc_2b_low : vrc_2b_hi) << 1) |
+			        ((flags & 1) ? vrc_2b_hi : vrc_2b_low);
+			} else {
+				/* Updated code, not compatible with earlier VRC24 cart variants */
+				vrc_2b_hi =
+				    (flags & 5) == 0 ?
+				    (((A >> 7) & 1) | ((A >> 2) & 1)) /* mapper #21 */
+				    : (flags & 5) == 1 ?
+				    (A & 1) /* mapper #22 */
+				    : (flags & 5) == 4 ?
+				    (((A >> 5) & 1) | ((A >> 3) & 1) | ((A >> 1) & 1)) /* mapper #23 */
+				    : (((A >> 2) & 1) | (A & 1)); /* mapper #25 */
+				vrc_2b_low =
+				    (flags & 5) == 0 ?
+				    (((A >> 6) & 1) | ((A >> 1) & 1)) /* mapper #21 */
+				    : (flags & 5) == 1 ?
+				    ((A >> 1) & 1) /* mapper #22 */
+				    : (flags & 5) == 4 ?
+				    (((A >> 4) & 1) | ((A >> 2) & 1) | (A & 1)) /* mapper #23 */
+				    : (((A >> 3) & 1) | ((A >> 1) & 1)); /* mapper #25 */
+				vrc_2b_addr = (vrc_2b_hi << 1) | vrc_2b_low;
+			}
 
 			switch (((A >> 10) & 0x1C) | vrc_2b_addr) {
 			case 0: /* $8000-$8003, PRG0 */
@@ -2134,6 +2138,31 @@ void COOLGIRL_Init(CartInfo *info) {
 		CFI[i * 2] = CFI[i * 2 + 1] = cfi_data[i];
 	}
 	SetupCartPRGMapping(CFI_CHIP, CFI, sizeof(cfi_data) * 2, 0);
+
+	switch (info->PRGCRC32) {
+	/* Earlier version of roms using VRC24 were using incorrect flags
+	 * which are now incompatible with later updates of Coolgirl firmware causing
+	 * graphics to be broken. This enables compatibily code to handle early roms while
+	 * keeping the latest and updated VRC24 handling intact for newer roms when they become available.
+	 */
+	case 0xCF0FE3F3: /* 0b89251f6d63d49586ee3bbe41914ab7.unif */
+	case 0x62BEFE75: /* 320 ¿úÓ äÑ¡ñ¿.unf */
+	case 0xBF617289: /* d61e011f86b13bed9a22d3c56326e689.unif */
+	case 0x3A70CB07: /* (MMK-02A-01) Gradius 10-in-1.nes */
+	case 0x5352A128: /* (MMK-02D-00) Coolgirl 11-in-1.nes */
+	case 0x861F89A0: /* (MMK-02E-00) Coolgirl 7-in-1.nes */
+	case 0xA25CD951: /* (MMK-02F-00) Shooting Game 16-in-1.nes */
+	case 0xE368F1F6: /* (MMK-033-00) Game 150-in-1.nes */
+	case 0x49EE3B04: /* (YG-6014) Super Captain Tsubasa 2 Hack 6-in-1.nes (not using mapper code 24 but whatever) */
+	case 0x7B85868B: /* (Yhc-4006-00) Super Konami 80-in-1.nes */
+	case 0x2F0D22CD: /* (Yhc-BS-8165-01) Super Plane Game 11-in-1.nes */
+	case 0x242B9218: /* (Yhc-CK-124-07) Super Konami 3-in-1.nes */
+		vrc24_compatibility = 1;
+		break;
+	default:
+		vrc24_compatibility = 0;
+		break;
+	}
 
 	ExState(sram_enabled, "SREN");
 	ExState(sram_page, "SRPG");
