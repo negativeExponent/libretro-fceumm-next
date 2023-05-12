@@ -1,7 +1,7 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2015 CaH4e3, ClusteR
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,170 +16,162 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * CoolBoy 400-in-1 FK23C-mimic mapper 16Mb/32Mb PROM + 128K/256K CHR RAM, optional SRAM, optional NTRAM
- * only MMC3 mode
- *
- * 6000 (xx76x210) | 0xC0
- * 6001 (xxx354x)
- * 6002 = 0
- * 6003 = 0
- *
- * hardware tested logic, don't try to understand lol
  */
 
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void COOLBOYCW(uint32 A, uint8 V) {
-	uint32 mask = 0xFF ^ (mmc3.expregs[0] & 0x80);
+static uint8 *CHRRAM = NULL;
+static uint32 CHRRAMSize = 0;
+static uint8 submapper;
+
+static void M268CW(uint32 A, uint8 V) {
+	uint16 base = ((mmc3.expregs[0] << 4) & 0x380) | ((mmc3.expregs[2] << 3) & 0x078);
+	uint16 mask = (mmc3.expregs[0] & 0x80) ? 0x7F : 0xFF;
+	uint8  ram  = CHRRAM && (mmc3.expregs[4] & 0x01) && ((V & 0xFE) == (mmc3.expregs[4] & 0xFE));
+	/* CHR-RAM write protect on submapper 8/9) */
+	if ((submapper & ~1) == 8) {
+		if (mmc3.expregs[0] & 0x10) {
+			SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], 0);
+		} else {
+			SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], 1);
+		}
+	}
 	if (mmc3.expregs[3] & 0x10) {
-		if (mmc3.expregs[3] & 0x40) { /* Weird mode */
-			int cbase = (mmc3.cmd & 0x80) << 5;
-			switch (cbase ^ A) { /* Don't even try to understand */
-			case 0x0400:
-			case 0x0C00: V &= 0x7F; break;
-			}
+		/* GNROM */
+		mask = 0x07;
+		V = A >> 10;
+	}
+	setchr1r(ram ? 0x10 : 0x00, A, (base & ~mask) | (V & mask));
+}
+
+static void M268PW(uint32 A, uint8 V) {
+	uint16 base;
+	uint16 mask = 0x0F						/* PRG A13-A16 */
+	    | ((~mmc3.expregs[0] >> 2) & 0x10)	/* PRG A17     */
+	    | ((~mmc3.expregs[1] >> 2) & 0x20)	/* PRG A18     */
+	    | ((mmc3.expregs[1] >> 0) & 0x40)	/* PRG A19     */
+	    | ((mmc3.expregs[1] << 2) & 0x80)	/* PRG A20     */
+	    ;
+	switch (submapper & ~1) {
+	default: /* Original implementation */
+		base = (mmc3.expregs[3] & 0x0E) | ((mmc3.expregs[0] << 4) & 0x70) | ((mmc3.expregs[1] << 3) & 0x80) |
+		    ((mmc3.expregs[1] << 6) & 0x300) | ((mmc3.expregs[0] << 6) & 0xC00);
+		break;
+	case 2: /* Later revision with different arrangement of register 1 */
+		base = (mmc3.expregs[3] & 0x0E) | ((mmc3.expregs[0] << 4) & 0x70) | ((mmc3.expregs[1] << 4) & 0x80) |
+		    ((mmc3.expregs[1] << 6) & 0x100) | ((mmc3.expregs[1] << 8) & 0x200) | ((mmc3.expregs[0] << 6) & 0xC00);
+		break;
+	case 4: /* LD622D: PRG A20-21 moved to register 0 */
+		base = (mmc3.expregs[3] & 0x0E) | ((mmc3.expregs[0] << 4) & 0x70) | ((mmc3.expregs[0] << 3) & 0x180);
+		break;
+	case 6: /* J-852C: CHR A17 selects between two PRG chips */
+		base = (mmc3.expregs[3] & 0x0E) | ((mmc3.expregs[0] << 4) & 0x70) | ((mmc3.expregs[1] << 3) & 0x80) |
+		    ((mmc3.expregs[1] << 6) & 0x300) | ((mmc3.expregs[0] << 6) & 0xC00);
+		base &= ROM_size - 1;
+		if ((mmc3.expregs[0] & 0x80) ? !!(mmc3.expregs[0] & 0x08) : !!(mmc3.regs[0] & 0x80)) {
+			base |= ROM_size;
 		}
-		/* Highest bit goes from MMC3 registers when mmc3.expregs[3]&0x80==0 or from mmc3.expregs[0]&0x08 otherwise */
-		setchr1(A,
-			(V & 0x80 & mask) | ((((mmc3.expregs[0] & 0x08) << 4) & ~mask)) /* 7th bit */
-			| ((mmc3.expregs[2] & 0x0F) << 3) /* 6-3 bits */
-			| ((A >> 10) & 7) /* 2-0 bits */
-		);
-	} else {
-		if (mmc3.expregs[3] & 0x40) { /* Weird mode, again */
-			int cbase = (mmc3.cmd & 0x80) << 5;
-			switch (cbase ^ A) { /* Don't even try to understand */
-			case 0x0000: V = mmc3.regs[0]; break;
-			case 0x0800: V = mmc3.regs[1]; break;
-			case 0x0400:
-			case 0x0C00: V = 0; break;
-			}
+		break;
+	}
+	if (mmc3.expregs[3] & 0x10) {
+		/* GNROM */
+		switch (submapper & ~1) {
+		default:
+			mask = (mmc3.expregs[1] & 0x02) ? 0x03 : 0x01;
+			break;
+		case 2:
+			mask = (mmc3.expregs[1] & 0x10) ? 0x01 : 0x03;
+			break;
 		}
-		/* Simple MMC3 mode
-		 * Highest bit goes from MMC3 registers when mmc3.expregs[3]&0x80==0 or from mmc3.expregs[0]&0x08 otherwise
-		 */
-		setchr1(A, (V & mask) | (((mmc3.expregs[0] & 0x08) << 4) & ~mask));
+		V = A >> 13;
+	}
+	setprg8(A, (base & ~mask) | (V & mask));
+}
+
+static DECLFR(M268WramRead) {
+	if (mmc3.wram & 0xA0) {
+		return CartBR(A);
+	}
+	return X.DB;
+}
+
+static DECLFW(M268WramWrite) {
+	if (MMC3CanWriteToWRAM() || (mmc3.wram & 0x20)) {
+		CartBW(A, V);
 	}
 }
 
-static void COOLBOYPW(uint32 A, uint8 V) {
-	uint32 mask = ((0x3F | (mmc3.expregs[1] & 0x40) | ((mmc3.expregs[1] & 0x20) << 2)) ^ ((mmc3.expregs[0] & 0x40) >> 2)) ^ ((mmc3.expregs[1] & 0x80) >> 2);
-	uint32 base = ((mmc3.expregs[0] & 0x07) >> 0) | ((mmc3.expregs[1] & 0x10) >> 1) | ((mmc3.expregs[1] & 0x0C) << 2) | ((mmc3.expregs[0] & 0x30) << 2);
-
-	/* Very weird mode
-	 * Last banks are first in this mode, ignored when mmc3.cmd&0x40
-	 */
-	if ((mmc3.expregs[3] & 0x40) && (V >= 0xFE) && !((mmc3.cmd & 0x40) != 0)) {
-		switch (A & 0xE000) {
-		case 0xA000:
-			if ((mmc3.cmd & 0x40)) V = 0;
-			break;
-		case 0xC000:
-			if (!(mmc3.cmd & 0x40)) V = 0;
-			break;
-		case 0xE000:
-			V = 0;
-			break;
+static DECLFW(M268Write) {
+	uint8 index = A & 0x07;
+	if (~submapper & 0x01) {
+		M268WramWrite(A, V);
+	}
+	if ((~mmc3.expregs[3] & 0x80) || (index == 2)) {
+		if (index == 2) {
+			if (mmc3.expregs[2] & 0x80) {
+				V = (V & 0x0F) | (mmc3.expregs[2] & ~0x0F);
+			}
+			V &= ((~mmc3.expregs[2] >> 3) & 0x0E) | 0xF1;
 		}
-	}
-
-	/* Regular MMC3 mode, internal ROM size can be up to 2048kb! */
-	if (!(mmc3.expregs[3] & 0x10))
-		setprg8(A, (((base << 4) & ~mask)) | (V & mask));
-	else { /* NROM mode */
-		uint8 emask;
-		mask &= 0xF0;
-		if ((((mmc3.expregs[1] & 2) != 0))) /* 32kb mode */
-			emask = (mmc3.expregs[3] & 0x0C) | ((A & 0x4000) >> 13);
-		else /* 16kb mode */
-			emask = mmc3.expregs[3] & 0x0E;
-		setprg8(A, ((base << 4) & ~mask)   /* 7-4 bits are from base (see below) */
-			| (V & mask)                   /* ... or from MM3 internal regs, depends on mask */
-			| emask                        /* 3-1 (or 3-2 when (mmc3.expregs[3]&0x0C is set) from mmc3.expregs[3] */
-			| ((A & 0x2000) >> 13));       /* 0th just as is */
-	}
-}
-
-static DECLFW(COOLBOYWrite) {
-	if(mmc3.wram & 0x80)
-		CartBW(A,V);
-
-	/* Deny any further writes when 7th bit is 1 AND 4th is 0 */
-	if ((mmc3.expregs[3] & 0x90) != 0x80) {
-		mmc3.expregs[A & 3] = V;
+		mmc3.expregs[index] = V;
 		FixMMC3PRG(mmc3.cmd);
 		FixMMC3CHR(mmc3.cmd);
 	}
 }
 
-static void COOLBOYReset(void) {
+static void M268Reset(void) {
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0x00;
+	mmc3.expregs[4] = mmc3.expregs[5] = mmc3.expregs[6] = mmc3.expregs[7] = 0x00;
 	MMC3RegReset();
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
-#if 0
-	mmc3.expregs[0] = 0;
-	mmc3.expregs[1] = 0x60;
-	mmc3.expregs[2] = 0;
-	mmc3.expregs[3] = 0;
-#endif
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
 }
 
-static void COOLBOYPower(void) {
+static void M268Power(void) {
+	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0x00;
+	mmc3.expregs[4] = mmc3.expregs[5] = mmc3.expregs[6] = mmc3.expregs[7] = 0x00;
 	GenMMC3Power();
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
-#if 0
-	mmc3.expregs[0] = 0;
-	mmc3.expregs[1] = 0x60;
-	mmc3.expregs[2] = 0;
-	mmc3.expregs[3] = 0;
-#endif
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
-	SetWriteHandler(0x5000, 0x5fff, CartBW);            /* some games access random unmapped areas and crashes because of KT-008 PCB hack in MMC3 source lol */
-	SetWriteHandler(0x6000, 0x7fff, COOLBOYWrite);
+	SetReadHandler(0x6000, 0x7FFF, M268WramRead);
+	if (submapper & 1) {
+		SetWriteHandler(0x5000, 0x5FFF, M268Write);
+		SetWriteHandler(0x6000, 0x7FFF, M268WramWrite);
+	} else {
+		SetWriteHandler(0x6000, 0x7FFF, M268Write);
+	}
+}
+
+static void M268Close(void) {
+	GenMMC3Close();
+	if (CHRRAM) {
+		FCEU_gfree(CHRRAM);
+	}
+	CHRRAM = NULL;
+}
+
+static void ComminInit(CartInfo *info, int _submapper) {
+	GenMMC3_Init(info, 512, 256, (info->PRGRamSize + info->PRGRamSaveSize) >> 10, info->battery);
+	submapper = _submapper;
+	mmc3.pwrap = M268PW;
+	mmc3.cwrap = M268CW;
+	info->Power = M268Power;
+	info->Reset = M268Reset;
+	info->Close = M268Close;
+	CHRRAMSize = info->CHRRamSize + info->CHRRamSaveSize;
+	if (!UNIFchrrama && CHRRAMSize) {
+		CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSize);
+		SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSize, 1);
+		AddExState(CHRRAM, CHRRAMSize, 0x00, "CRAM");
+	}
+	AddExState(mmc3.expregs, 8, 0x00, "EXPR");
 }
 
 void COOLBOY_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 256, 8, 0);
-	mmc3.pwrap = COOLBOYPW;
-	mmc3.cwrap = COOLBOYCW;
-	info->Power = COOLBOYPower;
-	info->Reset = COOLBOYReset;
-	AddExState(mmc3.expregs, 4, 0, "EXPR");
-}
-
-/*------------------ MINDKIDS ---------------------------*/
-/* A COOLBOY variant that works identically but puts the outer bank registers
- * in the $5xxx range instead of the $6xxx range.
- * The UNIF board name is MINDKIDS (submapper 1).
- * http://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_268
- */
-
-static void MINDKIDSPower(void) {
-	GenMMC3Power();
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
-	SetWriteHandler(0x5000, 0x5fff, COOLBOYWrite);
+	ComminInit(info, 0);
 }
 
 void MINDKIDS_Init(CartInfo *info) {
-	GenMMC3_Init(info, 2048, 256, 8, info->battery);
-	mmc3.pwrap = COOLBOYPW;
-	mmc3.cwrap = COOLBOYCW;
-	info->Power = MINDKIDSPower;
-	info->Reset = COOLBOYReset;
-	AddExState(mmc3.expregs, 4, 0, "EXPR");
+	ComminInit(info, 1);
 }
 
 void Mapper268_Init(CartInfo *info) {
-	/* Technically, the distinction between COOLBOY ($6000-$7FFF) and MINDKIDS ($5000-$5FFF) is based on a solder pad setting. */
-	/* In NES 2.0, the submapper field is used to distinguish between the two settings. */
-	if (info->submapper == 1)
-		MINDKIDS_Init(info);
-	else
-		COOLBOY_Init(info);
+	ComminInit(info, info->submapper);
 }
