@@ -36,6 +36,7 @@ static uint32 CHRRAMSIZE;
 
 static uint8 IRQCount, IRQLatch, IRQa;
 static uint8 IRQReload;
+static uint8 submapper;
 
 static SFORMAT MMC3_StateRegs[] =
 {
@@ -326,6 +327,7 @@ void GenMMC3_Init(CartInfo *info, int prg, int chr, int wram, int battery) {
 	else
 		GameHBIRQHook = MMC3_hb;
 	GameStateRestore = GenMMC3Restore;
+	submapper = info->submapper;
 }
 
 /* ----------------------------------------------------------------------
@@ -651,18 +653,22 @@ void Mapper49_Init(CartInfo *info) {
 /* ---------------------------- Mapper 52 ------------------------------- */
 /* Submapper 13 - CHR-ROM + CHR-RAM */
 static void M52PW(uint32 A, uint8 V) {
-	uint32 mask = 0x1F ^ ((mmc3.expregs[0] & 8) << 1);
-	uint32 bank = ((mmc3.expregs[0] & 6) | ((mmc3.expregs[0] >> 3) & mmc3.expregs[0] & 1)) << 4;
-	setprg8(A, bank | (V & mask));
+	uint32 mask = (mmc3.expregs[0] & 8) ? 0x0F : 0x1F;
+	setprg8(A, ((mmc3.expregs[0] << 4) & 0x70) | (V & mask));
 }
 
 static void M52CW(uint32 A, uint8 V) {
-	uint32 mask = 0xFF ^ ((mmc3.expregs[0] & 0x40) << 1);
-	/*	uint32 bank = (((mmc3.expregs[0]>>3)&4)|((mmc3.expregs[0]>>1)&2)|((mmc3.expregs[0]>>6)&(mmc3.expregs[0]>>4)&1))<<7; */
-	uint32 bank = (((mmc3.expregs[0] >> 4) & 2) | (mmc3.expregs[0] & 4) |
-		((mmc3.expregs[0] >> 6) & (mmc3.expregs[0] >> 4) & 1)) << 7; /* actually 256K CHR banks index bits is inverted! */
-	uint8 ram = CHRRAM && ((mmc3.expregs[0] & 3) == 3);
-	setchr1r(ram ? 0x10 : 0, A, bank | (V & mask));
+	uint32 mask = (mmc3.expregs[0] & 0x40) ? 0x7F : 0xFF;
+	uint32 bank = (submapper == 14) ? (((mmc3.expregs[0] << 3) & 0x080) | ((mmc3.expregs[0] << 7) & 0x300)) :
+		(((mmc3.expregs[0] << 3) & 0x180) | ((mmc3.expregs[0] << 7) & 0x200));
+	uint8 ram = CHRRAM && (
+		((submapper == 13) && ((mmc3.expregs[0] & 3) == 0x3)) ||
+		((submapper == 14) && (mmc3.expregs[0] & 0x20)));
+	if (ram) {
+		setchr8r(0x10, 0);
+	} else {
+		setchr1(A, bank | (V & mask));
+	}
 }
 
 static DECLFW(M52Write) {
@@ -694,11 +700,16 @@ void Mapper52_Init(CartInfo *info) {
 	info->Reset = M52Reset;
 	info->Power = M52Power;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");
-	if (info->iNES2 && (info->submapper == 13)) {
+	if (info->iNES2 && ((info->submapper == 13) || (info->submapper == 14))) {
 		CHRRAMSIZE = info->CHRRamSize ? info->CHRRamSize : 8192;
 		CHRRAM     = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 		SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 		AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
+	}
+	if (info->CRC32 == 0xCCE8CA2F && submapper != 14) {
+		/* Well 8-in-1 (AB128) (Unl) (p1), with 1024 PRG and CHR is incompatible with submapper 13.
+		 * This was reassigned to submapper 14 instead. */
+		submapper = 14;
 	}
 }
 
