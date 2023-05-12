@@ -20,6 +20,8 @@
 
 #include "mapinc.h"
 
+/* FIXME: incompatible with run-ahead, much more when second instance is used */
+
 static uint8 reg[4], dip;
 static uint8 MMC1_reg[4], MMC1_shift, MMC1_count, MMC1_filter;
 static uint8 MMC3_reg[8], MMC3_index, MMC3_mirroring, MMC3_wram, MMC3_reload, MMC3_count, MMC3_irq;
