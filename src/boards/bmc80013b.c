@@ -25,44 +25,49 @@
 
 #include "mapinc.h"
 
-static uint8 regs[2], mode;
+static uint8 regs[2], extra_chip;
 
 static SFORMAT StateRegs[] =
 {
 	{ regs, 2, "REGS" },
-	{ &mode, 1, "MODE" },
+	{ &extra_chip, 1, "XTRA" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (mode & 0x02)
-		setprg16(0x8000, (regs[0] & 0x0F) | (regs[1] & 0x70));
-	else
-		setprg16(0x8000, (regs[0] & ((ROM_size - 1) & 0x0F)) | 0x80);
-	setprg16(0xC000, regs[1]);
+	if (extra_chip) {
+		setprg16(0x8000, 0x80 | (regs[0] & ((ROM_size - 1) & 0x0F)));
+	} else {
+		setprg16(0x8000, (regs[1] & 0x70) | (regs[0] & 0x0F));
+	}
+	setprg16(0xC000, regs[1] & 0x7F);
+	setchr8(0);
 	setmirror(((regs[0] >> 4) & 1) ^ 1);
 }
 
-static DECLFW(BMC80013BWrite) {
-	uint8 reg = (A >> 13) & 0x03;
-	if (!reg)
-		regs[0] = V & 0x1F;
-	else {
-		regs[1] = V & 0x7F;
-		mode = reg;
-	}
+static DECLFW(BMC80013BWrite8) {
+	regs[0] = V;
+	Sync();
+}
+
+static DECLFW(BMC80013BWriteA) {
+	regs[1] = V;
+	extra_chip = (A & 0x4000) == 0;
 	Sync();
 }
 
 static void BMC80013BPower(void) {
+	regs[0] = regs[1] = 0;
+	extra_chip = 1;
 	Sync();
-	setchr8(0);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, BMC80013BWrite);
+	SetWriteHandler(0x8000, 0x9FFF, BMC80013BWrite8);
+	SetWriteHandler(0xA000, 0xFFFF, BMC80013BWriteA);
 }
 
 static void BMC80013BReset(void) {
-	regs[0] = regs[1] = mode = 0;
+	regs[0] = regs[1] = 0;
+	extra_chip = 1;
 	Sync();
 }
 
