@@ -204,7 +204,6 @@ static void M200Sync(void) {
 }
 
 void Mapper200_Init(CartInfo *info) {
-	/* TODO: init was ~0 */
 	Latch_Init(info, M200Sync, NULL, 0, 0);
 	submapper = info->submapper;
 }

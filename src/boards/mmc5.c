@@ -718,8 +718,6 @@ static void GenMMC5Power(void) {
 	FCEU_CheatAddRAM(1, 0x5c00, ExRAM);
 }
 
-/* TODO: Clean this up. State variables are expanded for
- * big-endian compatibility when saving and loading states */
 static SFORMAT MMC5_StateRegs[] = {
 	{ PRGBanks, 4, "PREG" },
 	{ CHRBanksA, 16, "CHRA" },
