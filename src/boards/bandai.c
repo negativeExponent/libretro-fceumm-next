@@ -31,8 +31,6 @@ static int16 IRQCount, IRQLatch;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
-/* TODO: Clean this up. State variables are expanded for
- * big-endian compatibility when saving and loading states */
 static SFORMAT StateRegs[] =
 {
 	{ reg, 16, "REGS" },
