@@ -73,7 +73,7 @@ static DECLFW(writeVRC4) {
 		vrc4Prg = V;
 		Sync();
 	} else {
-		switch (A & 0xF000 | ((A >> 2) & 3)) {		
+		switch ((A & 0xF000) | ((A >> 2) & 3)) {		
 		case 0x9000:
 			vrc4Mirr = V;
 			Sync();
