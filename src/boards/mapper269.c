@@ -27,8 +27,6 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 *CHRROM;
-
 static void M269CW(uint32 A, uint8 V) {
 	uint32 mask = 0xFF >> (~mmc3.expregs[2] & 0xF);
 	uint32 base = ((mmc3.expregs[2] << 4) & 0xF00) | mmc3.expregs[0];

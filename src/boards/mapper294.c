@@ -25,10 +25,10 @@
 static uint8 reg;
 
 static void Sync(void) {
-	setprg16(0x8000, (reg << 3) | latch.data & 0x07);
-	setprg16(0xC000, (reg << 3) | 7);
+	setprg16(0x8000, (reg << 3) | (latch.data & 0x07));
+	setprg16(0xC000, (reg << 3) | 0x07);
 	setchr8(0);
-	setmirror(((reg >> 4) & 1) ^ 1);
+	setmirror(((reg >> 4) & 0x01) ^ 0x01);
 }
 
 static DECLFW(M294Write) {
