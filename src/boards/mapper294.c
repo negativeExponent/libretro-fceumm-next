@@ -20,42 +20,37 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 latch;
+static uint8 reg;
 
-static void Mapper294_sync(void) {
-	setprg16(0x8000, latch);
-	setprg16(0xC000, latch | 7);
+static void Sync(void) {
+	setprg16(0x8000, (reg << 3) | latch.data & 0x07);
+	setprg16(0xC000, (reg << 3) | 7);
 	setchr8(0);
-	setmirror((latch & 0x80) ? MI_H : MI_V);
+	setmirror(((reg >> 4) & 1) ^ 1);
 }
 
-static DECLFW(Mapper294_writeInnerBank) {
-	latch = (latch & ~7) | (V & 7);
-	Mapper294_sync();
-}
-
-static DECLFW(Mapper294_writeOuterBank) {
+static DECLFW(M294Write) {
 	if (A & 0x100) {
-		latch = (latch & 7) | V << 3;
-		Mapper294_sync();
+		reg = V;
+		Sync();
 	}
 }
 
-static void Mapper294_reset(void) {
-	latch = 0;
-	Mapper294_sync();
+static void M294Reset(void) {
+	reg = 0;
+	LatchHardReset();
 }
 
-static void Mapper294_power(void) {
-	Mapper294_reset();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, Mapper294_writeInnerBank);
-	SetWriteHandler(0x4020, 0x7FFF, Mapper294_writeOuterBank);
+static void M294Power(void) {
+	LatchPower();
+	SetWriteHandler(0x4020, 0x4FFF, M294Write);
 }
 
 void Mapper294_Init(CartInfo *info) {
-	info->Power = Mapper294_power;
-	info->Reset = Mapper294_reset;
-	AddExState(&latch, 1, 0, "LATC");
+	Latch_Init(info, Sync, NULL, 0, 0);
+	info->Power = M294Power;
+	info->Reset = M294Reset;
+	AddExState(&reg, 1, 0, "REGS");
 }
