@@ -21,8 +21,6 @@
 #include "mapinc.h"
 #include "latch.h"
 
-extern uint32 ROM_size;
-
 static void Sync(void) {
 	setchr8(0);
 	setprg16(0xc000, 0x7);

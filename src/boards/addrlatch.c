@@ -120,8 +120,6 @@ void Mapper61_Init(CartInfo *info) {
 static uint16 openBus   = 0;
 static uint8 hasBattery = 0;
 
-extern uint32 ROM_size;
-
 static DECLFR(M63Read) {
 	if (openBus)
 		return X.DB;
