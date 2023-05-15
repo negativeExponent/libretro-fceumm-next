@@ -98,18 +98,23 @@ static void cwrap(uint32 A, uint32 V) {
 	int bank = 0;
 
 	if (jncota523) {
-		if (~A & 0x0400)
+		if (~A & 0x0400) {
 			setchr2r(bank, A, V);
+		}
 	} else {
 		/* some workaround for chr rom / ram access */
-		if (!VROM_size)
+		if (UNIFchrrama) {
+			/* CHR-RAM only */
 			bank = 0;
-		else if (CHRRAMSIZE && fk23_regs[0] & 0x20)
-			bank = 0x10;
-
-		if (CHR_MIXED && V < 8)
-			bank = 0x10; /* first 8K of chr bank is RAM */
-
+		} else if (CHRRAMSIZE) {
+			/* Mixed CHR-ROM + CHR-RAM */
+			if ((fk23_regs[0] & 0x20) && ((subType == 0) || (subType == 1))) {
+				bank = 0x10;
+			} else if (CHR_MIXED && (V < 8)) {
+				/* first 8K of chr bank is RAM */
+				bank = 0x10;
+			}
+		}
 		setchr1r(bank, A, V);
 	}
 }

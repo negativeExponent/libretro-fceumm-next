@@ -491,8 +491,8 @@ void Mapper44_Init(CartInfo *info) {
 /* ---------------------------- Mapper 45 ------------------------------- */
 
 static void M45CW(uint32 A, uint8 V) {
-	if (CHRsize[0] == 8192) {
-		/* assume chr-ram */
+	if (UNIFchrrama) {
+		/* assume chr-ram, 4-in-1 Yhc-Sxx-xx variants */
 		setchr1(A, V);
 	} else {
 		uint32 mask = 0xFF >> (~mmc3.expregs[2] & 0xF);
