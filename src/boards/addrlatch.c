@@ -740,10 +740,11 @@ static void M435Sync(void) {
 	else
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
 
-	setmirror(latch.addr & 0x002 ? MI_H : MI_V);
+	setmirror(((latch.addr >> 1) & 1) ^ 1);
 	setchr8(0);
 }
 
 void Mapper435_Init(CartInfo *info) {
 	Latch_Init(info, M435Sync, NULL, 1, 0);
+	info->Reset = LatchHardReset;
 }
