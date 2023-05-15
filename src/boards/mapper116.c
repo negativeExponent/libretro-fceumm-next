@@ -56,9 +56,6 @@ static uint8 mode          = 0;
 static uint8 submapper    = 0;
 static uint8 game         = 0;
 
-extern uint32 ROM_size;
-extern uint32 VROM_size;
-
 static SFORMAT StateRegs[] =
 {
 	{ &mode,        1, "MODE" },
