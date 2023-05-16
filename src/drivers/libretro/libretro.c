@@ -89,12 +89,15 @@ static retro_input_poll_t poll_cb = NULL;
 static retro_input_state_t input_cb = NULL;
 static retro_audio_sample_batch_t audio_batch_cb = NULL;
 retro_environment_t environ_cb = NULL;
+
 #ifdef PSP
 static bool crop_overscan;
-#else
-static unsigned crop_overscan_h;
-static unsigned crop_overscan_v;
 #endif
+
+static int overscan_left;
+static int overscan_right;
+static int overscan_top;
+static int overscan_bottom;
 
 static bool use_raw_palette;
 static int aspect_ratio_par;
@@ -1660,13 +1663,8 @@ static float get_aspect_ratio(unsigned width, unsigned height)
 
 void retro_get_system_av_info(struct retro_system_av_info *info)
 {
-#ifdef PSP
-   unsigned width  = NES_WIDTH  - (crop_overscan ? 16 : 0);
-   unsigned height = NES_HEIGHT - (crop_overscan ? 16 : 0);
-#else
-   unsigned width  = NES_WIDTH  - (crop_overscan_h * 2);
-   unsigned height = NES_HEIGHT - (crop_overscan_v * 2);
-#endif
+   unsigned width  = NES_WIDTH  - overscan_left - overscan_right;
+   unsigned height = NES_HEIGHT - overscan_top - overscan_bottom;
 #ifdef HAVE_NTSC_FILTER
    info->geometry.base_width = (use_ntsc ? NES_NTSC_OUT_WIDTH(width) : width);
    info->geometry.max_width = (use_ntsc ? NES_NTSC_WIDTH : NES_WIDTH);
@@ -2014,31 +2012,60 @@ static void check_variables(bool startup)
       bool newval = (!strcmp(var.value, "enabled"));
       if (newval != crop_overscan)
       {
+         overscan_left = (newval == true ? 8 : 0);
+         overscan_right = (newval == true ? 8 : 0);
+         overscan_top = (newval == true ? 8 : 0);
+         overscan_bottom = (newval == true ? 8 : 0);
+
          crop_overscan = newval;
          audio_video_updated = 1;
       }
    }
 #else
-   var.key = "fceumm_overscan_h";
+   var.key = "fceumm_overscan_left";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      unsigned newval = atoi(var.value);
-      if (newval != crop_overscan_h)
+      int newval = atoi(var.value);
+      if (newval != overscan_left)
       {
-         crop_overscan_h = newval;
+         overscan_left = newval;
          audio_video_updated = 1;
       }
    }
 
-   var.key = "fceumm_overscan_v";
+   var.key = "fceumm_overscan_right";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      unsigned newval = atoi(var.value);
-      if (newval != crop_overscan_v)
+      int newval = atoi(var.value);
+      if (newval != overscan_right)
       {
-         crop_overscan_v = newval;
+         overscan_right = newval;
+         audio_video_updated = 1;
+      }
+   }
+
+   var.key = "fceumm_overscan_top";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      int newval = atoi(var.value);
+      if (newval != overscan_top)
+      {
+         overscan_top = newval;
+         audio_video_updated = 1;
+      }
+   }
+
+   var.key = "fceumm_overscan_bottom";
+
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      int newval = atoi(var.value);
+      if (newval != overscan_bottom)
+      {
+         overscan_bottom = newval;
          audio_video_updated = 1;
       }
    }
@@ -2286,22 +2313,16 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
    bool adjy = false;
    int min_width, min_height, max_width, max_height;
 
-#ifdef PSP
-   adjx = adjy = crop_overscan ? 1 : 0;
-#else
-   adjx        = crop_overscan_h ? 1 : 0;
-   adjy        = crop_overscan_v ? 1 : 0;
-#endif
    max_width   = 256;
    max_height  = 240;
    zapdata[2]  = 0; /* reset click state */
 
    if (zappermode == RetroMouse) /* mouse device */
    {
-      min_width   = (adjx ? 8 : 0) + 1;
-      min_height  = (adjy ? 8 : 0) + 1;
-      max_width  -= (adjx ? 8 : 0);
-      max_height -= (adjy ? 8 : 0);
+      min_width   = overscan_left + 1;
+      min_height  = overscan_top + 1;
+      max_width  -= overscan_right;
+      max_height -= overscan_bottom;
 
       /* TODO: Add some sort of mouse sensitivity */
       mzx += input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
@@ -2323,8 +2344,8 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
          zapdata[2] |= 0x2;
    }
    else if (zappermode == RetroPointer) {
-      int offset_x = (adjx ? 0X8FF : 0);
-      int offset_y = (adjy ? 0X999 : 0);
+      int offset_x = (overscan_left * 0x120) - 1;
+      int offset_y = (overscan_top * 0x133) + 1;
 
       int _x = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X);
       int _y = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y);
@@ -2345,8 +2366,8 @@ void get_mouse_input(unsigned port, uint32_t *zapdata)
    }
    else /* lightgun device */
    {
-      int offset_x = (adjx ? 0X8FF : 0);
-      int offset_y = (adjy ? 0X999 : 0);
+      int offset_x = (overscan_left * 0x120) - 1;
+      int offset_y = (overscan_top * 0x133) + 1;
       int offscreen;
       int offscreen_shot;
       int trigger;
@@ -2681,10 +2702,6 @@ static void FCEUD_UpdateInput(void)
       palette_switch_counter = 0;
 }
 
-void FCEUD_Update(uint8 *XBuf, int32 *Buffer, int Count)
-{
-}
-
 static void retro_run_blit(uint8_t *gfx)
 {
    unsigned x, y;
@@ -2750,10 +2767,10 @@ static void retro_run_blit(uint8_t *gfx)
       ps2->coreTexture->PSM = GS_PSM_T8;
       ps2->coreTexture->ClutPSM = GS_PSM_CT16;
       ps2->coreTexture->Filter = GS_FILTER_LINEAR;
-      ps2->padding = (struct retro_hw_ps2_insets){ (float)crop_overscan_v,
-                                                   (float)crop_overscan_h,
-                                                   (float)crop_overscan_v,
-                                                   (float)crop_overscan_h};
+      ps2->padding = (struct retro_hw_ps2_insets){ (float)overscan_top,
+                                                   (float)overscan_left,
+                                                   (float)overscan_bottom,
+                                                   (float)overscan_right };
    }
 
    ps2->coreTexture->Clut = (u32*)retro_palette;
@@ -2777,11 +2794,11 @@ static void retro_run_blit(uint8_t *gfx)
           NES_WIDTH, burst_phase, NES_WIDTH, NES_HEIGHT,
           ntsc_video_out, NES_NTSC_WIDTH * sizeof(uint16));
 
-      width    = NES_NTSC_OUT_WIDTH(NES_WIDTH - (crop_overscan_h * 2));
-      height   = NES_HEIGHT - (crop_overscan_v * 2);
+      width    = NES_NTSC_OUT_WIDTH(NES_WIDTH - overscan_left - overscan_right);
+      height   = NES_HEIGHT - overscan_top - overscan_bottom;
       pitch    = width * sizeof(uint16_t);
-      h_offset = crop_overscan_h ? NES_NTSC_OUT_WIDTH(crop_overscan_h) : 0;
-      v_offset = crop_overscan_v;
+      h_offset = overscan_left ? NES_NTSC_OUT_WIDTH(overscan_left) : 0;
+      v_offset = overscan_top;
       in       = ntsc_video_out + h_offset + NES_NTSC_WIDTH * v_offset;
       out      = fceu_video_out;
 
@@ -2796,11 +2813,11 @@ static void retro_run_blit(uint8_t *gfx)
    else
 #endif /* HAVE_NTSC_FILTER */
    {
-      incr   = (crop_overscan_h * 2);
-      width  = NES_WIDTH - (crop_overscan_h * 2);
-      height = NES_HEIGHT - (crop_overscan_v * 2);
-      pitch  = width * sizeof(uint16_t);
-      gfx   += (crop_overscan_v ? (crop_overscan_h + NES_WIDTH * crop_overscan_v) : crop_overscan_h);
+      incr   += (overscan_left + overscan_right);
+      width  -= (overscan_left + overscan_right);
+      height -= (overscan_top + overscan_bottom);
+      pitch  -= (overscan_left + overscan_right) * sizeof(uint16_t);
+      gfx    += (overscan_top * 256) + overscan_left;
 
       if (use_raw_palette)
       {
