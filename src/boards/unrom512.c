@@ -34,18 +34,19 @@
   */
 
 #include "mapinc.h"
+#include "latch.h"
 
 #define ROM_CHIP          0x00
 #define CFI_CHIP          0x10
 #define FLASH_CHIP        0x11
 #define FLASH_SECTOR_SIZE (4 * 1024)
 
-static uint8 flash_save, flash_state, flash_id_mode, latche, bus_conflict;
-static uint16 latcha;
+static uint8 flash_save, flash_state, flash_id_mode;
 static uint8 *flash_data;
 static uint16 flash_buffer_a[10];
 static uint8 flash_buffer_v[10];
 static uint8 flash_id[2];
+static uint8 submapper;
 
 static void UNROM512_Sync() {
 	int chip;
@@ -54,10 +55,18 @@ static void UNROM512_Sync() {
 	} else {
 		chip = ROM_CHIP;
 	}
-	setprg16r(chip, 0x8000, latche & 0x1F);
+	setprg16r(chip, 0x8000, latch.data & 0x1F);
 	setprg16r(chip, 0xc000, ~0);
-	setchr8((latche >> 5) & 3);
-	setmirror(MI_0 + ((latche >> 7) & 1));
+	setchr8((latch.data >> 5) & 3);
+	switch (submapper) {
+	case 1:
+		/* Mega Man II (30th Anniversary Edition) */
+		setmirror((latch.data >> 7) & 1);	
+		break;
+	default:
+		setmirror(MI_0 + ((latch.data >> 7) & 1));
+		break;
+	}
 }
 
 static void StateRestore(int version) {
@@ -67,7 +76,7 @@ static void StateRestore(int version) {
 static DECLFW(UNROM512FlashWrite) {
 	int i, offset, sector;
 	if (flash_state < sizeof(flash_buffer_a) / sizeof(flash_buffer_a[0])) {
-		flash_buffer_a[flash_state] = (A & 0x3FFF) | ((latche & 1) << 14);
+		flash_buffer_a[flash_state] = (A & 0x3FFF) | ((latch.data & 1) << 14);
 		flash_buffer_v[flash_state] = V;
 		flash_state++;
 
@@ -131,28 +140,15 @@ static DECLFW(UNROM512FlashWrite) {
 	UNROM512_Sync();
 }
 
-static DECLFW(UNROM512HLatchWrite) {
-	if (bus_conflict) {
-		V &= CartBR(A);
-	}
-	latche = V;
-	latcha = A;
-	UNROM512_Sync();
-}
-
 static void UNROM512LatchPower(void) {
-	latche = 0;
-	UNROM512_Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	if (!flash_save) {
-		SetWriteHandler(0x8000, 0xFFFF, UNROM512HLatchWrite);
-	} else {
+	LatchPower();
+	if (flash_save) {
 		SetWriteHandler(0x8000, 0xBFFF, UNROM512FlashWrite);
-		SetWriteHandler(0xC000, 0xFFFF, UNROM512HLatchWrite);
 	}
 }
 
 static void UNROM512LatchClose(void) {
+	LatchClose();
 	if (flash_data) {
 		FCEU_gfree(flash_data);
 	}
@@ -160,31 +156,36 @@ static void UNROM512LatchClose(void) {
 }
 
 void UNROM512_Init(CartInfo *info) {
-	int mirror;
+	int mirror = (head.ROM_type & 1) | ((head.ROM_type & 8) >> 2);
+
+	Latch_Init(info, UNROM512_Sync, NULL, 0, !info->battery);
+
 	info->Power      = UNROM512LatchPower;
 	info->Close      = UNROM512LatchClose;
 	GameStateRestore = StateRestore;
 
+	submapper = (info->iNES2 && info->submapper) ? info->submapper : ((info->PRGCRC32 == 0x891C14BC) ? 0x01 : 0x00);
+
+	if (!(submapper & 1)) {
+		switch (mirror) {
+		case 0: /* hard horizontal, internal */
+			SetupCartMirroring(MI_H, 1, NULL);
+			break;
+		case 1: /* hard vertical, internal */
+			SetupCartMirroring(MI_V, 1, NULL);
+			break;
+		case 2: /* switchable 1-screen, internal (flags: 4-screen + horizontal) */
+			SetupCartMirroring(MI_0, 0, NULL);
+			break;
+		case 3: /* hard four screen, last 8k of 32k RAM (flags: 4-screen + vertical) */
+			SetupCartMirroring(4, 1, VROM + (info->CHRRamSize - 8192));
+			break;
+		}
+	}
+
 	flash_state   = 0;
 	flash_id_mode = 0;
 	flash_save    = info->battery;
-	bus_conflict  = !info->battery; /* Is it required by any game? */
-
-	mirror = (head.ROM_type & 1) | ((head.ROM_type & 8) >> 2);
-	switch (mirror) {
-	case 0: /* hard horizontal, internal */
-		SetupCartMirroring(MI_H, 1, NULL);
-		break;
-	case 1: /* hard vertical, internal */
-		SetupCartMirroring(MI_V, 1, NULL);
-		break;
-	case 2: /* switchable 1-screen, internal (flags: 4-screen + horizontal) */
-		SetupCartMirroring(MI_0, 0, NULL);
-		break;
-	case 3: /* hard four screen, last 8k of 32k RAM (flags: 4-screen + vertical) */
-		SetupCartMirroring(4, 1, VROM + (info->CHRRamSize - 8192));
-		break;
-	}
 
 	if (flash_save) {
 		uint32 i;
@@ -208,8 +209,4 @@ void UNROM512_Init(CartInfo *info) {
 		AddExState(flash_buffer_a, sizeof(flash_buffer_a), 0, "FLBA");
 		AddExState(flash_buffer_v, sizeof(flash_buffer_v), 0, "FLBV");
 	}
-
-	AddExState(&latcha, 2, 0, "LATA");
-	AddExState(&latche, 1, 0, "LATC");
-	AddExState(&bus_conflict, 1, 0, "BUSC");
 }
