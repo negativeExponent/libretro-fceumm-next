@@ -68,6 +68,8 @@ static TXC txc;
 static void Dummyfunc(void) { }
 static void (*WSync)(void) = Dummyfunc;
 
+static void UNL22211_Init(CartInfo *info);
+
 static SFORMAT StateRegs[] =
 {
 	{ &txc.accumulator, 1, "ACC0" },
@@ -158,6 +160,10 @@ static int CheckHash(CartInfo *info) {
 	  FCEU_printf(" WARNING: Using alternate mapper implementation.\n");
 	  UNL22211_Init(info);
 	  return 1;
+	}
+	if (info->CRC32 == 0x2A5F4C5A) {
+		FCEU_printf(" WARNING: Using alternate mapper implementation.\n");
+		return 1;
 	}
 	return 0;
 }
@@ -345,60 +351,42 @@ void Mapper172_Init(CartInfo *info) {
 
 /* === LEGACY MAPPER IMPLEMENTATION === */
 
-static uint8 reg[4], cmd, is172, is173;
+static uint8 reg[4];
 
 static SFORMAT UNL22211StateRegs[] =
 {
 	{ reg, 4, "REGS" },
-	{ &cmd, 1, "CMD" },
 	{ 0 }
 };
 
 static void UNL22211Sync(void) {
 	setprg32(0x8000, (reg[2] >> 2) & 1);
-	if (is172)
-	  setchr8((((cmd ^ reg[2]) >> 3) & 2) | (((cmd ^ reg[2]) >> 5) & 1));	/* 1991 DU MA Racing probably CHR bank sequence is WRONG, so it is possible to
-														  * rearrange CHR banks for normal UNIF board and mapper 172 is unneccessary */
-	else
-	  setchr8(reg[2] & 3);
+	setchr8(reg[2] & 3);
 }
 
 static DECLFW(UNL22211WriteLo) {
-/*	FCEU_printf("bs %04x %02x\n",A,V); */
-	reg[A & 3] = V;
-}
-
-static DECLFW(UNL22211WriteHi) {
-/*	FCEU_printf("bs %04x %02x\n",A,V); */
-	cmd = V;
-	UNL22211Sync();
+	if (A & 0x100) {
+		reg[A & 3] = V;
+		UNL22211Sync();
+	}
 }
 
 static DECLFR(UNL22211ReadLo) {
-	return (reg[1] ^ reg[2]) | (is173 ? 0x01 : 0x40);
-#if 0
-	if(reg[3])
-	  return reg[2];
-	else
-	  return X.DB;
-#endif
+	return ((reg[1] ^ reg[2]) | 0x40);
 }
 
 static void UNL22211Power(void) {
 	UNL22211Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetReadHandler(0x4100, 0x4100, UNL22211ReadLo);
-	SetWriteHandler(0x4100, 0x4103, UNL22211WriteLo);
-	SetWriteHandler(0x8000, 0xFFFF, UNL22211WriteHi);
+	SetWriteHandler(0x4100, 0x4FFF, UNL22211WriteLo);
 }
 
 static void UNL22211StateRestore(int version) {
 	UNL22211Sync();
 }
 
-void UNL22211_Init(CartInfo *info) {
-	is172 = 0;
-	is173 = 0;
+static void UNL22211_Init(CartInfo *info) {
 	info->Power = UNL22211Power;
 	GameStateRestore = UNL22211StateRestore;
 	AddExState(&UNL22211StateRegs, ~0, 0, 0);
