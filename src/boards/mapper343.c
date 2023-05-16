@@ -26,46 +26,32 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 gameblock;
 static uint8 submapper;
-
-static SFORMAT StateRegs[] =
-{
-	{ &gameblock, 1, "GAME" },
-	{ 0 }
-};
 
 static void Sync(void) {
 	if (submapper == 1) {
-		setprg32(0x8000, gameblock);
+		setprg32(0x8000, latch.data);
 	} else {
-		setprg16(0x8000, gameblock);
-		setprg16(0xC000, gameblock);
+		setprg16(0x8000, latch.data);
+		setprg16(0xC000, latch.data);
 	}
-	setchr8(gameblock);
-	setmirror(gameblock >> 7 & 1);
+	setchr8(latch.data);
+	setmirror(latch.data >> 7 & 1);
 }
 
 static DECLFW(M343Write) {
-	gameblock = ~V;
-	Sync();
+	LatchWrite(A, ~V);
 }
 
 static void BMCRESETNROMXIN1Power(void) {
-	gameblock = 0;
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	LatchPower();
 	SetWriteHandler(0x8000, 0xFFFF, M343Write);
-}
-
-static void StateRestore(int version) {
-	Sync();
 }
 
 void BMCRESETNROMXIN1_Init(CartInfo *info) {
 	submapper = info->submapper;
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = BMCRESETNROMXIN1Power;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
 }
