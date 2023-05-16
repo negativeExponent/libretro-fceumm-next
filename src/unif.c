@@ -498,7 +498,7 @@ static BMAPPING bmap[] = {
 	{ "NROM-256",                     0, NROM_Init,             0 },
 	{ "NTBROM",                      68, Mapper68_Init,         0 },
 	{ "NTD-03",                     290, BMCNTD03_Init,         0 },
-	{ "NovelDiamond9999999in1",     201, Novel_Init,            0 },
+	{ "NovelDiamond9999999in1",     201, Mapper201_Init,        0 },
 	{ "OneBus",                     256, UNLOneBus_Init,        0 },
 	{ "PEC-586",                NO_INES, UNLPEC586Init,         0 },
 	{ "RROM",                         0, NROM_Init,             0 },
