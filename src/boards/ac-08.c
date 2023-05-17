@@ -27,7 +27,6 @@
 #include "../fds_apu.h"
 
 static uint8 reg, mirr;
-static uint8 prg;
 
 static SFORMAT StateRegs[] =
 {
@@ -37,6 +36,7 @@ static SFORMAT StateRegs[] =
 };
 
 static void Sync(void) {
+	uint8 prg = (ROM_size & 0x0F) ? 4 : 7;
 	setprg8(0x6000, reg);
 	setprg32(0x8000, prg);
 	setchr8(0);
@@ -71,7 +71,6 @@ static void StateRestore(int version) {
 }
 
 void AC08_Init(CartInfo *info) {
-	prg = (info->PRGRomSize / 16384) & 0x0F ? 4 : 7;
 	info->Power = AC08Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);

@@ -94,8 +94,11 @@ static void StateRestore(int version) {
 }
 
 void Mapper42_Init(CartInfo *info) {
-	if (info->CHRRomSize == 0 && info->PRGRomSize > 131072) {
-		/* Green Beret FDS Conversion can be 160K or 256K */
+	if (info->iNES2 && (info->submapper == 2)) {
+		AC08_Init(info);
+		return;
+	} else if (UNIFchrrama && ((info->PRGRomSize == 163840) || (info->PRGRomSize == 262144))) {
+		/* Green Beret LH09 FDS Conversion can be 160K or 256K */
 		AC08_Init(info);
 		return;
 	}
