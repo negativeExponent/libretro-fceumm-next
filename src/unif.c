@@ -121,13 +121,17 @@ static void FreeUNIF(void) {
 
 static void ResetUNIF(void) {
 	int x;
-	for (x = 0; x < 32; x++)
+	for (x = 0; x < 32; x++) {
 		malloced[x] = 0;
+		mallocedsizes[x] = 0;
+	}
 	for (x = 0; x < 16; x++)
 		prg_idx[x] = chr_idx[x] = 0;
 	vramo = 0;
 	boardname = 0;
 	mirrortodo = 0;
+	submapper = 0;
+	cspecial = 0;
 	memset(&UNIFCart, 0, sizeof(UNIFCart));
 	UNIFchrrama = 0;
 	prg_chip_count = 0;
