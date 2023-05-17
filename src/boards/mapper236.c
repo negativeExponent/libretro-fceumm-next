@@ -22,7 +22,6 @@
 
 static uint8 reg[2];
 static uint8 dip;
-static uint8 chrramvariant;
 static SFORMAT StateRegs[] =
 {
 	{ reg,  2, "REG " },
@@ -33,7 +32,7 @@ static SFORMAT StateRegs[] =
 static void Sync(void) {
 	int prg;
 	int chr;
-	if (chrramvariant) {
+	if (UNIFchrrama) {
 		prg = (reg[1] & 7) | (reg[0] << 3);
 		chr = 0;
 	} else {
@@ -96,5 +95,4 @@ void Mapper236_Init(CartInfo *info) {
 	info->Reset = M236Reset;
 	AddExState(&StateRegs, ~0, 0, 0);
 	GameStateRestore = StateRestore;
-	chrramvariant = info->CHRRomSize == 0;
 }
