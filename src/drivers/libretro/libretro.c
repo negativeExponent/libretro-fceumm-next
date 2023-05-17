@@ -59,6 +59,7 @@
 #define DEVICE_SNESGAMEPAD RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 8)
 #define DEVICE_VIRTUALBOY  RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_JOYPAD, 9)
 
+#define DEVICE_SNESMOUSE   RETRO_DEVICE_MOUSE
 #define DEVICE_ZAPPER      RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  0)
 #define DEVICE_ARKANOID    RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  1)
 #define DEVICE_OEKAKIDS    RETRO_DEVICE_SUBCLASS(RETRO_DEVICE_MOUSE,  2)
@@ -1174,6 +1175,11 @@ static void set_input(unsigned port)
             inputDPtr = &nes_input.JoyButtons[port];
             FCEU_printf(" Player %u: SNES Gamepad\n", port + 1);
             break;
+         case DEVICE_SNESMOUSE:
+            type = SI_SNES_MOUSE;
+            inputDPtr = &nes_input.MouseData[port];
+            FCEU_printf(" Player %u: SNES Mouse\n", port + 1);
+            break;
          case DEVICE_VIRTUALBOY:
             type = SI_VIRTUALBOY;
             inputDPtr = &nes_input.JoyButtons[port];
@@ -1287,6 +1293,9 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
                break;
             case SI_SNES_GAMEPAD:
                nes_input.type[port] = DEVICE_SNESGAMEPAD;
+               break;
+            case SI_SNES_MOUSE:
+               nes_input.type[port] = DEVICE_SNESMOUSE;
                break;
             case SI_VIRTUALBOY:
                nes_input.type[port] = DEVICE_VIRTUALBOY;
@@ -1569,6 +1578,7 @@ void retro_set_environment(retro_environment_t cb)
       { "Power Pad A",  DEVICE_POWERPADA },
       { "Power Pad B",  DEVICE_POWERPADB },
       { "SNES Gamepad", DEVICE_SNESGAMEPAD },
+      { "SNES Mouse",   DEVICE_SNESMOUSE },
       { "Virtual Boy",  DEVICE_VIRTUALBOY },
       { 0, 0 },
    };
@@ -1581,6 +1591,7 @@ void retro_set_environment(retro_environment_t cb)
       { "Power Pad A",  DEVICE_POWERPADA },
       { "Power Pad B",  DEVICE_POWERPADB },
       { "SNES Gamepad", DEVICE_SNESGAMEPAD },
+      { "SNES Mouse",   DEVICE_SNESMOUSE },
       { "Virtual Boy",  DEVICE_VIRTUALBOY },
       { 0, 0 },
    };
@@ -2624,6 +2635,16 @@ static void FCEUD_UpdateInput(void)
 
       switch (device)
       {
+         case DEVICE_SNESMOUSE:
+            int dx = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
+            int dy = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
+            int mb = ((input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT) ? 1 : 0)
+               | (input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT) ? 2 : 0));
+
+            nes_input.MouseData[port][0] = dx;
+            nes_input.MouseData[port][1] = dy;
+            nes_input.MouseData[port][2] = mb;
+            break;
          case DEVICE_ARKANOID:
          case DEVICE_ZAPPER:
             get_mouse_input(port, nes_input.type[port], nes_input.MouseData[port]);
