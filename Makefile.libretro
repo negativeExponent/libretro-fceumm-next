@@ -768,6 +768,8 @@ else
 WARNING_DEFINES = -Wall -Wno-write-strings
 endif
 
+CFLAGS += -Werror=implicit-function-declaration
+
 CFLAGS += $(fpic) $(WARNING_DEFINES) $(DEFINES) $(ENDIANNESS_DEFINES)
 LDFLAGS += $(LIBM)
 
