@@ -597,10 +597,10 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                         168, Mapper168_Init         )
 /*    INES_BOARD( "",                            169, Mapper169_Init ) */
 	INES_BOARD( "",                         170, Mapper170_Init         )
-	INES_BOARD( "Kaiser 7058",              171, UNLKS7058_Init         )
+	INES_BOARD( "Kaiser 7058",              171, Mapper171_Init         )
 	INES_BOARD( "Super Mega P-4070",        172, Mapper172_Init         )
 	INES_BOARD( "Idea-Tek ET.xx",           173, Mapper173_Init         )
-    INES_BOARD( "NTDec 5-in-1",             174, Mapper174_Init )
+    INES_BOARD( "NTDec 5-in-1",             174, Mapper174_Init         )
 	INES_BOARD( "",                         175, Mapper175_Init         )
 	INES_BOARD( "BMCFK23C",                 176, Mapper176_Init         )
 	INES_BOARD( "Hénggé Diànzǐ",            177, Mapper177_Init         )
@@ -775,9 +775,9 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "YY860606C",                358, Mapper358_Init         )
 	INES_BOARD( "SB-5013/GCL8050/841242C",  359, Mapper359_Init         )
 	INES_BOARD( "Bitcorp 31-in-1",          360, Mapper360_Init         )
-	INES_BOARD( "OK-411",                   361, GN45_Init              ) /* OK-411 is emulated together with GN-45 */
+	INES_BOARD( "YY841101C (OK-411)",       361, Mapper361_Init              ) /* OK-411 is emulated together with GN-45 */
 	INES_BOARD( "JY830832C",                364, Mapper364_Init         )
-	INES_BOARD( "GN-45",                    366, GN45_Init              )
+	INES_BOARD( "GN-45",                    366, Mapper366_Init              )
 	INES_BOARD( "Yung-08",                  368, Mapper368_Init         )
 	INES_BOARD( "N49C-300",                 369, Mapper369_Init         )
 	INES_BOARD( "Golden Mario Party II - Around the World 6-in-1", 370, Mapper370_Init         )
@@ -804,7 +804,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "YY850439C",                397, Mapper397_Init         )
 	INES_BOARD( "8-BIT XMAS",               400, Mapper400_Init         )
 	INES_BOARD( "BMC Super 19-in-1 (VIP19)",401, Mapper401_Init         )
-	INES_BOARD( "831019C J-2282",           402, J2282_Init             )
+	INES_BOARD( "J-2282",                   402, Mapper402_Init         )
 	INES_BOARD( "89433",                    403, Mapper403_Init         )
 	INES_BOARD( "JY012005",                 404, Mapper404_Init         )
 	INES_BOARD( "Haradius Zero",            406, Mapper406_Init         )
@@ -1057,36 +1057,39 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 		}
 	}
 
-	FCEU_printf(" PRG-ROM CRC32:  0x%08X\n", iNESCart.PRGCRC32);
-	FCEU_printf(" PRG+CHR CRC32:  0x%08X\n", iNESCart.CRC32);
-	FCEU_printf(" PRG+CHR MD5:    0x%s\n", md5_asciistr(iNESCart.MD5));
+	FCEU_printf(" PRG-ROM CRC32: 0x%08X\n", iNESCart.PRGCRC32);
+	if (iNESCart.PRGCRC32 != iNESCart.CRC32) {
+		FCEU_printf(" PRG+CHR CRC32: 0x%08X\n", iNESCart.CRC32);
+	}
+	FCEU_printf(" PRG+CHR MD5:   0x%s\n", md5_asciistr(iNESCart.MD5));
 	FCEU_printf(" PRG-ROM:  %6d KiB\n", iNESCart.PRGRomSize >> 10);
 	FCEU_printf(" CHR-ROM:  %6d KiB\n", iNESCart.CHRRomSize >> 10);
-	FCEU_printf(" MISC-ROM: %6d KiB\n", MiscROM_size >> 10);
-	FCEU_printf(" Mapper #: %3d\n", iNESCart.mapper);
-	FCEU_printf(" Mapper name: %s\n", mappername);
-	FCEU_printf(" Mirroring: %s\n",
-	            iNESCart.mirror == 2 ? "None (Four-screen)" :
-	                iNESCart.mirror  ? "Vertical" :
-	                                   "Horizontal");
-	FCEU_printf(" Battery: %s\n", (head.ROM_type & 2) ? "Yes" : "No");
-	FCEU_printf(" System: %s\n", tv_region[iNESCart.region]);
-	FCEU_printf(" Trained: %s\n", (head.ROM_type & 4) ? "Yes" : "No");
+	FCEU_printf(" Mapper #:    %3d\n", iNESCart.mapper);
+	FCEU_printf(" Mapper name:   %s\n", mappername);
+	FCEU_printf(" Mirroring:     %s\n",
+		iNESCart.mirror == 2 ? "None (Four-screen)" :
+		iNESCart.mirror  ? "Vertical" : "Horizontal");
+	FCEU_printf(" Battery:       %s\n", (head.ROM_type & 2) ? "Yes" : "No");
+	FCEU_printf(" System:        %s\n", tv_region[iNESCart.region]);
+	FCEU_printf(" Trained:       %s\n", (head.ROM_type & 4) ? "Yes" : "No");
 
 	if (iNESCart.iNES2) {
 		unsigned PRGRAM = iNESCart.PRGRamSize + iNESCart.PRGRamSaveSize;
 		unsigned CHRRAM = iNESCart.CHRRamSize + iNESCart.CHRRamSaveSize;
 
 		FCEU_printf(" NES 2.0 extended iNES.\n");
-		FCEU_printf(" Sub Mapper #: %3d\n", iNESCart.submapper);
+		FCEU_printf(" Submapper:    %2d\n", iNESCart.submapper);
 		if (PRGRAM || CHRRAM) {
 			if (head.ROM_type & 0x02) {
-				FCEU_printf(" PRG RAM: %d KB (%d KB battery-backed)\n", PRGRAM / 1024, iNESCart.PRGRamSaveSize / 1024);
-				FCEU_printf(" CHR RAM: %d KB (%d KB battery-backed)\n", CHRRAM / 1024, iNESCart.CHRRamSaveSize / 1024);
+				FCEU_printf(" PRG-RAM:      %2d KB ( %2d KB battery-backed)\n", PRGRAM / 1024, iNESCart.PRGRamSaveSize / 1024);
+				FCEU_printf(" CHR-RAM:      %2d KB ( %2d KB battery-backed)\n", CHRRAM / 1024, iNESCart.CHRRamSaveSize / 1024);
 			} else {
-				FCEU_printf(" PRG RAM: %d KB\n", PRGRAM / 1024);
-				FCEU_printf(" CHR RAM: %d KB\n", CHRRAM / 1024);
+				FCEU_printf(" PRG-RAM:      %2d KB\n", PRGRAM / 1024);
+				FCEU_printf(" CHR-RAM:      %2d KB\n", CHRRAM / 1024);
 			}
+		}
+		if (MiscROM_size) {
+			FCEU_printf(" MISC-ROM: %6d KiB\n", MiscROM_size >> 10);
 		}
 	}
 

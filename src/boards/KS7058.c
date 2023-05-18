@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* iNES Mapper 171 - Kaiser KS-7058 */
+
 #include "mapinc.h"
 
 static uint8 chr[2];
@@ -33,23 +35,23 @@ static void Sync(void) {
 	setchr4(0x1000, chr[1]);
 }
 
-static DECLFW(UNLKS7058Write) {
+static DECLFW(M171Write) {
 	chr[A & 1] = V;
 	Sync();
 }
 
-static void UNLKS7058Power(void) {
+static void M171Power(void) {
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, UNLKS7058Write);
+	SetWriteHandler(0x8000, 0xFFFF, M171Write);
 }
 
 static void StateRestore(int version) {
 	Sync();
 }
 
-void UNLKS7058_Init(CartInfo *info) {
-	info->Power = UNLKS7058Power;
+void Mapper171_Init(CartInfo *info) {
+	info->Power = M171Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

@@ -1239,6 +1239,15 @@ void Mapper205_Init(CartInfo *info) {
 /* --------------------------- GN-45 BOARD ------------------------------ */
 
 /* Mapper 361 and 366, previously assigned as Mapper 205 */
+/* Mapper 361:
+ *  JY-009
+ *  JY-018
+ *  JY-019
+ *  OK-411
+ * Mapper 366 (GN-45):
+ *  K-3131GS
+ *  K-3131SS
+*/	
 static void GN45PW(uint32 A, uint8 V) {
 	setprg8(A, (V & 0x0f) | mmc3.expregs[0]);
 }
@@ -1247,41 +1256,51 @@ static void GN45CW(uint32 A, uint8 V) {
 	setchr1(A, (V & 0x7F) | (mmc3.expregs[0] << 3));
 }
 
-static DECLFW(GN45Write0) {
-	if (mmc3.expregs[2] == 0) {
-		mmc3.expregs[0] = A & 0x30;
-		mmc3.expregs[2] = A & 0x80;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
-	} else
-		CartBW(A, V);
-}
-
-static DECLFW(GN45Write1) {
-	if (mmc3.expregs[2] == 0) {
-		mmc3.expregs[0] = V & 0x30;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
-	} else
-		CartBW(A, V);
-}
-
 static void GN45Reset(void) {
 	mmc3.expregs[0] = mmc3.expregs[2] = 0;
 	MMC3RegReset();
 }
 
-static void GN45Power(void) {
-	GenMMC3Power();
-	SetWriteHandler(0x6000, 0x6fff, GN45Write0);
-	SetWriteHandler(0x7000, 0x7fff, GN45Write1); /* OK-411 boards, the same logic, but data latched, 2-in-1 frankenstein */
+static DECLFW(M361Write) {
+	mmc3.expregs[0] = V & 0xF0;
+	FixMMC3PRG(mmc3.cmd);
+	FixMMC3CHR(mmc3.cmd);
 }
 
-void GN45_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 128, 8, 0);
+static void M361Power(void) {
+	GenMMC3Power();
+	SetWriteHandler(0x7000, 0x7fff, M361Write); /* OK-411 boards, the same logic, but data latched, 2-in-1 frankenstein */
+}
+
+void Mapper361_Init(CartInfo *info) {
+	GenMMC3_Init(info, 512, 512, 0, 0);
 	mmc3.pwrap = GN45PW;
 	mmc3.cwrap = GN45CW;
-	info->Power = GN45Power;
+	info->Power = M361Power;
+	info->Reset = GN45Reset;
+	AddExState(mmc3.expregs, 1, 0, "EXPR");
+}
+
+static DECLFW(M366Write) {
+	CartBW(A, V);
+	if (mmc3.expregs[2] == 0) {
+		mmc3.expregs[0] = A & 0x70;
+		mmc3.expregs[2] = A & 0x80;
+		FixMMC3PRG(mmc3.cmd);
+		FixMMC3CHR(mmc3.cmd);
+	}	
+}
+
+static void GM366Power(void) {
+	GenMMC3Power();
+	SetWriteHandler(0x6000, 0x7fff, M366Write);
+}
+
+void Mapper366_Init(CartInfo *info) {
+	GenMMC3_Init(info, 512, 512, 8, 0);
+	mmc3.pwrap = GN45PW;
+	mmc3.cwrap = GN45CW;
+	info->Power = GM366Power;
 	info->Reset = GN45Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

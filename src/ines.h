@@ -176,7 +176,7 @@ void Mapper166_Init(CartInfo *);
 void Mapper167_Init(CartInfo *);
 void Mapper168_Init(CartInfo *);
 void Mapper170_Init(CartInfo *);
-/* void Mapper171_Init(CartInfo *); */ /* Kaiser 7058 */
+void Mapper171_Init(CartInfo *); /* Kaiser 7058 */
 void Mapper172_Init(CartInfo *);
 void Mapper173_Init(CartInfo *);
 void Mapper174_Init(CartInfo *);
@@ -249,24 +249,20 @@ void Mapper253_Init(CartInfo *);
 void Mapper254_Init(CartInfo *);
 void Mapper255_Init(CartInfo *);
 
-void GN45_Init(CartInfo *info); /* m361, m366 */
+void Mapper267_Init(CartInfo *);
+void Mapper268_Init(CartInfo *);
+void Mapper269_Init(CartInfo *);
+void Mapper271_Init(CartInfo *);
 void Mapper272_Init(CartInfo *);
 void Mapper277_Init(CartInfo *);
 void Mapper281_Init(CartInfo *);
 void Mapper282_Init(CartInfo *);
 void Mapper283_Init(CartInfo *);
-void Mapper291_Init(CartInfo *);
-void Mapper295_Init(CartInfo *);
-
-void J2282_Init(CartInfo *);
-
-void Mapper267_Init(CartInfo *);
-void Mapper268_Init(CartInfo *);
-void Mapper269_Init(CartInfo *);
-void Mapper271_Init(CartInfo *);
 void Mapper288_Init(CartInfo *);
+void Mapper291_Init(CartInfo *);
 void Mapper293_Init(CartInfo *);
 void Mapper294_Init(CartInfo *);
+void Mapper295_Init(CartInfo *);
 void Mapper297_Init(CartInfo *);
 void Mapper310_Init(CartInfo *);
 void Mapper319_Init(CartInfo *);
@@ -281,7 +277,9 @@ void Mapper357_Init(CartInfo *);
 void Mapper358_Init(CartInfo *);
 void Mapper359_Init(CartInfo *);
 void Mapper360_Init(CartInfo *);
+void Mapper361_Init(CartInfo *);
 void Mapper364_Init(CartInfo *);
+void Mapper366_Init(CartInfo *);
 void Mapper368_Init(CartInfo *);
 void Mapper369_Init(CartInfo *);
 void Mapper370_Init(CartInfo *);
@@ -308,6 +306,7 @@ void Mapper396_Init(CartInfo *);
 void Mapper397_Init(CartInfo *);
 void Mapper400_Init(CartInfo *);
 void Mapper401_Init(CartInfo *);
+void Mapper402_Init(CartInfo *);
 void Mapper403_Init(CartInfo *);
 void Mapper404_Init(CartInfo *);
 void Mapper406_Init(CartInfo *);
@@ -358,6 +357,7 @@ void Mapper467_Init(CartInfo *);
 void Mapper500_Init(CartInfo *);
 void Mapper501_Init(CartInfo *);
 void Mapper502_Init(CartInfo *);
+
 void Mapper512_Init(CartInfo *);
 void Mapper516_Init(CartInfo *);
 void Mapper523_Init(CartInfo *);
@@ -376,7 +376,5 @@ void Mapper553_Init(CartInfo *);
 void Mapper554_Init(CartInfo *);
 void Mapper556_Init(CartInfo *);
 void Mapper558_Init(CartInfo *);
-
-void UNLKS7058_Init(CartInfo *);
 
 #endif
