@@ -1291,7 +1291,7 @@ static DECLFW(M366Write) {
 	}	
 }
 
-static void GM366Power(void) {
+static void M366Power(void) {
 	GenMMC3Power();
 	SetWriteHandler(0x6000, 0x7fff, M366Write);
 }
@@ -1300,7 +1300,7 @@ void Mapper366_Init(CartInfo *info) {
 	GenMMC3_Init(info, 512, 512, 8, 0);
 	mmc3.pwrap = GN45PW;
 	mmc3.cwrap = GN45CW;
-	info->Power = GM366Power;
+	info->Power = M366Power;
 	info->Reset = GN45Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }
