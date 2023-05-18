@@ -19,6 +19,10 @@ typedef struct {
 					 * that are not really MMC3 but are
 					 * set to mapper 4.
 					 */
+	int mirror2bits; /* a 2bit representation for mirroring.
+                      * For use in nonstandard way like apply one-screen mirroring on
+					  * mapper 30.
+                      */
 	int battery;	/* Presence of an actual battery. */
 	int PRGRomSize;		/* prg rom size in bytes */
 	int CHRRomSize;		/* chr rom size in bytes */
@@ -27,6 +31,12 @@ typedef struct {
 	int PRGRamSaveSize;	/* prg ram size in bytes (non-volatile or battery backed) */
 	int CHRRamSaveSize;	/* chr ram size in bytes (non-volatile or battery backed) */
 	int region;			/* video system timing (ntsc, pal, dendy */
+
+	int ConsoleType;
+	int ExtConsoleType;
+	int InputTypes;
+	int VS_PPUTypes;
+	int VS_HWType;
 
 	uint8 MD5[16];
 	uint32 PRGCRC32;

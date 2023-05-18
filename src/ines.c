@@ -887,38 +887,23 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "YC-03-09",                 558, Mapper558_Init         )
 INES_BOARD_END()
 
-static uint32 iNES_get_mapper_id(void) {
-	/* If byte 7 AND $0C = $08, and the size taking into account byte 9 does not exceed the actual size of the ROM
-	 * image, then NES 2.0. If byte 7 AND $0C = $00, and bytes 12-15 are all 0, then iNES. Otherwise, archaic iNES. -
-	 * nesdev*/
-	uint32 ret;
-	switch (head.ROM_type2 & 0x0C) {
-	case 0x08: /* header version is NES 2.0 */
-		ret = (((uint32)head.ROM_type3 << 8) & 0xF00) | (head.ROM_type2 & 0xF0) | (head.ROM_type >> 4);
-		break;
-	case 0x00: /* header version is iNES */
-		ret = (head.ROM_type2 & 0xF0) | (head.ROM_type >> 4);
-		break;
-	default: /* any other value is Archaic iNes, byte 7-15 not used */
-		ret = (head.ROM_type >> 4);
-		break;
-	}
-	return ret;
-}
-
 static void iNES_read_header_info(void) {
 	ROM_size         = head.ROM_size;
 	VROM_size        = head.VROM_size;
 	iNESCart.mirror  = (head.ROM_type & 8) ? 2 : (head.ROM_type & 1);
+	iNESCart.mirror2bits = ((head.ROM_type & 8) ? 2 : 0) | (head.ROM_type & 1);
 	iNESCart.battery = (head.ROM_type & 2) ? 1 : 0;
-	iNESCart.mapper  = iNES_get_mapper_id();
+	iNESCart.mapper  = (head.ROM_type2 & 0xF0) | ((head.ROM_type & 0xF0) >> 4);
 	iNESCart.iNES2   = (head.ROM_type2 & 0x0C) == 0x08;
+	iNESCart.ConsoleType = head.ROM_type2 & 0x03;
 
 	if (iNESCart.iNES2) {
+		iNESCart.mapper |= (((uint32)head.ROM_type3 << 8) & 0xF00);
+		iNESCart.submapper = (head.ROM_type3 >> 4) & 0x0F;
 		ROM_size |= ((head.upper_PRG_CHR_size >> 0) & 0xF) << 8;
 		VROM_size |= ((head.upper_PRG_CHR_size >> 4) & 0xF) << 8;
-		iNESCart.submapper = (head.ROM_type3 >> 4) & 0x0F;
-		iNESCart.region    = head.Region & 3;
+		iNESCart.region = head.Region & 3;
+
 		if (head.PRGRAM_size & 0x0F)
 			iNESCart.PRGRamSize = 64 << ((head.PRGRAM_size >> 0) & 0x0F);
 		if (head.PRGRAM_size & 0xF0)
@@ -951,17 +936,12 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 
 	memset(&iNESCart, 0, sizeof(iNESCart));
 
-	if (!memcmp((char *)(&head) + 0x7, "DiskDude", 8))
+	if (!memcmp((char *)(&head) + 0x7, "DiskDude", 8)) {
 		memset((char *)(&head) + 0x7, 0, 0x9);
-
-	if (!memcmp((char *)(&head) + 0x7, "demiforce", 9))
+	} else if (!memcmp((char *)(&head) + 0x7, "demiforce", 9)) {
 		memset((char *)(&head) + 0x7, 0, 0x9);
-
-	if (!memcmp((char *)(&head) + 0xA, "Ni03", 4)) {
-		if (!memcmp((char *)(&head) + 0x7, "Dis", 3))
-			memset((char *)(&head) + 0x7, 0, 0x9);
-		else
-			memset((char *)(&head) + 0xA, 0, 0x6);
+	} else if (!memcmp((char *)(&head) + 0xA, "Ni03", 4)) {
+		memset((char *)(&head) + 0x7, 0, 0x9);
 	}
 
 	iNES_read_header_info();

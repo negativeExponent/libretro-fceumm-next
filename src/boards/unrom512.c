@@ -156,8 +156,6 @@ static void UNROM512LatchClose(void) {
 }
 
 void UNROM512_Init(CartInfo *info) {
-	int mirror = (head.ROM_type & 1) | ((head.ROM_type & 8) >> 2);
-
 	Latch_Init(info, UNROM512_Sync, NULL, 0, !info->battery);
 
 	info->Power      = UNROM512LatchPower;
@@ -167,7 +165,7 @@ void UNROM512_Init(CartInfo *info) {
 	submapper = (info->iNES2 && info->submapper) ? info->submapper : ((info->PRGCRC32 == 0x891C14BC) ? 0x01 : 0x00);
 
 	if (!(submapper & 1)) {
-		switch (mirror) {
+		switch (info->mirror2bits) {
 		case 0: /* hard horizontal, internal */
 			SetupCartMirroring(MI_H, 1, NULL);
 			break;
