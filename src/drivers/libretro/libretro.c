@@ -2636,6 +2636,7 @@ static void FCEUD_UpdateInput(void)
       switch (device)
       {
          case DEVICE_SNESMOUSE:
+         {
             int dx = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X);
             int dy = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y);
             int mb = ((input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT) ? 1 : 0)
@@ -2644,7 +2645,7 @@ static void FCEUD_UpdateInput(void)
             nes_input.MouseData[port][0] = dx;
             nes_input.MouseData[port][1] = dy;
             nes_input.MouseData[port][2] = mb;
-            break;
+         } break;
          case DEVICE_ARKANOID:
          case DEVICE_ZAPPER:
             get_mouse_input(port, nes_input.type[port], nes_input.MouseData[port]);
@@ -2718,6 +2719,8 @@ static void FCEUD_UpdateInput(void)
             nes_input.JoyButtons[port] |= (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START)) ? JOY_START : 0;
 
          } break;
+         default:
+            break;
       }
    }
 
