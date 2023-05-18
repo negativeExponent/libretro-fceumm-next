@@ -680,10 +680,9 @@ void BMCSA005A_Init(CartInfo *info) {
 	info->Reset = LatchHardReset;
 }
 
-/* -------------- 831019C J-2282 ------------------------ */
-/* NES 2.0 Mapper 402 */
+/* -------------- Mapper 402 ------------------------ */
 
-static void J2282Sync(void) {
+static void M402Sync(void) {
 	if (latch.addr & 0x800) {
 		setprg8(0x6000, ((latch.addr & 0x1F) << 1) | 3);
 	}
@@ -702,8 +701,8 @@ static void J2282Sync(void) {
 	setmirror(((latch.addr >> 7) & 1) ^ 1);
 }
 
-void J2282_Init(CartInfo *info) {
-	Latch_Init(info, J2282Sync, NULL, 0, 0);
+void Mapper402_Init(CartInfo *info) {
+	Latch_Init(info, M402Sync, NULL, 0, 0);
 	info->Reset = LatchHardReset;
 }
 
