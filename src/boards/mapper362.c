@@ -51,7 +51,7 @@ static SFORMAT StateRegs[] = {
 
 static void Sync(void) {
     uint32 cbase = (vrc4Misc << 13) & 0x4000;
-	uint32 prgBase = (game == 0) ? ((vrc4Chr[PPUCHRBus] >> 3) & 0x30) : 0x40;
+	uint32 prgBase = (game == 0) ? ((vrc4Chr[PPUCHRBus] & 0x180) >> 3) : 0x40;
     uint32 chrBase = (game == 0) ? (vrc4Chr[PPUCHRBus] & 0x180) : 0x200;
 	uint32 chrMask = (game == 0) ? 0x7F : 0x1FF;
 
@@ -144,10 +144,13 @@ static void FP_FASTAPASS(1) M362CPUHook(int a) {
 }
 
 static void FP_FASTAPASS(1) M362PPUHook(uint32 A) {
-    A &= 0x1FFF;
-    A >>= 10;
-    PPUCHRBus = A;
-    Sync();
+    uint8 bank = (A & 0x1FFF) >> 10;
+	if ((game == 0) && (PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
+		A &= 0x1FFF;
+		A >>= 10;
+		PPUCHRBus = A;
+		Sync();
+	}
 }
 
 static void M362Reset(void) {
@@ -169,7 +172,7 @@ static void M362Power(void) {
 		vrc4Chr[i] = 0;
 	}
 	vrc4Mirr = vrc4Misc = vrc4IRQLatch = vrc4IRQa = vrc4IRQCount = vrc4IRQCycles = 0;
-	reg = game = 0;
+	PPUCHRBus = game = 0;
     Sync();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);

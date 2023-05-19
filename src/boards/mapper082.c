@@ -26,7 +26,7 @@
 
 #include "mapinc.h"
 
-static uint8 creg[5], preg[3], prot[3], ctrl;
+static uint8 creg[6], preg[3], prot[3], ctrl;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 static int mappernum;
@@ -34,7 +34,7 @@ static int mappernum;
 static SFORMAT StateRegs[] =
 {
 	{ preg, 3, "PREGS" },
-	{ creg, 5, "CREGS" },
+	{ creg, 6, "CREGS" },
 	{ prot, 3, "PROT" },
 	{ &ctrl, 1, "CTRL" },
 
