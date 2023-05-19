@@ -37,7 +37,7 @@ static int16 vrc4IRQCycles;
 
 static SFORMAT StateRegs[] = {
     { &game,          1, "GAME" },
-    { &PPUCHRBus,     1, "CHRB" },
+    { &PPUCHRBus,     1, "PPUC" },
 	{ vrc4Prg,        2, "V4PR" },
 	{ &vrc4Mirr,      1, "V4MI" },
 	{ &vrc4Misc,      1, "V4MS" },

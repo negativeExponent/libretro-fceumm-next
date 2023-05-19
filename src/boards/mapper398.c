@@ -36,8 +36,8 @@ static uint8 vrc4IRQCount;
 static int16 vrc4IRQCycles;
 
 static SFORMAT StateRegs[] = {
-	{ &latch, 1, "GAME" },
-	{ &PPUCHRBus, 1, "CHRB" },
+	{ &latch, 1, "LATC" },
+	{ &PPUCHRBus, 1, "PPUC" },
 	{ vrc4Prg, 2, "V4PR" },
 	{ &vrc4Mirr, 1, "V4MI" },
 	{ &vrc4Misc, 1, "V4MS" },
