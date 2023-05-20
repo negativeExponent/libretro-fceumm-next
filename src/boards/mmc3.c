@@ -1056,31 +1056,6 @@ void Mapper194_Init(CartInfo *info) {
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
 
-/* ---------------------------- Mapper 195 ------------------------------- */
-static void M195CW(uint32 A, uint8 V) {
-	if (V <= 3) /* Crystalis (c).nes, Captain Tsubasa Vol 2 - Super Striker (C) */
-		setchr1r(0x10, A, V);
-	else
-		setchr1r(0, A, V);
-}
-
-static void M195Power(void) {
-	GenMMC3Power();
-	setprg4r(0x10, 0x5000, 2);
-	SetWriteHandler(0x5000, 0x5fff, CartBW);
-	SetReadHandler(0x5000, 0x5fff, CartBR);
-}
-
-void Mapper195_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 256, 16, info->battery);
-	mmc3.cwrap = M195CW;
-	info->Power = M195Power;
-	CHRRAMSIZE = 4096;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
-	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
-	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-}
-
 /* ---------------------------- Mapper 196 ------------------------------- */
 /* MMC3 board with optional command address line connection, allows to
  * make three-four different wirings to IRQ address lines and separately to
@@ -1183,10 +1158,17 @@ static void M198PW(uint32 A, uint8 V) {
 		setprg8(A, V);
 }
 
+static void M198Power(void) {
+	GenMMC3Power();
+	setprg4r(0x10, 0x5000, 2);
+	SetWriteHandler(0x5000, 0x5fff, CartBW);
+	SetReadHandler(0x5000, 0x5fff, CartBR);
+}
+
 void Mapper198_Init(CartInfo *info) {
 	GenMMC3_Init(info, 1024, 0, 16, info->battery);
 	mmc3.pwrap = M198PW;
-	info->Power = M195Power;
+	info->Power = M198Power;
 }
 
 /* ---------------------------- Mapper 205 ------------------------------ */
