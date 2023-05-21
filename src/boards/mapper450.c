@@ -1,7 +1,6 @@
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2007 CaH4e3
  *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,35 +16,52 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * NES 2.0 Mapper 530 - UNL-AX5705
- * Super Bros. Pocker Mali (VRC4 mapper)
+ */
+
+/* NES 2.0 Mapper 450 - YY841157C
  */
 
 #include "mapinc.h"
 #include "vrc24.h"
 
-static void PRGWrap(uint32 A, uint8 V) {
-	setprg8(A, ((V & 0x02) << 2) | ((V & 0x08) >> 2) | (V & ~0x0A));
+/* TODO: move this register to VRC2 microwire interface when implemented */
+static uint8 wires;
+
+static SFORMAT StateRegs[] = {
+	{ &wires, 1, "WIRE" },
+	{ 0 },
+};
+
+static void M450PW(uint32 A, uint8 V) {
+    setprg8(A, (wires << 4) | (V & 0x0F));
 }
 
-static void CHRWrap(uint32 A, uint32 V) {
-	setchr1(A, ((V & 0x40) >> 1) | ((V & 0x20) << 1) | (V & ~0x60));
+static void M450CW(uint32 A, uint32 V) {
+    setchr1(A, (wires << 7) | (V & 0x7F));
 }
 
-static DECLFW(UNLAX5705Write) {
-	A |= (A & 0x08) << 9;
-	VRC24Write(A, V);
+static DECLFW(M450WriteReg) {
+	wires = V;
+	FixVRC24PRG();
+    FixVRC24CHR();
 }
 
-static void UNLAX5705Power(void) {
+static void M450Reset(void) {
+	wires = 0;
+	FixVRC24PRG();
+    FixVRC24CHR();
+}
+
+static void M450Power(void) {
+	wires = 0;
 	GenVRC24Power();
-	SetWriteHandler(0x8000, 0xFFFF, UNLAX5705Write);
+	SetWriteHandler(0x6000, 0x6FFF, M450WriteReg);
 }
 
-void UNLAX5705_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4f, 0);
-	info->Power = UNLAX5705Power;
-	vrc24.pwrap = PRGWrap;
-	vrc24.cwrap = CHRWrap;
+void Mapper450_Init(CartInfo *info) {
+	GenVRC24_Init(info, VRC2b, 0);
+	info->Power = M450Power;
+    vrc24.pwrap = M450PW;
+    vrc24.cwrap = M450CW;
+	AddExState(StateRegs, ~0, 0, 0);
 }
