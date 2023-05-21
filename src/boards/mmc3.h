@@ -16,10 +16,6 @@ typedef struct {
 
 extern MMC3 mmc3;
 
-extern void (*pwrap)(uint32 A, uint8 V);
-extern void (*cwrap)(uint32 A, uint8 V);
-extern void (*mwrap)(uint8 V);
-
 void GenMMC3Power(void);
 void GenMMC3Restore(int version);
 void MMC3RegReset(void);

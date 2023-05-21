@@ -1,7 +1,7 @@
-/* FCEUmm - NES/Famicom Emulator
+/* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,22 +18,36 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* NES 2.0 Mapper 527 is used for a bootleg version of
- * Taito's 不動明王伝 (Fudō Myōō Den).
- * Its UNIF board name is UNL-AX-40G. The original INES Mapper 207 is
- * replaced with a VRC2 clone (A0/A1, i.e. VRC2b) while retaining
- * Mapper 207's extended mirroring.
+/* NES 2.0 Mapper 520 - VRC4 clone
+ * Datach Dragon Ball Z/Datach Yu Yu Hakusho
  */
 
 #include "mapinc.h"
 #include "vrc24.h"
 
-static void UNLAX40GCW(uint32 A, uint32 V) {
-	setchr1(A, V);
-	setmirrorw((vrc24.chrhi[0] >> 3) & 1, (vrc24.chrhi[0] >> 3) & 1, (vrc24.chrhi[1] >> 3) & 1, (vrc24.chrhi[1] >> 3) & 1);
+static uint8 PPUCHRBus;
+
+static SFORMAT StateRegs[] = {
+	{ &PPUCHRBus, 1, "PPUC" },
+	{ 0 },
+};
+
+static void M520PW(uint32 A, uint8 V) {
+	setprg8(A, ((vrc24.chrreg[PPUCHRBus] << 2) & 0x20) | (V & 0x1F));
 }
 
-void UNLAX40G_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2b, 0);
-	vrc24.cwrap = UNLAX40GCW;
+static void FP_FASTAPASS(1) M520PPUHook(uint32 A) {
+	uint8 bank = (A & 0x1FFF) >> 10;
+	if ((PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
+		PPUCHRBus = bank;
+		FixVRC24PRG();
+		FixVRC24CHR();
+	}
+}
+
+void Mapper520_Init(CartInfo *info) {
+	GenVRC24_Init(info, VRC4e, 0);
+	PPU_hook = M520PPUHook;
+	vrc24.pwrap = M520PW;
+	AddExState(StateRegs, ~0, 0, 0);
 }
