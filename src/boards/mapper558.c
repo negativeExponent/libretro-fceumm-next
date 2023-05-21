@@ -78,8 +78,6 @@ static DECLFW(writeReg) {
 
 static void M558Power(void) {
 	memset(reg, 0, sizeof(reg));
-	if (haveEEPROM)
-		eeprom_93C66_init();
 	Sync();
 	SetReadHandler(0x5000, 0x57FF, readReg);
 	SetWriteHandler(0x5000, 0x57FF, writeReg);
@@ -118,7 +116,7 @@ void Mapper558_Init(CartInfo *info) {
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 	haveEEPROM = !!(info->PRGRamSaveSize & 0x200);
 	if (haveEEPROM) {
-		eeprom_93C66_storage = eeprom_data;
+		eeprom_93C66_init(eeprom_data, 512, 8);
 		info->battery = 1;
 		info->SaveGame[0] = eeprom_data;
 		info->SaveGameLen[0] = 512;

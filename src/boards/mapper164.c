@@ -82,12 +82,12 @@ static DECLFW(writeReg) {
 
 static void M164Power(void) {
 	memset(reg, 0, sizeof(reg));
-	eeprom_93C66_init();
 	Sync();
 	SetReadHandler(0x5400, 0x57FF, readReg);
 	SetWriteHandler(0x5000, 0x57FF, writeReg);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
+	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
 static void M164Reset(void) {
@@ -117,9 +117,8 @@ void Mapper164_Init(CartInfo *info) {
 	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 
-	eeprom_93C66_storage = eeprom_data;
+	eeprom_93C66_init(eeprom_data, 512, 8);
 	info->battery = 1;
 	info->SaveGame[0] = eeprom_data;
 	info->SaveGameLen[0] = 512;

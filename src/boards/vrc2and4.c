@@ -24,8 +24,9 @@
 
 #include "mapinc.h"
 #include "vrcirq.h"
+#include "eeprom_93C66.h"
 
-static uint8 isPirate, is22;
+static uint8 is22;
 static uint16 IRQCount;
 static uint8 IRQLatch, IRQa;
 static uint8 prgreg[4], chrreg[8];
@@ -36,6 +37,9 @@ static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
 static uint8 prgMask = 0x1F;
+
+static uint8 haveEEPROM;
+static uint8 eeprom_data[256];
 
 static SFORMAT StateRegs[] =
 {
@@ -96,23 +100,14 @@ static DECLFW(VRC24Write) {
 		case 0x8001:
 		case 0x8002:
 		case 0x8003:
-			if (!isPirate) {
-				prgreg[0] = V & prgMask;
-				Sync();
-			}
+			prgreg[0] = V & prgMask;
+			Sync();
 			break;
 		case 0xA000:
 		case 0xA001:
 		case 0xA002:
 		case 0xA003:
-			if (!isPirate)
-			{
-				prgreg[1] = V & prgMask;
-			}
-			else {
-				prgreg[0] = (V & prgMask) << 1;
-				prgreg[1] = ((V & prgMask) << 1) | 1;
-			}
+			prgreg[1] = V & prgMask;
 			Sync();
 			break;
 		case 0x9000:
@@ -234,38 +229,80 @@ static void VRC24_Init(CartInfo *info, uint32 hasWRAM) {
 }
 
 void Mapper21_Init(CartInfo *info) {
-	isPirate = 0;
 	is22 = 0;
 	info->Power = M21Power;
 	VRC24_Init(info, 1);
 }
 
 void Mapper22_Init(CartInfo *info) {
-	isPirate = 0;
 	is22 = 1;
 	info->Power = M22Power;
 	VRC24_Init(info, 0);
 }
 
 void Mapper23_Init(CartInfo *info) {
-	isPirate = 0;
 	is22 = 0;
 	info->Power = M23Power;
 	VRC24_Init(info, 1);
 }
 
 void Mapper25_Init(CartInfo *info) {
-	isPirate = 0;
 	is22 = 0;
 	info->Power = M25Power;
 	VRC24_Init(info, 1);
 }
 
+/* -------------------- Mapper 529 -------------------- */
+/* ------------------ UNIF UNL-T-230 ------------------ */
+
+static void UNLT230PRGSync(void) {
+	setprg16(0x8000, prgreg[1]);
+	setprg16(0xC000, ~0);
+}
+
+static DECLFR(UNLT230EEPROMRead) {
+	if (haveEEPROM) {
+		return eeprom_93C66_read() ? 0x01 : 0x00;
+	}
+	return 0x01;
+}
+
+static DECLFW(UNLT230Write) {
+	if (A & 0x800) {
+		if (haveEEPROM) {
+			eeprom_93C66_write(!!(A & 0x04), !!(A & 0x02), !!(A & 0x01));
+		}
+	} else {
+		VRC24Write((A & 0xF000) | ((A >> 2) & 3), V);
+		UNLT230PRGSync();
+	}
+}
+
+static void UNLT230Power(void) {
+	VRC24PowerCommon(M23Write);
+	SetReadHandler(0x5000, 0x5FFF, UNLT230EEPROMRead);
+	SetWriteHandler(0x8000, 0xFFFF, UNLT230Write);
+}
+
+static void UNLT230StateRestore(int version) {
+	Sync();
+	UNLT230PRGSync();
+}
+
 void UNLT230_Init(CartInfo *info) {
-	isPirate = 1;
 	is22 = 0;
-	info->Power = M23Power;
-	VRC24_Init(info, 1);
+	haveEEPROM = (info->PRGRamSaveSize & 0x100) != 0;
+
+	VRC24_Init(info, !haveEEPROM);
+	info->Power = UNLT230Power;
+	GameStateRestore = UNLT230StateRestore;
+
+	if (haveEEPROM) {
+		eeprom_93C66_init(eeprom_data, 256, 16);
+		info->battery = 1;
+		info->SaveGame[0] = eeprom_data;
+		info->SaveGameLen[0] = 256;
+	}
 }
 
 /* -------------------- UNL-TH2131-1 -------------------- */
