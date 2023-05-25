@@ -114,7 +114,7 @@ void M544Close(void) {
 }
 
 void Mapper544_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4_559, 1);
+	GenVRC24_Init(info, VRC4_544, 1);
 	info->Power = M544Power;
 	info->Close = M544Close;
     vrc24.pwrap = M544PW;

@@ -41,7 +41,7 @@
 #include "vrc24.h"
 #include "vrcirq.h"
 
-static enum VRC24Type variant;
+static VRC24Type variant;
 static uint8 autoConfig = 0;
 
 static uint8 *WRAM = NULL;
@@ -54,9 +54,9 @@ static SFORMAT StateRegs[] =
 	{ vrc24.prgreg, 2, "PREG" },
 	{ vrc24.chrreg, 8, "CREG" },
 	{ vrc24.chrhi,  8, "CHRH" },
-	{ &variant, 1, "VRNT" },
 	{ &vrc24.cmd, 1, "CMDR" },
 	{ &vrc24.mirr, 1, "MIRR" },
+	{ &variant, 1, "VRNT" },
 
 	{ 0 }
 };
@@ -144,12 +144,13 @@ static uint32 translateAddr(uint32 A) {
 			A0 |= (A >> 3) & 0x01;
 			A1 |= (A >> 2) & 0x01;
 			break;
-		
+
+		case VRC4_544:
 		case VRC4_559:
 			A0 |= (A >> 10) & 0x01;
 			A1 |= (A >> 11) & 0x01;
 			break;
-		
+
 		default:
 			break;
 		}
@@ -161,27 +162,21 @@ static uint32 translateAddr(uint32 A) {
 void FixVRC24PRG(void) {
 	if (vrc24.cmd & 2) {
 		vrc24.pwrap(0x8000, ~1);
-		vrc24.pwrap(0xA000, vrc24.prgreg[1]);
 		vrc24.pwrap(0xC000, vrc24.prgreg[0]);
-		vrc24.pwrap(0xE000, ~0);
 	} else {
 		vrc24.pwrap(0x8000, vrc24.prgreg[0]);
-		vrc24.pwrap(0xA000, vrc24.prgreg[1]);
 		vrc24.pwrap(0xC000, ~1);
-		vrc24.pwrap(0xE000, ~0);
 	}
+	vrc24.pwrap(0xA000, vrc24.prgreg[1]);
+	vrc24.pwrap(0xE000, ~0);
 }
 
 void FixVRC24CHR(void) {
-	vrc24.cwrap(0x0000, (vrc24.chrhi[0] << 4) | vrc24.chrreg[0]);
-	vrc24.cwrap(0x0400, (vrc24.chrhi[1] << 4) | vrc24.chrreg[1]);
-	vrc24.cwrap(0x0800, (vrc24.chrhi[2] << 4) | vrc24.chrreg[2]);
-	vrc24.cwrap(0x0C00, (vrc24.chrhi[3] << 4) | vrc24.chrreg[3]);
-	vrc24.cwrap(0x1000, (vrc24.chrhi[4] << 4) | vrc24.chrreg[4]);
-	vrc24.cwrap(0x1400, (vrc24.chrhi[5] << 4) | vrc24.chrreg[5]);
-	vrc24.cwrap(0x1800, (vrc24.chrhi[6] << 4) | vrc24.chrreg[6]);
-	vrc24.cwrap(0x1C00, (vrc24.chrhi[7] << 4) | vrc24.chrreg[7]);
+	int i;
 
+	for (i = 0; i < 8; i++) {
+		vrc24.cwrap(0x0400 * i, (vrc24.chrhi[i] << 4) | vrc24.chrreg[i]);
+	}
 	if (vrc24.mwrap) {
 		vrc24.mwrap(vrc24.mirr);
 	}
@@ -306,7 +301,7 @@ void GenVRC24Close(void) {
 	WRAM = NULL;
 }
 
-void GenVRC24_Init(CartInfo *info, enum VRC24Type type, int wram) {
+void GenVRC24_Init(CartInfo *info, VRC24Type type, int wram) {
 	vrc24.pwrap = GENPWRAP;
 	vrc24.cwrap = GENCWRAP;
 	vrc24.mwrap = GENMWRAP;
@@ -338,7 +333,7 @@ void GenVRC24_Init(CartInfo *info, enum VRC24Type type, int wram) {
 
 void Mapper21_Init(CartInfo *info) {
 	/* Mapper 21 - VRC4a, VRC4c */
-	enum VRC24Type type = VRC4a;
+	VRC24Type type = VRC4a;
 	autoConfig = 1;
 	if (info->iNES2 && !info->submapper) {
 		switch (info->submapper) {
@@ -366,7 +361,7 @@ void Mapper22_Init(CartInfo *info) {
 
 void Mapper23_Init(CartInfo *info) {
 	/* Mapper 23 - VRC2b, VRC4e, VRC4f */
-	enum VRC24Type type = VRC4f;
+	VRC24Type type = VRC4f;
 	autoConfig = 1;
 	if (info->iNES2 && !info->submapper) {
 		switch (info->submapper) {
@@ -382,7 +377,7 @@ void Mapper23_Init(CartInfo *info) {
 
 void Mapper25_Init(CartInfo *info) {
 	/* Mapper 25 - VRC2c, VRC4b, VRC4d */
-	enum VRC24Type type = VRC4b;
+	VRC24Type type = VRC4b;
 	autoConfig = 1;
 	if (info->iNES2 && !info->submapper) {
 		switch (info->submapper) {
