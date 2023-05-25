@@ -334,13 +334,13 @@ void GenVRC24_Init(CartInfo *info, VRC24Type type, int wram) {
 void Mapper21_Init(CartInfo *info) {
 	/* Mapper 21 - VRC4a, VRC4c */
 	VRC24Type type = VRC4a;
-	autoConfig = 1;
-	if (info->iNES2 && !info->submapper) {
+	if (info->iNES2 && info->submapper) {
 		switch (info->submapper) {
-		case 1: type = VRC4a; autoConfig = 0; break;
-		case 2: type = VRC4c; autoConfig = 0; break;
+		case 1: type = VRC4a; break;
+		case 2: type = VRC4c; break;
 		}
 	}
+	autoConfig = !info->submapper;
 	GenVRC24_Init(info, type, 1);
 }
 
@@ -352,7 +352,6 @@ static void M22CW(uint32 A, uint32 V) {
 
 void Mapper22_Init(CartInfo *info) {
 	/* Mapper 22 - VRC2a */
-	autoConfig = 0;
 	GenVRC24_Init(info, VRC2a, 0);
 	vrc24.cwrap = M22CW;
 }
@@ -362,14 +361,14 @@ void Mapper22_Init(CartInfo *info) {
 void Mapper23_Init(CartInfo *info) {
 	/* Mapper 23 - VRC2b, VRC4e, VRC4f */
 	VRC24Type type = VRC4f;
-	autoConfig = 1;
-	if (info->iNES2 && !info->submapper) {
+	if (info->iNES2 && info->submapper) {
 		switch (info->submapper) {
-		case 1: type = VRC4f; autoConfig = 0; break;
-		case 2: type = VRC4e; autoConfig = 0; break;
-		case 3: type = VRC2b; autoConfig = 0; break;
+		case 1: type = VRC4f; break;
+		case 2: type = VRC4e; break;
+		case 3: type = VRC2b; break;
 		}
 	}
+	autoConfig = !info->submapper;
 	GenVRC24_Init(info, type, 1);
 }
 
@@ -378,13 +377,13 @@ void Mapper23_Init(CartInfo *info) {
 void Mapper25_Init(CartInfo *info) {
 	/* Mapper 25 - VRC2c, VRC4b, VRC4d */
 	VRC24Type type = VRC4b;
-	autoConfig = 1;
-	if (info->iNES2 && !info->submapper) {
+	if (info->iNES2 && info->submapper) {
 		switch (info->submapper) {
-		case 1: type = VRC4b; autoConfig = 0; break;
-		case 2: type = VRC4d; autoConfig = 0; break;
-		case 3: type = VRC2c; autoConfig = 0; break;
+		case 1: type = VRC4b; break;
+		case 2: type = VRC4d; break;
+		case 3: type = VRC2c; break;
 		}
 	}
+	autoConfig = !info->submapper;
 	GenVRC24_Init(info, type, 1);
 }
