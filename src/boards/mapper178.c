@@ -19,6 +19,9 @@
  *
  * DSOUNDV1/FL-TR8MA boards (32K WRAM, 8/16M), 178 mapper boards (8K WRAM, 4/8M)
  * Various Education Cartridges
+ * 
+ * mapper 551
+ * Compared to INES Mapper 178, mirroring is hard-wired, and the chipset's internal CHR-RAM is not used in favor of CHR-ROM.
  *
  */
 
@@ -33,6 +36,7 @@ static uint32 WRAMSIZE;
 static uint8 pcm_enable = 0;
 static int16 pcm_latch = 0x3F6, pcm_clock = 0x3F6;
 static writefunc pcmwrite;
+static int mappernum  = 0;
 
 static SFORMAT StateRegs[] =
 {
@@ -83,8 +87,6 @@ static uint8 decode(uint8 code) {
 static void Sync(void) {
 	uint32 sbank = reg[1] & 0x7;
 	uint32 bbank = reg[2];
-	setchr8(0);
-	setprg8r(0x10, 0x6000, reg[3] & 3);
 	if (reg[0] & 2) { /* UNROM mode */
 		setprg16(0x8000, (bbank << 3) | sbank);
 		if (reg[0] & 4)
@@ -99,7 +101,18 @@ static void Sync(void) {
 		} else
 			setprg32(0x8000, bank >> 1);
 	}
-	setmirror((reg[0] & 1) ^ 1);
+
+	if (mappernum == 551) {
+		setprg8r(0x10, 0x6000, 0);
+		setchr8(reg[3]);
+		setmirror(head.ROM_type & 1);
+	} else {
+		setchr8(0);
+		setprg8r(0x10, 0x6000, reg[3] & 3);
+		setmirror((reg[0] & 1) ^ 1);
+	}
+	
+	if (mappernum != 551) setmirror((reg[0] & 1) ^ 1);
 }
 
 static DECLFW(M178Write) {
@@ -184,4 +197,6 @@ void Mapper178_Init(CartInfo *info) {
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
 	AddExState(&StateRegs, ~0, 0, 0);
+
+	mappernum = info->mapper;
 }
