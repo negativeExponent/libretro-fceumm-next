@@ -33,7 +33,7 @@ static SFORMAT StateRegs[] =
 	{ 0 }
 };
 
-static void M183PW(void) {
+static void M183PW(uint32 A, uint8 V) {
 	setprg8(0x6000, prg[3]);
 	setprg8(0x8000, prg[0]);
 	setprg8(0xA000, prg[1]);

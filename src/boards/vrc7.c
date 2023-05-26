@@ -151,7 +151,7 @@ static void StateRestore(int version) {
 #endif
 }
 
-void Mapper85_Init(CartInfo *info) {
+void Mapper085_Init(CartInfo *info) {
 	info->Power = VRC7Power;
 	info->Close = VRC7Close;
 	VRCIRQ_Init();

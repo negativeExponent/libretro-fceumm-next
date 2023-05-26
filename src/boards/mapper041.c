@@ -36,34 +36,34 @@ static void Sync(void) {
 	setmirror(mirror);
 }
 
-static DECLFW(M41Write0) {
+static DECLFW(M041Write0) {
 	mainreg = A & 0xFF;
 	mirror = ((A >> 5) & 1) ^ 1;
 	chrreg = (chrreg & 3) | ((A >> 1) & 0xC);
 	Sync();
 }
 
-static DECLFW(M41Write1) {
+static DECLFW(M041Write1) {
 	if (mainreg & 0x4) {
 		chrreg = (chrreg & 0xC) | (A & 3);
 		Sync();
 	}
 }
 
-static void M41Power(void) {
+static void M041Power(void) {
 	mainreg = chrreg = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x67FF, M41Write0);
-	SetWriteHandler(0x8000, 0xFFFF, M41Write1);
+	SetWriteHandler(0x6000, 0x67FF, M041Write0);
+	SetWriteHandler(0x8000, 0xFFFF, M041Write1);
 }
 
 static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper41_Init(CartInfo *info) {
-	info->Power = M41Power;
+void Mapper041_Init(CartInfo *info) {
+	info->Power = M041Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

@@ -52,7 +52,7 @@ static void Sync(void) {
 	setmirror(mirr);
 }
 
-static DECLFW(M65Write) {
+static DECLFW(M065Write) {
 	switch (A) {
 		case 0x8000:
 			preg[0] = V;
@@ -118,14 +118,14 @@ static DECLFW(M65Write) {
 	}
 }
 
-static void M65Power(void) {
+static void M065Power(void) {
 	preg[2] = ~1;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M65Write);
+	SetWriteHandler(0x8000, 0xFFFF, M065Write);
 }
 
-void FP_FASTAPASS(1) M65IRQ(int a) {
+void FP_FASTAPASS(1) M065IRQ(int a) {
 	if (IRQa) {
 		IRQCount -= a;
 		if (IRQCount <= 0) {
@@ -139,9 +139,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper65_Init(CartInfo *info) {
-	info->Power = M65Power;
-	MapIRQHook = M65IRQ;
+void Mapper065_Init(CartInfo *info) {
+	info->Power = M065Power;
+	MapIRQHook = M065IRQ;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

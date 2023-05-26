@@ -27,65 +27,67 @@ static uint8 submapper = 0;
 
 /*------------------ Map 2 ---------------------------*/
 
-static void UNROMSync(void) {
+static void M002Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
 	setprg16(0x8000, latch.data);
 	setprg16(0xc000, ~0);
 	setchr8(0);
 }
 
-void UNROM_Init(CartInfo *info) {
+void Mapper002_Init(CartInfo *info) {
 	/* By default, do not emulate bus conflicts except when explicitly told by a NES 2.0 header to do so. */
-	Latch_Init(info, UNROMSync, NULL, 1, info->iNES2 && info->submapper == 2);
+	Latch_Init(info, M002Sync, NULL, 1, info->iNES2 && info->submapper == 2);
 }
 
 /*------------------ Map 3 ---------------------------*/
 
-static void CNROMSync(void) {
+static void M003Sync(void) {
 	setchr8(latch.data);
 	setprg32(0x8000, 0);
 	setprg8r(0x10, 0x6000, 0); /* Hayauchy IGO uses 2Kb or RAM */
 }
 
-void CNROM_Init(CartInfo *info) {
+void Mapper003_Init(CartInfo *info) {
 	/* By default, do not emulate bus conflicts except when explicitly told by a NES 2.0 header to do so. */
-	Latch_Init(info, CNROMSync, NULL, 1, info->iNES2 && info->submapper == 2);
+	Latch_Init(info, M003Sync, NULL, 1, info->iNES2 && info->submapper == 2);
 }
 
 /*------------------ Map 7 ---------------------------*/
 
-static void ANROMSync(void) {
+static void M007Sync(void) {
 	setprg32(0x8000, latch.data & 0xF);
 	setmirror(MI_0 + ((latch.data >> 4) & 1));
 	setchr8(0);
 }
 
-void ANROM_Init(CartInfo *info) {
-	Latch_Init(info, ANROMSync, NULL, 0, info->iNES2 && info->submapper == 2);
+void Mapper007_Init(CartInfo *info) {
+	Latch_Init(info, M007Sync, NULL, 0, info->iNES2 && info->submapper == 2);
 }
 
 /*------------------ Map 8 ---------------------------*/
 
-static void M8Sync(void) {
+static void M008Sync(void) {
 	setprg16(0x8000, latch.data >> 3);
 	setprg16(0xc000, 1);
 	setchr8(latch.data & 3);
 }
 
-void Mapper8_Init(CartInfo *info) {
-	Latch_Init(info, M8Sync, NULL, 0, 0);
+void Mapper008_Init(CartInfo *info) {
+	Latch_Init(info, M008Sync, NULL, 0, 0);
 }
 
-/*------------------ Map 11 / 144 ---------------------------*/
+/*------------------ Map 11  ---------------------------*/
 
-static void M11Sync(void) {
+static void M011Sync(void) {
 	setprg32(0x8000, latch.data & 0xF);
 	setchr8(latch.data >> 4);
 }
 
-void Mapper11_Init(CartInfo *info) {
-	Latch_Init(info, M11Sync, NULL, 0, 0);
+void Mapper011_Init(CartInfo *info) {
+	Latch_Init(info, M011Sync, NULL, 0, 0);
 }
+
+/*------------------ Map 144 ---------------------------*/
 
 static DECLFW(M144Write) {
     uint8 data = CartBR(A & (A | 1));
@@ -98,20 +100,20 @@ static void M144Power() {
 }
 
 void Mapper144_Init(CartInfo *info) {
-	Latch_Init(info, M11Sync, NULL, 0, 1);
+	Latch_Init(info, M011Sync, NULL, 0, 1);
     info->Power = M144Power;
 }
 
 /*------------------ Map 13 ---------------------------*/
 
-static void CPROMSync(void) {
+static void M013Sync(void) {
 	setchr4(0x0000, 0);
 	setchr4(0x1000, latch.data & 3);
 	setprg32(0x8000, 0);
 }
 
-void CPROM_Init(CartInfo *info) {
-	Latch_Init(info, CPROMSync, NULL, 0, 1);
+void Mapper013_Init(CartInfo *info) {
+	Latch_Init(info, M013Sync, NULL, 0, 1);
 }
 
 /*------------------ Map 29 ---------------------------*/
@@ -119,45 +121,45 @@ void CPROM_Init(CartInfo *info) {
  * Mapper 28, used by homebrew game Glider
  * https://wiki.nesdev.com/w/index.php/INES_Mapper_029 */
 
-static void M29Sync(void) {
+static void M029Sync(void) {
 	setprg16(0x8000, (latch.data >> 2) & 7);
 	setprg16(0xc000, ~0);
 	setchr8r(0, latch.data & 3);
 	setprg8r(0x10, 0x6000, 0);
 }
 
-void Mapper29_Init(CartInfo *info) {
-	Latch_Init(info, M29Sync, NULL, 1, 0);
+void Mapper029_Init(CartInfo *info) {
+	Latch_Init(info, M029Sync, NULL, 1, 0);
 }
 
 /*------------------ Map 66 ---------------------------*/
 
-static void MHROMSync(void) {
+static void MM066Sync(void) {
 	setprg32(0x8000, latch.data >> 4);
 	setchr8(latch.data & 0xF);
 }
 
-void MHROM_Init(CartInfo *info) {
-	Latch_Init(info, MHROMSync, NULL, 0, 1);
+void Mapper066_Init(CartInfo *info) {
+	Latch_Init(info, MM066Sync, NULL, 0, 1);
 }
 
 /*------------------ Map 70 ---------------------------*/
 
-static void M70Sync(void) {
+static void M070Sync(void) {
 	setprg16(0x8000, latch.data >> 4);
 	setprg16(0xc000, ~0);
 	setchr8(latch.data & 0xf);
 }
 
-void Mapper70_Init(CartInfo *info) {
-	Latch_Init(info, M70Sync, NULL, 0, 1);
+void Mapper070_Init(CartInfo *info) {
+	Latch_Init(info, M070Sync, NULL, 0, 1);
 }
 
 /*------------------ Map 78 ---------------------------*/
 /* Should be two separate emulation functions for this "mapper".  Sigh.  URGE TO KILL RISING. */
 /* Submapper 1 - Uchuusen - Cosmo Carrier ( one-screen mirroring ) */
 /* Submapper 3 - Holy Diver ( horizontal/vertical mirroring ) */
-static void M78Sync(void) {
+static void M078Sync(void) {
 	setprg16(0x8000, (latch.data & 7));
 	setprg16(0xc000, ~0);
 	setchr8(latch.data >> 4);
@@ -168,59 +170,59 @@ static void M78Sync(void) {
 	}
 }
 
-void Mapper78_Init(CartInfo *info) {
-	Latch_Init(info, M78Sync, NULL, 0, 1);
+void Mapper078_Init(CartInfo *info) {
+	Latch_Init(info, M078Sync, NULL, 0, 1);
 	submapper = info->iNES2 ? info->submapper : 0;
 }
 
 /*------------------ Map 89 ---------------------------*/
 
-static void M89Sync(void) {
+static void M089Sync(void) {
 	setprg16(0x8000, (latch.data >> 4) & 7);
 	setprg16(0xc000, ~0);
 	setchr8((latch.data & 7) | ((latch.data >> 4) & 8));
 	setmirror(MI_0 + ((latch.data >> 3) & 1));
 }
 
-void Mapper89_Init(CartInfo *info) {
-	Latch_Init(info, M89Sync, NULL, 0, 1);
+void Mapper089_Init(CartInfo *info) {
+	Latch_Init(info, M089Sync, NULL, 0, 1);
 }
 
 /*------------------ Map 93 ---------------------------*/
 
-static void SSUNROMSync(void) {
+static void M093Sync(void) {
 	setprg16(0x8000, latch.data >> 4);
 	setprg16(0xc000, ~0);
 	setchr8(0);
 }
 
-void SUNSOFT_UNROM_Init(CartInfo *info) {
-	Latch_Init(info, SSUNROMSync, NULL, 0, 1);
+void Mapper093_Init(CartInfo *info) {
+	Latch_Init(info, M093Sync, NULL, 0, 1);
 }
 
 /*------------------ Map 94 ---------------------------*/
 
-static void M94Sync(void) {
+static void M094Sync(void) {
 	setprg16(0x8000, latch.data >> 2);
 	setprg16(0xc000, ~0);
 	setchr8(0);
 }
 
-void Mapper94_Init(CartInfo *info) {
-	Latch_Init(info, M94Sync, NULL, 0, 1);
+void Mapper094_Init(CartInfo *info) {
+	Latch_Init(info, M094Sync, NULL, 0, 1);
 }
 
 /*------------------ Map 97 ---------------------------*/
 
-static void M97Sync(void) {
+static void M097Sync(void) {
 	setchr8(0);
 	setprg16(0x8000, ~0);
 	setprg16(0xc000, latch.data);
 	setmirror((latch.data >> 7) & 1);
 }
 
-void Mapper97_Init(CartInfo *info) {
-	Latch_Init(info, M97Sync, NULL, 0, 0);
+void Mapper097_Init(CartInfo *info) {
+	Latch_Init(info, M097Sync, NULL, 0, 0);
 }
 
 /*------------------ Map 107 ---------------------------*/
@@ -379,7 +381,7 @@ void Mapper538_Init(CartInfo *info) {
  */
 
 static int A65ASsubmapper;
-static void BMCA65ASSync(void) {
+static void M285Sync(void) {
 	if (latch.data & 0x40)
 		setprg32(0x8000, (latch.data >> 1) & 0x0F);
 	else {
@@ -398,23 +400,23 @@ static void BMCA65ASSync(void) {
 		setmirror(((latch.data >> 3) & 1) ^ 1);
 }
 
-void BMCA65AS_Init(CartInfo *info) {
+void Mapper285_Init(CartInfo *info) {
 	A65ASsubmapper = info->submapper;
-	Latch_Init(info, BMCA65ASSync, NULL, 0, 0);
+	Latch_Init(info, M285Sync, NULL, 0, 0);
 }
 
 /*------------------ BMC-11160 (m299) ---------------------------*/
 /* Simple BMC discrete mapper by TXC */
 
-static void BMC11160Sync(void) {
+static void M299Sync(void) {
 	uint32 bank = (latch.data >> 4) & 7;
 	setprg32(0x8000, bank);
 	setchr8((bank << 2) | (latch.data & 3));
 	setmirror((latch.data >> 7) & 1);
 }
 
-void BMC11160_Init(CartInfo *info) {
-	Latch_Init(info, BMC11160Sync, NULL, 0, 0);
+void Mapper299_Init(CartInfo *info) {
+	Latch_Init(info, M299Sync, NULL, 0, 0);
 	info->Reset = LatchHardReset;
 }
 
@@ -422,14 +424,14 @@ void BMC11160_Init(CartInfo *info) {
 /* NES 2.0 mapper 336 is used for an 11-in-1 multicart
  * http://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_336 */
 
-static void BMCK3046Sync(void) {
+static void M336Sync(void) {
 	setprg16(0x8000, latch.data);
 	setprg16(0xC000, latch.data | 0x07);
 	setchr8(0);
 }
 
-void BMCK3046_Init(CartInfo *info) {
-	Latch_Init(info, BMCK3046Sync, NULL, 0, 0);
+void Mapper336_Init(CartInfo *info) {
+	Latch_Init(info, M336Sync, NULL, 0, 0);
 	info->Reset = LatchHardReset;
 }
 

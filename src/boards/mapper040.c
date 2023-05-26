@@ -56,7 +56,7 @@ static void Sync(void) {
 	setmirror((outer_bank & 1) ^ 1);
 }
 
-static DECLFW(M40Write) {
+static DECLFW(M040Write) {
 	switch (A & 0xe000) {
 		case 0x8000:
 			IRQa = 0;
@@ -80,23 +80,23 @@ static DECLFW(M40Write) {
 	}
 }
 
-static void M40Power(void) {
+static void M040Power(void) {
 	reg = 0;
 	outer_bank = 0;
 	IRQCount = IRQa = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xffff, CartBR);
-	SetWriteHandler(0x8000, 0xffff, M40Write);
+	SetWriteHandler(0x8000, 0xffff, M040Write);
 }
 
-static void M40Reset(void) {
+static void M040Reset(void) {
 	reg = 0;
 	outer_bank = 0;
 	IRQCount = IRQa = 0;
 	Sync();
  }
 
-static void FP_FASTAPASS(1) M40IRQHook(int a) {
+static void FP_FASTAPASS(1) M040IRQHook(int a) {
 	if (IRQa) {
 		if (IRQCount < 4096)
 			IRQCount += a;
@@ -111,10 +111,10 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper40_Init(CartInfo *info) {
-	info->Reset = M40Reset;
-	info->Power = M40Power;
-	MapIRQHook = M40IRQHook;
+void Mapper040_Init(CartInfo *info) {
+	info->Reset = M040Reset;
+	info->Power = M040Power;
+	MapIRQHook = M040IRQHook;
 	GameStateRestore = StateRestore;
 	submapper = info->submapper;
 	AddExState(&StateRegs, ~0, 0, 0);

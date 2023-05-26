@@ -331,7 +331,7 @@ void GenVRC24_Init(CartInfo *info, VRC24Type type, int wram) {
 
 /* -------------------- Mapper 21 -------------------- */
 
-void Mapper21_Init(CartInfo *info) {
+void Mapper021_Init(CartInfo *info) {
 	/* Mapper 21 - VRC4a, VRC4c */
 	VRC24Type type = VRC4a;
 	if (info->iNES2 && info->submapper) {
@@ -350,7 +350,7 @@ static void M22CW(uint32 A, uint32 V) {
 	setchr1(A, V >> 1);
 }
 
-void Mapper22_Init(CartInfo *info) {
+void Mapper022_Init(CartInfo *info) {
 	/* Mapper 22 - VRC2a */
 	GenVRC24_Init(info, VRC2a, 0);
 	vrc24.cwrap = M22CW;
@@ -358,7 +358,7 @@ void Mapper22_Init(CartInfo *info) {
 
 /* -------------------- Mapper 23 -------------------- */
 
-void Mapper23_Init(CartInfo *info) {
+void Mapper023_Init(CartInfo *info) {
 	/* Mapper 23 - VRC2b, VRC4e, VRC4f */
 	VRC24Type type = VRC4f;
 	if (info->iNES2 && info->submapper) {
@@ -374,7 +374,7 @@ void Mapper23_Init(CartInfo *info) {
 
 /* -------------------- Mapper 25 -------------------- */
 
-void Mapper25_Init(CartInfo *info) {
+void Mapper025_Init(CartInfo *info) {
 	/* Mapper 25 - VRC2c, VRC4b, VRC4d */
 	VRC24Type type = VRC4b;
 	if (info->iNES2 && info->submapper) {

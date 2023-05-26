@@ -52,7 +52,7 @@ static void Sync(void) {
 		setmirror(mirr & 1);
 }
 
-static DECLFW(M18WriteIRQ) {
+static DECLFW(M018WriteIRQ) {
 	switch (A & 0xF003) {
 		case 0xE000:
 			IRQLatch &= 0xFFF0;
@@ -84,21 +84,21 @@ static DECLFW(M18WriteIRQ) {
 	}
 }
 
-static DECLFW(M18WritePrg) {
+static DECLFW(M018WritePrg) {
 	uint32 i = ((A >> 1) & 1) | ((A - 0x8000) >> 11);
 	preg[i] &= (0xF0) >> ((A & 1) << 2);
 	preg[i] |= (V & 0xF) << ((A & 1) << 2);
 	Sync();
 }
 
-static DECLFW(M18WriteChr) {
+static DECLFW(M018WriteChr) {
 	uint32 i = ((A >> 1) & 1) | ((A - 0xA000) >> 11);
 	creg[i] &= (0xF0) >> ((A & 1) << 2);
 	creg[i] |= (V & 0xF) << ((A & 1) << 2);
 	Sync();
 }
 
-static void M18Power(void) {
+static void M018Power(void) {
 	IRQa = 0;
 	preg[0] = 0;
 	preg[1] = 1;
@@ -107,13 +107,13 @@ static void M18Power(void) {
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetWriteHandler(0x8000, 0x9FFF, M18WritePrg);
-	SetWriteHandler(0xA000, 0xDFFF, M18WriteChr);
-	SetWriteHandler(0xE000, 0xFFFF, M18WriteIRQ);
+	SetWriteHandler(0x8000, 0x9FFF, M018WritePrg);
+	SetWriteHandler(0xA000, 0xDFFF, M018WriteChr);
+	SetWriteHandler(0xE000, 0xFFFF, M018WriteIRQ);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void FP_FASTAPASS(1) M18IRQHook(int a) {
+static void FP_FASTAPASS(1) M018IRQHook(int a) {
 	if (IRQa && IRQCount) {
 		IRQCount -= a;
 		if (IRQCount <= 0) {
@@ -124,7 +124,7 @@ static void FP_FASTAPASS(1) M18IRQHook(int a) {
 	}
 }
 
-static void M18Close(void) {
+static void M018Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
@@ -134,10 +134,10 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper18_Init(CartInfo *info) {
-	info->Power = M18Power;
-	info->Close = M18Close;
-	MapIRQHook = M18IRQHook;
+void Mapper018_Init(CartInfo *info) {
+	info->Power = M018Power;
+	info->Close = M018Close;
+	MapIRQHook = M018IRQHook;
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;

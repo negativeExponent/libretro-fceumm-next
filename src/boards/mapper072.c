@@ -38,7 +38,7 @@ static void Sync(void) {
 	setchr8(creg);
 }
 
-static DECLFW(M72Write) {
+static DECLFW(M072Write) {
 	if (V & 0x80)
 		preg = V & 0xF;
 	if (V & 0x40)
@@ -46,18 +46,18 @@ static DECLFW(M72Write) {
 	Sync();
 }
 
-static void M72Power(void) {
+static void M072Power(void) {
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0xFFFF, M72Write);
+	SetWriteHandler(0x6000, 0xFFFF, M072Write);
 }
 
 static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper72_Init(CartInfo *info) {
-	info->Power = M72Power;
+void Mapper072_Init(CartInfo *info) {
+	info->Power = M072Power;
 	GameStateRestore = StateRestore;
 
 	AddExState(&StateRegs, ~0, 0, 0);

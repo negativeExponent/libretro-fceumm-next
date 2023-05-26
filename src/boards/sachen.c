@@ -97,7 +97,7 @@ static void S8259Restore(int version) {
 	S8259Synco();
 }
 
-void S8259A_Init(CartInfo *info) {	/* Kevin's Horton 141 mapper */
+void Mapper141_Init(CartInfo *info) {	/* Kevin's Horton 141 mapper */
 	info->Power = S8259Reset;
 	GameStateRestore = S8259Restore;
 	AddExState(latch, 8, 0, "LATC");
@@ -105,7 +105,7 @@ void S8259A_Init(CartInfo *info) {	/* Kevin's Horton 141 mapper */
 	type = 0;
 }
 
-void S8259B_Init(CartInfo *info) {	/* Kevin's Horton 138 mapper */
+void Mapper138_Init(CartInfo *info) {	/* Kevin's Horton 138 mapper */
 	info->Power = S8259Reset;
 	GameStateRestore = S8259Restore;
 	AddExState(latch, 8, 0, "LATC");
@@ -113,7 +113,7 @@ void S8259B_Init(CartInfo *info) {	/* Kevin's Horton 138 mapper */
 	type = 1;
 }
 
-void S8259C_Init(CartInfo *info) {	/* Kevin's Horton 139 mapper */
+void Mapper139_Init(CartInfo *info) {	/* Kevin's Horton 139 mapper */
 	info->Power = S8259Reset;
 	GameStateRestore = S8259Restore;
 	AddExState(latch, 8, 0, "LATC");
@@ -121,7 +121,7 @@ void S8259C_Init(CartInfo *info) {	/* Kevin's Horton 139 mapper */
 	type = 2;
 }
 
-void S8259D_Init(CartInfo *info) {	/* Kevin's Horton 137 mapper */
+void Mapper137_Init(CartInfo *info) {	/* Kevin's Horton 137 mapper */
 	info->Power = S8259Reset;
 	GameStateRestore = S8259Restore;
 	AddExState(latch, 8, 0, "LATC");
@@ -150,7 +150,7 @@ static void SARestore(int version) {
 }
 
 static DECLFW(SADWrite) {
-	latch[0] = V;
+	latch[0] = V & CartBR(A);
 	WSync();
 }
 
@@ -161,7 +161,7 @@ static void SADPower(void) {
 	SetWriteHandler(0x8000, 0xFFFF, SADWrite);
 }
 
-static void SA0161MSynco(void) {
+static void M148Sync(void) {
 	setprg32(0x8000, (latch[0] >> 3) & 1);
 	setchr8(latch[0] & 7);
 }
@@ -171,46 +171,46 @@ static void SA72007Synco(void) {
 	setchr8(latch[0] >> 7);
 }
 
-static void SA009Synco(void) {
+static void M160Sync(void) {
 	setprg32(0x8000, 0);
 	setchr8(latch[0] & 1);
 }
 
-static void SA72008Synco(void) {
+static void M133Sync(void) {
 	setprg32(0x8000, (latch[0] >> 2) & 1);
 	setchr8(latch[0] & 3);
 }
 
-void SA72007_Init(CartInfo *info) {
+void Mapper145_Init(CartInfo *info) {
 	WSync = SA72007Synco;
 	GameStateRestore = SARestore;
 	info->Power = SAPower;
 	AddExState(&latch[0], 1, 0, "LATC");
 }
 
-void SA72008_Init(CartInfo *info) {
-	WSync = SA72008Synco;
+void Mapper133_Init(CartInfo *info) {
+	WSync = M133Sync;
 	GameStateRestore = SARestore;
 	info->Power = SAPower;
 	AddExState(&latch[0], 1, 0, "LATC");
 }
 
-void SA009_Init(CartInfo *info) {
-	WSync = SA009Synco;
+void Mapper160_Init(CartInfo *info) {
+	WSync = M160Sync;
 	GameStateRestore = SARestore;
 	info->Power = SAPower;
 	AddExState(&latch[0], 1, 0, "LATC");
 }
 
-void SA0036_Init(CartInfo *info) {
+void Mapper149_Init(CartInfo *info) {
 	WSync = SA72007Synco;
 	GameStateRestore = SARestore;
 	info->Power = SADPower;
 	AddExState(&latch[0], 1, 0, "LATC");
 }
 
-void SA0037_Init(CartInfo *info) {
-	WSync = SA0161MSynco;
+void Mapper148_Init(CartInfo *info) {
+	WSync = M148Sync;
 	GameStateRestore = SARestore;
 	info->Power = SADPower;
 	AddExState(&latch[0], 1, 0, "LATC");
@@ -235,7 +235,7 @@ static void TCA01Power(void) {
 	SetReadHandler(0x4100, 0x5FFF, TCA01Read);
 }
 
-void TCA01_Init(CartInfo *info) {
+void Mapper143_Init(CartInfo *info) {
 	info->Power = TCA01Power;
 }
 
@@ -312,7 +312,7 @@ static void S74LS374NPower(void) {
 		SetReadHandler(0x4100, 0x7FFF, S74LS374NRead);
 }
 
-void S74LS374N_Init(CartInfo *info) {
+void Mapper150_Init(CartInfo *info) {
 	mapperNum = info->mapper;
 	info->Power = S74LS374NPower;
 	info->Reset = S74LS374NReset;

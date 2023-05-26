@@ -49,7 +49,7 @@ static void Sync(void) {
 	setchr8(0);
 }
 
-static DECLFW(M43Write) {
+static DECLFW(M043Write) {
 	/*	int transo[8]={4,3,4,4,4,7,5,6}; */
 	int transo[8] = { 4, 3, 5, 3, 6, 3, 7, 3 }; /* According to hardware tests */
 	switch (A & 0xf1ff) {
@@ -70,16 +70,16 @@ static DECLFW(M43Write) {
 	}
 }
 
-static void M43Power(void) {
+static void M043Power(void) {
 	reg = swap = 0;
 	Sync();
 	SetReadHandler(0x5000, 0xffff, CartBR);
-	SetWriteHandler(0x4020, 0xffff, M43Write);
+	SetWriteHandler(0x4020, 0xffff, M043Write);
 }
 
-static void M43Reset(void) { }
+static void M043Reset(void) { }
 
-static void FP_FASTAPASS(1) M43IRQHook(int a) {
+static void FP_FASTAPASS(1) M043IRQHook(int a) {
 	IRQCount += a;
 	if (IRQa)
 		if (IRQCount >= 4096) {
@@ -92,10 +92,10 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper43_Init(CartInfo *info) {
-	info->Reset = M43Reset;
-	info->Power = M43Power;
-	MapIRQHook = M43IRQHook;
+void Mapper043_Init(CartInfo *info) {
+	info->Reset = M043Reset;
+	info->Power = M043Power;
+	MapIRQHook = M043IRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

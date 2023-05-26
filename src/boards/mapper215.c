@@ -74,7 +74,7 @@ static uint8 protarray[8][8] = {
 	{ 0x00, 0x00, 0x00, 0x01, 0x02, 0x04, 0x0F, 0x00 }  /* 7 (default) Blood of Jurassic */
 };
 
-static void UNL8237CW(uint32 A, uint8 V) {
+static void M215CW(uint32 A, uint8 V) {
 	uint16 outer_bank;
 
 	if (submapper == 1)
@@ -88,7 +88,7 @@ static void UNL8237CW(uint32 A, uint8 V) {
 		setchr1(A, outer_bank | V);
 }
 
-static void UNL8237PW(uint32 A, uint8 V) {
+static void M215PW(uint32 A, uint8 V) {
 	uint8 outer_bank = ((mmc3.expregs[1] & 3) << 5);
 
 	if (submapper == 1)
@@ -120,11 +120,11 @@ static void UNL8237PW(uint32 A, uint8 V) {
 	}
 }
 
-static DECLFR(UNL8237ProtRead) {
+static DECLFR(M215ProtRead) {
 	return (protarray[mmc3.expregs[3]][A & 7] & 0x0F) | 0x50;
 }
 
-static DECLFW(UNL8237Write) {
+static DECLFW(M215Write) {
 	uint8 dat = V;
 	uint8 adr = adrperm[mmc3.expregs[2]][((A >> 12) & 6) | (A & 1)];
 	uint16 addr = (adr & 1) | ((adr & 6) << 12) | 0x8000;
@@ -136,7 +136,7 @@ static DECLFW(UNL8237Write) {
 		MMC3_IRQWrite(addr, dat);
 }
 
-static DECLFW(UNL8237ExWrite) {
+static DECLFW(M215ExWrite) {
 	switch (A & 0xF007) {
 		case 0x5000:
 			mmc3.expregs[0] = V;
@@ -157,35 +157,35 @@ static DECLFW(UNL8237ExWrite) {
 	}
 }
 
-static void UNL8237Power(void) {
+static void M215Power(void) {
 	mmc3.expregs[0] = mmc3.expregs[2] = 0;
 	mmc3.expregs[1] = 0x0F;
 	mmc3.expregs[3] = 7;
 	GenMMC3Power();
-	SetWriteHandler(0x8000, 0xFFFF, UNL8237Write);
-	SetReadHandler(0x5000, 0x5FFF, UNL8237ProtRead);
-	SetWriteHandler(0x5000, 0x5FFF, UNL8237ExWrite);
+	SetWriteHandler(0x8000, 0xFFFF, M215Write);
+	SetReadHandler(0x5000, 0x5FFF, M215ProtRead);
+	SetWriteHandler(0x5000, 0x5FFF, M215ExWrite);
 }
 
-static void UNL8237Reset(void) {
+static void M215Reset(void) {
 	mmc3.expregs[0] = mmc3.expregs[2] = 0;
 	mmc3.expregs[1] = 0x0F;
 	mmc3.expregs[3] = 7;
 	MMC3RegReset();
 }
 
-void UNL8237_Init(CartInfo *info) {
+void Mapper215_Init(CartInfo *info) {
 	GenMMC3_Init(info, 256, 256, 0, 0);
-	mmc3.cwrap = UNL8237CW;
-	mmc3.pwrap = UNL8237PW;
-	info->Power = UNL8237Power;
-	info->Reset = UNL8237Reset;
+	mmc3.cwrap = M215CW;
+	mmc3.pwrap = M215PW;
+	info->Power = M215Power;
+	info->Reset = M215Reset;
 	AddExState(mmc3.expregs, 4, 0, "EXPR");
 	if (info->iNES2)
 		submapper = info->submapper;
 }
 
 void UNL8237A_Init(CartInfo *info) {
-	UNL8237_Init(info);
+	Mapper215_Init(info);
 	submapper = 1;
 }

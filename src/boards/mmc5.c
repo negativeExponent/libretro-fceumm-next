@@ -795,7 +795,7 @@ static void GenMMC5_Init(CartInfo *info, int wsize, int battery) {
 	Mapper5_ESI();
 }
 
-void Mapper5_Init(CartInfo *info) {
+void Mapper005_Init(CartInfo *info) {
 	WRAMSIZE = 64;
 	if (info->iNES2) {
 		WRAMSIZE = (info->PRGRamSize + info->PRGRamSaveSize) / 1024;

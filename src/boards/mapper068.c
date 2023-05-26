@@ -148,7 +148,7 @@ static void StateRestore(int version) {
 	M68NTfix();
 }
 
-void Mapper68_Init(CartInfo *info) {
+void Mapper068_Init(CartInfo *info) {
 	info->Power = M68Power;
 	info->Close = M68Close;
 	GameStateRestore = StateRestore;

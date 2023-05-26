@@ -49,7 +49,7 @@ static void MSync(void) {
 		setmirror(MI_0 + (mirror & 1));
 }
 
-static DECLFW(M88Write) {
+static DECLFW(M088Write) {
 	switch (A & 0x8001) {
 		case 0x8000:
 			cmd = V & 7;
@@ -63,12 +63,12 @@ static DECLFW(M88Write) {
 	}
 }
 
-static void M88Power(void) {
+static void M088Power(void) {
 	reg[0] = reg[1] = reg[2] = reg[3] = reg[4] = reg[5] = reg[6] = reg[7] = 0;
 	Sync();
 	MSync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M88Write);
+	SetWriteHandler(0x8000, 0xFFFF, M088Write);
 }
 
 static void StateRestore(int version) {
@@ -76,16 +76,16 @@ static void StateRestore(int version) {
 	MSync();
 }
 
-void Mapper88_Init(CartInfo *info) {
+void Mapper088_Init(CartInfo *info) {
 	is154 = 0;
-	info->Power = M88Power;
+	info->Power = M088Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
 
 void Mapper154_Init(CartInfo *info) {
 	is154 = 1;
-	info->Power = M88Power;
+	info->Power = M088Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

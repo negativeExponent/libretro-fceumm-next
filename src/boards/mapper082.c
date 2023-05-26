@@ -86,7 +86,7 @@ static DECLFW(WriteWRAM) {
 	}
 }
 
-static DECLFW(M82Write) {
+static DECLFW(M082Write) {
 	switch (A & 0x0F) {
 	case 0x0:
 	case 0x1:
@@ -105,16 +105,16 @@ static DECLFW(M82Write) {
 	Sync();
 }
 
-static void M82Power(void) {
+static void M082Power(void) {
 	Sync();
 	SetReadHandler(0x6000, 0xffff, CartBR);
 	SetReadHandler(0x6000, 0x73ff, ReadWRAM);
 	SetWriteHandler(0x6000, 0x73ff, WriteWRAM);
-	SetWriteHandler(0x7ef0, 0x7eff, M82Write); /* external WRAM might end at $73FF */
+	SetWriteHandler(0x7ef0, 0x7eff, M082Write); /* external WRAM might end at $73FF */
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M82Close(void) {
+static void M082Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
@@ -124,10 +124,10 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper82_Init(CartInfo *info) {
+void Mapper082_Init(CartInfo *info) {
 	mappernum = info->mapper;
-	info->Power = M82Power;
-	info->Close = M82Close;
+	info->Power = M082Power;
+	info->Close = M082Close;
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
@@ -142,5 +142,5 @@ void Mapper82_Init(CartInfo *info) {
 }
 
 void Mapper552_Init(CartInfo *info) {
-	Mapper82_Init(info);
+	Mapper082_Init(info);
 }

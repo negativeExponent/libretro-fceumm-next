@@ -33,24 +33,24 @@ static void Sync() {
 	setchr8(((reg >> 1) & 1) | ((reg << 1) & 2));
 }
 
-static DECLFW(M87Write) {
+static DECLFW(M087Write) {
 	reg = V;
 	Sync();
 }
 
-static void M87Power(void) {
+static void M087Power(void) {
 	reg = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x7FFF, M87Write);
+	SetWriteHandler(0x6000, 0x7FFF, M087Write);
 }
 
 static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper87_Init(CartInfo *info) {
-	info->Power = M87Power;
+void Mapper087_Init(CartInfo *info) {
+	info->Power = M087Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

@@ -45,13 +45,13 @@ static DECLFW(M343Write) {
 	LatchWrite(A, ~V);
 }
 
-static void BMCRESETNROMXIN1Power(void) {
+static void M343Power(void) {
 	LatchPower();
 	SetWriteHandler(0x8000, 0xFFFF, M343Write);
 }
 
-void BMCRESETNROMXIN1_Init(CartInfo *info) {
+void Mapper343_Init(CartInfo *info) {
 	submapper = info->submapper;
 	Latch_Init(info, Sync, NULL, 0, 0);
-	info->Power = BMCRESETNROMXIN1Power;
+	info->Power = M343Power;
 }

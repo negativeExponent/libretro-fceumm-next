@@ -167,7 +167,7 @@ static void RAMBO1_Init(CartInfo *info) {
 
 /* Mapper 64 */
 
-void Mapper64_Init(CartInfo *info) {
+void Mapper064_Init(CartInfo *info) {
 	RAMBO1_Init(info);
 }
 

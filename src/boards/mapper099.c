@@ -38,23 +38,23 @@ static void Sync(void) {
 	setprg8(0x8000, latch & 4); /* Special for VS Gumshoe */
 }
 
-static DECLFW(M99Write) {
+static DECLFW(M099Write) {
 	latch = V;
 	Sync();
 	old4016(A, V);
 }
 
-static void M99Power(void) {
+static void M099Power(void) {
 	latch = 0;
 	Sync();
 	old4016 = GetWriteHandler(0x4016);
-	SetWriteHandler(0x4016, 0x4016, M99Write);
+	SetWriteHandler(0x4016, 0x4016, M099Write);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M99Close(void) {
+static void M099Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
@@ -64,9 +64,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper99_Init(CartInfo *info) {
-	info->Power = M99Power;
-	info->Close = M99Close;
+void Mapper099_Init(CartInfo *info) {
+	info->Power = M099Power;
+	info->Close = M099Close;
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);

@@ -31,16 +31,16 @@ static void Sync(void) {
 	setchr4r(0x10, 0x1000, 0);
 }
 
-static void M77Close(void) {
+static void M077Close(void) {
 	LatchClose();
 	if (CHRRAM)
 		FCEU_gfree(CHRRAM);
 	CHRRAM = NULL;
 }
 
-void Mapper77_Init(CartInfo *info) {
+void Mapper077_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 1);
-	info->Close = M77Close;
+	info->Close = M077Close;
 
 	CHRRAMSIZE = 6 * 1024;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

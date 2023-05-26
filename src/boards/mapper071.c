@@ -37,7 +37,7 @@ static void Sync(void) {
 		setmirror(mirr);
 }
 
-static DECLFW(M71Write) {
+static DECLFW(M071Write) {
 	if ((A & 0xF000) == 0x9000)
 		mirr = MI_0 + ((V >> 4) & 1); /* 2-in-1, some carts are normal hardwire V/H mirror, some uses mapper selectable 0/1 mirror */
 	else
@@ -45,20 +45,20 @@ static DECLFW(M71Write) {
 	Sync();
 }
 
-static void M71Power(void) {
+static void M071Power(void) {
 	preg = 0;
 	mirr = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M71Write);
+	SetWriteHandler(0x8000, 0xFFFF, M071Write);
 }
 
 static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper71_Init(CartInfo *info) {
-	info->Power = M71Power;
+void Mapper071_Init(CartInfo *info) {
+	info->Power = M071Power;
 	GameStateRestore = StateRestore;
 
 	AddExState(&StateRegs, ~0, 0, 0);

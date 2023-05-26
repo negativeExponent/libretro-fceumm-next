@@ -344,7 +344,7 @@ static void GenMMC1Init(CartInfo *info, int prg, int chr, int wram, int saveram)
 	AddExState(&BufferShift, 1, 1, "BFRS");
 }
 
-void Mapper1_Init(CartInfo *info) {
+void Mapper001_Init(CartInfo *info) {
 	int bs = info->battery ? 8 : 0;
 	int ws = DetectMMC1WRAMSize(info, &bs);
 	GenMMC1Init(info, 512, 256, ws, bs);
@@ -422,15 +422,15 @@ void SOROM_Init(CartInfo *info) {
 
 static uint8 reg, lock;
 
-static void FARIDSLROM8IN1PRGHook(uint32 A, uint8 V) {
+static void M323PRGHook(uint32 A, uint8 V) {
 	setprg16(A, (V & 0x07) | (reg << 3));
 }
 
-static void FARIDSLROM8IN1CHRHook(uint32 A, uint8 V) {
+static void M323CHRHook(uint32 A, uint8 V) {
 	setchr4(A, (V & 0x1F) | (reg << 5));
 }
 
-static DECLFW(FARIDSLROM8IN1Write) {
+static DECLFW(M323Write) {
 	if (MMC1WRAMEnabled() && !lock) {
 		lock = (V & 0x08) >> 3;
 		reg = (V & 0xF0) >> 4;
@@ -440,23 +440,23 @@ static DECLFW(FARIDSLROM8IN1Write) {
 	}
 }
 
-static void FARIDSLROM8IN1Power(void) {
+static void M323Power(void) {
 	reg = lock = 0;
 	GenMMC1Power();
-	SetWriteHandler(0x6000, 0x7FFF, FARIDSLROM8IN1Write);
+	SetWriteHandler(0x6000, 0x7FFF, M323Write);
 }
 
-static void FARIDSLROM8IN1Reset(void) {
+static void M323Reset(void) {
 	reg = lock = 0;
 	MMC1CMReset();
 }
 
-void FARIDSLROM8IN1_Init(CartInfo *info) {
+void Mapper323_Init(CartInfo *info) {
 	GenMMC1Init(info, 1024, 256, 8, 0);
-	MMC1CHRHook4 = FARIDSLROM8IN1CHRHook;
-	MMC1PRGHook16 = FARIDSLROM8IN1PRGHook;
-	info->Power = FARIDSLROM8IN1Power;
-	info->Reset = FARIDSLROM8IN1Reset;
+	MMC1CHRHook4 = M323CHRHook;
+	MMC1PRGHook16 = M323PRGHook;
+	info->Power = M323Power;
+	info->Reset = M323Reset;
 	AddExState(&lock, 1, 0, "LOCK");
 	AddExState(&reg, 1, 0, "REG6");
 }

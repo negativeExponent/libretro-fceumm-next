@@ -72,19 +72,19 @@ static void Sync(void) {
 		setmirror(mirr);
 }
 
-static DECLFW(M80RamWrite) {
+static DECLFW(M080RamWrite) {
 	if (wram_enable == 0xA3)
 		wram[A & 0xFF] = V;
 }
 
-static DECLFR(M80RamRead) {
+static DECLFR(M080RamRead) {
 	if (wram_enable == 0xA3)
 		return wram[A & 0xFF];
 	else
 		return 0xFF;
 }
 
-static DECLFW(M80Write) {
+static DECLFW(M080Write) {
 	switch (A) {
 		case 0x7EF0:
 			creg[0] = V;
@@ -139,7 +139,7 @@ static DECLFW(M80Write) {
 	}
 }
 
-static DECLFW(M95Write) {
+static DECLFW(M095Write) {
 	switch (A & 0xF001) {
 		case 0x8000: cmd = V; break;
 		case 0x8001:
@@ -199,12 +199,12 @@ static void FP_FASTAPASS(1) MExMirrPPU(uint32 A) {
 	}
 }
 
-static void M80Power(void) {
+static void M080Power(void) {
 	wram_enable = 0xFF;
 	Sync();
-	SetReadHandler(0x7F00, 0x7FFF, M80RamRead);
-	SetWriteHandler(0x7F00, 0x7FFF, M80RamWrite);
-	SetWriteHandler(0x7EF0, 0x7EFF, M80Write);
+	SetReadHandler(0x7F00, 0x7FFF, M080RamRead);
+	SetWriteHandler(0x7F00, 0x7FFF, M080RamWrite);
+	SetWriteHandler(0x7EF0, 0x7EFF, M080Write);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
@@ -212,16 +212,16 @@ static void M207Power(void) {
 	mcache[0] = mcache[1] = mcache[2] = mcache[3] = 0;
 	mcache[4] = mcache[5] = mcache[6] = mcache[7] = 0;
 	Sync();
-	SetWriteHandler(0x7EF0, 0x7EFF, M80Write);
+	SetWriteHandler(0x7EF0, 0x7EFF, M080Write);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
-static void M95Power(void) {
+static void M095Power(void) {
 	preg[2] = ~1;
 	mcache[0] = mcache[1] = mcache[2] = mcache[3] = 0;
 	mcache[4] = mcache[5] = mcache[6] = mcache[7] = 0;
 	Sync();
-	SetWriteHandler(0x8000, 0xFFFF, M95Write);
+	SetWriteHandler(0x8000, 0xFFFF, M095Write);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
@@ -229,9 +229,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper80_Init(CartInfo *info) {
+void Mapper080_Init(CartInfo *info) {
 	isExMirr = 0;
-	info->Power = M80Power;
+	info->Power = M080Power;
 	GameStateRestore = StateRestore;
 
 	if (info->battery) {
@@ -242,9 +242,9 @@ void Mapper80_Init(CartInfo *info) {
 	AddExState(&StateRegs80, ~0, 0, 0);
 }
 
-void Mapper95_Init(CartInfo *info) {
+void Mapper095_Init(CartInfo *info) {
 	isExMirr = 1;
-	info->Power = M95Power;
+	info->Power = M095Power;
 	PPU_hook = MExMirrPPU;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs95, ~0, 0, 0);

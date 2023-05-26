@@ -452,13 +452,13 @@ static void syncSingleCart(void) {
 		syncNT(0x0FF, ((mode[3] << 8) & 0x100) | ((mode[3] << 6) & 0x600));
 	}
 }
-void Mapper35_Init(CartInfo *info) {
+void Mapper035_Init(CartInfo *info) {
 	/* Basically mapper 90/209/211 with WRAM */
 	allowExtendedMirroring = 1;
 	WSync = syncSingleCart;
 	JYASIC_init(info);
 }
-void Mapper90_Init(CartInfo *info) {
+void Mapper090_Init(CartInfo *info) {
 	/* Single cart, extended mirroring and ROM nametables disabled */
 	allowExtendedMirroring = 0;
 	WSync = syncSingleCart;

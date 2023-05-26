@@ -60,7 +60,7 @@ static void Sync(void) {
 		setmirror(mirr ^ 1);
 }
 
-static DECLFW(M91Write0) {
+static DECLFW(M091Write0) {
 	switch (A & 7) {
 		case 0:
 		case 1:
@@ -78,7 +78,7 @@ static DECLFW(M91Write0) {
 	}
 }
 
-static DECLFW(M91Write1) {
+static DECLFW(M091Write1) {
 	switch (A & 3) {
 		case 0:
 		case 1:
@@ -96,20 +96,20 @@ static DECLFW(M91Write1) {
 	}
 }
 
-static DECLFW(M91Write2) {
+static DECLFW(M091Write2) {
 	outerbank = A & 7;
 	Sync();
 }
 
-static void M91Power(void) {
+static void M091Power(void) {
 	Sync();
 	SetReadHandler(0x8000, 0xffff, CartBR);
-	SetWriteHandler(0x6000, 0x6fff, M91Write0);
-	SetWriteHandler(0x7000, 0x7fff, M91Write1);
-	SetWriteHandler(0x8000, 0x9fff, M91Write2);
+	SetWriteHandler(0x6000, 0x6fff, M091Write0);
+	SetWriteHandler(0x7000, 0x7fff, M091Write1);
+	SetWriteHandler(0x8000, 0x9fff, M091Write2);
 }
 
-static void M91IRQHook(void) {
+static void M091IRQHook(void) {
 	if (IRQCount < 8 && IRQa) {
 		IRQCount++;
 		if (IRQCount >= 8) {
@@ -122,13 +122,13 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper91_Init(CartInfo *info) {
+void Mapper091_Init(CartInfo *info) {
 	submapper = 0;
 	/* Super Fighter III */
 	if (info->submapper == 1)
 		submapper = info->submapper;
-	info->Power = M91Power;
-	GameHBIRQHook = M91IRQHook;
+	info->Power = M091Power;
+	GameHBIRQHook = M091IRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

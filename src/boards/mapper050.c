@@ -43,7 +43,7 @@ static void Sync(void) {
 	setchr8(0);
 }
 
-static DECLFW(M50Write) {
+static DECLFW(M050Write) {
 	switch (A & 0xD160) {
 		case 0x4120:
 			IRQa = V & 1;
@@ -58,16 +58,16 @@ static DECLFW(M50Write) {
 	}
 }
 
-static void M50Power(void) {
+static void M050Power(void) {
 	reg = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xffff, CartBR);
-	SetWriteHandler(0x4020, 0x5fff, M50Write);
+	SetWriteHandler(0x4020, 0x5fff, M050Write);
 }
 
-static void M50Reset(void) { }
+static void M050Reset(void) { }
 
-static void FP_FASTAPASS(1) M50IRQHook(int a) {
+static void FP_FASTAPASS(1) M050IRQHook(int a) {
 	if (IRQa) {
 		if (IRQCount < 4096)
 			IRQCount += a;
@@ -82,10 +82,10 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper50_Init(CartInfo *info) {
-	info->Reset = M50Reset;
-	info->Power = M50Power;
-	MapIRQHook = M50IRQHook;
+void Mapper050_Init(CartInfo *info) {
+	info->Reset = M050Reset;
+	info->Power = M050Power;
+	MapIRQHook = M050IRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

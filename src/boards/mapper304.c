@@ -24,7 +24,8 @@
  * Both Voleyball and Zanac by Whirlind Manu shares the same PCB, but with
  * some differences: Voleyball has 8K CHR ROM and 8K ROM at 6000K, Zanac
  * have 8K CHR RAM and banked 16K ROM mapper at 6000 as two 8K banks.
-*
+ *
+ * NES 2.0 Mapper 304 - UNL-SMB2J
  * Super Mario Bros 2j (Alt Small) uses additionally IRQ timer to drive framerate
  *
  * PCB for this mapper is "09-034A"
@@ -49,31 +50,31 @@ static void Sync(void) {
 	setchr8(0);
 }
 
-static DECLFW(UNLSMB2JWrite1) {
+static DECLFW(M304Write1) {
 	prg = V & 1;
 	Sync();
 }
 
-static DECLFW(UNLSMB2JWrite2) {
+static DECLFW(M304Write2) {
 	IRQa = V & 1;
 	IRQCount = 0;
 	X6502_IRQEnd(FCEU_IQEXT);
 }
 
-static DECLFR(UNLSMB2JRead) {
+static DECLFR(M304Read) {
 	return 0xFF;
 }
 
-static void UNLSMB2JPower(void) {
+static void M304Power(void) {
 	prg = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetReadHandler(0x4042, 0x4055, UNLSMB2JRead);
-	SetWriteHandler(0x4068, 0x4068, UNLSMB2JWrite2);
-	SetWriteHandler(0x4027, 0x4027, UNLSMB2JWrite1);
+	SetReadHandler(0x4042, 0x4055, M304Read);
+	SetWriteHandler(0x4068, 0x4068, M304Write2);
+	SetWriteHandler(0x4027, 0x4027, M304Write1);
 }
 
-static void FP_FASTAPASS(1) UNLSMB2JIRQHook(int a) {
+static void FP_FASTAPASS(1) M304IRQHook(int a) {
 	if (IRQa) {
 		if (IRQCount < 5750) /* completely by guess */
 			IRQCount += a;
@@ -88,9 +89,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void UNLSMB2J_Init(CartInfo *info) {
-	info->Power = UNLSMB2JPower;
-	MapIRQHook = UNLSMB2JIRQHook;
+void Mapper304_Init(CartInfo *info) {
+	info->Power = M304Power;
+	MapIRQHook = M304IRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

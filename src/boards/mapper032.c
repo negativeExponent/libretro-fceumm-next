@@ -46,39 +46,39 @@ static void Sync(void) {
 		setchr1(i << 10, creg[i]);
 }
 
-static DECLFW(M32Write0) {
+static DECLFW(M032Write0) {
 	preg[0] = V;
 	Sync();
 }
 
-static DECLFW(M32Write1) {
+static DECLFW(M032Write1) {
 	mirr = V;
 	Sync();
 }
 
-static DECLFW(M32Write2) {
+static DECLFW(M032Write2) {
 	preg[1] = V;
 	Sync();
 }
 
-static DECLFW(M32Write3) {
+static DECLFW(M032Write3) {
 	creg[A & 7] = V;
 	Sync();
 }
 
-static void M32Power(void) {
+static void M032Power(void) {
 	Sync();
 	SetReadHandler(0x6000, 0x7fff, CartBR);
 	SetWriteHandler(0x6000, 0x7fff, CartBW);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0x8FFF, M32Write0);
-	SetWriteHandler(0x9000, 0x9FFF, M32Write1);
-	SetWriteHandler(0xA000, 0xAFFF, M32Write2);
-	SetWriteHandler(0xB000, 0xBFFF, M32Write3);
+	SetWriteHandler(0x8000, 0x8FFF, M032Write0);
+	SetWriteHandler(0x9000, 0x9FFF, M032Write1);
+	SetWriteHandler(0xA000, 0xAFFF, M032Write2);
+	SetWriteHandler(0xB000, 0xBFFF, M032Write3);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M32Close(void) {
+static void M032Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
@@ -88,9 +88,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper32_Init(CartInfo *info) {
-	info->Power = M32Power;
-	info->Close = M32Close;
+void Mapper032_Init(CartInfo *info) {
+	info->Power = M032Power;
+	info->Close = M032Close;
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;

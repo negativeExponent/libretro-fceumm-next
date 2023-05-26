@@ -49,11 +49,11 @@ static void Sync(void) {
 	setmirror(((regs[1] >> 3) & 1) ^ 1);
 }
 
-static DECLFR(M57Read) {
+static DECLFR(M057Read) {
 	return hrd_flag;
 }
 
-static DECLFW(M57Write) {
+static DECLFW(M057Write) {
 	if (A & 0x2000) {
 		regs[(A >> 11) & 1] = (regs[(A >> 11) & 1] & ~0x40) | (V & 0x40);
 	} else {
@@ -62,16 +62,16 @@ static DECLFW(M57Write) {
 	Sync();
 }
 
-static void M57Power(void) {
+static void M057Power(void) {
 	regs[1] = regs[0] = 0; /* Always reset to menu */
 	hrd_flag = 1; /* YH-xxx "Olympic" multicarts disable the menu after one selection */
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M57Write);
-	SetReadHandler(0x6000, 0x6000, M57Read);
+	SetWriteHandler(0x8000, 0xFFFF, M057Write);
+	SetReadHandler(0x6000, 0x6000, M057Read);
 	Sync();
 }
 
-static void M57Reset(void) {
+static void M057Reset(void) {
 	regs[1] = regs[0] = 0; /* Always reset to menu */
 	hrd_flag++;
 	hrd_flag &= 3;
@@ -83,9 +83,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper57_Init(CartInfo *info) {
-	info->Power = M57Power;
-	info->Reset = M57Reset;
+void Mapper057_Init(CartInfo *info) {
+	info->Power = M057Power;
+	info->Reset = M057Reset;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

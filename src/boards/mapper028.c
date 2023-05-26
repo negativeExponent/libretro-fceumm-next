@@ -163,7 +163,7 @@ static DECLFW(WritePRG) {
 	}
 }
 
-static void M28Power(void) {
+static void M028Power(void) {
 	outer = 63;
 	prg = 15;
 	Sync();
@@ -175,7 +175,7 @@ static void M28Power(void) {
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 }
 
-static void M28Reset(void) {
+static void M028Reset(void) {
 	outer = 63;
 	prg = 15;
 	Sync();
@@ -185,9 +185,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper28_Init(CartInfo *info) {
-	info->Power = M28Power;
-	info->Reset = M28Reset;
+void Mapper028_Init(CartInfo *info) {
+	info->Power = M028Power;
+	info->Reset = M028Reset;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

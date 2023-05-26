@@ -52,7 +52,7 @@ static void Sync(void) {
 	}
 }
 
-static DECLFW(M67Write) {
+static DECLFW(M067Write) {
 	switch (A & 0xF800) {
 		case 0x8800:
 			creg[0] = V;
@@ -92,14 +92,14 @@ static DECLFW(M67Write) {
 	}
 }
 
-static void M67Power(void) {
+static void M067Power(void) {
 	suntoggle = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M67Write);
+	SetWriteHandler(0x8000, 0xFFFF, M067Write);
 }
 
-void FP_FASTAPASS(1) M67IRQ(int a) {
+void FP_FASTAPASS(1) M067IRQ(int a) {
 	if (IRQa) {
 		IRQCount -= a;
 		if (IRQCount < 0) {
@@ -113,9 +113,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper67_Init(CartInfo *info) {
-	info->Power = M67Power;
-	MapIRQHook = M67IRQ;
+void Mapper067_Init(CartInfo *info) {
+	info->Power = M067Power;
+	MapIRQHook = M067IRQ;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

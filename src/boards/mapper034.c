@@ -46,7 +46,7 @@ static void Sync(void) {
 	setchr4(0x1000, regs[2]);
 }
 
-static DECLFW(M34Write) {
+static DECLFW(M034Write) {
 	if (A >= 0x8000)
 		regs[0] = V;
 	else
@@ -64,18 +64,18 @@ static DECLFW(M34Write) {
 	Sync();
 }
 
-static void M34Power(void) {
+static void M034Power(void) {
 	regs[0] = regs[1] = 0;
 	regs[2] = 1;
 	Sync();
 	SetReadHandler(0x6000, 0x7ffc, CartBR);
 	SetWriteHandler(0x6000, 0x7ffc, CartBW);
 	SetReadHandler(0x8000, 0xffff, CartBR);
-	SetWriteHandler(0x7ffd, 0xffff, M34Write);
+	SetWriteHandler(0x7ffd, 0xffff, M034Write);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M34Close(void) {
+static void M034Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
@@ -85,9 +85,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper34_Init(CartInfo *info) {
-	info->Power = M34Power;
-	info->Close = M34Close;
+void Mapper034_Init(CartInfo *info) {
+	info->Power = M034Power;
+	info->Close = M034Close;
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;

@@ -60,23 +60,23 @@ static void Sync(void) {
 	}
 }
 
-static DECLFW(M69WRAMWrite) {
+static DECLFW(M069WRAMWrite) {
 	if ((preg[3] & 0xC0) == 0xC0)
 		CartBW(A, V);
 }
 
-static DECLFR(M69WRAMRead) {
+static DECLFR(M069WRAMRead) {
 	if ((preg[3] & 0xC0) == 0x40)
 		return X.DB;
 	else
 		return CartBR(A);
 }
 
-static DECLFW(M69Write0) {
+static DECLFW(M069Write0) {
 	cmdreg = V & 0xF;
 }
 
-static DECLFW(M69Write1) {
+static DECLFW(M069Write1) {
 	switch (cmdreg) {
 		case 0x0:
 			creg[0] = V;
@@ -168,11 +168,11 @@ static SFORMAT SStateRegs[] =
 	{ 0 }
 };
 
-static DECLFW(M69SWrite0) {
+static DECLFW(M069SWrite0) {
 	sndcmd = V % 14;
 }
 
-static DECLFW(M69SWrite1) {
+static DECLFW(M069SWrite1) {
 	GameExpSound.Fill = AYSound;
 	GameExpSound.HiFill = AYSoundHQ;
 	switch (sndcmd) {
@@ -319,28 +319,28 @@ void Mapper69_ESI(void) {
 
 /* SUNSOFT-5/FME-7 Sound */
 
-static void M69Power(void) {
+static void M069Power(void) {
 	cmdreg = sndcmd = 0;
 	IRQCount = 0xFFFF;
 	IRQa = 0;
 	Sync();
-	SetReadHandler(0x6000, 0x7FFF, M69WRAMRead);
-	SetWriteHandler(0x6000, 0x7FFF, M69WRAMWrite);
+	SetReadHandler(0x6000, 0x7FFF, M069WRAMRead);
+	SetWriteHandler(0x6000, 0x7FFF, M069WRAMWrite);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0x9FFF, M69Write0);
-	SetWriteHandler(0xA000, 0xBFFF, M69Write1);
-	SetWriteHandler(0xC000, 0xDFFF, M69SWrite0);
-	SetWriteHandler(0xE000, 0xFFFF, M69SWrite1);
+	SetWriteHandler(0x8000, 0x9FFF, M069Write0);
+	SetWriteHandler(0xA000, 0xBFFF, M069Write1);
+	SetWriteHandler(0xC000, 0xDFFF, M069SWrite0);
+	SetWriteHandler(0xE000, 0xFFFF, M069SWrite1);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M69Close(void) {
+static void M069Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
 }
 
-static void M69IRQHook(int a) {
+static void M069IRQHook(int a) {
 	if (IRQa) {
 		IRQCount -= a;
 		if (IRQCount <= 0) {
@@ -355,10 +355,10 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper69_Init(CartInfo *info) {
-	info->Power = M69Power;
-	info->Close = M69Close;
-	MapIRQHook = M69IRQHook;
+void Mapper069_Init(CartInfo *info) {
+	info->Power = M069Power;
+	info->Close = M069Close;
+	MapIRQHook = M069IRQHook;
 	WRAMSIZE = 8192;
 	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
@@ -375,8 +375,8 @@ void Mapper69_Init(CartInfo *info) {
 
 void NSFAY_Init(void) {
 	sndcmd = 0;
-	SetWriteHandler(0xC000, 0xDFFF, M69SWrite0);
-	SetWriteHandler(0xE000, 0xFFFF, M69SWrite1);
+	SetWriteHandler(0xC000, 0xDFFF, M069SWrite0);
+	SetWriteHandler(0xE000, 0xFFFF, M069SWrite1);
 	Mapper69_ESI();
 	AddExState(&SStateRegs, ~0, 0, 0);
 }

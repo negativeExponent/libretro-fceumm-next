@@ -54,26 +54,26 @@ static void Sync(void) {
 	setmirror(((latch.addr & 2) >> 1) ^ 1);
 }
 
-static DECLFR(UNL8157Read) {
+static DECLFR(M301Read) {
 	if ((latch.addr & 0x100) && (PRGsize[0] <= (512 * 1024))) {
 		A = (A & 0xFFFE) + reset;
 	}
 	return CartBR(A);
 }
 
-static void UNL8157Power(void) {	
+static void M301Power(void) {	
 	reset = 0;
 	LatchPower();
 }
 
-static void UNL8157Reset(void) {
+static void M301Reset(void) {
 	reset = !reset;
 	LatchHardReset();
 }
 
-void UNL8157_Init(CartInfo *info) {
-	Latch_Init(info, Sync, UNL8157Read, 0, 0);
-	info->Power = UNL8157Power;
-	info->Reset = UNL8157Reset;
+void Mapper301_Init(CartInfo *info) {
+	Latch_Init(info, Sync, M301Read, 0, 0);
+	info->Power = M301Power;
+	info->Reset = M301Reset;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

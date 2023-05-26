@@ -48,7 +48,7 @@ static void Sync(void) {
 	setchr4(0x1000, (latch.data & 4) | 3);
 }
 
-static void FP_FASTAPASS(1) M96Hook(uint32 A) {
+static void FP_FASTAPASS(1) M096PPUHook(uint32 A) {
 	uint16 addr = A & 0x3000;
 	if ((lastAddr != 0x2000) && ((A & 0x3000) == 0x2000)) {
 		ppulatch = (A >> 8) & 3;
@@ -57,15 +57,15 @@ static void FP_FASTAPASS(1) M96Hook(uint32 A) {
 	lastAddr = addr;
 }
 
-static void M96Power(void) {
+static void M096Power(void) {
 	ppulatch = 0;
 	lastAddr = 0;
 	LatchPower();
 }
 
-void Mapper96_Init(CartInfo *info) {
+void Mapper096_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 1);
-	info->Power = M96Power;
-	PPU_hook = M96Hook;
+	info->Power = M096Power;
+	PPU_hook = M096PPUHook;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

@@ -39,20 +39,20 @@ static void Sync(void) {
 	setmirror(((mode >> 7) & 1) ^ 1);
 }
 
-static DECLFW(M62Write) {
+static DECLFW(M062Write) {
 	mode = A & 0x3FFF;
 	bank = V & 3;
 	Sync();
 }
 
-static void M62Power(void) {
+static void M062Power(void) {
 	bank = mode = 0;
 	Sync();
-	SetWriteHandler(0x8000, 0xFFFF, M62Write);
+	SetWriteHandler(0x8000, 0xFFFF, M062Write);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
-static void M62Reset(void) {
+static void M062Reset(void) {
 	bank = mode = 0;
 	Sync();
 }
@@ -61,9 +61,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper62_Init(CartInfo *info) {
-	info->Power = M62Power;
-	info->Reset = M62Reset;
+void Mapper062_Init(CartInfo *info) {
+	info->Power = M062Power;
+	info->Reset = M062Reset;
 	AddExState(&StateRegs, ~0, 0, 0);
 	GameStateRestore = StateRestore;
 }

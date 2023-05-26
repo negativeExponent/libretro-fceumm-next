@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* NOTE: This only emulates the UNIF variant of 3D-Blocks */
+
 #include "mapinc.h"
 
 static uint8 reg[4], IRQa;

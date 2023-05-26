@@ -35,24 +35,24 @@ static void Sync() {
 	setchr8((reg & 3) | ((reg >> 4) & 4));
 }
 
-static DECLFW(M86Write) {
+static DECLFW(M086Write) {
 	reg = V;
 	Sync();
 }
 
-static void M86Power(void) {
+static void M086Power(void) {
 	reg = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x6FFF, M86Write);
+	SetWriteHandler(0x6000, 0x6FFF, M086Write);
 }
 
 static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper86_Init(CartInfo *info) {
-	info->Power = M86Power;
+void Mapper086_Init(CartInfo *info) {
+	info->Power = M086Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

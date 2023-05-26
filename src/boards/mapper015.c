@@ -51,7 +51,7 @@ static void Sync(void) {
 	setmirror(((latch.data >> 6) & 1) ^ 1);
 }
 
-void Mapper15_Init(CartInfo *info) {
+void Mapper015_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 1, 0);
 	info->Reset = LatchHardReset;
 }

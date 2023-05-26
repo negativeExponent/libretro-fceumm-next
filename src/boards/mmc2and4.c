@@ -112,7 +112,7 @@ static void MMC2and4Close(void) {
 	WRAM = NULL;
 }
 
-void Mapper9_Init(CartInfo *info) {
+void Mapper009_Init(CartInfo *info) {
 	is10 = 0;
 	isPC10 = 0;
 	info->Power = MMC2and4Power;
@@ -133,7 +133,7 @@ void Mapper9_Init(CartInfo *info) {
 	AddExState(&StateRegs, ~0, 0, 0);
 }
 
-void Mapper10_Init(CartInfo *info) {
+void Mapper010_Init(CartInfo *info) {
 	is10 = 1;
 	isPC10 = 0;
 	info->Power = MMC2and4Power;

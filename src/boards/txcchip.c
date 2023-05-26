@@ -172,34 +172,34 @@ static int CheckHash(CartInfo *info) {
 
 static uint8 creg = 0;
 
-static void M36Sync(void) {
+static void M036Sync(void) {
 	setprg32(0x8000, txc.output & 0x03);
 	setchr8(creg & 0x0F);
 }
 
-static DECLFW(M36Write) {
+static DECLFW(M036Write) {
 	if ((A & 0xF200) == 0x4200) creg = V;
 	TXC_CMDWrite(A, (V >> 4) & 0x03);
 }
 
-static DECLFR(M36Read) {
+static DECLFR(M036Read) {
 	uint8 ret = X.DB;
 	if ((A & 0x103) == 0x100)
 	  ret = (X.DB & 0xCF) | ((TXC_CMDRead() << 4) & 0x30);
 	return ret;
 }
 
-static void M36Power(void) {
+static void M036Power(void) {
 	creg = 0;
 	GenTXCPower();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetReadHandler(0x4100, 0x5FFF, M36Read);
-	SetWriteHandler(0x4100, 0xFFFF, M36Write);
+	SetReadHandler(0x4100, 0x5FFF, M036Read);
+	SetWriteHandler(0x4100, 0xFFFF, M036Write);
 }
 
-void Mapper36_Init(CartInfo *info) {
-	GenTXC_Init(info, M36Sync, 0);
-	info->Power = M36Power;
+void Mapper036_Init(CartInfo *info) {
+	GenTXC_Init(info, M036Sync, 0);
+	info->Power = M036Power;
 	AddExState(&creg, 1, 0, "CREG");
 }
 

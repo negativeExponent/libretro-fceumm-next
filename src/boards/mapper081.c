@@ -27,6 +27,6 @@ static void Sync(void) {
 	setchr8(latch.data & 3);
 }
 
-void Mapper81_Init(CartInfo *info) {
+void Mapper081_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
 }

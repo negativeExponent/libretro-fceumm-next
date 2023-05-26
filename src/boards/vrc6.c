@@ -325,7 +325,7 @@ static void VRC6_ESI(void) {
 
 /* VRC6 Sound */
 
-void Mapper24_Init(CartInfo *info) {
+void Mapper024_Init(CartInfo *info) {
 	is26 = 0;
 	info->Power = VRC6Power;
 	VRCIRQ_Init();
@@ -335,7 +335,7 @@ void Mapper24_Init(CartInfo *info) {
 	AddExState(&SStateRegs, ~0, 0, 0);
 }
 
-void Mapper26_Init(CartInfo *info) {
+void Mapper026_Init(CartInfo *info) {
 	is26 = 1;
 	info->Power = VRC6Power;
 	info->Close = VRC6Close;

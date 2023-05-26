@@ -155,7 +155,7 @@ static void UNROM512LatchClose(void) {
 	flash_data = NULL;
 }
 
-void UNROM512_Init(CartInfo *info) {
+void Mapper030_Init(CartInfo *info) {
 	Latch_Init(info, UNROM512_Sync, NULL, 0, !info->battery);
 
 	info->Power      = UNROM512LatchPower;

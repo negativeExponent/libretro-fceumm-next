@@ -49,26 +49,26 @@ static void Sync(void) {
 	setmirror(((mode >> 4) & 1) ^ 1);
 }
 
-static DECLFW(M51WriteMode) {
+static DECLFW(M051WriteMode) {
 	mode = V;
 	Sync();
 }
 
-static DECLFW(M51WriteBank) {
+static DECLFW(M051WriteBank) {
 	bank = V;
 	Sync();
 }
 
-static void M51Power(void) {
+static void M051Power(void) {
 	bank = 0;
 	mode = 2;
 	Sync();
-	SetWriteHandler(0x6000, 0x7FFF, M51WriteMode);
-	SetWriteHandler(0x8000, 0xFFFF, M51WriteBank);
+	SetWriteHandler(0x6000, 0x7FFF, M051WriteMode);
+	SetWriteHandler(0x8000, 0xFFFF, M051WriteBank);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 }
 
-static void M51Reset(void) {
+static void M051Reset(void) {
 	bank = 0;
 	mode = 2;
 	Sync();
@@ -78,9 +78,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper51_Init(CartInfo *info) {
-	info->Power = M51Power;
-	info->Reset = M51Reset;
+void Mapper051_Init(CartInfo *info) {
+	info->Power = M051Power;
+	info->Reset = M051Reset;
 	AddExState(&StateRegs, ~0, 0, 0);
 	GameStateRestore = StateRestore;
 	submapper        = info->submapper;

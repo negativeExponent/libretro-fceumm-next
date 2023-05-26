@@ -28,7 +28,7 @@ static uint32 submapper = 0;
 /*------------------ BMCD1038 ---------------------------*/
 /* iNES Mapper 59 */
 
-static void BMCD1038Sync(void) {
+static void M059Sync(void) {
 	if (latch.addr & 0x80) {
 		setprg16(0x8000, (latch.addr & 0x70) >> 4);
 		setprg16(0xC000, (latch.addr & 0x70) >> 4);
@@ -39,14 +39,14 @@ static void BMCD1038Sync(void) {
 	setmirror(((latch.addr & 8) >> 3) ^ 1);
 }
 
-static DECLFR(BMCD1038Read) {
+static DECLFR(M059Read) {
 	if (latch.addr & 0x100) {
 		return (X.DB & ~3) | (dipswitch & 3);
 	}
 	return CartBR(A);
 }
 
-static DECLFW(BMCD1038Write) {
+static DECLFW(M059Write) {
 	/* Only recognize the latch write if the lock bit has not been set. */
 	/* Needed for NT-234 "Road Fighter" */
 	if (~latch.addr & 0x200) {
@@ -54,30 +54,30 @@ static DECLFW(BMCD1038Write) {
 	}
 }
 
-static void BMCD1038Reset(void) {
+static void M059Reset(void) {
 	dipswitch++;
 	/* Always reset to menu */
 	latch.addr = 0;
-	BMCD1038Sync();
+	M059Sync();
 }
 
-static void BMCD1038Power(void) {
+static void M059Power(void) {
 	LatchPower();
 
 	/* Trap latch writes to enforce the "Lock" bit */
-	SetWriteHandler(0x8000, 0xFFFF, BMCD1038Write);
+	SetWriteHandler(0x8000, 0xFFFF, M059Write);
 }
 
-void BMCD1038_Init(CartInfo *info) {
-	Latch_Init(info, BMCD1038Sync, BMCD1038Read, 0, 0);
-	info->Reset = BMCD1038Reset;
-	info->Power = BMCD1038Power;
+void Mapper059_Init(CartInfo *info) {
+	Latch_Init(info, M059Sync, M059Read, 0, 0);
+	info->Reset = M059Reset;
+	info->Power = M059Power;
 	AddExState(&dipswitch, 1, 0, "DIPSW");
 }
 
 /*------------------ Map 058 ---------------------------*/
 
-static void M58Sync(void) {
+static void M058Sync(void) {
 	if (latch.addr & 0x40) {
 		setprg16(0x8000, latch.addr & 7);
 		setprg16(0xC000, latch.addr & 7);
@@ -88,13 +88,13 @@ static void M58Sync(void) {
 	setmirror(((latch.addr & 0x80) >> 7) ^ 1);
 }
 
-void Mapper58_Init(CartInfo *info) {
-	Latch_Init(info, M58Sync, NULL, 0, 0);
+void Mapper058_Init(CartInfo *info) {
+	Latch_Init(info, M058Sync, NULL, 0, 0);
 	info->Reset = LatchHardReset;
 }
 
 /*------------------ Map 061 ---------------------------*/
-static void M61Sync(void) {
+static void M061Sync(void) {
 	if (latch.addr & 0x10) {
 		setprg16(0x8000, ((latch.addr & 0xF) << 1) | ((latch.addr & 0x20) >> 5));
 		setprg16(0xC000, ((latch.addr & 0xF) << 1) | ((latch.addr & 0x20) >> 5));
@@ -105,8 +105,8 @@ static void M61Sync(void) {
 	setmirror(((latch.addr >> 7) & 1) ^ 1);
 }
 
-void Mapper61_Init(CartInfo *info) {
-	Latch_Init(info, M61Sync, NULL, 0, 0);
+void Mapper061_Init(CartInfo *info) {
+	Latch_Init(info, M061Sync, NULL, 0, 0);
 	info->Reset = LatchHardReset;
 }
 
@@ -120,13 +120,13 @@ void Mapper61_Init(CartInfo *info) {
 static uint16 openBus   = 0;
 static uint8 hasBattery = 0;
 
-static DECLFR(M63Read) {
+static DECLFR(M063Read) {
 	if (openBus)
 		return X.DB;
 	return CartBR(A);
 }
 
-static void M63Sync(void) {
+static void M063Sync(void) {
 	uint8 prg_mask = (submapper == 0) ? 0xFF : 0x7F;
 	uint8 prg_bank = (latch.addr >> 2) & prg_mask;
 	uint8 chr_protect = (latch.addr & ((submapper == 0) ? 0x400 : 0x200)) == 0;
@@ -144,8 +144,8 @@ static void M63Sync(void) {
 	SetupCartCHRMapping(0, CHRptr[0], 0x2000, chr_protect);
 }
 
-void Mapper63_Init(CartInfo *info) {
-	Latch_Init(info, M63Sync, M63Read, 0, 0);
+void Mapper063_Init(CartInfo *info) {
+	Latch_Init(info, M063Sync, M063Read, 0, 0);
 	info->Reset = LatchHardReset;
 	submapper = info->submapper;
 }
@@ -157,7 +157,7 @@ void Mapper63_Init(CartInfo *info) {
  * Additionally, PCB contains DSP extra sound chip, used for voice samples (unemulated)
  */
 
-static void M92Sync(void) {
+static void M092Sync(void) {
 	uint8 reg = latch.addr & 0xF0;
 	setprg16(0x8000, 0);
 	if (latch.addr >= 0x9000) {
@@ -181,15 +181,15 @@ static void M92Sync(void) {
 	}
 }
 
-static void M92Power() {
+static void M092Power() {
 	LatchPower();
 	latch.addr = 0x80B0;
-	M92Sync();
+	M092Sync();
 }
 
-void Mapper92_Init(CartInfo *info) {
-	Latch_Init(info, M92Sync, NULL, 0, 0);
-	info->Power = M92Power;
+void Mapper092_Init(CartInfo *info) {
+	Latch_Init(info, M092Sync, NULL, 0, 0);
+	info->Power = M092Power;
 }
 
 /*------------------ Map 200 ---------------------------*/
@@ -571,21 +571,21 @@ void Mapper541_Init(CartInfo *info) {
 /*------------------ BMC-190in1 ---------------------------*/
 /* NES 2.0 Mapper 300 */
 
-static void BMC190in1Sync(void) {
+static void M300Sync(void) {
 	setprg16(0x8000, (latch.addr >> 2) & 7);
 	setprg16(0xC000, (latch.addr >> 2) & 7);
 	setchr8((latch.addr >> 2) & 7);
 	setmirror((latch.addr & 1) ^ 1);
 }
 
-void BMC190in1_Init(CartInfo *info) {
-	Latch_Init(info, BMC190in1Sync, NULL, 0, 0);
+void Mapper300_Init(CartInfo *info) {
+	Latch_Init(info, M300Sync, NULL, 0, 0);
 }
 
 /*-------------- BMC810544-C-A1 ------------------------*/
 /* NES 2.0 Mapper 261 */
 
-static void BMC810544CA1Sync(void) {
+static void M261Sync(void) {
 	uint32 bank = latch.addr >> 7;
 	if (latch.addr & 0x40)
 		setprg32(0x8000, bank);
@@ -597,14 +597,14 @@ static void BMC810544CA1Sync(void) {
 	setmirror(((latch.addr >> 4) & 1) ^ 1);
 }
 
-void BMC810544CA1_Init(CartInfo *info) {
-	Latch_Init(info, BMC810544CA1Sync, NULL, 0, 0);
+void Mapper261_Init(CartInfo *info) {
+	Latch_Init(info, M261Sync, NULL, 0, 0);
 }
 
 /*-------------- BMCNTD-03 ------------------------*/
 /* NES 2.0 Mapper 290 */
 
-static void BMCNTD03Sync(void) {
+static void M290Sync(void) {
 	/* 1PPP Pmcc spxx xccc
 	 * 1000 0000 0000 0000 v
 	 * 1001 1100 0000 0100 h
@@ -621,15 +621,15 @@ static void BMCNTD03Sync(void) {
 	setmirror(((latch.addr >> 10) & 1) ^ 1);
 }
 
-void BMCNTD03_Init(CartInfo *info) {
-	Latch_Init(info, BMCNTD03Sync, NULL, 0, 0);
+void Mapper290_Init(CartInfo *info) {
+	Latch_Init(info, M290Sync, NULL, 0, 0);
 	info->Reset = LatchHardReset;
 }
 
 /*-------------- BMCG-146 ------------------------*/
 /* NES 2.0 Mapper 349 */
 
-static void BMCG146Sync(void) {
+static void M349Sync(void) {
 	setchr8(0);
 	if (latch.addr & 0x800) { /* UNROM mode */
 		setprg16(0x8000, (latch.addr & 0x1F) | (latch.addr & ((latch.addr & 0x40) >> 6)));
@@ -645,22 +645,22 @@ static void BMCG146Sync(void) {
 	setmirror(((latch.addr & 0x80) >> 7) ^ 1);
 }
 
-void BMCG146_Init(CartInfo *info) {
-	Latch_Init(info, BMCG146Sync, NULL, 0, 0);
+void Mapper349_Init(CartInfo *info) {
+	Latch_Init(info, M349Sync, NULL, 0, 0);
 }
 
 /*-------------- BMC-TJ-03 ------------------------*/
 /* NES 2.0 mapper 341 is used for a simple 4-in-1 multicart */
 
-static void BMCTJ03Sync(void) {
+static void M341Sync(void) {
 	uint8 mirr = (latch.addr & ((PRGsize[0] & 0x40000) ? 0x800 : 0x200)) ? MI_H : MI_V;
 	setprg32(0x8000, latch.addr >> 8);
 	setchr8(latch.addr >> 8);
 	setmirror(mirr);
 }
 
-void BMCTJ03_Init(CartInfo *info) {
-	Latch_Init(info, BMCTJ03Sync, NULL, 0, 0);
+void Mapper341_Init(CartInfo *info) {
+	Latch_Init(info, M341Sync, NULL, 0, 0);
 	info->Reset = LatchHardReset;
 }
 
@@ -668,15 +668,15 @@ void BMCTJ03_Init(CartInfo *info) {
 /* NES 2.0 mapper 338 is used for a 16-in-1 and a 200/300/600/1000-in-1 multicart.
  * http://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_338 */
 
-static void BMCSA005ASync(void) {
+static void M338Sync(void) {
 	setprg16(0x8000, latch.addr & 0x0F);
 	setprg16(0xC000, latch.addr & 0x0F);
 	setchr8(latch.addr & 0x0F);
 	setmirror((latch.addr >> 3) & 1);
 }
 
-void BMCSA005A_Init(CartInfo *info) {
-	Latch_Init(info, BMCSA005ASync, NULL, 0, 0);
+void Mapper338_Init(CartInfo *info) {
+	Latch_Init(info, M338Sync, NULL, 0, 0);
 	info->Reset = LatchHardReset;
 }
 

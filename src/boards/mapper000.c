@@ -54,7 +54,7 @@ static void NROMPower(void) {
 #endif
 }
 
-void NROM_Init(CartInfo *info) {
+void Mapper000_Init(CartInfo *info) {
 	info->Power = NROMPower;
 	info->Close = NROMClose;
 

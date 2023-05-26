@@ -49,7 +49,7 @@ static void Sync(void) {
 	setchr8(0);
 }
 
-static DECLFW(M73Write) {
+static DECLFW(M073Write) {
 	switch (A & 0xF000) {
 	case 0x8000: IRQReload &= 0xFFF0; IRQReload |= (V & 0xF) << 0;  break;
 	case 0x9000: IRQReload &= 0xFF0F; IRQReload |= (V & 0xF) << 4;  break;
@@ -73,7 +73,7 @@ static DECLFW(M73Write) {
 	}
 }
 
-static void M73IRQHook(int a) {
+static void M073IRQHook(int a) {
 	int32 i;
 	if (!IRQa) return;
 	for (i = 0; i < a; i++) {
@@ -100,16 +100,16 @@ static void M73IRQHook(int a) {
 	}
 }
 
-static void M73Power(void) {
+static void M073Power(void) {
 	IRQReload = IRQm = IRQx = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetWriteHandler(0x8000, 0xFFFF, M73Write);
+	SetWriteHandler(0x8000, 0xFFFF, M073Write);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M73Close(void) {
+static void M073Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
@@ -119,10 +119,10 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper73_Init(CartInfo *info) {
-	info->Power = M73Power;
-	info->Close = M73Close;
-	MapIRQHook = M73IRQHook;
+void Mapper073_Init(CartInfo *info) {
+	info->Power = M073Power;
+	info->Close = M073Close;
+	MapIRQHook = M073IRQHook;
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);

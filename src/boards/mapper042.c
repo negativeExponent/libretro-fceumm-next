@@ -45,7 +45,7 @@ static void Sync(void) {
 	setmirror(mirr);
 }
 
-static DECLFW(M42Write) {
+static DECLFW(M042Write) {
 	switch (A & 0xE003) {
 		case 0x8000:
 			creg = V;
@@ -68,16 +68,16 @@ static DECLFW(M42Write) {
 	}
 }
 
-static void M42Power(void) {
+static void M042Power(void) {
 	FDSSoundPower();
 	preg = 0;
 	mirr = 1; /* Ai Senshi Nicol actually has fixed mirroring, but mapper forcing it's default value now */
 	Sync();
 	SetReadHandler(0x6000, 0xffff, CartBR);
-	SetWriteHandler(0x6000, 0xffff, M42Write);
+	SetWriteHandler(0x6000, 0xffff, M042Write);
 }
 
-static void FP_FASTAPASS(1) M42IRQHook(int a) {
+static void FP_FASTAPASS(1) M042IRQHook(int a) {
 	if (IRQa) {
 		IRQCount += a;
 		if (IRQCount >= 32768)
@@ -93,7 +93,7 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper42_Init(CartInfo *info) {
+void Mapper042_Init(CartInfo *info) {
 	if (info->iNES2 && (info->submapper == 2)) {
 		AC08_Init(info);
 		return;
@@ -102,8 +102,8 @@ void Mapper42_Init(CartInfo *info) {
 		AC08_Init(info);
 		return;
 	}
-	info->Power = M42Power;
-	MapIRQHook = M42IRQHook;
+	info->Power = M042Power;
+	MapIRQHook = M042IRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

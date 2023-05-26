@@ -189,7 +189,7 @@ static void Sync(void) {
 	SyncMIR();
 }
 
-static DECLFW(UNLSL12ModeWrite) {
+static DECLFW(M116ModeWrite) {
 	/*  FCEU_printf("%04X:%02X\n",A,V); */
 	if (A & 0x100) {
 		mode = V;
@@ -209,7 +209,7 @@ static DECLFW(UNLSL12ModeWrite) {
 	}
 }
 
-static DECLFW(UNLSL12Write) {
+static DECLFW(M116Write) {
 	/*  FCEU_printf("%04X:%02X\n",A,V); */
 	switch (mode & 3) {
 		case 0: {
@@ -304,7 +304,7 @@ static DECLFW(UNLSL12Write) {
 	}
 }
 
-static void UNLSL12HBIRQ(void) {
+static void M116HBIRQ(void) {
 	if ((mode & 3) == 1) {
 		int32 count = IRQCount;
 		if (!count || IRQReload) {
@@ -323,7 +323,7 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-static void UNLSL12Reset(void) {
+static void M116Reset(void) {
 	/* this is suppose to increment during power cycle */
 	/* but we dont have a way to do that, so increment on reset instead. */
 	if (submapper == 3) {
@@ -335,7 +335,7 @@ static void UNLSL12Reset(void) {
 	Sync();
 }
 
-static void UNLSL12Power(void) {
+static void M116Power(void) {
 	game = (submapper == 3) ? 4 : 0;
 	mode = 1;
 	vrc2_chr[0] = ~0;
@@ -368,14 +368,14 @@ static void UNLSL12Power(void) {
 	mmc1_shift = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4100, 0x5FFF, UNLSL12ModeWrite);
-	SetWriteHandler(0x8000, 0xFFFF, UNLSL12Write);
+	SetWriteHandler(0x4100, 0x5FFF, M116ModeWrite);
+	SetWriteHandler(0x8000, 0xFFFF, M116Write);
 }
 
-void UNLSL12_Init(CartInfo *info) {
-	info->Power = UNLSL12Power;
-	info->Reset = UNLSL12Reset;
-	GameHBIRQHook = UNLSL12HBIRQ;
+void Mapper116_Init(CartInfo *info) {
+	info->Power = M116Power;
+	info->Reset = M116Reset;
+	GameHBIRQHook = M116HBIRQ;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 	submapper = info->submapper;

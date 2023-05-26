@@ -314,7 +314,7 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper16_Init(CartInfo *info) {
+void Mapper016_Init(CartInfo *info) {
 	x24c02 = 1;
 	is153 = 0;
 	info->Power = BandaiPower;

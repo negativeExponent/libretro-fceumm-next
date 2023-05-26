@@ -21,7 +21,7 @@
 /*
  * NES 2.0 Mapper 352
  * BMC-KS106C
- * - Kaiser 4-in-1(Unl,KS106C)[p1] - B-Wings, Kung Fu, 1942, SMB1
+ * - Kaiser 4-in-1(Unl,M352)[p1] - B-Wings, Kung Fu, 1942, SMB1
  */
 
 #include "mapinc.h"
@@ -40,13 +40,13 @@ static void Sync(void) {
 	setmirror(gameblock & 1);
 }
 
-static void KS106CPower(void) {
+static void M352Power(void) {
 	gameblock = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
-static void KS106CReset(void) {
+static void M352Reset(void) {
 	gameblock++;
 	Sync();
 }
@@ -55,9 +55,9 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void BMCKS106C_Init(CartInfo *info) {
-	info->Power = KS106CPower;
-	info->Reset = KS106CReset;
+void Mapper352_Init(CartInfo *info) {
+	info->Power = M352Power;
+	info->Reset = M352Reset;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

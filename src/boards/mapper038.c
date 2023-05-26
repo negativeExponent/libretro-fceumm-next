@@ -33,24 +33,24 @@ static void Sync() {
 	setchr8(reg >> 2);
 }
 
-static DECLFW(M38Write) {
+static DECLFW(M038Write) {
 	reg = V;
 	Sync();
 }
 
-static void M38Power(void) {
+static void M038Power(void) {
 	reg = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x7000, 0x7FFF, M38Write);
+	SetWriteHandler(0x7000, 0x7FFF, M038Write);
 }
 
 static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper38_Init(CartInfo *info) {
-	info->Power = M38Power;
+void Mapper038_Init(CartInfo *info) {
+	info->Power = M038Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
