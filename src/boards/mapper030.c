@@ -48,7 +48,7 @@ static uint8 flash_buffer_v[10];
 static uint8 flash_id[2];
 static uint8 submapper;
 
-static void UNROM512_Sync() {
+static void M030_Sync() {
 	int chip;
 	if (flash_save) {
 		chip = !flash_id_mode ? FLASH_CHIP : CFI_CHIP;
@@ -70,10 +70,10 @@ static void UNROM512_Sync() {
 }
 
 static void StateRestore(int version) {
-	UNROM512_Sync();
+	M030_Sync();
 }
 
-static DECLFW(UNROM512FlashWrite) {
+static DECLFW(M030FlashWrite) {
 	int i, offset, sector;
 	if (flash_state < sizeof(flash_buffer_a) / sizeof(flash_buffer_a[0])) {
 		flash_buffer_a[flash_state] = (A & 0x3FFF) | ((latch.data & 1) << 14);
@@ -137,17 +137,17 @@ static DECLFW(UNROM512FlashWrite) {
 		flash_id_mode = 0;
 	}
 
-	UNROM512_Sync();
+	M030_Sync();
 }
 
-static void UNROM512LatchPower(void) {
+static void M030LatchPower(void) {
 	LatchPower();
 	if (flash_save) {
-		SetWriteHandler(0x8000, 0xBFFF, UNROM512FlashWrite);
+		SetWriteHandler(0x8000, 0xBFFF, M030FlashWrite);
 	}
 }
 
-static void UNROM512LatchClose(void) {
+static void M030LatchClose(void) {
 	LatchClose();
 	if (flash_data) {
 		FCEU_gfree(flash_data);
@@ -156,10 +156,10 @@ static void UNROM512LatchClose(void) {
 }
 
 void Mapper030_Init(CartInfo *info) {
-	Latch_Init(info, UNROM512_Sync, NULL, 0, !info->battery);
+	Latch_Init(info, M030_Sync, NULL, 0, !info->battery);
 
-	info->Power      = UNROM512LatchPower;
-	info->Close      = UNROM512LatchClose;
+	info->Power      = M030LatchPower;
+	info->Close      = M030LatchClose;
 	GameStateRestore = StateRestore;
 
 	submapper = (info->iNES2 && info->submapper) ? info->submapper : ((info->PRGCRC32 == 0x891C14BC) ? 0x01 : 0x00);
