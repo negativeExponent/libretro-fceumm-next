@@ -23,7 +23,7 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 static uint8 nt[4];
 static uint8 cpuC;
@@ -82,7 +82,7 @@ static void M559Power(void) {
 }
 
 void Mapper559_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4_559, 1);
+    GenVRC24_Init(info, VRC4, 0x400, 0x800, 1, 1);
     info->Power = M559Power;
     vrc24.pwrap = M559PW;
     vrc24.cwrap = M559CW;

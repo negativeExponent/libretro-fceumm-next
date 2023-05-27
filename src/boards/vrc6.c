@@ -328,7 +328,7 @@ static void VRC6_ESI(void) {
 void Mapper024_Init(CartInfo *info) {
 	is26 = 0;
 	info->Power = VRC6Power;
-	VRCIRQ_Init();
+	VRCIRQ_Init(1);
 	VRC6_ESI();
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
@@ -339,7 +339,7 @@ void Mapper026_Init(CartInfo *info) {
 	is26 = 1;
 	info->Power = VRC6Power;
 	info->Close = VRC6Close;
-	VRCIRQ_Init();
+	VRCIRQ_Init(1);
 	VRC6_ESI();
 	GameStateRestore = StateRestore;
 

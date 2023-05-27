@@ -22,23 +22,8 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
-
-static DECLFW(M298IRQWrite) {
-	/* NOTE: acknowledge IRQ but do not move A control bit to E control bit.
-	 * So, just make E bit the same with A bit coz im lazy to modify IRQ code for now. */
-	if ((A & 0x03) == 0x01) {
-		V |= ((V >> 1) & 0x01);
-	}
-	VRC24Write(A, V);
-}
-
-static void M298Power(void) {
-	GenVRC24Power();
-	SetWriteHandler(0xF000, 0xFFFF, M298IRQWrite);
-}
+#include "vrc2and4.h"
 
 void Mapper298_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4b, 0);
-	info->Power = M298Power;
+	GenVRC24_Init(info, VRC4, 0x02, 0x01, 0, 0);
 }

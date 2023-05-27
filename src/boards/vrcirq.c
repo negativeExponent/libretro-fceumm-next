@@ -7,6 +7,7 @@ static uint8 IRQLatch;
 static uint8 IRQd;
 static uint8 IRQa;
 static uint8 IRQm;
+static uint8 IRQr;
 
 static SFORMAT StateRegs[] =
 {
@@ -16,6 +17,7 @@ static SFORMAT StateRegs[] =
 	{ &IRQd,          1, "IRQD" },
 	{ &IRQa,          1, "IRQA" },
 	{ &IRQm,          1, "IRQM" },
+	{ &IRQr,          1, "IRQR" },
 
 	{ 0 }
 };
@@ -43,7 +45,7 @@ static void FP_FASTAPASS(1) VRCIRQ_IrqHook(int a)
 	}
 }
 
-void VRCIRQ_Init(void)
+void VRCIRQ_Init(int irqRepeated)
 {
 	IRQPrescaler  = 0;
 	IRQCount      = 0;
@@ -51,6 +53,7 @@ void VRCIRQ_Init(void)
 	IRQd          = 0;
 	IRQa          = 0;
 	IRQm          = 0;
+	IRQr          = irqRepeated;
 	MapIRQHook    = VRCIRQ_IrqHook;
 
 	AddExState(&StateRegs, ~0, 0, 0);
@@ -88,6 +91,8 @@ void VRCIRQ_Control(uint8 V)
 
 void VRCIRQ_Acknowledge(void)
 {
-	IRQa = IRQd;
+	if (IRQr) {
+		IRQa = IRQd;
+	}
 	X6502_IRQEnd(FCEU_IQEXT);
 }

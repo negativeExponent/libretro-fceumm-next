@@ -22,7 +22,7 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 static uint8 prg_reg;
 static writefunc pcmwrite;
@@ -63,7 +63,7 @@ static void M266Power(void) {
 }
 
 void Mapper266_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4e, 0);
+	GenVRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
 	info->Power = M266Power;
 	vrc24.pwrap = M266PW;
 	AddExState(&StateRegs, ~0, 0, 0);

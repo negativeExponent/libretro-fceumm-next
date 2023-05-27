@@ -23,7 +23,7 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 static uint8 game;
 static uint8 PPUCHRBus;
@@ -35,12 +35,12 @@ static SFORMAT StateRegs[] = {
 };
 
 static void M362PW(uint32 A, uint8 V) {
-	uint8 prgBase = (game == 0) ? ((vrc24.chrhi[PPUCHRBus] << 1) & 0x30) : 0x40;
+	uint8 prgBase = (game == 0) ? ((vrc24.chrreg[PPUCHRBus] & 0x180) >> 3) : 0x40;
 	setprg8(A, prgBase | (V & 0x0F));
 }
 
 static void M362CW(uint32 A, uint32 V) {
-	uint32 chrBase = (game == 0) ? ((vrc24.chrhi[PPUCHRBus] << 4) & 0x180) : 0x200;
+	uint32 chrBase = (game == 0) ? (vrc24.chrreg[PPUCHRBus] & 0x180) : 0x200;
 	uint32 chrMask = (game == 0) ? 0x7F : 0x1FF;
 	setchr1(A, chrBase | (V & chrMask));
 }
@@ -52,15 +52,6 @@ static DECLFW(M362CHRWrite) {
 	 	an extra PRG sync after a CHR write. */
 		FixVRC24PRG();
 	}
-}
-
-static DECLFW(M362IRQWrite) {
-	/* NOTE: acknowledge IRQ but do not move A control bit to E control bit.
-	 * So, just make E bit the same with A bit coz im lazy to modify IRQ code for now. */
-	if ((A & 0x03) == 0x02) {
-		V |= ((V >> 1) & 0x01);
-	}
-	VRC24Write(A, V);
 }
 
 static void FP_FASTAPASS(1) M362PPUHook(uint32 A) {
@@ -86,11 +77,10 @@ static void M362Power(void) {
 	PPUCHRBus = game = 0;
     GenVRC24Power();
 	SetWriteHandler(0xB000, 0xEFFF, M362CHRWrite);
-	SetWriteHandler(0xF000, 0xFFFF, M362IRQWrite);
 }
 
 void Mapper362_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4f, 0);
+	GenVRC24_Init(info, VRC4, 0x01, 0x02, 0, 0);
 	info->Reset = M362Reset;
 	info->Power = M362Power;
     PPU_hook = M362PPUHook;

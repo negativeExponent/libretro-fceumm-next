@@ -154,7 +154,7 @@ static void StateRestore(int version) {
 void Mapper085_Init(CartInfo *info) {
 	info->Power = VRC7Power;
 	info->Close = VRC7Close;
-	VRCIRQ_Init();
+	VRCIRQ_Init(1);
 	WRAMSIZE = 8192;
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);

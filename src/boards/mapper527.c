@@ -26,14 +26,14 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 static void M527CW(uint32 A, uint32 V) {
 	setchr1(A, V);
-	setmirrorw((vrc24.chrhi[0] >> 3) & 1, (vrc24.chrhi[0] >> 3) & 1, (vrc24.chrhi[1] >> 3) & 1, (vrc24.chrhi[1] >> 3) & 1);
+	setmirrorw((vrc24.chrreg[0] >> 7) & 1, (vrc24.chrreg[0] >> 7) & 1, (vrc24.chrreg[1] >> 7) & 1, (vrc24.chrreg[1] >> 7) & 1);
 }
 
 void Mapper527_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2b, 0);
+	GenVRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
 	vrc24.cwrap = M527CW;
 }

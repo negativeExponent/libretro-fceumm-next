@@ -26,7 +26,7 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 static uint16 IRQCount;
 static uint8 IRQLatch, IRQa;
@@ -66,7 +66,7 @@ static void M524Power(void) {
 }
 
 void Mapper524_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2b, 1);
+	GenVRC24_Init(info, VRC2, 0x01, 0x02, 1, 1);
 	info->Power = M524Power;
 	MapIRQHook = M524IRQHook;
 	AddExState(IRQStateRegs, ~0, 0, NULL);

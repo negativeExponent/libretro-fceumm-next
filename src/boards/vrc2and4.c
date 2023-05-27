@@ -38,126 +38,27 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 #include "vrcirq.h"
-
-static VRC24Type variant;
-static uint8 autoConfig = 0;
 
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
+
+static uint8 vrc2and4_VRC4;
+static uint32 vrc2and4_A0;
+static uint32 vrc2and4_A1;
 
 VRC24 vrc24;
 
 static SFORMAT StateRegs[] =
 {
 	{ vrc24.prgreg, 2, "PREG" },
-	{ vrc24.chrreg, 8, "CREG" },
-	{ vrc24.chrhi,  8, "CHRH" },
+	{ vrc24.chrreg, 16, "CREG" },
 	{ &vrc24.cmd, 1, "CMDR" },
 	{ &vrc24.mirr, 1, "MIRR" },
-	{ &variant, 1, "VRNT" },
 
 	{ 0 }
 };
-
-static uint32 translateAddr(uint32 A) {
-	uint8 A0 = 0;
-	uint8 A1 = 0;
-
-	if (autoConfig) {
-		switch (variant) {
-		/* 21 */
-		case VRC4a:
-		case VRC4c:
-			A0 = (A >> 1) & 0x01;
-			A1 = (A >> 2) & 0x01;
-
-			A0 |= (A >> 6) & 0x01;
-			A1 |= (A >> 7) & 0x01;
-			break;
-
-		/* 23 */
-		case VRC2b:
-		case VRC4f:
-		case VRC4e:
-			A0 = (A >> 0) & 0x01;
-			A1 = (A >> 1) & 0x01;
-
-			A0 |= (A >> 2) & 0x01;
-			A1 |= (A >> 3) & 0x01;
-			break;
-
-		/* 25 */
-		case VRC2c:
-		case VRC4b:
-		case VRC4d:
-			A0 = (A >> 1) & 0x01;
-			A1 = (A >> 0) & 0x01;
-
-			A0 |= (A >> 3) & 0x01;
-			A1 |= (A >> 2) & 0x01;
-			break;
-
-		default:
-			break;
-		}
-	} else {
-		switch (variant) {
-		/* 21 */
-		case VRC4a:
-			A0 = (A >> 1) & 0x01;
-			A1 = (A >> 2) & 0x01;
-			break;
-
-		case VRC4c:
-			A0 = (A >> 6) & 0x01;
-			A1 = (A >> 7) & 0x01;
-			break;
-
-		/* 22 */
-		case VRC2a:
-			A0 = (A >> 1) & 0x01;
-			A1 = (A >> 0) & 0x01;
-			break;
-
-		/* 23 */
-		case VRC2b:
-		case VRC4f:
-			A0 = (A >> 0) & 0x01;
-			A1 = (A >> 1) & 0x01;
-			break;
-
-		case VRC4e:
-			A0 |= (A >> 2) & 0x01;
-			A1 |= (A >> 3) & 0x01;
-			break;
-
-		/* 25 */
-		case VRC2c:
-		case VRC4b:
-			A0 = (A >> 1) & 0x01;
-			A1 = (A >> 0) & 0x01;
-			break;
-
-		case VRC4d:
-			A0 |= (A >> 3) & 0x01;
-			A1 |= (A >> 2) & 0x01;
-			break;
-
-		case VRC4_544:
-		case VRC4_559:
-			A0 |= (A >> 10) & 0x01;
-			A1 |= (A >> 11) & 0x01;
-			break;
-
-		default:
-			break;
-		}
-	}
-
-	return (A & 0xF000) | (A1 << 1) | (A0 << 0);
-}
 
 void FixVRC24PRG(void) {
 	if (vrc24.cmd & 2) {
@@ -175,7 +76,7 @@ void FixVRC24CHR(void) {
 	int i;
 
 	for (i = 0; i < 8; i++) {
-		vrc24.cwrap(0x0400 * i, (vrc24.chrhi[i] << 4) | vrc24.chrreg[i]);
+		vrc24.cwrap(0x0400 * i, vrc24.chrreg[i]);
 	}
 	if (vrc24.mwrap) {
 		vrc24.mwrap(vrc24.mirr);
@@ -185,8 +86,6 @@ void FixVRC24CHR(void) {
 DECLFW(VRC24Write) {
 	uint8 index;
 
-	A = translateAddr(A) & 0xF003;
-
 	switch (A & 0xF000) {
 	case 0x8000:
 	case 0xA000:
@@ -195,7 +94,8 @@ DECLFW(VRC24Write) {
 		break;
 
 	case 0x9000:
-		switch (A & 0x03) {
+		index = ((A & vrc2and4_A1) ? 0x02 : 0x00) | ((A & vrc2and4_A0) ? 0x01 : 0x00);
+		switch (index & (vrc2and4_VRC4 ? 0x03 : 0x00)) {
 		case 0:
 		case 1:
 			if (V != 0xFF) {
@@ -205,15 +105,20 @@ DECLFW(VRC24Write) {
 			}
 			break;
 		case 2:
-		case 3:
 			vrc24.cmd = V;
 			FixVRC24PRG();
+			break;
+		case 3:
+			if (vrc24.writeMisc) {
+				vrc24.writeMisc(A, V);
+			}
 			break;
 		}
 		break;
 
 	case 0xF000:
-		switch (A & 0x03) {
+		index = ((A & vrc2and4_A1) ? 0x02 : 0x00) | ((A & vrc2and4_A0) ? 0x01 : 0x00);
+		switch (index) {
 		case 0x00: VRCIRQ_LatchNibble(V, 0); break;
 		case 0x01: VRCIRQ_LatchNibble(V, 1); break;
 		case 0x02: VRCIRQ_Control(V); break;
@@ -222,14 +127,14 @@ DECLFW(VRC24Write) {
 		break;
 
 	default:
-		index = ((A >> 1) & 0x01) | ((A - 0xB000) >> 11);
-		if (A & 0x01) {
+		index = (((A & 0xF000) - 0xB000) >> 11) | ((A & vrc2and4_A1) ? 0x01 : 0x00);
+		if (A & vrc2and4_A0) {
 			/* m25 can be 512K, rest are 256K or less */
-			vrc24.chrhi[index] = V & 0x1F;
+			vrc24.chrreg[index] = (vrc24.chrreg[index] & 0x000F) | (V << 4);
 		} else {
-			vrc24.chrreg[index] = V & 0xF;
+			vrc24.chrreg[index] = (vrc24.chrreg[index] & 0x0FF0) | (V & 0x0F);
 		}
-		vrc24.cwrap(index << 10, ((vrc24.chrhi[index] << 4) | vrc24.chrreg[index]));
+		vrc24.cwrap(index << 10, vrc24.chrreg[index]);
 		break;
 	}
 }
@@ -245,7 +150,7 @@ static void GENCWRAP(uint32 A, uint32 V) {
 static void GENMWRAP(uint8 V) {
 	vrc24.mirr = V;
 
-	switch (V & 0x3) {
+	switch (V & (vrc2and4_VRC4 ? 0x03 : 0x01)) {
 	case 0: setmirror(MI_V); break;
 	case 1: setmirror(MI_H); break;
 	case 2: setmirror(MI_0); break;
@@ -265,9 +170,6 @@ void GenVRC24Power(void) {
 	vrc24.chrreg[5] = 5;
 	vrc24.chrreg[6] = 6;
 	vrc24.chrreg[7] = 7;
-
-	vrc24.chrhi[0] = vrc24.chrhi[1] = vrc24.chrhi[2] = vrc24.chrhi[3] = 0;
-	vrc24.chrhi[4] = vrc24.chrhi[5] = vrc24.chrhi[6] = vrc24.chrhi[7] = 0;
 
 	vrc24.cmd = vrc24.mirr = 0;
 
@@ -301,13 +203,17 @@ void GenVRC24Close(void) {
 	WRAM = NULL;
 }
 
-void GenVRC24_Init(CartInfo *info, VRC24Type type, int wram) {
+void GenVRC24_Init(CartInfo *info, uint8 vrc4, uint32 A0, uint32 A1, int wram, int irqRepeated) {
 	vrc24.pwrap = GENPWRAP;
 	vrc24.cwrap = GENCWRAP;
 	vrc24.mwrap = GENMWRAP;
+	vrc24.writeMisc = NULL;
+
+	vrc2and4_A0 = A0;
+	vrc2and4_A1 = A1;
+	vrc2and4_VRC4 = vrc4;
 
 	WRAMSIZE = wram ? 8192 : 0;
-	variant = type;
 
 	if (wram) {
 		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
@@ -326,64 +232,5 @@ void GenVRC24_Init(CartInfo *info, VRC24Type type, int wram) {
 	info->Close = GenVRC24Close;
 	GameStateRestore = GenVRC24Restore;
 
-	VRCIRQ_Init();
-}
-
-/* -------------------- Mapper 21 -------------------- */
-
-void Mapper021_Init(CartInfo *info) {
-	/* Mapper 21 - VRC4a, VRC4c */
-	VRC24Type type = VRC4a;
-	if (info->iNES2 && info->submapper) {
-		switch (info->submapper) {
-		case 1: type = VRC4a; break;
-		case 2: type = VRC4c; break;
-		}
-	}
-	autoConfig = !info->submapper;
-	GenVRC24_Init(info, type, 1);
-}
-
-/* -------------------- Mapper 22 -------------------- */
-
-static void M22CW(uint32 A, uint32 V) {
-	setchr1(A, V >> 1);
-}
-
-void Mapper022_Init(CartInfo *info) {
-	/* Mapper 22 - VRC2a */
-	GenVRC24_Init(info, VRC2a, 0);
-	vrc24.cwrap = M22CW;
-}
-
-/* -------------------- Mapper 23 -------------------- */
-
-void Mapper023_Init(CartInfo *info) {
-	/* Mapper 23 - VRC2b, VRC4e, VRC4f */
-	VRC24Type type = VRC4f;
-	if (info->iNES2 && info->submapper) {
-		switch (info->submapper) {
-		case 1: type = VRC4f; break;
-		case 2: type = VRC4e; break;
-		case 3: type = VRC2b; break;
-		}
-	}
-	autoConfig = !info->submapper;
-	GenVRC24_Init(info, type, 1);
-}
-
-/* -------------------- Mapper 25 -------------------- */
-
-void Mapper025_Init(CartInfo *info) {
-	/* Mapper 25 - VRC2c, VRC4b, VRC4d */
-	VRC24Type type = VRC4b;
-	if (info->iNES2 && info->submapper) {
-		switch (info->submapper) {
-		case 1: type = VRC4b; break;
-		case 2: type = VRC4d; break;
-		case 3: type = VRC2c; break;
-		}
-	}
-	autoConfig = !info->submapper;
-	GenVRC24_Init(info, type, 1);
+	VRCIRQ_Init(irqRepeated);
 }

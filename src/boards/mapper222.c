@@ -24,7 +24,7 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 static uint8 IRQCount;
 static uint8 IRQa;
@@ -70,7 +70,7 @@ static void M222Power(void) {
 }
 
 void Mapper222_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2b, 0);
+	GenVRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
 	info->Power = M222Power;
 	MapIRQHook = NULL;
 	GameHBIRQHook = M222IRQ;

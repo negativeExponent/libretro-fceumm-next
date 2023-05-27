@@ -20,7 +20,7 @@
 
 /* NES 2.0 Mapper 544 - Waixing FS306 */
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 static uint8 nt[4];
 static uint8 cpuC;
@@ -57,17 +57,13 @@ static void M544CW(uint32 A, uint32 V) {
 }
 
 static DECLFW(M544WriteExtra) {
-    if ((A & 0xC00) == 0xC00) {
-        if (A & 0x04) {
-            nt[A & 0x03] = V & 0x01;
-            setmirrorw(nt[0], nt[1], nt[2], nt[3]);
-        } else {
-            cpuC = V;
-            FixVRC24PRG();
-        }
-    } else {
-        VRC24Write(A, V);
-    }
+	if (A & 0x04) {
+		nt[A & 0x03] = V & 0x01;
+		setmirrorw(nt[0], nt[1], nt[2], nt[3]);
+	} else {
+		cpuC = V;
+		FixVRC24PRG();
+	}
 }
 
 static const uint8 compareMasks[8] = {
@@ -77,7 +73,7 @@ static const uint8 compareMasks[8] = {
 static DECLFW(M544PPUWrite) {
 	if (RefreshAddr < 0x2000) {
         uint8 reg = RefreshAddr >> 10;
-        uint8 chrBank = (vrc24.chrhi[reg] << 4) | vrc24.chrreg[reg];
+        uint8 chrBank = vrc24.chrreg[reg];
 		if (chrBank & 0x80) {
             if (chrBank & 0x10) {
                 chrRamMask = 0x00;
@@ -103,7 +99,6 @@ static void M544Power(void) {
 	GenVRC24Power();
 	writePPU = GetWriteHandler(0x2007);
 	SetWriteHandler(0x2007, 0x2007, M544PPUWrite);
-    SetWriteHandler(0x9000, 0x9FFF, M544WriteExtra);
 }
 
 void M544Close(void) {
@@ -114,11 +109,12 @@ void M544Close(void) {
 }
 
 void Mapper544_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4_544, 1);
+    GenVRC24_Init(info, VRC4, 0x400, 0x800, 1, 1);
 	info->Power = M544Power;
 	info->Close = M544Close;
     vrc24.pwrap = M544PW;
 	vrc24.cwrap = M544CW;
+    vrc24.writeMisc = M544WriteExtra;
 
 	CHRRAMSIZE = 2048;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

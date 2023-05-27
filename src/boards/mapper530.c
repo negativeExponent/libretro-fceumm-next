@@ -23,7 +23,7 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 static void M530PW(uint32 A, uint8 V) {
 	setprg8(A, ((V & 0x02) << 2) | ((V & 0x08) >> 2) | (V & ~0x0A));
@@ -44,7 +44,7 @@ static void M530Power(void) {
 }
 
 void Mapper530_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4f, 0);
+	GenVRC24_Init(info, VRC4, 0x01, 0x02, 0, 1);
 	info->Power = M530Power;
 	vrc24.pwrap = M530PW;
 	vrc24.cwrap = M530CW;

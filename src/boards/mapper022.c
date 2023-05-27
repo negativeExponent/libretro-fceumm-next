@@ -1,7 +1,6 @@
-/* FCEUmm - NES/Famicom Emulator
+/* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2007 CaH4e3
  *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,30 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* -------------------- UNL-M525 -------------------- */
-/* http://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_525
- * NES 2.0 Mapper 525 is used for a bootleg version of versions of Contra and 月風魔伝 (Getsu Fūma Den).
- * Its similar to Mapper 23 Submapper 3) with non-nibblized CHR-ROM bank registers.
- */
-
 #include "mapinc.h"
 #include "vrc2and4.h"
 
-static DECLFW(M525Write) {
-	switch (A & 0xB000) {
-	case 0xB000:
-		vrc24.chrreg[A & 0x07] = V;
-		FixVRC24CHR();
-		break;
-	}
+static void M22CW(uint32 A, uint32 V) {
+	setchr1(A, (V & 0xFF) >> 1);
 }
 
-static void M525Power(void) {
-	GenVRC24Power();
-	SetWriteHandler(0xB000, 0xBFFF, M525Write);
-}
-
-void Mapper525_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2, 0x01, 0x02, 1, 1);
-	info->Power = M525Power;
+void Mapper022_Init(CartInfo *info) {
+	/* Mapper 22 - VRC2a */
+	GenVRC24_Init(info, VRC2, 0x02, 0x01, 0, 1);
+	vrc24.cwrap = M22CW;
 }

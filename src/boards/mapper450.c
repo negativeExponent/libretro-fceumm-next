@@ -22,7 +22,7 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 /* TODO: move this register to VRC2 microwire interface when implemented */
 static uint8 wires;
@@ -59,7 +59,7 @@ static void M450Power(void) {
 }
 
 void Mapper450_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2b, 0);
+	GenVRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
 	info->Power = M450Power;
     vrc24.pwrap = M450PW;
     vrc24.cwrap = M450CW;

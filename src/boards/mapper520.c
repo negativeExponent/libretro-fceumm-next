@@ -23,7 +23,7 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 static uint8 PPUCHRBus;
 
@@ -46,7 +46,7 @@ static void FP_FASTAPASS(1) M520PPUHook(uint32 A) {
 }
 
 void Mapper520_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4e, 0);
+	GenVRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
 	PPU_hook = M520PPUHook;
 	vrc24.pwrap = M520PW;
 	AddExState(StateRegs, ~0, 0, 0);

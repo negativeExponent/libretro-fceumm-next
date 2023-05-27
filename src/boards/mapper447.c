@@ -23,7 +23,7 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 static uint8 reg;
 
@@ -78,7 +78,7 @@ static void M447Power(void) {
 }
 
 void Mapper447_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4e, 1);
+    GenVRC24_Init(info, VRC4, 0x04, 0x08, 1, 1);
 	info->Reset = M447Reset;
 	info->Power = M447Power;
     vrc24.pwrap = M447PW;

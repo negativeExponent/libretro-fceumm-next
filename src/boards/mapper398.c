@@ -23,7 +23,7 @@
  */
 
 #include "mapinc.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 static uint8 latch;
 static uint8 PPUCHRBus;
@@ -82,7 +82,7 @@ static void M398Power(void) {
 }
 
 void Mapper398_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4f, 0);
+	GenVRC24_Init(info, VRC4, 0x01, 0x02, 0, 1);
 	info->Reset = M398Reset;
 	info->Power = M398Power;
 	PPU_hook = M398PPUHook;

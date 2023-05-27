@@ -24,7 +24,7 @@
 
 #include "mapinc.h"
 #include "latch.h"
-#include "vrc24.h"
+#include "vrc2and4.h"
 
 static uint8 reg;
 
@@ -90,7 +90,7 @@ static void StateRestore(int version) {
 
 void Mapper448_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
-	GenVRC24_Init(info, VRC4e, 0);
+	GenVRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
 	info->Reset = M448Reset;
 	info->Power = M448Power;
 	GameStateRestore = StateRestore;
