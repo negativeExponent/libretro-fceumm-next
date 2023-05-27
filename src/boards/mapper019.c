@@ -34,7 +34,7 @@ static DECLFW(BWRAM) {
 	WRAM[A - 0x6000] = V;
 }
 
-void Mapper19_ESI(void);
+static void Mapper19_ESI(void);
 
 static uint8 NTAPage[4];
 
@@ -47,8 +47,6 @@ static void NamcoSoundHack(void);
 static void DoNamcoSound(int32 *Wave, int Count);
 static void DoNamcoSoundHQ(void);
 static void SyncHQ(int32 ts);
-
-static int is210;	/* Lesser mapper. */
 
 static uint8 PRG[3];
 static uint8 CHR[8];
@@ -129,7 +127,7 @@ static void FixNTAR(void) {
 
 static void FASTAPASS(2) DoCHRRAMROM(int x, uint8 V) {
 	CHR[x] = V;
-	if (!is210 && !((gorfus >> ((x >> 2) + 6)) & 1) && (V >= 0xE0)) {
+	if (!((gorfus >> ((x >> 2) + 6)) & 1) && (V >= 0xE0)) {
 	} else
 		setchr1(x << 10, V);
 }
@@ -197,10 +195,6 @@ static DECLFW(Mapper19_write) {
 			gorko = V & 0xC0;
 			PRG[0] = V & 0x3F;
 			SyncPRG();
-			if (is210) {
-				gorko = V >> 6;
-				SyncMirror();
-			}
 			break;
 		case 0xE800:
 			gorfus = V & 0xC0;
@@ -370,7 +364,7 @@ static void M19SC(void) {
 		Mapper19_ESI();
 }
 
-void Mapper19_ESI(void) {
+static void Mapper19_ESI(void) {
 	GameExpSound.RChange = M19SC;
 	memset(vcount, 0, sizeof(vcount));
 	memset(PlayIndex, 0, sizeof(PlayIndex));
@@ -391,14 +385,13 @@ static void N106_Power(void) {
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xffff, Mapper19_write);
 	SetWriteHandler(0x4020, 0x5fff, Mapper19_write);
-	if (!is210) {
-		SetWriteHandler(0xc000, 0xdfff, Mapper19C0D8_write);
-		SetReadHandler(0x4800, 0x4fff, Namco_Read4800);
-		SetReadHandler(0x5000, 0x57ff, Namco_Read5000);
-		SetReadHandler(0x5800, 0x5fff, Namco_Read5800);
-		NTAPage[0] = NTAPage[1] = NTAPage[2] = NTAPage[3] = 0xFF;
-		FixNTAR();
-	}
+
+	SetWriteHandler(0xc000, 0xdfff, Mapper19C0D8_write);
+	SetReadHandler(0x4800, 0x4fff, Namco_Read4800);
+	SetReadHandler(0x5000, 0x57ff, Namco_Read5000);
+	SetReadHandler(0x5800, 0x5fff, Namco_Read5800);
+	NTAPage[0] = NTAPage[1] = NTAPage[2] = NTAPage[3] = 0xFF;
+	FixNTAR();
 
 	SetReadHandler(0x6000, 0x7FFF, AWRAM);
 	SetWriteHandler(0x6000, 0x7FFF, BWRAM);
@@ -417,7 +410,6 @@ static void N106_Power(void) {
 }
 
 void Mapper019_Init(CartInfo *info) {
-	is210 = 0;
 	battery = info->battery;
 	info->Power = N106_Power;
 
@@ -441,18 +433,4 @@ void Mapper019_Init(CartInfo *info) {
 		info->SaveGame[1] = IRAM;
 		info->SaveGameLen[1] = 128;
 	}
-}
-
-static void Mapper210_StateRestore(int version) {
-	SyncPRG();
-	FixCRR();
-}
-
-void Mapper210_Init(CartInfo *info) {
-	is210 = 1;
-	GameStateRestore = Mapper210_StateRestore;
-	info->Power = N106_Power;
-	FCEU_MemoryRand(WRAM, sizeof(WRAM));
-	AddExState(WRAM, 8192, 0, "WRAM");
-	AddExState(N106_StateRegs, ~0, 0, 0);
 }
