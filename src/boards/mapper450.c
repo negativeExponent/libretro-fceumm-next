@@ -46,12 +46,6 @@ static DECLFW(M450WriteReg) {
     FixVRC24CHR();
 }
 
-static void M450Reset(void) {
-	wires = 0;
-	FixVRC24PRG();
-    FixVRC24CHR();
-}
-
 static void M450Power(void) {
 	wires = 0;
 	GenVRC24Power();
