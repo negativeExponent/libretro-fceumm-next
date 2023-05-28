@@ -115,6 +115,7 @@ void Mapper544_Init(CartInfo *info) {
     vrc24.pwrap = M544PW;
 	vrc24.cwrap = M544CW;
     vrc24.writeMisc = M544WriteExtra;
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 2048;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
