@@ -56,6 +56,7 @@ static SFORMAT StateRegs[] =
 	{ vrc24.chrreg, 16, "CREG" },
 	{ &vrc24.cmd, 1, "CMDR" },
 	{ &vrc24.mirr, 1, "MIRR" },
+	{ &vrc24.latch, 1, "LATC" },
 
 	{ 0 }
 };
@@ -81,6 +82,26 @@ void FixVRC24CHR(void) {
 	if (vrc24.mwrap) {
 		vrc24.mwrap(vrc24.mirr);
 	}
+}
+
+static DECLFR(VRC24WRAMRead) {
+	A = 0x6000 | (A & (WRAMSIZE - 1));
+	return CartBR(A);
+}
+
+static DECLFW(VRC24WRAMWrite) {
+	A = 0x6000 | (A & (WRAMSIZE - 1));
+	CartBW(A, V);
+}
+
+static DECLFR(VRC24LatchRead) {
+	return (X.DB & ~0x01) | (vrc24.latch & 0x01);
+}
+
+static DECLFW(VRC24LatchWrite) {
+	vrc24.latch = V;
+	FixVRC24PRG();
+	FixVRC24CHR();
 }
 
 DECLFW(VRC24Write) {
@@ -127,7 +148,7 @@ DECLFW(VRC24Write) {
 		break;
 
 	default:
-		index = (((A & 0xF000) - 0xB000) >> 11) | ((A & vrc2and4_A1) ? 0x01 : 0x00);
+		index = (((A - 0xB000) >> 11) & 0x06) | ((A & vrc2and4_A1) ? 0x01 : 0x00);
 		if (A & vrc2and4_A0) {
 			/* m25 can be 512K, rest are 256K or less */
 			vrc24.chrreg[index] = (vrc24.chrreg[index] & 0x000F) | (V << 4);
@@ -181,9 +202,13 @@ void GenVRC24Power(void) {
 
 	if (WRAMSIZE) {
 		setprg8r(0x10, 0x6000, 0);
-		SetReadHandler(0x6000, 0x7FFF, CartBR);
-		SetWriteHandler(0x6000, 0x7FFF, CartBW);
+		SetReadHandler(0x6000, 0x7FFF, VRC24WRAMRead);
+		SetWriteHandler(0x6000, 0x7FFF, VRC24WRAMWrite);
 		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+	} else if (!vrc2and4_VRC4) {
+		/* microwire interface */
+		SetReadHandler(0x6000, 0x6FFF, VRC24LatchRead);
+		SetWriteHandler(0x6000, 0x6FFF, VRC24LatchWrite);
 	}
 
 	if (UNIFchrrama) {
@@ -213,16 +238,21 @@ void GenVRC24_Init(CartInfo *info, uint8 vrc4, uint32 A0, uint32 A1, int wram, i
 	vrc2and4_A1 = A1;
 	vrc2and4_VRC4 = vrc4;
 
-	WRAMSIZE = wram ? 8192 : 0;
-
 	if (wram) {
-		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
-		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
-		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+		if (info->iNES2) {
+			WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
+		} else {
+			WRAMSIZE = 8192;
+		}
+		if (WRAMSIZE) {
+			WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+			SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
+			AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
-		if (info->battery) {
-			info->SaveGame[0] = WRAM;
-			info->SaveGameLen[0] = WRAMSIZE;
+			if (info->battery) {
+				info->SaveGame[0] = WRAM;
+				info->SaveGameLen[0] = WRAMSIZE;
+			}
 		}
 	}
 

@@ -66,7 +66,7 @@ static void M524Power(void) {
 }
 
 void Mapper524_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2, 0x01, 0x02, 1, 1);
+	GenVRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
 	info->Power = M524Power;
 	MapIRQHook = M524IRQHook;
 	AddExState(IRQStateRegs, ~0, 0, NULL);

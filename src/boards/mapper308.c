@@ -70,7 +70,7 @@ static void M308Power(void) {
 }
 
 void Mapper308_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2, 0x01, 0x02, 1, 1);
+	GenVRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
 	info->Power = M308Power;
 	MapIRQHook = M308IRQHook;
 	AddExState(IRQStateRegs, ~0, 0, NULL);

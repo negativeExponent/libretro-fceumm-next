@@ -30,7 +30,7 @@ void Mapper025_Init(CartInfo *info) {
 	switch (info->submapper) {
 	case 1:  GenVRC24_Init(info, VRC4, 0x02, 0x01, 1, 1); break;
 	case 2:  GenVRC24_Init(info, VRC4, 0x08, 0x04, 1, 1); break;
-	case 3:  GenVRC24_Init(info, VRC2, 0x02, 0x01, 1, 1); break;
+	case 3:  GenVRC24_Init(info, VRC2, 0x02, 0x01, 0, 1); break;
 	default: GenVRC24_Init(info, VRC4, 0x0A, 0x05, 1, 1); break;
 	}
 	vrc24.cwrap = M025CW;

@@ -24,38 +24,16 @@
 #include "mapinc.h"
 #include "vrc2and4.h"
 
-/* TODO: move this register to VRC2 microwire interface when implemented */
-static uint8 wires;
-
-static SFORMAT StateRegs[] = {
-	{ &wires, 1, "WIRE" },
-	{ 0 },
-};
-
 static void M450PW(uint32 A, uint8 V) {
-    setprg8(A, (wires << 4) | (V & 0x0F));
+    setprg8(A, (vrc24.latch << 4) | (V & 0x0F));
 }
 
 static void M450CW(uint32 A, uint32 V) {
-    setchr1(A, (wires << 7) | (V & 0x7F));
-}
-
-static DECLFW(M450WriteReg) {
-	wires = V;
-	FixVRC24PRG();
-    FixVRC24CHR();
-}
-
-static void M450Power(void) {
-	wires = 0;
-	GenVRC24Power();
-	SetWriteHandler(0x6000, 0x6FFF, M450WriteReg);
+    setchr1(A, (vrc24.latch << 7) | (V & 0x7F));
 }
 
 void Mapper450_Init(CartInfo *info) {
 	GenVRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
-	info->Power = M450Power;
     vrc24.pwrap = M450PW;
     vrc24.cwrap = M450CW;
-	AddExState(StateRegs, ~0, 0, 0);
 }

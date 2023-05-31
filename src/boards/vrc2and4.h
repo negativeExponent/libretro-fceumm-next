@@ -25,6 +25,7 @@ typedef struct {
     uint16 chrreg[8];
     uint8 cmd;
     uint8 mirr;
+	uint8 latch; /* VRC2 $6000-$6FFF */
 
     void (*pwrap)(uint32 A, uint8 V);
     void (*cwrap)(uint32 A, uint32 V);
