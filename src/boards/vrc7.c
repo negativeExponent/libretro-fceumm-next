@@ -18,82 +18,39 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "mapinc.h"
-#include "emu2413.h"
+#include "vrc7.h"
 #include "vrcirq.h"
+#include "vrc7sound.h"
 
-static int32 dwave = 0;
-static OPLL *VRC7Sound = NULL;
-static uint8 vrc7idx, preg[3], creg[8], mirr;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
+static uint32 vrc7_A0;
+static uint32 vrc7_A1;
+
+VRC7 vrc7;
+
 static SFORMAT StateRegs[] =
 {
-	{ &vrc7idx, 1, "VRCI" },
-	{ preg, 3, "PREG" },
-	{ creg, 8, "CREG" },
-	{ &mirr, 1, "MIRR" },
+	{ vrc7.prg, 3, "PREG" },
+	{ vrc7.chr, 8, "CREG" },
+	{ &vrc7.mirr, 1, "MIRR" },
 
 	{ 0 }
 };
 
-/* VRC7 Sound */
-
-void DoVRC7Sound(void) {
-	int32 z, a;
-	if (FSettings.soundq >= 1)
-		return;
-	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
-	a = z - dwave;
-	OPLL_fillbuf(VRC7Sound, &Wave[dwave], a, 1);
-	dwave += a;
+static void GENPWRAP(uint32 A, uint8 V) {
+	setprg8(A, V & 0x3F);
 }
 
-void UpdateOPLNEO(int32 *Wave, int Count) {
-	OPLL_fillbuf(VRC7Sound, Wave, Count, 4);
+static void GENCWRAP(uint32 A, uint32 V) {
+	setchr1(A, V & 0x1FF);
 }
 
-void UpdateOPL(int Count) {
-	int32 z, a;
-	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
-	a = z - dwave;
-	if (VRC7Sound && a)
-		OPLL_fillbuf(VRC7Sound, &Wave[dwave], a, 1);
-	dwave = 0;
-}
+static void GENMWRAP(uint8 V) {
+	vrc7.mirr = V;
 
-static void VRC7SC(void) {
-	if (VRC7Sound)
-		OPLL_set_rate(VRC7Sound, FSettings.SndRate);
-}
-
-static void VRC7SKill(void) {
-	if (VRC7Sound)
-		OPLL_delete(VRC7Sound);
-	VRC7Sound = NULL;
-}
-
-static void VRC7_ESI(void) {
-	GameExpSound.RChange = VRC7SC;
-	GameExpSound.Kill = VRC7SKill;
-	VRC7Sound = OPLL_new(3579545, FSettings.SndRate ? FSettings.SndRate : 44100);
-	OPLL_reset(VRC7Sound);
-	OPLL_reset(VRC7Sound);
-}
-
-/* VRC7 Sound */
-
-static void Sync(void) {
-	uint8 i;
-	setprg8r(0x10, 0x6000, 0);
-	setprg8(0x8000, preg[0]);
-	setprg8(0xA000, preg[1]);
-	setprg8(0xC000, preg[2]);
-	setprg8(0xE000, ~0);
-	for (i = 0; i < 8; i++)
-		setchr1(i << 10, creg[i]);
-	switch (mirr & 3) {
+	switch (vrc7.mirr & 3) {
 	case 0: setmirror(MI_V); break;
 	case 1: setmirror(MI_H); break;
 	case 2: setmirror(MI_0); break;
@@ -101,60 +58,112 @@ static void Sync(void) {
 	}
 }
 
-static DECLFW(VRC7SW) {
-	if (FSettings.SndRate) {
-		OPLL_writeReg(VRC7Sound, vrc7idx, V);
-		GameExpSound.Fill = UpdateOPL;
-		GameExpSound.NeoFill = UpdateOPLNEO;
+void FixVRC7PRG(void) {
+	setprg8r(0x10, 0x6000, 0);
+	vrc7.pwrap(0x8000, vrc7.prg[0]);
+	vrc7.pwrap(0xa000, vrc7.prg[1]);
+	vrc7.pwrap(0xc000, vrc7.prg[2]);
+	vrc7.pwrap(0xe000, ~0);
+}
+
+void FixVRC7CHR(void) {
+	int i;
+	for (i = 0; i < 8; i++) {
+		vrc7.cwrap(i << 10, vrc7.chr[i]);
+	}
+
+	if (vrc7.mwrap) {
+		vrc7.mwrap(vrc7.mirr);
 	}
 }
 
-static DECLFW(VRC7Write) {
-	A |= (A & 8) << 1;	/* another two-in-oooone */
-	if (A >= 0xA000 && A <= 0xDFFF) {
-		A &= 0xF010;
-		creg[((A >> 4) & 1) | ((A - 0xA000) >> 11)] = V;
-		Sync();
-	} else if (A == 0x9030) {
-		VRC7SW(A, V);
-	} else switch (A & 0xF010) {
-		case 0x8000: preg[0] = V; Sync(); break;
-		case 0x8010: preg[1] = V; Sync(); break;
-		case 0x9000: preg[2] = V; Sync(); break;
-		case 0x9010: vrc7idx = V; break;
-		case 0xE000: mirr = V & 3; Sync(); break;
-		case 0xE010: VRCIRQ_Latch(V); break;
-		case 0xF000: VRCIRQ_Control(V); break;
-		case 0xF010: VRCIRQ_Acknowledge(); break;
+DECLFW(VRC7Write) {
+	int index;
+	switch (A & 0xF000) {
+	case 0x8000:
+	case 0x9000:
+		index = ((A >> 11) & 0x02) | ((A & vrc7_A0) ? 0x01 : 0x00);
+		switch (index) {
+		case 0x00:
+		case 0x01:
+		case 0x02:
+			vrc7.prg[index] = V;
+			FixVRC7PRG();
+			break;
+		default:
+			VRC7SW(A, V);
+			break;
 		}
+		break;
+	
+	case 0xA000:
+	case 0xB000:
+	case 0xC000:
+	case 0xD000:
+		index = ((A - 0xA000) >> 11) | ((A & vrc7_A0) ? 0x01 : 0x00);
+		vrc7.chr[index] = V;
+		FixVRC7CHR();
+		break;
+
+	case 0xE000:
+	case 0xF000:
+		index = ((A >> 11) & 0x02) | ((A & vrc7_A0) ? 0x01 : 0x00);
+		switch (index) {
+		case 0x00: if (vrc7.mwrap) vrc7.mwrap(V); break;
+		case 0x01: VRCIRQ_Latch(V); break;
+		case 0x02: VRCIRQ_Control(V); break;
+		case 0x03: VRCIRQ_Acknowledge(); break;
+		}
+		break;
+	}
 }
 
-static void VRC7Power(void) {
-	Sync();
+void GenVRC7Power(void) {
+	vrc7.prg[0] = 0;
+	vrc7.prg[1] = 1;
+	vrc7.prg[2] = ~1;
+
+	vrc7.chr[0] = 0;
+	vrc7.chr[1] = 1;
+	vrc7.chr[2] = 2;
+	vrc7.chr[3] = 3;
+	vrc7.chr[4] = 4;
+	vrc7.chr[5] = 5;
+	vrc7.chr[6] = 6;
+	vrc7.chr[7] = 7;
+
+	vrc7.mirr = 0;
+
+	FixVRC7PRG();
+	FixVRC7CHR();
+
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, VRC7Write);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void VRC7Close(void) {
-	if (WRAM)
+void GenVRC7Close(void) {
+	if (WRAM) {
 		FCEU_gfree(WRAM);
+	}
 	WRAM = NULL;
 }
 
-static void StateRestore(int version) {
-	Sync();
-
-#ifndef GEKKO
-	OPLL_forceRefresh(VRC7Sound);
-#endif
+void GenVRC7Restore(int version) {
+	VRC7SoundRestore();
+	FixVRC7PRG();
+	FixVRC7CHR();
 }
 
-void Mapper085_Init(CartInfo *info) {
-	info->Power = VRC7Power;
-	info->Close = VRC7Close;
-	VRCIRQ_Init(1);
+void GenVRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {
+	vrc7.pwrap = GENPWRAP;
+	vrc7.cwrap = GENCWRAP;
+	vrc7.mwrap = GENMWRAP;
+
+	vrc7_A0 = A0;
+	vrc7_A1 = A1;
+
 	WRAMSIZE = 8192;
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
@@ -163,34 +172,14 @@ void Mapper085_Init(CartInfo *info) {
 		info->SaveGame[0] = WRAM;
 		info->SaveGameLen[0] = WRAMSIZE;
 	}
-	GameStateRestore = StateRestore;
-	VRC7_ESI();
 	AddExState(&StateRegs, ~0, 0, 0);
 
-/* Ignoring these sound state files for Wii since it causes states unable to load */
-#ifndef GEKKO
-	/* Sound states */
-	AddExState(&VRC7Sound->adr, sizeof(VRC7Sound->adr), 0, "ADDR");
-	AddExState(&VRC7Sound->out, sizeof(VRC7Sound->out), 0, "OUT0");
-	AddExState(&VRC7Sound->realstep, sizeof(VRC7Sound->realstep), 0, "RTIM");
-	AddExState(&VRC7Sound->oplltime, sizeof(VRC7Sound->oplltime), 0, "TIME");
-	AddExState(&VRC7Sound->opllstep, sizeof(VRC7Sound->opllstep), 0, "STEP");
-	AddExState(&VRC7Sound->prev, sizeof(VRC7Sound->prev), 0, "PREV");
-	AddExState(&VRC7Sound->next, sizeof(VRC7Sound->next), 0, "NEXT");
-	AddExState(&VRC7Sound->LowFreq, sizeof(VRC7Sound->LowFreq), 0, "LFQ0");
-	AddExState(&VRC7Sound->HiFreq, sizeof(VRC7Sound->HiFreq), 0, "HFQ0");
-	AddExState(&VRC7Sound->InstVol, sizeof(VRC7Sound->InstVol), 0, "VOLI");
-	AddExState(&VRC7Sound->CustInst, sizeof(VRC7Sound->CustInst), 0, "CUSI");
-	AddExState(&VRC7Sound->slot_on_flag, sizeof(VRC7Sound->slot_on_flag), 0, "FLAG");
-	AddExState(&VRC7Sound->pm_phase, sizeof(VRC7Sound->pm_phase), 0, "PMPH");
-	AddExState(&VRC7Sound->lfo_pm, sizeof(VRC7Sound->lfo_pm), 0, "PLFO");
-	AddExState(&VRC7Sound->am_phase, sizeof(VRC7Sound->am_phase), 0, "AMPH");
-	AddExState(&VRC7Sound->lfo_am, sizeof(VRC7Sound->lfo_am), 0, "ALFO");
-	AddExState(&VRC7Sound->patch_number, sizeof(VRC7Sound->patch_number), 0, "PNUM");
-	AddExState(&VRC7Sound->key_status, sizeof(VRC7Sound->key_status), 0, "KET");
-	AddExState(&VRC7Sound->mask, sizeof(VRC7Sound->mask), 0, "MASK");
-	AddExState((uint8 *)VRC7Sound->slot, sizeof(VRC7Sound->slot), 0, "SLOT");
-#endif
+	info->Power = GenVRC7Power;
+	info->Close = GenVRC7Close;
+	GameStateRestore = GenVRC7Restore;
+
+	VRCIRQ_Init(1);
+	VRC7_ESI();
 }
 
 void NSFVRC7_Init(void) {
