@@ -86,8 +86,6 @@ void VRC7_ESI(void) {
 	GameExpSound.RChange = VRC7SC;
 	GameExpSound.Kill = VRC7SKill;
 	VRC7Sound = OPLL_new(3579545, FSettings.SndRate ? FSettings.SndRate : 44100);
-	OPLL_reset(VRC7Sound);
-	OPLL_reset(VRC7Sound);
 
 	/* Sound states */
     AddExState(&vrc7idx, sizeof(vrc7idx), 0, "VRCI");
