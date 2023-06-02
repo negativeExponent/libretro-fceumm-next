@@ -77,6 +77,14 @@ typedef long long int64;
 
 #define FCEU_MAYBE_UNUSED(x) (void)(x)
 
+#if !defined (FALSE)
+#define FALSE 0
+#endif
+
+#if !defined (TRUE)
+#define TRUE 1
+#endif
+
 typedef void (FP_FASTAPASS(2) *writefunc)(uint32 A, uint8 V);
 typedef uint8 (FP_FASTAPASS(1) *readfunc)(uint32 A);
 
