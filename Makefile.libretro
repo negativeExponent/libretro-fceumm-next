@@ -48,6 +48,10 @@ else ifneq ($(findstring MINGW,$(shell uname -a)),)
 	system_platform = win
 endif
 
+ifneq ($(V),1)
+   Q := @
+endif
+
 TARGET_NAME := fceumm
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
@@ -814,11 +818,13 @@ else
 	$(AR) rcs $@ $(OBJECTS)
 endif
 else
-	$(LD) $(LINKOUT)$@ $(SHARED) $(OBJECTS) $(LDFLAGS) $(LIBS)
+	@$(if $(Q), $(shell echo echo LD $@),)
+	$(Q)$(LD) $(LINKOUT)$@ $(SHARED) $(OBJECTS) $(LDFLAGS) $(LIBS)
 endif
 
 %.o: %.c
-	$(CC) -c $(OBJOUT)$@ $< $(CFLAGS) $(INCFLAGS)
+	@$(if $(Q), $(shell echo echo CC $<),)
+	$(Q)$(CC) -c $(OBJOUT)$@ $< $(CFLAGS) $(INCFLAGS)
 
 clean-objs:
 	rm -f $(OBJECTS)
