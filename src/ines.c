@@ -445,7 +445,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "BANDAI 24C02",              16, Mapper016_Init         )
 	INES_BOARD( "FFE Rev. B",                17, Mapper017_Init         )
 	INES_BOARD( "JALECO SS880006",           18, Mapper018_Init         ) /* JF-NNX (EB89018-30007) boards */
-	INES_BOARD( "Namcot 106",                19, Mapper019_Init         )
+	INES_BOARD( "Namco 129/163",             19, Mapper019_Init         )
 /*    INES_BOARD( "",                         20, Mapper20_Init ) */
 	INES_BOARD( "Konami VRC2/VRC4 A",        21, Mapper021_Init         )
 	INES_BOARD( "Konami VRC2/VRC4 B",        22, Mapper022_Init         )

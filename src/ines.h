@@ -47,7 +47,7 @@ extern iNES_HEADER head;
 void NSFVRC6_Init(void);
 void NSFMMC5_Init(void);
 void NSFAY_Init(void);
-void NSFN106_Init(void);
+void NSFN163_Init(void);
 void NSFVRC7_Init(void);
 
 void Mapper001_Init(CartInfo *);

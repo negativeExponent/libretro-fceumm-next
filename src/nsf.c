@@ -113,7 +113,7 @@ void NSFGI(int h) {
 		} else if (NSFHeader.SoundChip & 8) {
 			NSFMMC5_Close();
 		} else if (NSFHeader.SoundChip & 0x10) {
-/*   NSFN106_Init(); */
+/*   NSFN163_Init(); */
 		} else if (NSFHeader.SoundChip & 0x20) {
 /*   NSFAY_Init(); */
 		}
@@ -235,7 +235,7 @@ static DECLFR(NSFVectorRead) {
 void NSFVRC6_Init(void);
 void NSFVRC7_Init(void);
 void NSFMMC5_Init(void);
-void NSFN106_Init(void);
+void NSFN163_Init(void);
 void NSFAY_Init(void);
 
 void NSF_init(void) {
@@ -294,7 +294,7 @@ void NSF_init(void) {
 	} else if (NSFHeader.SoundChip & 8) {
 		NSFMMC5_Init();
 	} else if (NSFHeader.SoundChip & 0x10) {
-		NSFN106_Init();
+		NSFN163_Init();
 	} else if (NSFHeader.SoundChip & 0x20) {
 		NSFAY_Init();
 	}
