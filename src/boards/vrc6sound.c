@@ -61,6 +61,7 @@ static INLINE void DoSQV(int x) {
 	cvbc[x] = end;
 
 	if (vpsg1[(x << 2) | 0x2] & 0x80) {
+		amp = GetVolume(APU_VRC6, amp);
 		if (vpsg1[x << 2] & 0x80) {
 			for (V = start; V < end; V++)
 				Wave[V >> 4] += amp;
@@ -125,6 +126,7 @@ static void DoSawV(void) {
 				if (vcount[2] <= 0)
 					goto rea;
 				duff = (((phaseacc >> 3) & 0x1f) << 4) * 6 / 8;
+				duff = GetVolume(APU_VRC6, duff);
 			}
 			Wave[V >> 4] += duff;
 		}
@@ -136,6 +138,7 @@ static INLINE void DoSQVHQ(int x) {
 	int32 amp = ((vpsg1[x << 2] & 15) << 8) * 6 / 8;
 
 	if (vpsg1[(x << 2) | 0x2] & 0x80) {
+		amp = GetVolume(APU_VRC6, amp);
 		if (vpsg1[x << 2] & 0x80) {
 			for (V = cvbc[x]; V < (int)SOUNDTS; V++)
 				WaveHi[V] += amp;
@@ -170,10 +173,13 @@ static void DoSQV2HQ(void) {
 
 static void DoSawVHQ(void) {
 	int32 V;
+	int32 duff;
 
 	if (vpsg2[2] & 0x80) {
 		for (V = cvbc[2]; V < (int)SOUNDTS; V++) {
-			WaveHi[V] += (((phaseacc >> 3) & 0x1f) << 8) * 6 / 8;
+			duff = (((phaseacc >> 3) & 0x1f) << 8) * 6 / 8;
+			duff = GetVolume(APU_VRC6, duff);
+			WaveHi[V] += duff;
 			vcount[2]--;
 			if (vcount[2] <= 0) {
 				vcount[2] = (vpsg2[1] + ((vpsg2[2] & 15) << 8) + 1) << 1;
@@ -224,8 +230,7 @@ DECLFW(VRC6SW) {
 	}
 }
 
-void VRC6_ESI(void) {
-	GameExpSound.RChange = VRC6_ESI;
+static void VRC6_SC(void) {
 	GameExpSound.Fill = VRC6Sound;
 	GameExpSound.HiFill = VRC6SoundHQ;
 	GameExpSound.HiSync = VRC6SyncHQ;
@@ -246,6 +251,10 @@ void VRC6_ESI(void) {
 		}
 	} else
 		memset(sfun, 0, sizeof(sfun));
+}
 
+void VRC6_ESI(void) {
+	GameExpSound.RChange = VRC6_SC;
+	VRC6_SC();
     AddExState(&SStateRegs, ~0, 0, 0);
 }

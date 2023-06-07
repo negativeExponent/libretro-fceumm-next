@@ -830,8 +830,10 @@ clean-objs:
 	rm -f $(OBJECTS)
 
 clean:
-	rm -f $(OBJECTS)
-	rm -f $(TARGET)
+	@$(if $(Q), $(shell echo echo rm -rf *.o),)
+	$(Q)rm -f $(OBJECTS)
+	@$(if $(Q), $(shell echo echo rm -rf $(TARGET)),)
+	$(Q)rm -f $(TARGET)
 
 .PHONY: clean clean-objs
 endif

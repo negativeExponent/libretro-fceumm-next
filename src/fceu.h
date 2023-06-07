@@ -66,11 +66,10 @@ extern uint8 PAL;
 
 typedef struct {
 	int PAL;
-	int SoundVolume;
-	int TriangleVolume;
-	int SquareVolume[2];
-	int NoiseVolume;
-	int PCMVolume;
+	
+	int SoundVolume; /* master volume */
+	int volume[11]; /* nes apu and expansion */
+	
 	int GameGenie;
 
 	/* Current first and last rendered scanlines. */
@@ -82,7 +81,7 @@ typedef struct {
 	 */
 	int UsrFirstSLine[2];
 	int UsrLastSLine[2];
-	uint32 SndRate;
+	int SndRate;
 	int soundq;
 	int lowpass;
 } FCEUS;

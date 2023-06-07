@@ -115,7 +115,7 @@ static INLINE uint32 FetchDuffHQ(uint32 P, uint32 envelope) {
 		duff = IRAM[sample >> 1] & 0x0F;
 	}
 	duff = (duff * envelope) >> 16;
-	return(duff);
+	return (uint32)GetVolume(APU_N163, duff);
 }
 
 static void DoN163SoundHQ(void) {
@@ -163,7 +163,7 @@ static INLINE uint32 FetchDuff(uint32 P, uint32 envelope) {
 		duff = IRAM[sample >> 1] & 0x0F;
 	}
 	duff = (duff * envelope) >> 19;
-	return(duff);
+	return (uint32)GetVolume(APU_N163, duff);
 }
 
 static void DoN163Sound(int32 *Wave, int Count) {

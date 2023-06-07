@@ -513,7 +513,7 @@ void RDoPCM(void) {
 
 	for (V = ChannelBC[4]; V < SOUNDTS; V++)
 		/* TODO: get rid of floating calculations to binary. set log volume scaling. */
-		WaveHi[V] += (((RawDALatch << 16) / 256) * FSettings.PCMVolume ) & (~0xFFFF);
+        WaveHi[V] += GetVolume(APU_DPCM, RawDALatch << 16) & (~0xFFFF);
 
 	ChannelBC[4] = SOUNDTS;
 }
@@ -549,14 +549,8 @@ static INLINE void RDoSQ(int x) {
 			amp = EnvUnits[x].Speed;
 		else
 			amp = EnvUnits[x].decvolume;
-
-		/* Modify Square wave volume based on channel volume modifiers
-		 * Note: the formulat x = x * y /100 does not yield exact results,
-		 * but is "close enough" and avoids the need for using double values
-		 * or implicit cohersion which are slower (we need speed here) */
-		/* TODO: Optimize this. */
-		if (FSettings.SquareVolume[x] != 256)
-			amp = (amp * FSettings.SquareVolume[x]) / 256;
+		
+		amp = GetVolume(APU_SQUARE1 + x, amp);
 
 		amp <<= 24;
 		dutyCycle = (PSG[(x << 2)] & 0xC0) >> 6;
@@ -625,14 +619,7 @@ static void RDoSQLQ(void) {
 		else
 			amp[x] = EnvUnits[x].decvolume;
 
-		/* Modify Square wave volume based on channel volume modifiers
-		 * Note: the formulat x = x * y /100 does not yield exact results,
-		 * but is "close enough" and avoids the need for using double vales
-		 * or implicit cohersion which are slower (we need speed here)
-		 * fixed - setting up maximum volume for square2 caused complete mute square2 channel.
-		 * TODO: Optimize this. */
-		if (FSettings.SquareVolume[x] != 256)
-			amp[x] = (amp[x] * FSettings.SquareVolume[x]) / 256;
+		amp[x] = GetVolume(APU_SQUARE1 + x, amp[x]);
 
 		if (!inie[x]) amp[x] = 0;	/* Correct? Buzzing in MM2, others otherwise... */
 
@@ -696,22 +683,23 @@ static void RDoTriangle(void) {
 	tcout = (tristep & 0xF);
 	if (!(tristep & 0x10)) tcout ^= 0xF;
 	tcout = (tcout * 3) << 16;	/* (tcout<<1); */
+    tcout = GetVolume(APU_TRIANGLE, tcout);
 
 	if (!lengthcount[2] || !TriCount) {	/* Counter is halted, but we still need to output. */
 		int32 *start = &WaveHi[ChannelBC[2]];
 		int32 count = SOUNDTS - ChannelBC[2];
 		while (count--) {
-			*start += (tcout / 256 * FSettings.TriangleVolume) & (~0xFFFF);  /* TODO OPTIMIZE ME */
+			*start += tcout & (~0xFFFF);
 			start++;
 		}
 
-		/* cout = (tcout / 256 * FSettings.TriangleVolume) & (~0xFFFF);
+		/* cout = tcout & (~0xFFFF);
 		for(V = ChannelBC[2]; V < SOUNDTS; V++)
 			WaveHi[V] += cout; */
 
 	} else {
 		for (V = ChannelBC[2]; V < SOUNDTS; V++) {
-			WaveHi[V] += (tcout / 256 * FSettings.TriangleVolume) & (~0xFFFF);  /* TODO OPTIMIZE ME! */
+			WaveHi[V] += tcout & (~0xFFFF);
 			wlcount[2]--;
 			if (!wlcount[2]) {
 				wlcount[2] = (PSG[0xa] | ((PSG[0xb] & 7) << 8)) + 1;
@@ -719,6 +707,7 @@ static void RDoTriangle(void) {
 				tcout = (tristep & 0xF);
 				if (!(tristep & 0x10)) tcout ^= 0xF;
 				tcout = (tcout * 3) << 16;
+                tcout = GetVolume(APU_TRIANGLE, tcout);
 			}
 		}
     }
@@ -733,6 +722,7 @@ static void RDoTriangleNoisePCMLQ(void) {
 	int32 inie[2];
 	uint32 amptab[2];
 	uint32 noiseout;
+    uint32 pcmout;
 	int nshift;
 
 	int32 totalout;
@@ -755,13 +745,8 @@ static void RDoTriangleNoisePCMLQ(void) {
 	else
 		amptab[0] = EnvUnits[2].decvolume;
 
-	/* Modify Triangle wave volume based on channel volume modifiers
-	 * Note: the formulat x = x * y /100 does not yield exact results,
-	 * but is "close enough" and avoids the need for using double vales
-	 * or implicit cohersion which are slower (we need speed here)
-	 * TODO: Optimize this. */
-	if (FSettings.TriangleVolume != 256)
-		amptab[0] = (amptab[0] * FSettings.TriangleVolume) / 256;
+    pcmout = GetVolume(APU_DPCM, RawDALatch);
+    amptab[0] = GetVolume(APU_NOISE, amptab[0]);
 
 	amptab[1] = 0;
 	amptab[0] <<= 1;
@@ -776,7 +761,7 @@ static void RDoTriangleNoisePCMLQ(void) {
 	else
 		nshift = 13;
 
-	totalout = wlookup2[lq_tcout + noiseout + RawDALatch];
+	totalout = wlookup2[lq_tcout + noiseout + pcmout];
 
 	if (inie[0] && inie[1]) {
 		for (V = start; V < end; V++) {
@@ -793,7 +778,8 @@ static void RDoTriangleNoisePCMLQ(void) {
 				lq_tcout = (tristep & 0xF);
 				if (!(tristep & 0x10)) lq_tcout ^= 0xF;
 				lq_tcout = lq_tcout * 3;
-				totalout = wlookup2[lq_tcout + noiseout + RawDALatch];
+                lq_tcout = GetVolume(APU_TRIANGLE, lq_tcout);
+				totalout = wlookup2[lq_tcout + noiseout + pcmout];
 			}
 
 			if (lq_noiseacc <= 0) {
@@ -809,7 +795,7 @@ static void RDoTriangleNoisePCMLQ(void) {
 				nreg &= 0x7fff;
 				noiseout = amptab[(nreg >> 0xe) & 1];
 				if (lq_noiseacc <= 0) goto rea2;
-				totalout = wlookup2[lq_tcout + noiseout + RawDALatch];
+				totalout = wlookup2[lq_tcout + noiseout + pcmout];
 			}	/* noiseacc<=0 */
 		}	/* for(V=... */
 	} else if (inie[0]) {
@@ -826,7 +812,8 @@ static void RDoTriangleNoisePCMLQ(void) {
 				lq_tcout = (tristep & 0xF);
 				if (!(tristep & 0x10)) lq_tcout ^= 0xF;
 				lq_tcout = lq_tcout * 3;
-				totalout = wlookup2[lq_tcout + noiseout + RawDALatch];
+                lq_tcout = GetVolume(APU_TRIANGLE, lq_tcout);
+				totalout = wlookup2[lq_tcout + noiseout + pcmout];
 			}
 		}
 	} else if (inie[1]) {
@@ -846,7 +833,7 @@ static void RDoTriangleNoisePCMLQ(void) {
 				nreg &= 0x7fff;
 				noiseout = amptab[(nreg >> 0xe) & 1];
 				if (lq_noiseacc <= 0) goto area2;
-				totalout = wlookup2[lq_tcout + noiseout + RawDALatch];
+				totalout = wlookup2[lq_tcout + noiseout + pcmout];
 			}	/* noiseacc<=0 */
 		}
 	} else {
@@ -865,13 +852,7 @@ static void RDoNoise(void) {
 	else
 		amptab[0] = EnvUnits[2].decvolume;
 
-	/* Modify Noise wave volume based on channel volume modifiers
-	* Note: the formulat x = x * y /100 does not yield exact results,
-	* but is "close enough" and avoids the need for using double vales
-	* or implicit cohersion which are slower (we need speed here)
-	* TODO: Optimize this. */
-	if (FSettings.NoiseVolume != 256)
-		amptab[0] = (amptab[0] * FSettings.NoiseVolume) / 256;
+	amptab[0] = GetVolume(APU_NOISE, amptab[0]);
 
 	amptab[0] <<= 16;
 	amptab[1] = 0;

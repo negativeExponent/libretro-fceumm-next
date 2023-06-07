@@ -818,9 +818,12 @@ static INLINE int16 calc(OPLL * opll) {
 	return (int16)out;
 }
 
+#include "../fceu.h"
+#include "../sound.h"
+
 void OPLL_fillbuf(OPLL* opll, int32 *buf, int32 len, int shift) {
 	while (len > 0) {
-		*buf += (calc(opll) + 32768) << shift;
+		*buf += GetVolume(APU_VRC7, (calc(opll) + 32768) << shift);
 		buf++;
 		len--;
 	}

@@ -305,6 +305,7 @@ endlseq:
 }
 
 int FCEUI_Initialize(void) {
+	int x;
 	if (!FCEU_InitVirtualVideo())
 		return 0;
 	memset(&FSettings, 0, sizeof(FSettings));
@@ -313,6 +314,9 @@ int FCEUI_Initialize(void) {
 	FSettings.UsrLastSLine[0] = 231;
 	FSettings.UsrLastSLine[1] = 239;
 	FSettings.SoundVolume = 100;
+	for (x = 0; x < (sizeof(FSettings.volume) / sizeof(FSettings.volume[0])); x++) {
+		FSettings.volume[x] = 256; /* 0-256 scale, (256 max volume) */
+	}
 	FCEUPPU_Init();
 	X6502_Init();
 	return 1;

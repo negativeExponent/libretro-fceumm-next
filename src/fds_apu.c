@@ -212,7 +212,7 @@ static INLINE int32 FDSDoSound(void) {
 	{
 		int k = amplitude[0];
 		if (k > 0x20) k = 0x20;
-		return (fdso.cwave[b24latch68 >> 19] * k) * 4 / ((SPSG[0x9] & 0x3) + 2);
+		return GetVolume(APU_FDS, (fdso.cwave[b24latch68 >> 19] * k) * 4 / ((SPSG[0x9] & 0x3) + 2));
 	}
 }
 

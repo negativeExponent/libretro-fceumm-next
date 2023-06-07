@@ -89,6 +89,7 @@ static void DoAYSQ(int x) {
 	int V;
 
 	amp += amp >> 1;
+	amp = GetVolume(APU_S5B, amp);
 
 	start = CAYBC[x];
 	end = (SOUNDTS << 16) / soundtsinc;
@@ -96,7 +97,7 @@ static void DoAYSQ(int x) {
 		return;
 	CAYBC[x] = end;
 
-	if (amp && !(sreg[0x7] & (1 << x)))
+	if (amp && !(sreg[0x7] & (1 << x))) {
 		for (V = start; V < end; V++) {
 			if (dcount[x])
 				Wave[V >> 4] += amp;
@@ -106,6 +107,7 @@ static void DoAYSQ(int x) {
 				vcount[x] += freq;
 			}
 		}
+	}
 }
 
 static void DoAYSQHQ(int x) {
@@ -114,6 +116,7 @@ static void DoAYSQHQ(int x) {
 	int32 amp = (sreg[0x8 + x] & 15) << 6;
 
 	amp += amp >> 1;
+	amp = GetVolume(APU_S5B, amp);
 
 	if (!(sreg[0x7] & (1 << x))) {
 		for (V = CAYBC[x]; V < SOUNDTS; V++) {

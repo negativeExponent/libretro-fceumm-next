@@ -1835,20 +1835,42 @@ void retro_reset(void)
    ResetNES();
 }
 
-static void set_apu_channels(int chan)
+static void set_apu_channels(void)
 {
-   FSettings.SquareVolume[1] = (chan & 1) ? 256 : 0;
-   FSettings.SquareVolume[0] = (chan & 2) ? 256 : 0;
-   FSettings.TriangleVolume  = (chan & 3) ? 256 : 0;
-   FSettings.NoiseVolume     = (chan & 4) ? 256 : 0;
-   FSettings.PCMVolume       = (chan & 5) ? 256 : 0;
+   char apu_name[][25] = {
+      "fceumm_apu_sq1",
+      "fceumm_apu_sq2",
+      "fceumm_apu_tri",
+      "fceumm_apu_noise",
+      "fceumm_apu_dpcm",
+      "fceumm_apu_fds",
+      "fceumm_apu_s5b",
+      "fceumm_apu_n163",
+      "fceumm_apu_vrc6",
+      "fceumm_apu_vrc7",
+      "fceumm_apu_mmc5",
+   };
+
+   struct retro_variable var = { 0 };
+   int i = 0;
+   int ssize = sizeof(apu_name) / sizeof(apu_name[0]);
+
+   for (i = 0; i < ssize; i++) {
+      var.key = apu_name[i];
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
+         int newval = atoi(var.value);
+         if (FSettings.volume[i] != newval) {
+            FSettings.volume[i] = newval;
+         }
+      } else {
+         FSettings.volume[i] = 256; /* set to max volume */
+      }
+   }
 }
 
 static void check_variables(bool startup)
 {
-   struct retro_variable var = {0};
-   char key[256];
-   int i, enable_apu;
+   struct retro_variable var = { 0 };
    bool stereo_filter_updated = false;
 
    /* 1 = Performs only geometry update: e.g. overscans */
@@ -2257,19 +2279,7 @@ static void check_variables(bool startup)
          swapDuty = newval;
    }
 
-   var.key = key;
-
-   enable_apu = 0xff;
-
-   strcpy(key, "fceumm_apu_x");
-   for (i = 0; i < 5; i++)
-   {
-      key[strlen("fceumm_apu_")] = '1' + i;
-      var.value = NULL;
-      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && !strcmp(var.value, "disabled"))
-         enable_apu &= ~(1 << i);
-   }
-   set_apu_channels(enable_apu);
+   set_apu_channels();
 
    update_dipswitch();
 
