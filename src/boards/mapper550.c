@@ -22,8 +22,8 @@
 
 #include "mmc1.h"
 
-static uint8_t latch;
-static uint8_t reg;
+static uint8 latch;
+static uint8 reg;
 
 static void M550PW(uint32 A, uint8 V) {
 	if ((reg & 0x06) == 0x06) {

@@ -2102,7 +2102,7 @@ static void COOLGIRL_Restore(int version) {
 #define ExState(var, varname) AddExState(&var, sizeof(var), 0, varname)
 
 void COOLGIRL_Init(CartInfo *info) {
-	size_t i;
+	int i;
 
 	info->Power = COOLGIRL_Power;
 	info->Reset = COOLGIRL_Reset;

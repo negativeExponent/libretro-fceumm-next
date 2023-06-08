@@ -32,7 +32,7 @@ static uint8 submapper;
 
 static void M313CW(uint32 A, uint8 V) {
 	/*FCEU_printf("CHR: A:%04x V:%02x 0:%02x\n", A, V, mmc3.expregs[0]);*/
-	uint32_t bank;
+	uint32 bank;
 	switch (submapper) {
 	default: bank = (mmc3.expregs[0] << 7) | (V & 0x7F); break;
 	case 1: bank = (mmc3.expregs[0] << 7) | (V & 0x7F); break;
@@ -45,7 +45,7 @@ static void M313CW(uint32 A, uint8 V) {
 
 static void M313PW(uint32 A, uint8 V) {
 	/*FCEU_printf("PRG: A:%04x V:%02x 0:%02x\n", A, V, mmc3.expregs[0]);*/
-	uint32_t bank;
+	uint32 bank;
 	switch (submapper) {
 	default: bank = (mmc3.expregs[0] << 4) | (V & 0x0F); break;
 	case 1: bank = (mmc3.expregs[0] << 5) | (V & 0x1F); break;

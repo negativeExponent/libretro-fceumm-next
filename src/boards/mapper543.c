@@ -22,9 +22,9 @@
 
 #include "mmc1.h"
 
-static uint8_t reg;
-static uint8_t bits;
-static uint8_t shift;
+static uint8 reg;
+static uint8 bits;
+static uint8 shift;
 
 static void M543PW(uint32 A, uint8 V) {
 	setprg16(A, (V & 0x0F) | (reg << 4));

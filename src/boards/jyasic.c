@@ -67,14 +67,14 @@ static SFORMAT JYASIC_stateRegs[] = {
 	{ 0 }
 };
 
-static uint8 rev(uint8_t val) {
+static uint8 rev(uint8 val) {
 	return ((val << 6) & 0x40) | ((val << 4) & 0x20) | ((val << 2) & 0x10) | (val & 0x08) | ((val >> 2) & 0x04) |
 	    ((val >> 4) & 0x02) | ((val >> 6) & 0x01);
 }
 
 static void syncPRG(int AND, int OR) {
-	uint8_t prgLast = (mode[0] & 0x04) ? prg[3] : 0xFF;
-	uint8_t prg6000 = 0;
+	uint8 prgLast = (mode[0] & 0x04) ? prg[3] : 0xFF;
+	uint8 prg6000 = 0;
 	switch (mode[0] & 0x03) {
 		case 0:
 			setprg32(0x8000, (prgLast & (AND >> 2)) | (OR >> 2));
@@ -171,7 +171,7 @@ static void syncNT(int AND, int OR) {
 }
 
 static void clockIRQ(void) {
-	uint8_t mask = irqControl & 0x04 ? 0x07 : 0xFF;
+	uint8 mask = irqControl & 0x04 ? 0x07 : 0xFF;
 	bool clockIrqCounter = false;
 	uint8 prescaler = irqPrescaler & mask;
 

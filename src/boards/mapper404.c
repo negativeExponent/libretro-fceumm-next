@@ -24,7 +24,7 @@
 
 #include "mmc1.h"
 
-static uint8_t reg;
+static uint8 reg;
 
 static void M404PW(uint32 A, uint8 V) {
 	uint8 mask = (reg & 0x40) ? 0x07 : 0x0F;
