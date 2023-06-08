@@ -25,6 +25,14 @@ static uint8 vrc7idx;
 
 static OPLL *VRC7Sound = NULL;
 
+static void OPLL_fillbuf(OPLL *opll, int32 *buf, int32 len, int shift) {
+	while (len > 0) {
+		*buf += GetVolume(APU_VRC7, (OPLL_calc(opll) << shift));
+		buf++;
+		len--;
+	}
+}
+
 void DoVRC7Sound(void) {
 	int32 z, a;
 	if (FSettings.soundq >= 1) {
@@ -86,29 +94,41 @@ void VRC7_ESI(void) {
 	GameExpSound.RChange = VRC7SC;
 	GameExpSound.Kill = VRC7SKill;
 	VRC7Sound = OPLL_new(3579545, FSettings.SndRate ? FSettings.SndRate : 44100);
+	OPLL_setChipType(VRC7Sound, OPLL_VRC7_TONE);
+	OPLL_resetPatch(VRC7Sound, OPLL_VRC7_TONE);
 
 	/* Sound states */
     AddExState(&vrc7idx, sizeof(vrc7idx), 0, "VRCI");
-	AddExState(&VRC7Sound->adr, sizeof(VRC7Sound->adr), 0, "ADDR");
-	AddExState(&VRC7Sound->out, sizeof(VRC7Sound->out), 0, "OUT0");
-	AddExState(&VRC7Sound->realstep, sizeof(VRC7Sound->realstep), 0, "RTIM");
-	AddExState(&VRC7Sound->oplltime, sizeof(VRC7Sound->oplltime), 0, "TIME");
-	AddExState(&VRC7Sound->opllstep, sizeof(VRC7Sound->opllstep), 0, "STEP");
-	AddExState(&VRC7Sound->prev, sizeof(VRC7Sound->prev), 0, "PREV");
-	AddExState(&VRC7Sound->next, sizeof(VRC7Sound->next), 0, "NEXT");
-	AddExState(&VRC7Sound->LowFreq, sizeof(VRC7Sound->LowFreq), 0, "LFQ0");
-	AddExState(&VRC7Sound->HiFreq, sizeof(VRC7Sound->HiFreq), 0, "HFQ0");
-	AddExState(&VRC7Sound->InstVol, sizeof(VRC7Sound->InstVol), 0, "VOLI");
-	AddExState(&VRC7Sound->CustInst, sizeof(VRC7Sound->CustInst), 0, "CUSI");
-	AddExState(&VRC7Sound->slot_on_flag, sizeof(VRC7Sound->slot_on_flag), 0, "FLAG");
+	AddExState(&VRC7Sound->clk, sizeof(VRC7Sound->clk), 0, "CLK7");
+	AddExState(&VRC7Sound->rate, sizeof(VRC7Sound->rate), 0, "RATE");
+
+	AddExState(&VRC7Sound->chip_type, sizeof(VRC7Sound->chip_type), 0, "CHIP");
+
+	AddExState(&VRC7Sound->adr, sizeof(VRC7Sound->adr), 0, "ADR7");
+
+	AddExState(&VRC7Sound->inp_step, sizeof(VRC7Sound->inp_step), 0, "ISTP");
+	AddExState(&VRC7Sound->out_step, sizeof(VRC7Sound->out_step), 0, "OSTP");
+	AddExState(&VRC7Sound->out_time, sizeof(VRC7Sound->out_time), 0, "OTME");
+
+	AddExState(VRC7Sound->reg, sizeof(VRC7Sound->reg), 0, "REG7");
+	AddExState(&VRC7Sound->test_flag, sizeof(VRC7Sound->test_flag), 0, "TFLG");
+	AddExState(&VRC7Sound->slot_key_status, sizeof(VRC7Sound->slot_key_status), 0, "SKST");
+	AddExState(&VRC7Sound->rhythm_mode, sizeof(VRC7Sound->rhythm_mode), 0, "RMOD");
+
+	AddExState(&VRC7Sound->eg_counter, sizeof(VRC7Sound->eg_counter), 0, "ECTR");
+
 	AddExState(&VRC7Sound->pm_phase, sizeof(VRC7Sound->pm_phase), 0, "PMPH");
-	AddExState(&VRC7Sound->lfo_pm, sizeof(VRC7Sound->lfo_pm), 0, "PLFO");
 	AddExState(&VRC7Sound->am_phase, sizeof(VRC7Sound->am_phase), 0, "AMPH");
-	AddExState(&VRC7Sound->lfo_am, sizeof(VRC7Sound->lfo_am), 0, "ALFO");
-	AddExState(&VRC7Sound->patch_number, sizeof(VRC7Sound->patch_number), 0, "PNUM");
-	AddExState(&VRC7Sound->key_status, sizeof(VRC7Sound->key_status), 0, "KET");
-	AddExState(&VRC7Sound->mask, sizeof(VRC7Sound->mask), 0, "MASK");
-    AddExState(&VRC7Sound->slot[0], sizeof(VRC7Sound->slot[0]), 0, "SL00");
+
+	AddExState(&VRC7Sound->lfo_am, sizeof(VRC7Sound->lfo_am), 0, "LFO7");
+
+	AddExState(&VRC7Sound->noise, sizeof(VRC7Sound->noise), 0, "NOIS");
+	AddExState(&VRC7Sound->short_noise, sizeof(VRC7Sound->short_noise), 0, "SNOS");
+
+	AddExState(VRC7Sound->patch_number, sizeof(VRC7Sound->patch_number), 0, "PTNM");
+
+	/* VRC7 only uses 12 slots */
+	AddExState(&VRC7Sound->slot[0], sizeof(VRC7Sound->slot[0]), 0, "SL00");
     AddExState(&VRC7Sound->slot[1], sizeof(VRC7Sound->slot[1]), 0, "SL01");
     AddExState(&VRC7Sound->slot[2], sizeof(VRC7Sound->slot[2]), 0, "SL02");
     AddExState(&VRC7Sound->slot[3], sizeof(VRC7Sound->slot[3]), 0, "SL03");
@@ -120,6 +140,15 @@ void VRC7_ESI(void) {
     AddExState(&VRC7Sound->slot[9], sizeof(VRC7Sound->slot[9]), 0, "SL09");
     AddExState(&VRC7Sound->slot[10], sizeof(VRC7Sound->slot[10]), 0, "SL10");
     AddExState(&VRC7Sound->slot[11], sizeof(VRC7Sound->slot[11]), 0, "SL11");
+
+	AddExState(&VRC7Sound->mask, sizeof(VRC7Sound->mask), 0, "MASK");
+
+	AddExState(VRC7Sound->ch_out, sizeof(VRC7Sound->ch_out), 0, "CHOU");
+	AddExState(VRC7Sound->mix_out, sizeof(VRC7Sound->mix_out), 0, "MIXO");
+
+	/* custom patches */
+	AddExState(&VRC7Sound->patch[0], sizeof(VRC7Sound->patch[0]), 0, "PAT0");
+	AddExState(&VRC7Sound->patch[1], sizeof(VRC7Sound->patch[1]), 0, "PAT1");
 }
 
 /* VRC7 Sound */
