@@ -60,8 +60,6 @@ typedef struct {
 	int (*init)(FCEUFILE *fp);
 } BFMAPPING;
 
-CartInfo UNIFCart;
-
 static int vramo;
 static int mirrortodo;
 static int submapper;
@@ -132,7 +130,7 @@ static void ResetUNIF(void) {
 	mirrortodo = 0;
 	submapper = 0;
 	cspecial = 0;
-	memset(&UNIFCart, 0, sizeof(UNIFCart));
+	memset(&iNESCart, 0, sizeof(iNESCart));
 	UNIFchrrama = 0;
 	prg_chip_count = 0;
 	chr_chip_count = 0;
@@ -284,8 +282,8 @@ static int TVCI(FCEUFILE *fp) {
 
 static int EnableBattery(FCEUFILE *fp) {
 	int ret = FCEU_fgetc(fp);
-	UNIFCart.battery = (ret > 0) ? 1 : 0;
-	if (UNIFCart.battery)
+	iNESCart.battery = (ret > 0) ? 1 : 0;
+	if (iNESCart.battery)
 		FCEU_printf(" Battery-backed.\n");
 	return(1);
 }
@@ -381,7 +379,7 @@ static void CheckHashInfo(void) {
 	uint64 partialMD5 = 0;
 
 	for (x = 0; x < 8; x++)
-		partialMD5 |= (uint64)UNIFCart.MD5[15 - x] << (x * 8);
+		partialMD5 |= (uint64)iNESCart.MD5[15 - x] << (x * 8);
 
 	x = 0;
 	do {
@@ -710,11 +708,11 @@ static int InitializeBoard(void) {
 				mirrortodo = 4;
 			MooMirroring();
 
-			UNIFCart.mapper    = bmap[x].ines_mapper;
-			UNIFCart.submapper = submapper;
+			iNESCart.mapper    = bmap[x].ines_mapper;
+			iNESCart.submapper = submapper;
 			GameInfo->cspecial = cspecial;
 
-			bmap[x].init(&UNIFCart);
+			bmap[x].init(&iNESCart);
 			return(1);
 		}
 		x++;
@@ -727,17 +725,17 @@ static int InitializeBoard(void) {
 static void UNIFGI(int h) {
 	switch (h) {
 	case GI_RESETM2:
-		if (UNIFCart.Reset)
-			UNIFCart.Reset();
+		if (iNESCart.Reset)
+			iNESCart.Reset();
 		break;
 	case GI_POWER:
-		if (UNIFCart.Power)
-			UNIFCart.Power();
+		if (iNESCart.Power)
+			iNESCart.Power();
 		if (UNIFchrrama) memset(UNIFchrrama, 0, 8192);
 		break;
 	case GI_CLOSE:
-		if (UNIFCart.Close)
-			UNIFCart.Close();
+		if (iNESCart.Close)
+			iNESCart.Close();
 		FreeUNIF();
 		break;
 	}
@@ -816,19 +814,19 @@ int UNIFLoad(const char *name, FCEUFILE *fp) {
 
 	/* Note: Use raw size in bytes for checksums */
 
-	UNIFCart.PRGRomSize = prg_size_bytes;
-	UNIFCart.CHRRomSize = chr_size_bytes;
+	iNESCart.PRGRomSize = prg_size_bytes;
+	iNESCart.CHRRomSize = chr_size_bytes;
 
-	UNIFCart.PRGCRC32   = CalcCRC32(0, ROM, prg_size_bytes);
-	UNIFCart.CHRCRC32   = CalcCRC32(0, VROM, chr_size_bytes);
-	UNIFCart.CRC32      = CalcCRC32(UNIFCart.PRGCRC32, VROM, chr_size_bytes);
+	iNESCart.PRGCRC32   = CalcCRC32(0, ROM, prg_size_bytes);
+	iNESCart.CHRCRC32   = CalcCRC32(0, VROM, chr_size_bytes);
+	iNESCart.CRC32      = CalcCRC32(iNESCart.PRGCRC32, VROM, chr_size_bytes);
 
 	md5_starts(&md5);
 	md5_update(&md5, ROM, prg_size_bytes);
 	if (chr_size_bytes)
 		md5_update(&md5, VROM, chr_size_bytes);
-	md5_finish(&md5, UNIFCart.MD5);
-	memcpy(GameInfo->MD5, UNIFCart.MD5, sizeof(UNIFCart.MD5));
+	md5_finish(&md5, iNESCart.MD5);
+	memcpy(GameInfo->MD5, iNESCart.MD5, sizeof(iNESCart.MD5));
 
 	CheckHashInfo();
 
@@ -838,19 +836,19 @@ int UNIFLoad(const char *name, FCEUFILE *fp) {
 	if (UNIF_CHRROMSize)
 		SetupCartCHRMapping(0, VROM, UNIF_CHRROMSize, 0);
 
-	FCEU_printf(" PRG-ROM CRC32: 0x%08X\n", UNIFCart.PRGCRC32);
-	FCEU_printf(" PRG+CHR CRC32: 0x%08X\n", UNIFCart.CRC32);
-	FCEU_printf(" PRG+CHR MD5  : 0x%s\n", md5_asciistr(UNIFCart.MD5));
+	FCEU_printf(" PRG-ROM CRC32: 0x%08X\n", iNESCart.PRGCRC32);
+	FCEU_printf(" PRG+CHR CRC32: 0x%08X\n", iNESCart.CRC32);
+	FCEU_printf(" PRG+CHR MD5  : 0x%s\n", md5_asciistr(iNESCart.MD5));
 
 	if (!InitializeBoard()) {
 		Cleanup();
 		return 0;
 	}
 
-	FCEU_printf(" [UNIF] PRG ROM: %u KiB\n", UNIFCart.PRGRomSize / 1024);
-	FCEU_printf(" [UNIF] CHR ROM: %u KiB\n", UNIFCart.CHRRomSize / 1024);
-	FCEU_printf(" [UNIF] iNES Mapper: %d\n", UNIFCart.mapper);
-	FCEU_printf(" [UNIF] SubMapper: %d\n", UNIFCart.submapper);
+	FCEU_printf(" [UNIF] PRG ROM: %u KiB\n", iNESCart.PRGRomSize / 1024);
+	FCEU_printf(" [UNIF] CHR ROM: %u KiB\n", iNESCart.CHRRomSize / 1024);
+	FCEU_printf(" [UNIF] iNES Mapper: %d\n", iNESCart.mapper);
+	FCEU_printf(" [UNIF] SubMapper: %d\n", iNESCart.submapper);
 
 	GameInterface = UNIFGI;
 

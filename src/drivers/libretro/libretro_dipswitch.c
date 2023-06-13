@@ -15,8 +15,6 @@
 #define MAX_CORE_OPTIONS 8
 #define MAX_VALUES 10
 
-extern CartInfo iNESCart;
-
 typedef struct {
    const char  *name;
    uint8       value;

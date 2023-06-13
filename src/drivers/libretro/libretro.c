@@ -197,8 +197,6 @@ static unsigned serialize_size;
 /* extern forward decls.*/
 extern FCEUGI *GameInfo;
 extern uint8 *XBuf;
-extern CartInfo iNESCart;
-extern CartInfo UNIFCart;
 extern int show_crosshair;
 extern int option_ramstate;
 
@@ -3660,25 +3658,22 @@ unsigned retro_get_region(void)
 
 void *retro_get_memory_data(unsigned type)
 {
-   uint8_t* data;
+   uint8_t* data = NULL;
 
    switch(type)
    {
       case RETRO_MEMORY_SAVE_RAM:
          if (iNESCart.battery && iNESCart.SaveGame[0] && iNESCart.SaveGameLen[0])
+         {
             return iNESCart.SaveGame[0];
-         else if (UNIFCart.battery && UNIFCart.SaveGame[0] && UNIFCart.SaveGameLen[0])
-            return UNIFCart.SaveGame[0];
+         }
          else if (GameInfo->type == GIT_FDS)
+         {
             return FDSROM_ptr();
-         else
-            data = NULL;
+         }
          break;
       case RETRO_MEMORY_SYSTEM_RAM:
          data = RAM;
-         break;
-      default:
-         data = NULL;
          break;
    }
 
@@ -3687,25 +3682,22 @@ void *retro_get_memory_data(unsigned type)
 
 size_t retro_get_memory_size(unsigned type)
 {
-   unsigned size;
+   unsigned size = 0;
 
    switch(type)
    {
       case RETRO_MEMORY_SAVE_RAM:
          if (iNESCart.battery && iNESCart.SaveGame[0] && iNESCart.SaveGameLen[0])
+         {
             size = iNESCart.SaveGameLen[0];
-         else if (UNIFCart.battery && UNIFCart.SaveGame[0] && UNIFCart.SaveGameLen[0])
-            size = UNIFCart.SaveGameLen[0];
+         }
          else if (GameInfo->type == GIT_FDS)
+         {
             size = FDSROM_size();
-         else
-            size = 0;
+         }
          break;
       case RETRO_MEMORY_SYSTEM_RAM:
          size = 0x800;
-         break;
-      default:
-         size = 0;
          break;
    }
 

@@ -107,6 +107,7 @@ void FASTAPASS(3) setntamem(uint8 *p, int ram, uint32 b);
 #define MI_1 3
 
 extern int geniestage;
+extern CartInfo iNESCart;
 
 void FCEU_GeniePower(void);
 
