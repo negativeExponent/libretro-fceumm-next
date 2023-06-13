@@ -105,7 +105,6 @@ static void Sync(void) {
 	if (mappernum == 551) {
 		setprg8r(0x10, 0x6000, 0);
 		setchr8(reg[3]);
-		setmirror(head.ROM_type & 1);
 	} else {
 		setchr8(0);
 		setprg8r(0x10, 0x6000, reg[3] & 3);
