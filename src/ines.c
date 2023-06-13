@@ -895,30 +895,26 @@ INES_BOARD_BEGIN()
 INES_BOARD_END()
 
 static void iNES_read_header_info(CartInfo *info, iNES_HEADER *h) {
-	ROM_size         = h->ROM_size;
-	VROM_size        = h->VROM_size;
-	info->mirror  = (h->ROM_type & 8) ? 2 : (h->ROM_type & 1);
+	ROM_size          = h->ROM_size;
+	VROM_size         = h->VROM_size;
+	info->mirror      = (h->ROM_type & 8) ? 2 : (h->ROM_type & 1);
 	info->mirror2bits = ((h->ROM_type & 8) ? 2 : 0) | (h->ROM_type & 1);
-	info->battery = (h->ROM_type & 2) ? 1 : 0;
-	info->mapper  = (h->ROM_type2 & 0xF0) | ((h->ROM_type & 0xF0) >> 4);
-	info->iNES2   = (h->ROM_type2 & 0x0C) == 0x08;
+	info->battery     = (h->ROM_type & 2) ? 1 : 0;
+	info->mapper      = (h->ROM_type2 & 0xF0) | ((h->ROM_type & 0xF0) >> 4);
+	info->iNES2       = (h->ROM_type2 & 0x0C) == 0x08;
 	info->ConsoleType = h->ROM_type2 & 0x03;
 
 	if (info->iNES2) {
-		info->mapper |= (((uint32)h->ROM_type3 << 8) & 0xF00);
+		info->mapper   |= (((uint32)h->ROM_type3 << 8) & 0xF00);
 		info->submapper = (h->ROM_type3 >> 4) & 0x0F;
-		ROM_size |= ((h->upper_PRG_CHR_size >> 0) & 0xF) << 8;
-		VROM_size |= ((h->upper_PRG_CHR_size >> 4) & 0xF) << 8;
-		info->region = h->Region & 3;
+		ROM_size       |= ((h->upper_PRG_CHR_size >> 0) & 0xF) << 8;
+		VROM_size      |= ((h->upper_PRG_CHR_size >> 4) & 0xF) << 8;
+		info->region    = h->Region & 3;
 
-		if (h->PRGRAM_size & 0x0F)
-			info->PRGRamSize = 64 << ((h->PRGRAM_size >> 0) & 0x0F);
-		if (h->PRGRAM_size & 0xF0)
-			info->PRGRamSaveSize = 64 << ((h->PRGRAM_size >> 4) & 0x0F);
-		if (h->CHRRAM_size & 0x0F)
-			info->CHRRamSize = 64 << ((h->CHRRAM_size >> 0) & 0x0F);
-		if (h->CHRRAM_size & 0xF0)
-			info->CHRRamSaveSize = 64 << ((h->CHRRAM_size >> 4) & 0x0F);
+		if (h->PRGRAM_size & 0x0F) info->PRGRamSize     = 64 << ((h->PRGRAM_size >> 0) & 0x0F);
+		if (h->PRGRAM_size & 0xF0) info->PRGRamSaveSize = 64 << ((h->PRGRAM_size >> 4) & 0x0F);
+		if (h->CHRRAM_size & 0x0F) info->CHRRamSize     = 64 << ((h->CHRRAM_size >> 0) & 0x0F);
+		if (h->CHRRAM_size & 0xF0) info->CHRRamSaveSize = 64 << ((h->CHRRAM_size >> 4) & 0x0F);
 	}
 }
 
