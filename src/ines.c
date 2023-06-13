@@ -1180,14 +1180,10 @@ static int iNES_Init(int num) {
 					case 30:
 					case 45:
 					case 96:
-					case 513:
 						CHRRAMSize = 32 * 1024;
 						break;
 					case 176:
 						CHRRAMSize = 128 * 1024;
-						break;
-					case 268:
-						CHRRAMSize = 256 * 1024;
 						break;
 					default:
 						CHRRAMSize = 8 * 1024;
