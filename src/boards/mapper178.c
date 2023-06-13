@@ -110,8 +110,6 @@ static void Sync(void) {
 		setprg8r(0x10, 0x6000, reg[3] & 3);
 		setmirror((reg[0] & 1) ^ 1);
 	}
-	
-	if (mappernum != 551) setmirror((reg[0] & 1) ^ 1);
 }
 
 static DECLFW(M178Write) {
