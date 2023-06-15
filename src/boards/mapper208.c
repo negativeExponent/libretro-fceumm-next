@@ -89,7 +89,7 @@ static void M208Power(void) {
 }
 
 void Mapper208_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = M208PW;
 	mmc3.mwrap = M208MW;
 	info->Power = M208Power;

@@ -56,7 +56,7 @@ static void M377Power(void) {
 }
 
 void Mapper377_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 128, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = M377CW;
 	mmc3.pwrap = M377PW;
 	info->Reset = M377Reset;

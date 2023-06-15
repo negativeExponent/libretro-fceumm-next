@@ -87,7 +87,7 @@ static void M219Reset(void) {
 }
 
 void Mapper219_Init(CartInfo *info) {
-	GenMMC3_Init(info, 64, 512, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = M219PWrap;
 	mmc3.cwrap = M219CWrap;
 	info->Power = M219Power;

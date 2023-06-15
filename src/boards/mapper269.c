@@ -68,7 +68,7 @@ static uint8 unscrambleCHR(uint8 data) {
 }
 
 void Mapper269_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 0, 8, 0);
+	GenMMC3_Init(info, 8, 0);
 	mmc3.cwrap = M269CW;
 	mmc3.pwrap = M269PW;
 	info->Power = M269Power;

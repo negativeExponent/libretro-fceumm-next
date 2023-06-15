@@ -45,7 +45,7 @@ static void M364Power(void) {
 }
 
 void Mapper364_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 512, 8, 0);
+	GenMMC3_Init(info, 8, 0);
 	mmc3.pwrap = M364PW;
 	mmc3.cwrap = M364CW;
 	info->Power = M364Power;

@@ -157,7 +157,7 @@ static void M260Power(void) {
 }
 
 void Mapper260_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, 8, 0);
+	GenMMC3_Init(info, 8, 0);
 	mmc3.cwrap = M260CW;
 	mmc3.pwrap = M260PW;
 	mmc3.mwrap = M260MW;

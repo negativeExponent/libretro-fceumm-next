@@ -64,7 +64,7 @@ static void M458Power(void) {
 }
 
 void Mapper458_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = M458CW;
 	mmc3.pwrap = M458PW;
 	info->Reset = M458Reset;

@@ -93,7 +93,7 @@ void M195Close(void) {
 }
 
 void Mapper195_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 256, 16, info->battery);
+	GenMMC3_Init(info, 16, info->battery);
 	info->Power = M195Power;
 	info->Close = M195Close;
 	mmc3.cwrap = M195CW;

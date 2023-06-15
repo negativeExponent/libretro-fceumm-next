@@ -75,7 +75,7 @@ static void M512Power(void) {
 }
 
 void Mapper512_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 256, 8, info->battery);
+	GenMMC3_Init(info, 8, info->battery);
 	mmc3.cwrap = M512CW;
 	mmc3.pwrap = M512PW;
 	mmc3.mwrap = M512MW;

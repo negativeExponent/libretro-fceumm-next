@@ -71,7 +71,7 @@ static void M412Power(void) {
 }
 
 void Mapper412_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = M412CW;
 	mmc3.pwrap = M412PW;
 	info->Reset = M412Reset;

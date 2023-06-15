@@ -73,7 +73,7 @@ static void Mapper444_Power(void) {
 
 void Mapper444_Init(CartInfo *info) {
 	pads = info->submapper; /* UNIF represents submapper 0 */
-	GenMMC3_Init(info, 256, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = Mapper444_CHRWrap;
 	mmc3.pwrap = Mapper444_PRGWrap;
 	info->Power = Mapper444_Power;

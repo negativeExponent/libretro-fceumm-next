@@ -53,7 +53,7 @@ static void M267Power(void) {
 }
 
 void Mapper267_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 128, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = M267CW;
 	mmc3.pwrap = M267PW;
 	info->Reset = M267Reset;

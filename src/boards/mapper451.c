@@ -90,7 +90,7 @@ static void M451Close() {
 
 void Mapper451_Init(CartInfo *info) {
 	uint32 w, r;
-	GenMMC3_Init(info, 512, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	info->Power = M451Power;
 	info->Close = M451Close;
     mmc3.pwrap = M451PW;

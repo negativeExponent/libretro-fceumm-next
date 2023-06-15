@@ -183,7 +183,7 @@ static void M369Power(void) {
 }
 
 void Mapper369_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 384, 8, info->battery);
+	GenMMC3_Init(info, 8, info->battery);
 	mmc3.pwrap = SyncPRG;
 	mmc3.cwrap = SyncCHR;
 	info->Power = M369Power;

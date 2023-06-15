@@ -53,7 +53,7 @@ static void M513Power(void) {
 }
 
 void Mapper513_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 0, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = M513PW;
 	mmc3.opts |= 2;
 	info->SaveGame[0] = UNIFchrrama;

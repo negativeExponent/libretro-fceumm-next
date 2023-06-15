@@ -58,7 +58,7 @@ static void M395Power(void) {
 }
 
 void Mapper395_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = M395CW;
 	mmc3.pwrap = M395PW;
 	info->Power = M395Power;

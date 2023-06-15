@@ -59,7 +59,7 @@ static void Mapper376Power(void) {
 }
 
 void Mapper376_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = Mapper376PW;
 	mmc3.cwrap = Mapper376CW;
 	info->Power = Mapper376Power;

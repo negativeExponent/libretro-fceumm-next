@@ -103,7 +103,7 @@ static void M014Power(void) {
 }
 
 void Mapper014_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 512, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = M014CW;
 	info->Power = M014Power;
 	GameStateRestore = StateRestore;

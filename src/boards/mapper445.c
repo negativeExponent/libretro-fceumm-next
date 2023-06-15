@@ -61,7 +61,7 @@ static void M445Power(void) {
 }
 
 void Mapper445_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 512, info->PRGRamSize + info->PRGRamSaveSize, info->battery);
+	GenMMC3_Init(info, info->PRGRamSize + info->PRGRamSaveSize, info->battery);
 	mmc3.pwrap = M445PW;
 	mmc3.cwrap = M445CW;
 	info->Power = M445Power;

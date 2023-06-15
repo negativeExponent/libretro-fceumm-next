@@ -109,7 +109,7 @@ static void PowerCommon(void) {
 }
 
 static void InitCommon(CartInfo *info) {
-	GenMMC3_Init(info, 512, 256, 8, info->battery);
+	GenMMC3_Init(info, 8, info->battery);
 	mmc3.cwrap = wrapCHR;
 	mmc3.pwrap = wrapPRG;
 

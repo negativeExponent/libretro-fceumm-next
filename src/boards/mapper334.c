@@ -59,7 +59,7 @@ static void M334Power(void) {
 }
 
 void Mapper334_Init(CartInfo *info) {
-	GenMMC3_Init(info, 32, 32, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = M334PW;
 	info->Power = M334Power;
 	info->Reset = M334Reset;

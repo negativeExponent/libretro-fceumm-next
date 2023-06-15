@@ -54,7 +54,7 @@ static void M420Power(void) {
 }
 
 void Mapper420_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = M420CW;
 	mmc3.pwrap = M420PW;
 	info->Reset = M420Reset;

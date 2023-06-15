@@ -44,7 +44,7 @@ static void M238Power(void) {
 }
 
 void Mapper238_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	info->Power = M238Power;
 	AddExState(mmc3.expregs, 6, 0, "EXPR");
 }

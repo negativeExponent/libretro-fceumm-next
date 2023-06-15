@@ -33,7 +33,7 @@ static void M199Power(void) {
 }
 
 void Mapper199_Init(CartInfo *info) {
-	GenMMC3_Init(info, 1024, 8, 16, info->battery);
+	GenMMC3_Init(info, 16, info->battery);
 	mmc3.cwrap = M199CW;
 	info->Power = M199Power;
 	info->Reset = MMC3RegReset;

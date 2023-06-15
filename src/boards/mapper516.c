@@ -54,7 +54,7 @@ static void M516Power(void) {
 }
 
 void Mapper516_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 128, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = M516CW;
 	mmc3.pwrap = M516PW;
 	info->Power = M516Power;

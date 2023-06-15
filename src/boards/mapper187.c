@@ -64,7 +64,7 @@ static void M187Power(void) {
 }
 
 void Mapper187_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = M187PW;
 	mmc3.cwrap = M187CW;
 	info->Power = M187Power;

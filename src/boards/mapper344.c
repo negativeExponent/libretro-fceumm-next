@@ -59,7 +59,7 @@ static void M344Power(void) {
 }
 
 void Mapper344_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = M344PW;
 	mmc3.cwrap = M344CW;
 	info->Power = M344Power;

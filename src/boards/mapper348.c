@@ -59,7 +59,7 @@ static void M348Power(void) {
 }
 
 void Mapper348_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 128, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = M348PW;
 	mmc3.cwrap = M348CW;
 	info->Power = M348Power;

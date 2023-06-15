@@ -92,7 +92,7 @@ static void M327Close(void) {
 }
 
 void Mapper327_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, 8, 0);
+	GenMMC3_Init(info, 8, 0);
 	CHRRAMSize = 8192;
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSize, 1);

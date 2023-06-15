@@ -61,7 +61,7 @@ static void M123Power(void) {
 }
 
 void Mapper123_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = M123PW;
 	info->Power = M123Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

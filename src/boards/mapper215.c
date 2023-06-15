@@ -175,7 +175,7 @@ static void M215Reset(void) {
 }
 
 void Mapper215_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = M215CW;
 	mmc3.pwrap = M215PW;
 	info->Power = M215Power;

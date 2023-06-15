@@ -86,7 +86,7 @@ static void M401Power(void) {
 }
 
 void Mapper401_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, 8, 0);
+	GenMMC3_Init(info, 8, 0);
 	mmc3.cwrap = M401CW;
 	mmc3.pwrap = M401PW;
 	info->Power = M401Power;

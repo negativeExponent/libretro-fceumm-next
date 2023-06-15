@@ -710,7 +710,7 @@ void Mapper394_Init(CartInfo *info) {
 	allowExtendedMirroring = 1;
 	WSync = sync394;
 	JYASIC_init(info);
-	GenMMC3_Init(info, 128, 128, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = Mapper394_PWrap;
 	mmc3.cwrap = Mapper394_CWrap;
 	info->Reset = Mapper394_power;

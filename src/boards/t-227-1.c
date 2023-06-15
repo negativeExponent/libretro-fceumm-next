@@ -91,7 +91,7 @@ static void BMCT2271Power(void) {
 }
 
 void BMCT2271_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 128, 8, 0);
+	GenMMC3_Init(info, 8, 0);
 	mmc3.pwrap = BMCT2271PW;
 	mmc3.cwrap = BMCT2271CW;
 	info->Power = BMCT2271Power;

@@ -59,7 +59,7 @@ static void M333Power(void) {
 }
 
 void Mapper333_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 128, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = M333CW;
 	mmc3.pwrap = M333PW;
 	info->Power = M333Power;

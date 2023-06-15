@@ -51,7 +51,7 @@ static void M291Power(void) {
 }
 
 void Mapper291_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 512, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = M291CW;
 	mmc3.pwrap = M291PW;
 	info->Power = M291Power;

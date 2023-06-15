@@ -67,7 +67,7 @@ static void M406Close() {
 
 void Mapper406_Init(CartInfo *info) {
 	uint32 w, r;
-	GenMMC3_Init(info, 512, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	info->Power = M406Power;
 	info->Close = M406Close;
     mmc3.pwrap = M406PW;

@@ -93,7 +93,7 @@ static void M460close(void) {
 }
 
 void Mapper460_Init(CartInfo *info) {
-	GenMMC3_Init(info, 512, 512, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.cwrap = M460CW;
 	mmc3.pwrap = M460PW;
 	info->Power = M460Power;

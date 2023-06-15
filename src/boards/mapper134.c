@@ -87,7 +87,7 @@ static void Mapper134_Power(void) {
 }
 
 void Mapper134_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8, info->battery);
+	GenMMC3_Init(info, info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8, info->battery);
 	mmc3.cwrap = Mapper134_CHRWrap;
 	mmc3.pwrap = Mapper134_PRGWrap;
 	info->Power = Mapper134_Power;

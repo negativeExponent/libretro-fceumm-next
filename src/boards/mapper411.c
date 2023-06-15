@@ -74,7 +74,7 @@ static void M411Power(void) {
 }
 
 void Mapper411_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = M411PW;
 	mmc3.cwrap = M411CW;
 	info->Power = M411Power;

@@ -79,7 +79,7 @@ static void BMC411120CPower(void) {
 }
 
 void Mapper287_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 512, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = BMC411120CPW;
 	mmc3.cwrap = BMC411120CCW;
 	info->Power = BMC411120CPower;

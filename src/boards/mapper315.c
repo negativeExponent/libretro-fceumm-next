@@ -61,7 +61,7 @@ static void M315CPower(void) {
 }
 
 void Mapper315_Init(CartInfo *info) {
-	GenMMC3_Init(info, 128, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = M315CPW;
 	mmc3.cwrap = M315CCW;
 	info->Power = M315CPower;

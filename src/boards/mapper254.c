@@ -1,7 +1,7 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2005 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,34 +18,39 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* NES 2.0 Mapper 263 - UNL-KOF97 */
-
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint32 unscrambleAddr(uint32 A) {
-	return ((A & 0xE000) | ((A >> 12) & 1));
+static DECLFR(M254ReadWRAM) {
+	if (mmc3.expregs[0]) {
+		return X.DB ^ mmc3.expregs[0];
+	}
+    return CartBR(A);
 }
 
-static uint8 unscrambleData(uint8 V) {
-	return ((V & 0xD8) | ((V & 0x20) >> 4) | ((V & 4) << 3) | ((V & 2) >> 1) | ((V & 1) << 2));
+static DECLFW(M254WriteWRAM) {
+	if (V & 0x01) {
+		mmc3.expregs[0] = 0;
+	}
+	CartBW(A, V);
 }
 
-static DECLFW(M263CMDWrite) {
-	MMC3_CMDWrite(unscrambleAddr(A), unscrambleData(V));
+static void M254Reset(void) {
+	mmc3.expregs[0] = 0x80;
+	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG(mmc3.cmd);
 }
 
-static DECLFW(M263IRQWrite) {
-	MMC3_IRQWrite(unscrambleAddr(A), unscrambleData(V));
-}
-
-static void M263Power(void) {
+static void M254Power(void) {
+    mmc3.expregs[0] = 0x80;
 	GenMMC3Power();
-	SetWriteHandler(0x8000, 0xA000, M263CMDWrite);
-	SetWriteHandler(0xC000, 0xF000, M263IRQWrite);
+	SetReadHandler(0x6000, 0x7FFF, M254ReadWRAM);
+    SetWriteHandler(0x6000, 0x7FFF, M254WriteWRAM);
 }
 
-void Mapper263_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
-	info->Power = M263Power;
+void Mapper254_Init(CartInfo *info) {
+	GenMMC3_Init(info, 8, info->battery);
+	info->Power = M254Power;
+	info->Reset = M254Reset;
+	AddExState(&mmc3.expregs[0], 1, 0, "EXPR");
 }

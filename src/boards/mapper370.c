@@ -82,7 +82,7 @@ static void M370Power(void) {
 }
 
 void Mapper370_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, 8, 0);
+	GenMMC3_Init(info, 8, 0);
 	mmc3.cwrap = M370CW;
 	mmc3.pwrap = M370PW;
 	mmc3.mwrap = M370MW;

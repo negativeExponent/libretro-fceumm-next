@@ -148,7 +148,7 @@ static void M268Close(void) {
 }
 
 static void ComminInit(CartInfo *info, int _submapper) {
-	GenMMC3_Init(info, 512, 256, (info->PRGRamSize + info->PRGRamSaveSize) >> 10, info->battery);
+	GenMMC3_Init(info, (info->PRGRamSize + info->PRGRamSaveSize) >> 10, info->battery);
 	submapper = _submapper;
 	mmc3.pwrap = M268PW;
 	mmc3.cwrap = M268CW;

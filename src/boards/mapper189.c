@@ -47,7 +47,7 @@ static void M189Power(void) {
 }
 
 void Mapper189_Init(CartInfo *info) {
-	GenMMC3_Init(info, 256, 256, 0, 0);
+	GenMMC3_Init(info, 0, 0);
 	mmc3.pwrap = M189PW;
 	info->Power = M189Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
