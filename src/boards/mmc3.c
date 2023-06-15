@@ -1323,46 +1323,6 @@ void Mapper245_Init(CartInfo *info) {
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }
 
-/* ---------------------------- Mapper 249 ------------------------------ */
-
-static void M249PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 0x2) {
-		if (V < 0x20)
-			V = (V & 1) | ((V >> 3) & 2) | ((V >> 1) & 4) | ((V << 2) & 8) | ((V << 2) & 0x10);
-		else {
-			V -= 0x20;
-			V = (V & 3) | ((V >> 1) & 4) | ((V >> 4) & 8) | ((V >> 2) & 0x10) | ((V << 3) & 0x20) | ((V << 2) & 0xC0);
-		}
-	}
-	setprg8(A, V);
-}
-
-static void M249CW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 0x2)
-		V = (V & 3) | ((V >> 1) & 4) | ((V >> 4) & 8) | ((V >> 2) & 0x10) | ((V << 3) & 0x20) | ((V << 2) & 0xC0);
-	setchr1(A, V);
-}
-
-static DECLFW(M249Write) {
-	mmc3.expregs[0] = V;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
-}
-
-static void M249Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
-	SetWriteHandler(0x5000, 0x5000, M249Write);
-}
-
-void Mapper249_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
-	mmc3.cwrap = M249CW;
-	mmc3.pwrap = M249PW;
-	info->Power = M249Power;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
-}
-
 /* ---------------------------- UNIF Boards ----------------------------- */
 
 void TBROM_Init(CartInfo *info) {
