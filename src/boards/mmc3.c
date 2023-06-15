@@ -188,6 +188,20 @@ DECLFW(MMC3_IRQWrite) {
 	}
 }
 
+DECLFW(MMC3_Write) {
+	/*	FCEU_printf("bs %04x %02x\n",A,V); */
+	switch (A & 0xE000) {
+	case 0x8000:
+	case 0xA000:
+		MMC3_CMDWrite(A, V);
+		break;
+	case 0xC000:
+	case 0xE000:
+		MMC3_IRQWrite(A, V);
+		break;
+	}
+}
+
 static void ClockMMC3Counter(void) {
 	int count = IRQCount;
 	if (!count || IRQReload) {
@@ -1347,27 +1361,6 @@ void Mapper249_Init(CartInfo *info) {
 	mmc3.pwrap = M249PW;
 	info->Power = M249Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
-}
-
-/* ---------------------------- Mapper 250 ------------------------------ */
-
-static DECLFW(M250Write) {
-	MMC3_CMDWrite((A & 0xE000) | ((A & 0x400) >> 10), A & 0xFF);
-}
-
-static DECLFW(M250IRQWrite) {
-	MMC3_IRQWrite((A & 0xE000) | ((A & 0x400) >> 10), A & 0xFF);
-}
-
-static void M250_Power(void) {
-	GenMMC3Power();
-	SetWriteHandler(0x8000, 0xBFFF, M250Write);
-	SetWriteHandler(0xC000, 0xFFFF, M250IRQWrite);
-}
-
-void Mapper250_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
-	info->Power = M250_Power;
 }
 
 /* ---------------------------- UNIF Boards ----------------------------- */
