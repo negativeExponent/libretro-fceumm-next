@@ -1171,28 +1171,6 @@ void Mapper197_Init(CartInfo *info) {
 	mmc3.cwrap = M197CW;
 }
 
-/* ---------------------------- Mapper 198 ------------------------------- */
-
-static void M198PW(uint32 A, uint8 V) {
-	if (V >= 0x50) /* Tenchi o Kurau II - Shokatsu Koumei Den (J) (C).nes */
-		setprg8(A, V & 0x4F);
-	else
-		setprg8(A, V);
-}
-
-static void M198Power(void) {
-	GenMMC3Power();
-	setprg4r(0x10, 0x5000, 2);
-	SetWriteHandler(0x5000, 0x5fff, CartBW);
-	SetReadHandler(0x5000, 0x5fff, CartBR);
-}
-
-void Mapper198_Init(CartInfo *info) {
-	GenMMC3_Init(info, 16, info->battery);
-	mmc3.pwrap = M198PW;
-	info->Power = M198Power;
-}
-
 /* ---------------------------- UNIF Boards ----------------------------- */
 
 void TBROM_Init(CartInfo *info) {
