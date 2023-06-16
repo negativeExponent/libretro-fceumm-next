@@ -54,8 +54,8 @@ static DECLFW(Mapper391_Write) {
 		if (~mmc3.expregs[0] & 0x80) {
 			mmc3.expregs[0] = V;
 			mmc3.expregs[1] = ((A >> 8) & 0xFF);
-			FixMMC3PRG(mmc3.cmd);
-			FixMMC3CHR(mmc3.cmd);
+			FixMMC3PRG();
+			FixMMC3CHR();
 		}
 	}
 }

@@ -140,13 +140,13 @@ static DECLFW(M215ExWrite) {
 	switch (A & 0xF007) {
 		case 0x5000:
 			mmc3.expregs[0] = V;
-			FixMMC3PRG(mmc3.cmd);
-			FixMMC3CHR(mmc3.cmd);
+			FixMMC3PRG();
+			FixMMC3CHR();
 			break;
 		case 0x5001:
 			mmc3.expregs[1] = V;
-			FixMMC3PRG(mmc3.cmd);
-			FixMMC3CHR(mmc3.cmd);
+			FixMMC3PRG();
+			FixMMC3CHR();
 			break;
 		case 0x5002:
 			mmc3.expregs[3] = V;

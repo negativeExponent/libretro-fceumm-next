@@ -37,8 +37,8 @@ static DECLFW(M516Write) {
 	/*    FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, mmc3.expregs[0]); */
 	if (A & 0x10) {
 		mmc3.expregs[0] = A & 0xF;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 	if (A < 0xC000) {
 		MMC3_CMDWrite(A, V);

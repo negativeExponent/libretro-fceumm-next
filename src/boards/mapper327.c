@@ -67,8 +67,8 @@ static DECLFW(M327Write) {
 		CartBW(A, V);
 		if ((mmc3.expregs[0] & 7) == 0) {
 			mmc3.expregs[0] = A & 0x3F;
-			FixMMC3PRG(mmc3.cmd);
-			FixMMC3CHR(mmc3.cmd);
+			FixMMC3PRG();
+			FixMMC3CHR();
 		}
 	}
 }

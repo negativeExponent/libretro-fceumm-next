@@ -43,7 +43,7 @@ static void M262CW(uint32 A, uint8 V) {
 
 static DECLFW(M262Write) {
 	mmc3.expregs[0] = V;
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3CHR();
 }
 
 static DECLFR(M262Read) {

@@ -64,7 +64,7 @@ static void M208MW(uint8 V) {
 
 static DECLFW(M208Write) {
 	mmc3.expregs[5] = V;
-	FixMMC3PRG(mmc3.cmd);
+	FixMMC3PRG();
 }
 
 static DECLFW(M208ProtWrite) {

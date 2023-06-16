@@ -70,8 +70,8 @@ static DECLFW(BMC810131C_Write) {
 	if (((mmc3.wram & 0xC0) == 0x80) && !(mmc3.expregs[0] & 7))
 	{
 		mmc3.expregs[0] = A & 0x3F;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 	else {
 		CartBW(A, V);

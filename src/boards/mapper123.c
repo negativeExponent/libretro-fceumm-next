@@ -49,7 +49,7 @@ static DECLFW(M123WriteHi) {
 static DECLFW(M123WriteLo) {
 	if (A & 0x800) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG(mmc3.cmd);
+		FixMMC3PRG();
 	}
 }
 

@@ -29,8 +29,9 @@
 
 MMC3 mmc3;
 
-uint8 *WRAM;
+static uint8 *WRAM;
 static uint32 WRAMSIZE;
+
 static uint8 *CHRRAM;
 static uint32 CHRRAMSIZE;
 
@@ -53,10 +54,6 @@ static SFORMAT MMC3_StateRegs[] =
 
 static int isRevB = 1;
 
-void GenMMC3Power(void);
-void FixMMC3PRG(int V);
-void FixMMC3CHR(int V);
-
 void GenMMC3_Init(CartInfo *info, int wram, int battery);
 
 /* ----------------------------------------------------------------------
@@ -64,38 +61,38 @@ void GenMMC3_Init(CartInfo *info, int wram, int battery);
  * ----------------------------------------------------------------------
  */
 
-uint8 MMC3GetPRGBank(int bank) {
-	if ((~bank & 0x01) && (mmc3.cmd & 0x40)) {
-		bank ^= 0x02;
+uint8 MMC3GetPRGBank(int V) {
+	if ((~V & 0x01) && (mmc3.cmd & 0x40)) {
+		V ^= 0x02;
 	}
-	if (bank & 0x02) {
-		return ((~1) | (bank & 0x01));
+	if (V & 0x02) {
+		return ((~1) | (V & 0x01));
 	}
-	return mmc3.regs[6 | (bank & 0x01)];
+	return mmc3.regs[6 | (V & 0x01)];
 }
 
-uint8 MMC3GetCHRBank(int bank) {
+uint8 MMC3GetCHRBank(int V) {
 	if (mmc3.cmd & 0x80) {
-		bank ^= 0x04;
+		V ^= 0x04;
 	}
-	if (bank & 4) {
-		return mmc3.regs[bank - 2];
+	if (V & 4) {
+		return mmc3.regs[V - 2];
 	}
-	return ((mmc3.regs[bank >> 1] & ~0x01) | (bank & 0x01));
+	return ((mmc3.regs[V >> 1] & ~0x01) | (V & 0x01));
 }
 
-int MMC3CanWriteToWRAM() {
+int MMC3CanWriteToWRAM(void) {
 	return ((mmc3.wram & 0x80) && !(mmc3.wram & 0x40));
 }
 
-void FixMMC3PRG(int V) {
+void FixMMC3PRG(void) {
 	mmc3.pwrap(0x8000, MMC3GetPRGBank(0));
 	mmc3.pwrap(0xA000, MMC3GetPRGBank(1));
 	mmc3.pwrap(0xC000, MMC3GetPRGBank(2));
 	mmc3.pwrap(0xE000, MMC3GetPRGBank(3));
 }
 
-void FixMMC3CHR(int V) {
+void FixMMC3CHR(void) {
 	mmc3.cwrap(0x0000, MMC3GetCHRBank(0));
 	mmc3.cwrap(0x0400, MMC3GetCHRBank(1));
 	mmc3.cwrap(0x0800, MMC3GetCHRBank(2));
@@ -106,8 +103,9 @@ void FixMMC3CHR(int V) {
 	mmc3.cwrap(0x1800, MMC3GetCHRBank(6));
 	mmc3.cwrap(0x1C00, MMC3GetCHRBank(7));
 
-	if (mmc3.mwrap)
+	if (mmc3.mwrap) {
 		mmc3.mwrap(mmc3.mirroring);
+	}
 }
 
 void MMC3RegReset(void) {
@@ -122,19 +120,20 @@ void MMC3RegReset(void) {
 	mmc3.regs[6] = 0;
 	mmc3.regs[7] = 1;
 
-	FixMMC3PRG(0);
-	FixMMC3CHR(0);
+	FixMMC3PRG();
+	FixMMC3CHR();
 }
 
 DECLFW(MMC3_CMDWrite) {
+	uint8 oldcmd = mmc3.cmd;
 	/*	FCEU_printf("bs %04x %02x\n",A,V); */
 	switch (A & 0xE001) {
 		case 0x8000:
-			if ((V & 0x40) != (mmc3.cmd & 0x40))
-				FixMMC3PRG(V);
-			if ((V & 0x80) != (mmc3.cmd & 0x80))
-				FixMMC3CHR(V);
 			mmc3.cmd = V;
+			if ((oldcmd & 0x40) != (mmc3.cmd & 0x40))
+				FixMMC3PRG();
+			if ((oldcmd & 0x80) != (mmc3.cmd & 0x80))
+				FixMMC3CHR();
 			break;
 		case 0x8001: {
 			int cbase = (mmc3.cmd & 0x80) << 5;
@@ -246,8 +245,8 @@ static void MMC3_hb_PALStarWarsHack(void) {
 }
 
 void GenMMC3Restore(int version) {
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG();
+	FixMMC3CHR();
 }
 
 static void GENCWRAP(uint32 A, uint8 V) {
@@ -444,8 +443,8 @@ static void M037CW(uint32 A, uint8 V) {
 
 static DECLFW(M037Write) {
 	mmc3.expregs[0] = (V & 6) >> 1;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG();
+	FixMMC3CHR();
 }
 
 static void M037Reset(void) {
@@ -491,8 +490,8 @@ static void M044CW(uint32 A, uint8 V) {
 static DECLFW(M044Write) {
 	if (A & 1) {
 		mmc3.expregs[0] = V & 7;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	} else
 		MMC3_CMDWrite(A, V);
 }
@@ -550,8 +549,8 @@ static DECLFW(M045Write) {
 	if (!(mmc3.expregs[3] & 0x40)) {
 		mmc3.expregs[mmc3.expregs[4]] = V;
 		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 }
 
@@ -605,8 +604,8 @@ static void M047CW(uint32 A, uint8 V) {
 
 static DECLFW(M047Write) {
 	mmc3.expregs[0] = V & 1;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG();
+	FixMMC3CHR();
 }
 
 static void M047Power(void) {
@@ -645,8 +644,8 @@ static void M49CW(uint32 A, uint8 V) {
 static DECLFW(M49Write) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 }
 
@@ -701,8 +700,8 @@ static DECLFW(M052Write) {
 	}
 	mmc3.expregs[1] = V & 0x80;
 	mmc3.expregs[0] = V;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG();
+	FixMMC3CHR();
 }
 
 static void M052Reset(void) {
@@ -856,7 +855,7 @@ static DECLFW(M114ExWrite) {
 			mmc3.expregs[1] = V;
 		else
 			mmc3.expregs[0] = V;
-		FixMMC3PRG(mmc3.cmd);
+		FixMMC3PRG();
 	}
 }
 
@@ -913,7 +912,7 @@ static DECLFW(M115Write) {
 		mmc3.expregs[0] = V;
 	else if (A == 0x6001)
 		mmc3.expregs[1] = V;
-	FixMMC3PRG(mmc3.cmd);
+	FixMMC3PRG();
 }
 
 static DECLFR(M115Read) {
@@ -1104,7 +1103,7 @@ static DECLFW(Mapper196Write) {
 static DECLFW(Mapper196WriteLo) {
 	mmc3.expregs[0] = 1;
 	mmc3.expregs[1] = (V & 0xf) | (V >> 4);
-	FixMMC3PRG(mmc3.cmd);
+	FixMMC3PRG();
 }
 
 static void Mapper196Power(void) {
@@ -1216,8 +1215,8 @@ static DECLFW(M205Write) {
 		mmc3.expregs[0] |= mmc3.expregs[1];
 	}
 	CartBW(A, V);
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG();
+	FixMMC3CHR();
 }
 
 static void M205Reset(void) {
@@ -1268,8 +1267,8 @@ static void GN45Reset(void) {
 
 static DECLFW(M361Write) {
 	mmc3.expregs[0] = V & 0xF0;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG();
+	FixMMC3CHR();
 }
 
 static void M361Power(void) {
@@ -1291,8 +1290,8 @@ static DECLFW(M366Write) {
 	if (mmc3.expregs[2] == 0) {
 		mmc3.expregs[0] = A & 0x70;
 		mmc3.expregs[2] = A & 0x80;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}	
 }
 

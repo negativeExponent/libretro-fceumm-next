@@ -52,8 +52,8 @@ static DECLFR(Mapper444_Read) {
 
 static DECLFW(Mapper444_Write) {
 	mmc3.expregs[0] = A & 0xFF;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG();
+	FixMMC3CHR();
 }
 
 static void Mapper444_Reset(void) {

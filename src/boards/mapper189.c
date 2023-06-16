@@ -28,14 +28,14 @@ static void M189PW(uint32 A, uint8 V) {
 static DECLFW(M189Write) {
 	if (A & 0x100) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG(mmc3.cmd);
+		FixMMC3PRG();
 	}
 }
 
 static DECLFW(M189WRAMWrite) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG(mmc3.cmd);
+		FixMMC3PRG();
 	}
 }
 

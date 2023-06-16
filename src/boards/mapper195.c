@@ -67,7 +67,7 @@ static DECLFW(M195PPUWrite) {
 				chrRamMask = (chrBank & 0x40) ? 0xFE : 0xFC;
 				chrRamBankSelect = chrRamLut[index];
 			}
-            FixMMC3CHR(mmc3.cmd);
+            FixMMC3CHR();
 		}
 	}
 	writePPU(A, V);

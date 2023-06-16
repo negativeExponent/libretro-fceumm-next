@@ -32,8 +32,8 @@ static void Mapper456_CHRWrap(uint32 A, uint8 V) {
 static DECLFW(Mapper456_Write) {
 	if (A & 0x100) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 }
 

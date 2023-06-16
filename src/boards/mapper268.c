@@ -115,8 +115,8 @@ static DECLFW(M268Write) {
 			V &= ((~mmc3.expregs[2] >> 3) & 0x0E) | 0xF1;
 		}
 		mmc3.expregs[index] = V;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 }
 

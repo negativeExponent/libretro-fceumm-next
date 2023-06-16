@@ -68,8 +68,8 @@ static DECLFW(M014CMDWrite) {
 		bbrk = V;
 	}
 	if (bbrk & 2) {
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 		if (A < 0xC000)
 			MMC3_CMDWrite(A, V);
 		else
@@ -91,8 +91,8 @@ static DECLFW(M014CMDWrite) {
 
 static void StateRestore(int version) {
 	if (bbrk & 2) {
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	} else
 		Sync();
 }

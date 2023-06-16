@@ -44,8 +44,8 @@ static DECLFW(M269Write5) {
 	if (!(mmc3.expregs[3] & 0x80)) {
 		mmc3.expregs[mmc3.expregs[4]] = V;
 		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 }
 

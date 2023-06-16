@@ -38,7 +38,7 @@ static DECLFW(M513Write) {
 	case 0x8001:
 		if ((mmc3.expregs[0] & 7) < 6) {
 			mmc3.expregs[1] = V;
-			FixMMC3PRG(mmc3.cmd);
+			FixMMC3PRG();
 		}
 		break;
 	}

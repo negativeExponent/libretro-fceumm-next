@@ -62,11 +62,11 @@ static DECLFR(Mapper134_Read) {
 static DECLFW(Mapper134_Write) {
 	if (~mmc3.expregs[0] & 0x80) {
 		mmc3.expregs[A & 3] = V;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	} else if ((A & 3) == 2) {
 		mmc3.expregs[A & 3] = (mmc3.expregs[A & 3] & ~3) | (V & 3);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3CHR();
 	}
 	CartBW(A, V);
 }

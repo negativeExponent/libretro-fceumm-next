@@ -62,7 +62,7 @@ static DECLFR(M383Read) {
 	if (A17A18 == 0x00) { /* "PAL PRG A16 is updated with the content of the corresponding MMC3 PRG bank bit by reading from the
 		           respective address range, which in turn will then be applied across the entire ROM address range." */
 		A16 = mmc3.regs[0x06 | ((A >> 13) & 0x01)] & 0x08;
-		FixMMC3PRG(mmc3.cmd);
+		FixMMC3PRG();
 	}
 	return CartBR(A);
 }
@@ -71,8 +71,8 @@ static DECLFW(M383Write) {
 	if (A & 0x0100) {
 		A15 = (A >> 11) & 0x04;
 		A17A18 = A & 0x30;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 	if (A & 0x4000)
 		MMC3_IRQWrite(A, V);

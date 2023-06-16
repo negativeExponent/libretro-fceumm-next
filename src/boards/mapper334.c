@@ -33,7 +33,7 @@ static DECLFW(M334Write) {
 	if (MMC3CanWriteToWRAM()) {
 		if (!(A & 1)) {
 			mmc3.expregs[0] = V;
-			FixMMC3PRG(mmc3.cmd);
+			FixMMC3PRG();
 		}
 	}
 }

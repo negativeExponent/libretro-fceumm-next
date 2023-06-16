@@ -46,8 +46,8 @@ static void M339PW(uint32 A, uint8 V) {
 static DECLFW(M339Write) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = A & 0x3F;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 }
 

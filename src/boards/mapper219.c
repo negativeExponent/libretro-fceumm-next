@@ -38,8 +38,8 @@ static DECLFW(M219WriteOuter) {
 			mmc3.expregs[1] = (mmc3.expregs[1] & ~2) | ((V >> 4) & 2);
 			break;
 	}
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG();
+	FixMMC3CHR();
 }
 
 static DECLFW(M219WriteASIC) {
@@ -58,10 +58,10 @@ static DECLFW(M219WriteASIC) {
 					mmc3.regs[index] &= ~0xF0;
 					mmc3.regs[index] |= ((V << 4) & 0xF0);
 				}
-				FixMMC3CHR(mmc3.cmd);
+				FixMMC3CHR();
 			} else if ((mmc3.cmd >= 0x25) && (mmc3.cmd <= 0x26)) { /* Scrambled PRG register */
 				mmc3.regs[6 | (mmc3.cmd & 1)] = ((V >> 5) & 1) | ((V >> 3) & 2) | ((V >> 1) & 4) | ((V << 1) & 8);
-				FixMMC3PRG(mmc3.cmd);
+				FixMMC3PRG();
 			}
 		}
 	} else { /* Register index */

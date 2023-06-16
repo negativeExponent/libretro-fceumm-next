@@ -52,20 +52,25 @@ static void M292CW(uint32 A, uint8 V) {
 static DECLFW(M292ProtWrite) {
 	if (!(A & 1)) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG(mmc3.cmd);
+		FixMMC3PRG();
 	}
 }
 
 static DECLFR(M292ProtRead) {
 	if (!fceuindbg) {
 		if (!(A & 1)) {
+			int tmp;
 			if ((mmc3.expregs[0] & 0xE0) == 0xC0) {
 				mmc3.expregs[1] = ARead[0x6a](0x6a);	/* program can latch some data from the BUS, but I can't say how exactly, */
 			} else {							/* without more equipment and skills ;) probably here we can try to get any write */
 				mmc3.expregs[2] = ARead[0xff](0xff);	/* before the read operation */
 			}
-			FixMMC3CHR(mmc3.cmd & 0x7F);		/* there are more different behaviour of the board that's not used by game itself, so unimplemented here and */
-		}										/* actually will break the current logic ;) */
+			/* TODO: Verify that nothing breaks here */
+			tmp = mmc3.cmd;
+			mmc3.cmd &= 0x7F;
+			FixMMC3CHR();
+			mmc3.cmd = tmp;	/* there are more different behaviour of the board that's not used by game itself, so unimplemented here and */
+		}					/* actually will break the current logic ;) */
 	}
 	return 0;
 }

@@ -106,13 +106,13 @@ static DECLFW(M260HiWrite) {
 	if(mmc3.expregs[0] & 4) {		/* custom banking */
 /*		FCEU_printf("CUSTOM\n"); */
 		unromchr = V;
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3CHR();
 	} else {				/* mmc3 banking */
 /*		FCEU_printf("MMC3\n"); */
 		if(A<0xC000) {
 			MMC3_CMDWrite(A, V);
-			FixMMC3PRG(mmc3.cmd);
-			FixMMC3CHR(mmc3.cmd);
+			FixMMC3PRG();
+			FixMMC3CHR();
 		} else {
 			MMC3_IRQWrite(A, V);
 		}
@@ -125,8 +125,8 @@ static DECLFW(M260Write) {
 /*		FCEU_printf("LO WRITE %04X:%02X\n",A,V); */
 		mmc3.expregs[A & 3] = V;
 		lock = V & 0x80;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 }
 
@@ -141,16 +141,16 @@ static void M260Reset(void) {
 /*	FCEU_printf("M260 dipswitch set to %d\n",dipswitch); */
 	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
 	MMC3RegReset();
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG();
+	FixMMC3CHR();
 }
 
 static void M260Power(void) {
 	GenMMC3Power();
 	dipswitch = lock = 0;
 	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG();
+	FixMMC3CHR();
 	SetReadHandler(0x5000, 0x5fff, M260Read);
 	SetWriteHandler(0x5000, 0x5fff, M260Write);
 	SetWriteHandler(0x8000, 0xffff, M260HiWrite);

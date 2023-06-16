@@ -42,8 +42,8 @@ static void M333PW(uint32 A, uint8 V) {
 static DECLFW(M333Write) {
 	if (A & 0x1000) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	} else {
 		if (A < 0xC000)
 			MMC3_CMDWrite(A, V);

@@ -41,8 +41,8 @@ static void M395PW(uint32 A, uint8 V) {
 static DECLFW(M395Write) {
 	if (!(mmc3.expregs[1] & 0x80)) {
 		mmc3.expregs[(A >> 4) & 1] = V;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 }
 

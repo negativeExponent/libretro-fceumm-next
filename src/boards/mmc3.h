@@ -16,19 +16,19 @@ typedef struct {
 
 extern MMC3 mmc3;
 
+uint8 MMC3GetPRGBank(int V);
+uint8 MMC3GetCHRBank(int V);
+
 void GenMMC3Power(void);
 void GenMMC3Restore(int version);
 void MMC3RegReset(void);
 void GenMMC3Close(void);
-void FixMMC3PRG(int V);
-void FixMMC3CHR(int V);
-int  MMC3CanWriteToWRAM();
+void FixMMC3PRG(void);
+void FixMMC3CHR(void);
+int  MMC3CanWriteToWRAM(void);
 DECLFW(MMC3_CMDWrite);
 DECLFW(MMC3_IRQWrite);
 DECLFW(MMC3_Write);
-
-uint8 MMC3GetPRGBank(int bank);
-uint8 MMC3GetCHRBank(int bank);
 
 void GenMMC3_Init(CartInfo *info, int wram, int battery);
 

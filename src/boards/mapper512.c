@@ -57,7 +57,7 @@ static void M512PW(uint32 A, uint8 V) {
 static DECLFW(M512Write) {
 	if (A & 0x100) {
 		mmc3.expregs[0] = V & 3;
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3CHR();
 	}
 }
 

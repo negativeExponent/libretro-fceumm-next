@@ -663,8 +663,8 @@ static DECLFW(Mapper394_Write) {
 		if (HSK007Reg[1] & 0x10)
 			WSync();
 		else {
-			FixMMC3PRG(mmc3.cmd);
-			FixMMC3CHR(mmc3.cmd);
+			FixMMC3PRG();
+			FixMMC3CHR();
 		}
 	}
 }
@@ -693,8 +693,8 @@ static void Mapper394_restore(int version) {
 		SetWriteHandler(0x8000, 0xBFFF, MMC3_CMDWrite);
 		SetWriteHandler(0xC000, 0xFFFF, MMC3_IRQWrite);
 		SetReadHandler(0x8000, 0xFFFF, CartBR);
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 }
 static void Mapper394_power(void) {

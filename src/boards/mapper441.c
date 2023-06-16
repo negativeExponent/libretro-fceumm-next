@@ -45,8 +45,8 @@ static DECLFW(M441Write) {
 	if (MMC3CanWriteToWRAM()) {
 		if (~mmc3.expregs[0] & 0x80) {
 			mmc3.expregs[0] = V;
-			FixMMC3PRG(mmc3.cmd);
-			FixMMC3CHR(mmc3.cmd);
+			FixMMC3PRG();
+			FixMMC3CHR();
 		}
 	}
 }

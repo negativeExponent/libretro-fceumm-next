@@ -43,8 +43,8 @@ static void Mapper376PW(uint32 A, uint8 V) {
 
 static DECLFW(Mapper376Write) {
 	mmc3.expregs[A & 1] = V;
-	FixMMC3PRG(mmc3.cmd);
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG();
+	FixMMC3CHR();
 }
 
 static void Mapper376Reset(void) {

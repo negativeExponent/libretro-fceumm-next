@@ -99,7 +99,7 @@ static DECLFW(M121Write) {
 /*		mmc3.expregs[5] = 0; */
 /*		FCEU_printf("gen: %02x\n",V); */
 			MMC3_CMDWrite(A, V);
-			FixMMC3PRG(mmc3.cmd);
+			FixMMC3PRG();
 			break;
 		case 0x8001:
 			mmc3.expregs[6] = ((V & 1) << 5) | ((V & 2) << 3) | ((V & 4) << 1) |
@@ -108,7 +108,7 @@ static DECLFW(M121Write) {
 			if (!mmc3.expregs[7])
 				Sync();
 			MMC3_CMDWrite(A, V);
-			FixMMC3PRG(mmc3.cmd);
+			FixMMC3PRG();
 			break;
 		case 0x8003:
 			mmc3.expregs[5] = V;
@@ -116,7 +116,7 @@ static DECLFW(M121Write) {
 			/*		FCEU_printf("prot: %02x\n",mmc3.expregs[5]); */
 			Sync();
 			MMC3_CMDWrite(0x8000, V);
-			FixMMC3PRG(mmc3.cmd);
+			FixMMC3PRG();
 			break;
 	}
 }
@@ -126,8 +126,8 @@ static DECLFW(M121LoWrite) {
 	mmc3.expregs[4] = prot_array[V & 3]; /* 0x100 bit in address seems to be switch arrays 0, 2, 2, 3 (Contra Fighter) */
 	if ((A & 0x5180) == 0x5180) { /* A9713 multigame extension */
 		mmc3.expregs[3] = V;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 	/*	FCEU_printf("write: %04x:%04x\n",A,V); */
 }

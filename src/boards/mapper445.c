@@ -38,8 +38,8 @@ static void M445CW(uint32 A, uint8 V) {
 static DECLFW(M445Write) {
     if (!(mmc3.expregs[3] & 0x20)) {
         mmc3.expregs[A & 0x03] = V;
-        FixMMC3PRG(mmc3.cmd);
-        FixMMC3CHR(mmc3.cmd);
+        FixMMC3PRG();
+        FixMMC3CHR();
     }
 }
 

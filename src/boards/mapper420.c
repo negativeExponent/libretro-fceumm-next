@@ -38,8 +38,8 @@ static void M420PW(uint32 A, uint8 V) {
 static DECLFW(M420Write) {
 	/* writes possible regardless of MMC3 wram state */
 	mmc3.expregs[A & 3] = V;
-	FixMMC3PRG(mmc3.cmd);        
-	FixMMC3CHR(mmc3.cmd);
+	FixMMC3PRG();        
+	FixMMC3CHR();
 }
 
 static void M420Reset(void) {

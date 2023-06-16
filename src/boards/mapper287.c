@@ -61,8 +61,8 @@ static DECLFW(BMC411120CLoWrite) {
 	/*	printf("Wr: A:%04x V:%02x\n", A, V); */
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = A;
-		FixMMC3PRG(mmc3.cmd);
-		FixMMC3CHR(mmc3.cmd);
+		FixMMC3PRG();
+		FixMMC3CHR();
 	}
 }
 
