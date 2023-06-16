@@ -1240,48 +1240,6 @@ void Mapper205_Init(CartInfo *info) {
 	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }
 
-/* --------------------------- GN-45 BOARD ------------------------------ */
-
-/* Mapper 361 and 366, previously assigned as Mapper 205 */
-/* Mapper 361 (YY841101C):
- *  JY-009
- *  JY-018
- *  JY-019
- *  OK-411
-*/	
-static void GN45PW(uint32 A, uint8 V) {
-	setprg8(A, (V & 0x0f) | mmc3.expregs[0]);
-}
-
-static void GN45CW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | (mmc3.expregs[0] << 3));
-}
-
-static void GN45Reset(void) {
-	mmc3.expregs[0] = mmc3.expregs[2] = 0;
-	MMC3RegReset();
-}
-
-static DECLFW(M361Write) {
-	mmc3.expregs[0] = V & 0xF0;
-	FixMMC3PRG();
-	FixMMC3CHR();
-}
-
-static void M361Power(void) {
-	GenMMC3Power();
-	SetWriteHandler(0x7000, 0x7fff, M361Write); /* OK-411 boards, the same logic, but data latched, 2-in-1 frankenstein */
-}
-
-void Mapper361_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = GN45PW;
-	mmc3.cwrap = GN45CW;
-	info->Power = M361Power;
-	info->Reset = GN45Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
-}
-
 /* ---------------------------- UNIF Boards ----------------------------- */
 
 void TBROM_Init(CartInfo *info) {
