@@ -1155,22 +1155,6 @@ void Mapper325_Init(CartInfo *info) {
 	info->Power = M325Power;
 }
 
-/* ---------------------------- Mapper 197 ------------------------------- */
-
-static void M197CW(uint32 A, uint8 V) {
-	if (A == 0x0000)
-		setchr4(0x0000, V >> 1);
-	else if (A == 0x1000)
-		setchr2(0x1000, V);
-	else if (A == 0x1400)
-		setchr2(0x1800, V);
-}
-
-void Mapper197_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0);
-	mmc3.cwrap = M197CW;
-}
-
 /* ---------------------------- UNIF Boards ----------------------------- */
 
 void TBROM_Init(CartInfo *info) {
