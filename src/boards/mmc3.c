@@ -1193,53 +1193,6 @@ void Mapper198_Init(CartInfo *info) {
 	info->Power = M198Power;
 }
 
-/* ---------------------------- Mapper 205 ------------------------------ */
-/* UNIF boardname BMC-JC-016-2
-https://wiki.nesdev.com/w/index.php/INES_Mapper_205 */
-
-/* 2023-02 : Update reg write logic and add solder pad */
-
-static void M205PW(uint32 A, uint8 V) {
-	uint8 bank = V & ((mmc3.expregs[0] & 0x02) ? 0x0F : 0x1F);
-	setprg8(A, mmc3.expregs[0] << 4 | bank);
-}
-
-static void M205CW(uint32 A, uint8 V) {
-	uint8 bank = V & ((mmc3.expregs[0] & 0x02) ? 0x7F : 0xFF);
-	setchr1(A, (mmc3.expregs[0] << 7) | bank);
-}
-
-static DECLFW(M205Write) {
-	mmc3.expregs[0] = V & 3;
-	if (V & 1) {
-		mmc3.expregs[0] |= mmc3.expregs[1];
-	}
-	CartBW(A, V);
-	FixMMC3PRG();
-	FixMMC3CHR();
-}
-
-static void M205Reset(void) {
-	mmc3.expregs[0] = 0;
-	mmc3.expregs[1] ^= 2; /* solder pad */
-	MMC3RegReset();
-}
-
-static void M205Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = 0;
-	GenMMC3Power();
-	SetWriteHandler(0x6000, 0x7FFF, M205Write);
-}
-
-void Mapper205_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0);
-	mmc3.pwrap = M205PW;
-	mmc3.cwrap = M205CW;
-	info->Power = M205Power;
-	info->Reset = M205Reset;
-	AddExState(mmc3.expregs, 2, 0, "EXPR");
-}
-
 /* ---------------------------- UNIF Boards ----------------------------- */
 
 void TBROM_Init(CartInfo *info) {
