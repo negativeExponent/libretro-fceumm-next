@@ -1243,14 +1243,11 @@ void Mapper205_Init(CartInfo *info) {
 /* --------------------------- GN-45 BOARD ------------------------------ */
 
 /* Mapper 361 and 366, previously assigned as Mapper 205 */
-/* Mapper 361:
+/* Mapper 361 (YY841101C):
  *  JY-009
  *  JY-018
  *  JY-019
  *  OK-411
- * Mapper 366 (GN-45):
- *  K-3131GS
- *  K-3131SS
 */	
 static void GN45PW(uint32 A, uint8 V) {
 	setprg8(A, (V & 0x0f) | mmc3.expregs[0]);
@@ -1281,30 +1278,6 @@ void Mapper361_Init(CartInfo *info) {
 	mmc3.pwrap = GN45PW;
 	mmc3.cwrap = GN45CW;
 	info->Power = M361Power;
-	info->Reset = GN45Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
-}
-
-static DECLFW(M366Write) {
-	CartBW(A, V);
-	if (mmc3.expregs[2] == 0) {
-		mmc3.expregs[0] = A & 0x70;
-		mmc3.expregs[2] = A & 0x80;
-		FixMMC3PRG();
-		FixMMC3CHR();
-	}	
-}
-
-static void M366Power(void) {
-	GenMMC3Power();
-	SetWriteHandler(0x6000, 0x7fff, M366Write);
-}
-
-void Mapper366_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0);
-	mmc3.pwrap = GN45PW;
-	mmc3.cwrap = GN45CW;
-	info->Power = M366Power;
 	info->Reset = GN45Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }
