@@ -27,6 +27,9 @@ DECLFW(MMC3_CMDWrite);
 DECLFW(MMC3_IRQWrite);
 DECLFW(MMC3_Write);
 
+uint8 MMC3GetPRGBank(int bank);
+uint8 MMC3GetCHRBank(int bank);
+
 void GenMMC3_Init(CartInfo *info, int wram, int battery);
 
 #endif /* _MMC3_H */

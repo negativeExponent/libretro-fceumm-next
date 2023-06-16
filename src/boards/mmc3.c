@@ -64,34 +64,47 @@ void GenMMC3_Init(CartInfo *info, int wram, int battery);
  * ----------------------------------------------------------------------
  */
 
+uint8 MMC3GetPRGBank(int bank) {
+	if ((~bank & 0x01) && (mmc3.cmd & 0x40)) {
+		bank ^= 0x02;
+	}
+	if (bank & 0x02) {
+		return ((~1) | (bank & 0x01));
+	}
+	return mmc3.regs[6 | (bank & 0x01)];
+}
+
+uint8 MMC3GetCHRBank(int bank) {
+	if (mmc3.cmd & 0x80) {
+		bank ^= 0x04;
+	}
+	if (bank & 4) {
+		return mmc3.regs[bank - 2];
+	}
+	return ((mmc3.regs[bank >> 1] & ~0x01) | (bank & 0x01));
+}
+
 int MMC3CanWriteToWRAM() {
 	return ((mmc3.wram & 0x80) && !(mmc3.wram & 0x40));
 }
 
 void FixMMC3PRG(int V) {
-	if (V & 0x40) {
-		mmc3.pwrap(0xC000, mmc3.regs[6]);
-		mmc3.pwrap(0x8000, ~1);
-	} else {
-		mmc3.pwrap(0x8000, mmc3.regs[6]);
-		mmc3.pwrap(0xC000, ~1);
-	}
-	mmc3.pwrap(0xA000, mmc3.regs[7]);
-	mmc3.pwrap(0xE000, ~0);
+	mmc3.pwrap(0x8000, MMC3GetPRGBank(0));
+	mmc3.pwrap(0xA000, MMC3GetPRGBank(1));
+	mmc3.pwrap(0xC000, MMC3GetPRGBank(2));
+	mmc3.pwrap(0xE000, MMC3GetPRGBank(3));
 }
 
 void FixMMC3CHR(int V) {
-	int cbase = (V & 0x80) << 5;
+	mmc3.cwrap(0x0000, MMC3GetCHRBank(0));
+	mmc3.cwrap(0x0400, MMC3GetCHRBank(1));
+	mmc3.cwrap(0x0800, MMC3GetCHRBank(2));
+	mmc3.cwrap(0x0C00, MMC3GetCHRBank(3));
 
-	mmc3.cwrap((cbase ^ 0x000), mmc3.regs[0] & (~1));
-	mmc3.cwrap((cbase ^ 0x400), mmc3.regs[0] | 1);
-	mmc3.cwrap((cbase ^ 0x800), mmc3.regs[1] & (~1));
-	mmc3.cwrap((cbase ^ 0xC00), mmc3.regs[1] | 1);
-
-	mmc3.cwrap(cbase ^ 0x1000, mmc3.regs[2]);
-	mmc3.cwrap(cbase ^ 0x1400, mmc3.regs[3]);
-	mmc3.cwrap(cbase ^ 0x1800, mmc3.regs[4]);
-	mmc3.cwrap(cbase ^ 0x1c00, mmc3.regs[5]);
+	mmc3.cwrap(0x1000, MMC3GetCHRBank(4));
+	mmc3.cwrap(0x1400, MMC3GetCHRBank(5));
+	mmc3.cwrap(0x1800, MMC3GetCHRBank(6));
+	mmc3.cwrap(0x1C00, MMC3GetCHRBank(7));
 
 	if (mmc3.mwrap)
 		mmc3.mwrap(mmc3.mirroring);
@@ -1294,32 +1307,6 @@ void Mapper366_Init(CartInfo *info) {
 	mmc3.cwrap = GN45CW;
 	info->Power = M366Power;
 	info->Reset = GN45Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
-}
-
-/* ---------------------------- Mapper 245 ------------------------------ */
-
-static void M245CW(uint32 A, uint8 V) {
-	if (!UNIFchrrama) /* Yong Zhe Dou E Long - Dragon Quest VI (As).nes NEEDS THIS for RAM cart */
-		setchr1(A, V & 7);
-	mmc3.expregs[0] = V;
-	FixMMC3PRG(mmc3.cmd);
-}
-
-static void M245PW(uint32 A, uint8 V) {
-	setprg8(A, (V & 0x3F) | ((mmc3.expregs[0] & 2) << 5));
-}
-
-static void M245Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
-}
-
-void Mapper245_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
-	mmc3.cwrap = M245CW;
-	mmc3.pwrap = M245PW;
-	info->Power = M245Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }
 
