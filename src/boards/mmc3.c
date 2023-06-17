@@ -1049,27 +1049,6 @@ void Mapper191_Init(CartInfo *info) {
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
 
-/* ---------------------------- Mapper 192 ------------------------------- */
-
-static void M192CW(uint32 A, uint8 V) {
-	/* Ying Lie Qun Xia Zhuan (Chinese),
-	 * You Ling Xing Dong (China) (Unl) [this will be mistakenly headered as m074 sometimes]
-	 */
-	if ((V == 8) || (V == 9) || (V == 0xA) || (V == 0xB))
-		setchr1r(0x10, A, V);
-	else
-		setchr1r(0, A, V);
-}
-
-void Mapper192_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
-	MMC3_cwrap = M192CW;
-	CHRRAMSIZE = 4096;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
-	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
-	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-}
-
 /* ---------------------------- UNIF Boards ----------------------------- */
 
 void TBROM_Init(CartInfo *info) {
