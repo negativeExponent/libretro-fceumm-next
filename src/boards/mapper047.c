@@ -18,12 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* iNES Mapper 49 */
-/* BMC-STREETFIGTER-GAME4IN1 */
-/* added 6-24-19:
- * BMC-STREETFIGTER-GAME4IN1 - Sic. $6000 set to $41 rather than $00 on power-up.
- */
-
 #include "mapinc.h"
 #include "mmc3.h"
 

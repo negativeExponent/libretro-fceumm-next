@@ -27,7 +27,7 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M49PW(uint32 A, uint8 V) {
+static void M049PW(uint32 A, uint8 V) {
 	if (mmc3.expregs[0] & 1) {
 		setprg8(A, ((mmc3.expregs[0] >> 2) & ~0x0F) | (V & 0x0F));
 	} else {
@@ -35,11 +35,11 @@ static void M49PW(uint32 A, uint8 V) {
 	}
 }
 
-static void M49CW(uint32 A, uint8 V) {
+static void M049CW(uint32 A, uint8 V) {
 	setchr1(A, ((mmc3.expregs[0] << 1) & 0x180) | (V & 0x7F));
 }
 
-static DECLFW(M49Write) {
+static DECLFW(M049Write) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = V;
 		MMC3_FixPRG();
@@ -47,23 +47,23 @@ static DECLFW(M49Write) {
 	}
 }
 
-static void M49Reset(void) {
+static void M049Reset(void) {
 	mmc3.expregs[0] = mmc3.expregs[1];
 	MMC3RegReset();
 }
 
-static void M49Power(void) {
+static void M049Power(void) {
 	mmc3.expregs[0] = mmc3.expregs[1];
 	GenMMC3Power();
-	SetWriteHandler(0x6000, 0x7FFF, M49Write);
+	SetWriteHandler(0x6000, 0x7FFF, M049Write);
 }
 
 void Mapper049_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	MMC3_cwrap = M49CW;
-	MMC3_pwrap = M49PW;
-	info->Reset = M49Reset;
-	info->Power = M49Power;
+	MMC3_cwrap = M049CW;
+	MMC3_pwrap = M049PW;
+	info->Reset = M049Reset;
+	info->Power = M049Power;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");
 
 	mmc3.expregs[1] = 0;
