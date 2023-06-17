@@ -1088,47 +1088,6 @@ void Mapper194_Init(CartInfo *info) {
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
 
-/* ---------------------------- Mapper 196 ------------------------------- */
-/* MMC3 board with optional command address line connection, allows to
- * make three-four different wirings to IRQ address lines and separately to
- * CMD address line, Mali Boss additionally check if wiring are correct for
- * game
- */
-
-static void M196PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0])
-		setprg32(0x8000, mmc3.expregs[1]);
-	else
-		setprg8(A, V);
-}
-
-static DECLFW(Mapper196Write) {
-	A = (A & 0xF000) | (!!(A & 0xE) ^ (A & 1));
-	if (A >= 0xC000)
-		MMC3_IRQWrite(A, V);
-	else
-		MMC3_CMDWrite(A, V);
-}
-
-static DECLFW(Mapper196WriteLo) {
-	mmc3.expregs[0] = 1;
-	mmc3.expregs[1] = (V & 0xf) | (V >> 4);
-	MMC3_FixPRG();
-}
-
-static void Mapper196Power(void) {
-	GenMMC3Power();
-	mmc3.expregs[0] = mmc3.expregs[1] = 0;
-	SetWriteHandler(0x6000, 0x6FFF, Mapper196WriteLo);
-	SetWriteHandler(0x8000, 0xFFFF, Mapper196Write);
-}
-
-void Mapper196_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
-	MMC3_pwrap = M196PW;
-	info->Power = Mapper196Power;
-}
-
 /* ---------------------------- UNIF Boards ----------------------------- */
 
 void TBROM_Init(CartInfo *info) {
