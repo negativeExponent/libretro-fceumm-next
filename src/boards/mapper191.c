@@ -24,25 +24,25 @@
 static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSIZE = 0;
 
-static void M194CW(uint32 A, uint8 V) {
-	if ((V & ~0x01) == 0x00) { /* Dai-2-Ji - Super Robot Taisen (As).nes */
-		setchr1r(0x10, A, V & 0x01);
+static void M191CW(uint32 A, uint8 V) {
+    if (V & 0x80) {
+        setchr1r(0x10, A, V & 0x01);
     } else {
-		setchr1(A, V);
+	    setchr1(A, V);
     }
 }
 
-static void M194Close(void) {
+static void M191Close(void) {
 	if (CHRRAM) {
 		FCEU_free(CHRRAM);
 		CHRRAM = NULL;
 	}
 }
 
-void Mapper194_Init(CartInfo *info) {
+void Mapper191_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, info->battery);
-	info->Close = M194Close;
-	MMC3_cwrap = M194CW;
+    info->Close = M191Close;
+	MMC3_cwrap = M191CW;
 	CHRRAMSIZE = 2048;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);

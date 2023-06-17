@@ -1034,21 +1034,6 @@ void Mapper165_Init(CartInfo *info) {
 	AddExState(mmc3.expregs, 4, 0, "EXPR");
 }
 
-/* ---------------------------- Mapper 191 ------------------------------ */
-
-static void M191CW(uint32 A, uint8 V) {
-	setchr1r((V & 0x80) >> 3, A, V);
-}
-
-void Mapper191_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
-	MMC3_cwrap = M191CW;
-	CHRRAMSIZE = 2048;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
-	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
-	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-}
-
 /* ---------------------------- UNIF Boards ----------------------------- */
 
 void TBROM_Init(CartInfo *info) {
