@@ -977,63 +977,6 @@ void Mapper119_Init(CartInfo *info) {
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
 
-/* ---------------------------- Mapper 165 ------------------------------ */
-
-static void M165CW(uint32 A, uint8 V) {
-	if (V == 0)
-		setchr4r(0x10, A, 0);
-	else
-		setchr4(A, V >> 2);
-}
-
-static void M165PPUFD(void) {
-	if (mmc3.expregs[0] == 0xFD) {
-		M165CW(0x0000, mmc3.regs[0]);
-		M165CW(0x1000, mmc3.regs[2]);
-	}
-}
-
-static void M165PPUFE(void) {
-	if (mmc3.expregs[0] == 0xFE) {
-		M165CW(0x0000, mmc3.regs[1]);
-		M165CW(0x1000, mmc3.regs[4]);
-	}
-}
-
-static void M165CWM(uint32 A, uint8 V) {
-	if (((mmc3.cmd & 0x7) == 0) || ((mmc3.cmd & 0x7) == 2))
-		M165PPUFD();
-	if (((mmc3.cmd & 0x7) == 1) || ((mmc3.cmd & 0x7) == 4))
-		M165PPUFE();
-}
-
-static void FP_FASTAPASS(1) M165PPU(uint32 A) {
-	if ((A & 0x1FF0) == 0x1FD0) {
-		mmc3.expregs[0] = 0xFD;
-		M165PPUFD();
-	} else if ((A & 0x1FF0) == 0x1FE0) {
-		mmc3.expregs[0] = 0xFE;
-		M165PPUFE();
-	}
-}
-
-static void M165Power(void) {
-	mmc3.expregs[0] = 0xFD;
-	GenMMC3Power();
-}
-
-void Mapper165_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
-	MMC3_cwrap = M165CWM;
-	PPU_hook = M165PPU;
-	info->Power = M165Power;
-	CHRRAMSIZE = 4096;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
-	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
-	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-	AddExState(mmc3.expregs, 4, 0, "EXPR");
-}
-
 /* ---------------------------- UNIF Boards ----------------------------- */
 
 void TBROM_Init(CartInfo *info) {
