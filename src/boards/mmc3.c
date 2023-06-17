@@ -745,18 +745,6 @@ void Mapper052_Init(CartInfo *info) {
 	}
 }
 
-/* ---------------------------- Mapper 76 ------------------------------- */
-
-static void M076CW(uint32 A, uint8 V) {
-	if (A >= 0x1000)
-		setchr2((A & 0xC00) << 1, V);
-}
-
-void Mapper076_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
-	MMC3_cwrap = M076CW;
-}
-
 /* ---------------------------- Mapper 118 ------------------------------ */
 
 static uint8 PPUCHRBus;
