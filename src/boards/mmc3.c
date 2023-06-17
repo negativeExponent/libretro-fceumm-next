@@ -633,55 +633,6 @@ void Mapper047_Init(CartInfo *info) {
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }
 
-/* ---------------------------- Mapper 49 ------------------------------- */
-/* -------------------- BMC-STREETFIGTER-GAME4IN1 ----------------------- */
-/* added 6-24-19:
- * BMC-STREETFIGTER-GAME4IN1 - Sic. $6000 set to $41 rather than $00 on power-up.
- */
-
-static void M49PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 1) {
-		setprg8(A, ((mmc3.expregs[0] >> 2) & ~0x0F) | (V & 0x0F));
-	} else {
-		setprg32(0x8000, (mmc3.expregs[0] >> 4) & 3);
-	}
-}
-
-static void M49CW(uint32 A, uint8 V) {
-	setchr1(A, ((mmc3.expregs[0] << 1) & 0x180) | (V & 0x7F));
-}
-
-static DECLFW(M49Write) {
-	if (MMC3CanWriteToWRAM()) {
-		mmc3.expregs[0] = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-	}
-}
-
-static void M49Reset(void) {
-	mmc3.expregs[0] = mmc3.expregs[1];
-	MMC3RegReset();
-}
-
-static void M49Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[1];
-	GenMMC3Power();
-	SetWriteHandler(0x6000, 0x7FFF, M49Write);
-}
-
-void Mapper049_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
-	MMC3_cwrap = M49CW;
-	MMC3_pwrap = M49PW;
-	info->Reset = M49Reset;
-	info->Power = M49Power;
-	AddExState(mmc3.expregs, 2, 0, "EXPR");
-	mmc3.expregs[1] = 0;
-	if (info->PRGCRC32 == 0x408EA235)
-		mmc3.expregs[1] = 0x41; /* Street Fighter II Game 4-in-1 */
-}
-
 /* ---------------------------- Mapper 118 ------------------------------ */
 
 static uint8 PPUCHRBus;
