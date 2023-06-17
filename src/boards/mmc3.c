@@ -1129,42 +1129,6 @@ void Mapper196_Init(CartInfo *info) {
 	info->Power = Mapper196Power;
 }
 
-/* ---------------------------- Mali Splash Bomb---------------------------- */
-/* The same board as for 196 mapper games, but with additional data bit swap
- * Also, it is impossible to work on the combined 196 mapper source with
- * all data bits merged, because it's using one of them as 8000 reg...
- */
-
-static void M325PW(uint32 A, uint8 V) {
-	setprg8(A, (V & 3) | ((V & 8) >> 1) | ((V & 4) << 1));
-}
-
-static void M325CW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0xDD) | ((V & 0x20) >> 4) | ((V & 2) << 4));
-}
-
-static DECLFW(M325Write) {
-	if (A >= 0xC000) {
-		A = (A & 0xFFFE) | ((A >> 2) & 1) | ((A >> 3) & 1);
-		MMC3_IRQWrite(A, V);
-	} else {
-		A = (A & 0xFFFE) | ((A >> 3) & 1);
-		MMC3_CMDWrite(A, V);
-	}
-}
-
-static void M325Power(void) {
-	GenMMC3Power();
-	SetWriteHandler(0x8000, 0xFFFF, M325Write);
-}
-
-void Mapper325_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
-	MMC3_pwrap = M325PW;
-	MMC3_cwrap = M325CW;
-	info->Power = M325Power;
-}
-
 /* ---------------------------- UNIF Boards ----------------------------- */
 
 void TBROM_Init(CartInfo *info) {
