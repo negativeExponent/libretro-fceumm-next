@@ -21,56 +21,65 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M197CW(uint32 A, uint8 V) {
-	switch (iNESCart.submapper) {
-    case 1:
-        if (A == 0x0800)
-            setchr4(0x0000, V >> 1);
-        else if (A == 0x1800)
-            setchr2(0x1000, V);
-        else if (A == 0x1C00)
-            setchr2(0x1800, V);
-        break;
-    case 2:
-        if (A == 0x0000)
-            setchr2(0x0000, V);
-        else if (A == 0x0C00)
-            setchr2(0x0800, V);
-        else if (A == 0x1000)
-            setchr2(0x1000, V);
-        else if (A == 0x1C00)
-            setchr2(0x1800, V);
-        break;
-    case 3:
-        if (A == 0x0000)
-			setchr4(0x0000, (((mmc3.expregs[0] << 7) & 0x100) | V) >> 1);
-		else if (A == 0x1000)
-			setchr2(0x1000, ((mmc3.expregs[0] << 7) & 0x100) | V);
-		else if (A == 0x1400)
-			setchr2(0x1800, ((mmc3.expregs[0] << 7) & 0x100) | V);
-		break;
-    case 0:
-    default:
-		if (A == 0x0000)
-			setchr4(0x0000, V >> 1);
-		else if (A == 0x1000)
-			setchr2(0x1000, V);
-		else if (A == 0x1400)
-			setchr2(0x1800, V);
-		break;
-	}
-}
-
 static void M197PW(uint32 A, uint8 V) {
     uint8 mask = (mmc3.expregs[0] & 0x08) ? 0x0F : 0x1F;
     setprg8(A, (mmc3.expregs[0] << 4) | (V & mask));
 }
 
+static void M197FixCHR(void) {
+	switch (iNESCart.submapper) {
+    case 1:
+        setchr2(0x0000, mmc3.regs[1] & ~0x01);
+        setchr2(0x0800, mmc3.regs[1] |  0x01);
+        setchr2(0x1000, mmc3.regs[4]);
+        setchr2(0x1800, mmc3.regs[5]);
+        break;
+    case 2:
+        setchr2(0x0000, mmc3.regs[0] & ~0x01);
+        setchr2(0x0800, mmc3.regs[1] |  0x01);
+        setchr2(0x1000, mmc3.regs[2]);
+        setchr2(0x1800, mmc3.regs[5]);
+        break;
+    case 0:
+    case 3:
+    default:
+		setchr2(0x0000, mmc3.regs[0] & ~0x01);
+        setchr2(0x0800, mmc3.regs[0] |  0x01);
+        setchr2(0x1000, mmc3.regs[2]);
+        setchr2(0x1800, mmc3.regs[3]);
+		break;
+	}
+}
+
 static DECLFW(M197WriteWRAM) {
     if (MMC3CanWriteToWRAM()) {
         mmc3.expregs[0] = V;
-        MMC3_FixCHR();
         MMC3_FixPRG();
+    }
+}
+
+static DECLFW(M197Write) {
+    A &= 0xE001;
+    switch (A) {
+    case 0x8001:
+        switch (mmc3.cmd & 0x07) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+            mmc3.regs[mmc3.cmd & 0x07] = V;
+            MMC3_FixCHR();
+            break;
+        default:
+            MMC3_CMDWrite(A, V);
+            break;
+        }
+        break;
+    default:
+        MMC3_CMDWrite(A, V);
+        break;
     }
 }
 
@@ -83,6 +92,7 @@ static void M197Reset(void) {
 static void M197Power(void) {
     mmc3.expregs[0] = 0;
     GenMMC3Power();
+    SetWriteHandler(0x8000, 0x9FFF, M197Write);
     if (iNESCart.submapper == 3) {
         SetWriteHandler(0x6000, 0x7FFF, M197WriteWRAM);
     }
@@ -92,10 +102,9 @@ void Mapper197_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
     info->Power = M197Power;
     info->Reset = M197Reset;
-	MMC3_cwrap = M197CW;
+	MMC3_FixCHR = M197FixCHR;
     if (iNESCart.submapper == 3) {
         MMC3_pwrap = M197PW;
         AddExState(mmc3.expregs, 1, 0, "EXPR");
     }
-
 }
