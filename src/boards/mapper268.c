@@ -115,8 +115,8 @@ static DECLFW(M268Write) {
 			V &= ((~mmc3.expregs[2] >> 3) & 0x0E) | 0xF1;
 		}
 		mmc3.expregs[index] = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -150,8 +150,8 @@ static void M268Close(void) {
 static void ComminInit(CartInfo *info, int _submapper) {
 	GenMMC3_Init(info, (info->PRGRamSize + info->PRGRamSaveSize) >> 10, info->battery);
 	submapper = _submapper;
-	mmc3.pwrap = M268PW;
-	mmc3.cwrap = M268CW;
+	MMC3_pwrap = M268PW;
+	MMC3_cwrap = M268CW;
 	info->Power = M268Power;
 	info->Reset = M268Reset;
 	info->Close = M268Close;

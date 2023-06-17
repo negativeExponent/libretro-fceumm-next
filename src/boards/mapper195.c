@@ -67,7 +67,7 @@ static DECLFW(M195PPUWrite) {
 				chrRamMask = (chrBank & 0x40) ? 0xFE : 0xFC;
 				chrRamBankSelect = chrRamLut[index];
 			}
-            FixMMC3CHR();
+            MMC3_FixCHR();
 		}
 	}
 	writePPU(A, V);
@@ -96,7 +96,7 @@ void Mapper195_Init(CartInfo *info) {
 	GenMMC3_Init(info, 16, info->battery);
 	info->Power = M195Power;
 	info->Close = M195Close;
-	mmc3.cwrap = M195CW;
+	MMC3_cwrap = M195CW;
 
 	CHRRAMSIZE = 4096;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

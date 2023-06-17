@@ -84,8 +84,8 @@ static void SyncCHR(uint32 A, uint8 V) {
 static DECLFW(M369WriteLo) {
 	if ((A & 0xC100) == 0x4100) {
 		mode = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -102,8 +102,8 @@ static DECLFW(M369Write) {
 				break;
 			case 0xE000:
 				smb2_reg = V & 7;
-				FixMMC3PRG();
-				FixMMC3CHR();
+				MMC3_FixPRG();
+				MMC3_FixCHR();
 				break;
 		}
 	} else {
@@ -113,8 +113,8 @@ static DECLFW(M369Write) {
 			case 0xA000:
 			case 0xA001:
 				MMC3_CMDWrite(A, V);
-				FixMMC3PRG();
-				FixMMC3CHR();
+				MMC3_FixPRG();
+				MMC3_FixCHR();
 				break;
 			case 0xC000:
 				mmc3_latch = V;
@@ -184,8 +184,8 @@ static void M369Power(void) {
 
 void Mapper369_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, info->battery);
-	mmc3.pwrap = SyncPRG;
-	mmc3.cwrap = SyncCHR;
+	MMC3_pwrap = SyncPRG;
+	MMC3_cwrap = SyncCHR;
 	info->Power = M369Power;
 	info->Reset = M369Reset;
 	MapIRQHook = SMB2JIRQHook;

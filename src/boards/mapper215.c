@@ -140,13 +140,13 @@ static DECLFW(M215ExWrite) {
 	switch (A & 0xF007) {
 		case 0x5000:
 			mmc3.expregs[0] = V;
-			FixMMC3PRG();
-			FixMMC3CHR();
+			MMC3_FixPRG();
+			MMC3_FixCHR();
 			break;
 		case 0x5001:
 			mmc3.expregs[1] = V;
-			FixMMC3PRG();
-			FixMMC3CHR();
+			MMC3_FixPRG();
+			MMC3_FixCHR();
 			break;
 		case 0x5002:
 			mmc3.expregs[3] = V;
@@ -176,8 +176,8 @@ static void M215Reset(void) {
 
 void Mapper215_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M215CW;
-	mmc3.pwrap = M215PW;
+	MMC3_cwrap = M215CW;
+	MMC3_pwrap = M215PW;
 	info->Power = M215Power;
 	info->Reset = M215Reset;
 	AddExState(mmc3.expregs, 4, 0, "EXPR");

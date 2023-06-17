@@ -49,8 +49,8 @@ static DECLFR(Mapper443_Read) {
 
 static DECLFW(Mapper443_Write) {
 	mmc3.expregs[0] = A & 0xFF;
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static void Mapper443_Reset(void) {
@@ -70,8 +70,8 @@ static void Mapper443_Power(void) {
 
 void Mapper443_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = Mapper443_CHRWrap;
-	mmc3.pwrap = Mapper443_PRGWrap;
+	MMC3_cwrap = Mapper443_CHRWrap;
+	MMC3_pwrap = Mapper443_PRGWrap;
 	info->Power = Mapper443_Power;
 	info->Reset = Mapper443_Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

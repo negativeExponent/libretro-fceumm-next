@@ -48,8 +48,8 @@ static DECLFW(M410Write) {
 	if (!(mmc3.expregs[3] & 0x40)) {
 		mmc3.expregs[mmc3.expregs[4]] = V;
 		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
-		FixMMC3PRG();        
-		FixMMC3CHR();
+		MMC3_FixPRG();        
+		MMC3_FixCHR();
 	}
 }
 
@@ -75,8 +75,8 @@ static void M410Power(void) {
 
 void Mapper410_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M410CW;
-	mmc3.pwrap = M410PW;
+	MMC3_cwrap = M410CW;
+	MMC3_pwrap = M410PW;
 	info->Reset = M410Reset;
 	info->Power = M410Power;
 	info->Close = M410Close;

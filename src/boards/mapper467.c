@@ -41,8 +41,8 @@ static void Mapper467_CHRWrap(uint32 A, uint8 V) {
 
 static DECLFW(Mapper467_WriteExtra) {
 	mmc3.expregs[0] = V;
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 	setmirror(mmc3.expregs[0] & 0x80 ? MI_H : MI_V);
 }
 
@@ -66,8 +66,8 @@ static void Mapper467_Power(void) {
 
 void Mapper467_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = Mapper467_CHRWrap;
-	mmc3.pwrap = Mapper467_PRGWrap;
+	MMC3_cwrap = Mapper467_CHRWrap;
+	MMC3_pwrap = Mapper467_PRGWrap;
 	info->Power = Mapper467_Power;
 	info->Reset = Mapper467_Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

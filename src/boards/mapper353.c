@@ -85,12 +85,12 @@ static void M353MW(uint8 V) {
 static DECLFW(M353Write) {
 	if (A & 0x80) {
 		mmc3.expregs[0] = (A >> 13) & 0x03;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	} else {
 		if (A < 0xC000) {
 			MMC3_CMDWrite(A, V);
-			FixMMC3PRG();
+			MMC3_FixPRG();
 		} else
 			MMC3_IRQWrite(A, V);
 	}
@@ -118,9 +118,9 @@ static void M353Close(void) {
 
 void Mapper353_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, info->battery);
-	mmc3.cwrap = M353CW;
-	mmc3.pwrap = M353PW;
-	mmc3.mwrap = M353MW;
+	MMC3_cwrap = M353CW;
+	MMC3_pwrap = M353PW;
+	MMC3_mwrap = M353MW;
 	PPU_hook = M353PPU;
 	info->Power = M353Power;
 	info->Close = M353Close;

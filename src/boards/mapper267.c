@@ -36,8 +36,8 @@ static void M267PW(uint32 A, uint8 V) {
 static DECLFW(M267Write) {
 	if (!(mmc3.expregs[0] & 0x80)) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -54,8 +54,8 @@ static void M267Power(void) {
 
 void Mapper267_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M267CW;
-	mmc3.pwrap = M267PW;
+	MMC3_cwrap = M267CW;
+	MMC3_pwrap = M267PW;
 	info->Reset = M267Reset;
 	info->Power = M267Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

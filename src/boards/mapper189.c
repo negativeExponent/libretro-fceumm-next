@@ -28,14 +28,14 @@ static void M189PW(uint32 A, uint8 V) {
 static DECLFW(M189Write) {
 	if (A & 0x100) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
+		MMC3_FixPRG();
 	}
 }
 
 static DECLFW(M189WRAMWrite) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
+		MMC3_FixPRG();
 	}
 }
 
@@ -48,7 +48,7 @@ static void M189Power(void) {
 
 void Mapper189_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M189PW;
+	MMC3_pwrap = M189PW;
 	info->Power = M189Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

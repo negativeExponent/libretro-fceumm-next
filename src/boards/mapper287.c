@@ -61,8 +61,8 @@ static DECLFW(BMC411120CLoWrite) {
 	/*	printf("Wr: A:%04x V:%02x\n", A, V); */
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = A;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -80,8 +80,8 @@ static void BMC411120CPower(void) {
 
 void Mapper287_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = BMC411120CPW;
-	mmc3.cwrap = BMC411120CCW;
+	MMC3_pwrap = BMC411120CPW;
+	MMC3_cwrap = BMC411120CCW;
 	info->Power = BMC411120CPower;
 	info->Reset = BMC411120CReset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

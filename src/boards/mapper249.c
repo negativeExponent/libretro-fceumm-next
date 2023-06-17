@@ -42,8 +42,8 @@ static void M249CW(uint32 A, uint8 V) {
 
 static DECLFW(M249Write) {
 	mmc3.expregs[0] = V;
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static void M249Power(void) {
@@ -54,8 +54,8 @@ static void M249Power(void) {
 
 void Mapper249_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, info->battery);
-	mmc3.cwrap = M249CW;
-	mmc3.pwrap = M249PW;
+	MMC3_cwrap = M249CW;
+	MMC3_pwrap = M249PW;
 	info->Power = M249Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

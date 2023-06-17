@@ -61,8 +61,8 @@ static void M322PW(uint32 A, uint8 V) {
 static DECLFW(M322Write) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = A & 0xFF;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -79,8 +79,8 @@ static void M322Reset(void) {
 
 void Mapper322_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M322PW;
-	mmc3.cwrap = M322CW;
+	MMC3_pwrap = M322PW;
+	MMC3_cwrap = M322CW;
 	info->Power = M322Power;
 	info->Reset = M322Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

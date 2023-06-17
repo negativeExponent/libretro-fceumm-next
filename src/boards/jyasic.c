@@ -663,8 +663,8 @@ static DECLFW(Mapper394_Write) {
 		if (HSK007Reg[1] & 0x10)
 			WSync();
 		else {
-			FixMMC3PRG();
-			FixMMC3CHR();
+			MMC3_FixPRG();
+			MMC3_FixCHR();
 		}
 	}
 }
@@ -693,8 +693,8 @@ static void Mapper394_restore(int version) {
 		SetWriteHandler(0x8000, 0xBFFF, MMC3_CMDWrite);
 		SetWriteHandler(0xC000, 0xFFFF, MMC3_IRQWrite);
 		SetReadHandler(0x8000, 0xFFFF, CartBR);
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 static void Mapper394_power(void) {
@@ -711,8 +711,8 @@ void Mapper394_Init(CartInfo *info) {
 	WSync = sync394;
 	JYASIC_init(info);
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = Mapper394_PWrap;
-	mmc3.cwrap = Mapper394_CWrap;
+	MMC3_pwrap = Mapper394_PWrap;
+	MMC3_cwrap = Mapper394_CWrap;
 	info->Reset = Mapper394_power;
 	info->Power = Mapper394_power;
 	AddExState(HSK007Reg, 4, 0, "HSK ");

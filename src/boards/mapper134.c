@@ -62,11 +62,11 @@ static DECLFR(Mapper134_Read) {
 static DECLFW(Mapper134_Write) {
 	if (~mmc3.expregs[0] & 0x80) {
 		mmc3.expregs[A & 3] = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	} else if ((A & 3) == 2) {
 		mmc3.expregs[A & 3] = (mmc3.expregs[A & 3] & ~3) | (V & 3);
-		FixMMC3CHR();
+		MMC3_FixCHR();
 	}
 	CartBW(A, V);
 }
@@ -88,8 +88,8 @@ static void Mapper134_Power(void) {
 
 void Mapper134_Init(CartInfo *info) {
 	GenMMC3_Init(info, info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8, info->battery);
-	mmc3.cwrap = Mapper134_CHRWrap;
-	mmc3.pwrap = Mapper134_PRGWrap;
+	MMC3_cwrap = Mapper134_CHRWrap;
+	MMC3_pwrap = Mapper134_PRGWrap;
 	info->Power = Mapper134_Power;
 	info->Reset = Mapper134_Reset;
 	AddExState(mmc3.expregs, 4, 0, "EXPR");

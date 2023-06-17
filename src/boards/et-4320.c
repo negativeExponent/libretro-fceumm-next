@@ -70,8 +70,8 @@ static DECLFW(BMC810131C_Write) {
 	if (((mmc3.wram & 0xC0) == 0x80) && !(mmc3.expregs[0] & 7))
 	{
 		mmc3.expregs[0] = A & 0x3F;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 	else {
 		CartBW(A, V);
@@ -110,8 +110,8 @@ void BMC810131C_Init(CartInfo *info) {
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSize, 1);
 	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
-	mmc3.pwrap = BMC810131C_PW;
-	mmc3.cwrap = BMC810131C_CW;
+	MMC3_pwrap = BMC810131C_PW;
+	MMC3_cwrap = BMC810131C_CW;
 	PPU_hook = TKSPPU;
 	info->Power = BMC810131C_Power;
 	info->Reset = BMC810131C_Reset;

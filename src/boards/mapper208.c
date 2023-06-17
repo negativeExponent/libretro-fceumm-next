@@ -64,7 +64,7 @@ static void M208MW(uint8 V) {
 
 static DECLFW(M208Write) {
 	mmc3.expregs[5] = V;
-	FixMMC3PRG();
+	MMC3_FixPRG();
 }
 
 static DECLFW(M208ProtWrite) {
@@ -90,8 +90,8 @@ static void M208Power(void) {
 
 void Mapper208_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M208PW;
-	mmc3.mwrap = M208MW;
+	MMC3_pwrap = M208PW;
+	MMC3_mwrap = M208MW;
 	info->Power = M208Power;
 	AddExState(mmc3.expregs, 6, 0, "EXPR");
 	submapper = info->submapper;

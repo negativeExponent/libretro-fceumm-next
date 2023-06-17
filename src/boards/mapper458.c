@@ -44,8 +44,8 @@ static DECLFR(M458Read) {
 static DECLFW(M458Write) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = A & 0xFF;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -65,8 +65,8 @@ static void M458Power(void) {
 
 void Mapper458_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M458CW;
-	mmc3.pwrap = M458PW;
+	MMC3_cwrap = M458CW;
+	MMC3_pwrap = M458PW;
 	info->Reset = M458Reset;
 	info->Power = M458Power;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");

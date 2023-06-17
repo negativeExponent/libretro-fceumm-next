@@ -57,7 +57,7 @@ static void M512PW(uint32 A, uint8 V) {
 static DECLFW(M512Write) {
 	if (A & 0x100) {
 		mmc3.expregs[0] = V & 3;
-		FixMMC3CHR();
+		MMC3_FixCHR();
 	}
 }
 
@@ -76,9 +76,9 @@ static void M512Power(void) {
 
 void Mapper512_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, info->battery);
-	mmc3.cwrap = M512CW;
-	mmc3.pwrap = M512PW;
-	mmc3.mwrap = M512MW;
+	MMC3_cwrap = M512CW;
+	MMC3_pwrap = M512PW;
+	MMC3_mwrap = M512MW;
 	info->Power = M512Power;
 	info->Close = M512Close;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

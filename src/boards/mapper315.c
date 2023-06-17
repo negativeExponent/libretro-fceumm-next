@@ -45,8 +45,8 @@ static void M315CPW(uint32 A, uint8 V) {
 static DECLFW(M315CWrite) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -62,8 +62,8 @@ static void M315CPower(void) {
 
 void Mapper315_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M315CPW;
-	mmc3.cwrap = M315CCW;
+	MMC3_pwrap = M315CPW;
+	MMC3_cwrap = M315CCW;
 	info->Power = M315CPower;
 	info->Reset = M315CReset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

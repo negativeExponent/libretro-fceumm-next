@@ -38,8 +38,8 @@ static void M420PW(uint32 A, uint8 V) {
 static DECLFW(M420Write) {
 	/* writes possible regardless of MMC3 wram state */
 	mmc3.expregs[A & 3] = V;
-	FixMMC3PRG();        
-	FixMMC3CHR();
+	MMC3_FixPRG();        
+	MMC3_FixCHR();
 }
 
 static void M420Reset(void) {
@@ -55,8 +55,8 @@ static void M420Power(void) {
 
 void Mapper420_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M420CW;
-	mmc3.pwrap = M420PW;
+	MMC3_cwrap = M420CW;
+	MMC3_pwrap = M420PW;
 	info->Reset = M420Reset;
 	info->Power = M420Power;
 	AddExState(mmc3.expregs, 4, 0, "EXPR");

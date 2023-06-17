@@ -52,8 +52,8 @@ static DECLFR(Mapper444_Read) {
 
 static DECLFW(Mapper444_Write) {
 	mmc3.expregs[0] = A & 0xFF;
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static void Mapper444_Reset(void) {
@@ -74,8 +74,8 @@ static void Mapper444_Power(void) {
 void Mapper444_Init(CartInfo *info) {
 	pads = info->submapper; /* UNIF represents submapper 0 */
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = Mapper444_CHRWrap;
-	mmc3.pwrap = Mapper444_PRGWrap;
+	MMC3_cwrap = Mapper444_CHRWrap;
+	MMC3_pwrap = Mapper444_PRGWrap;
 	info->Power = Mapper444_Power;
 	info->Reset = Mapper444_Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

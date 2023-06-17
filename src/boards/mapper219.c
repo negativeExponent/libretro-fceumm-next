@@ -38,8 +38,8 @@ static DECLFW(M219WriteOuter) {
 			mmc3.expregs[1] = (mmc3.expregs[1] & ~2) | ((V >> 4) & 2);
 			break;
 	}
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static DECLFW(M219WriteASIC) {
@@ -58,10 +58,10 @@ static DECLFW(M219WriteASIC) {
 					mmc3.regs[index] &= ~0xF0;
 					mmc3.regs[index] |= ((V << 4) & 0xF0);
 				}
-				FixMMC3CHR();
+				MMC3_FixCHR();
 			} else if ((mmc3.cmd >= 0x25) && (mmc3.cmd <= 0x26)) { /* Scrambled PRG register */
 				mmc3.regs[6 | (mmc3.cmd & 1)] = ((V >> 5) & 1) | ((V >> 3) & 2) | ((V >> 1) & 4) | ((V << 1) & 8);
-				FixMMC3PRG();
+				MMC3_FixPRG();
 			}
 		}
 	} else { /* Register index */
@@ -88,8 +88,8 @@ static void M219Reset(void) {
 
 void Mapper219_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M219PWrap;
-	mmc3.cwrap = M219CWrap;
+	MMC3_pwrap = M219PWrap;
+	MMC3_cwrap = M219CWrap;
 	info->Power = M219Power;
 	info->Reset = M219Reset;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");

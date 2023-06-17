@@ -69,15 +69,15 @@ static void M197PW(uint32 A, uint8 V) {
 static DECLFW(M197WriteWRAM) {
     if (MMC3CanWriteToWRAM()) {
         mmc3.expregs[0] = V;
-        FixMMC3CHR();
-        FixMMC3PRG();
+        MMC3_FixCHR();
+        MMC3_FixPRG();
     }
 }
 
 static void M197Reset(void) {
     mmc3.expregs[0] = 0;
-    FixMMC3CHR();
-    FixMMC3PRG();
+    MMC3_FixCHR();
+    MMC3_FixPRG();
 }
 
 static void M197Power(void) {
@@ -92,9 +92,9 @@ void Mapper197_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
     info->Power = M197Power;
     info->Reset = M197Reset;
-	mmc3.cwrap = M197CW;
+	MMC3_cwrap = M197CW;
     if (iNESCart.submapper == 3) {
-        mmc3.pwrap = M197PW;
+        MMC3_pwrap = M197PW;
         AddExState(mmc3.expregs, 1, 0, "EXPR");
     }
 

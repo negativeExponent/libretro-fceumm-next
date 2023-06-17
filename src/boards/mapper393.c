@@ -62,15 +62,15 @@ static DECLFW(M393Write8) {
 	}
 
 	mmc3.expregs[1] = V;
-	FixMMC3CHR();
-	FixMMC3PRG();
+	MMC3_FixCHR();
+	MMC3_FixPRG();
 }
 
 static DECLFW(M393Write6) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = A & 0xFF;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -95,8 +95,8 @@ static void M393lose(void) {
 
 void Mapper393_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, 0);
-	mmc3.pwrap = M393PW;
-	mmc3.cwrap = M393CW;
+	MMC3_pwrap = M393PW;
+	MMC3_cwrap = M393CW;
 	info->Power = M393Power;
 	info->Reset = M393Reset;
 	info->Close = M393lose;

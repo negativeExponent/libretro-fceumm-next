@@ -32,8 +32,8 @@ static void Mapper456_CHRWrap(uint32 A, uint8 V) {
 static DECLFW(Mapper456_Write) {
 	if (A & 0x100) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -50,8 +50,8 @@ static void Mapper456_Power(void) {
 
 void Mapper456_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, 0);
-	mmc3.cwrap = Mapper456_CHRWrap;
-	mmc3.pwrap = Mapper456_PRGWrap;
+	MMC3_cwrap = Mapper456_CHRWrap;
+	MMC3_pwrap = Mapper456_PRGWrap;
 	info->Power = Mapper456_Power;
 	info->Reset = Mapper456_Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

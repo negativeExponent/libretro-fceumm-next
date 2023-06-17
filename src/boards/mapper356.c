@@ -60,8 +60,8 @@ static DECLFW(M356Write) {
 	if (!(mmc3.expregs[3] & 0x40)) {
 		mmc3.expregs[mmc3.expregs[4]] = V;
 		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -87,9 +87,9 @@ static void M356Power(void) {
 
 void Mapper356_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M356CW;
-	mmc3.pwrap = M356PW;
-	mmc3.mwrap = M356MW;
+	MMC3_cwrap = M356CW;
+	MMC3_pwrap = M356PW;
+	MMC3_mwrap = M356MW;
 	info->Reset = M356Reset;
 	info->Power = M356Power;
 	info->Close = M356Close;

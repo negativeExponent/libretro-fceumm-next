@@ -40,8 +40,8 @@ static void M430PW(uint32 A, uint8 V) {
 static DECLFW(M430Write) {
 	if (MMC3CanWriteToWRAM()) {
 	    mmc3.expregs[0] = A & 0xFF;
-	    FixMMC3PRG();        
-	    FixMMC3CHR();
+	    MMC3_FixPRG();        
+	    MMC3_FixCHR();
     }
 }
 
@@ -58,8 +58,8 @@ static void M430Power(void) {
 
 void Mapper430_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M430CW;
-	mmc3.pwrap = M430PW;
+	MMC3_cwrap = M430CW;
+	MMC3_pwrap = M430PW;
 	info->Reset = M430Reset;
 	info->Power = M430Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

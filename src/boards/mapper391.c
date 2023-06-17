@@ -54,8 +54,8 @@ static DECLFW(Mapper391_Write) {
 		if (~mmc3.expregs[0] & 0x80) {
 			mmc3.expregs[0] = V;
 			mmc3.expregs[1] = ((A >> 8) & 0xFF);
-			FixMMC3PRG();
-			FixMMC3CHR();
+			MMC3_FixPRG();
+			MMC3_FixCHR();
 		}
 	}
 }
@@ -73,8 +73,8 @@ static void Mapper391_Power(void) {
 
 void Mapper391_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = Mapper391_CHRWrap;
-	mmc3.pwrap = Mapper391_PRGWrap;
+	MMC3_cwrap = Mapper391_CHRWrap;
+	MMC3_pwrap = Mapper391_PRGWrap;
 	info->Power = Mapper391_Power;
 	info->Reset = Mapper391_Reset;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");

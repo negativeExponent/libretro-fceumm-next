@@ -43,8 +43,8 @@ static void M344PW(uint32 A, uint8 V) {
 static DECLFW(M344Write) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = A & 0xFF;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -60,8 +60,8 @@ static void M344Power(void) {
 
 void Mapper344_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M344PW;
-	mmc3.cwrap = M344CW;
+	MMC3_pwrap = M344PW;
+	MMC3_cwrap = M344CW;
 	info->Power = M344Power;
 	info->Reset = M344Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

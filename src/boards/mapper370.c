@@ -62,8 +62,8 @@ static DECLFR(M370Read) {
 
 static DECLFW(M370Write) {
 	mmc3.expregs[0] = (A & 0xFF);
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static void M370Reset(void) {
@@ -83,9 +83,9 @@ static void M370Power(void) {
 
 void Mapper370_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, 0);
-	mmc3.cwrap = M370CW;
-	mmc3.pwrap = M370PW;
-	mmc3.mwrap = M370MW;
+	MMC3_cwrap = M370CW;
+	MMC3_pwrap = M370PW;
+	MMC3_mwrap = M370MW;
 	PPU_hook = M370PPU;
 	info->Power = M370Power;
 	info->Reset = M370Reset;

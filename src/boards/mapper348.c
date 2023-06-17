@@ -42,8 +42,8 @@ static void M348PW(uint32 A, uint8 V) {
 static DECLFW(M348Write) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -60,8 +60,8 @@ static void M348Power(void) {
 
 void Mapper348_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M348PW;
-	mmc3.cwrap = M348CW;
+	MMC3_pwrap = M348PW;
+	MMC3_cwrap = M348CW;
 	info->Power = M348Power;
 	info->Reset = M348Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

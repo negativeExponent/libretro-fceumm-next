@@ -23,7 +23,7 @@
 
 static void M245CW(uint32 A, uint8 V) {
 	setchr8(0);
-	FixMMC3PRG();
+	MMC3_FixPRG();
 }
 
 static void M245PW(uint32 A, uint8 V) {
@@ -36,7 +36,7 @@ static void M245PPUHook(uint32 A) {
 		A &= 3;
 		if (A != mmc3.expregs[0]) {
 			mmc3.expregs[0] = A;
-			FixMMC3PRG();
+			MMC3_FixPRG();
 		}
 	}
 }
@@ -49,8 +49,8 @@ static void M245Power(void) {
 void Mapper245_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, info->battery);
 	info->Power = M245Power;
-	mmc3.pwrap = M245PW;
-	mmc3.cwrap = M245CW;
+	MMC3_pwrap = M245PW;
+	MMC3_cwrap = M245CW;
 	PPU_hook = M245PPUHook;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

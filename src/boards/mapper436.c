@@ -37,8 +37,8 @@ static void Mapper436_CWrap(uint32 A, uint8 V) {
 
 static DECLFW(Mapper436_Write) {
 	mmc3.expregs[0] = A & 0xFF;
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static void Mapper436_Reset(void) {
@@ -54,8 +54,8 @@ static void Mapper436_Power(void) {
 
 void Mapper436_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, 0);
-	mmc3.pwrap = Mapper436_PWrap;
-	mmc3.cwrap = Mapper436_CWrap;
+	MMC3_pwrap = Mapper436_PWrap;
+	MMC3_cwrap = Mapper436_CWrap;
 	info->Power = Mapper436_Power;
 	info->Reset = Mapper436_Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

@@ -34,8 +34,8 @@ static void M457PW(uint32 A, uint8 V) {
 static DECLFW(M457Write) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -52,8 +52,8 @@ static void M457Power(void) {
 
 void Mapper457_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M457CW;
-	mmc3.pwrap = M457PW;
+	MMC3_cwrap = M457CW;
+	MMC3_pwrap = M457PW;
 	info->Reset = M457Reset;
 	info->Power = M457Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

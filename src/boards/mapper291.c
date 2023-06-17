@@ -35,8 +35,8 @@ static void M291PW(uint32 A, uint8 V) {
 static DECLFW(M291Write) {
 	/* The Outer Bank Register responds even when the MMC3 clone's WRAM bit is clear. */
 	mmc3.expregs[0] = V;
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static void M291Reset(void) {
@@ -52,8 +52,8 @@ static void M291Power(void) {
 
 void Mapper291_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M291CW;
-	mmc3.pwrap = M291PW;
+	MMC3_cwrap = M291CW;
+	MMC3_pwrap = M291PW;
 	info->Power = M291Power;
 	info->Reset = M291Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

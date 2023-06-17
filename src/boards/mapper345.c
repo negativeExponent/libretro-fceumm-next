@@ -46,8 +46,8 @@ static void M345MW(uint8 V) {
 static DECLFW(M345Write) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -63,8 +63,8 @@ static void M345Power(void) {
 
 void Mapper345_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M345PW;
-	mmc3.mwrap = M345MW;
+	MMC3_pwrap = M345PW;
+	MMC3_mwrap = M345MW;
 	info->Power = M345Power;
 	info->Reset = M345Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

@@ -37,8 +37,8 @@ static DECLFW(M516Write) {
 	/*    FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, mmc3.expregs[0]); */
 	if (A & 0x10) {
 		mmc3.expregs[0] = A & 0xF;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 	if (A < 0xC000) {
 		MMC3_CMDWrite(A, V);
@@ -55,8 +55,8 @@ static void M516Power(void) {
 
 void Mapper516_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M516CW;
-	mmc3.pwrap = M516PW;
+	MMC3_cwrap = M516CW;
+	MMC3_pwrap = M516PW;
 	info->Power = M516Power;
 	AddExState(mmc3.expregs, 4, 0, "EXPR");
 }

@@ -38,8 +38,8 @@ static void M445CW(uint32 A, uint8 V) {
 static DECLFW(M445Write) {
     if (!(mmc3.expregs[3] & 0x20)) {
         mmc3.expregs[A & 0x03] = V;
-        FixMMC3PRG();
-        FixMMC3CHR();
+        MMC3_FixPRG();
+        MMC3_FixCHR();
     }
 }
 
@@ -62,8 +62,8 @@ static void M445Power(void) {
 
 void Mapper445_Init(CartInfo *info) {
 	GenMMC3_Init(info, info->PRGRamSize + info->PRGRamSaveSize, info->battery);
-	mmc3.pwrap = M445PW;
-	mmc3.cwrap = M445CW;
+	MMC3_pwrap = M445PW;
+	MMC3_cwrap = M445CW;
 	info->Power = M445Power;
 	info->Reset = M445Reset;
 	AddExState(mmc3.expregs, 4, 0, "EXPR");

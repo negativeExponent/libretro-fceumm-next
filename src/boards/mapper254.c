@@ -37,8 +37,8 @@ static DECLFW(M254WriteWRAM) {
 
 static void M254Reset(void) {
 	mmc3.expregs[0] = 0x80;
-	FixMMC3CHR();
-	FixMMC3PRG();
+	MMC3_FixCHR();
+	MMC3_FixPRG();
 }
 
 static void M254Power(void) {

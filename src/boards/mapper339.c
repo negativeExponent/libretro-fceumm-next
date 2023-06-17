@@ -46,8 +46,8 @@ static void M339PW(uint32 A, uint8 V) {
 static DECLFW(M339Write) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = A & 0x3F;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -64,8 +64,8 @@ static void M339Power(void) {
 
 void Mapper339_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, 0);
-	mmc3.pwrap = M339PW;
-	mmc3.cwrap = M339CW;
+	MMC3_pwrap = M339PW;
+	MMC3_cwrap = M339CW;
 	info->Power = M339Power;
 	info->Reset = M339Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

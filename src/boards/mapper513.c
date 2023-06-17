@@ -38,7 +38,7 @@ static DECLFW(M513Write) {
 	case 0x8001:
 		if ((mmc3.expregs[0] & 7) < 6) {
 			mmc3.expregs[1] = V;
-			FixMMC3PRG();
+			MMC3_FixPRG();
 		}
 		break;
 	}
@@ -54,7 +54,7 @@ static void M513Power(void) {
 
 void Mapper513_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M513PW;
+	MMC3_pwrap = M513PW;
 	mmc3.opts |= 2;
 	info->SaveGame[0] = UNIFchrrama;
 	info->SaveGameLen[0] = 32 * 1024;

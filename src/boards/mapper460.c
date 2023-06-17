@@ -66,8 +66,8 @@ static DECLFR(M460Read) {
 static DECLFW(M460WriteLow) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = A & 0xFF;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -94,8 +94,8 @@ static void M460close(void) {
 
 void Mapper460_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M460CW;
-	mmc3.pwrap = M460PW;
+	MMC3_cwrap = M460CW;
+	MMC3_pwrap = M460PW;
 	info->Power = M460Power;
 	info->Reset = M460Reset;
 	info->Close = M460close;

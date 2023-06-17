@@ -52,7 +52,7 @@ static void M292CW(uint32 A, uint8 V) {
 static DECLFW(M292ProtWrite) {
 	if (!(A & 1)) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
+		MMC3_FixPRG();
 	}
 }
 
@@ -68,7 +68,7 @@ static DECLFR(M292ProtRead) {
 			/* TODO: Verify that nothing breaks here */
 			tmp = mmc3.cmd;
 			mmc3.cmd &= 0x7F;
-			FixMMC3CHR();
+			MMC3_FixCHR();
 			mmc3.cmd = tmp;	/* there are more different behaviour of the board that's not used by game itself, so unimplemented here and */
 		}					/* actually will break the current logic ;) */
 	}
@@ -83,8 +83,8 @@ static void M292Power(void) {
 
 void Mapper292_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M292PW;
-	mmc3.cwrap = M292CW;
+	MMC3_pwrap = M292PW;
+	MMC3_cwrap = M292CW;
 	info->Power = M292Power;
 	AddExState(mmc3.expregs, 3, 0, "EXPR");
 }

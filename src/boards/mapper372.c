@@ -49,8 +49,8 @@ static DECLFW(M372Write) {
 	if (!(mmc3.expregs[3] & 0x40)) {
 		mmc3.expregs[mmc3.expregs[4]] = V;
 		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -76,8 +76,8 @@ static void M372Close(void) {
 
 void Mapper372_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M372CW;
-	mmc3.pwrap = M372PW;
+	MMC3_cwrap = M372CW;
+	MMC3_pwrap = M372PW;
 	info->Reset = M372Reset;
 	info->Power = M372Power;
 	info->Close = M372Close;

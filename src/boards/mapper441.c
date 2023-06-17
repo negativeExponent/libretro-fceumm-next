@@ -45,8 +45,8 @@ static DECLFW(M441Write) {
 	if (MMC3CanWriteToWRAM()) {
 		if (~mmc3.expregs[0] & 0x80) {
 			mmc3.expregs[0] = V;
-			FixMMC3PRG();
-			FixMMC3CHR();
+			MMC3_FixPRG();
+			MMC3_FixCHR();
 		}
 	}
 }
@@ -64,8 +64,8 @@ static void M441Power(void) {
 
 void Mapper441_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap       = M441CW;
-	mmc3.pwrap       = M441PW;
+	MMC3_cwrap       = M441CW;
+	MMC3_pwrap       = M441PW;
 	info->Power = M441Power;
 	info->Reset = M441Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

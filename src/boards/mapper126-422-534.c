@@ -69,14 +69,14 @@ static DECLFW(writeWRAM) {
 	if (~mmc3.expregs[3] & 0x80) {
 		/* Lock bit clear: Update any outer bank register */
 		mmc3.expregs[A & 3] = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	} else if ((A & 3) == 2) {
 		/* Lock bit set: Only update the bottom one or two bits of the CNROM bank */
 		int latchMask = (mmc3.expregs[2] & 0x10) ? 1 : 3; /* 16 or 32 KiB inner CHR bank selection */
 		mmc3.expregs[2] &= ~latchMask;
 		mmc3.expregs[2] |= V & latchMask;
-		FixMMC3CHR();
+		MMC3_FixCHR();
 	}
 	CartBW(A, V);
 }
@@ -110,8 +110,8 @@ static void PowerCommon(void) {
 
 static void InitCommon(CartInfo *info) {
 	GenMMC3_Init(info, 8, info->battery);
-	mmc3.cwrap = wrapCHR;
-	mmc3.pwrap = wrapPRG;
+	MMC3_cwrap = wrapCHR;
+	MMC3_pwrap = wrapPRG;
 
 	info->Power = PowerCommon;
 	info->Reset = ResetCommon;

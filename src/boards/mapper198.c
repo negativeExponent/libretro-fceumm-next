@@ -36,6 +36,6 @@ static void M198Power(void) {
 
 void Mapper198_Init(CartInfo *info) {
 	GenMMC3_Init(info, 16, info->battery);
-	mmc3.pwrap = M198PW;
+	MMC3_pwrap = M198PW;
 	info->Power = M198Power;
 }

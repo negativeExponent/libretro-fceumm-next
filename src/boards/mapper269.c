@@ -44,8 +44,8 @@ static DECLFW(M269Write5) {
 	if (!(mmc3.expregs[3] & 0x80)) {
 		mmc3.expregs[mmc3.expregs[4]] = V;
 		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -69,8 +69,8 @@ static uint8 unscrambleCHR(uint8 data) {
 
 void Mapper269_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, 0);
-	mmc3.cwrap = M269CW;
-	mmc3.pwrap = M269PW;
+	MMC3_cwrap = M269CW;
+	MMC3_pwrap = M269PW;
 	info->Power = M269Power;
 	info->Reset = M269Reset;
 	AddExState(mmc3.expregs, 5, 0, "EXPR");

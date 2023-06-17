@@ -34,8 +34,8 @@ static void M364PW(uint32 A, uint8 V) {
 
 static DECLFW(M364Write) {
 	mmc3.expregs[0] = V;
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static void M364Power(void) {
@@ -46,8 +46,8 @@ static void M364Power(void) {
 
 void Mapper364_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, 0);
-	mmc3.pwrap = M364PW;
-	mmc3.cwrap = M364CW;
+	MMC3_pwrap = M364PW;
+	MMC3_cwrap = M364CW;
 	info->Power = M364Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

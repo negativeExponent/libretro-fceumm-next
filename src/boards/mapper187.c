@@ -48,7 +48,7 @@ static void M187PW(uint32 A, uint8 V) {
 static DECLFW(M187WriteLo) {
 	if (!(A & 1)) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
+		MMC3_FixPRG();
 	}
 }
 
@@ -65,8 +65,8 @@ static void M187Power(void) {
 
 void Mapper187_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M187PW;
-	mmc3.cwrap = M187CW;
+	MMC3_pwrap = M187PW;
+	MMC3_cwrap = M187CW;
 	info->Power = M187Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

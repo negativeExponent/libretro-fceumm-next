@@ -44,8 +44,8 @@ static DECLFW(M366Write) {
 	CartBW(A, V);
 	if (~mmc3.expregs[0] & 0x80) {
 		mmc3.expregs[0] = A & 0xF0;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}	
 }
 
@@ -56,8 +56,8 @@ static void M366Power(void) {
 
 void Mapper366_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, 0);
-	mmc3.pwrap = M366PW;
-	mmc3.cwrap = M366CW;
+	MMC3_pwrap = M366PW;
+	MMC3_cwrap = M366CW;
 	info->Power = M366Power;
 	info->Reset = M366Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

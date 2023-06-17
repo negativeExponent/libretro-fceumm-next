@@ -41,8 +41,8 @@ static DECLFW(M205Write) {
 		mmc3.expregs[0] |= mmc3.expregs[1];
 	}
 	CartBW(A, V);
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static void M205Reset(void) {
@@ -59,8 +59,8 @@ static void M205Power(void) {
 
 void Mapper205_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, 0);
-	mmc3.pwrap = M205PW;
-	mmc3.cwrap = M205CW;
+	MMC3_pwrap = M205PW;
+	MMC3_cwrap = M205CW;
 	info->Power = M205Power;
 	info->Reset = M205Reset;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");

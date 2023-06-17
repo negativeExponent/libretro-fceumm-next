@@ -67,8 +67,8 @@ static DECLFW(M327Write) {
 		CartBW(A, V);
 		if ((mmc3.expregs[0] & 7) == 0) {
 			mmc3.expregs[0] = A & 0x3F;
-			FixMMC3PRG();
-			FixMMC3CHR();
+			MMC3_FixPRG();
+			MMC3_FixCHR();
 		}
 	}
 }
@@ -97,8 +97,8 @@ void Mapper327_Init(CartInfo *info) {
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSize, 1);
 	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
-	mmc3.pwrap = M327PW;
-	mmc3.cwrap = M327CW;
+	MMC3_pwrap = M327PW;
+	MMC3_cwrap = M327CW;
 	info->Power = M327Power;
 	info->Reset = M327Reset;
 	info->Close = M327Close;

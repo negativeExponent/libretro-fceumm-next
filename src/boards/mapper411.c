@@ -62,8 +62,8 @@ static void M411PW(uint32 A, uint8 V) {
 
 static DECLFW(M411Write5000) {
 	mmc3.expregs[A & 1] = V;
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static void M411Power(void) {
@@ -75,8 +75,8 @@ static void M411Power(void) {
 
 void Mapper411_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M411PW;
-	mmc3.cwrap = M411CW;
+	MMC3_pwrap = M411PW;
+	MMC3_cwrap = M411CW;
 	info->Power = M411Power;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }

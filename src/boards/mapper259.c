@@ -45,7 +45,7 @@ static void M259PW(uint32 A, uint8 V) {
 static DECLFW(M259Write) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
+		MMC3_FixPRG();
 	}
 }
 
@@ -56,7 +56,7 @@ static void M259Power(void) {
 
 void Mapper259_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M259PW;
+	MMC3_pwrap = M259PW;
 	info->Power = M259Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

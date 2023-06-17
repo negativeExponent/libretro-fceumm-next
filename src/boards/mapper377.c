@@ -39,8 +39,8 @@ static void M377PW(uint32 A, uint8 V) {
 static DECLFW(M377Write) {
 	if (!(mmc3.expregs[0] & 0x80)) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -57,8 +57,8 @@ static void M377Power(void) {
 
 void Mapper377_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M377CW;
-	mmc3.pwrap = M377PW;
+	MMC3_cwrap = M377CW;
+	MMC3_pwrap = M377PW;
 	info->Reset = M377Reset;
 	info->Power = M377Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

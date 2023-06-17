@@ -41,8 +41,8 @@ static void M395PW(uint32 A, uint8 V) {
 static DECLFW(M395Write) {
 	if (!(mmc3.expregs[1] & 0x80)) {
 		mmc3.expregs[(A >> 4) & 1] = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -59,8 +59,8 @@ static void M395Power(void) {
 
 void Mapper395_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M395CW;
-	mmc3.pwrap = M395PW;
+	MMC3_cwrap = M395CW;
+	MMC3_pwrap = M395PW;
 	info->Power = M395Power;
 	info->Reset = M395Reset;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");

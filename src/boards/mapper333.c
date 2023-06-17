@@ -42,8 +42,8 @@ static void M333PW(uint32 A, uint8 V) {
 static DECLFW(M333Write) {
 	if (A & 0x1000) {
 		mmc3.expregs[0] = V;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	} else {
 		if (A < 0xC000)
 			MMC3_CMDWrite(A, V);
@@ -60,8 +60,8 @@ static void M333Power(void) {
 
 void Mapper333_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M333CW;
-	mmc3.pwrap = M333PW;
+	MMC3_cwrap = M333CW;
+	MMC3_pwrap = M333PW;
 	info->Power = M333Power;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

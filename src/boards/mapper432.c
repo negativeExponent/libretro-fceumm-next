@@ -60,8 +60,8 @@ static DECLFW(M432Write) {
 		mmc3.expregs[A & 1] = V;
 		if (~A & 1 && ~V & 1 && ROM_size < 64)
 			mmc3.expregs[1] &= ~0x20; /* Writing 0 to register 0 clears register 1's DIP bit */
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
@@ -83,8 +83,8 @@ static void M432Power(void) {
 
 void Mapper432_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap       = M432CW;
-	mmc3.pwrap       = M432PW;
+	MMC3_cwrap       = M432CW;
+	MMC3_pwrap       = M432PW;
 	info->Power = M432Power;
 	info->Reset = M432Reset;
 	AddExState(mmc3.expregs, 3, 0, "EXPR");

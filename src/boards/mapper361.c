@@ -43,8 +43,8 @@ static void M361Reset(void) {
 
 static DECLFW(M361Write) {
 	mmc3.expregs[0] = V & 0xF0;
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static void M361Power(void) {
@@ -54,8 +54,8 @@ static void M361Power(void) {
 
 void Mapper361_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = M361PW;
-	mmc3.cwrap = M361CW;
+	MMC3_pwrap = M361PW;
+	MMC3_cwrap = M361CW;
 	info->Power = M361Power;
 	info->Reset = M361Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");

@@ -56,8 +56,8 @@ static DECLFW(M401Write) {
 	if (!(mmc3.expregs[3] & 0x40)) {
 		mmc3.expregs[mmc3.expregs[4]] = V;
 		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 	CartBW(A, V);
 }
@@ -87,8 +87,8 @@ static void M401Power(void) {
 
 void Mapper401_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, 0);
-	mmc3.cwrap = M401CW;
-	mmc3.pwrap = M401PW;
+	MMC3_cwrap = M401CW;
+	MMC3_pwrap = M401PW;
 	info->Power = M401Power;
 	info->Reset = M401Reset;
 	AddExState(mmc3.expregs, 5, 0, "EXPR");

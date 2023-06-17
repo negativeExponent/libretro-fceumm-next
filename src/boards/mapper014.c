@@ -68,8 +68,8 @@ static DECLFW(M014CMDWrite) {
 		bbrk = V;
 	}
 	if (bbrk & 2) {
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 		if (A < 0xC000)
 			MMC3_CMDWrite(A, V);
 		else
@@ -91,8 +91,8 @@ static DECLFW(M014CMDWrite) {
 
 static void StateRestore(int version) {
 	if (bbrk & 2) {
-		FixMMC3PRG();
-		FixMMC3CHR();
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	} else
 		Sync();
 }
@@ -104,7 +104,7 @@ static void M014Power(void) {
 
 void Mapper014_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.cwrap = M014CW;
+	MMC3_cwrap = M014CW;
 	info->Power = M014Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);

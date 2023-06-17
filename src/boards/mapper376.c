@@ -43,8 +43,8 @@ static void Mapper376PW(uint32 A, uint8 V) {
 
 static DECLFW(Mapper376Write) {
 	mmc3.expregs[A & 1] = V;
-	FixMMC3PRG();
-	FixMMC3CHR();
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static void Mapper376Reset(void) {
@@ -60,8 +60,8 @@ static void Mapper376Power(void) {
 
 void Mapper376_Init(CartInfo *info) {
 	GenMMC3_Init(info, 0, 0);
-	mmc3.pwrap = Mapper376PW;
-	mmc3.cwrap = Mapper376CW;
+	MMC3_pwrap = Mapper376PW;
+	MMC3_cwrap = Mapper376CW;
 	info->Power = Mapper376Power;
 	info->Reset = Mapper376Reset;
 	AddExState(mmc3.expregs, 2, 0, "EXPR");
