@@ -962,21 +962,6 @@ static void TKSWRAP(uint32 A, uint8 V) {
 		setmirror(MI_0 + (V >> 7));
 }
 
-/* ---------------------------- Mapper 119 ------------------------------ */
-
-static void TQWRAP(uint32 A, uint8 V) {
-	setchr1r((V & 0x40) >> 2, A, V & 0x3F);
-}
-
-void Mapper119_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
-	MMC3_cwrap = TQWRAP;
-	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
-	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
-	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-}
-
 /* ---------------------------- UNIF Boards ----------------------------- */
 
 void TBROM_Init(CartInfo *info) {
@@ -1021,6 +1006,10 @@ void TKSROM_Init(CartInfo *info) {
 	MMC3_mwrap = GENNOMWRAP;
 	PPU_hook = TKSPPU;
 	AddExState(&PPUCHRBus, 1, 0, "PPUC");
+}
+
+static void TQWRAP(uint32 A, uint8 V) {
+	setchr1r((V & 0x40) >> 2, A, V & 0x3F);
 }
 
 void TQROM_Init(CartInfo *info) {
