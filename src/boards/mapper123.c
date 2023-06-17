@@ -23,7 +23,9 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-extern uint8 m114_perm[8];
+static const uint8 m114_perm[8] = {
+    0, 3, 1, 5, 6, 7, 2, 4
+};
 
 static void M123PW(uint32 A, uint8 V) {
 	if (mmc3.expregs[0] & 0x40) {

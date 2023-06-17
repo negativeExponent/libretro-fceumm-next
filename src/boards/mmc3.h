@@ -11,6 +11,7 @@ typedef struct {
 } MMC3;
 
 extern MMC3 mmc3;
+extern int isRevB;
 
 uint8 MMC3GetPRGBank(int V);
 uint8 MMC3GetCHRBank(int V);
