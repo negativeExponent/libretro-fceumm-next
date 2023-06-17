@@ -1070,24 +1070,6 @@ void Mapper192_Init(CartInfo *info) {
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }
 
-/* ---------------------------- Mapper 194 ------------------------------- */
-
-static void M194CW(uint32 A, uint8 V) {
-	if (V <= 1) /* Dai-2-Ji - Super Robot Taisen (As).nes */
-		setchr1r(0x10, A, V);
-	else
-		setchr1r(0, A, V);
-}
-
-void Mapper194_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
-	MMC3_cwrap = M194CW;
-	CHRRAMSIZE = 2048;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
-	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
-	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-}
-
 /* ---------------------------- UNIF Boards ----------------------------- */
 
 void TBROM_Init(CartInfo *info) {
