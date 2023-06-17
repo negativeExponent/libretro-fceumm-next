@@ -897,52 +897,6 @@ void Mapper114_Init(CartInfo *info) {
 	AddExState(&cmdin, 1, 0, "CMDI");
 }
 
-/* ---------------------------- Mapper 115 KN-658 board ------------------------------ */
-
-static void M115PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 0x80) {
-		if (mmc3.expregs[0] & 0x20)
-			setprg32(0x8000, (mmc3.expregs[0] & 0x0F) >> 1); /* real hardware tests, info 100% now lol */
-		else {
-			setprg16(0x8000, (mmc3.expregs[0] & 0x0F));
-			setprg16(0xC000, (mmc3.expregs[0] & 0x0F));
-		}
-	} else
-		setprg8(A, V);
-}
-
-static void M115CW(uint32 A, uint8 V) {
-	setchr1(A, (uint32)V | ((mmc3.expregs[1] & 1) << 8));
-}
-
-static DECLFW(M115Write) {
-	if (A == 0x5080)
-		mmc3.expregs[2] = V; /* Extra prot hardware 2-in-1 mode */
-	else if (A == 0x6000)
-		mmc3.expregs[0] = V;
-	else if (A == 0x6001)
-		mmc3.expregs[1] = V;
-	MMC3_FixPRG();
-}
-
-static DECLFR(M115Read) {
-	return mmc3.expregs[2];
-}
-
-static void M115Power(void) {
-	GenMMC3Power();
-	SetWriteHandler(0x4100, 0x7FFF, M115Write);
-	SetReadHandler(0x5000, 0x5FFF, M115Read);
-}
-
-void Mapper115_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
-	MMC3_cwrap = M115CW;
-	MMC3_pwrap = M115PW;
-	info->Power = M115Power;
-	AddExState(mmc3.expregs, 3, 0, "EXPR");
-}
-
 /* ---------------------------- Mapper 118 ------------------------------ */
 
 static uint8 PPUCHRBus;
