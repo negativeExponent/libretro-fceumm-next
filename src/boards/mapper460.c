@@ -86,6 +86,7 @@ static void M460Power(void) {
 }
 
 static void M460close(void) {
+	GenMMC3Close();
 	if (CHRRAM) {
 		FCEU_gfree(CHRRAM);
 	}

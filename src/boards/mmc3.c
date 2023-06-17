@@ -757,24 +757,6 @@ void Mapper076_Init(CartInfo *info) {
 	MMC3_cwrap = M076CW;
 }
 
-/* ---------------------------- Mapper 74 ------------------------------- */
-
-static void M074CW(uint32 A, uint8 V) {
-	if ((V == 8) || (V == 9)) /* Di 4 Ci - Ji Qi Ren Dai Zhan (As).nes, Ji Jia Zhan Shi (As).nes */
-		setchr1r(0x10, A, V);
-	else
-		setchr1r(0, A, V);
-}
-
-void Mapper074_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
-	MMC3_cwrap = M074CW;
-	CHRRAMSIZE = 2048;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
-	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
-	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-}
-
 /* ---------------------------- Mapper 118 ------------------------------ */
 
 static uint8 PPUCHRBus;

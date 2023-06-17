@@ -22,28 +22,27 @@
 #include "mmc3.h"
 
 static uint8 *CHRRAM = NULL;
-static uint32 CHRRAMSIZE = 0;
+static uint32 CHRRAMSIZE;
 
-static void M194CW(uint32 A, uint8 V) {
-	if ((V & ~0x01) == 0x00) { /* Dai-2-Ji - Super Robot Taisen (As).nes */
+static void M074CW(uint32 A, uint8 V) {
+	if ((V & ~0x01) == 0x08) /* Di 4 Ci - Ji Qi Ren Dai Zhan (As).nes, Ji Jia Zhan Shi (As).nes */
 		setchr1r(0x10, A, V & 0x01);
-    } else {
+	else
 		setchr1(A, V);
+}
+
+static void M074Close(void) {
+    GenMMC3Close();
+    if (CHRRAM) {
+        FCEU_free(CHRRAM);
+        CHRRAM = NULL;
     }
 }
 
-static void M194Close(void) {
-	GenMMC3Close();
-	if (CHRRAM) {
-		FCEU_free(CHRRAM);
-		CHRRAM = NULL;
-	}
-}
-
-void Mapper194_Init(CartInfo *info) {
+void Mapper074_Init(CartInfo *info) {
 	GenMMC3_Init(info, 8, info->battery);
-	info->Close = M194Close;
-	MMC3_cwrap = M194CW;
+    info->Close = M074Close;
+	MMC3_cwrap = M074CW;
 	CHRRAMSIZE = 2048;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);

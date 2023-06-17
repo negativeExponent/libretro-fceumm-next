@@ -63,6 +63,7 @@ static void FP_FASTAPASS(1) M165PPU(uint32 A) {
 }
 
 static void M165Close(void) {
+	GenMMC3Close();
     if (CHRRAM) {
         FCEU_free(CHRRAM);
         CHRRAM = NULL;

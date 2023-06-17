@@ -33,6 +33,7 @@ static void M192CW(uint32 A, uint8 V) {
 }
 
 static void M192Close(void) {
+	GenMMC3Close();
 	if (CHRRAM) {
 		FCEU_free(CHRRAM);
 		CHRRAM = NULL;
