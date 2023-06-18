@@ -52,14 +52,21 @@ static SFORMAT MMC3_StateRegs[] =
 	{ 0 }
 };
 
+static void GenFixPRG(void);
+static void GenFixCHR(void);
+
+static DECLFW (GENPWRAP);
+static DECLFW (GENCWRAP);
+static void GENNOMWRAP(uint8 V);
+
 int isRevB = 1;
 
-void (*MMC3_FixPRG)(void);
-void (*MMC3_FixCHR)(void);
+void (*MMC3_FixPRG)(void) = GenFixPRG;
+void (*MMC3_FixCHR)(void) = GenFixCHR;
 
-void (*MMC3_pwrap)(uint32 A, uint8 V);
-void (*MMC3_cwrap)(uint32 A, uint8 V);
-void (*MMC3_mwrap)(uint8 V);
+void (*MMC3_pwrap)(uint32 A, uint8 V) = GENPWRAP;
+void (*MMC3_cwrap)(uint32 A, uint8 V) = GENCWRAP;
+void (*MMC3_mwrap)(uint8 V) = GENNOMWRAP;
 
 void GenMMC3_Init(CartInfo *info, int wram, int battery);
 
@@ -361,91 +368,4 @@ void GenMMC3_Init(CartInfo *info, int wram, int battery) {
 		GameHBIRQHook = MMC3_hb;
 	GameStateRestore = GenMMC3Restore;
 	submapper = info->submapper;
-}
-
-/* ----------------------------------------------------------------------
- * -------------------------- MMC3 Based Code ---------------------------
- *  ----------------------------------------------------------------------
- */
-
-/* ---------------------------- Mapper 118 ------------------------------ */
-
-static uint8 PPUCHRBus;
-static uint8 TKSMIR[8];
-
-static void FP_FASTAPASS(1) TKSPPU(uint32 A) {
-	A &= 0x1FFF;
-	A >>= 10;
-	PPUCHRBus = A;
-	setmirror(MI_0 + TKSMIR[A]);
-}
-
-static void TKSWRAP(uint32 A, uint8 V) {
-	TKSMIR[A >> 10] = V >> 7;
-	setchr1(A, V & 0x7F);
-	if (PPUCHRBus == (A >> 10))
-		setmirror(MI_0 + (V >> 7));
-}
-
-/* ---------------------------- UNIF Boards ----------------------------- */
-
-void TBROM_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0); /* 64 - 64 */
-}
-
-void TEROM_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0); /* 32 - 32 */
-}
-
-void TFROM_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0); /* 512 - 64 */
-}
-
-void TGROM_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0); /* 512 - 0 */
-}
-
-void TKROM_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery); /* 512- 256 */
-}
-
-void TLROM_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0); /* 512 - 256 */
-}
-
-void TSROM_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0); /* 512 - 256 */
-}
-
-void TLSROM_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0); /* 512 - 256 */
-	MMC3_cwrap = TKSWRAP;
-	MMC3_mwrap = GENNOMWRAP;
-	PPU_hook = TKSPPU;
-	AddExState(&PPUCHRBus, 1, 0, "PPUC");
-}
-
-void TKSROM_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);  /* 512 - 256 */
-	MMC3_cwrap = TKSWRAP;
-	MMC3_mwrap = GENNOMWRAP;
-	PPU_hook = TKSPPU;
-	AddExState(&PPUCHRBus, 1, 0, "PPUC");
-}
-
-static void TQWRAP(uint32 A, uint8 V) {
-	setchr1r((V & 0x40) >> 2, A, V & 0x3F);
-}
-
-void TQROM_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);  /* 512 - 64 */
-	MMC3_cwrap = TQWRAP;
-	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
-	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
-	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-}
-
-void HKROM_Init(CartInfo *info) {
-	GenMMC3_Init(info, 1, info->battery);  /* 512 - 512 */
 }
