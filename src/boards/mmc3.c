@@ -434,50 +434,6 @@ void Mapper012_Init(CartInfo *info) {
 	AddExState(mmc3.expregs, 2, 0, "EXPR");
 }
 
-/* ---------------------------- Mapper 37 ------------------------------- */
-
-static void M037PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] != 2)
-		V &= 0x7;
-	else
-		V &= 0xF;
-	V |= mmc3.expregs[0] << 3;
-	setprg8(A, V);
-}
-
-static void M037CW(uint32 A, uint8 V) {
-	uint32 NV = V;
-	NV &= 0x7F;
-	NV |= mmc3.expregs[0] << 6;
-	setchr1(A, NV);
-}
-
-static DECLFW(M037Write) {
-	mmc3.expregs[0] = (V & 6) >> 1;
-	MMC3_FixPRG();
-	MMC3_FixCHR();
-}
-
-static void M037Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
-}
-
-static void M037Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
-	SetWriteHandler(0x6000, 0x7FFF, M037Write);
-}
-
-void Mapper037_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
-	MMC3_pwrap = M037PW;
-	MMC3_cwrap = M037CW;
-	info->Power = M037Power;
-	info->Reset = M037Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
-}
-
 /* ---------------------------- Mapper 118 ------------------------------ */
 
 static uint8 PPUCHRBus;
