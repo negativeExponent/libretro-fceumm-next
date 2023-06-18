@@ -49,7 +49,7 @@ static void M114PRG(void) {
 }
 
 static void M114CWRAP(uint32 A, uint8 V) {
-    uint8 base = (mmc3.expregs[1] << 8) & 0x100;
+    uint16 base = (mmc3.expregs[1] << 8) & 0x100;
 	setchr1(A, base | V);
 }
 
@@ -105,7 +105,7 @@ void Mapper114_Init(CartInfo *info) {
     }
 
 	GenMMC3_Init(info, 0, 0);
-	MMC3_pwrap = M114PRG;
+	MMC3_FixPRG = M114PRG;
 	MMC3_cwrap = M114CWRAP;
 	info->Power = M114Power;
 	info->Reset = M114Reset;
