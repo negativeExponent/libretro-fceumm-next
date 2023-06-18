@@ -58,4 +58,5 @@ void Mapper044_Init(CartInfo *info) {
 	MMC3_cwrap = M044CW;
 	MMC3_pwrap = M044PW;
 	info->Power = M044Power;
+    info->Reset = M044Reset;
 }

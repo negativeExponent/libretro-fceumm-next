@@ -37,6 +37,10 @@ static DECLFW(M047Write) {
     }
 }
 
+static void M047Reset(void) {
+	MMC3RegReset();
+}
+
 static void M047Power(void) {
 	mmc3.expregs[0] = 0;
 	GenMMC3Power();
@@ -48,5 +52,6 @@ void Mapper047_Init(CartInfo *info) {
 	MMC3_pwrap = M047PW;
 	MMC3_cwrap = M047CW;
 	info->Power = M047Power;
+	info->Reset = M047Reset;
 	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

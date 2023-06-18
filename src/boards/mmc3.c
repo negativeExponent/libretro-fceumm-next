@@ -117,6 +117,7 @@ static void GenFixCHR(void) {
 
 void MMC3RegReset(void) {
 	IRQCount = IRQLatch = IRQa = mmc3.cmd = 0;
+	mmc3.mirroring = mmc3.wram = 0;
 
 	mmc3.regs[0] = 0;
 	mmc3.regs[1] = 2;
