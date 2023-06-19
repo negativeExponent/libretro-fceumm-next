@@ -515,7 +515,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "NAMCO 3433",                88, Mapper088_Init         )
 	INES_BOARD( "SUNSOFT-3",                 89, Mapper089_Init         ) /* SUNSOFT-2 mapper */
 	INES_BOARD( "HUMMER/JY BOARD",           90, Mapper090_Init         )
-	INES_BOARD( "EARLY HUMMER/JY BOARD",     91, Mapper091_Init         )
+	INES_BOARD( "JY830623C/YY840238C/EJ-006-1", 91, Mapper091_Init      )
 	INES_BOARD( "JALECO JF-19",              92, Mapper092_Init         )
 	INES_BOARD( "SUNSOFT-3R",                93, Mapper093_Init         ) /* SUNSOFT-2 mapper with VRAM, different wiring */
 	INES_BOARD( "HVC-UN1ROM",                94, Mapper094_Init         )
