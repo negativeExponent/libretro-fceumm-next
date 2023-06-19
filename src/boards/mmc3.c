@@ -32,12 +32,10 @@ MMC3 mmc3;
 static uint8 *WRAM;
 static uint32 WRAMSIZE;
 
-static uint8 *CHRRAM;
-static uint32 CHRRAMSIZE;
-
 static uint8 IRQCount, IRQLatch, IRQa;
 static uint8 IRQReload;
-static uint8 submapper;
+
+static uint8 isMMC6 = 0;
 
 static SFORMAT MMC3_StateRegs[] =
 {
@@ -285,11 +283,37 @@ static void GENNOMWRAP(uint8 V) {
 }
 
 static DECLFW(MBWRAMMMC6) {
-	WRAM[A & 0x3ff] = V;
+	if (~mmc3.cmd & 0x20) {
+		/* wram disabled */
+		return;
+	}
+	A &= 0x3FF;
+	if (A & 0x200) {
+		/* 2nd bank writes are disabled */
+		if ((mmc3.wram & 0xC0) == 0x00) return;
+	} else {
+		/* 1st bank writes are disabled */
+		if ((mmc3.wram & 0x30) == 0x00) return;
+	}
+	WRAM[A] = V;
 }
 
 static DECLFR(MAWRAMMMC6) {
-	return (WRAM[A & 0x3ff]);
+	if (~mmc3.cmd & 0x20) {
+		/* wram disabled */
+		return X.DB;
+	}
+	A &= 0x3FF;
+	if (A & 0x200) {
+		/* 2nd bank */
+		if (mmc3.wram & 0x20) return 0x00;
+		if (mmc3.wram & 0x80) return WRAM[A];
+	} else {
+		/* 1st bank */
+		if (mmc3.wram & 0x20) return WRAM[A];
+		if (mmc3.wram & 0x80) return 0x00;
+	}
+	return X.DB;
 }
 
 void GenMMC3Power(void) {
@@ -303,7 +327,7 @@ void GenMMC3Power(void) {
 	mmc3.wram = mmc3.mirroring = 0;
 	setmirror(1);
 	if (mmc3.opts & 1) {
-		if (WRAMSIZE == 1024) {
+		if (isMMC6) {
 			FCEU_CheatAddRAM(1, 0x7000, WRAM);
 			SetReadHandler(0x7000, 0x7FFF, MAWRAMMMC6);
 			SetWriteHandler(0x7000, 0x7FFF, MBWRAMMMC6);
@@ -317,16 +341,12 @@ void GenMMC3Power(void) {
 			FCEU_MemoryRand(WRAM, WRAMSIZE);
 	}
 	MMC3RegReset();
-	if (CHRRAM)
-		FCEU_MemoryRand(CHRRAM, CHRRAMSIZE);
 }
 
 void GenMMC3Close(void) {
-	if (CHRRAM)
-		FCEU_gfree(CHRRAM);
 	if (WRAM)
 		FCEU_gfree(WRAM);
-	CHRRAM = WRAM = NULL;
+	WRAM = NULL;
 }
 
 void GenMMC3_Init(CartInfo *info, int wram, int battery) {
@@ -338,6 +358,8 @@ void GenMMC3_Init(CartInfo *info, int wram, int battery) {
 	MMC3_mwrap = GENMWRAP;
 
 	WRAMSIZE = wram << 10;
+
+	isMMC6 = (info->mapper == 4 && ((info->submapper == 1) || (WRAMSIZE == 1024)));
 
 	if (wram) {
 		mmc3.opts |= 1;
@@ -367,5 +389,4 @@ void GenMMC3_Init(CartInfo *info, int wram, int battery) {
 	else
 		GameHBIRQHook = MMC3_hb;
 	GameStateRestore = GenMMC3Restore;
-	submapper = info->submapper;
 }
