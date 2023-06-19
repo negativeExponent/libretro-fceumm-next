@@ -21,11 +21,6 @@
 	{ 0xeaf7ed72,    1, DEFAULT, DEFAULT, 1,    0x70,    0x07, DEFAULT, NOEXTRA }, /* Legend of Zelda */
 	{ 0x3fe272fb,    1, DEFAULT, DEFAULT, 1,    0x70,    0x07, DEFAULT, NOEXTRA }, /* Legend of Zelda */
 	{ 0xba322865,    1, DEFAULT, DEFAULT, 1,    0x70, DEFAULT, DEFAULT, NOEXTRA }, /* Zelda 2 */
-	{ 0x25952141,    4, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* AD&D Pool of Radiance */
-	{ 0x1335cb05,    4, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Crystalis */
-	{ 0x57e220d0,    4, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Final Fantasy 3 */
-	{ 0x889129cb,    4, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Startropics */
-	{ 0xd054ffb0,    4, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Startropics 2*/
 	{ 0xb5ff71ab,   19, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Battle Fleet */
 	{ 0x0c1792da,   19, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Famista '90 */
 	{ 0x47c2020b,   19, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Hydlide 3*/
@@ -151,9 +146,22 @@
 	{ 0x9eefb4b4,    4, DEFAULT, DFAULT8, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Pachi-Slot Adventure 2 - Sorotta-kun no Pachi-Slot Tanteidan (Japan).nes */
 	{ 0xafe03802,    4, DEFAULT, DFAULT8, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Pachio-kun 3 (Japan) (Rev A).nes */
 	{ 0x21a653c7,    4, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Super Sky Kid (VS).nes */
+	{ 0xF011AFD6,    4,       0, DEFAULT, 0,    0x70,    0x07, DEFAULT, NOEXTRA }, /* Rockman 4- Minus Infinity [Infinite Life]. Basically oversize MMC3 that fails to enable WRAM before accessing it. */
 	{ 0xdb7f07be,    4, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Toki (USA) (Beta).nes */
 	{ 0x8F6CC85A,    4, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (KT-220B) Totally Rad 4-in-1.nes [overdump] */
 	{ 0xAB9DE91F,    4, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (KT-220B) Totally Rad 4-in-1.nes, Commonly set to mapper 176 */
+	{ 0x25952141,    4, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* AD&D Pool of Radiance */
+	{ 0x1335cb05,    4, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Crystalis */
+	{ 0x57e220d0,    4, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Final Fantasy 3 */
+	{ 0x889129cb,    4,       1, DEFAULT, 1,    0x40, DEFAULT, DEFAULT, NOEXTRA }, /* Startropics */
+	{ 0xd054ffb0,    4,       1, DEFAULT, 1,    0x40, DEFAULT, DEFAULT, NOEXTRA }, /* Startropics 2*/
+	{ 0x33751782,    4,       1, DEFAULT, 1,    0x40, DEFAULT, DEFAULT, NOEXTRA }, /* Zoda's Revenge - StarTropics II (USA, Europe) (Virtual Console).nes */
+	{ 0xE7B34C02,    4,       1, DEFAULT, 1,    0x40, DEFAULT, DEFAULT, NOEXTRA }, /* StarTropics (NTSC).nes */
+	{ 0xF6A64735,    4,       1, DEFAULT, 1,    0x40, DEFAULT, DEFAULT, NOEXTRA }, /* StarTropics (PAL).nes */
+	{ 0xFCEDB11A,    4,       1, DEFAULT, 1,    0x40, DEFAULT, DEFAULT, NOEXTRA }, /* Startropics [music synchronization].nes */
+	{ 0x998422FC,    4,       1, DEFAULT, 1,    0x40, DEFAULT, DEFAULT, NOEXTRA }, /* Startropics_1.nes */
+
+	/* CRC32, mapperNum, SubMapper, Mirroring, hasBattery, prgRam, chrRam, region, extra flags */
 
 	/* MMC5 */
 	{ 0x671f23a8,    5, DEFAULT, DEFAULT, 0,       0,        0,     PAL, NOEXTRA }, /* Castlevania III - Dracula's Curse (E) */
@@ -596,7 +604,6 @@
 	{ 0xE3A0B9E5,  176,       0, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (YH-8027) Super Game 4-in-1 */
 	{ 0x5A0E3E69,  176,       0, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (YH-8033) Super Game 4-in-1 */
 	{ 0x21D4484A,  176,       0, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (YH-8042) Super Game 4-in-1 */
-	{ 0xF011AFD6,    4,       0, DEFAULT, 0,    0x70,    0x07, DEFAULT, NOEXTRA }, /* Rockman 4- Minus Infinity [Infinite Life]. Basically oversize MMC3 that fails to enable WRAM before accessing it. */
 	{ 0x576D9589,  176,       1, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (BS-0210A PCB) Super Mario 4-in-1.nes */
 	{ 0x01B3EDD2,  176,       1, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (BS-6002) Super Game 16-in-1.nes */
 	{ 0x291F5318,  176,       1, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (BS-6008) 210-in-1.nes */
@@ -932,7 +939,6 @@
 	{ 0x19c1ed51,  150, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Poker III (Asia) (Ja) (Unl).nes */
 	{ 0x282745c5,  141, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Q Boy (Asia) (Ja) (Unl).nes */
 	{ 0x4b9ecfb2,   21, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Wai Wai World 2 - SOS!! Paseri Jou (Japan) (Virtual Console).nes */
-	{ 0x33751782,    4, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Zoda's Revenge - StarTropics II (USA, Europe) (Virtual Console).nes */
 	{ 0x9bbf3e5d,   15, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* 168-in-1 [p1][!].nes */
 
 	/* TXC / Sachen / JoyVan */
