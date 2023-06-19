@@ -547,7 +547,7 @@ static BMAPPING bmap[] = {
 	{ "SA-002",                     136, Mapper136_Init,        0 },
 	{ "SA-0036",                    149, Mapper149_Init,        0 },
 	{ "SA-0037",                    148, Mapper148_Init,        0 },
-	{ "SA-009",                     160, Mapper160_Init,        0 },
+/*	{ "SA-009",                     160, Mapper160_Init,        0 }, */
 	{ "SA-016-1M",                   79, Mapper079_Init,        0 },
 	{ "SA-72007",                   145, Mapper145_Init,        0 },
 	{ "SA-72008",                   133, Mapper133_Init,        0 },
