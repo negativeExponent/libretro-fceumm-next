@@ -26,9 +26,6 @@
 
 static uint8 cmd, mirr, regs[11];
 static uint8 rmode, IRQmode, IRQCount, IRQa, IRQLatch;
-static uint8 M158PPUCHRBus;
-static uint8 M158MIR[8];
-static uint8 mapper;
 
 static SFORMAT StateRegs[] = {
 	{ regs, 11, "REGS" },
@@ -42,47 +39,49 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void cwrap(uint32 A, uint8 V) {
-	setchr1(A, V);
-	if (mapper == 158) {
-		M158MIR[A >> 10] = (V >> 7) & 1;
-		if (M158PPUCHRBus == (A >> 10)) {
-			setmirror(MI_0 + ((V >> 7) & 1));
-		}
-	}
-}
-
 static void Sync(void) {
 	if (cmd & 0x20) {
-		cwrap(0x0000, regs[0]);
-		cwrap(0x0400, regs[8]);
-		cwrap(0x0800, regs[1]);
-		cwrap(0x0C00, regs[9]);
+		setchr1(0x0000, regs[0]);
+		setchr1(0x0400, regs[8]);
+		setchr1(0x0800, regs[1]);
+		setchr1(0x0C00, regs[9]);
 	} else {
-		cwrap(0x0000, (regs[0] & 0xFE));
-		cwrap(0x0400, (regs[0] & 0xFE) | 1);
-		cwrap(0x0800, (regs[1] & 0xFE));
-		cwrap(0x0C00, (regs[1] & 0xFE) | 1);
+		setchr1(0x0000, (regs[0] & 0xFE));
+		setchr1(0x0400, (regs[0] & 0xFE) | 1);
+		setchr1(0x0800, (regs[1] & 0xFE));
+		setchr1(0x0C00, (regs[1] & 0xFE) | 1);
 	}
-	cwrap(0x1000, regs[2]);
-	cwrap(0x1400, regs[3]);
-	cwrap(0x1800, regs[4]);
-	cwrap(0x1C00, regs[5]);
+	setchr1(0x1000, regs[2]);
+	setchr1(0x1400, regs[3]);
+	setchr1(0x1800, regs[4]);
+	setchr1(0x1C00, regs[5]);
 
 	setprg8(0x8000, regs[6]);
 	setprg8(0xA000, regs[7]);
 	setprg8(0xC000, regs[10]);
 	setprg8(0xE000, ~0);
 
-	if (mapper != 158) {
-		setmirror(mirr);
+	if (iNESCart.mapper == 158) {
+		if (cmd & 0x20) {
+			setntamem(NTARAM + ((regs[0] >> 7) << 10), 1, 0);
+			setntamem(NTARAM + ((regs[8] >> 7) << 10), 1, 1);
+			setntamem(NTARAM + ((regs[1] >> 7) << 10), 1, 2);
+			setntamem(NTARAM + ((regs[9] >> 7) << 10), 1, 3);
+		} else {
+			setntamem(NTARAM + ((regs[0] >> 7) << 10), 1, 0);
+			setntamem(NTARAM + ((regs[0] >> 7) << 10), 1, 1);
+			setntamem(NTARAM + ((regs[1] >> 7) << 10), 1, 2);
+			setntamem(NTARAM + ((regs[1] >> 7) << 10), 1, 3);
+		}
+	} else {
+		setmirror((mirr & 1) ^ 1);
 	}
 }
 
-static DECLFW(RAMBO1_Write) {
+static DECLFW(M064Write) {
 	switch (A & 0xF001) {
 	case 0xA000:
-		mirr = (V & 1) ^ 1;
+		mirr = V;
 		Sync();
 		break;
 	case 0x8000: cmd = V; break;
@@ -117,20 +116,20 @@ static DECLFW(RAMBO1_Write) {
 	}
 }
 
-static void RAMBO1Power(void) {
+static void M064Power(void) {
 	cmd = mirr = 0;
 	regs[0] = regs[1] = regs[2] = regs[3] = regs[4] = regs[5] = ~0;
 	regs[6] = regs[7] = regs[8] = regs[9] = regs[10] = ~0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, RAMBO1_Write);
+	SetWriteHandler(0x8000, 0xFFFF, M064Write);
 }
 
 static void StateRestore(int version) {
 	Sync();
 }
 
-static void FP_FASTAPASS(1) RAMBO1IRQHook(int a) {
+static void FP_FASTAPASS(1) M064CPUHook(int a) {
 	static int32 smallcount;
 	if (IRQmode) {
 		smallcount += a;
@@ -143,7 +142,7 @@ static void FP_FASTAPASS(1) RAMBO1IRQHook(int a) {
 	}
 }
 
-static void RAMBO1HBHook(void) {
+static void M064HBHook(void) {
 	if ((!IRQmode) && (scanline != 240)) {
 		rmode = 0;
 		IRQCount--;
@@ -156,32 +155,14 @@ static void RAMBO1HBHook(void) {
 	}
 }
 
-static void RAMBO1_Init(CartInfo *info) {
-	mapper = info->mapper;
-	info->Power = RAMBO1Power;
-	GameHBIRQHook = RAMBO1HBHook;
-	MapIRQHook = RAMBO1IRQHook;
+void Mapper064_Init(CartInfo *info) {
+	info->Power = M064Power;
+	GameHBIRQHook = M064HBHook;
+	MapIRQHook = M064CPUHook;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }
 
-/* Mapper 64 */
-
-void Mapper064_Init(CartInfo *info) {
-	RAMBO1_Init(info);
-}
-
-/* Mapper 158 - Alien Syndrome */
-
-static void FP_FASTAPASS(1) M158PPU(uint32 A) {
-	A &= 0x1FFF;
-	A >>= 10;
-	M158PPUCHRBus = A;
-	setmirror(MI_0 + M158MIR[A]);
-}
-
 void Mapper158_Init(CartInfo *info) {
-	RAMBO1_Init(info);
-	PPU_hook = M158PPU;
-	AddExState(&M158PPUCHRBus, 1, 0, "PPUC");
+	Mapper064_Init(info);
 }
