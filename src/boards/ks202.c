@@ -91,7 +91,7 @@ void FP_FASTAPASS(1) KS202IRQHook(int a) {
 }
 
 void GenKS202Power(void) {
-	WSync();
+	GenKS202Reset();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, KS202_Write);
@@ -140,6 +140,4 @@ void KS202_Init(CartInfo *info, void (*proc)(void), int wram, int battery) {
 		}
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}
-
-	GenKS202Reset();
 }

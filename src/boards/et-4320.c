@@ -38,6 +38,11 @@ Example Game:
 7 in 1 multicart (Amarello, TMNT2, Contra, Ninja Cat, Ninja Crusaders, Rainbow Islands 2)
 */
 
+/* NOTE:
+ * Appears similar to Mapper 327 but with mirroring similar to Mapper 118?
+ * Cannot find a cart to confirm this though
+*/
+
 #include "mapinc.h"
 #include "mmc3.h"
 
