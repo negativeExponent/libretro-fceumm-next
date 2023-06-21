@@ -78,7 +78,7 @@ static void M297StateRestore(int version) {
 }
 
 void Mapper297_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 256, 256, 0, 0);
+	GenMMC1_Init(info, 0, 0);
 	info->Power = M297Power;
 	mmc1.cwrap = M297CHR;
 	mmc1.pwrap = M297PRG;

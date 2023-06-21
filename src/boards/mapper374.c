@@ -41,7 +41,7 @@ static void M374Reset(void) {
 }
 
 void Mapper374_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 128, 128, 0, 0);
+	GenMMC1_Init(info, 0, 0);
 	mmc1.cwrap = M374CHR;
 	mmc1.pwrap = M374PRG;
 	info->Reset = M374Reset;

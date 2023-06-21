@@ -55,7 +55,7 @@ static void M323Reset(void) {
 }
 
 void Mapper323_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 1024, 256, 0, 0);
+	GenMMC1_Init(info, 0, 0);
 	mmc1.cwrap = M323CHRHook;
 	mmc1.pwrap = M323PRGHook;
 	info->Power = M323Power;

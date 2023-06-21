@@ -63,12 +63,12 @@ void Mapper001_Init(CartInfo *info) {
 	int bs = info->battery ? 8 : 0;
 	int ws = DetectMMC1WRAMSize(info, &bs);
 	submapper = info->submapper;
-	GenMMC1_Init(info, MMC1B, 512, 256, ws, bs);
+	GenMMC1_Init(info, ws, bs);
 	mmc1.pwrap = M001PW;
 }
 
 /* Same as mapper 1, without respect for WRAM enable bit. */
 void Mapper155_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1A, 512, 256, 8, info->battery ? 8 : 0);
+	GenMMC1_Init(info, 8, info->battery ? 8 : 0);
     mmc1.pwrap = M001PW;
 }

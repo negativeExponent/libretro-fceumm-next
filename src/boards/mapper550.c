@@ -73,7 +73,7 @@ static void M550Power(void) {
 }
 
 void Mapper550_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 512, 128, 8, 0);
+	GenMMC1_Init(info, 8, 0);
 	info->Power = M550Power;
 	info->Reset = M550Reset;
 	mmc1.cwrap = M550CW;

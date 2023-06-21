@@ -59,7 +59,7 @@ static void M105Reset(void) {
 }
 
 void Mapper105_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 256, 256, 8, 0);
+	GenMMC1_Init(info, 8, 0);
 	mmc1.cwrap = M105CW;
 	mmc1.pwrap = M105PW;
 	MapIRQHook = M105IRQHook;

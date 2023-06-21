@@ -30,9 +30,7 @@ static uint32 WRAMSIZE = 0;
 static uint32 NONSaveRAMSIZE = 0;
 
 static uint8 *WRAM = NULL;
-static uint8 *CHRRAM = NULL;
 static MMC1Type mmc1_type = MMC1B;
-static uint8 submapper;
 
 MMC1 mmc1;
 
@@ -102,7 +100,7 @@ uint32 MMC1GetPRGBank(int index) {
 		break;
 	}
 
-	if ((mmc1.regs[3] & 0x10) && mmc1_type == MMC1A) {
+	if ((mmc1.regs[3] & 0x10) && (mmc1_type == MMC1A)) {
 		return ((bank & 0x07) | (mmc1.regs[3] & 0x08));
 	}
 
@@ -237,17 +235,17 @@ void GenMMC1Power(void) {
 }
 
 void GenMMC1Close(void) {
-	if (CHRRAM) {
-		FCEU_gfree(CHRRAM);
-	}
 	if (WRAM) {
 		FCEU_gfree(WRAM);
 	}
-	CHRRAM = WRAM = NULL;
+	WRAM = NULL;
 }
 
-void GenMMC1_Init(CartInfo *info, MMC1Type type, int prg, int chr, int wram, int saveram) {
-	mmc1_type = type;
+void GenMMC1_Init(CartInfo *info, int wram, int saveram) {
+	if ((info->mapper == 155) ||
+		((info->mapper == 4) && (info->submapper == 3))) {
+		mmc1_type = MMC1A;
+	}
 
 	mmc1.pwrap = GENPWRAP;
 	mmc1.cwrap = GENCWRAP;
@@ -255,9 +253,6 @@ void GenMMC1_Init(CartInfo *info, MMC1Type type, int prg, int chr, int wram, int
 
 	WRAMSIZE = wram * 1024;
 	NONSaveRAMSIZE = (wram - saveram) * 1024;
-	PRGmask16[0] &= (prg >> 14) - 1;
-	CHRmask4[0] &= (chr >> 12) - 1;
-	CHRmask8[0] &= (chr >> 13) - 1;
 
 	if (WRAMSIZE) {
 		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
@@ -268,14 +263,9 @@ void GenMMC1_Init(CartInfo *info, MMC1Type type, int prg, int chr, int wram, int
 			info->SaveGameLen[0] = saveram * 1024;
 		}
 	}
-	if (!chr) {
-		CHRRAM = (uint8*)FCEU_gmalloc(8192);
-		SetupCartCHRMapping(0, CHRRAM, 8192, 1);
-		AddExState(CHRRAM, 8192, 0, "CHRR");
-	}
+
 	AddExState(mmc1.regs, 4, 0, "DREG");
 
-	submapper = info->submapper;
 	info->Power = GenMMC1Power;
 	info->Close = GenMMC1Close;
 	GameStateRestore = GenMMC1Restore;
@@ -285,61 +275,17 @@ void GenMMC1_Init(CartInfo *info, MMC1Type type, int prg, int chr, int wram, int
 }
 
 void SAROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 128, 64, 8, info->battery ? 8 : 0);
-}
-
-void SBROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 128, 64, 0, 0);
-}
-
-void SCROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 128, 128, 0, 0);
-}
-
-void SEROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 32, 64, 0, 0);
-}
-
-void SGROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 256, 0, 0, 0);
+	GenMMC1_Init(info, 8, info->battery ? 8 : 0);
 }
 
 void SKROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 256, 64, 8, info->battery ? 8 : 0);
+	GenMMC1_Init(info, 8, info->battery ? 8 : 0);
 }
-
-void SLROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 256, 128, 0, 0);
-}
-
-void SL1ROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 128, 128, 0, 0);
-}
-
-/* Begin unknown - may be wrong - perhaps they use different MMC1s from the
-	similarly functioning boards?
-*/
-
-void SL2ROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 256, 256, 0, 0);
-}
-
-void SFROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 256, 256, 0, 0);
-}
-
-void SHROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 256, 256, 0, 0);
-}
-
-/* End unknown  */
-/*              */
-/*              */
 
 void SNROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 256, 0, 8, info->battery ? 8 : 0);
+	GenMMC1_Init(info, 8, info->battery ? 8 : 0);
 }
 
 void SOROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 256, 0, 16, info->battery ? 8 : 0);
+	GenMMC1_Init(info, 16, info->battery ? 8 : 0);
 }

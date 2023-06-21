@@ -72,7 +72,7 @@ static void M543Power(void) {
 
 void Mapper543_Init(CartInfo *info) {
 	/* M543 has 32K CHR RAM but only uses 8K, so its safe to set this chr to 0 */
-	GenMMC1_Init(info, MMC1B, 2048, 32, 64, info->battery ? 64 : 0);
+	GenMMC1_Init(info, 64, info->battery ? 64 : 0);
 	info->Power = M543Power;
 	info->Reset = M543Reset;
 	mmc1.cwrap = M543CW;

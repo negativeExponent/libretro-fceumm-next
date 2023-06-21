@@ -55,7 +55,7 @@ static void M404Power(void) {
 }
 
 void Mapper404_Init(CartInfo *info) {
-	GenMMC1_Init(info, MMC1B, 256, 256, 0, 0);
+	GenMMC1_Init(info, 0, 0);
 	info->Power = M404Power;
 	info->Reset = M404Reset;
 	mmc1.cwrap = M404CW;

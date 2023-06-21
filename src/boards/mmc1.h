@@ -35,6 +35,6 @@ void FixMMC1MIRRORING(void);
 
 DECLFW(MMC1Write);
 
-void GenMMC1_Init(CartInfo *info, MMC1Type type, int prg, int chr, int wram, int saveram);
+void GenMMC1_Init(CartInfo *info, int wram, int saveram);
 
 #endif /* _MMC1_H */
