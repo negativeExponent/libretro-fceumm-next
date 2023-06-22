@@ -429,7 +429,7 @@ static BMAPPING bmap[] = {
 	{ "Transformer",            NO_INES, Transformer_Init,      0 },
 	{ "81-01-31-C",             NO_INES, BMC810131C_Init,       0 }, /* might be 327 with m118-like mirroring */
 	{ "KG256",                  NO_INES, KG256_Init,            0 }, /* cant find similar cart */
-	{ "HP898F",                 NO_INES, BMCHP898F_Init,        0 }, /* exclusive to the UNIF implementation of mapper 319 */
+	{ "HP898F",                 NO_INES, Mapper319_Init,        0 }, /* exclusive to the UNIF implementation of mapper 319 */
 	{ "VRC7",                   NO_INES, UNLVRC7_Init,          0 }, /* pirate clone on VRC7 */
 	{ "CHINA_ER_SAN2",          NO_INES, Mapper019_Init,        0 }, /* Needs more than just what mapper 19 can handle */
 	{ "AC08",                        42, Mapper042_Init,        0 },

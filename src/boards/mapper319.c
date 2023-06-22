@@ -33,13 +33,29 @@ static SFORMAT StateRegs[] =
 };
 
 static void M319Sync(void) {
-	if (reg[1] & 0x40)
-		setprg32(0x8000, (reg[1] >> 3) & 3);
-	else {
-		setprg16(0x8000, ((reg[1] >> 2) & 6) | ((reg[1] >> 5) & 1));
-		setprg16(0xC000, ((reg[1] >> 2) & 6) | ((reg[1] >> 5) & 1));
+	uint8 bank;
+	uint8 mask;
+
+	if (iNESCart.CRC32 == 0xE5B9AB1F || iNESCart.PRGCRC32 == 0xC25FD362) {
+		/* The publicly-available UNIF (UNL-HP898F) ROM file of Prima Soft 9999999-in-1 has
+		 * the order of the 16 KiB PRG-ROM banks slightly mixed up, so that the
+		 * PRG A14 mode bit operates on A16 instead of A14. To obtain the
+		 * correct bank order, use UNIF 16 KiB PRG banks 0, 4, 1, 5, 2, 6, 3, 7.
+		 */
+		bank = (reg[1] >> 3) & 7;
+		mask = (reg[1] >> 4) & 4;
+		setprg16(0x8000, bank & ~mask);
+		setprg16(0xC000, bank |  mask);
+	} else {
+		bank = ((reg[1] >> 2) & 0x06) | ((reg[1] >> 5) & 0x01);
+		mask = (reg[1] >> 6) & 0x01;
+		setprg16(0x8000, (bank & ~mask));
+		setprg16(0xC000, (bank |  mask));
 	}
-	setchr8(((reg[0] >> 4) & ~((reg[0] << 2) & 4)) | ((latch.data << 2) & ((reg[0] << 2) & 4)));
+
+	bank = reg[0] >> 4;
+	mask = (reg[0] << 2) & 0x04;
+	setchr8((bank & ~mask) | ((latch.data << 2) & mask));
 	setmirror(reg[1] >> 7);
 }
 
@@ -48,8 +64,16 @@ static DECLFR(M319ReadPad) {
 }
 
 static DECLFW(M319WriteReg) {
-	reg[A >> 2 & 1] = V;
-	M319Sync();
+	switch (A & 0x04) {
+	case 0x00:
+		reg[0] = V;
+		M319Sync();
+		break;
+	case 0x04:
+		reg[1] = V;
+		M319Sync();
+		break;
+	}
 }
 
 static void M319Reset(void) {

@@ -45,7 +45,6 @@ void UNLPEC586Init(CartInfo *);
 void UNLVRC7_Init(CartInfo *);
 void COOLBOY_Init(CartInfo *);
 void MINDKIDS_Init(CartInfo *);			/* m268 */
-void BMCHP898F_Init(CartInfo *);
 void BMC810131C_Init(CartInfo *);
 void COOLGIRL_Init(CartInfo *);			/* m342 */
 void KG256_Init(CartInfo *);
