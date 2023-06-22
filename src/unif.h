@@ -42,7 +42,6 @@ void UNL3DBlock_Init(CartInfo *);
 void UNL43272_Init(CartInfo *);
 void UNL8237A_Init(CartInfo *);
 void UNLPEC586Init(CartInfo *);
-void UNLVRC7_Init(CartInfo *);
 void COOLBOY_Init(CartInfo *);
 void MINDKIDS_Init(CartInfo *);			/* m268 */
 void BMC810131C_Init(CartInfo *);
