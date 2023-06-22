@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,92 +19,194 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * FDS Conversion
- * - Ai Senshi Nicol (256K PRG, 128K CHR)
- * - Bio Miracle Bokutte Upa (J) (128K PRG, 0K CHR)
+ * - Submapper 1 - Ai Senshi Nicol (256K PRG, 128K CHR, fixed Mirroring)
+ * - Submapper 3 - Bio Miracle Bokutte Upa (J) (128K PRG, 0K CHR, IRQ)
+ * 
+ * - Submapper 2
+ * - KS-018/AC-08/LH09
+ * - UNIF UNL-AC08
+ * - [UNIF] Green Beret (FDS Conversion, LH09) (Unl) [U][!][t1] (160K PRG)
+ * - Green Beret (FDS Conversion) (Unl) (256K PRG)
  */
 
 #include "mapinc.h"
 #include "../fds_apu.h"
 
-static uint8 preg, creg, mirr;
-static uint32 IRQCount, IRQa;
+static uint8 reg, prg, chr, mirr;
+static uint8 IRQa;
+static uint16 IRQCount;
 
 static SFORMAT StateRegs[] =
 {
-	{ &preg, 1, "PREG" },
-	{ &creg, 1, "CREG" },
+	{ &reg, 1, "REG0" },
+	{ &prg, 1, "PREG" },
+	{ &chr, 1, "CREG" },
 	{ &mirr, 1, "MIRR" },
-	{ &IRQCount, 4, "IRQC" },
-	{ &IRQa, 4, "IRQA" },
+	{ &IRQa, 1, "IRQA" },
+	{ &IRQCount, 2, "IRQC" },
+	
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg8(0x6000, preg);
+/* Submapper 1 - Ai Senshi Nicol */
+
+static void M042_Sub1_Sync(void) {
+	setprg8(0x6000, prg & 0x0F);
 	setprg32(0x8000, ~0);
-	setchr8(creg);
-	setmirror(mirr);
+	setchr8(chr & 0x0F);
 }
 
-static DECLFW(M042Write) {
-	switch (A & 0xE003) {
-		case 0x8000:
-			creg = V;
-			Sync();
-			break;
-		case 0xE000:
-			preg = V & 0x0F;
-			Sync();
-			break;
-		case 0xE001:
-			mirr = ((V >> 3) & 1) ^ 1;
-			Sync();
-			break;
-		case 0xE002:
-			IRQa = V & 2;
-			if (!IRQa)
-				IRQCount = 0;
-			X6502_IRQEnd(FCEU_IQEXT);
-			break;
+static DECLFW(M042_Sub1_Write) {
+	switch (A & 0xE000) {
+	case 0x8000:
+		chr = V;
+		M042_Sub1_Sync();
+		break;
+	case 0xE000:
+		prg = V;
+		M042_Sub1_Sync();
+		break;
 	}
 }
 
-static void M042Power(void) {
+static void M042_Sub1_Restore(int version) {
+	M042_Sub1_Sync();
+}
+
+static void M042_Sub1_Power(void) {
+	prg = 0;
+	chr = 0;
 	FDSSoundPower();
-	preg = 0;
-	mirr = 1; /* Ai Senshi Nicol actually has fixed mirroring, but mapper forcing it's default value now */
-	Sync();
-	SetReadHandler(0x6000, 0xffff, CartBR);
-	SetWriteHandler(0x6000, 0xffff, M042Write);
+	M042_Sub1_Sync();
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, M042_Sub1_Write);
 }
 
-static void FP_FASTAPASS(1) M042IRQHook(int a) {
-	if (IRQa) {
-		IRQCount += a;
-		if (IRQCount >= 32768)
-			IRQCount -= 32768;
-		if (IRQCount >= 24576)
-			X6502_IRQBegin(FCEU_IQEXT);
-		else
-			X6502_IRQEnd(FCEU_IQEXT);
+/* Submapper 2 - Green Beret */
+
+static void M042_Sub2_Sync(void) {
+	uint8 prg = (ROM_size & 0x0F) ? 4 : 7;
+	setprg8(0x6000, (reg >> 1) & 0x0F);
+	setprg32(0x8000, prg);
+	setchr8(0);
+	setmirror(((mirr >> 3) & 1) ^ 1);
+}
+
+static DECLFW(M042_Sub2_Write) {
+	switch (A & 0xF001) {
+	case 0x4001:
+	case 0x4000:
+		if ((A & 0xFF) != 0x25) {
+			break;
+		}
+		mirr = V;
+		M042_Sub2_Sync();
+		break;
+	case 0x8001:
+		reg = V;
+		M042_Sub2_Sync();
+		break;
 	}
 }
 
-static void StateRestore(int version) {
-	Sync();
+static void M042_Sub2_Restore(int version) {
+	M042_Sub2_Sync();
 }
+
+static void M042_Sub2_Power(void) {
+	reg = 0;
+	mirr = 0;
+	FDSSoundPower();
+	M042_Sub2_Sync();
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x4020, 0xFFFF, M042_Sub2_Write);
+}
+
+/* Submapper 3 - Mario Baby */
+
+static void M042_Sub3_Sync(void) {
+	setprg8(0x6000, prg & 0x0F);
+	setprg32(0x8000, ~0);
+	setchr8(0);
+	setmirror(((mirr >> 3) & 1) ^ 1);
+}
+
+static DECLFW(M042_Sub3_Write) {
+	switch (A & 0xE003) {
+	case 0xE000:
+		prg = V;
+		M042_Sub3_Sync();
+		break;
+	case 0xE001:
+		mirr = V;
+		M042_Sub3_Sync();
+		break;
+	case 0xE002:
+		IRQa = V;
+		break;
+	}
+}
+
+static void M042_Sub3_Restore(int version) {
+	M042_Sub3_Sync();
+}
+
+static void M042_Sub3_Power(void) {
+	prg = 0;
+	mirr = 0;
+	M042_Sub3_Sync();
+	FDSSoundPower();
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0xE000, 0xFFFF, M042_Sub3_Write);
+}
+
+static void FP_FASTAPASS(1) M042_Sub3_IRQHook(int a) {
+	while (a--) { /* NOTE: Possible performance hit, but whatever */
+		if (IRQa & 0x02) {
+			IRQCount++;
+			if ((IRQCount & 0x6000) == 0x6000) {
+				X6502_IRQBegin(FCEU_IQEXT);
+			} else {
+				X6502_IRQEnd(FCEU_IQEXT);
+			}
+		} else {
+			IRQCount = 0;
+			X6502_IRQEnd(FCEU_IQEXT);
+		}
+	}
+}
+
+/* Mapper 42 Loader */
 
 void Mapper042_Init(CartInfo *info) {
-	if (info->iNES2 && (info->submapper == 2)) {
-		AC08_Init(info);
-		return;
-	} else if (UNIFchrrama && ((info->PRGRomSize == 163840) || (info->PRGRomSize == 262144))) {
-		/* Green Beret LH09 FDS Conversion can be 160K or 256K */
-		AC08_Init(info);
-		return;
+	if (info->submapper == 0 || info-> submapper > 3) {
+		if (!UNIFchrrama) {
+			/* Ai Senshi Nicole, only cart with CHR-ROM, all others use CHR-RAM */
+			info->submapper = 1;
+		} else {
+			if ((ROM_size * 16) > 128) {
+				/* Green Beret LH09 FDS Conversion can be 160K or 256K */
+				info->submapper = 2;
+			} else {
+				/* Mario Baby has only 128K PRG */
+				info->submapper = 3;
+			}
+		}
 	}
-	info->Power = M042Power;
-	MapIRQHook = M042IRQHook;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	switch (info->submapper) {
+	case 1:
+		info->Power = M042_Sub1_Power;
+		GameStateRestore = M042_Sub1_Restore;
+		break;
+	case 2:
+		info->Power = M042_Sub2_Power;
+		GameStateRestore = M042_Sub2_Restore;
+		break;
+	default:
+		info->Power = M042_Sub3_Power;
+		MapIRQHook = M042_Sub3_IRQHook;
+		GameStateRestore = M042_Sub3_Restore;
+		break;
+	}
+	AddExState(StateRegs, ~0, 0, NULL);
 }

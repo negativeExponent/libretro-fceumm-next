@@ -21,7 +21,6 @@
 #ifndef _FCEU_UNIF_H
 #define _FCEU_UNIF_H
 
-void AC08_Init(CartInfo *);
 void BMCFK23CA_Init(CartInfo *);
 void BMCFK23C_Init(CartInfo *);
 void BMCT2271_Init(CartInfo *);

@@ -432,7 +432,7 @@ static BMAPPING bmap[] = {
 	{ "HP898F",                 NO_INES, BMCHP898F_Init,        0 }, /* exclusive to the UNIF implementation of mapper 319 */
 	{ "VRC7",                   NO_INES, UNLVRC7_Init,          0 }, /* pirate clone on VRC7 */
 	{ "CHINA_ER_SAN2",          NO_INES, Mapper019_Init,        0 }, /* Needs more than just what mapper 19 can handle */
-	{ "AC08",                        42, AC08_Init,             0 }, /* unif-specific */
+	{ "AC08",                        42, Mapper042_Init,        0 },
 	{ "COOLBOY",                    268, COOLBOY_Init,          BMCFLAG_256KCHRR },
 	{ "MINDKIDS",                   268, MINDKIDS_Init,         BMCFLAG_256KCHRR },
 	{ "COOLGIRL",                   342, COOLGIRL_Init,         BMCFLAG_256KCHRR },
