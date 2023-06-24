@@ -93,7 +93,6 @@ static void M150Power(void) {
 }
 
 void Mapper150_Init(CartInfo *info) {
-	iNESCart.mapper = info->mapper;
 	info->Power = M150Power;
 	info->Reset = M150Reset;
 	GameStateRestore = M150Restore;

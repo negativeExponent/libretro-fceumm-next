@@ -68,9 +68,9 @@ static void M268PW(uint32 A, uint8 V) {
 	case 6: /* J-852C: CHR A17 selects between two PRG chips */
 		base = (mmc3.expregs[3] & 0x0E) | ((mmc3.expregs[0] << 4) & 0x70) | ((mmc3.expregs[1] << 3) & 0x80) |
 		    ((mmc3.expregs[1] << 6) & 0x300) | ((mmc3.expregs[0] << 6) & 0xC00);
-		base &= ROM_size - 1;
+		base &= ROM.prg.size - 1;
 		if ((mmc3.expregs[0] & 0x80) ? !!(mmc3.expregs[0] & 0x08) : !!(mmc3.regs[0] & 0x80)) {
-			base |= ROM_size;
+			base |= ROM.prg.size;
 		}
 		break;
 	}

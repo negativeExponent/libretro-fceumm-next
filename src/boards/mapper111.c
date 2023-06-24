@@ -256,9 +256,9 @@ void Mapper111_Init(CartInfo* info) {
 		AddExState(&FlashRegs, ~0, 0, 0);
 
 		/* copy PRG ROM into FLASHROM, use it instead of PRG ROM */
-		PRGSIZE = ROM_size * 16 * 1024;
+		PRGSIZE = ROM.prg.size * 16 * 1024;
 		for (w = 0, r = 0; w < FLASHROMSIZE; ++w) {
-			FLASHROM[w] = ROM[r];
+			FLASHROM[w] = ROM.prg.data[r];
 			++r;
 			if (r >= PRGSIZE)
 				r = 0;

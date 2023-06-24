@@ -43,7 +43,7 @@ static void BMC411120CCW(uint32 A, uint8 V) {
 }
 
 static void BMC411120CPW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & (8 | (reset_flag && ((ROM_size * 16) <= 512) ? 4 : 0))) {
+	if (mmc3.expregs[0] & (8 | (reset_flag && ((ROM.prg.size * 16) <= 512) ? 4 : 0))) {
 		/* 32K Mode */
 		if (A == 0x8000) {
 			/* bit 0-1 of register should be used as outer bank regardless of banking modes */

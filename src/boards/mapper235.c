@@ -33,8 +33,8 @@ static SFORMAT StateRegs[] =
 
 static void Sync(void) {
 	if (unrom) { /* Contra mode */
-		setprg16(0x8000, (ROM_size & 0xC0) | (latch.data & 7));
-		setprg16(0xC000, (ROM_size & 0xC0) | 7);
+		setprg16(0x8000, (ROM.prg.size & 0xC0) | (latch.data & 7));
+		setprg16(0xC000, (ROM.prg.size & 0xC0) | 7);
 		setchr8(0);
 		setmirror(MI_V);
 	} else {
@@ -44,7 +44,7 @@ static void Sync(void) {
 		} else {
 			setmirror(((latch.addr >> 13) & 1) ^ 1);
 		}
-		if (bank >= (ROM_size >> 1)) {
+		if (bank >= (ROM.prg.size >> 1)) {
 			openbus = 1;
 		} else if (latch.addr & 0x800) {
 			setprg16(0x8000, (bank << 1) | ((latch.addr >> 12) & 1));
@@ -65,7 +65,7 @@ static DECLFR(M235Read) {
 }
 
 static void M235Reset(void) {
-	if ((ROM_size * 16384) & 0x20000) {
+	if ((ROM.prg.size * 16384) & 0x20000) {
 		unrom = (unrom + 1) & 1;
 	}
 	LatchHardReset();

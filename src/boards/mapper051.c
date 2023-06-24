@@ -84,7 +84,7 @@ void Mapper051_Init(CartInfo *info) {
 	AddExState(&StateRegs, ~0, 0, 0);
 	GameStateRestore = StateRestore;
 	submapper        = info->submapper;
-	if (!UNIFchrrama && (VROM_size == 1)) {
+	if (!UNIFchrrama && (ROM.chr.size == 1)) {
 		/* at least 1 variant has 8K CHR-ROM which should be treated as CHR-RAM */
 		SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], 1);
 		AddExState(CHRptr[0], CHRsize[0], 0, "CHRR");

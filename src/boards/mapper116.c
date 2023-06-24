@@ -381,7 +381,7 @@ void Mapper116_Init(CartInfo *info) {
 	submapper = info->submapper;
 	if (submapper == 0) {
 		/* PRG 128K and CHR 128K is Huang-2 (submapper 2) */
-		if (ROM_size == 8 && VROM_size == 16)
+		if (ROM.prg.size == 8 && ROM.chr.size == 16)
 			submapper = 2;
 	}
 }

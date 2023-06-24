@@ -77,14 +77,14 @@ void Mapper269_Init(CartInfo *info) {
 
 	if (UNIFchrrama) {
 		uint32 i;
-		if (VROM) {
-			FCEU_free(VROM);
+		if (ROM.chr.data) {
+			FCEU_free(ROM.chr.data);
 		}
-		VROM = (uint8*)FCEU_malloc(PRGsize[0]);
+		ROM.chr.data = (uint8*)FCEU_malloc(PRGsize[0]);
 		/* unscramble CHR data from PRG */
 		for (i = 0; i < PRGsize[0]; i++) {
-			VROM[i] = unscrambleCHR(ROM[i]);
+			ROM.chr.data[i] = unscrambleCHR(ROM.prg.data[i]);
 		}
-		SetupCartCHRMapping(0, VROM, PRGsize[0], 0);
+		SetupCartCHRMapping(0, ROM.chr.data, PRGsize[0], 0);
 	}
 }

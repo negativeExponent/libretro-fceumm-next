@@ -43,36 +43,30 @@
 
 extern SFORMAT FCEUVSUNI_STATEINFO[];
 
-uint8 *trainerpoo  = NULL;
-uint8 *ROM         = NULL;
-uint8 *VROM        = NULL;
-uint8 *MiscROM     = NULL;
+romData_t ROM;
+
 uint8 *ExtraNTARAM = NULL;
 static iNES_HEADER head   = { 0 };
 
 CartInfo iNESCart = { 0 };
-
-uint32 ROM_size  = 0;
-uint32 VROM_size = 0;
-uint32 MiscROM_size = 0;
 
 static int CHRRAMSize = -1;
 
 static int iNES_Init(int num);
 
 static DECLFR(TrainerRead) {
-	return (trainerpoo[A & 0x1FF]);
+	return (ROM.trainer.data[A & 0x1FF]);
 }
 
 static void iNES_ExecPower() {
 	if (iNESCart.Power)
 		iNESCart.Power();
 
-	if (trainerpoo) {
+	if (ROM.trainer.data) {
 		int x;
 		for (x = 0; x < 512; x++) {
-			X6502_DMW(0x7000 + x, trainerpoo[x]);
-			if (X6502_DMR(0x7000 + x) != trainerpoo[x]) {
+			X6502_DMW(0x7000 + x, ROM.trainer.data[x]);
+			if (X6502_DMR(0x7000 + x) != ROM.trainer.data[x]) {
 				SetReadHandler(0x7000, 0x71FF, TrainerRead);
 				break;
 			}
@@ -81,25 +75,25 @@ static void iNES_ExecPower() {
 }
 
 static void Cleanup(void) {
-	if (ROM) {
-		free(ROM);
-		ROM = NULL;
+	if (ROM.prg.data) {
+		free(ROM.prg.data);
+		ROM.prg.data = NULL;
 	}
-	if (VROM) {
-		free(VROM);
-		VROM = NULL;
+	if (ROM.chr.data) {
+		free(ROM.chr.data);
+		ROM.chr.data = NULL;
 	}
-	if (trainerpoo) {
-		free(trainerpoo);
-		trainerpoo = NULL;
+	if (ROM.trainer.data) {
+		free(ROM.trainer.data);
+		ROM.trainer.data = NULL;
 	}
 	if (ExtraNTARAM) {
 		free(ExtraNTARAM);
 		ExtraNTARAM = NULL;
 	}
-	if (MiscROM) {
-		free(MiscROM);
-		MiscROM = NULL;
+	if (ROM.misc.data) {
+		free(ROM.misc.data);
+		ROM.misc.data = NULL;
 	}
 }
 
@@ -283,10 +277,10 @@ static void CheckHInfo(CartInfo *info, iNES_HEADER *h, uint64 partialmd5) {
 	do {
 		if (moo[x].crc32 == info->CRC32) {
 			if (moo[x].mapper >= 0) {
-				if (moo[x].extra >= 0 && moo[x].extra == 0x800 && VROM_size) {
-					VROM_size = 0;
-					free(VROM);
-					VROM = NULL;
+				if (moo[x].extra >= 0 && moo[x].extra == 0x800 && ROM.chr.size) {
+					ROM.chr.size = 0;
+					free(ROM.chr.data);
+					ROM.chr.data = NULL;
 					tofix |= 8;
 				}
 				if (info->mapper != (moo[x].mapper & 0xFFF)) {
@@ -895,8 +889,8 @@ INES_BOARD_BEGIN()
 INES_BOARD_END()
 
 static void iNES_read_header_info(CartInfo *info, iNES_HEADER *h) {
-	ROM_size          = h->ROM_size;
-	VROM_size         = h->VROM_size;
+	ROM.prg.size      = h->ROM_size;
+	ROM.chr.size      = h->ROM_size;
 	info->mirror      = (h->ROM_type & 8) ? 2 : (h->ROM_type & 1);
 	info->mirror2bits = ((h->ROM_type & 8) ? 2 : 0) | (h->ROM_type & 1);
 	info->battery     = (h->ROM_type & 2) ? 1 : 0;
@@ -907,8 +901,8 @@ static void iNES_read_header_info(CartInfo *info, iNES_HEADER *h) {
 	if (info->iNES2) {
 		info->mapper   |= (((uint32)h->ROM_type3 << 8) & 0xF00);
 		info->submapper = (h->ROM_type3 >> 4) & 0x0F;
-		ROM_size       |= ((h->upper_PRG_CHR_size >> 0) & 0xF) << 8;
-		VROM_size      |= ((h->upper_PRG_CHR_size >> 4) & 0xF) << 8;
+		ROM.prg.size   |= ((h->upper_PRG_CHR_size >> 0) & 0xF) << 8;
+		ROM.chr.size   |= ((h->upper_PRG_CHR_size >> 4) & 0xF) << 8;
 		info->region    = h->Region & 3;
 
 		if (h->PRGRAM_size & 0x0F) info->PRGRamSize     = 64 << ((h->PRGRAM_size >> 0) & 0x0F);
@@ -951,22 +945,24 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 
 	iNES_read_header_info(&iNESCart, &head);
 
-	if (!ROM_size)
-		ROM_size = 256;
+	if (!ROM.prg.size) {
+		ROM.prg.size = 256;
+	}
 
 	filesize -= 16; /* remove header size from total size */
 
 	/* Trainer */
 	if (head.ROM_type & 4) {
-		trainerpoo = (uint8 *)FCEU_gmalloc(512);
-		FCEU_fread(trainerpoo, 512, 1, fp);
+		ROM.trainer.size = 512;
+		ROM.trainer.data = (uint8 *)FCEU_gmalloc(512);
+		FCEU_fread(ROM.trainer.data, 512, 1, fp);
 		filesize -= 512;
 	}
 
 	iNESCart.PRGRomSize =
-	    ROM_size >= 0xF00 ? (pow(2, head.ROM_size >> 2) * ((head.ROM_size & 3) * 2 + 1)) : (ROM_size * 0x4000);
+	    ROM.prg.size >= 0xF00 ? (pow(2, head.ROM_size >> 2) * ((head.ROM_size & 3) * 2 + 1)) : (ROM.prg.size * 0x4000);
 	iNESCart.CHRRomSize =
-	    VROM_size >= 0xF00 ? (pow(2, head.VROM_size >> 2) * ((head.VROM_size & 3) * 2 + 1)) : (VROM_size * 0x2000);
+	    ROM.chr.size >= 0xF00 ? (pow(2, head.ROM_size >> 2) * ((head.ROM_size & 3) * 2 + 1)) : (ROM.chr.size * 0x2000);
 
 	romSize = iNESCart.PRGRomSize + iNESCart.CHRRomSize;
 
@@ -978,46 +974,47 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 
 	rom_size_pow2 = uppow2(iNESCart.PRGRomSize);
 
-	if ((ROM = (uint8 *)FCEU_malloc(rom_size_pow2)) == NULL) {
+	if ((ROM.prg.data = (uint8 *)FCEU_malloc(rom_size_pow2)) == NULL) {
 		Cleanup();
 		return 0;
 	}
 
-	memset(ROM, 0xFF, rom_size_pow2);
-	FCEU_fread(ROM, 1, iNESCart.PRGRomSize, fp);
+	memset(ROM.prg.data, 0xFF, rom_size_pow2);
+	FCEU_fread(ROM.prg.data, 1, iNESCart.PRGRomSize, fp);
 
 	if (iNESCart.CHRRomSize) {
 		vrom_size_pow2 = uppow2(iNESCart.CHRRomSize);
 
-		if ((VROM = (uint8 *)FCEU_malloc(vrom_size_pow2)) == NULL) {
+		if ((ROM.chr.data = (uint8 *)FCEU_malloc(vrom_size_pow2)) == NULL) {
 			Cleanup();
 			return 0;
 		}
 
-		memset(VROM, 0xFF, vrom_size_pow2);
-		FCEU_fread(VROM, 1, iNESCart.CHRRomSize, fp);
+		memset(ROM.chr.data, 0xFF, vrom_size_pow2);
+		FCEU_fread(ROM.chr.data, 1, iNESCart.CHRRomSize, fp);
 	}
 
 	if (head.MiscRoms & 3) {
-		MiscROM_size = filesize - iNESCart.PRGRomSize - iNESCart.CHRRomSize;
+		ROM.misc.size = filesize - iNESCart.PRGRomSize - iNESCart.CHRRomSize;
 
-		if ((MiscROM = (uint8 *)FCEU_malloc(MiscROM_size)) == NULL) {
+		if ((ROM.misc.data = (uint8 *)FCEU_malloc(ROM.misc.size)) == NULL) {
 			Cleanup();
 			return 0;
 		}
 
-		memset(MiscROM, 0xFF, MiscROM_size);
-		FCEU_fread(MiscROM, 1, MiscROM_size, fp);
+		memset(ROM.misc.data, 0xFF, ROM.misc.size);
+		FCEU_fread(ROM.misc.data, 1, ROM.misc.size, fp);
 	}
 
-	iNESCart.PRGCRC32 = CalcCRC32(0, ROM, iNESCart.PRGRomSize);
-	iNESCart.CHRCRC32 = CalcCRC32(0, VROM, iNESCart.CHRRomSize);
-	iNESCart.CRC32    = CalcCRC32(iNESCart.PRGCRC32, VROM, iNESCart.CHRRomSize);
+	iNESCart.PRGCRC32 = CalcCRC32(0, ROM.prg.data, iNESCart.PRGRomSize);
+	iNESCart.CHRCRC32 = CalcCRC32(0, ROM.chr.data, iNESCart.CHRRomSize);
+	iNESCart.CRC32    = CalcCRC32(iNESCart.PRGCRC32, ROM.chr.data, iNESCart.CHRRomSize);
 
 	md5_starts(&md5);
-	md5_update(&md5, ROM, iNESCart.PRGRomSize);
-	if (iNESCart.CHRRomSize)
-		md5_update(&md5, VROM, iNESCart.CHRRomSize);
+	md5_update(&md5, ROM.prg.data, iNESCart.PRGRomSize);
+	if (iNESCart.CHRRomSize) {
+		md5_update(&md5, ROM.chr.data, iNESCart.CHRRomSize);
+	}
 	md5_finish(&md5, iNESCart.MD5);
 
 	memcpy(&GameInfo->MD5, &iNESCart.MD5, sizeof(iNESCart.MD5));
@@ -1076,15 +1073,15 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 				FCEU_printf(" CHR-RAM:      %2d KB\n", CHRRAM / 1024);
 			}
 		}
-		if (MiscROM_size) {
-			FCEU_printf(" MISC-ROM: %6d KiB\n", MiscROM_size >> 10);
+		if (ROM.misc.size) {
+			FCEU_printf(" MISC-ROM: %6d KiB\n", ROM.misc.size >> 10);
 		}
 	}
 
 	ResetCartMapping();
 	ResetExState(0, 0);
 
-	SetupCartPRGMapping(0, ROM, rom_size_pow2, 0);
+	SetupCartPRGMapping(0, ROM.prg.data, rom_size_pow2, 0);
 
 	SetInput(&iNESCart);
 
@@ -1113,10 +1110,11 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 	}
 
 	/* Must remain here because above functions might change value of
-	 * VROM_size and free(VROM).
+	 * ROM.chr.size and free(ROM.chr.data).
 	 */
-	if (VROM_size)
-		SetupCartCHRMapping(0, VROM, vrom_size_pow2, 0);
+	if (ROM.chr.size) {
+		SetupCartCHRMapping(0, ROM.chr.data, vrom_size_pow2, 0);
+	}
 
 	if (iNESCart.mirror == 2) {
 		ExtraNTARAM = (uint8 *)FCEU_gmalloc(2048);
@@ -1160,7 +1158,7 @@ static int iNES_Init(int num) {
 	while (tmp->init) {
 		if (num == tmp->number) {
 			UNIFchrrama = 0; /* need here for compatibility with UNIF mapper code */
-			if (!VROM_size) {
+			if (!ROM.chr.size) {
 				if (iNESCart.iNES2) {
 					CHRRAMSize = iNESCart.CHRRamSize + iNESCart.CHRRamSaveSize;
 					if (CHRRAMSize == 0)
@@ -1189,12 +1187,13 @@ static int iNES_Init(int num) {
 				}
 				if (CHRRAMSize > 0) { /* TODO: CHR-RAM are sometimes handled in mappers e.g. MMC1 using submapper 1/2/4
 					                     and CHR-RAM can be zero here */
-					if ((VROM = (uint8 *)malloc(CHRRAMSize)) == NULL)
+					if ((ROM.chr.data = (uint8 *)malloc(CHRRAMSize)) == NULL) {
 						return 0;
-					FCEU_MemoryRand(VROM, CHRRAMSize);
-					UNIFchrrama = VROM;
-					SetupCartCHRMapping(0, VROM, CHRRAMSize, 1);
-					AddExState(VROM, CHRRAMSize, 0, "CHRR");
+					}
+					FCEU_MemoryRand(ROM.chr.data, CHRRAMSize);
+					UNIFchrrama = ROM.chr.data;
+					SetupCartCHRMapping(0, ROM.chr.data, CHRRAMSize, 1);
+					AddExState(ROM.chr.data, CHRRAMSize, 0, "CHRR");
 					/* FCEU_printf(" CHR-RAM:  %3d KiB\n", CHRRAMSize / 1024); */
 				}
 			}

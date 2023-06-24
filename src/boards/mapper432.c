@@ -50,7 +50,7 @@ static void M432PW(uint32 A, uint8 V) {
 }
 
 static DECLFR(M432Read) {
-	if (mmc3.expregs[0] & 1 || ((mmc3.expregs[1] & 0x20) && (ROM_size < 64)))
+	if (mmc3.expregs[0] & 1 || ((mmc3.expregs[1] & 0x20) && (ROM.prg.size < 64)))
 		return mmc3.expregs[2];
 	return CartBR(A);
 }
@@ -58,7 +58,7 @@ static DECLFR(M432Read) {
 static DECLFW(M432Write) {
 	if (MMC3CanWriteToWRAM()) {
 		mmc3.expregs[A & 1] = V;
-		if (~A & 1 && ~V & 1 && ROM_size < 64)
+		if (~A & 1 && ~V & 1 && ROM.prg.size < 64)
 			mmc3.expregs[1] &= ~0x20; /* Writing 0 to register 0 clears register 1's DIP bit */
 		MMC3_FixPRG();
 		MMC3_FixCHR();

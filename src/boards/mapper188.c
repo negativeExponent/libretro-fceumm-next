@@ -30,7 +30,7 @@ static void Sync(void) {
 		else
 			setprg16(0x8000, (latch.data & 7) | 8);
 	} else
-		setprg16(0x8000, 7 + (ROM_size >> 4));
+		setprg16(0x8000, 7 + (ROM.prg.size >> 4));
 }
 
 static DECLFR(ExtDev) {

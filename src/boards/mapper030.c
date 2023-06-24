@@ -176,7 +176,7 @@ void Mapper030_Init(CartInfo *info) {
 			SetupCartMirroring(MI_0, 0, NULL);
 			break;
 		case 3: /* hard four screen, last 8k of 32k RAM (flags: 4-screen + vertical) */
-			SetupCartMirroring(4, 1, VROM + (info->CHRRamSize - 8192));
+			SetupCartMirroring(4, 1, ROM.chr.data + (info->CHRRamSize - 8192));
 			break;
 		}
 	}
@@ -198,7 +198,7 @@ void Mapper030_Init(CartInfo *info) {
 		info->SaveGameLen[0] = PRGsize[ROM_CHIP];
 
 		flash_id[0] = 0xBF;
-		flash_id[1] = 0xB5 + (ROM_size >> 4);
+		flash_id[1] = 0xB5 + (ROM.prg.size >> 4);
 		SetupCartPRGMapping(CFI_CHIP, flash_id, sizeof(flash_id), 0);
 
 		AddExState(flash_data, PRGsize[ROM_CHIP], 0, "FLSH");

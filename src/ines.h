@@ -38,10 +38,26 @@ typedef struct {
 	uint8 ExpDevice;
 } iNES_HEADER;
 
-extern uint8 *ROM;
-extern uint8 *VROM;
-extern uint32 ROM_size;		/* prg size in 16K chunks */
-extern uint32 VROM_size;	/* chr size in 8K chunks */
+typedef struct romData_t {
+	struct prg {
+		uint8 *data;
+		uint32 size;
+	} prg;
+	struct chr {
+		uint8 *data;
+		uint32 size;
+	} chr;
+	struct trainer {
+		uint8 *data;
+		uint32 size;
+	} trainer;
+	struct misc {
+		uint8 *data;
+		uint32 size;
+	} misc;
+} romData_t;
+
+extern romData_t ROM;
 
 void NSFVRC6_Init(void);
 void NSFMMC5_Init(void);

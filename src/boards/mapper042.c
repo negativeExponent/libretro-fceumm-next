@@ -85,7 +85,7 @@ static void M042_Sub1_Power(void) {
 /* Submapper 2 - Green Beret */
 
 static void M042_Sub2_Sync(void) {
-	uint8 prg = (ROM_size & 0x0F) ? 4 : 7;
+	uint8 prg = (ROM.prg.size & 0x0F) ? 4 : 7;
 	setprg8(0x6000, (reg >> 1) & 0x0F);
 	setprg32(0x8000, prg);
 	setchr8(0);
@@ -184,7 +184,7 @@ void Mapper042_Init(CartInfo *info) {
 			/* Ai Senshi Nicole, only cart with CHR-ROM, all others use CHR-RAM */
 			info->submapper = 1;
 		} else {
-			if ((ROM_size * 16) > 128) {
+			if ((ROM.prg.size * 16) > 128) {
 				/* Green Beret LH09 FDS Conversion can be 160K or 256K */
 				info->submapper = 2;
 			} else {

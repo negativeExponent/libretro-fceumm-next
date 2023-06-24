@@ -36,7 +36,7 @@ static SFORMAT StateRegs[] =
 
 static void Sync(void) {
 	if (extra_chip) {
-		setprg16(0x8000, 0x80 | (regs[0] & ((ROM_size - 1) & 0x0F)));
+		setprg16(0x8000, 0x80 | (regs[0] & ((ROM.prg.size - 1) & 0x0F)));
 	} else {
 		setprg16(0x8000, (regs[1] & 0x70) | (regs[0] & 0x0F));
 	}

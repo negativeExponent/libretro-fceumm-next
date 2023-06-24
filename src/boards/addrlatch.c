@@ -139,7 +139,7 @@ static void M063Sync(void) {
 	setchr8(0);
 	setmirror((latch.addr & 1) ^ 1);
 	/* return openbus for unpopulated rom banks */
-	openBus = prg_bank >= ROM_size;
+	openBus = prg_bank >= ROM.prg.size;
 	/* chr-ram protect */
 	SetupCartCHRMapping(0, CHRptr[0], 0x2000, chr_protect);
 }
@@ -418,10 +418,10 @@ static void M242Sync(void) {
 
 	if (M242TwoChips) {
 		if (latch.addr & 0x600) { /* First chip */
-			p &= ((ROM_size & ~8) - 1);
+			p &= ((ROM.prg.size & ~8) - 1);
 		} else { /* Second chip */
 			p &= 0x07;
-			p += (ROM_size & ~8);
+			p += (ROM.prg.size & ~8);
 		}
 	}
 
@@ -452,7 +452,7 @@ static void M242Sync(void) {
 		}
 	}
 
-	if (!hasBattery && (latch.addr & 0x80) == 0x80 && (ROM_size * 16) > 256)
+	if (!hasBattery && (latch.addr & 0x80) == 0x80 && (ROM.prg.size * 16) > 256)
 		/* CHR-RAM write protect hack, needed for some multicarts */
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
 	else

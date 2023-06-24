@@ -109,11 +109,11 @@ static void FreeUNIF(void) {
 			free(malloced[x]); malloced[x] = 0;
 		}
 	}
-	if (ROM) {
-		free(ROM); ROM = 0;
+	if (ROM.prg.data) {
+		free(ROM.prg.data); ROM.prg.data = 0;
 	}
-	if (VROM) {
-		free(VROM); VROM = 0;
+	if (ROM.chr.data) {
+		free(ROM.chr.data); ROM.chr.data = 0;
 	}
 }
 
@@ -136,8 +136,8 @@ static void ResetUNIF(void) {
 	chr_chip_count = 0;
 	UNIF_PRGROMSize = 0;
 	UNIF_CHRROMSize = 0;
-	ROM_size = 0;
-	VROM_size = 0;
+	ROM.prg.size = 0;
+	ROM.chr.size = 0;
 }
 
 static void Cleanup(void) {
@@ -688,7 +688,7 @@ static int InitializeBoard(void) {
 		/* ignore case during board name comparing */
 		if (string_is_equal_noncase((const char*)sboardname, (const char*)bmap[x].name)) {
 
-			if (VROM_size == 0) {
+			if (ROM.chr.size == 0) {
 				if (bmap[x].flags & BMCFLAG_16KCHRR)
 					CHRRAMSize = 16;
 				else if (bmap[x].flags & BMCFLAG_32KCHRR)
@@ -770,11 +770,11 @@ int UNIFLoad(const char *name, FCEUFILE *fp) {
 		return 0;
 	}
 
-	ROM_size = (UNIF_PRGROMSize / 0x1000) + ((UNIF_PRGROMSize % 0x1000) ? 1 : 0);
-	ROM_size = (ROM_size >> 2) + ((ROM_size & 3) ? 1: 0);
+	ROM.prg.size = (UNIF_PRGROMSize / 0x1000) + ((UNIF_PRGROMSize % 0x1000) ? 1 : 0);
+	ROM.prg.size = (ROM.prg.size >> 2) + ((ROM.prg.size & 3) ? 1: 0);
 	if (UNIF_CHRROMSize) {
-		VROM_size = (UNIF_CHRROMSize / 0x400) + ((UNIF_CHRROMSize % 0x400) ? 1 : 0);
-		VROM_size = (VROM_size >> 3) + ((VROM_size & 7) ? 1: 0);
+		ROM.chr.size = (UNIF_CHRROMSize / 0x400) + ((UNIF_CHRROMSize % 0x400) ? 1 : 0);
+		ROM.chr.size = (ROM.chr.size >> 3) + ((ROM.chr.size & 7) ? 1: 0);
 	}
 
 	UNIF_PRGROMSize = FixRomSize(UNIF_PRGROMSize, 2048);
@@ -783,12 +783,12 @@ int UNIFLoad(const char *name, FCEUFILE *fp) {
 
 	/* Note: Use rounded size for memory allocations and board mapping */
 
-	if (!(ROM = (uint8*)malloc(UNIF_PRGROMSize))) {
+	if (!(ROM.prg.data = (uint8*)malloc(UNIF_PRGROMSize))) {
 		Cleanup();
 		return 0;
 	}
 	if (UNIF_CHRROMSize) {
-		if (!(VROM = (uint8*)malloc(UNIF_CHRROMSize))) {
+		if (!(ROM.chr.data = (uint8*)malloc(UNIF_CHRROMSize))) {
 			Cleanup();
 			return 0;
 		}
@@ -800,14 +800,14 @@ int UNIFLoad(const char *name, FCEUFILE *fp) {
 		int p = prg_idx[x];
 		int c = 16 + chr_idx[x];
 		if (malloced[p]) {
-			memcpy(ROM + prg_size_bytes, malloced[p], mallocedsizes[p]);
+			memcpy(ROM.prg.data + prg_size_bytes, malloced[p], mallocedsizes[p]);
 			prg_size_bytes += mallocedsizes[p];
 			free(malloced[p]);
 			malloced[p] = 0;
 		}
 
 		if (malloced[c]) {
-			memcpy(VROM + chr_size_bytes, malloced[c], mallocedsizes[c]);
+			memcpy(ROM.chr.data + chr_size_bytes, malloced[c], mallocedsizes[c]);
 			chr_size_bytes += mallocedsizes[c];
 			free(malloced[c]);
 			malloced[c] = 0;
@@ -819,14 +819,14 @@ int UNIFLoad(const char *name, FCEUFILE *fp) {
 	iNESCart.PRGRomSize = prg_size_bytes;
 	iNESCart.CHRRomSize = chr_size_bytes;
 
-	iNESCart.PRGCRC32   = CalcCRC32(0, ROM, prg_size_bytes);
-	iNESCart.CHRCRC32   = CalcCRC32(0, VROM, chr_size_bytes);
-	iNESCart.CRC32      = CalcCRC32(iNESCart.PRGCRC32, VROM, chr_size_bytes);
+	iNESCart.PRGCRC32   = CalcCRC32(0, ROM.prg.data, prg_size_bytes);
+	iNESCart.CHRCRC32   = CalcCRC32(0, ROM.chr.data, chr_size_bytes);
+	iNESCart.CRC32      = CalcCRC32(iNESCart.PRGCRC32, ROM.chr.data, chr_size_bytes);
 
 	md5_starts(&md5);
-	md5_update(&md5, ROM, prg_size_bytes);
+	md5_update(&md5, ROM.prg.data, prg_size_bytes);
 	if (chr_size_bytes)
-		md5_update(&md5, VROM, chr_size_bytes);
+		md5_update(&md5, ROM.chr.data, chr_size_bytes);
 	md5_finish(&md5, iNESCart.MD5);
 	memcpy(GameInfo->MD5, iNESCart.MD5, sizeof(iNESCart.MD5));
 
@@ -834,9 +834,9 @@ int UNIFLoad(const char *name, FCEUFILE *fp) {
 
 	/* Note: Use rounded size for board mappings */
 
-	SetupCartPRGMapping(0, ROM, UNIF_PRGROMSize, 0);
+	SetupCartPRGMapping(0, ROM.prg.data, UNIF_PRGROMSize, 0);
 	if (UNIF_CHRROMSize)
-		SetupCartCHRMapping(0, VROM, UNIF_CHRROMSize, 0);
+		SetupCartCHRMapping(0, ROM.chr.data, UNIF_CHRROMSize, 0);
 
 	FCEU_printf(" PRG-ROM CRC32: 0x%08X\n", iNESCart.PRGCRC32);
 	FCEU_printf(" PRG+CHR CRC32: 0x%08X\n", iNESCart.CRC32);

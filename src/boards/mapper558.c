@@ -69,7 +69,7 @@ static DECLFW(writeReg) {
 	V = (V & ~3) | (V >> 1 & 1) | (V << 1 & 2);
 
 	/* Swap bits of registers 0-2 again if the "swap bits" bit is set. Exclude register 2 on when PRG-ROM is 1 MiB. */
-	if ((reg[3] & 0x02) && index <= (ROM_size == 64 ? 1 : 2))
+	if ((reg[3] & 0x02) && index <= (ROM.prg.size == 64 ? 1 : 2))
 		V = (V & ~3) | (V >> 1 & 1) | (V << 1 & 2);
 
 	reg[index] = V;
