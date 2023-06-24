@@ -43,24 +43,22 @@
 
 extern SFORMAT FCEUVSUNI_STATEINFO[];
 
-romData_t ROM;
-
-uint8 *ExtraNTARAM = NULL;
-static iNES_HEADER head   = { 0 };
-
+romData_t ROM = { 0 };
 CartInfo iNESCart = { 0 };
+uint8 *ExtraNTARAM = NULL;
 
+static iNES_HEADER head = { 0 };
 static int CHRRAMSize = -1;
 
 static int iNES_Init(int num);
-
 static DECLFR(TrainerRead) {
 	return (ROM.trainer.data[A & 0x1FF]);
 }
 
 static void iNES_ExecPower() {
-	if (iNESCart.Power)
+	if (iNESCart.Power) {
 		iNESCart.Power();
+	}
 
 	if (ROM.trainer.data) {
 		int x;
@@ -100,15 +98,13 @@ static void Cleanup(void) {
 static void iNESGI(int h) {
 	switch (h) {
 	case GI_RESETM2:
-		if (iNESCart.Reset)
-			iNESCart.Reset();
+		if (iNESCart.Reset) iNESCart.Reset();
 		break;
 	case GI_POWER:
 		iNES_ExecPower();
 		break;
 	case GI_CLOSE:
-		if (iNESCart.Close)
-			iNESCart.Close();
+		if (iNESCart.Close) iNESCart.Close();
 		Cleanup();
 		break;
 	}
@@ -250,7 +246,7 @@ struct CHINF {
 	int32 extra;
 };
 
-static void CheckHInfo(CartInfo *info, iNES_HEADER *h, uint64 partialmd5) {
+static void CheckHInfo(CartInfo *info, uint64 partialmd5) {
 #define DEFAULT (-1)
 #define NOEXTRA (-1)
 
@@ -313,9 +309,9 @@ static void CheckHInfo(CartInfo *info, iNES_HEADER *h, uint64 partialmd5) {
 				}
 			}
 			if (moo[x].battery >= 0) {
-				if (!(h->ROM_type & 2) && (moo[x].battery != 0)) {
+				if ((info->battery == 0) && (moo[x].battery != 0)) {
 					tofix |= 4;
-					h->ROM_type |= 2;
+					info->battery = 1;
 				}
 			}
 			if (moo[x].region >= 0) {
@@ -890,7 +886,7 @@ INES_BOARD_END()
 
 static void iNES_read_header_info(CartInfo *info, iNES_HEADER *h) {
 	ROM.prg.size      = h->ROM_size;
-	ROM.chr.size      = h->ROM_size;
+	ROM.chr.size      = h->VROM_size;
 	info->mirror      = (h->ROM_type & 8) ? 2 : (h->ROM_type & 1);
 	info->mirror2bits = ((h->ROM_type & 8) ? 2 : 0) | (h->ROM_type & 1);
 	info->battery     = (h->ROM_type & 2) ? 1 : 0;
@@ -1085,8 +1081,10 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 
 	SetInput(&iNESCart);
 
+	iNESCart.battery = (head.ROM_type & 2) ? 1 : 0;
+
 	if (iNESCart.iNES2 < 1)
-		CheckHInfo(&iNESCart, &head, partialmd5);
+		CheckHInfo(&iNESCart, partialmd5);
 
 	{
 		int mapper        = iNESCart.mapper;
@@ -1123,8 +1121,6 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 		SetupCartMirroring(2 + (iNESCart.mirror & 1), 1, 0);
 	else
 		SetupCartMirroring(iNESCart.mirror & 1, (iNESCart.mirror & 4) >> 2, 0);
-
-	iNESCart.battery = (head.ROM_type & 2) ? 1 : 0;
 
 	if (!iNES_Init(iNESCart.mapper)) {
 		FCEU_printf("\n");
