@@ -5,15 +5,16 @@
 FCEU "mappers modified" is an unofficial build of FCEU Ultra by CaH4e3, which supports a lot of new mappers including some obscure mappers such as one for unlicensed NES ROM's.
 
 Recent Changes (in no particular order):
-- additional mapper support
+- additional mappers support
 - mapper fixes and updates
-- additional input options
+- additional input options (SNES Mouse, SNES Gamepad, PowerPad A/B, VirtualBoy Controller etc)
 - variable overscan cropping options, including separate top, bottom, left, right overscan cropping
 - replaced on/off audio options to volume controls
 - add volume controls for expansion audio (FDS, MMC5, VRC6, VRC7, Namco163, Sunsoft5B)
 - fix to audio controls not muting some channels when in low quality mode
+- add missing state variables, fixing runahead compatibility
+- misc changes under the hood
 
-The core can be compiled similarly to libretro-fceumm. and be a drop-in replacement. Take note that with the massive changes, savestates are not compatible between versions, and even on possible future commits.
+The core can be compiled similarly to libretro-fceumm. and be a drop-in replacement.
 
-
-
+NOTE: With the massive changes, savestates are not compatible between versions, and even on possible future commits. SRAM are mostly compatible though.
