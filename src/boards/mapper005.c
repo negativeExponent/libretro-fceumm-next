@@ -631,8 +631,6 @@ static void GenMMC5_Init(CartInfo *info, int wsize, int battery) {
 		}
 		info->SaveGame[0] = WRAM;
 		info->SaveGameLen[0] = saveramsize;
-
-		FCEU_printf("wramsize:%04x savesize:%04x\n", wsize * 1024, saveramsize);
 	}
 
 	MMC5HackVROMMask = CHRmask4[0];
