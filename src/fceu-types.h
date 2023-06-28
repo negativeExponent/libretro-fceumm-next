@@ -85,6 +85,14 @@ typedef long long int64;
 #define TRUE 1
 #endif
 
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
 typedef void (FP_FASTAPASS(2) *writefunc)(uint32 A, uint8 V);
 typedef uint8 (FP_FASTAPASS(1) *readfunc)(uint32 A);
 

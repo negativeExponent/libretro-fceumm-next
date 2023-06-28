@@ -492,9 +492,10 @@ void FASTAPASS(1) FCEU_SoundCPUHook(int cycles) {
 			int t = ((DMCShift & 1) << 2) - 2;
 			/* Unbelievably ugly hack */
 			if (FSettings.SndRate) {
-				soundtsoffs += DMCacc;
+				const uint32 fudge = MIN((uint32)(-DMCacc), (uint32)(soundtsoffs + timestamp));
+				soundtsoffs -= fudge;
 				DoPCM();
-				soundtsoffs -= DMCacc;
+				soundtsoffs += fudge;
 			}
 			RawDALatch += t;
 			if (RawDALatch & 0x80)
