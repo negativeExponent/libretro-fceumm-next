@@ -254,17 +254,6 @@ static DECLFW(Write_PSG) {
 			lengthcount[3] = lengthtable[(V >> 3) & 0x1f];
 		EnvUnits[2].reloaddec = 1;
 		break;
-	case 0x10:
-		DoPCM();
-		LoadDMCPeriod(V & 0xF);
-
-		if (SIRQStat & 0x80) {
-			if (!(V & 0x80)) {
-				X6502_IRQEnd(FCEU_IQDPCM);
-				SIRQStat &= ~0x80;
-			} else X6502_IRQBegin(FCEU_IQDPCM);
-		}
-		break;
 	}
 	PSG[A] = V;
 }
@@ -273,14 +262,15 @@ static DECLFW(Write_DMCRegs) {
 	A &= 0xF;
 
 	switch (A) {
-	case 0x00: DoPCM();
+	case 0x00:
+		DoPCM();
 		LoadDMCPeriod(V & 0xF);
 
 		if (SIRQStat & 0x80) {
 			if (!(V & 0x80)) {
 				X6502_IRQEnd(FCEU_IQDPCM);
 				SIRQStat &= ~0x80;
-			} else X6502_IRQBegin(FCEU_IQDPCM);
+			}
 		}
 		DMCFormat = V;
 		break;
