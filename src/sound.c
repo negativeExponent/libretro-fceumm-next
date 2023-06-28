@@ -529,51 +529,57 @@ static INLINE void RDoSQ(int x) {
 	int32 cf;
 	int32 rc;
 
+	if (EnvUnits[x].Mode & 0x1)
+		amp = EnvUnits[x].Speed;
+	else
+		amp = EnvUnits[x].decvolume;
+
+	amp = GetVolume(APU_SQUARE1 + x, amp);
+	amp <<= 24;
+
+	rthresh = RectDuties[(PSG[(x << 2)] & 0xC0) >> 6];
+	
+	D = &WaveHi[ChannelBC[x]];
 	V = SOUNDTS - ChannelBC[x];
+
+	currdc = RectDutyCount[x];
 	cf = (curfreq[x] + 1) * 2;
 	rc = wlcount[x];
 
 	/* added 2018/12/08 */
 	/* when pulse channel is silenced, resets length counters but not
 	 * duty cycle, instead of resetting both */
-	if ((curfreq[x] < 8 || curfreq[x] > 0x7ff) ||
-	!CheckFreq(curfreq[x], PSG[(x << 2) | 0x1]) ||
-	!lengthcount[x]) {
+	/* revised 2023-06-28 */
+	if ((curfreq[x] < 8) || !CheckFreq(curfreq[x], PSG[(x << 2) | 0x1]) || !lengthcount[x]) {
 		rc -= V;
 		if (rc <= 0) {
 			rc = cf - (-rc % cf);
 		}
-	} else {
-		int dutyCycle;
-
-		if (EnvUnits[x].Mode & 0x1)
-			amp = EnvUnits[x].Speed;
-		else
-			amp = EnvUnits[x].decvolume;
-		
-		amp = GetVolume(APU_SQUARE1 + x, amp);
-
-		amp <<= 24;
-		dutyCycle = (PSG[(x << 2)] & 0xC0) >> 6;
-		rthresh = RectDuties[dutyCycle];
-		currdc = RectDutyCount[x];
-		D = &WaveHi[ChannelBC[x]];
-
-		while (V > 0) {
-			if (currdc < rthresh)
-				*D += amp;
-			rc--;
-			if (!rc) {
-				rc = cf;
-				currdc = (currdc + 1) & 7;
-			}
-			V--;
-			D++;
-		}
-
-		RectDutyCount[x] = currdc;
+		V = 0;
 	}
 
+	if (rthresh == 6) { /* Reversed below */
+		currdc = (currdc - 2) & 0x7;
+	}
+
+	while (V > 0) {
+		if (currdc < rthresh) {
+			*D += amp;
+		}
+		rc--;
+		if (!rc) {
+			rc = cf;
+			currdc = (currdc + 1) & 7;
+		}
+		V--;
+		D++;
+	}
+
+	if (rthresh == 6) { /* Reverse above */
+		currdc = (currdc + 2) & 0x7;
+	}
+
+	RectDutyCount[x] = currdc;
 	wlcount[x] = rc;
 	ChannelBC[x] = SOUNDTS;
 }
