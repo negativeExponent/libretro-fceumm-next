@@ -70,6 +70,8 @@ static uint8 sweepon[2];
 static int32 curfreq[2];
 static uint8 SweepCount[2];
 static uint8 sweepReload[2];
+static uint8 sweepShift[2];
+static uint8 sweepPeriod[2];
 
 static uint16 nreg = 0;
 
@@ -199,7 +201,9 @@ static DECLFW(Write_PSG) {
 	case 0x1:
 		DoSQ1();
 		sweepReload[0] = 1;
-		sweepon[0] = (V & 0x80);
+		sweepShift[0] = V & 0x07;
+		sweepPeriod[0] = ((V >> 4) & 0x7) + 1;
+		sweepon[0] = (V & 0x80) && sweepShift[0];
 		break;
 	case 0x2:
 		DoSQ1();
@@ -220,7 +224,9 @@ static DECLFW(Write_PSG) {
 	case 0x5:
 		DoSQ2();
 		sweepReload[1] = 1;
-		sweepon[1] = (V & 0x80);
+		sweepShift[1] = V & 0x07;
+		sweepPeriod[1] = ((V >> 4) & 0x7) + 1;
+		sweepon[1] = (V & 0x80) && sweepShift[1];
 		break;
 	case 0x6:
 		DoSQ2();
@@ -362,9 +368,8 @@ static void FASTAPASS(1) FrameSoundStuff(int V) {
 			/* http://wiki.nesdev.com/w/index.php/APU_Sweep */
 			if (SweepCount[P] > 0) SweepCount[P]--;
 			if (SweepCount[P] <= 0) {
-				uint32 sweepShift = (PSG[(P << 2) + 0x1] & 7);
-				if (sweepon[P] && sweepShift && curfreq[P] >= 8) {
-					int32 mod = (curfreq[P] >> sweepShift);
+				if (sweepon[P] && (curfreq[P] >= 8)) {
+					int32 mod = (curfreq[P] >> sweepShift[P]);
 					if (PSG[(P << 2) + 0x1] & 0x8) {
 						curfreq[P] -= (mod + (P ^ 1));
 					} else if ((mod + curfreq[P]) < 0x800) {
@@ -372,11 +377,11 @@ static void FASTAPASS(1) FrameSoundStuff(int V) {
 					}
 				}
 
-				SweepCount[P] = (((PSG[(P << 2) + 0x1] >> 4) & 7) + 1);
+				SweepCount[P] = sweepPeriod[P];
 			}
 
 			if (sweepReload[P]) {
-				SweepCount[P] = (((PSG[(P << 2) + 0x1] >> 4) & 7) + 1);
+				SweepCount[P] = sweepPeriod[P];
 				sweepReload[P] = 0;
 			}
 		}
@@ -1158,6 +1163,9 @@ SFORMAT FCEUSND_STATEINFO[] = {
 	{ &curfreq[0], 4 | FCEUSTATE_RLSB, "CRF1" },
 	{ &curfreq[1], 4 | FCEUSTATE_RLSB, "CRF2" },
 	{ SweepCount, 2, "SWCT" },
+	{ sweepReload, 2, "SWRL" },
+	{ sweepPeriod, 2, "SWPD" },
+	{ sweepShift, 2, "SWSH" },
 
 	{ &SIRQStat, 1, "SIRQ" },
 
@@ -1223,54 +1231,44 @@ void FCEUSND_LoadState(int version) {
 	DMCAddress &= 0x7FFF;
 
 	/* minimal validation */
-	for (i = 0; i < 5; i++)
-	{
+	for (i = 0; i < 5; i++) {
 		uint32 BC_max = 15;
 
-		if (FSettings.soundq == 2)
-		{
+		if (FSettings.soundq == 2) {
 			BC_max = 1025;
-		}
-		else if (FSettings.soundq == 1)
-		{
+		} else if (FSettings.soundq == 1) {
 			BC_max = 485;
 		}
-		if (/* ChannelBC[i] < 0 || */ ChannelBC[i] > BC_max)
-		{
+		if (/* ChannelBC[i] < 0 || */ ChannelBC[i] > BC_max) {
 			ChannelBC[i] = 0;
 		}
 	}
-	for (i = 0; i < 4; i++)
-	{
-		if (wlcount[i] < 0 || wlcount[i] > 2048)
-		{
-			wlcount[i] = 2048;
-		}
+	for (i = 0; i < 4; i++) {
+		wlcount[i] = MAX((int32)(1), (int32)MIN((int32)(0xFFFF), (int32)(wlcount[i])));
 	}
-	for (i = 0; i < 2; i++)
-	{
-		if (RectDutyCount[i] < 0 || RectDutyCount[i] > 7)
-		{
-			RectDutyCount[i] = 7;
+	for (i = 0; i < 2; i++) {
+		RectDutyCount[i] &= 0x7;
+		curfreq[i] &= 0xFFFF;
+		sweepShift[i] &= 0x7;
+		if (!sweepShift[i]) {
+			sweepon[i] = 0;
 		}
 	}
 
 	/* Comparison is always false because access to array >= 0. */
 	/* if (sound_timestamp < 0)
 	{
-		sound_timestamp = 0;
+	    sound_timestamp = 0;
 	}
 	if (soundtsoffs < 0)
 	{
-		soundtsoffs = 0;
+	    soundtsoffs = 0;
 	} */
-	if (soundtsoffs + sound_timestamp >= soundtsinc)
-	{
+	if (soundtsoffs + sound_timestamp >= soundtsinc) {
 		soundtsoffs = 0;
 		sound_timestamp = 0;
 	}
-	if (tristep > 32)
-	{
+	if (tristep > 32) {
 		tristep &= 0x1F;
 	}
 }
