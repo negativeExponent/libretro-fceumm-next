@@ -424,7 +424,7 @@ static void CheckHashInfo(void) {
 
 static BMAPPING bmap[] = {
 /*	{ "KONAMI-QTAI",            NO_INES, Mapper190_Init,        0 }, */
-	{ "PEC-586",                NO_INES, UNLPEC586Init,         0 },
+	{ "PEC-586",                    257, Mapper257_Init,        0 },
 	{ "SSS-NROM-256",           NO_INES, SSSNROM_Init,          0 }, /* famicombox - cant find similar cart */
 	{ "T-227-1",                NO_INES, BMCT2271_Init,         0 }, /* cant find similar cart */
 	{ "Transformer",            NO_INES, Transformer_Init,      0 },

@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +21,10 @@
 
 #include "mapinc.h"
 
-static uint8 is167, regs[4];
+static uint8 *WRAM = NULL;
+static uint32 WRAMSIZE;
+
+static uint8 regs[4];
 
 static SFORMAT StateRegs[] =
 {
@@ -35,54 +39,55 @@ static void Sync(void) {
 
 	if (regs[1] & 0x08) {
 		bank &= 0xFE;
-		if (is167) {
-			setprg16(0x8000, base + bank + 1);
-			setprg16(0xC000, base + bank + 0);
-		} else {
-			setprg16(0x8000, base + bank + 0);
-			setprg16(0xC000, base + bank + 1);
-		}
+		setprg16(0x8000, base + bank + 1);
+		setprg16(0xC000, base + bank + 0);
 	} else {
 		if (regs[1] & 0x04) {
 			setprg16(0x8000, 0x1F);
 			setprg16(0xC000, base + bank);
 		} else {
 			setprg16(0x8000, base + bank);
-			if (is167)
-				setprg16(0xC000, 0x20);
-			else
-				setprg16(0xC000, 0x07);
+			setprg16(0xC000, 0x20);
 		}
 	}
 	setchr8(0);
 }
 
-static DECLFW(M166Write) {
+static DECLFW(M167Write) {
 	regs[(A >> 13) & 0x03] = V;
 	Sync();
 }
 
-static void M166Power(void) {
+static void M167Power(void) {
 	regs[0] = regs[1] = regs[2] = regs[3] = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M166Write);
+	SetWriteHandler(0x6000, 0x7FFF, CartBW);
+	SetWriteHandler(0x8000, 0xFFFF, M167Write);
+	if (WRAMSIZE) {
+	    setprg8r(0x10, 0x6000, 0);
+		SetReadHandler(0x6000, 0x7FFF, CartBR);
+		SetWriteHandler(0x6000, 0x7FFF, CartBW);
+	}
 }
 
 static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper166_Init(CartInfo *info) {
-	is167 = 0;
-	info->Power = M166Power;
-	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
-}
-
 void Mapper167_Init(CartInfo *info) {
-	is167 = 1;
-	info->Power = M166Power;
+	info->Power = M167Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
+
+	WRAMSIZE = 8 * 1024;
+	if (info->iNES2) {
+		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
+	}
+	if (WRAMSIZE) {
+		WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
+		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
+		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+	}
 }
