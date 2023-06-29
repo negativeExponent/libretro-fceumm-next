@@ -21,7 +21,7 @@
 /* FDS Conversion - Kid Icarus (パルテナの鏡) (Parthena) */
 
 #include "mapinc.h"
-#include "../fds_apu.h"
+#include "fdssound.h"
 
 static uint8 preg;
 static uint8 mirr;

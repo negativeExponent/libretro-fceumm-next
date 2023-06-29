@@ -20,7 +20,7 @@
 
 /* Begin FDS sound */
 #include <string.h>
-#include "fceu-types.h"
+#include "fdssound.h"
 #include "x6502.h"
 #include "fceu.h"
 #include "sound.h"

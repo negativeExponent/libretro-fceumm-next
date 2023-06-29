@@ -23,7 +23,7 @@
  */
 
 #include "mapinc.h"
-#include "../fds_apu.h"
+#include "fdssound.h"
 
 static uint32 mapperNum;
 static uint8 preg[4];

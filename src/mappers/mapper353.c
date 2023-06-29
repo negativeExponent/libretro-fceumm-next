@@ -23,7 +23,7 @@
  * The PCB code is 81-03-05-C.
  */
 
-#include "../fds_apu.h"
+#include "fdssound.h"
 #include "mapinc.h"
 #include "mmc3.h"
 

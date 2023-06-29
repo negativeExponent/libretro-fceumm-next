@@ -25,7 +25,7 @@
 
 #include "mapinc.h"
 #include "latch.h"
-#include "fds_apu.h"
+#include "fdssound.h"
 
 static void Sync(void) {
 	setprg8(0x6000, ((latch.addr >> 3) & 4) | (latch.addr >> 2));

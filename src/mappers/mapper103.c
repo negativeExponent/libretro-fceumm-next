@@ -22,7 +22,7 @@
  */
 
 #include "mapinc.h"
-#include "../fds_apu.h"
+#include "fdssound.h"
 
 static uint8 reg0, reg1, reg2;
 static uint8 *WRAM = NULL;

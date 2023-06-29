@@ -30,7 +30,7 @@
  */
 
 #include "mapinc.h"
-#include "../fds_apu.h"
+#include "fdssound.h"
 
 static uint8 reg, prg, chr, mirr;
 static uint8 IRQa;

@@ -1,7 +1,7 @@
-/* FCEUmm - NES/Famicom Emulator
+/* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2007 CaH4e3
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,56 +16,77 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-
-/* FDS Conversion
- * NES 2.0 Mapper 309 is used for Whirlwind Manu's ROM cartridge conversion
- * of game 愛戦士ニコル (Ai Senshi Nicol, cartridge code M309).
- * Its UNIF board name is UNL-LH51.
- * https://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_309
+ *
+ * NES 2.0 Mapper 535 - UNL-M535
+ * FDS Conversion - Nazo no Murasamejō
+ *
  */
 
 #include "mapinc.h"
-#include "../fds_apu.h"
+#include "fdssound.h"
 
-static uint8 reg, mirr;
+static uint8 reg, IRQa;
+static int32 IRQCount;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
 static SFORMAT StateRegs[] =
 {
 	{ &reg, 1, "REG" },
-	{ &mirr, 1, "MIRR" },
+	{ &IRQa, 1, "IRQA" },
+	{ &IRQCount, 4, "IRQC" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	setchr8(0);
-	setprg8r(0x10, 0x6000, 0);
-	setprg8(0x8000, reg & 0x0F);
-	setprg8(0xA000, 13);
-	setprg8(0xC000, 14);
-	setprg8(0xE000, 15);
-	setmirror(((mirr >> 3) & 1) ^ 1);
+	setprg8(0x6000, reg);
+	setprg8(0x8000, 0xc);
+	setprg4(0xa000, (0xd << 1));
+	setprg2(0xb000, (0xd << 2) + 2);
+	setprg2r(0x10, 0xb800, 4);
+	setprg2r(0x10, 0xc000, 5);
+	setprg2r(0x10, 0xc800, 6);
+	setprg2r(0x10, 0xd000, 7);
+	setprg2(0xd800, (0xe << 2) + 3);
+	setprg8(0xe000, 0xf);
 }
 
-static DECLFW(M309Write) {
-	switch (A & 0xF000) {
-	case 0x8000: reg = V; Sync(); break;
-	case 0xF000: mirr = V; Sync(); break;
+static DECLFW(M535RamWrite) {
+	WRAM[(A - 0xB800) & 0x1FFF] = V;
+}
+
+static DECLFW(M535Write) {
+	reg = V;
+	Sync();
+}
+
+static DECLFW(M535IRQaWrite) {
+	IRQa = V & 2;
+	IRQCount = 0;
+	if (!IRQa)
+		X6502_IRQEnd(FCEU_IQEXT);
+}
+
+static void FP_FASTAPASS(1) M535IRQHook(int a) {
+	if (IRQa) {
+		IRQCount += a;
+		if (IRQCount > 7560)
+			X6502_IRQBegin(FCEU_IQEXT);
 	}
 }
 
-static void M309Power(void) {
+static void M535Power(void) {
 	FDSSoundPower();
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetWriteHandler(0x8000, 0xFFFF, M309Write);
+	SetWriteHandler(0xB800, 0xD7FF, M535RamWrite);
+	SetWriteHandler(0xE000, 0xEFFF, M535IRQaWrite);
+	SetWriteHandler(0xF000, 0xFFFF, M535Write);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M309Close(void) {
+static void M535Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
@@ -75,9 +96,10 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper309_Init(CartInfo *info) {
-	info->Power = M309Power;
-	info->Close = M309Close;
+void Mapper535_Init(CartInfo *info) {
+	info->Power = M535Power;
+	info->Close = M535Close;
+	MapIRQHook = M535IRQHook;
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;

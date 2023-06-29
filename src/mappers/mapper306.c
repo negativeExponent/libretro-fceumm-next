@@ -27,7 +27,7 @@
  */
 
 #include "mapinc.h"
-#include "../fds_apu.h"
+#include "fdssound.h"
 
 static uint8 preg;
 

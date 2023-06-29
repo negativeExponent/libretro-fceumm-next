@@ -21,7 +21,7 @@
 
 #include "mapinc.h"
 #include "latch.h"
-#include "../fds_apu.h"
+#include "fdssound.h"
 
 static uint8 submapper = 0;
 
