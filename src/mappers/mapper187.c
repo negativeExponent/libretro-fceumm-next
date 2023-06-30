@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,29 +26,34 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static void M187CW(uint32 A, uint8 V) {
-	if ((A & 0x1000) == ((mmc3.cmd & 0x80) << 5))
+	if ((A & 0x1000) == ((mmc3.cmd & 0x80) << 5)) {
 		setchr1(A, V | 0x100);
-	else
+	} else {
 		setchr1(A, V);
+	}
 }
 
 static void M187PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 0x80) {
-		uint8 bank = (mmc3.expregs[0] >> 1) & 0x0F;
-		if (mmc3.expregs[0] & 0x20) {
+	if (reg & 0x80) {
+		uint8 bank = (reg >> 1) & 0x0F;
+
+		if (reg & 0x20) {
 			setprg32(0x8000, bank >> 1);
 		} else {
 			setprg16(0x8000, bank);
 			setprg16(0xC000, bank);
 		}
-	} else
+	} else {
 		setprg8(A, V & 0x3F);
+	}
 }
 
-static DECLFW(M187WriteLo) {
-	if (!(A & 1)) {
-		mmc3.expregs[0] = V;
+static DECLFW(M187Write) {
+	if (!(A & 0x01)) {
+		reg = V;
 		MMC3_FixPRG();
 	}
 }
@@ -57,16 +63,16 @@ static DECLFR(M187Read) {
 }
 
 static void M187Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetReadHandler(0x5000, 0x5FFF, M187Read);
-	SetWriteHandler(0x5000, 0x5FFF, M187WriteLo);
+	SetWriteHandler(0x5000, 0x5FFF, M187Write);
 }
 
 void Mapper187_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_pwrap = M187PW;
 	MMC3_cwrap = M187CW;
 	info->Power = M187Power;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

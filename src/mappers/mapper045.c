@@ -21,30 +21,36 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg[4];
+static uint8 cmd;
+static uint8 dipsw;
+
 static void M045CW(uint32 A, uint8 V) {
 	if (UNIFchrrama) {
 		/* assume chr-ram, 4-in-1 Yhc-Sxx-xx variants */
 		setchr8(0);
 	} else {
-		uint32 mask = 0xFF >> (~mmc3.expregs[2] & 0xF);
-		uint32 base = ((mmc3.expregs[2] << 4) & 0xF00) | mmc3.expregs[0];
+		uint32 mask = 0xFF >> (~reg[2] & 0xF);
+		uint32 base = ((reg[2] << 4) & 0xF00) | reg[0];
+
 		setchr1(A, (base & ~mask) | (V & mask));
 	}
 }
 
 static void M045PW(uint32 A, uint8 V) {
-	uint32 mask = ~mmc3.expregs[3] & 0x3F;
-	uint32 base = ((mmc3.expregs[2] << 2) & 0x300) | mmc3.expregs[1];
+	uint32 mask = ~reg[3] & 0x3F;
+	uint32 base = ((reg[2] << 2) & 0x300) | reg[1];
+
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFR(M045ReadCart) {
     /* Some multicarts select between five different menus by connecting one of the higher address lines to PRG /CE.
 	The menu code selects between menus by checking which of the higher address lines disables PRG-ROM when set. */
-	if (((PRGsize[0] < 0x200000) && (mmc3.expregs[5] == 1) && (mmc3.expregs[1] & 0x80)) ||
-	    ((PRGsize[0] < 0x200000) && (mmc3.expregs[5] == 2) && (mmc3.expregs[2] & 0x40)) ||
-	    ((PRGsize[0] < 0x100000) && (mmc3.expregs[5] == 3) && (mmc3.expregs[1] & 0x40)) ||
-	    ((PRGsize[0] < 0x100000) && (mmc3.expregs[5] == 4) && (mmc3.expregs[2] & 0x20))) {
+	if (((PRGsize[0] < 0x200000) && (dipsw == 1) && (reg[1] & 0x80)) ||
+	    ((PRGsize[0] < 0x200000) && (dipsw == 2) && (reg[2] & 0x40)) ||
+	    ((PRGsize[0] < 0x100000) && (dipsw == 3) && (reg[1] & 0x40)) ||
+	    ((PRGsize[0] < 0x100000) && (dipsw == 4) && (reg[2] & 0x20))) {
 		return X.DB;
 	}
 	return CartBR(A);
@@ -52,44 +58,48 @@ static DECLFR(M045ReadCart) {
 
 static DECLFW(M045WriteReg) {
 	CartBW(A, V);
-	if (!(mmc3.expregs[3] & 0x40)) {
-		mmc3.expregs[mmc3.expregs[4]] = V;
-		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
+	if (!(reg[3] & 0x40)) {
+		reg[cmd] = V;
+		cmd = (cmd + 1) & 0x03;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
+	} else {
+		CartBW(A, V);
 	}
 }
 
 static DECLFR(M045ReadDIP) {
-	uint32 addr = 1 << (mmc3.expregs[5] + 4);
-	if (A & (addr | (addr - 1)))
-		return X.DB | 1;
-	else
-		return X.DB;
+	uint32 addr = 1 << (dipsw + 4);
+	if (A & (addr | (addr - 1))) {
+		return X.DB | 0x01;
+	}
+	return X.DB;
 }
 
 static void M045Reset(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = 0;
-	mmc3.expregs[2] = 0x0F;
-	mmc3.expregs[5]++;
-	mmc3.expregs[5] &= 7;
-	MMC3RegReset();
+	reg[0] = reg[1] = reg[3] = cmd = 0;
+	reg[2] = 0x0F;
+	dipsw++;
+	dipsw &= 7;
+	MMC3_Reset();
 }
 
 static void M045Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = mmc3.expregs[5] = 0;
-	mmc3.expregs[2] = 0x0F;
-	GenMMC3Power();
+	reg[0] = reg[1] = reg[3] = cmd = dipsw = 0;
+	reg[2] = 0x0F;
+	MMC3_Power();
     SetReadHandler(0x8000, 0xFFFF, M045ReadCart);
 	SetWriteHandler(0x6000, 0x7FFF, M045WriteReg);
 	SetReadHandler(0x5000, 0x5FFF, M045ReadDIP);
 }
 
 void Mapper045_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
 	MMC3_cwrap = M045CW;
 	MMC3_pwrap = M045PW;
 	info->Reset = M045Reset;
 	info->Power = M045Power;
-	AddExState(mmc3.expregs, 5, 0, "EXPR");
+	AddExState(reg, 4, 0, "EXPR");
+	AddExState(&cmd, 1, 0, "CMD0");
+	AddExState(&dipsw, 1, 0, "DPSW");
 }

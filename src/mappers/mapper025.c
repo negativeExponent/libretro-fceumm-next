@@ -28,10 +28,10 @@ static void M025CW(uint32 A, uint32 V) {
 void Mapper025_Init(CartInfo *info) {
 	/* Mapper 25 - VRC2c, VRC4b, VRC4d */
 	switch (info->submapper) {
-	case 1:  GenVRC24_Init(info, VRC4, 0x02, 0x01, 1, 1); break;
-	case 2:  GenVRC24_Init(info, VRC4, 0x08, 0x04, 1, 1); break;
-	case 3:  GenVRC24_Init(info, VRC2, 0x02, 0x01, 0, 1); break;
-	default: GenVRC24_Init(info, VRC4, 0x0A, 0x05, 1, 1); break;
+	case 1:  VRC24_Init(info, VRC4, 0x02, 0x01, 1, 1); break;
+	case 2:  VRC24_Init(info, VRC4, 0x08, 0x04, 1, 1); break;
+	case 3:  VRC24_Init(info, VRC2, 0x02, 0x01, 0, 1); break;
+	default: VRC24_Init(info, VRC4, 0x0A, 0x05, 1, 1); break;
 	}
-	vrc24.cwrap = M025CW;
+	VRC24_cwrap = M025CW;
 }

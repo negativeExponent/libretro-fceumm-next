@@ -56,7 +56,7 @@ static DECLFW(M195PPUWrite) {
 			reg = addr >> 11;
         }
 
-		chrBank = mmc3.regs[reg];
+		chrBank = mmc3.reg[reg];
 		if (chrBank & 0x80) {
 			if (chrBank & 0x10) {
                 /* CHR-RAM disable */
@@ -64,6 +64,7 @@ static DECLFW(M195PPUWrite) {
 				chrRamBankSelect = 0xFF;
 			} else {
                 uint8 index = ((chrBank >> 4) & 0x04) | ((chrBank >> 2) & 0x02) | ((chrBank >> 1) & 0x01);
+
 				chrRamMask = (chrBank & 0x40) ? 0xFE : 0xFC;
 				chrRamBankSelect = chrRamLut[index];
 			}
@@ -76,7 +77,7 @@ static DECLFW(M195PPUWrite) {
 static void M195Power(void) {
 	chrRamMask = 0xFC;
 	chrRamBankSelect = 0x00;
-	GenMMC3Power();
+	MMC3_Power();
 	setprg4r(0x10, 0x5000, 2);
 	SetWriteHandler(0x5000, 0x5FFF, CartBW);
 	SetReadHandler(0x5000, 0x5FFF, CartBR);
@@ -86,7 +87,7 @@ static void M195Power(void) {
 }
 
 void M195Close(void) {
-	GenMMC3Close();
+	MMC3_Close();
 	if (CHRRAM) {
 		FCEU_gfree(CHRRAM);
     }
@@ -94,7 +95,7 @@ void M195Close(void) {
 }
 
 void Mapper195_Init(CartInfo *info) {
-	GenMMC3_Init(info, 16, info->battery);
+	MMC3_Init(info, 16, info->battery);
 	info->Power = M195Power;
 	info->Close = M195Close;
 	MMC3_cwrap = M195CW;

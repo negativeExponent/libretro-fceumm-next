@@ -3,6 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2008 CaH4e3
  *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,39 +25,42 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void Mapper436_PWrap(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 0x01)
-		setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] >> 2) & 0x30));
-	else if (A == 0x8000)
-		setprg32(A, (mmc3.expregs[0] >> 4));
+static uint8 reg;
+
+static void M436PW(uint32 A, uint8 V) {
+	if (reg & 0x01) {
+		setprg8(A, ((reg >> 2) & 0x30) | (V & 0x0F));
+	} else {
+		setprg32(0x8000, (reg >> 4));
+	}
 }
 
-static void Mapper436_CWrap(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | ((mmc3.expregs[0] << 1) & ~0x7F));
+static void M436CW(uint32 A, uint8 V) {
+	setchr1(A, ((reg << 1) & ~0x7F) | (V & 0x7F));
 }
 
-static DECLFW(Mapper436_Write) {
-	mmc3.expregs[0] = A & 0xFF;
+static DECLFW(M436Write) {
+	reg = A & 0xFF;
 	MMC3_FixPRG();
 	MMC3_FixCHR();
 }
 
-static void Mapper436_Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+static void M436Reset(void) {
+	reg = 0;
+	MMC3_Reset();
 }
 
-static void Mapper436_Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
-	SetWriteHandler(0x6000, 0x7FFF, Mapper436_Write);
+static void M436Power(void) {
+	reg = 0;
+	MMC3_Power();
+	SetWriteHandler(0x6000, 0x7FFF, M436Write);
 }
 
 void Mapper436_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0);
-	MMC3_pwrap = Mapper436_PWrap;
-	MMC3_cwrap = Mapper436_CWrap;
-	info->Power = Mapper436_Power;
-	info->Reset = Mapper436_Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	MMC3_Init(info, 8, 0);
+	MMC3_pwrap = M436PW;
+	MMC3_cwrap = M436CW;
+	info->Power = M436Power;
+	info->Reset = M436Reset;
+	AddExState(&reg, 1, 0, "EXPR");
 }

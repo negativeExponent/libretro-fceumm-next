@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- * Copyright (C) 2020
+ * Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,105 +27,114 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
 static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSIZE;
-static uint8 PPUCHRBus;
-static uint8 MIR[8];
-
-static void M353PPU(uint32 A) {
-	A &= 0x1FFF;
-	A >>= 10;
-	PPUCHRBus = A;
-	if (mmc3.expregs[0] == 0)
-		setmirror(MI_0 + MIR[A]);
-}
 
 static void M353PW(uint32 A, uint8 V) {
-	uint8 bank = V;
+	uint16 base = reg << 5;
+	uint16 mask = 0x1F;
 
-	if (mmc3.expregs[0] == 2) {
-		bank &= 0x0F;
-		bank |= (mmc3.regs[0] & 0x80) ? 0x10 : 0x00;
-		bank |= (mmc3.expregs[0] << 5);
-	} else {
-		if ((mmc3.expregs[0] == 3) && !(mmc3.regs[0] & 0x80)) {
-			switch (A & 0xF000) {
-				case 0xC000:
-				case 0xE000:
-					bank = mmc3.regs[6 + ((A >> 13) & 1)] | 0x70;
-					break;
-			}
-		} else {
-			bank &= 0x1F;
-			bank |= (mmc3.expregs[0] << 5);
-		}
+	if (reg == 2) {
+		base |= (mmc3.reg[0] & 0x80) ? 0x10 : 0x00;
+		mask >>= 1;
+	} else if ((reg == 3) && !(mmc3.reg[0] & 0x80) && (A >= 0xC000)) {
+		base = 0x70;
+		mask = 0x0F;
+		V = mmc3.reg[6 + ((A >> 13) & 1)];
 	}
 
-	setprg8(A, bank);
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void M353CW(uint32 A, uint8 V) {
-	if ((mmc3.expregs[0] == 2) && (mmc3.regs[0] & 0x80))
+	if ((reg == 2) && (mmc3.reg[0] & 0x80)) {
 		setchr8r(0x10, 0);
-	else
-		setchr1(A, (V & 0x7F) | ((mmc3.expregs[0]) << 7));
-
-	MIR[A >> 10] = V >> 7;
-	if ((mmc3.expregs[0] == 0) && (PPUCHRBus == (A >> 10)))
-		setmirror(MI_0 + (V >> 7));
+	} else {
+		setchr1(A, (V & 0x7F) | ((reg) << 7));
+	}
 }
 
-static void M353MW(uint8 V) {
-	if (mmc3.expregs[0] != 0) {
-		mmc3.mirroring = V;
-		setmirror((V & 1) ^ 1);
+static void M353MIR(void) {
+	if (reg == 1) {
+		if (mmc3.cmd & 0x80) {
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[2] >> 7) & 0x01), 1, 0);
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[3] >> 7) & 0x01), 1, 1);
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[4] >> 7) & 0x01), 1, 2);
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[5] >> 7) & 0x01), 1, 3);
+		} else {
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[0] >> 7) & 0x01), 1, 0);
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[0] >> 7) & 0x01), 1, 1);
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[1] >> 7) & 0x01), 1, 2);
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[1] >> 7) & 0x01), 1, 3);
+		}
+	} else {
+		setmirror((mmc3.mirr & 1) ^ 1);
 	}
 }
 
 static DECLFW(M353Write) {
 	if (A & 0x80) {
-		mmc3.expregs[0] = (A >> 13) & 0x03;
+		reg = (A >> 13) & 0x03;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	} else {
-		if (A < 0xC000) {
-			MMC3_CMDWrite(A, V);
+		uint8 oldcmd = mmc3.cmd;
+
+		switch (A & 0xE001) {
+		case 0x8000:
+			mmc3.cmd = V;
+			if ((oldcmd & 0x40) != (mmc3.cmd & 0x40)) {
+				MMC3_FixPRG();
+			}
+			if ((oldcmd & 0x80) != (mmc3.cmd & 0x80)) {
+				MMC3_FixCHR();
+				MMC3_FixMIR();
+			}
+			break;
+		case 0x8001:
+			mmc3.reg[mmc3.cmd & 0x07] = V;
 			MMC3_FixPRG();
-		} else
-			MMC3_IRQWrite(A, V);
+			MMC3_FixCHR();
+			MMC3_FixMIR();
+			break;
+		default:
+			MMC3_CMDWrite(A, V);
+			break;
+		}
 	}
 }
 
 static void M353Power(void) {
 	FDSSoundPower();
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M353Write);
 }
 
 static void M353Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 	FDSSoundReset();
 }
 
 static void M353Close(void) {
-	GenMMC3Close();
-	if (CHRRAM)
+	MMC3_Close();
+	if (CHRRAM) {
 		FCEU_gfree(CHRRAM);
+	}
 	CHRRAM = NULL;
 }
 
 void Mapper353_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
+	MMC3_FixMIR = M353MIR;
 	MMC3_cwrap = M353CW;
 	MMC3_pwrap = M353PW;
-	MMC3_mwrap = M353MW;
-	PPU_hook = M353PPU;
 	info->Power = M353Power;
 	info->Close = M353Close;
 	info->Reset = M353Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

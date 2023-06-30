@@ -22,34 +22,37 @@
 #include "mmc3.h"
 
 static uint8 *CHRRAM = NULL;
+static uint8 reg;
+static uint8 dipsw;
 
 static void M460PW(uint32 A, uint8 V) {
 	uint32 mask = 0x0F;
-	uint32 base = mmc3.expregs[0] << 4;
-	if (mmc3.expregs[0] & 0x20 && ((mmc3.expregs[0] != 0x20) || (~mmc3.expregs[1] & 1))) {
+	uint32 base = reg << 4;
+
+	if ((reg & 0x20) && ((reg != 0x20) || (~dipsw & 0x01))) {
 		/* Menu selection by selectively connecting CPU D7 to reg or not */
-		if (mmc3.expregs[0] & 0x10) {
-			setprg8(0x8000, (base & ~mask) | ((mmc3.regs[6] & ~2) & mask));
-			setprg8(0xA000, (base & ~mask) | ((mmc3.regs[7] & ~2) & mask));
-			setprg8(0xC000, (base & ~mask) | ((mmc3.regs[6] |  2) & mask));
-			setprg8(0xE000, (base & ~mask) | ((mmc3.regs[7] |  2) & mask));
+		if (reg & 0x10) {
+			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & ~2) & mask));
+			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & ~2) & mask));
+			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] |  2) & mask));
+			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  2) & mask));
 		} else {
-			setprg8(0x8000, (base & ~mask) | (mmc3.regs[6] & mask));
-			setprg8(0xA000, (base & ~mask) | (mmc3.regs[7] & mask));
-			setprg8(0xC000, (base & ~mask) | (mmc3.regs[6] & mask));
-			setprg8(0xE000, (base & ~mask) | (mmc3.regs[7] & mask));
+			setprg8(0x8000, (base & ~mask) | (mmc3.reg[6] & mask));
+			setprg8(0xA000, (base & ~mask) | (mmc3.reg[7] & mask));
+			setprg8(0xC000, (base & ~mask) | (mmc3.reg[6] & mask));
+			setprg8(0xE000, (base & ~mask) | (mmc3.reg[7] & mask));
 		}
 	} else {
-		setprg8(A, (V & mask) | (base & ~mask));
+		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
 static void M460CW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 0x04) {
-		setchr2(0x0000, mmc3.regs[0] & 0xFE);
-		setchr2(0x0800, mmc3.regs[0] | 0x01);
-		setchr2(0x1000, mmc3.regs[2]);
-		setchr2(0x1800, mmc3.regs[5]);
+	if (reg & 0x04) {
+		setchr2(0x0000, mmc3.reg[0] & 0xFE);
+		setchr2(0x0800, mmc3.reg[0] | 0x01);
+		setchr2(0x1000, mmc3.reg[2]);
+		setchr2(0x1800, mmc3.reg[5]);
 	} else {
 		setchr8r(0x10, 0);
 	}
@@ -57,36 +60,36 @@ static void M460CW(uint32 A, uint8 V) {
 
 static DECLFR(M460Read) {
 	/* Menu selection by selectively connecting reg's D7 to PRG /CE or not */
-	if ((mmc3.expregs[0] & 0x80) && (mmc3.expregs[1] & 1)) {
+	if ((reg & 0x80) && (dipsw & 0x01)) {
 		return X.DB;
 	}
 	return CartBR(A);
 }
 
 static DECLFW(M460WriteLow) {
-	if (MMC3CanWriteToWRAM()) {
-		mmc3.expregs[0] = A & 0xFF;
+	if (MMC3_WRAMWritable(A)) {
+		reg = A & 0xFF;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
 }
 
 static void M460Reset(void) {
-	mmc3.expregs[0] = 0;
-	mmc3.expregs[1]++;
-	MMC3RegReset();
+	reg = 0;
+	dipsw++;
+	MMC3_Reset();
 }
 
 static void M460Power(void) {
-	mmc3.expregs[0] = 0;
-	mmc3.expregs[1] = 0;
-	GenMMC3Power();
+	reg = 0;
+	dipsw = 0;
+	MMC3_Power();
 	SetReadHandler(0x8000, 0xFFFF, M460Read);
 	SetWriteHandler(0x6000, 0x7FFF, M460WriteLow);
 }
 
 static void M460close(void) {
-	GenMMC3Close();
+	MMC3_Close();
 	if (CHRRAM) {
 		FCEU_gfree(CHRRAM);
 	}
@@ -94,7 +97,7 @@ static void M460close(void) {
 }
 
 void Mapper460_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M460CW;
 	MMC3_pwrap = M460PW;
 	info->Power = M460Power;

@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2015 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,28 +31,28 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg[3];
+
 static void M292PW(uint32 A, uint8 V) {
-	if (A == 0x8000)
-		setprg8(A, mmc3.expregs[0] & 0x1F); /* the real hardware has this bank overrided with it's own register,
+	if (A == 0x8000) {
+		setprg8(A, reg[0] & 0x1F); /* the real hardware has this bank overrided with it's own register,
 		                                * but MMC3 prg swap still works and you can actually change bank C000 at the
 		                                * same time if use 0x46 cmd
 		                                */
-	else
+	} else {
 		setprg8(A, V);
+	}
 }
 
 static void M292CW(uint32 A, uint8 V) {
-	if (A == 0x0000)
-		setchr2(0x0000, (V >> 1) ^ mmc3.expregs[1]);
-	else if (A == 0x0800)
-		setchr2(0x0800, (V >> 1) | ((mmc3.expregs[2] & 0x40) << 1));
-	else if (A == 0x1000)
-		setchr4(0x1000, mmc3.expregs[2] & 0x3F);
+	setchr2(0x0000, (MMC3_GetCHRBank(0) >> 1) ^ reg[1]);
+	setchr2(0x0800, (MMC3_GetCHRBank(2) >> 1) | ((reg[2] & 0x40) << 1));
+	setchr4(0x1000, reg[2] & 0x3F);
 }
 
 static DECLFW(M292ProtWrite) {
 	if (!(A & 1)) {
-		mmc3.expregs[0] = V;
+		reg[0] = V;
 		MMC3_FixPRG();
 	}
 }
@@ -60,10 +61,10 @@ static DECLFR(M292ProtRead) {
 	if (!fceuindbg) {
 		if (!(A & 1)) {
 			int tmp;
-			if ((mmc3.expregs[0] & 0xE0) == 0xC0) {
-				mmc3.expregs[1] = ARead[0x6a](0x6a);	/* program can latch some data from the BUS, but I can't say how exactly, */
+			if ((reg[0] & 0xE0) == 0xC0) {
+				reg[1] = ARead[0x6a](0x6a);	/* program can latch some data from the BUS, but I can't say how exactly, */
 			} else {							/* without more equipment and skills ;) probably here we can try to get any write */
-				mmc3.expregs[2] = ARead[0xff](0xff);	/* before the read operation */
+				reg[2] = ARead[0xff](0xff);	/* before the read operation */
 			}
 			/* TODO: Verify that nothing breaks here */
 			tmp = mmc3.cmd;
@@ -76,15 +77,15 @@ static DECLFR(M292ProtRead) {
 }
 
 static void M292Power(void) {
-	GenMMC3Power();
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x6FFF, M292ProtWrite);
 	SetReadHandler(0x6000, 0x6FFF, M292ProtRead);
 }
 
 void Mapper292_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_pwrap = M292PW;
 	MMC3_cwrap = M292CW;
 	info->Power = M292Power;
-	AddExState(mmc3.expregs, 3, 0, "EXPR");
+	AddExState(reg, 3, 0, "EXPR");
 }

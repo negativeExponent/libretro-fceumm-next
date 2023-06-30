@@ -33,7 +33,7 @@ static void M194CW(uint32 A, uint8 V) {
 }
 
 static void M194Close(void) {
-	GenMMC3Close();
+	MMC3_Close();
 	if (CHRRAM) {
 		FCEU_free(CHRRAM);
 		CHRRAM = NULL;
@@ -41,7 +41,7 @@ static void M194Close(void) {
 }
 
 void Mapper194_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
 	info->Close = M194Close;
 	MMC3_cwrap = M194CW;
 	CHRRAMSIZE = 2048;

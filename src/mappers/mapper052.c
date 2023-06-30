@@ -23,25 +23,27 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSIZE;
 
 static void M052PW(uint32 A, uint8 V) {
-	uint8 mask = (mmc3.expregs[0] & 8) ? 0x0F : 0x1F;
-	uint8 base = (mmc3.expregs[0] << 4) & 0x70;
+	uint8 mask = (reg & 0x08) ? 0x0F : 0x1F;
+	uint8 base = (reg << 4) & 0x70;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void M052CW(uint32 A, uint8 V) {
-	uint32 mask = (mmc3.expregs[0] & 0x40) ? 0x7F : 0xFF;
-	uint32 bank = (iNESCart.submapper == 14) ? (((mmc3.expregs[0] << 3) & 0x080) | ((mmc3.expregs[0] << 7) & 0x300)) :
-		(((mmc3.expregs[0] << 3) & 0x180) | ((mmc3.expregs[0] << 7) & 0x200));
-	uint8 ram = CHRRAM && (
-		((iNESCart.submapper == 13) && ((mmc3.expregs[0] & 0x03) == 0x03)) ||
-		((iNESCart.submapper == 14) && (mmc3.expregs[0] & 0x20)));
+	uint32 mask = (reg & 0x40) ? 0x7F : 0xFF;
+	uint32 bank = (iNESCart.submapper == 14) ? (((reg << 3) & 0x080) | ((reg << 7) & 0x300)) :
+		(((reg << 3) & 0x180) | ((reg << 7) & 0x200));
+	uint8 chrram = CHRRAM && (
+		((iNESCart.submapper == 13) && ((reg & 0x03) == 0x03)) ||
+		((iNESCart.submapper == 14) && (reg & 0x20)));
 
-	if (ram) {
+	if (chrram) {
 		setchr8r(0x10, 0);
 	} else {
 		setchr1(A, (bank & ~mask) | (V & mask));
@@ -49,9 +51,9 @@ static void M052CW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M052Write) {
-	if (MMC3CanWriteToWRAM()) {
-		if (!(mmc3.expregs[0] & 0x80)) {
-			mmc3.expregs[0] = V;
+	if (MMC3_WRAMWritable(A)) {
+		if (!(reg & 0x80)) {
+			reg = V;
 			MMC3_FixPRG();
 			MMC3_FixCHR();
 		} else {
@@ -61,7 +63,7 @@ static DECLFW(M052Write) {
 }
 
 static void M052Close(void) {
-	GenMMC3Close();
+	MMC3_Close();
 	if (CHRRAM) {
 		FCEU_free(CHRRAM);
 		CHRRAM = NULL;
@@ -69,28 +71,30 @@ static void M052Close(void) {
 }
 
 static void M052Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static void M052Power(void) {
-	M052Reset();
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M052Write);
 }
 
 void Mapper052_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	uint8 ws = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8;
+
+	MMC3_Init(info, ws, info->battery);
 	MMC3_cwrap = M052CW;
 	MMC3_pwrap = M052PW;
+
 	info->Reset = M052Reset;
 	info->Power = M052Power;
 	info->Close = M052Close;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 
 	if (info->CRC32 == 0xA874E216 && info->submapper != 13) {
-		/* (YH-430) 97-98 Four-in-One */
-		info->submapper = 13;
+		info->submapper = 13; /* (YH-430) 97-98 Four-in-One */
 	} else if (info->CRC32 == 0xCCE8CA2F && info->submapper != 14) {
 		/* Well 8-in-1 (AB128) (Unl) (p1), with 1024 PRG and CHR is incompatible with submapper 13.
 		 * This was reassigned to submapper 14 instead. */
@@ -99,7 +103,7 @@ void Mapper052_Init(CartInfo *info) {
 
 	if ((info->submapper == 13) || (info->submapper == 14)) {
 		CHRRAMSIZE = info->CHRRamSize ? info->CHRRamSize : 8192;
-		CHRRAM     = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+		CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 		SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 		AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 	}

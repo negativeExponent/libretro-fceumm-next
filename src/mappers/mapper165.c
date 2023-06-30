@@ -21,49 +21,54 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSIZE = 0;
 
 static void M165CW(uint32 A, uint8 V) {
-	if (V == 0)
+	if (V == 0) {
 		setchr4r(0x10, A, 0);
-	else
+	} else {
 		setchr4(A, V >> 2);
+	}
 }
 
 static void M165PPUFD(void) {
-	if (mmc3.expregs[0] == 0xFD) {
-		M165CW(0x0000, mmc3.regs[0]);
-		M165CW(0x1000, mmc3.regs[2]);
+	if (reg == 0xFD) {
+		M165CW(0x0000, mmc3.reg[0]);
+		M165CW(0x1000, mmc3.reg[2]);
 	}
 }
 
 static void M165PPUFE(void) {
-	if (mmc3.expregs[0] == 0xFE) {
-		M165CW(0x0000, mmc3.regs[1]);
-		M165CW(0x1000, mmc3.regs[4]);
+	if (reg == 0xFE) {
+		M165CW(0x0000, mmc3.reg[1]);
+		M165CW(0x1000, mmc3.reg[4]);
 	}
 }
 
 static void M165CWM(uint32 A, uint8 V) {
-	if (((mmc3.cmd & 0x7) == 0) || ((mmc3.cmd & 0x7) == 2))
+	if (((mmc3.cmd & 0x7) == 0) || ((mmc3.cmd & 0x7) == 2)) {
 		M165PPUFD();
-	if (((mmc3.cmd & 0x7) == 1) || ((mmc3.cmd & 0x7) == 4))
+	}
+	if (((mmc3.cmd & 0x7) == 1) || ((mmc3.cmd & 0x7) == 4)) {
 		M165PPUFE();
+	}
 }
 
 static void FP_FASTAPASS(1) M165PPU(uint32 A) {
 	if ((A & 0x1FF0) == 0x1FD0) {
-		mmc3.expregs[0] = 0xFD;
+		reg = 0xFD;
 		M165PPUFD();
 	} else if ((A & 0x1FF0) == 0x1FE0) {
-		mmc3.expregs[0] = 0xFE;
+		reg = 0xFE;
 		M165PPUFE();
 	}
 }
 
 static void M165Close(void) {
-	GenMMC3Close();
+	MMC3_Close();
     if (CHRRAM) {
         FCEU_free(CHRRAM);
         CHRRAM = NULL;
@@ -71,12 +76,12 @@ static void M165Close(void) {
 }
 
 static void M165Power(void) {
-	mmc3.expregs[0] = 0xFD;
-	GenMMC3Power();
+	reg = 0xFD;
+	MMC3_Power();
 }
 
 void Mapper165_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
     info->Close = M165Close;
 	MMC3_cwrap = M165CWM;
 	PPU_hook = M165PPU;
@@ -85,5 +90,5 @@ void Mapper165_Init(CartInfo *info) {
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-	AddExState(mmc3.expregs, 4, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

@@ -21,27 +21,30 @@ enum {
 };
 
 typedef struct {
-    uint8 prgreg[2];
-    uint16 chrreg[8];
+    uint8 prg[2];
+    uint16 chr[8];
     uint8 cmd;
     uint8 mirr;
 	uint8 latch; /* VRC2 $6000-$6FFF */
-
-    void (*pwrap)(uint32 A, uint8 V);
-    void (*cwrap)(uint32 A, uint32 V);
-    void (*mwrap)(uint8 V);
-	void (*writeMisc)(uint32 A, uint8 V);
 } VRC24;
 
 extern VRC24 vrc24;
 
-void GenVRC24Power(void);
-void GenVRC24Close(void);
-void GenVRC24Restore(int version);
-void FixVRC24PRG(void);
-void FixVRC24CHR(void);
-DECLFW(VRC24Write);
+void VRC24_IRQCPUHook(int a);
+void VRC24_Reset(void);
+void VRC24_Power(void);
+void VRC24_Close(void);
+DECLFW(VRC24_Write);
 
-void GenVRC24_Init(CartInfo *info, uint8 vrc4, uint32 A0, uint32 A1, int wram, int irqRepeated);
+void VRC24_Init(CartInfo *info, uint8 vrc4, uint32 A0, uint32 A1, int wram, int irqRepeated);
+
+void VRC24_FixPRG(void);
+void VRC24_FixCHR(void);
+void VRC24_FixMIR(void);
+
+extern void (*VRC24_pwrap)(uint32 A, uint8 V);
+extern void (*VRC24_cwrap)(uint32 A, uint32 V);
+extern void (*VRC24_mwrap)(uint8 V);
+extern void (*VRC24_miscWrite)(uint32 A, uint8 V);
 
 #endif /* _VRC24_H */

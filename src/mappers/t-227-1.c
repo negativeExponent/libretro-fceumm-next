@@ -80,18 +80,18 @@ static void BMCT2271Reset(void) {
 	mmc3.expregs[0] = 0x00;
 	reset_flag++;
 	reset_flag &= 0x0F;
-	MMC3RegReset();
+	MMC3_Reset();
 }
 
 static void BMCT2271Power(void) {
 	mmc3.expregs[0] = 0x00;
-	GenMMC3Power();
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, BMCT2271LoWrite);
 	SetReadHandler(0x8000, 0xFFFF, BMCT2271HiRead);
 }
 
 void BMCT2271_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0);
+	MMC3_Init(info, 8, 0);
 	MMC3_pwrap = BMCT2271PW;
 	MMC3_cwrap = BMCT2271CW;
 	info->Power = BMCT2271Power;

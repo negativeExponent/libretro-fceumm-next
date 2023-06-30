@@ -37,7 +37,7 @@ static SFORMAT StateRegs[] = {
 static void M398PW(uint32 A, uint8 V) {
 	if (latch & 0x80) {
         /* GNROM-like */
-		setprg32(0x8000, ((latch >> 5) & 0x06) | ((vrc24.chrreg[PPUCHRBus] >> 2) & 0x01));
+		setprg32(0x8000, ((latch >> 5) & 0x06) | ((vrc24.chr[PPUCHRBus] >> 2) & 0x01));
 	} else {
 		setprg8(A, V & 0x0F);
 	}
@@ -46,7 +46,7 @@ static void M398PW(uint32 A, uint8 V) {
 static void M398CW(uint32 A, uint32 V) {
 	if (latch & 0x80) {
         /* GNROM-like */
-		setchr8(0x40 | ((latch >> 3) & 0x08) | (vrc24.chrreg[PPUCHRBus] & 0x07));
+		setchr8(0x40 | ((latch >> 3) & 0x08) | (vrc24.chr[PPUCHRBus] & 0x07));
 	} else {
 		setchr1(A, V & 0x1FF);
 	}
@@ -54,39 +54,39 @@ static void M398CW(uint32 A, uint32 V) {
 
 static DECLFW(M398WriteLatch) {
 	latch = A & 0xFF;
-	FixVRC24PRG();
-	FixVRC24CHR();
-	VRC24Write(A, V);
+	VRC24_FixPRG();
+	VRC24_FixCHR();
+	VRC24_Write(A, V);
 }
 
 static void FP_FASTAPASS(1) M398PPUHook(uint32 A) {
 	uint8 bank = (A & 0x1FFF) >> 10;
 	if ((PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
 		PPUCHRBus = bank;
-		FixVRC24PRG();
-		FixVRC24CHR();
+		VRC24_FixPRG();
+		VRC24_FixCHR();
 	}
 }
 
 static void M398Reset(void) {
 	latch = 0xC0;
-	FixVRC24PRG();
-	FixVRC24CHR();
+	VRC24_FixPRG();
+	VRC24_FixCHR();
 }
 
 static void M398Power(void) {
 	PPUCHRBus = 0;
     latch = 0xC0;
-	GenVRC24Power();
+	VRC24_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M398WriteLatch);
 }
 
 void Mapper398_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4, 0x01, 0x02, 0, 1);
+	VRC24_Init(info, VRC4, 0x01, 0x02, 0, 1);
 	info->Reset = M398Reset;
 	info->Power = M398Power;
 	PPU_hook = M398PPUHook;
-	vrc24.pwrap = M398PW;
-	vrc24.cwrap = M398CW;
+	VRC24_pwrap = M398PW;
+	VRC24_cwrap = M398CW;
 	AddExState(StateRegs, ~0, 0, 0);
 }

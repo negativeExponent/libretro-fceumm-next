@@ -21,44 +21,46 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static void M037PW(uint32 A, uint8 V) {
-	uint16 base = ((mmc3.expregs[0] << 2) & 0x10) | ((mmc3.expregs[0] & 0x03) == 0x03 ? 0x08 : 0);
-	uint16 mask = (mmc3.expregs[0] << 1) | 0x07;
+	uint16 base = ((reg << 2) & 0x10) | (((reg & 0x03) == 0x03) ? 0x08 : 0);
+	uint16 mask = (reg << 1) | 0x07;
 
 	setprg8(A, base | (V & mask));
 }
 
 static void M037CW(uint32 A, uint8 V) {
-    uint16 base = mmc3.expregs[0] << 5;
+    uint16 base = reg << 5;
 	uint16 mask = 0x7F;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(M037Write) {
-    if (MMC3CanWriteToWRAM()) {
-	    mmc3.expregs[0] = V;
+    if (MMC3_WRAMWritable(A)) {
+	    reg = V;
 	    MMC3_FixPRG();
 	    MMC3_FixCHR();
     }
 }
 
 static void M037Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static void M037Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M037Write);
 }
 
 void Mapper037_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
 	MMC3_pwrap = M037PW;
 	MMC3_cwrap = M037CW;
 	info->Power = M037Power;
 	info->Reset = M037Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

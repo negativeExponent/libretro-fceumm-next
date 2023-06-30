@@ -39,12 +39,12 @@ static DECLFW(M325Write) {
 }
 
 static void M325Power(void) {
-	GenMMC3Power();
+	MMC3_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M325Write);
 }
 
 void Mapper325_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_pwrap = M325PW;
 	MMC3_cwrap = M325CW;
 	info->Power = M325Power;

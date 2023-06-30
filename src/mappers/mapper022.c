@@ -27,6 +27,6 @@ static void M22CW(uint32 A, uint32 V) {
 
 void Mapper022_Init(CartInfo *info) {
 	/* Mapper 22 - VRC2a */
-	GenVRC24_Init(info, VRC2, 0x02, 0x01, 0, 1);
-	vrc24.cwrap = M22CW;
+	VRC24_Init(info, VRC2, 0x02, 0x01, 0, 1);
+	VRC24_cwrap = M22CW;
 }

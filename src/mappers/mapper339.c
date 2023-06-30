@@ -1,6 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,47 +27,49 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static void M339CW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | (mmc3.expregs[0] & 0x18) << 4);
+	setchr1(A, (V & 0x7F) | (reg & 0x18) << 4);
 }
 
 static void M339PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 0x20) {				/* MMC3 mode */
-		setprg8(A, (V & 0x0F) | (mmc3.expregs[0] & 0x18) << 1);
+	if (reg & 0x20) {				/* MMC3 mode */
+		setprg8(A, (V & 0x0F) | (reg & 0x18) << 1);
 	} else {
-		if ((mmc3.expregs[0] & 0x07) == 0x06) {	/* NROM-256 */
-			setprg32(0x8000, (mmc3.expregs[0] >> 1) & 0x0F);
+		if ((reg & 0x07) == 0x06) {	/* NROM-256 */
+			setprg32(0x8000, (reg >> 1) & 0x0F);
 		} else {							/* NROM-128 */
-			setprg16(0x8000, mmc3.expregs[0] & 0x1F);
-			setprg16(0xC000, mmc3.expregs[0] & 0x1F);
+			setprg16(0x8000, reg & 0x1F);
+			setprg16(0xC000, reg & 0x1F);
 		}
 	}
 }
 
 static DECLFW(M339Write) {
-	if (MMC3CanWriteToWRAM()) {
-		mmc3.expregs[0] = A & 0x3F;
+	if (MMC3_WRAMWritable(A)) {
+		reg = A & 0x3F;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
 }
 
 static void M339Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static void M339Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M339Write);
 }
 
 void Mapper339_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0);
+	MMC3_Init(info, 8, 0);
 	MMC3_pwrap = M339PW;
 	MMC3_cwrap = M339CW;
 	info->Power = M339Power;
 	info->Reset = M339Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

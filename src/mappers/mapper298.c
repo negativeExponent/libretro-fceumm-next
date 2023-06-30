@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,5 +26,5 @@
 #include "vrc2and4.h"
 
 void Mapper298_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4, 0x02, 0x01, 0, 0);
+	VRC24_Init(info, VRC4, 0x02, 0x01, 0, 0);
 }

@@ -21,43 +21,46 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M430CW(uint32 A, uint8 V) {
-	uint8 mask = (mmc3.expregs[0] & 4) ? 0x7F : 0xFF;
-	setchr1(A, ((mmc3.expregs[0] << 6) & ~mask) | (V & mask));
-}
+static uint8 reg;
 
 static void M430PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 8) {
-		setprg8(0x8000, ((mmc3.expregs[0] << 4) & 0x30) | ((mmc3.regs[6] & ~2) & 0x0F));
-		setprg8(0xA000, ((mmc3.expregs[0] << 4) & 0x30) | ((mmc3.regs[7] & ~2) & 0x0F));
-		setprg8(0xC000, ((mmc3.expregs[0] << 4) & 0x30) | ((mmc3.regs[6] |  2) & 0x0F));
-		setprg8(0xE000, ((mmc3.expregs[0] << 4) & 0x30) | ((mmc3.regs[7] |  2) & 0x0F));
+	if (reg & 0x08) {
+		setprg8(0x8000, ((reg << 4) & 0x30) | ((mmc3.reg[6] & ~2) & 0x0F));
+		setprg8(0xA000, ((reg << 4) & 0x30) | ((mmc3.reg[7] & ~2) & 0x0F));
+		setprg8(0xC000, ((reg << 4) & 0x30) | ((mmc3.reg[6] |  2) & 0x0F));
+		setprg8(0xE000, ((reg << 4) & 0x30) | ((mmc3.reg[7] |  2) & 0x0F));
 	} else {
-		setprg8(A, ((mmc3.expregs[0] << 4) & 0x30) | (V & 0x0F));
+		setprg8(A, ((reg << 4) & 0x30) | (V & 0x0F));
 	}
 }
 
+static void M430CW(uint32 A, uint8 V) {
+	uint8 mask = (reg & 0x04) ? 0x7F : 0xFF;
+
+	setchr1(A, ((reg << 6) & ~mask) | (V & mask));
+}
+
 static DECLFW(M430Write) {
-	if (MMC3CanWriteToWRAM()) {
-	    mmc3.expregs[0] = A & 0xFF;
+	if (MMC3_WRAMWritable(A)) {
+	    reg = A & 0xFF;
 	    MMC3_FixPRG();        
 	    MMC3_FixCHR();
     }
 }
 
 static void M430Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static void M430Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M430Write);
 }
 
 void Mapper430_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M430CW;
 	MMC3_pwrap = M430PW;
 	info->Reset = M430Reset;

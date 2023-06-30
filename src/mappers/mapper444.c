@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,59 +26,70 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
 static uint8 pads;
 static uint8 dip;
 
-static void Mapper444_PRGWrap(uint32 A, uint8 V) {
-	int prgAND = ((pads & 4) && (mmc3.expregs[0] & 0x02)) ? 0x1F : 0x0F;
-	int prgOR = mmc3.expregs[0] << 4;
-	if (mmc3.expregs[0] & 0x04) {
-		if (~A & 0x4000) {
-			setprg8(A, ((((~mmc3.expregs[0] & 0x08) ? ~2 : ~0) & V) & prgAND) | (prgOR & ~prgAND));
-			setprg8(A | 0x4000, ((~mmc3.expregs[0] & 0x08) ? 2 : 0) | (V & prgAND) | (prgOR & ~prgAND));
+static void M444PW(uint32 A, uint8 V) {
+	uint16 mask = ((pads & 0x04) && (reg & 0x02)) ? 0x1F : 0x0F;
+	uint16 base = reg << 4;
+
+	if (reg & 0x04) {
+		if (reg & 0x08) {
+			setprg8(0x8000, (base & ~mask) | (mmc3.reg[6] & mask));
+			setprg8(0xA000, (base & ~mask) | (mmc3.reg[7] & mask));
+			setprg8(0xC000, (base & ~mask) | (mmc3.reg[6] & mask));
+			setprg8(0xE000, (base & ~mask) | (mmc3.reg[7] & mask));
+		} else {
+			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & ~0x02) & mask));
+			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & ~0x02) & mask));
+			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] |  0x02) & mask));
+			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  0x02) & mask));
 		}
-	} else
-		setprg8(A, (V & prgAND) | (prgOR & ~prgAND));
+	} else {
+		setprg8(A, (base & ~mask) | (V & mask));
+	}
 }
 
-static void Mapper444_CHRWrap(uint32 A, uint8 V) {
-	int chrAND = (pads & 1) ? 0xFF : 0x7F;
-	int chrOR = ((mmc3.expregs[0] << 7) & ((pads & 1) ? 0x00 : 0x80)) | ((mmc3.expregs[0] << ((pads & 2) ? 4 : 7)) & 0x100);
-	setchr1(A, (V & chrAND) | (chrOR & ~chrAND));
+static void M444CW(uint32 A, uint8 V) {
+	uint16 mask = (pads & 1) ? 0xFF : 0x7F;
+	uint16 base = ((reg << 7) & ((pads & 1) ? 0x00 : 0x80)) | ((reg << ((pads & 2) ? 4 : 7)) & 0x100);
+
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFR(Mapper444_Read) {
-	return (mmc3.expregs[0] & 0x0C) == 0x08 ? dip : CartBR(A);
+static DECLFR(M444Read) {
+	return (reg & 0x0C) == 0x08 ? dip : CartBR(A);
 }
 
-static DECLFW(Mapper444_Write) {
-	mmc3.expregs[0] = A & 0xFF;
+static DECLFW(M444Write) {
+	reg = A & 0xFF;
 	MMC3_FixPRG();
 	MMC3_FixCHR();
 }
 
-static void Mapper444_Reset(void) {
+static void M444Reset(void) {
 	dip++;
 	dip &= 3;
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
-static void Mapper444_Power(void) {
+static void M444Power(void) {
 	dip = 0;
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
-	SetWriteHandler(0x6000, 0x7FFF, Mapper444_Write);
-	SetReadHandler(0x8000, 0xFFFF, Mapper444_Read);
+	reg = 0;
+	MMC3_Power();
+	SetWriteHandler(0x6000, 0x7FFF, M444Write);
+	SetReadHandler(0x8000, 0xFFFF, M444Read);
 }
 
 void Mapper444_Init(CartInfo *info) {
 	pads = info->submapper; /* UNIF represents submapper 0 */
-	GenMMC3_Init(info, 0, 0);
-	MMC3_cwrap = Mapper444_CHRWrap;
-	MMC3_pwrap = Mapper444_PRGWrap;
-	info->Power = Mapper444_Power;
-	info->Reset = Mapper444_Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	MMC3_Init(info, 0, 0);
+	MMC3_cwrap = M444CW;
+	MMC3_pwrap = M444PW;
+	info->Power = M444Power;
+	info->Reset = M444Reset;
+	AddExState(&reg, 1, 0, "EXPR");
 	AddExState(&dip, 1, 0, "DIPS");
 }

@@ -33,7 +33,7 @@ static void M450CW(uint32 A, uint32 V) {
 }
 
 void Mapper450_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
-    vrc24.pwrap = M450PW;
-    vrc24.cwrap = M450CW;
+	VRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
+    VRC24_pwrap = M450PW;
+    VRC24_cwrap = M450CW;
 }

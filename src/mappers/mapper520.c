@@ -33,21 +33,21 @@ static SFORMAT StateRegs[] = {
 };
 
 static void M520PW(uint32 A, uint8 V) {
-	setprg8(A, ((vrc24.chrreg[PPUCHRBus] << 2) & 0x20) | (V & 0x1F));
+	setprg8(A, ((vrc24.chr[PPUCHRBus] << 2) & 0x20) | (V & 0x1F));
 }
 
 static void FP_FASTAPASS(1) M520PPUHook(uint32 A) {
 	uint8 bank = (A & 0x1FFF) >> 10;
 	if ((PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
 		PPUCHRBus = bank;
-		FixVRC24PRG();
-		FixVRC24CHR();
+		VRC24_FixPRG();
+		VRC24_FixCHR();
 	}
 }
 
 void Mapper520_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
+	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
 	PPU_hook = M520PPUHook;
-	vrc24.pwrap = M520PW;
+	VRC24_pwrap = M520PW;
 	AddExState(StateRegs, ~0, 0, 0);
 }

@@ -28,14 +28,13 @@
  * game
  */
 
-static void M196PRG(void) {
-	if (mmc3.expregs[0]) {
-		setprg32(0x8000, mmc3.expregs[1]);
+static uint8 reg[2];
+
+static void M196PW(uint32 A, uint8 V) {
+	if (reg[0]) {
+		setprg32(0x8000, reg[1]);
     } else {
-		setprg8(0x8000, mmc3.regs[6]);
-        setprg8(0xA000, mmc3.regs[7]);
-        setprg8(0xC000, ~1);
-        setprg8(0xE000, ~0);
+		setprg8(A, V);
     }
 }
 
@@ -44,21 +43,22 @@ static DECLFW(M196Write) {
 	MMC3_Write(A, V);
 }
 
-static DECLFW(M196WriteLo) {
-	mmc3.expregs[0] = 1;
-	mmc3.expregs[1] = (V & 0xf) | (V >> 4);
+static DECLFW(M196WriteNROM) {
+	reg[0] = 1;
+	reg[1] = (V & 0xf) | (V >> 4);
 	MMC3_FixPRG();
 }
 
 static void M196Power(void) {
-	GenMMC3Power();
-	mmc3.expregs[0] = mmc3.expregs[1] = 0;
-	SetWriteHandler(0x6000, 0x7FFF, M196WriteLo);
+	MMC3_Power();
+	reg[0] = reg[1] = 0;
+	SetWriteHandler(0x6000, 0x7FFF, M196WriteNROM);
 	SetWriteHandler(0x8000, 0xFFFF, M196Write);
 }
 
 void Mapper196_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
-	MMC3_FixPRG = M196PRG;
+	MMC3_Init(info, 0, 0);
+	MMC3_pwrap = M196PW;
 	info->Power = M196Power;
+	AddExState(reg, 2, 0, "EXPR");
 }

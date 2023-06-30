@@ -21,39 +21,45 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+static uint8 dipsw;
+
 static void M012CW(uint32 A, uint8 V) {
-	setchr1(A, (mmc3.expregs[(A & 0x1000) >> 12] << 8) + V);
+	uint16 base = reg << ((A & 0x1000) ? 4 : 8);
+
+	setchr1(A, (base & 0x100) | (V & 0xFF));
 }
 
 static DECLFW(M012Write) {
-	mmc3.expregs[0] = V & 0x01;
-	mmc3.expregs[1] = (V & 0x10) >> 4;
+	reg = V;
+	MMC3_FixCHR();
 }
 
 static DECLFR(M012Read) {
-	return mmc3.expregs[2];
+	return dipsw;
 }
 
 static void M012Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = 0;
-	mmc3.expregs[2] = 1; /* chinese is default */
-	GenMMC3Power();
-	SetWriteHandler(0x4100, 0x5FFF, M012Write);
-	SetReadHandler(0x4100, 0x5FFF, M012Read);
+	reg = 0;
+	dipsw = 1; /* chinese is default */
+	MMC3_Power();
+	SetWriteHandler(0x4100, 0x4FFF, M012Write);
+	SetReadHandler(0x4100, 0x4FFF, M012Read);
 }
 
 static void M012Reset(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = 0;
-	mmc3.expregs[2] ^= 1;
-	MMC3RegReset();
+	reg = 0;
+	dipsw ^= 1;
+	MMC3_Reset();
 }
 
 void Mapper012_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
 	MMC3_cwrap = M012CW;
 	isRevB = 0;
 
 	info->Power = M012Power;
 	info->Reset = M012Reset;
-	AddExState(mmc3.expregs, 2, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(&dipsw, 1, 0, "DPSW");
 }

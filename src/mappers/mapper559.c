@@ -53,10 +53,10 @@ static DECLFW(M559WriteExtra) {
             setmirrorw(nt[0], nt[1], nt[2], nt[3]);
         } else {
             cpuC = V;
-            FixVRC24PRG();
+            VRC24_FixPRG();
         }
     } else {
-        VRC24Write(A, V);
+        VRC24_Write(A, V);
     }
 }
 
@@ -65,7 +65,7 @@ static DECLFW(M559WriteCHR_IRQ) {
     if (A & 0x400) {
         V >>= 4;
     }
-    VRC24Write(A, V);
+    VRC24_Write(A, V);
 }
 
 static void M559Power(void) {
@@ -74,7 +74,7 @@ static void M559Power(void) {
     nt[2] = 1;
     nt[3] = 1;
     cpuC = ~1;
-    GenVRC24Power();
+    VRC24_Power();
     setprg8(0xC000, cpuC);
     setmirrorw(nt[0], nt[1], nt[2], nt[3]);
     SetWriteHandler(0x9000, 0x9FFF, M559WriteExtra);
@@ -82,9 +82,9 @@ static void M559Power(void) {
 }
 
 void Mapper559_Init(CartInfo *info) {
-    GenVRC24_Init(info, VRC4, 0x400, 0x800, 1, 1);
+    VRC24_Init(info, VRC4, 0x400, 0x800, 1, 1);
     info->Power = M559Power;
-    vrc24.pwrap = M559PW;
-    vrc24.cwrap = M559CW;
+    VRC24_pwrap = M559PW;
+    VRC24_cwrap = M559CW;
 	AddExState(StateRegs, ~0, 0, 0);
 }

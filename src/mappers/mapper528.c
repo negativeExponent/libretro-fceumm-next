@@ -117,7 +117,9 @@ static void StateRestore(int version) {
 void Mapper528_Init(CartInfo *info) {
 	info->Power = M528Power;
 	GameStateRestore = StateRestore;
-    VRCIRQ_Init(1);
+    VRCIRQ_Init(TRUE);
+	MapIRQHook = VRCIRQ_CPUHook;
+	AddExState(&VRCIRQ_StateRegs, ~0, 0, 0);
 	AddExState(&StateRegs, ~0, 0, 0);
 
     WRAMSIZE = 8192;

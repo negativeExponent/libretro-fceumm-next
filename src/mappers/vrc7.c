@@ -178,7 +178,10 @@ void GenVRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {
 	info->Close = GenVRC7Close;
 	GameStateRestore = GenVRC7Restore;
 
-	VRCIRQ_Init(1);
+	VRCIRQ_Init(TRUE);
+	MapIRQHook = VRCIRQ_CPUHook;
+	AddExState(&VRCIRQ_StateRegs, ~0, 0, 0);
+
 	VRC7_ESI();
 }
 

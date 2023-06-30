@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
+ * 	Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,60 +24,64 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static uint8 *CHRRAM;
-static uint8 tekker;
+static uint8 dipsw;
 
 static void M262CW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 0x40)
+	if (reg & 0x40) {
 		setchr8r(0x10, 0);
-	else {
-		if (A < 0x800)
-			setchr1(A, V | ((mmc3.expregs[0] & 8) << 5));
-		else if (A < 0x1000)
-			setchr1(A, V | ((mmc3.expregs[0] & 4) << 6));
-		else if (A < 0x1800)
-			setchr1(A, V | ((mmc3.expregs[0] & 1) << 8));
-		else
-			setchr1(A, V | ((mmc3.expregs[0] & 2) << 7));
+	} else {
+		uint8 lsh[] = { 3, 2, 0, 1 };
+		uint8 bank = (A >> 11) & 0x03;
+
+		setchr1(A, (((reg >> lsh[bank]) << 8) & 0x100) | (V & 0xFF));
 	}
 }
 
 static DECLFW(M262Write) {
-	mmc3.expregs[0] = V;
-	MMC3_FixCHR();
+	if (A & 0x100) {
+		reg = V;
+		MMC3_FixCHR();
+	}
 }
 
 static DECLFR(M262Read) {
-	return(tekker);
+	if (A & 0x100) {
+		return(dipsw);
+	}
+	return X.DB;
 }
 
 static void M262Reset(void) {
-	MMC3RegReset();
-	tekker ^= 0xFF;
+	MMC3_Reset();
+	dipsw ^= 0xFF;
 }
 
 static void M262Power(void) {
-	tekker = 0x00;
-	GenMMC3Power();
-	SetWriteHandler(0x4100, 0x4100, M262Write);
-	SetReadHandler(0x4100, 0x4100, M262Read);
+	dipsw = 0x00;
+	MMC3_Power();
+	SetWriteHandler(0x4100, 0x4FFF, M262Write);
+	SetReadHandler(0x4100, 0x4FFF, M262Read);
 }
 
 static void M262Close(void) {
-	GenMMC3Close();
-	if (CHRRAM)
+	MMC3_Close();
+	if (CHRRAM) {
 		FCEU_gfree(CHRRAM);
+	}
 	CHRRAM = NULL;
 }
 
 void Mapper262_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M262CW;
 	info->Power = M262Power;
 	info->Reset = M262Reset;
 	info->Close = M262Close;
 	CHRRAM = (uint8*)FCEU_gmalloc(8192);
 	SetupCartCHRMapping(0x10, CHRRAM, 8192, 1);
-	AddExState(mmc3.expregs, 4, 0, "EXPR");
-	AddExState(&tekker, 1, 0, "DIPSW");
+	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(&dipsw, 1, 0, "DPSW");
 }

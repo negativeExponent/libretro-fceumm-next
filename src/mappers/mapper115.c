@@ -21,64 +21,40 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M115PRG(void) {
-	if (mmc3.expregs[0] & 0x80) {
-		uint8 bank = mmc3.expregs[0] & 0x0F;
-		if (mmc3.expregs[0] & 0x20) {
-			setprg32(0x8000, bank >> 1); /* real hardware tests, info 100% now lol */
+static uint8 reg[2];
+
+static void M115PW(uint32 A, uint8 V) {
+	if (reg[0] & 0x80) {
+		if (reg[0] & 0x20) {
+			setprg32(0x8000, (reg[0] & 0x0F) >> 1);
 		} else {
-			setprg16(0x8000, bank);
-			setprg16(0xC000, bank);
+			setprg16(0x8000, reg[0] & 0x0F);
+			setprg16(0xC000, reg[0] & 0x0F);
 		}
 	} else {
-		setprg8(0x8000, mmc3.regs[6]);
-		setprg8(0xA000, mmc3.regs[7]);
-		setprg8(0xC000, ~1);
-		setprg8(0xE000, ~0);
+		setprg8(A, V & 0x3F);
 	}
 }
 
 static void M115CW(uint32 A, uint8 V) {
-	uint16 base = (mmc3.expregs[1] & 1) << 8;
-	setchr1(A, base | V);
+	setchr1(A, ((reg[1] << 8) & 0x100) | (V & 0xFF));
 }
 
-static DECLFW(M115WriteLow) {
-	mmc3.expregs[A & 0x01] = V;
+static DECLFW(M115WriteReg) {
+	reg[A & 0x01] = V;
 	MMC3_FixPRG();
 	MMC3_FixCHR();
 }
 
-static DECLFW(M115Write) {
-	A &= 0xE001;
-	switch (A) {
-	case 0x8001:
-		switch (mmc3.cmd & 0x07) {
-		case 6:
-		case 7:
-			mmc3.regs[mmc3.cmd & 0x07] = V;
-			MMC3_FixPRG();
-			break;
-		default:
-			MMC3_CMDWrite(A, V);
-			break;
-		}
-	default:
-		MMC3_CMDWrite(A, V);
-		break;
-	}
-}
-
 static void M115Power(void) {
-	GenMMC3Power();
-	SetWriteHandler(0x6000, 0x7FFF, M115WriteLow);
-	SetWriteHandler(0x8000, 0x9FFF, M115Write);
+	MMC3_Power();
+	SetWriteHandler(0x6000, 0x7FFF, M115WriteReg);
 }
 
 void Mapper115_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M115CW;
-	MMC3_FixPRG = M115PRG;
+	MMC3_pwrap = M115PW;
 	info->Power = M115Power;
-	AddExState(mmc3.expregs, 3, 0, "EXPR");
+	AddExState(reg, 2, 0, "EXPR");
 }

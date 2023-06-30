@@ -4,6 +4,7 @@
 *	Copyright (C) 2016 Cluster
 *	http://clusterrr.com
 *	clusterrr@clusterrr.com
+*   Copyright (C) 2023
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License as published by
@@ -46,80 +47,113 @@ Example Game:
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 *CHRRAM;
+static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSize;
-static uint8 PPUCHRBus;
-static uint8 TKSMIR[8];
+static uint8 reg;
 
 static void BMC810131C_PW(uint32 A, uint8 V) {
-	if ((mmc3.expregs[0] >> 3) & 1)
-		setprg8(A, (V & 0x1F) | ((mmc3.expregs[0] & 7) << 4));
-	else
-		setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] & 7) << 4));
+	uint16 mask = (reg & 0x08) ? 0x1F : 0x0F;
+	uint16 base = (reg << 4) & 0x70;
+
+	setprg8(A, (base | (V & mask)));
 }
 
 static void BMC810131C_CW(uint32 A, uint8 V) {
-	if ((mmc3.expregs[0] >> 4) & 1)
-		setchr1r(0x10, A, V);
-	else if (((mmc3.expregs[0] >> 5) & 1) && ((mmc3.expregs[0] >> 3) & 1))
-		setchr1(A, V | ((mmc3.expregs[0] & 7) << 7));
-	else
-		setchr1(A, (V & 0x7F) | ((mmc3.expregs[0] & 7) << 7));
+	uint16 base = (reg << 7) & 0x380;
 
-	TKSMIR[A >> 10] = V >> 7;
-	if (((mmc3.expregs[0] >> 3) & 1) && (PPUCHRBus == (A >> 10)))
-		setmirror(MI_0 + (V >> 7));
+	if (reg & 0x10) {
+		setchr1r(0x10, A, V);
+	} else if ((reg & 0x20) && (reg & 0x08)) {
+		setchr1(A, (base | (V & 0xFF)));
+	} else {
+		setchr1(A, (base | (V & 0x7F)));
+	}
+}
+
+static void BMC810131C_SyncMIRR(void) {
+	if (reg & 0x08) {
+		if (mmc3.cmd & 0x80) {
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[2] >> 7) & 0x01), 1, 0);
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[3] >> 7) & 0x01), 1, 1);
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[4] >> 7) & 0x01), 1, 2);
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[5] >> 7) & 0x01), 1, 3);
+		} else {
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[0] >> 7) & 0x01), 1, 0);
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[0] >> 7) & 0x01), 1, 1);
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[1] >> 7) & 0x01), 1, 2);
+			setntamem(NTARAM + 0x400 * ((mmc3.reg[1] >> 7) & 0x01), 1, 3);
+		}
+	} else {
+		setmirror((mmc3.mirr & 0x01) ^ 0x01);
+	}
 }
 
 static DECLFW(BMC810131C_Write) {
-	if (((mmc3.wram & 0xC0) == 0x80) && !(mmc3.expregs[0] & 7))
-	{
-		mmc3.expregs[0] = A & 0x3F;
+	if (((mmc3.wram & 0xC0) == 0x80) && !(reg & 0x07)) {
+		reg = A & 0x3F;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
-	}
-	else {
+	} else {
 		CartBW(A, V);
 	}
 }
 
+static DECLFW(BMC810131C_WriteCMD) {
+	switch (A & 0xE001) {
+	case 0x8001:
+		switch (mmc3.cmd & 0x07) {
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			mmc3.reg[mmc3.cmd & 0x07] = V;
+			MMC3_FixCHR();
+			MMC3_FixMIR();
+			break;
+		default:
+			MMC3_CMDWrite(A, V);
+			break;
+		}
+	default:
+		MMC3_CMDWrite(A, V);
+		break;
+	}
+}
+
 static void BMC810131C_Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static void BMC810131C_Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, BMC810131C_Write);
+	SetWriteHandler(0x8000, 0x9FFF, BMC810131C_WriteCMD);
 }
 
 static void BMC810131C_Close(void) {
-	GenMMC3Close();
-	if (CHRRAM)
+	MMC3_Close();
+	if (CHRRAM) {
 		FCEU_gfree(CHRRAM);
+	}
 	CHRRAM = NULL;
 }
 
-static void TKSPPU(uint32 A) {
-	A &= 0x1FFF;
-	A >>= 10;
-	PPUCHRBus = A;
-	if ((mmc3.expregs[0] >> 3) & 1)
-		setmirror(MI_0 + TKSMIR[A]);
-}
-
 void BMC810131C_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0);
+	MMC3_Init(info, 8, 0);
+	MMC3_FixMIR = BMC810131C_SyncMIRR;
+	MMC3_pwrap = BMC810131C_PW;
+	MMC3_cwrap = BMC810131C_CW;
+	info->Power = BMC810131C_Power;
+	info->Reset = BMC810131C_Reset;
+	info->Close = BMC810131C_Close;
+	AddExState(&reg, 1, 0, "EXPR");
+
 	CHRRAMSize = 8192;
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSize, 1);
 	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
-	MMC3_pwrap = BMC810131C_PW;
-	MMC3_cwrap = BMC810131C_CW;
-	PPU_hook = TKSPPU;
-	info->Power = BMC810131C_Power;
-	info->Reset = BMC810131C_Reset;
-	info->Close = BMC810131C_Close;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
 }

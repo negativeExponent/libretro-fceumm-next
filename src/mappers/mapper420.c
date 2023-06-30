@@ -21,43 +21,48 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg[4];
+
 static void M420CW(uint32 A, uint8 V) {
-	uint8 mask = (mmc3.expregs[1] & 0x80) ? 0x7F : 0xFF;
-	setchr1(A, ((mmc3.expregs[1] << 1) & 0x100) | ((mmc3.expregs[1] << 5) & 0x80) | (V & mask));
+	uint8 mask = (reg[1] & 0x80) ? 0x7F : 0xFF;
+
+	setchr1(A, ((reg[1] << 1) & 0x100) | ((reg[1] << 5) & 0x80) | (V & mask));
 }
 
 static void M420PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 0x80) {
-		setprg32(0x8000, ((mmc3.expregs[2] >> 2) & 8) | ((mmc3.expregs[0] >> 1) & 7));
+	if (reg[0] & 0x80) {
+		setprg32(0x8000, ((reg[2] >> 2) & 0x08) | ((reg[0] >> 1) & 0x07));
 	} else {
-		uint8 mask = (mmc3.expregs[0] & 0x20) ? 0x0F : ((mmc3.expregs[3] & 0x20) ? 0x1F : 0x3F);
-		setprg8(A, ((mmc3.expregs[3] << 3) & 0x20) | (V & mask));
+		uint8 mask = (reg[0] & 0x20) ? 0x0F : ((reg[3] & 0x20) ? 0x1F : 0x3F);
+
+		setprg8(A, ((reg[3] << 3) & 0x20) | (V & mask));
 	}
 }
 
 static DECLFW(M420Write) {
 	/* writes possible regardless of MMC3 wram state */
-	mmc3.expregs[A & 3] = V;
+	CartBW(A, V);
+	reg[A & 0x03] = V;
 	MMC3_FixPRG();        
 	MMC3_FixCHR();
 }
 
 static void M420Reset(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
-	MMC3RegReset();
+	reg[0] = reg[1] = reg[2] = reg[3] = 0;
+	MMC3_Reset();
 }
 
 static void M420Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
-	GenMMC3Power();
+	reg[0] = reg[1] = reg[2] = reg[3] = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M420Write);
 }
 
 void Mapper420_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M420CW;
 	MMC3_pwrap = M420PW;
 	info->Reset = M420Reset;
 	info->Power = M420Power;
-	AddExState(mmc3.expregs, 4, 0, "EXPR");
+	AddExState(reg, 4, 0, "EXPR");
 }

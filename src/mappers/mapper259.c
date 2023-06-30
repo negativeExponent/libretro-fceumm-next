@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2015 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,29 +35,32 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static void M259PW(uint32 A, uint8 V) {
-	uint32 bank = mmc3.expregs[0] & 0xF;
-	uint32 mode = (mmc3.expregs[0] & 8) >> 3;
-	uint32 mask = ~(mode);
-	setprg16(0x8000, (bank & mask));
-	setprg16(0xC000, (bank & mask) | mode);
+	uint32 bank = reg & 0xF;
+	uint32 mode = (reg & 8) >> 3;
+
+	setprg16(0x8000, (bank & ~mode));
+	setprg16(0xC000, (bank |  mode));
 }
 
 static DECLFW(M259Write) {
-	if (MMC3CanWriteToWRAM()) {
-		mmc3.expregs[0] = V;
+	if (MMC3_WRAMWritable(A)) {
+		reg = V;
 		MMC3_FixPRG();
 	}
 }
 
 static void M259Power(void) {
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M259Write);
 }
 
 void Mapper259_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_pwrap = M259PW;
 	info->Power = M259Power;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

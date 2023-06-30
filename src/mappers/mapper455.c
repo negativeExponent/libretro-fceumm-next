@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,54 +22,58 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg[2];
+
 static void M455PW(uint32 A, uint8 V) {
-	uint8 prgAND = (mmc3.expregs[1] & 0x01) ? 0x1F : 0x0F;
-	uint8 prgOR  = ((mmc3.expregs[0] >> 2) & 0x07) | ((mmc3.expregs[1] << 1) & 0x08) | ((mmc3.expregs[0] >> 2) & 0x10);
-	if (mmc3.expregs[0] & 0x01) {
-		if (mmc3.expregs[0] & 0x02) {
-			setprg32(0x8000, prgOR >> 1);
+	uint16 mask = (reg[1] & 0x01) ? 0x1F : 0x0F;
+	uint16 base = ((reg[0] >> 2) & 0x10) | ((reg[1] << 1) & 0x08) | ((reg[0] >> 2) & 0x07);
+
+	if (reg[0] & 0x01) {
+		if (reg[0] & 0x02) {
+			setprg32(0x8000, base >> 1);
 		} else {
-			setprg16(0x8000, prgOR);
-			setprg16(0xC000, prgOR);
+			setprg16(0x8000, base);
+			setprg16(0xC000, base);
 		}
 	} else {
-		setprg8(A, (V & prgAND) | ((prgOR << 1) & ~prgAND));
+		setprg8(A, ((base << 1) & ~mask) | (V & mask));
 	}
 }
 
 static void M455CW(uint32 A, uint8 V) {
-	uint8 chrAND = (mmc3.expregs[1] & 0x02) ? 0xFF : 0x7F;
-	uint8 chrOR  = ((mmc3.expregs[0] >> 2) & 0x07) | ((mmc3.expregs[1] << 1) & 0x08) | ((mmc3.expregs[0] >> 2) & 0x10);
-	setchr1(A, (V & chrAND) | ((chrOR << 4) & ~chrAND));
+	uint16 mask = (reg[1] & 0x02) ? 0xFF : 0x7F;
+	uint16 base = ((reg[0] >> 2) & 0x10) | ((reg[1] << 1) & 0x08) | ((reg[0] >> 2) & 0x07);
+
+	setchr1(A, ((base << 4) & ~mask) | (V & mask));
 }
 
 static DECLFW(M455Write) {
 	if (A & 0x100) {
-		mmc3.expregs[0] = V;
-		mmc3.expregs[1] = A & 0xFF;
+		reg[0] = V;
+		reg[1] = A & 0xFF;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
 }
 
 static void M455Reset(void) {
-	mmc3.expregs[0] = 1;
-	mmc3.expregs[1] = 0;
-	MMC3RegReset();
+	reg[0] = 1;
+	reg[1] = 0;
+	MMC3_Reset();
 }
 
 static void M455Power(void) {
-	mmc3.expregs[0] = 1;
-	mmc3.expregs[1] = 0;
-	GenMMC3Power();
+	reg[0] = 1;
+	reg[1] = 0;
+	MMC3_Power();
 	SetWriteHandler(0x4100, 0x5FFF, M455Write);
 }
 
 void Mapper455_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
-	MMC3_cwrap       = M455CW;
-	MMC3_pwrap       = M455PW;
+	MMC3_Init(info, 0, 0);
+	MMC3_cwrap = M455CW;
+	MMC3_pwrap = M455PW;
 	info->Power = M455Power;
 	info->Reset = M455Reset;
-	AddExState(mmc3.expregs, 2, 0, "EXPR");
+	AddExState(reg, 2, 0, "EXPR");
 }

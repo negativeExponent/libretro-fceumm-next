@@ -45,35 +45,35 @@ static DECLFW(M183Write) {
 	switch (A & 0xF80C) {
 	case 0x6800:
 		prg[3] = A & 0x3F;
-		FixVRC24PRG();
+		VRC24_FixPRG();
 		break;
 	case 0x8800:
 		prg[0] = V;
-		FixVRC24PRG();
+		VRC24_FixPRG();
 		break;
 	case 0x9800:
-		VRC24Write(0x9000 | (A & 0xC0), V);
+		VRC24_Write(0x9000 | (A & 0xC0), V);
 		break;
 	case 0xA800:
 		prg[1] = V;
-		FixVRC24PRG();
+		VRC24_FixPRG();
 		break;
 	case 0xA000:
 		prg[2] = V;
-		FixVRC24PRG();
+		VRC24_FixPRG();
 		break;
 	}
 }
 
 static void M183Power(void) {
-	GenVRC24Power();
+	VRC24_Power();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0xAFFF, M183Write);
 }
 
 void Mapper183_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
+	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
 	info->Power = M183Power;
-	vrc24.pwrap = M183PW;
+	VRC24_pwrap = M183PW;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

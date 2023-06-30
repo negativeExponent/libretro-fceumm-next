@@ -21,53 +21,57 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+static uint8 dipsw;
+
 static void M458CW(uint32 A, uint8 V) {
-	setchr1(A, ((mmc3.expregs[0] << 4) & ~0x7F) | (V & 0x7F));
+	setchr1(A, ((reg << 4) & ~0x7F) | (V & 0x7F));
 }
 
 static void M458PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 0x10) {
-		setprg32(0x8000, mmc3.expregs[0] >> 1);
+	if (reg & 0x10) {
+		setprg32(0x8000, reg >> 1);
 	} else {
-		setprg16(0x8000, mmc3.expregs[0]);
-		setprg16(0xC000, mmc3.expregs[0]);
+		setprg16(0x8000, reg);
+		setprg16(0xC000, reg);
 	}
 }
 
 static DECLFR(M458Read) {
-	if ((mmc3.expregs[0] & 0x20) && (mmc3.expregs[1] & 3)) {
-		return CartBR((A & ~3) | (mmc3.expregs[1] & 3));
+	if ((reg & 0x20) && (dipsw & 0x03)) {
+		return CartBR((A & ~0x03) | (dipsw & 0x03));
 	}
 	return CartBR(A);
 }
 
 static DECLFW(M458Write) {
-	if (MMC3CanWriteToWRAM()) {
-		mmc3.expregs[0] = A & 0xFF;
+	if (MMC3_WRAMWritable(A)) {
+		reg = A & 0xFF;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
 }
 
 static void M458Reset(void) {
-	mmc3.expregs[0] = 0;
-	mmc3.expregs[1]++;
-	MMC3RegReset();
+	reg = 0;
+	dipsw++;
+	MMC3_Reset();
 }
 
 static void M458Power(void) {
-	mmc3.expregs[0] = 0;
-	mmc3.expregs[1] = 0;
-	GenMMC3Power();
+	reg = 0;
+	dipsw = 0;
+	MMC3_Power();
 	SetReadHandler(0x8000, 0xFFFF, M458Read);
 	SetWriteHandler(0x6000, 0x7FFF, M458Write);
 }
 
 void Mapper458_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M458CW;
 	MMC3_pwrap = M458PW;
 	info->Reset = M458Reset;
 	info->Power = M458Power;
-	AddExState(mmc3.expregs, 2, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(&dipsw, 1, 0, "CMD0");
 }

@@ -21,12 +21,14 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M245FixCHR(void) {
-	setchr8(0);
-}
+static uint8 reg;
 
 static void M245PW(uint32 A, uint8 V) {
-	setprg8(A, (V & 0x3F) | ((MMC3GetCHRBank(mmc3.expregs[0]) & 0x02) << 5));
+	setprg8(A, (V & 0x3F) | ((MMC3_GetCHRBank(reg) & 0x02) << 5));
+}
+
+static void M245CW(uint32 A, uint8 V) {
+    setchr8(0);
 }
 
 static DECLFW(M245Write) {
@@ -40,9 +42,8 @@ static DECLFW(M245Write) {
         case 3:
         case 4:
         case 5:
-            mmc3.regs[mmc3.cmd & 0x07] = V;
+            mmc3.reg[mmc3.cmd & 0x07] = V;
 			MMC3_FixPRG();
-			MMC3_FixCHR();
             break;
         default:
             MMC3_CMDWrite(A, V);
@@ -59,24 +60,24 @@ static void M245PPUHook(uint32 A) {
 	if (A < 0x2000) {
 		A >>= 10;
 		A &= 3;
-		if (A != mmc3.expregs[0]) {
-			mmc3.expregs[0] = A;
+		if (A != reg) {
+			reg = A;
 			MMC3_FixPRG();
 		}
 	}
 }
 
 static void M245Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x8000, 0x9FFF, M245Write);
 }
 
 void Mapper245_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
 	info->Power = M245Power;
 	MMC3_pwrap = M245PW;
-	MMC3_FixCHR = M245FixCHR;
+	MMC3_cwrap = M245CW;
 	PPU_hook = M245PPUHook;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

@@ -26,11 +26,12 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 dipSwitch;
+static uint8 reg[4];
+static uint8 dipsw;
 
 static void M126PW(uint32 A, uint8 V) {
-	uint16 mask = (mmc3.expregs[0] & 0x40) ? 0x0F : 0x1F; /* 128 KiB or 256 KiB inner PRG bank selection */
-	uint16 base = (((mmc3.expregs[0] << 4) & 0x70) | ((mmc3.expregs[0] << 3) & 0x180)) & ~mask; /* outer PRG bank */
+	uint16 mask = (reg[0] & 0x40) ? 0x0F : 0x1F; /* 128 KiB or 256 KiB inner PRG bank selection */
+	uint16 base = (((reg[0] << 4) & 0x70) | ((reg[0] << 3) & 0x180)) & ~mask; /* outer PRG bank */
 
 	switch (iNESCart.submapper) {
 	case 1:
@@ -39,64 +40,54 @@ static void M126PW(uint32 A, uint8 V) {
 		break;
 	case 2:
 		/* uses $6001 bit 2 as a chip select between two 1 MiB chips. */
-		base |= ((mmc3.expregs[1] & 0x02) << 5);
+		base |= ((reg[1] & 0x02) << 5);
 		break;
 	}
 
-	switch (mmc3.expregs[3] & 0x03) {
-	case 0:
-		/* MMC3 PRG mode */
+	if (reg[3] & 0x03) {
+		if ((reg[3] & 0x03) == 0x03) {
+			setprg32(0x8000, (base | (mmc3.reg[6] & mask)) >> 2);
+		} else {
+			setprg16(0x8000, (base | (mmc3.reg[6] & mask)) >> 1);
+			setprg16(0xC000, (base | (mmc3.reg[6] & mask)) >> 1);
+		}
+	} else {
 		setprg8(A, (base & ~mask) | (V & mask));
-		break;
-	case 1:
-	case 2:
-		/* NROM-128 mode: MMC3 register 6 applies throughout $8000-$FFFF, MMC3 A13 replaced with CPU A13. */
-		setprg8(0x8000, (base | ((mmc3.regs[6] & ~1) & mask)) | 0);
-		setprg8(0xA000, (base | ((mmc3.regs[6] & ~1) & mask)) | 1);
-		setprg8(0xC000, (base | ((mmc3.regs[6] & ~1) & mask)) | 0);
-		setprg8(0xE000, (base | ((mmc3.regs[6] & ~1) & mask)) | 1);
-		break;
-	case 3:
-		/* NROM-256 mode: MMC3 register 6 applies throughout $8000-$FFFF, MMC3 A13-14 replaced with CPU A13-14. */
-		setprg8(0x8000, (base | ((mmc3.regs[6] & ~3) & mask)) | 0);
-		setprg8(0xA000, (base | ((mmc3.regs[6] & ~3) & mask)) | 1);
-		setprg8(0xC000, (base | ((mmc3.regs[6] & ~3) & mask)) | 2);
-		setprg8(0xE000, (base | ((mmc3.regs[6] & ~3) & mask)) | 3);
-		break;
 	}
 }
 
 static void M126CW(uint32 A, uint8 V) {
-	uint16 mask = (mmc3.expregs[0] & 0x80) ? 0x7F : 0xFF; /* 128 KiB or 256 KiB innter CHR bank selection */
+	uint16 mask = (reg[0] & 0x80) ? 0x7F : 0xFF; /* 128 KiB or 256 KiB innter CHR bank selection */
 	uint16 base; /* outer CHR bank */
 
 	if (iNESCart.mapper == 126) {
 		/* Mapper 126 swaps CHR A18 and A19 */
-		base = ((mmc3.expregs[0] << 4) & 0x080) | ((mmc3.expregs[0] << 3) & 0x100) | ((mmc3.expregs[0] << 5) & 0x200);
+		base = ((reg[0] << 4) & 0x080) | ((reg[0] << 3) & 0x100) | ((reg[0] << 5) & 0x200);
 	} else {
-		base = (mmc3.expregs[0] << 4) & 0x380;
+		base = (reg[0] << 4) & 0x380;
 	}
 
-	if (mmc3.expregs[3] & 0x10) {
+	if (reg[3] & 0x10) {
 		/* CNROM mode: 8 KiB inner CHR bank comes from outer bank register #2 */
-		setchr8((mmc3.expregs[2] & (mask >> 3)) | ((base & ~mask) >> 3));
+		setchr8((reg[2] & (mask >> 3)) | ((base & ~mask) >> 3));
 	} else {
 		/* MMC3 CHR mode */
-		setchr1(A, (V & mask) | (base & ~mask));
+		setchr1(A, (base & ~mask) | (V & mask));
 	}
 }
 
 static DECLFW(M126WRAMWrite) {
-	if (~mmc3.expregs[3] & 0x80) {
+	if (!(reg[3] & 0x80)) {
 		/* Lock bit clear: Update any outer bank register */
-		mmc3.expregs[A & 0x03] = V;
+		reg[A & 0x03] = V;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	} else if ((A & 0x03) == 2) {
 		/* Lock bit set: Only update the bottom one or two bits of the CNROM bank */
-		uint8 mask = (mmc3.expregs[2] & 0x10) ? 1 : 3; /* 16 or 32 KiB inner CHR bank selection */
-		mmc3.expregs[2] &= ~mask;
-		mmc3.expregs[2] |= V & mask;
+		uint8 mask = (reg[2] & 0x10) ? 1 : 3; /* 16 or 32 KiB inner CHR bank selection */
+
+		reg[2] &= ~mask;
+		reg[2] |= V & mask;
 		MMC3_FixCHR();
 	}
 	CartBW(A, V);
@@ -104,9 +95,10 @@ static DECLFW(M126WRAMWrite) {
 
 static DECLFR(M126ReadDIP) {
 	uint8 result = CartBR(A);
-	if (mmc3.expregs[1] & 0x01) {
+
+	if (reg[1] & 0x01) {
 		/* Replace bottom two bits with solder pad or DIP switch setting if so selected */
-		result = (result & ~0x03) | (dipSwitch & 0x03);
+		return ((result & ~0x03) | (dipsw & 0x03));
 	}
 	return result;
 }
@@ -120,28 +112,28 @@ static DECLFW(M126IRQWrite) {
 }
 
 static void M126Reset(void) {
-	dipSwitch++; /* Soft-resetting cycles through solder pad or DIP switch settings */
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
-	MMC3RegReset();
+	dipsw++; /* Soft-resetting cycles through solder pad or DIP switch settings */
+	reg[0] = reg[1] = reg[2] = reg[3] = 0;
+	MMC3_Reset();
 }
 
 static void M126Power(void) {
-	dipSwitch = 0;
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
-	GenMMC3Power();
+	dipsw = 0;
+	reg[0] = reg[1] = reg[2] = reg[3] = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M126WRAMWrite);
 	SetReadHandler(0x8000, 0xFFFF, M126ReadDIP);
 	SetWriteHandler(0xC000, 0xDFFF, M126IRQWrite);
 }
 
 void Mapper126_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
 	MMC3_cwrap = M126CW;
 	MMC3_pwrap = M126PW;
 	info->Power = M126Power;
 	info->Reset = M126Reset;
-	AddExState(mmc3.expregs, 4, 0, "EXPR");
-	AddExState(&dipSwitch, 1, 0, "DPSW");
+	AddExState(reg, 4, 0, "EXPR");
+	AddExState(&dipsw, 1, 0, "DPSW");
 }
 
 void Mapper422_Init(CartInfo *info) {

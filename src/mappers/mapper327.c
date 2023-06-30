@@ -4,6 +4,7 @@
  *	Copyright (C) 2015 Cluster
  *	http://clusterrr.com
  *	clusterrr@clusterrr.com
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,30 +44,34 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSize;
 
 static void M327PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 8)
-		setprg8(A, (V & 0x1F) | ((mmc3.expregs[0] & 7) << 4));
-	else
-		setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] & 7) << 4));
+	uint8 base = (reg << 4) & 0x70;
+	uint8 mask = (reg & 0x08) ? 0x1F : 0x0F;
+
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void M327CW(uint32 A, uint8 V) {
-	if ((mmc3.expregs[0] >> 4) & 1)
-		setchr1r(0x10, A, V);
-	else if (mmc3.expregs[0] & 0x20)
-		setchr1(A, V | ((mmc3.expregs[0] & 7) << 7));
-	else
-		setchr1(A, (V & 0x7F) | ((mmc3.expregs[0] & 7) << 7));
+	if (reg & 0x10) {
+		setchr8r(0x10, 0);
+	} else {
+		uint16 base = (reg << 7) & 0x380;
+		uint16 mask = (reg & 0x20) ? 0xFF : 0x7F;
+		
+		setchr1(A, base | (V & mask));
+	}
 }
 
 static DECLFW(M327Write) {
-	if (MMC3CanWriteToWRAM()) {
+	if (MMC3_WRAMWritable(A)) {
 		CartBW(A, V);
-		if ((mmc3.expregs[0] & 7) == 0) {
-			mmc3.expregs[0] = A & 0x3F;
+		if ((reg & 7) == 0) {
+			reg = A & 0x3F;
 			MMC3_FixPRG();
 			MMC3_FixCHR();
 		}
@@ -74,25 +79,26 @@ static DECLFW(M327Write) {
 }
 
 static void M327Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static void M327Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M327Write);
 }
 
 static void M327Close(void) {
-	GenMMC3Close();
-	if (CHRRAM)
+	MMC3_Close();
+	if (CHRRAM) {
 		FCEU_gfree(CHRRAM);
+	}
 	CHRRAM = NULL;
 }
 
 void Mapper327_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0);
+	MMC3_Init(info, 8, 0);
 	CHRRAMSize = 8192;
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSize, 1);
@@ -102,5 +108,5 @@ void Mapper327_Init(CartInfo *info) {
 	info->Power = M327Power;
 	info->Reset = M327Reset;
 	info->Close = M327Close;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

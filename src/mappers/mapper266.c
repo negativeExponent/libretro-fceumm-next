@@ -45,26 +45,26 @@ static DECLFW(M266Write) {
 			pcmwrite(0x4011, (V & 0xf) << 3);
 		} else {
 			prg_reg = V & 0xC;
-			FixVRC24PRG();
+			VRC24_FixPRG();
 		}
 		break;
 	default:
 		A = (A & ~0x6000) | ((A << 1) & 0x4000) | ((A >> 1) & 0x2000);
-		VRC24Write(A, V);
+		VRC24_Write(A, V);
 		break;
 	}
 }
 
 static void M266Power(void) {
 	prg_reg = 0;
-	GenVRC24Power();
+	VRC24_Power();
 	pcmwrite = GetWriteHandler(0x4011);
 	SetWriteHandler(0x8000, 0xFFFF, M266Write);
 }
 
 void Mapper266_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
+	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
 	info->Power = M266Power;
-	vrc24.pwrap = M266PW;
+	VRC24_pwrap = M266PW;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

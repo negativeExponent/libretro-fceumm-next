@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2020
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,37 +25,42 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 dipswitch = 0;
+static uint8 reg[4];
+static uint8 cmd;
+static uint8 dipsw = 0;
 
 static void M401CW(uint32 A, uint8 V) {
-	uint32 mask = (0xFF >> (~mmc3.expregs[2] & 0xF));
-	uint32 bank = (mmc3.expregs[0] | ((mmc3.expregs[2] << 4) & 0xF00));
-	setchr1(A, (V & mask) | bank);
+	uint32 mask = (0xFF >> (~reg[2] & 0xF));
+	uint32 bank = (reg[0] | ((reg[2] << 4) & 0xF00));
+
+	setchr1(A, bank | (V & mask));
 }
 
 static void M401PW(uint32 A, uint8 V) {
-	if ((dipswitch & 1) && (mmc3.expregs[1] & 0x80)) {
+	if ((dipsw & 1) && (reg[1] & 0x80)) {
 		/* openbus */
 	} else {
-		uint32 mask = (~mmc3.expregs[3] & 0x1F);
-		uint32 bank = (mmc3.expregs[1] & 0x1F) | (mmc3.expregs[2] & 0x80) |
-		    ((dipswitch & 2) ? (mmc3.expregs[2] & 0x20) : ((mmc3.expregs[1] >> 1) & 0x20)) |
-		    ((dipswitch & 4) ? (mmc3.expregs[2] & 0x40) : ((mmc3.expregs[1] << 1) & 0x40));
-		setprg8(A, (V & mask) | bank);
+		uint32 mask = (~reg[3] & 0x1F);
+		uint32 bank = (reg[1] & 0x1F) | (reg[2] & 0x80) |
+		    ((dipsw & 2) ? (reg[2] & 0x20) : ((reg[1] >> 1) & 0x20)) |
+		    ((dipsw & 4) ? (reg[2] & 0x40) : ((reg[1] << 1) & 0x40));
+
+		setprg8(A, bank | (V & mask));
 	}
 }
 
 static DECLFR(M401Read) {
-	if ((dipswitch & 1) && (mmc3.expregs[1] & 0x80))
+	if ((dipsw & 0x01) && (reg[1] & 0x80)) {
 		return X.DB;
+	}
 	return CartBR(A);
 }
 
 static DECLFW(M401Write) {
-	/* FCEU_printf("Wr A:%04x V:%02x index:%d\n", A, V, mmc3.expregs[4]); */
-	if (!(mmc3.expregs[3] & 0x40)) {
-		mmc3.expregs[mmc3.expregs[4]] = V;
-		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
+	/* FCEU_printf("Wr A:%04x V:%02x index:%d\n", A, V, cmd); */
+	if (!(reg[3] & 0x40)) {
+		reg[cmd] = V;
+		cmd = (cmd + 1) & 0x03;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
@@ -63,34 +68,35 @@ static DECLFW(M401Write) {
 }
 
 static void M401Reset(void) {
-	dipswitch = (dipswitch + 1) & 7;
-	FCEU_printf("dipswitch = %d\n", dipswitch);
-	mmc3.expregs[0] = 0x00;
-	mmc3.expregs[1] = 0x00;
-	mmc3.expregs[2] = 0x0F;
-	mmc3.expregs[3] = 0x00;
-	mmc3.expregs[4] = 0x00;
-	MMC3RegReset();
+	dipsw = (dipsw + 1) & 7;
+	FCEU_printf("dipsw = %d\n", dipsw);
+	reg[0] = 0x00;
+	reg[1] = 0x00;
+	reg[2] = 0x0F;
+	reg[3] = 0x00;
+	cmd = 0x00;
+	MMC3_Reset();
 }
 
 static void M401Power(void) {
-	dipswitch = 7;
-	mmc3.expregs[0] = 0x00;
-	mmc3.expregs[1] = 0x00;
-	mmc3.expregs[2] = 0x0F;
-	mmc3.expregs[3] = 0x00;
-	mmc3.expregs[4] = 0x00;
-	GenMMC3Power();
+	dipsw = 7;
+	reg[0] = 0x00;
+	reg[1] = 0x00;
+	reg[2] = 0x0F;
+	reg[3] = 0x00;
+	cmd = 0x00;
+	MMC3_Power();
 	SetReadHandler(0x8000, 0xFFFF, M401Read);
 	SetWriteHandler(0x6000, 0x7FFF, M401Write);
 }
 
 void Mapper401_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0);
+	MMC3_Init(info, 8, 0);
 	MMC3_cwrap = M401CW;
 	MMC3_pwrap = M401PW;
 	info->Power = M401Power;
 	info->Reset = M401Reset;
-	AddExState(mmc3.expregs, 5, 0, "EXPR");
-	AddExState(&dipswitch, 1, 0, "DPSW");
+	AddExState(reg, 4, 0, "EXPR");
+	AddExState(&cmd, 1, 0, "CMD0");
+	AddExState(&dipsw, 1, 0, "DPSW");
 }

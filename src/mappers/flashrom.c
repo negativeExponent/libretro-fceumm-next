@@ -38,9 +38,9 @@ static SFORMAT FlashStateRegs[] = {
     { 0 }
 };
 
-#define PRG_OFFSET(A) &Page[A >> 11][A] - flash_data
+#define PRG_OFFSET(A) (&Page[(A) >> 11][(A)] - flash_data)
 
-DECLFR(FlashRead) {
+DECLFR(flashrom_read) {
 	if (flash_state == 0x90) {
         /* 0: manufacturer id */
         /* 1: model id */
@@ -51,9 +51,9 @@ DECLFR(FlashRead) {
 	return flash_data[PRG_OFFSET(A)];
 }
 
-DECLFW(FlashWrite) {
+DECLFW(flashrom_write) {
 	uint32 chip_address = PRG_OFFSET(A);
-	uint32 cmd = A & 0x7FFF;
+	uint32 cmd = chip_address & 0x7FFF;
 	int i;
 
 	switch (flash_state) {
@@ -113,7 +113,7 @@ DECLFW(FlashWrite) {
 	/* FCEU_printf("%04x:%02x cmd:%04x state:%02x addr1:%04x addr2:%04x\n", A, V, cmd, flash_state, flash_addr1, flash_addr2); */
 }
 
-void FlashCPUHook(int a) {
+void flashrom_cpucycle(int a) {
 	if (time_out > 0) {
 		time_out -= a;
 		if (time_out <= 0) {
@@ -122,7 +122,7 @@ void FlashCPUHook(int a) {
 	}
 }
 
-void Flash_Init(uint8 *data, uint32 size, uint8 manufacter_id, uint8 model_id, uint32 sector_size, uint32 adr1, uint32 adr2) {
+void flashrom_init(uint8 *data, uint32 size, uint8 manufacter_id, uint8 model_id, uint32 sector_size, uint32 adr1, uint32 adr2) {
 	flash_data      = data;
 	flash_size      = size;
 	flash_id[0]     = manufacter_id;

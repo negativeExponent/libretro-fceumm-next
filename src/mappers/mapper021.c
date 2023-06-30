@@ -24,8 +24,8 @@
 void Mapper021_Init(CartInfo *info) {
 	/* Mapper 21 - VRC4a, VRC4c */
 	switch (info->submapper) {
-	case 1:  GenVRC24_Init(info, VRC4, 0x02, 0x04, 1, 1); break;
-	case 2:  GenVRC24_Init(info, VRC4, 0x40, 0x80, 1, 1); break;
-	default: GenVRC24_Init(info, VRC4, 0x42, 0x84, 1, 1); break;
+	case 1:  VRC24_Init(info, VRC4, 0x02, 0x04, 1, 1); break;
+	case 2:  VRC24_Init(info, VRC4, 0x40, 0x80, 1, 1); break;
+	default: VRC24_Init(info, VRC4, 0x42, 0x84, 1, 1); break;
 	}
 }

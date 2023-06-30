@@ -28,35 +28,37 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static void M361PW(uint32 A, uint8 V) {
-	setprg8(A, (V & 0x0f) | mmc3.expregs[0]);
+	setprg8(A, (V & 0x0f) | reg);
 }
 
 static void M361CW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | (mmc3.expregs[0] << 3));
+	setchr1(A, (V & 0x7F) | (reg << 3));
 }
 
 static void M361Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static DECLFW(M361Write) {
-	mmc3.expregs[0] = V & 0xF0;
+	reg = V & 0xF0;
 	MMC3_FixPRG();
 	MMC3_FixCHR();
 }
 
 static void M361Power(void) {
-	GenMMC3Power();
+	MMC3_Power();
 	SetWriteHandler(0x7000, 0x7fff, M361Write);
 }
 
 void Mapper361_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_pwrap = M361PW;
 	MMC3_cwrap = M361CW;
 	info->Power = M361Power;
 	info->Reset = M361Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

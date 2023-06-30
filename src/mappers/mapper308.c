@@ -65,12 +65,12 @@ void FP_FASTAPASS(1) M308IRQHook(int a) {
 
 static void M308Power(void) {
 	IRQa = IRQCount = IRQLatch = 0;
-	GenVRC24Power();
+	VRC24_Power();
 	SetWriteHandler(0xF000, 0xFFFF, M308Write);
 }
 
 void Mapper308_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
+	VRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
 	info->Power = M308Power;
 	MapIRQHook = M308IRQHook;
 	AddExState(IRQStateRegs, ~0, 0, NULL);

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,43 +26,53 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
+static uint8 prg_bank_order[2][4] = {
+	{ 0, 1, 2, 3 }, /* normal bank order */
+	{ 0, 3, 1, 2 }  /* wrong bank order, added for compatibility */
+};
+
 static void M344CW(uint32 A, uint8 V) {
-	int chrAND = (mmc3.expregs[0] & 0x02) ? 0x7F : 0xFF;
-	int chrOR = (mmc3.expregs[0] & 3) << 7;
-	setchr1(A, chrOR | (V & chrAND));
+	uint16 mask = (reg & 0x02) ? 0x7F : 0xFF;
+	uint16 base = (reg & 0x03) << 7;
+
+	setchr1(A, base | (V & mask));
 }
 
 static void M344PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 4) {
-		setprg32(0x8000, (mmc3.expregs[0] << 2) | ((mmc3.regs[6] & 0x0F) >> 2));
+	uint8 base = prg_bank_order[(iNESCart.PRGCRC32 == 0xAB2ACA46)][reg & 0x03];
+
+	if (reg & 0x04) {
+		setprg32(0x8000, (base << 2) | ((mmc3.reg[6] & 0x0F) >> 2));
 	} else {
-		setprg8(A, (mmc3.expregs[0] << 4) | (V & 0x0F));
+		setprg8(A, (base << 4) | (V & 0x0F));
 	}
 }
 
 static DECLFW(M344Write) {
-	if (MMC3CanWriteToWRAM()) {
-		mmc3.expregs[0] = A & 0xFF;
+	if (MMC3_WRAMWritable(A)) {
+		reg = A & 0xFF;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
 }
 
 static void M344Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static void M344Power(void) {
-	GenMMC3Power();
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M344Write);
 }
 
 void Mapper344_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_pwrap = M344PW;
 	MMC3_cwrap = M344CW;
 	info->Power = M344Power;
 	info->Reset = M344Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

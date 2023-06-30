@@ -29,25 +29,27 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static uint8 *CHRRAM     = NULL;
 static uint32 CHRRAMSIZE = 8192;
 
 extern uint8 *ExtraNTARAM;
 
-static void M512MW(uint8 V) {
-	if (mmc3.expregs[0] == 1) {
+static void M512MIR(void) {
+	if (reg == 1) {
 		SetupCartMirroring(4, 1, ExtraNTARAM);
 	} else {
-		mmc3.mirroring = V;
-		SetupCartMirroring((V & 1) ^ 1, 0, 0);
+		SetupCartMirroring((mmc3.mirr & 0x01) ^ 0x01, 0, 0);
 	}
 }
 
 static void M512CW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 2)
+	if (reg & 0x02) {
 		setchr1r(0x10, A, (V & 0x03));
-	else
+	} else {
 		setchr1(A, V);
+	}
 }
 
 static void M512PW(uint32 A, uint8 V) {
@@ -56,32 +58,34 @@ static void M512PW(uint32 A, uint8 V) {
 
 static DECLFW(M512Write) {
 	if (A & 0x100) {
-		mmc3.expregs[0] = V & 3;
+		reg = V & 0x03;
 		MMC3_FixCHR();
+		MMC3_FixMIR();
 	}
 }
 
 static void M512Close(void) {
-	GenMMC3Close();
-	if (CHRRAM)
+	MMC3_Close();
+	if (CHRRAM) {
 		FCEU_gfree(CHRRAM);
+	}
 	CHRRAM = NULL;
 }
 
 static void M512Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x4100, 0x4FFF, M512Write);
 }
 
 void Mapper512_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
 	MMC3_cwrap = M512CW;
 	MMC3_pwrap = M512PW;
-	MMC3_mwrap = M512MW;
+	MMC3_FixMIR = M512MIR;
 	info->Power = M512Power;
 	info->Close = M512Close;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);

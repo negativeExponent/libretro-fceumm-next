@@ -31,18 +31,18 @@
 static DECLFW(M525Write) {
 	switch (A & 0xB000) {
 	case 0xB000:
-		vrc24.chrreg[A & 0x07] = V;
-		FixVRC24CHR();
+		vrc24.chr[A & 0x07] = V;
+		VRC24_FixCHR();
 		break;
 	}
 }
 
 static void M525Power(void) {
-	GenVRC24Power();
+	VRC24_Power();
 	SetWriteHandler(0xB000, 0xBFFF, M525Write);
 }
 
 void Mapper525_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
+	VRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
 	info->Power = M525Power;
 }

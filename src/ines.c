@@ -1062,11 +1062,11 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 		FCEU_printf(" Submapper:    %2d\n", iNESCart.submapper);
 		if (PRGRAM || CHRRAM) {
 			if (head.ROM_type & 0x02) {
-				FCEU_printf(" PRG-RAM:      %2d KB ( %2d KB battery-backed)\n", PRGRAM / 1024, iNESCart.PRGRamSaveSize / 1024);
-				FCEU_printf(" CHR-RAM:      %2d KB ( %2d KB battery-backed)\n", CHRRAM / 1024, iNESCart.CHRRamSaveSize / 1024);
+				FCEU_printf(" PRG-RAM:       %-3d KiB ( %2d KiB battery-backed)\n", PRGRAM / 1024, iNESCart.PRGRamSaveSize / 1024);
+				FCEU_printf(" CHR-RAM:       %-3d KiB ( %2d KiB battery-backed)\n", CHRRAM / 1024, iNESCart.CHRRamSaveSize / 1024);
 			} else {
-				FCEU_printf(" PRG-RAM:      %2d KB\n", PRGRAM / 1024);
-				FCEU_printf(" CHR-RAM:      %2d KB\n", CHRRAM / 1024);
+				FCEU_printf(" PRG-RAM:       %-3d KiB\n", PRGRAM / 1024);
+				FCEU_printf(" CHR-RAM:       %-3d KiB\n", CHRRAM / 1024);
 			}
 		}
 		if (ROM.misc.size) {

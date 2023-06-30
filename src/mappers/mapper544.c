@@ -62,7 +62,7 @@ static DECLFW(M544WriteExtra) {
 		setmirrorw(nt[0], nt[1], nt[2], nt[3]);
 	} else {
 		cpuC = V;
-		FixVRC24PRG();
+		VRC24_FixPRG();
 	}
 }
 
@@ -73,7 +73,7 @@ static const uint8 compareMasks[8] = {
 static DECLFW(M544PPUWrite) {
 	if (RefreshAddr < 0x2000) {
         uint8 reg = RefreshAddr >> 10;
-        uint8 chrBank = vrc24.chrreg[reg];
+        uint8 chrBank = vrc24.chr[reg];
 		if (chrBank & 0x80) {
             if (chrBank & 0x10) {
                 chrRamMask = 0x00;
@@ -82,7 +82,7 @@ static DECLFW(M544PPUWrite) {
                 chrRamMask = (chrBank & 0x40) ? 0xFE : 0xFC;
                 chrRamCompare = compareMasks[((chrBank >> 1) & 0x01) | ((chrBank >> 2) & 0x02) | ((chrBank >> 4) & 0x04)];
             }
-			FixVRC24CHR();
+			VRC24_FixCHR();
 		}
 	}
 	writePPU(A, V);
@@ -96,7 +96,7 @@ static void M544Power(void) {
     nt[2] = 1;
     nt[3] = 1;
     cpuC = ~1;
-	GenVRC24Power();
+	VRC24_Power();
 	writePPU = GetWriteHandler(0x2007);
 	SetWriteHandler(0x2007, 0x2007, M544PPUWrite);
 }
@@ -109,12 +109,12 @@ void M544Close(void) {
 }
 
 void Mapper544_Init(CartInfo *info) {
-    GenVRC24_Init(info, VRC4, 0x400, 0x800, 1, 1);
+    VRC24_Init(info, VRC4, 0x400, 0x800, 1, 1);
 	info->Power = M544Power;
 	info->Close = M544Close;
-    vrc24.pwrap = M544PW;
-	vrc24.cwrap = M544CW;
-    vrc24.writeMisc = M544WriteExtra;
+    VRC24_pwrap = M544PW;
+	VRC24_cwrap = M544CW;
+    VRC24_miscWrite = M544WriteExtra;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 2048;

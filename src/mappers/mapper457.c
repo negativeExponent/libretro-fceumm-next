@@ -21,40 +21,45 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static void M457CW(uint32 A, uint8 V) {
-	uint32 mask = (mmc3.expregs[0] & 8) ? 0xFF : 0x7F;
-	setchr1(A, ((mmc3.expregs[0] << 7) & ~mask) | (V & mask));
+	uint32 mask = (reg & 0x08) ? 0xFF : 0x7F;
+
+	setchr1(A, ((reg << 7) & ~mask) | (V & mask));
 }
 
 static void M457PW(uint32 A, uint8 V) {
-	uint32 mask = (mmc3.expregs[0] & 8) ? 0x1F : 0x0F;
-	setprg8(A, (((mmc3.expregs[0] & 7) << 4) & ~mask) | (V & mask));
+	uint32 mask = (reg & 0x08) ? 0x1F : 0x0F;
+
+	setprg8(A, (((reg & 7) << 4) & ~mask) | (V & mask));
 }
 
 static DECLFW(M457Write) {
-	if (MMC3CanWriteToWRAM()) {
-		mmc3.expregs[0] = V;
+	if (MMC3_WRAMWritable(A)) {
+		CartBW(A, V);
+		reg = V;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
 }
 
 static void M457Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static void M457Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M457Write);
 }
 
 void Mapper457_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M457CW;
 	MMC3_pwrap = M457PW;
 	info->Reset = M457Reset;
 	info->Power = M457Power;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

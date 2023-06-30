@@ -9,7 +9,7 @@ static uint8 IRQa;
 static uint8 IRQm;
 static uint8 IRQr;
 
-static SFORMAT StateRegs[] =
+SFORMAT VRCIRQ_StateRegs[] =
 {
 	{ &IRQPrescaler,  2, "PREC" },
 	{ &IRQCount,      1, "IRQC" },
@@ -22,7 +22,7 @@ static SFORMAT StateRegs[] =
 	{ 0 }
 };
 
-static void FP_FASTAPASS(1) VRCIRQ_IrqHook(int a)
+void FP_FASTAPASS(1) VRCIRQ_CPUHook(int a)
 {
 	int count = a;
 
@@ -54,9 +54,6 @@ void VRCIRQ_Init(int irqRepeated)
 	IRQa          = 0;
 	IRQm          = 0;
 	IRQr          = irqRepeated;
-	MapIRQHook    = VRCIRQ_IrqHook;
-
-	AddExState(&StateRegs, ~0, 0, 0);
 }
 
 void VRCIRQ_Latch(uint8 V)

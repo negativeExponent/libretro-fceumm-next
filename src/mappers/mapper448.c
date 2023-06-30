@@ -40,10 +40,10 @@ static void Sync(void) {
 		setmirror(MI_0 + ((latch.data >> 4) & 0x01));
 	} else {
 		if (reg & 0x04) { /* UOROM */
-			setprg16(0x8000, ((reg << 3) & ~0x0F) | (vrc24.prgreg[0] & 0x0F));
+			setprg16(0x8000, ((reg << 3) & ~0x0F) | (vrc24.prg[0] & 0x0F));
 			setprg16(0xC000, ((reg << 3) & ~0x0F) | 0x0F);
 		} else { /* UNROM */
-			setprg16(0x8000, (reg << 3) | (vrc24.prgreg[0] & 0x07));
+			setprg16(0x8000, (reg << 3) | (vrc24.prg[0] & 0x07));
 			setprg16(0xC000, (reg << 3) | 0x07);
 		}
 		switch (vrc24.mirr & 0x03) {
@@ -64,7 +64,7 @@ static DECLFW(M448WriteReg) {
 
 static DECLFW(M448Write) {
 	LatchWrite(A, V);
-    VRC24Write(A, V);
+    VRC24_Write(A, V);
 	Sync();
 }
 
@@ -76,7 +76,7 @@ static void M448Reset(void) {
 static void M448Power(void) {
 	reg = 0;
 	LatchPower();
-	GenVRC24Power();
+	VRC24_Power();
 	Sync();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
@@ -90,7 +90,7 @@ static void StateRestore(int version) {
 
 void Mapper448_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
-	GenVRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
+	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
 	info->Reset = M448Reset;
 	info->Power = M448Power;
 	GameStateRestore = StateRestore;

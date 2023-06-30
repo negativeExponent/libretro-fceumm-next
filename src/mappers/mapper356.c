@@ -1,7 +1,6 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2020
  *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or
@@ -26,15 +25,19 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg[4];
+static uint8 cmd;
+
 static uint8 *CHRRAM     = NULL;
 static uint32 CHRRAMSIZE = 0;
 
 extern uint8 *ExtraNTARAM;
 
 static void M356CW(uint32 A, uint8 V) {
-	if (mmc3.expregs[2] & 0x20) {
-		uint32 mask = 0xFF >> (~mmc3.expregs[2] & 0xF);
-		uint32 base = ((mmc3.expregs[2] << 4) & 0xF00) | mmc3.expregs[0];
+	if (reg[2] & 0x20) {
+		uint32 mask = 0xFF >> (~reg[2] & 0xF);
+		uint32 base = ((reg[2] << 4) & 0xF00) | reg[0];
+
 		setchr1(A, (base & ~mask) | (V & mask));
 	} else {
 		setchr8r(0x10, 0);
@@ -42,58 +45,61 @@ static void M356CW(uint32 A, uint8 V) {
 }
 
 static void M356PW(uint32 A, uint8 V) {
-	uint32 mask = ~mmc3.expregs[3] & 0x3F;
-	uint32 base = ((mmc3.expregs[2] << 2) & 0x300) | mmc3.expregs[1];
+	uint32 mask = ~reg[3] & 0x3F;
+	uint32 base = ((reg[2] << 2) & 0x300) | reg[1];
+
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M356MW(uint8 V) {
-	if (mmc3.expregs[2] & 0x40) {
+static void M356MIR(void) {
+	if (reg[2] & 0x40) {
 		SetupCartMirroring(4, 1, ExtraNTARAM);
 	} else {
-		mmc3.mirroring = V;
-		SetupCartMirroring((V & 1) ^ 1, 0, 0);
+		SetupCartMirroring((mmc3.mirr & 1) ^ 1, 0, 0);
 	}
 }
 
 static DECLFW(M356Write) {
-	if (!(mmc3.expregs[3] & 0x40)) {
-		mmc3.expregs[mmc3.expregs[4]] = V;
-		mmc3.expregs[4] = (mmc3.expregs[4] + 1) & 3;
+	if (!(reg[3] & 0x40)) {
+		reg[cmd] = V;
+		cmd = (cmd + 1) & 3;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
+		MMC3_FixMIR();
 	}
 }
 
 static void M356Close(void) {
-	GenMMC3Close();
-	if (CHRRAM)
+	MMC3_Close();
+	if (CHRRAM) {
 		FCEU_free(CHRRAM);
+	}
 	CHRRAM = NULL;
 }
 
 static void M356Reset(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = 0;
-	mmc3.expregs[2] = 0x0F;
-	MMC3RegReset();
+	reg[0] = reg[1] = reg[3] = cmd = 0;
+	reg[2] = 0x0F;
+	MMC3_Reset();
 }
 
 static void M356Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[3] = mmc3.expregs[4] = 0;
-	mmc3.expregs[2] = 0x0F;
-	GenMMC3Power();
+	reg[0] = reg[1] = reg[3] = cmd = 0;
+	reg[2] = 0x0F;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M356Write);
 }
 
 void Mapper356_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M356CW;
 	MMC3_pwrap = M356PW;
-	MMC3_mwrap = M356MW;
+	MMC3_FixMIR = M356MIR;
 	info->Reset = M356Reset;
 	info->Power = M356Power;
 	info->Close = M356Close;
-	AddExState(mmc3.expregs, 5, 0, "EXPR");
+	AddExState(reg, 4, 0, "EXPR");
+	AddExState(&cmd, 1, 0, "CMD0");
 
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

@@ -35,17 +35,17 @@ static void M530CW(uint32 A, uint32 V) {
 
 static DECLFW(UNLAX5705Write) {
 	A |= (A & 0x08) << 9;
-	VRC24Write(A, V);
+	VRC24_Write(A, V);
 }
 
 static void M530Power(void) {
-	GenVRC24Power();
+	VRC24_Power();
 	SetWriteHandler(0x8000, 0xFFFF, UNLAX5705Write);
 }
 
 void Mapper530_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4, 0x01, 0x02, 0, 1);
+	VRC24_Init(info, VRC4, 0x01, 0x02, 0, 1);
 	info->Power = M530Power;
-	vrc24.pwrap = M530PW;
-	vrc24.cwrap = M530CW;
+	VRC24_pwrap = M530PW;
+	VRC24_cwrap = M530CW;
 }

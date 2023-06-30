@@ -21,12 +21,26 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static void M004PW(uint32 A, uint8 V) {
+	setprg8(A, V & 0xFF);
+}
+
+static void M004CW(uint32 A, uint8 V) {
+	setchr1(A, V & 0xFF);
+}
+
 void Mapper004_Init(CartInfo *info) {
 	int ws = 8;
 
 	if (info->iNES2) {
-		ws = (info->PRGRamSize + info->PRGRamSaveSize) / 1024;
-		if (info->submapper == 4) isRevB = 0;
+		if (info->submapper == 5) {
+			Mapper249_Init(info);
+		} else {
+			ws = (info->PRGRamSize + info->PRGRamSaveSize) / 1024;
+			if (info->submapper == 4) {
+				isRevB = 0;
+			}
+		}
 	} else {
 		if ((info->CRC32 == 0x93991433 || info->CRC32 == 0xaf65aa84)) {
 			FCEU_printf(
@@ -40,5 +54,7 @@ void Mapper004_Init(CartInfo *info) {
 		}
 	}
 
-	GenMMC3_Init(info, ws, info->battery);
+	MMC3_Init(info, ws, info->battery);
+	MMC3_pwrap = M004PW;
+	MMC3_cwrap = M004CW;
 }

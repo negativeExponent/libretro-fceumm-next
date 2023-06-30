@@ -21,41 +21,73 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M249PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 0x02) {
-		if (V < 0x20) {
-			V = (V & 0x01) | ((V >> 3) & 0x02) | ((V >> 1) & 0x04) | ((V << 2) & 0x08) | ((V << 2) & 0x10);
-		} else {
-			V -= 0x20;
-			V = (V & 0x03) | ((V >> 1) & 0x04) | ((V >> 4) & 0x08) | ((V >> 2) & 0x10) | ((V << 3) & 0x20) | ((V << 2) & 0xC0);
+static uint8 reg;
+
+static uint8 prg_pattern[4][4] = {
+	{ 3, 4, 2, 1 },
+	{ 4, 3, 1, 2 },
+	{ 1, 2, 3, 4 },
+	{ 2, 1, 4, 3 },
+};
+
+static uint8 chr_pattern[8][6] = {
+	{ 5, 2, 6, 7, 4, 3 },
+	{ 4, 5, 3, 2, 7, 6 },
+	{ 2, 3, 4, 5, 6, 7 },
+	{ 6, 4, 2, 3, 7, 5 },
+	{ 5, 3, 7, 6, 2, 4 },
+	{ 4, 2, 5, 6, 7, 3 },
+	{ 3, 6, 4, 5, 2, 7 },
+	{ 2, 5, 6, 7, 3, 4 },
+};
+
+static uint32 scrambleBankOrder(uint32 V, const uint8 *source, const uint8 *target, uint32 length) {
+	uint32 bank = 0;
+	uint32 bit = 0;
+
+	for (bit = 0; bit < 8; bit++) {
+		if (V & (0x01 << bit)) {
+			uint32 index = 0;
+
+			for (index = 0; index < length; index++) {
+				if (source[index] == bit) {
+					break;
+				}
+			}
+			bank |= (0x01 << (index == length ? bit : target[index]));
 		}
 	}
-	setprg8(A, V);
+	return bank;
+}
+
+static void M249PW(uint32 A, uint8 V) {
+	uint32 bank = scrambleBankOrder(V, prg_pattern[reg & 0x03], prg_pattern[(iNESCart.mapper == 249) ? 0 : 2], 4);
+
+	setprg8(A, bank);
 }
 
 static void M249CW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 0x2) {
-		V = (V & 0x03) | ((V >> 1) & 0x04) | ((V >> 4) & 0x08) | ((V >> 2) & 0x10) | ((V << 3) & 0x20) | ((V << 2) & 0xC0);
-    }
-	setchr1(A, V);
+	uint32 bank = scrambleBankOrder(V, chr_pattern[reg & 0x07], chr_pattern[(iNESCart.mapper == 249) ? 0 : 2], 6);
+
+	setchr1(A, bank);
 }
 
 static DECLFW(M249Write) {
-	mmc3.expregs[0] = V;
+	reg = V;
 	MMC3_FixPRG();
 	MMC3_FixCHR();
 }
 
 static void M249Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
-	SetWriteHandler(0x5000, 0x5000, M249Write);
+	reg = 0;
+	MMC3_Power();
+	SetWriteHandler(0x5000, 0x5FFF, M249Write);
 }
 
 void Mapper249_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
 	MMC3_cwrap = M249CW;
 	MMC3_pwrap = M249PW;
 	info->Power = M249Power;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

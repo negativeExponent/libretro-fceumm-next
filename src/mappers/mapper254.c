@@ -21,36 +21,38 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static DECLFR(M254ReadWRAM) {
-	if (mmc3.expregs[0]) {
-		return X.DB ^ mmc3.expregs[0];
+	if (reg == TRUE) {
+		return X.DB ^ (reg * 0x80);
 	}
     return CartBR(A);
 }
 
 static DECLFW(M254WriteWRAM) {
 	if (V & 0x01) {
-		mmc3.expregs[0] = 0;
+		reg = FALSE;
 	}
 	CartBW(A, V);
 }
 
 static void M254Reset(void) {
-	mmc3.expregs[0] = 0x80;
+	reg = TRUE;
 	MMC3_FixCHR();
 	MMC3_FixPRG();
 }
 
 static void M254Power(void) {
-    mmc3.expregs[0] = 0x80;
-	GenMMC3Power();
+    reg = 0x80;
+	MMC3_Power();
 	SetReadHandler(0x6000, 0x7FFF, M254ReadWRAM);
     SetWriteHandler(0x6000, 0x7FFF, M254WriteWRAM);
 }
 
 void Mapper254_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
 	info->Power = M254Power;
 	info->Reset = M254Reset;
-	AddExState(&mmc3.expregs[0], 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

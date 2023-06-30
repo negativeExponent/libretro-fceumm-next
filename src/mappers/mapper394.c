@@ -26,19 +26,22 @@
 
 static uint8 reg[4];
 
-static uint32 M394_JYASIC_GetPRGBank(uint32 V) {
+static uint32 M394_PRGBank_JY(uint32 V) {
     uint8 base = ((reg[1] << 5) & 0x020) | ((reg[3] << 1) & 0x010);
+
 	return (base | (V & 0x1F));
 }
 
-static uint32 M394_JYASIC_GetCHRBank(uint32 V) {
+static uint32 M394_CHRBank_JY(uint32 V) {
     uint32 base = ((reg[1] << 8) & 0x100) | ((reg[3] << 1) & 0x080);
+
 	return (base | (V & 0x0FF));
 }
 
-static void M394_MMC3_PW(uint32 A, uint8 V) {
+static void M394PW_MMC3(uint32 A, uint8 V) {
 	uint8 mask = (reg[3] & 0x10) ? 0x1F : 0x0F;
 	uint8 base = ((reg[1] << 5) & 0x020) | ((reg[3] << 1) & 0x010);
+
 	if (reg[1] & 0x08) {
 		setprg8(A, base | (V & mask));
 	} else {
@@ -46,24 +49,24 @@ static void M394_MMC3_PW(uint32 A, uint8 V) {
 	}
 }
 
-static void M394_MMC3_CW(uint32 A, uint8 V) {
+static void M394CW_MMC3(uint32 A, uint8 V) {
 	uint16 mask  = (reg[3] & 0x80) ? 0xFF : 0x7F;
 	uint16 base = ((reg[3] << 1) & 0x080) | ((reg[1] << 8) & 0x100);
+
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void M394StateRestore(int version);
-
 static DECLFW(M394WriteReg) {
 	uint8 oldMode = reg[1];
+
 	A &= 3;
 	reg[A] = V;
 	if (A == 1) {
-		if ((~oldMode & 0x10) && (V & 0x10)) {
+		if (!(oldMode & 0x10) && (V & 0x10)) {
 			GenJYASICPower();
-        } else if ((oldMode & 0x10) && (~V & 0x10)) {
+        } else if ((oldMode & 0x10) && !(V & 0x10)) {
 			JYASIC_restoreWriteHandlers();
-			GenMMC3Power();
+			MMC3_Power();
 		}
 	} else {
 		if (reg[1] & 0x10) {
@@ -79,6 +82,7 @@ static DECLFW(M394WriteReg) {
 
 static void M394StateRestore(int version) {
 	int i;
+
 	JYASIC_restoreWriteHandlers();
 	if (reg[1] & 0x10) {
 		SetWriteHandler(0x5000, 0x5FFF, writeALU);
@@ -113,19 +117,19 @@ static void M394Power(void) {
 	reg[1] = 0x0F; /* start in MMC3 mode */
 	reg[2] = 0x00;
 	reg[3] = 0x10;
-	GenMMC3Power();
+	MMC3_Power();
 	SetWriteHandler(0x5000, 0x5FFF, M394WriteReg);
 }
 
 void Mapper394_Init(CartInfo *info) {
 	/* Multicart */
 	JYASIC_Init(info, TRUE);
-	JYASIC_GetPRGBank = M394_JYASIC_GetPRGBank;
-	JYASIC_GetCHRBank = M394_JYASIC_GetCHRBank;
+	JYASIC_GetPRGBank = M394_PRGBank_JY;
+	JYASIC_GetCHRBank = M394_CHRBank_JY;
 
-    GenMMC3_Init(info, 0, 0);
-    MMC3_pwrap = M394_MMC3_PW;
-	MMC3_cwrap = M394_MMC3_CW;
+    MMC3_Init(info, 0, 0);
+    MMC3_pwrap = M394PW_MMC3;
+	MMC3_cwrap = M394CW_MMC3;
 
 	info->Reset = M394Power;
 	info->Power = M394Power;

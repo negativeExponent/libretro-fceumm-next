@@ -21,37 +21,39 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static void M047PW(uint32 A, uint8 V) {
-	setprg8(A, (mmc3.expregs[0] << 4) | (V & 0x0F));
+	setprg8(A, (reg << 4) | (V & 0x0F));
 }
 
 static void M047CW(uint32 A, uint8 V) {
-	setchr1(A, (mmc3.expregs[0] << 7) | (V & 0x7F));
+	setchr1(A, (reg << 7) | (V & 0x7F));
 }
 
 static DECLFW(M047Write) {
-    if (MMC3CanWriteToWRAM()) {
-	    mmc3.expregs[0] = V;
+    if (MMC3_WRAMWritable(A)) {
+	    reg = V;
 	    MMC3_FixPRG();
 	    MMC3_FixCHR();
     }
 }
 
 static void M047Reset(void) {
-	MMC3RegReset();
+	MMC3_Reset();
 }
 
 static void M047Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M047Write);
 }
 
 void Mapper047_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_pwrap = M047PW;
 	MMC3_cwrap = M047CW;
 	info->Power = M047Power;
 	info->Reset = M047Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,24 +28,26 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static const uint8 lut[4] = { 0x00, 0x02, 0x02, 0x03 };
 
 static DECLFW(M238ProtWrite) {
-	mmc3.expregs[0] = lut[V & 3];
+	reg = lut[V & 3];
 }
 
 static DECLFR(M238ProtRead) {
-	return mmc3.expregs[0];
+	return reg;
 }
 
 static void M238Power(void) {
-	GenMMC3Power();
+	MMC3_Power();
 	SetWriteHandler(0x4020, 0x7FFF, M238ProtWrite);
 	SetReadHandler(0x4020, 0x7FFF, M238ProtRead);
 }
 
 void Mapper238_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	info->Power = M238Power;
-	AddExState(mmc3.expregs, 6, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

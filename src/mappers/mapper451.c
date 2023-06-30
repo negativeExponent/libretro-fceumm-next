@@ -25,64 +25,54 @@
 #include "mmc3.h"
 #include "flashrom.h"
 
+static uint8 reg;
+
 static uint8 *FLASHROM = NULL;
 static uint32 FLASHROM_size = 0;
 
-static void M451PW(uint32 A, uint8 V) {
-    switch (A & 0xE000) {
-    case 0x8000: V = 0; break;
-    case 0xE000: V = 0x30; break;
-    default: V &= 0x3F; break;
-    }
-    setprg8r(0x10, A, V);
+static void M451FixPRG(void) {
+	setprg8r(0x10, 0x8000, 0);
+	setprg8r(0x10, 0xA000, 0x10 | ((reg << 2) & 0x08) | (reg & 0x01));
+	setprg8r(0x10, 0xC000, 0x20 | ((reg << 2) & 0x08) | (reg & 0x01));
+	setprg8r(0x10, 0xE000, 0x30);
 }
 
-static DECLFR(M451FlashRead) {
-	return FlashRead(A);
+static void M451FixCHR(void) {
+	setchr8(reg & 0x01);
 }
 
-static DECLFW(M451FlashWrite) {
-	FlashWrite(A, V);
+static DECLFR(M451Read) {
+	return flashrom_read(A);
+}
+
+static DECLFW(M451Write) {
+	flashrom_write(A, V);
 	switch (A & 0xE000) {
     case 0xA000:
-        MMC3_CMDWrite(0xA000, A & 1);
+        MMC3_CMDWrite(0xA000, A & 0x01);
         break;
     case 0xC000:
         A &= 0xFF;
 	    MMC3_IRQWrite(0xC000, A - 1);
 	    MMC3_IRQWrite(0xC001, 0);
-	    MMC3_IRQWrite(0xE000 + (A == 0xFF ? 0 : 1), 0);
+	    MMC3_IRQWrite(0xE000 + ((A == 0xFF) ? 0x00 : 0x01), 0x00);
         break;
     case 0xE000:
-		A = ((A << 2) & 8) | (A & 1);
-		MMC3_CMDWrite(0x8000, 0x40);
-		MMC3_CMDWrite(0x8001, (A << 3) | 0);
-		MMC3_CMDWrite(0x8000, 0x41);
-		MMC3_CMDWrite(0x8001, (A << 3) | 2);
-		MMC3_CMDWrite(0x8000, 0x42);
-		MMC3_CMDWrite(0x8001, (A << 3) | 4);
-		MMC3_CMDWrite(0x8000, 0x43);
-		MMC3_CMDWrite(0x8001, (A << 3) | 5);
-		MMC3_CMDWrite(0x8000, 0x44);
-		MMC3_CMDWrite(0x8001, (A << 3) | 6);
-		MMC3_CMDWrite(0x8000, 0x45);
-		MMC3_CMDWrite(0x8001, (A << 3) | 7);
-		MMC3_CMDWrite(0x8000, 0x46);
-		MMC3_CMDWrite(0x8001, 0x20 | A);
-		MMC3_CMDWrite(0x8000, 0x47);
-		MMC3_CMDWrite(0x8001, 0x10 | A);
+		reg = A & 0x03;
+		MMC3_FixPRG();
+		MMC3_FixCHR();
         break;
 	}
 }
 
 static void M451Power(void) {
-	GenMMC3Power();
-	SetReadHandler(0x8000, 0xFFFF, M451FlashRead);
-	SetWriteHandler(0x8000, 0xFFFF, M451FlashWrite);
+	MMC3_Power();
+	SetReadHandler(0x8000, 0xFFFF, M451Read);
+	SetWriteHandler(0x8000, 0xFFFF, M451Write);
 }
 
 static void M451Close() {
-    GenMMC3Close();
+    MMC3_Close();
 	if (FLASHROM)
 		FCEU_free(FLASHROM);
 	FLASHROM = NULL;
@@ -90,12 +80,15 @@ static void M451Close() {
 
 void Mapper451_Init(CartInfo *info) {
 	uint32 w, r;
-	GenMMC3_Init(info, 0, 0);
+
+	MMC3_Init(info, 0, 0);
 	info->Power = M451Power;
 	info->Close = M451Close;
-    MMC3_pwrap = M451PW;
-	MapIRQHook = FlashCPUHook;
+    MMC3_FixPRG = M451FixPRG;
+	MMC3_FixCHR = M451FixCHR;
+	MapIRQHook = flashrom_cpucycle;
 
+	info->battery = 1;
 	FLASHROM_size = PRGsize[0];
 	FLASHROM = (uint8 *)FCEU_gmalloc(FLASHROM_size);
 	info->SaveGame[0]    = FLASHROM;
@@ -107,5 +100,5 @@ void Mapper451_Init(CartInfo *info) {
 		++r;
 	}
 	SetupCartPRGMapping(0x10, FLASHROM, FLASHROM_size, 0);
-	Flash_Init(FLASHROM, FLASHROM_size, 0x37, 0x86, 65536, 0x0555, 0x02AA);
+	flashrom_init(FLASHROM, FLASHROM_size, 0x37, 0x86, 65536, 0x0555, 0x02AA);
 }

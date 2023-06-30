@@ -47,8 +47,8 @@ static void M222IRQ(void) {
 
 static DECLFW(M222WriteCHR) {
 	if (~A & 0x01) {
-		VRC24Write(A, V);
-		VRC24Write(A | 0x01, V >> 4);
+		VRC24_Write(A, V);
+		VRC24_Write(A | 0x01, V >> 4);
 	}
 }
 
@@ -63,14 +63,14 @@ static DECLFW(M222WriteIRQ) {
 }
 
 static void M222Power(void) {
-	GenVRC24Power();
+	VRC24_Power();
 	SetWriteHandler(0xB000, 0xEFFF, M222WriteCHR);
 	SetWriteHandler(0xF000, 0xFFFF, M222WriteIRQ);
 
 }
 
 void Mapper222_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
+	VRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
 	info->Power = M222Power;
 	MapIRQHook = NULL;
 	GameHBIRQHook = M222IRQ;

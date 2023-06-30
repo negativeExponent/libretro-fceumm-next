@@ -48,12 +48,17 @@ static uint8 vrc2and4_VRC4;
 static uint32 vrc2and4_A0;
 static uint32 vrc2and4_A1;
 
+void (*VRC24_pwrap)(uint32 A, uint8 V);
+void (*VRC24_cwrap)(uint32 A, uint32 V);
+void (*VRC24_mwrap)(uint8 V);
+void (*VRC24_miscWrite)(uint32 A, uint8 V);
+
 VRC24 vrc24;
 
 static SFORMAT StateRegs[] =
 {
-	{ vrc24.prgreg, 2, "PREG" },
-	{ vrc24.chrreg, 16, "CREG" },
+	{ vrc24.prg, 2, "PREG" },
+	{ vrc24.chr, 16, "CREG" },
 	{ &vrc24.cmd, 1, "CMDR" },
 	{ &vrc24.mirr, 1, "MIRR" },
 	{ &vrc24.latch, 1, "LATC" },
@@ -61,26 +66,35 @@ static SFORMAT StateRegs[] =
 	{ 0 }
 };
 
-void FixVRC24PRG(void) {
+void VRC24_FixPRG(void) {
 	if (vrc24.cmd & 2) {
-		vrc24.pwrap(0x8000, ~1);
-		vrc24.pwrap(0xC000, vrc24.prgreg[0]);
+		VRC24_pwrap(0x8000, ~1);
+		VRC24_pwrap(0xC000, vrc24.prg[0]);
 	} else {
-		vrc24.pwrap(0x8000, vrc24.prgreg[0]);
-		vrc24.pwrap(0xC000, ~1);
+		VRC24_pwrap(0x8000, vrc24.prg[0]);
+		VRC24_pwrap(0xC000, ~1);
 	}
-	vrc24.pwrap(0xA000, vrc24.prgreg[1]);
-	vrc24.pwrap(0xE000, ~0);
+	VRC24_pwrap(0xA000, vrc24.prg[1]);
+	VRC24_pwrap(0xE000, ~0);
 }
 
-void FixVRC24CHR(void) {
+void VRC24_FixCHR(void) {
 	int i;
 
 	for (i = 0; i < 8; i++) {
-		vrc24.cwrap(0x0400 * i, vrc24.chrreg[i]);
+		VRC24_cwrap(0x0400 * i, vrc24.chr[i]);
 	}
-	if (vrc24.mwrap) {
-		vrc24.mwrap(vrc24.mirr);
+	if (VRC24_mwrap) {
+		VRC24_mwrap(vrc24.mirr);
+	}
+}
+
+void VRC24_FixMIR(void) {
+	switch (vrc24.mirr & (vrc2and4_VRC4 ? 0x03 : 0x01)) {
+	case 0: setmirror(MI_V); break;
+	case 1: setmirror(MI_H); break;
+	case 2: setmirror(MI_0); break;
+	case 3: setmirror(MI_1); break;
 	}
 }
 
@@ -100,18 +114,18 @@ static DECLFR(VRC24LatchRead) {
 
 static DECLFW(VRC24LatchWrite) {
 	vrc24.latch = V;
-	FixVRC24PRG();
-	FixVRC24CHR();
+	VRC24_FixPRG();
+	VRC24_FixCHR();
 }
 
-DECLFW(VRC24Write) {
+DECLFW(VRC24_Write) {
 	uint8 index;
 
 	switch (A & 0xF000) {
 	case 0x8000:
 	case 0xA000:
-		vrc24.prgreg[(A >> 13) & 0x01] = V & 0x1F;
-		FixVRC24PRG();
+		vrc24.prg[(A >> 13) & 0x01] = V & 0x1F;
+		VRC24_FixPRG();
 		break;
 
 	case 0x9000:
@@ -120,18 +134,18 @@ DECLFW(VRC24Write) {
 		case 0:
 		case 1:
 			if (V != 0xFF) {
-				if (vrc24.mwrap) {
-					vrc24.mwrap(V);
+				if (VRC24_mwrap) {
+					VRC24_mwrap(V);
 				}
 			}
 			break;
 		case 2:
 			vrc24.cmd = V;
-			FixVRC24PRG();
+			VRC24_FixPRG();
 			break;
 		case 3:
-			if (vrc24.writeMisc) {
-				vrc24.writeMisc(A, V);
+			if (VRC24_miscWrite) {
+				VRC24_miscWrite(A, V);
 			}
 			break;
 		}
@@ -151,11 +165,11 @@ DECLFW(VRC24Write) {
 		index = (((A - 0xB000) >> 11) & 0x06) | ((A & vrc2and4_A1) ? 0x01 : 0x00);
 		if (A & vrc2and4_A0) {
 			/* m25 can be 512K, rest are 256K or less */
-			vrc24.chrreg[index] = (vrc24.chrreg[index] & 0x000F) | (V << 4);
+			vrc24.chr[index] = (vrc24.chr[index] & 0x000F) | (V << 4);
 		} else {
-			vrc24.chrreg[index] = (vrc24.chrreg[index] & 0x0FF0) | (V & 0x0F);
+			vrc24.chr[index] = (vrc24.chr[index] & 0x0FF0) | (V & 0x0F);
 		}
-		vrc24.cwrap(index << 10, vrc24.chrreg[index]);
+		VRC24_cwrap(index << 10, vrc24.chr[index]);
 		break;
 	}
 }
@@ -170,35 +184,37 @@ static void GENCWRAP(uint32 A, uint32 V) {
 
 static void GENMWRAP(uint8 V) {
 	vrc24.mirr = V;
-
-	switch (V & (vrc2and4_VRC4 ? 0x03 : 0x01)) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
-	}
+	VRC24_FixMIR();
 }
 
-void GenVRC24Power(void) {
-	vrc24.prgreg[0] = 0;
-	vrc24.prgreg[1] = 1;
+void VRC24_IRQCPUHook(int a) {
+	VRCIRQ_CPUHook(a);
+}
 
-	vrc24.chrreg[0] = 0;
-	vrc24.chrreg[1] = 1;
-	vrc24.chrreg[2] = 2;
-	vrc24.chrreg[3] = 3;
-	vrc24.chrreg[4] = 4;
-	vrc24.chrreg[5] = 5;
-	vrc24.chrreg[6] = 6;
-	vrc24.chrreg[7] = 7;
+void VRC24_Reset(void) {
+	vrc24.prg[0] = 0;
+	vrc24.prg[1] = 1;
+
+	vrc24.chr[0] = 0;
+	vrc24.chr[1] = 1;
+	vrc24.chr[2] = 2;
+	vrc24.chr[3] = 3;
+	vrc24.chr[4] = 4;
+	vrc24.chr[5] = 5;
+	vrc24.chr[6] = 6;
+	vrc24.chr[7] = 7;
 
 	vrc24.cmd = vrc24.mirr = 0;
 
-	FixVRC24PRG();
-	FixVRC24CHR();
+	VRC24_FixPRG();
+	VRC24_FixCHR();
+}
+
+void VRC24_Power(void) {
+	VRC24_Reset();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, VRC24Write);
+	SetWriteHandler(0x8000, 0xFFFF, VRC24_Write);
 
 	if (WRAMSIZE) {
 		setprg8r(0x10, 0x6000, 0);
@@ -216,23 +232,23 @@ void GenVRC24Power(void) {
 	}
 }
 
-void GenVRC24Restore(int version) {
-	FixVRC24PRG();
-	FixVRC24CHR();
+static void StateRestore(int version) {
+	VRC24_FixPRG();
+	VRC24_FixCHR();
 }
 
-void GenVRC24Close(void) {
+void VRC24_Close(void) {
 	if (WRAM) {
 		FCEU_gfree(WRAM);
 	}
 	WRAM = NULL;
 }
 
-void GenVRC24_Init(CartInfo *info, uint8 vrc4, uint32 A0, uint32 A1, int wram, int irqRepeated) {
-	vrc24.pwrap = GENPWRAP;
-	vrc24.cwrap = GENCWRAP;
-	vrc24.mwrap = GENMWRAP;
-	vrc24.writeMisc = NULL;
+void VRC24_Init(CartInfo *info, uint8 vrc4, uint32 A0, uint32 A1, int wram, int irqRepeated) {
+	VRC24_pwrap = GENPWRAP;
+	VRC24_cwrap = GENCWRAP;
+	VRC24_mwrap = GENMWRAP;
+	VRC24_miscWrite = NULL;
 
 	vrc2and4_A0 = A0;
 	vrc2and4_A1 = A1;
@@ -258,9 +274,11 @@ void GenVRC24_Init(CartInfo *info, uint8 vrc4, uint32 A0, uint32 A1, int wram, i
 
 	AddExState(&StateRegs, ~0, 0, 0);
 
-	info->Power = GenVRC24Power;
-	info->Close = GenVRC24Close;
-	GameStateRestore = GenVRC24Restore;
+	info->Power = VRC24_Power;
+	info->Close = VRC24_Close;
+	GameStateRestore = StateRestore;
 
 	VRCIRQ_Init(irqRepeated);
+	MapIRQHook = VRCIRQ_CPUHook;
+	AddExState(&VRCIRQ_StateRegs, ~0, 0, 0);
 }

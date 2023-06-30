@@ -30,31 +30,35 @@ static void M044PW(uint32 A, uint8 V) {
 
 static void M044CW(uint32 A, uint8 V) {
     uint16 base = (mmc3.wram << 7) & 0x380;
-    uint8 mask = ((mmc3.wram & 0x06) == 0x06) ? 0xFF : 0x7F;
+    uint16 mask = ((mmc3.wram & 0x06) == 0x06) ? 0xFF : 0x7F;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW (M044WriteA000) {
-    A &= 0xE001;
-    MMC3_CMDWrite(A, V);
-    if (A == 0xA001) {
+    switch (A & 0xE001) {
+    case 0xA001:
+        mmc3.wram = V;
         MMC3_FixPRG();
         MMC3_FixCHR();
+        break;
+    default:
+        MMC3_CMDWrite(A, V);
+        break;
     }
 }
 
 static void M044Reset(void) {
-    MMC3RegReset();
+    MMC3_Reset();
 }
 
 static void M044Power(void) {
-	GenMMC3Power();
+	MMC3_Power();
     SetWriteHandler(0xA000, 0xBFFF, M044WriteA000);
 }
 
 void Mapper044_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
 	MMC3_cwrap = M044CW;
 	MMC3_pwrap = M044PW;
 	info->Power = M044Power;

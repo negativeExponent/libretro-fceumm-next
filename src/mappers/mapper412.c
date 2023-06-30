@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,54 +28,58 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg[4];
+
 static void M412CW(uint32 A, uint8 V) {
-    if (mmc3.expregs[2] & 2) {
-        setchr8(mmc3.expregs[0] >> 2);
+    if (reg[2] & 0x02) {
+        setchr8(reg[0] >> 2);
     } else {
-        setchr1(A, (mmc3.expregs[1] & 0x80) | (V & 0x7F));
+        setchr1(A, (reg[1] & 0x80) | (V & 0x7F));
     }
 }
 
 static void M412PW(uint32 A, uint8 V) {
-    if (mmc3.expregs[2] & 2) {
-        uint8 bank = mmc3.expregs[2] >> 3;
-        if (mmc3.expregs[2] & 4) {
+    if (reg[2] & 0x02) {
+        uint8 bank = reg[2] >> 3;
+
+        if (reg[2] & 0x04) {
             setprg32(0x8000, bank >> 1);
         } else {
             setprg16(0x8000, bank);
             setprg16(0xC000, bank);
         }
     } else {
-		uint32 mask = 0x3F & ~((mmc3.expregs[1] << 3) & 0x38);
-		uint32 base = (mmc3.expregs[1] >> 2) & 0x3E;
+		uint32 mask = 0x3F & ~((reg[1] << 3) & 0x38);
+		uint32 base = (reg[1] >> 0x02) & 0x3E;
+
 		setprg8(A, base | (V & mask));
 	}
 }
 
 static DECLFW(M412Write) {
-	if (MMC3CanWriteToWRAM()) {
-		mmc3.expregs[A & 3] = V;
+	if (MMC3_WRAMWritable(A)) {
+		reg[A & 3] = V;
 		MMC3_FixPRG();        
 		MMC3_FixCHR();
 	}
 }
 
 static void M412Reset(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
-	MMC3RegReset();
+	reg[0] = reg[1] = reg[2] = reg[3] = 0;
+	MMC3_Reset();
 }
 
 static void M412Power(void) {
-    mmc3.expregs[0] = mmc3.expregs[1] = mmc3.expregs[2] = mmc3.expregs[3] = 0;
-	GenMMC3Power();
+    reg[0] = reg[1] = reg[2] = reg[3] = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M412Write);
 }
 
 void Mapper412_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M412CW;
 	MMC3_pwrap = M412PW;
 	info->Reset = M412Reset;
 	info->Power = M412Power;
-	AddExState(mmc3.expregs, 4, 0, "EXPR");
+	AddExState(reg, 4, 0, "EXPR");
 }

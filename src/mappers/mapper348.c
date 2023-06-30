@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2008 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,45 +25,47 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static void M348CW(uint32 A, uint8 V) {
-	setchr1(A, ((mmc3.expregs[0] << 5) & 0x180) | (V & 0x7F));
+	setchr1(A, ((reg << 5) & 0x180) | (V & 0x7F));
 }
 
 static void M348PW(uint32 A, uint8 V) {
-	if ((mmc3.expregs[0] & 0x0C) == 0x0C) {
-		setprg8(0x8000, ((mmc3.expregs[0] << 2) & 0x30) | ((mmc3.regs[6] & ~2) & 0x0F));
-		setprg8(0xA000, ((mmc3.expregs[0] << 2) & 0x30) | ((mmc3.regs[7] & ~2) & 0x0F));
-		setprg8(0xC000, ((mmc3.expregs[0] << 2) & 0x30) | ((mmc3.regs[6] |  2) & 0x0F));
-		setprg8(0xE000, ((mmc3.expregs[0] << 2) & 0x30) | ((mmc3.regs[7] |  2) & 0x0F));
+	if ((reg & 0x0C) == 0x0C) {
+		setprg8(0x8000, ((reg << 2) & 0x30) | ((mmc3.reg[6] & ~0x02) & 0x0F));
+		setprg8(0xA000, ((reg << 2) & 0x30) | ((mmc3.reg[7] & ~0x02) & 0x0F));
+		setprg8(0xC000, ((reg << 2) & 0x30) | ((mmc3.reg[6] |  0x02) & 0x0F));
+		setprg8(0xE000, ((reg << 2) & 0x30) | ((mmc3.reg[7] |  0x02) & 0x0F));
 	} else {
-		setprg8(A, ((mmc3.expregs[0] << 2) & 0x30) | (V & 0x0F));
+		setprg8(A, ((reg << 2) & 0x30) | (V & 0x0F));
 	}
 }
 
 static DECLFW(M348Write) {
-	if (MMC3CanWriteToWRAM()) {
-		mmc3.expregs[0] = V;
+	if (MMC3_WRAMWritable(A)) {
+		reg = V;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
 }
 
 static void M348Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static void M348Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6800, 0x68FF, M348Write);
 }
 
 void Mapper348_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_pwrap = M348PW;
 	MMC3_cwrap = M348CW;
 	info->Power = M348Power;
 	info->Reset = M348Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

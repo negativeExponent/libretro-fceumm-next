@@ -33,7 +33,7 @@ static void M119CW(uint32 A, uint8 V) {
 }
 
 static void M119Close(void) {
-    GenMMC3Close();
+    MMC3_Close();
     if (CHRRAM) {
         FCEU_free(CHRRAM);
         CHRRAM = NULL;
@@ -41,7 +41,7 @@ static void M119Close(void) {
 }
 
 void Mapper119_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
     info->Close = M119Close;
 	MMC3_cwrap = M119CW;
 	CHRRAMSIZE = 8192;

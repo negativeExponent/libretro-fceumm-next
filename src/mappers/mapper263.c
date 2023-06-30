@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,12 +41,12 @@ static DECLFW(M263IRQWrite) {
 }
 
 static void M263Power(void) {
-	GenMMC3Power();
+	MMC3_Power();
 	SetWriteHandler(0x8000, 0xA000, M263CMDWrite);
 	SetWriteHandler(0xC000, 0xF000, M263IRQWrite);
 }
 
 void Mapper263_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	info->Power = M263Power;
 }

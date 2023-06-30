@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2020
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,40 +28,44 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg[2];
+
 static void M395CW(uint32 A, uint8 V) {
-	uint8 mask = mmc3.expregs[1] & 0x40 ? 0x7F : 0xFF;
-	setchr1(A, (V & mask) | ((mmc3.expregs[1] & 0x10) << 3) | ((mmc3.expregs[0] & 0x30) << 4) | ((mmc3.expregs[1] & 0x20) << 5));
+	uint8 mask = (reg[1] & 0x40) ? 0x7F : 0xFF;
+
+	setchr1(A, ((reg[0] & 0x30) << 4) | ((reg[1] & 0x20) << 5) | ((reg[1] & 0x10) << 3) | (V & mask));
 }
 
 static void M395PW(uint32 A, uint8 V) {
-	uint8 mask = mmc3.expregs[1] & 8 ? 0x0F : 0x1F;
-	setprg8(A, (V & mask) | ((mmc3.expregs[0] & 0x30) << 1) | ((mmc3.expregs[0] & 8) << 4) | ((mmc3.expregs[1] & 1) << 4));
+	uint8 mask = (reg[1] & 0x08) ? 0x0F : 0x1F;
+
+	setprg8(A, ((reg[0] & 0x30) << 1) | ((reg[0] & 8) << 4) | ((reg[1] & 1) << 4) | (V & mask));
 }
 
 static DECLFW(M395Write) {
-	if (!(mmc3.expregs[1] & 0x80)) {
-		mmc3.expregs[(A >> 4) & 1] = V;
+	if (!(reg[1] & 0x80)) {
+		reg[(A >> 4) & 1] = V;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
 }
 
 static void M395Reset(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = 0;
-	MMC3RegReset();
+	reg[0] = reg[1] = 0;
+	MMC3_Reset();
 }
 
 static void M395Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = 0;
-	GenMMC3Power();
+	reg[0] = reg[1] = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M395Write);
 }
 
 void Mapper395_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M395CW;
 	MMC3_pwrap = M395PW;
 	info->Power = M395Power;
 	info->Reset = M395Reset;
-	AddExState(mmc3.expregs, 2, 0, "EXPR");
+	AddExState(reg, 2, 0, "EXPR");
 }

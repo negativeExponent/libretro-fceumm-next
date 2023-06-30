@@ -21,93 +21,89 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg[2];
+static uint8 dipsw;
+
 static uint32 M114_addr[2][8] = {
 	{ 0xA001, 0xA000, 0x8000, 0xC000, 0x8001, 0xC001, 0xE000, 0xE001 }, /* 0: Aladdin, The Lion King */
 	{ 0xA001, 0x8001, 0x8000, 0xC001, 0xA000, 0xC000, 0xE000, 0xE001 }  /* 1: Boogerman */
 };
+
 static uint8 M114_index[2][8] = {
 	{ 0, 3, 1, 5, 6, 7, 2, 4 }, /* 0: Aladdin, The Lion King */
 	{ 0, 2, 5, 3, 6, 1, 7, 4 }, /* 1: Boogerman */
 };
 
-static void M114PRG(void) {
-	if (mmc3.expregs[0] & 0x80) {
-        uint8 bank = mmc3.expregs[0] & 0x0F;
-		if (mmc3.expregs[0] & 0x20)
-			setprg32(0x8000, bank >> 1);
-		else {
-			setprg16(0x8000, bank);
-			setprg16(0xC000, bank);
+static void M114PW(uint32 A, uint8 V) {
+	if (reg[0] & 0x80) {
+		if (reg[0] & 0x20) {
+			setprg32(0x8000, (reg[0] & 0x0F) >> 1);
+		} else {
+			setprg16(0x8000, reg[0] & 0x0F);
+			setprg16(0xC000, reg[0] & 0x0F);
 		}
 	} else {
-        int cbase = (mmc3.cmd & 0x40) << 7;
-		setprg8(0x8000 ^ cbase, mmc3.regs[6]);
-        setprg8(0xA000, mmc3.regs[7]);
-        setprg8(0xC000 ^ cbase, ~1);
-        setprg8(0xE000, ~0);
-    }
+		setprg8(A, V);
+	}
 }
 
-static void M114CWRAP(uint32 A, uint8 V) {
-    uint16 base = (mmc3.expregs[1] << 8) & 0x100;
-	setchr1(A, base | V);
+static void M114CW(uint32 A, uint8 V) {
+	setchr1(A, ((reg[1] << 8) & 0x100) | (V & 0x0FF));
 }
 
-static DECLFW(M114ExWrite) {
-	mmc3.expregs[A & 0x01] = V;
+static DECLFW(M114WriteReg) {
+	reg[A & 0x01] = V;
 	MMC3_FixPRG();
-    MMC3_FixCHR();
+	MMC3_FixCHR();
 }
 
 static DECLFW(M114Write) {
-    A = M114_addr[iNESCart.submapper & 0x01][((A >> 12) & 0x06) | (A & 0x01)];
-    if (A == 0x8000) {
-        V = (V & 0xC0) | M114_index[iNESCart.submapper & 0x01][V & 0x07];
-    }
-    switch (A) {
-    case 0x8001:
-        switch (mmc3.cmd & 0x07) {
-        case 6:
-        case 7:
-            mmc3.regs[mmc3.cmd & 0x07] = V;
-            MMC3_FixPRG();
-            break;
-        default:
-            MMC3_CMDWrite(A, V);
-            break;
-        }
-        break;
-    default:
-        MMC3_Write(A, V);
-        break;
-    }
+	A = M114_addr[iNESCart.submapper & 0x01][((A >> 12) & 0x06) | (A & 0x01)];
+	switch (A & 0xE001) {
+	case 0x8000:
+		V = (V & 0xF8) | M114_index[iNESCart.submapper & 0x01][V & 0x07];
+		MMC3_CMDWrite(A, V);
+		break;
+	default:
+		MMC3_Write(A, V);
+		break;
+	}
+}
+
+static DECLFR(M114ReadDip) {
+	if ((A & 0x03) == 0x02) {
+		return (X.DB & ~0x07) | (dipsw & 0x07);
+	}
+	return X.DB;
 }
 
 static void M114Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = 0;
-	GenMMC3Power();
-	SetWriteHandler(0x6000, 0x7FFF, M114ExWrite);
+	reg[0] = reg[1] = 0;
+	MMC3_Power();
+	SetReadHandler(0x6000, 0x7FFF, M114ReadDip);
+	SetWriteHandler(0x6000, 0x7FFF, M114WriteReg);
 	SetWriteHandler(0x8000, 0xFFFF, M114Write);
 }
 
 static void M114Reset(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = 0;
-	MMC3RegReset();
+	reg[0] = reg[1] = 0;
+	MMC3_Reset();
 }
 
 void Mapper114_Init(CartInfo *info) {
 	isRevB = 0;
 	/* Use NES 2.0 submapper to identify scrambling pattern, otherwise CRC32 for Boogerman and test rom */
-    if (!info->iNES2) {
-        if ((info->CRC32 == 0x80eb1839) || (info->CRC32 == 0x071e4ee8)) {
-            info->submapper = 1;
-        }
-    }
+	if (!info->iNES2) {
+		if ((info->CRC32 == 0x80eb1839) || (info->CRC32 == 0x071e4ee8)) {
+			info->submapper = 1;
+		}
+	}
 
-	GenMMC3_Init(info, 0, 0);
-	MMC3_FixPRG = M114PRG;
-	MMC3_cwrap = M114CWRAP;
+	MMC3_Init(info, 0, 0);
+	MMC3_pwrap = M114PW;
+	MMC3_cwrap = M114CW;
 	info->Power = M114Power;
 	info->Reset = M114Reset;
-	AddExState(mmc3.expregs, 2, 0, "EXPR");
+	AddExState(reg, 2, 0, "EXPR");
+	AddExState(&dipsw, 1, 0, "DPSW");
 }

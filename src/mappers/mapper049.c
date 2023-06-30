@@ -27,47 +27,44 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static void M049PW(uint32 A, uint8 V) {
-	if (mmc3.expregs[0] & 1) {
-		setprg8(A, ((mmc3.expregs[0] >> 2) & ~0x0F) | (V & 0x0F));
+	if (reg & 0x01) {
+		setprg8(A, ((reg >> 2) & ~0x0F) | (V & 0x0F));
 	} else {
-		setprg32(0x8000, (mmc3.expregs[0] >> 4) & 3);
+		setprg32(0x8000, (reg >> 4) & 0x03);
 	}
 }
 
 static void M049CW(uint32 A, uint8 V) {
-	setchr1(A, ((mmc3.expregs[0] << 1) & 0x180) | (V & 0x7F));
+	setchr1(A, ((reg << 1) & 0x180) | (V & 0x7F));
 }
 
 static DECLFW(M049Write) {
-	if (MMC3CanWriteToWRAM()) {
-		mmc3.expregs[0] = V;
+	if (MMC3_WRAMWritable(A)) {
+		reg = V;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
 }
 
 static void M049Reset(void) {
-	mmc3.expregs[0] = mmc3.expregs[1];
-	MMC3RegReset();
+	reg = ((iNESCart.submapper == 1) || (iNESCart.PRGCRC32 == 0x408EA235)) ? 0x41 : 0x00; /* Street Fighter II Game 4-in-1 */
+	MMC3_Reset();
 }
 
 static void M049Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[1];
-	GenMMC3Power();
+	reg = ((iNESCart.submapper == 1) || (iNESCart.PRGCRC32 == 0x408EA235)) ? 0x41 : 0x00; /* Street Fighter II Game 4-in-1 */
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M049Write);
 }
 
 void Mapper049_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M049CW;
 	MMC3_pwrap = M049PW;
 	info->Reset = M049Reset;
 	info->Power = M049Power;
-	AddExState(mmc3.expregs, 2, 0, "EXPR");
-
-	mmc3.expregs[1] = 0;
-	if (info->PRGCRC32 == 0x408EA235) {
-		mmc3.expregs[1] = 0x41; /* Street Fighter II Game 4-in-1 */
-    }
+	AddExState(&reg, 1, 0, "EXPR");
 }

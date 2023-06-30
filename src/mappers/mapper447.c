@@ -36,16 +36,16 @@ static void M447PW(uint32 A, uint8 V) {
     if (reg & 0x04) {
         if (reg & 2) {
             /* NROM-128 */
-            setprg8(0x8000, (reg << 4) | (vrc24.prgreg[0] & 0x0F));
-            setprg8(0xA000, (reg << 4) | (vrc24.prgreg[1] & 0x0F));
-            setprg8(0xC000, (reg << 4) | (vrc24.prgreg[0] & 0x0F));
-            setprg8(0xE000, (reg << 4) | (vrc24.prgreg[1] & 0x0F));
+            setprg8(0x8000, (reg << 4) | (vrc24.prg[0] & 0x0F));
+            setprg8(0xA000, (reg << 4) | (vrc24.prg[1] & 0x0F));
+            setprg8(0xC000, (reg << 4) | (vrc24.prg[0] & 0x0F));
+            setprg8(0xE000, (reg << 4) | (vrc24.prg[1] & 0x0F));
         } else {
             /* NROM-256 */
-            setprg8(0x8000, (reg << 4) | ((vrc24.prgreg[0] & ~0x02) & 0x0F));
-            setprg8(0xA000, (reg << 4) | ((vrc24.prgreg[1] & ~0x02) & 0x0F));
-            setprg8(0xC000, (reg << 4) | ((vrc24.prgreg[0] |  0x02) & 0x0F));
-            setprg8(0xE000, (reg << 4) | ((vrc24.prgreg[1] |  0x02) & 0x0F));
+            setprg8(0x8000, (reg << 4) | ((vrc24.prg[0] & ~0x02) & 0x0F));
+            setprg8(0xA000, (reg << 4) | ((vrc24.prg[1] & ~0x02) & 0x0F));
+            setprg8(0xC000, (reg << 4) | ((vrc24.prg[0] |  0x02) & 0x0F));
+            setprg8(0xE000, (reg << 4) | ((vrc24.prg[1] |  0x02) & 0x0F));
         }
     } else {
         setprg8(A, (reg << 4) | (V & 0x0F));
@@ -60,28 +60,28 @@ static DECLFW(M447WriteReg) {
     CartBW(A, V);
 	if ((vrc24.cmd & 0x01) && !(reg & 0x01)) {
 		reg = A & 0xFF;
-		FixVRC24PRG();
-        FixVRC24CHR();
+		VRC24_FixPRG();
+        VRC24_FixCHR();
 	}
 }
 
 static void M447Reset(void) {
 	reg = 0;
-	FixVRC24PRG();
-    FixVRC24CHR();
+	VRC24_FixPRG();
+    VRC24_FixCHR();
 }
 
 static void M447Power(void) {
 	reg = 0;
-	GenVRC24Power();
+	VRC24_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M447WriteReg);
 }
 
 void Mapper447_Init(CartInfo *info) {
-    GenVRC24_Init(info, VRC4, 0x04, 0x08, 1, 1);
+    VRC24_Init(info, VRC4, 0x04, 0x08, 1, 1);
 	info->Reset = M447Reset;
 	info->Power = M447Power;
-    vrc24.pwrap = M447PW;
-    vrc24.cwrap = M447CW;
+    VRC24_pwrap = M447PW;
+    VRC24_cwrap = M447CW;
 	AddExState(StateRegs, ~0, 0, 0);
 }

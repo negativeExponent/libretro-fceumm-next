@@ -25,69 +25,63 @@
 #include "mmc3.h"
 #include "flashrom.h"
 
-static uint8 *FLASHROM = NULL;
+static uint8 *FLASHROM_data = NULL;
 static uint32 FLASHROM_size = 0;
 
-static uint8 submapper;
-
 static void M406PW(uint32 A, uint8 V) {
-    setprg8r(0x10, A, V & 0x3F);
+	setprg8r(0x10, A, V & 0x3F);
 }
 
-static DECLFR(M406FlashRead) {
-	return FlashRead(A);
+static DECLFR(M406Read) {
+	return flashrom_read(A);
 }
 
-static DECLFW(M406FlashWrite) {
-    FlashWrite(A, V);
-    if (submapper == 0) {
-        A = (A & 0xFFFC) | ((A << 1) & 2) | ((A >> 1) & 1);
+static DECLFW(M406Write) {
+	flashrom_write(A, V);
+	if (iNESCart.submapper == 0) {
+		A = (A & 0xFFFC) | ((A << 1) & 2) | ((A >> 1) & 1);
 	} else if ((A <= 0x9000) || (A >= 0xE000)) {
-        A = A ^ 0x6000;
+		A = A ^ 0x6000;
 	}
-    if (A >= 0xC000) {
-        MMC3_IRQWrite(A, V);
-    } else {
-        MMC3_CMDWrite(A, V);
-    }
+	MMC3_Write(A, V);
 }
 
 static void M406Power(void) {
-	GenMMC3Power();
-	SetReadHandler(0x8000, 0xFFFF, M406FlashRead);
-	SetWriteHandler(0x8000, 0xFFFF, M406FlashWrite);
+	MMC3_Power();
+	SetReadHandler(0x8000, 0xFFFF, M406Read);
+	SetWriteHandler(0x8000, 0xFFFF, M406Write);
 }
 
 static void M406Close() {
-    GenMMC3Close();
-	if (FLASHROM)
-		FCEU_free(FLASHROM);
-	FLASHROM = NULL;
+	MMC3_Close();
+	if (FLASHROM_data) {
+		FCEU_free(FLASHROM_data);
+	}
+	FLASHROM_data = NULL;
 }
 
 void Mapper406_Init(CartInfo *info) {
-	uint32 w, r;
-	GenMMC3_Init(info, 0, 0);
+	uint32 w, r, id;
+
+	MMC3_Init(info, 0, 0);
 	info->Power = M406Power;
 	info->Close = M406Close;
-    MMC3_pwrap = M406PW;
-    submapper = info->submapper;
-	MapIRQHook = FlashCPUHook;
+	MMC3_pwrap = M406PW;
+	MapIRQHook = flashrom_cpucycle;
 
+	info->battery = 1;
 	FLASHROM_size = PRGsize[0];
-	FLASHROM = (uint8 *)FCEU_gmalloc(FLASHROM_size);
-	info->SaveGame[0]    = FLASHROM;
+	FLASHROM_data = (uint8 *)FCEU_gmalloc(FLASHROM_size);
+	info->SaveGame[0]    = FLASHROM_data;
 	info->SaveGameLen[0] = FLASHROM_size;
-	AddExState(FLASHROM, FLASHROM_size, 0, "FROM");
-	/* copy PRG ROM into FLASHROM, use it instead of PRG ROM */
+	AddExState(FLASHROM_data, FLASHROM_size, 0, "FROM");
+	/* copy PRG ROM into FLASHROM_data, use it instead of PRG ROM */
 	for (w = 0, r = 0; w < FLASHROM_size; w++) {
-		FLASHROM[w] = PRGptr[0][r];
+		FLASHROM_data[w] = PRGptr[0][r];
 		++r;
 	}
-	SetupCartPRGMapping(0x10, FLASHROM, FLASHROM_size, 0);
-	if (submapper == 0) {
-		Flash_Init(FLASHROM, FLASHROM_size, 0xC2, 0xA4, 65536, 0x5555, 0x02AAA);
-	} else {
-		Flash_Init(FLASHROM, FLASHROM_size, 0x01, 0xA4, 65536, 0x5555, 0x02AAA);
-	}
+	SetupCartPRGMapping(0x10, FLASHROM_data, FLASHROM_size, 0);
+
+	id = (info->submapper == 0) ? 0xC2 : 0x01;
+	flashrom_init(FLASHROM_data, FLASHROM_size, id, 0xA4, 65536, 0x5555, 0x02AAA);
 }

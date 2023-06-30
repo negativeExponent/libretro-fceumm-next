@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- * Copyright (C) 2022
+ * Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,40 +26,44 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-#define OUTER_BANK (((mmc3.expregs[0] & 0x20) >> 2) | (mmc3.expregs[0] & 0x06))
+static uint8 reg;
 
 static void M377CW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | (OUTER_BANK << 6));
+	uint16 base = ((reg & 0x20) >> 2) | (reg & 0x06);
+
+	setchr1(A, (base << 6) | (V & 0x7F));
 }
 
 static void M377PW(uint32 A, uint8 V) {
-	setprg8(A, (V & 0x0F) | (OUTER_BANK << 3));
+	uint16 base = ((reg & 0x20) >> 2) | (reg & 0x06);
+
+	setprg8(A, (base << 3) | (V & 0x0F));
 }
 
 static DECLFW(M377Write) {
-	if (!(mmc3.expregs[0] & 0x80)) {
-		mmc3.expregs[0] = V;
+	if (!(reg & 0x80)) {
+		reg = V;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
 }
 
 static void M377Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static void M377Power(void) {
-	mmc3.expregs[0] = 0;
-	GenMMC3Power();
+	reg = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M377Write);
 }
 
 void Mapper377_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M377CW;
 	MMC3_pwrap = M377PW;
 	info->Reset = M377Reset;
 	info->Power = M377Power;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

@@ -27,35 +27,37 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static void M366PW(uint32 A, uint8 V) {
-	setprg8(A, (V & 0x0f) | mmc3.expregs[0]);
+	setprg8(A, (reg & ~0x0F) | (V & 0x0F));
 }
 
 static void M366CW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | (mmc3.expregs[0] << 3));
+	setchr1(A, ((reg << 3) & ~0x7F) | (V & 0x7F));
 }
 
 static void M366Reset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static DECLFW(M366Write) {
 	CartBW(A, V);
-	if (~mmc3.expregs[0] & 0x80) {
-		mmc3.expregs[0] = A & 0xF0;
+	if (!(reg & 0x80)) {
+		reg = A & 0xF0;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}	
 }
 
 static void M366Power(void) {
-	GenMMC3Power();
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7fff, M366Write);
 }
 
 void Mapper366_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0);
+	MMC3_Init(info, 8, 0);
 	MMC3_pwrap = M366PW;
 	MMC3_cwrap = M366CW;
 	info->Power = M366Power;

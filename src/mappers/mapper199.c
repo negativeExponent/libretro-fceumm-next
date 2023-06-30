@@ -26,15 +26,15 @@ static void M199CW(uint32 A, uint8 V) {
 }
 
 static void M199Power(void) {
-	GenMMC3Power();
+	MMC3_Power();
 	setprg4r(0x10, 0x5000, 2);
 	SetReadHandler(0x5000, 0x5FFF, CartBR);
 	SetWriteHandler(0x5000, 0x5FFF, CartBW);
 }
 
 void Mapper199_Init(CartInfo *info) {
-	GenMMC3_Init(info, 16, info->battery);
+	MMC3_Init(info, 16, info->battery);
 	MMC3_cwrap = M199CW;
 	info->Power = M199Power;
-	info->Reset = MMC3RegReset;
+	info->Reset = MMC3_Reset;
 }

@@ -193,7 +193,10 @@ void GenVRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram) {
 	info->Close = GenVRC6Close;
 	GameStateRestore = GenVRC6Restore;
 
-	VRCIRQ_Init(1);
+	VRCIRQ_Init(TRUE);
+	MapIRQHook = VRCIRQ_CPUHook;
+	AddExState(&VRCIRQ_StateRegs, ~0, 0, 0);
+
 	VRC6_ESI();
 }
 

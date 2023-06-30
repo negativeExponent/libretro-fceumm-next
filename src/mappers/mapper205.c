@@ -25,43 +25,49 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+static uint8 dipsw;
+
 static void M205PW(uint32 A, uint8 V) {
-	uint8 mask = (mmc3.expregs[0] & 0x02) ? 0x0F : 0x1F;
-	setprg8(A, (mmc3.expregs[0] << 4) | (V & mask));
+	uint8 mask = (reg & 0x04) ? 0x0F : ((reg & 0x02) ? 0x0F : 0x1F);
+
+	setprg8(A, ((reg & 0x03) << 4) | (V & mask));
 }
 
 static void M205CW(uint32 A, uint8 V) {
-	uint8 mask = (mmc3.expregs[0] & 0x02) ? 0x7F : 0xFF;
-	setchr1(A, (mmc3.expregs[0] << 7) | (V & mask));
+	uint8 mask = (reg & 0x02) ? 0x7F : 0xFF;
+
+	setchr1(A, ((reg & 0x03) << 7) | (V & mask));
 }
 
 static DECLFW(M205Write) {
-	mmc3.expregs[0] = V & 3;
-	if (V & 1) {
-		mmc3.expregs[0] |= mmc3.expregs[1];
-	}
 	CartBW(A, V);
+	reg = V;
+	if ((V & 0x01) && dipsw) {
+		reg |= dipsw;
+	}
 	MMC3_FixPRG();
 	MMC3_FixCHR();
 }
 
 static void M205Reset(void) {
-	mmc3.expregs[0] = 0;
-	mmc3.expregs[1] ^= 2; /* solder pad */
-	MMC3RegReset();
+	reg = 0;
+	dipsw ^= 2; /* solder pad */
+	MMC3_Reset();
 }
 
 static void M205Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[1] = 0;
-	GenMMC3Power();
+	reg = dipsw = 0;
+	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M205Write);
 }
 
 void Mapper205_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, 0);
+	MMC3_Init(info, 8, 0);
 	MMC3_pwrap = M205PW;
 	MMC3_cwrap = M205CW;
 	info->Power = M205Power;
 	info->Reset = M205Reset;
-	AddExState(mmc3.expregs, 2, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(&dipsw, 1, 0, "DIPSW");
 }

@@ -25,14 +25,15 @@ static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSIZE;
 
 static void M074CW(uint32 A, uint8 V) {
-	if ((V & ~0x01) == 0x08) /* Di 4 Ci - Ji Qi Ren Dai Zhan (As).nes, Ji Jia Zhan Shi (As).nes */
+	if ((V & ~0x01) == 0x08) { /* Di 4 Ci - Ji Qi Ren Dai Zhan (As).nes, Ji Jia Zhan Shi (As).nes */
 		setchr1r(0x10, A, V & 0x01);
-	else
+	} else {
 		setchr1(A, V);
+	}
 }
 
 static void M074Close(void) {
-    GenMMC3Close();
+    MMC3_Close();
     if (CHRRAM) {
         FCEU_free(CHRRAM);
         CHRRAM = NULL;
@@ -40,7 +41,7 @@ static void M074Close(void) {
 }
 
 void Mapper074_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
     info->Close = M074Close;
 	MMC3_cwrap = M074CW;
 	CHRRAMSIZE = 2048;

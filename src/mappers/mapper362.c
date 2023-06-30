@@ -35,22 +35,22 @@ static SFORMAT StateRegs[] = {
 };
 
 static void M362PW(uint32 A, uint8 V) {
-	uint8 prgBase = (game == 0) ? ((vrc24.chrreg[PPUCHRBus] & 0x180) >> 3) : 0x40;
+	uint8 prgBase = (game == 0) ? ((vrc24.chr[PPUCHRBus] & 0x180) >> 3) : 0x40;
 	setprg8(A, prgBase | (V & 0x0F));
 }
 
 static void M362CW(uint32 A, uint32 V) {
-	uint32 chrBase = (game == 0) ? (vrc24.chrreg[PPUCHRBus] & 0x180) : 0x200;
+	uint32 chrBase = (game == 0) ? (vrc24.chr[PPUCHRBus] & 0x180) : 0x200;
 	uint32 chrMask = (game == 0) ? 0x7F : 0x1FF;
 	setchr1(A, chrBase | (V & chrMask));
 }
 
 static DECLFW(M362CHRWrite) {
-	VRC24Write(A, V);
+	VRC24_Write(A, V);
 	if (A & 0x01) {
 		/* NOTE: Because the lst higher 2 CHR-ROM bits are repurposed as PRG/CHR outer bank, 
 	 	an extra PRG sync after a CHR write. */
-		FixVRC24PRG();
+		VRC24_FixPRG();
 	}
 }
 
@@ -58,8 +58,8 @@ static void FP_FASTAPASS(1) M362PPUHook(uint32 A) {
     uint8 bank = (A & 0x1FFF) >> 10;
 	if ((game == 0) && (PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
 		PPUCHRBus = bank;
-		FixVRC24CHR();
-		FixVRC24PRG();
+		VRC24_FixCHR();
+		VRC24_FixPRG();
 	}
 }
 
@@ -69,22 +69,22 @@ static void M362Reset(void) {
     } else {
         game = (game + 1) & 0x01;
     }
-	FixVRC24CHR();
-	FixVRC24PRG();
+	VRC24_FixCHR();
+	VRC24_FixPRG();
 }
 
 static void M362Power(void) {	
 	PPUCHRBus = game = 0;
-    GenVRC24Power();
+    VRC24_Power();
 	SetWriteHandler(0xB000, 0xEFFF, M362CHRWrite);
 }
 
 void Mapper362_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC4, 0x01, 0x02, 0, 0);
+	VRC24_Init(info, VRC4, 0x01, 0x02, 0, 0);
 	info->Reset = M362Reset;
 	info->Power = M362Power;
     PPU_hook = M362PPUHook;
-	vrc24.pwrap = M362PW;
-	vrc24.cwrap = M362CW;
+	VRC24_pwrap = M362PW;
+	VRC24_cwrap = M362CW;
 	AddExState(StateRegs, ~0, 0, 0);
 }

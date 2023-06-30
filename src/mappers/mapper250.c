@@ -22,17 +22,15 @@
 #include "mmc3.h"
 
 static DECLFW(M250Write) {
-    V = A & 0xFF;
-    A = (A & 0xE000) | ((A & 0x400) >> 10);
-    MMC3_Write(A, V);
+    MMC3_Write(((A & 0xE000) | ((A & 0x400) >> 10)), (A & 0xFF));
 }
 
 static void M250_Power(void) {
-	GenMMC3Power();
+	MMC3_Power();
     SetWriteHandler(0x8000, 0xFFFF, M250Write);
 }
 
 void Mapper250_Init(CartInfo *info) {
-	GenMMC3_Init(info, 8, info->battery);
+	MMC3_Init(info, 8, info->battery);
 	info->Power = M250_Power;
 }

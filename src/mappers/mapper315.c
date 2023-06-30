@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,44 +28,49 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
+static uint8 reg;
+
 static void M315CCW(uint32 A, uint8 V) {
-	setchr1(A, ((mmc3.expregs[0] << 8) & 0x100) | ((mmc3.expregs[0] << 6) & 0x80) | ((mmc3.expregs[0] << 3) & 0x40) | V);
+	setchr1(A, ((reg << 8) & 0x100) | ((reg << 6) & 0x80) | ((reg << 3) & 0x40) | V);
 }
 
 static void M315CPW(uint32 A, uint8 V) {
-	if ((mmc3.expregs[0] & 0x06) == 0x06) {
-		setprg8(0x8000, ((mmc3.expregs[0] << 3) & 0x30) | ((mmc3.regs[6] & ~2) & 0x0F));
-		setprg8(0xA000, ((mmc3.expregs[0] << 3) & 0x30) | ((mmc3.regs[7] & ~2) & 0x0F));
-		setprg8(0xC000, ((mmc3.expregs[0] << 3) & 0x30) | ((mmc3.regs[6] |  2) & 0x0F));
-		setprg8(0xE000, ((mmc3.expregs[0] << 3) & 0x30) | ((mmc3.regs[7] |  2) & 0x0F));
+	uint8 mask = 0x0F;
+	uint8 base = reg >> 1;
+
+	if ((reg & 0x06) == 0x06) { /* GNROM-like */
+		setprg8(0x8000, (base << 4) | ((mmc3.reg[6] & ~0x02) & mask));
+		setprg8(0xA000, (base << 4) | ((mmc3.reg[7] & ~0x02) & mask));
+		setprg8(0xC000, (base << 4) | ((mmc3.reg[6] |  0x02) & mask));
+		setprg8(0xE000, (base << 4) | ((mmc3.reg[7] |  0x02) & mask));
 	} else {
-		setprg8(A, (V & 0x0F) | ((mmc3.expregs[0] & 0x06) << 3));
+		setprg8(A, (base << 4) | (V & mask));
 	}
 }
 
 static DECLFW(M315CWrite) {
-	if (MMC3CanWriteToWRAM()) {
-		mmc3.expregs[0] = V;
+	if (MMC3_WRAMWritable(A)) {
+		reg = V;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
 }
 
 static void M315CReset(void) {
-	mmc3.expregs[0] = 0;
-	MMC3RegReset();
+	reg = 0;
+	MMC3_Reset();
 }
 
 static void M315CPower(void) {
-	GenMMC3Power();
+	MMC3_Power();
 	SetWriteHandler(0x6800, 0x68FF, M315CWrite);
 }
 
 void Mapper315_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_pwrap = M315CPW;
 	MMC3_cwrap = M315CCW;
 	info->Power = M315CPower;
 	info->Reset = M315CReset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

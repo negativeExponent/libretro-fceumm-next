@@ -61,12 +61,12 @@ void FP_FASTAPASS(1) M524IRQHook(int a) {
 
 static void M524Power(void) {
 	IRQa = IRQCount = IRQLatch = 0;
-	GenVRC24Power();
+	VRC24_Power();
 	SetWriteHandler(0xF000, 0xFFFF, M524Write);
 }
 
 void Mapper524_Init(CartInfo *info) {
-	GenVRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
+	VRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
 	info->Power = M524Power;
 	MapIRQHook = M524IRQHook;
 	AddExState(IRQStateRegs, ~0, 0, NULL);

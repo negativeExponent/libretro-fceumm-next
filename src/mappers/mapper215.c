@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2011 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +38,7 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 submapper;
+static uint8 reg[4];
 
 static uint8 regperm[8][8] =
 {
@@ -51,16 +52,15 @@ static uint8 regperm[8][8] =
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },		/* empty */
 };
 
-static uint8 adrperm[8][8] =
-{
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 3, 2, 0, 4, 1, 5, 6, 7 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },		/* unused */
-	{ 5, 0, 1, 2, 3, 7, 6, 4 },
-	{ 3, 1, 0, 5, 2, 4, 6, 7 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },		/* empty */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },		/* empty */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },		/* empty */
+static uint16 adrperm[8][8] = {
+	{ 0x8000, 0x8001, 0xA000, 0xA001, 0xC000, 0xC001, 0xE000, 0xE001 },
+	{ 0xA001, 0xA000, 0x8000, 0xC000, 0x8001, 0xC001, 0xE000, 0xE001 },
+	{ 0x8000, 0x8001, 0xA000, 0xA001, 0xC000, 0xC001, 0xE000, 0xE001 },	/* unused */
+	{ 0xC001, 0x8000, 0x8001, 0xA000, 0xA001, 0xE001, 0xE000, 0xC000 },
+	{ 0xA001, 0x8001, 0x8000, 0xC000, 0xA000, 0xC001, 0xE000, 0xE001 },
+	{ 0x8000, 0x8001, 0xA000, 0xA001, 0xC000, 0xC001, 0xE000, 0xE001 },	/* empty */
+	{ 0x8000, 0x8001, 0xA000, 0xA001, 0xC000, 0xC001, 0xE000, 0xE001 },	/* empty */
+	{ 0x8000, 0x8001, 0xA000, 0xA001, 0xC000, 0xC001, 0xE000, 0xE001 },	/* empty */
 };
 
 static uint8 protarray[8][8] = {
@@ -75,117 +75,107 @@ static uint8 protarray[8][8] = {
 };
 
 static void M215CW(uint32 A, uint8 V) {
-	uint16 outer_bank;
+	uint16 mask = (reg[0] & 0x40) ? 0x7F : 0xFF;
+	uint16 base;
 
-	if (submapper == 1)
-		outer_bank = ((mmc3.expregs[1] & 0xE) << 7);
-	else
-		outer_bank = ((mmc3.expregs[1] & 0xC) << 6);
+	if (iNESCart.submapper == 1) {
+		base = (reg[1] << 7) & 0x700;
+	} else {
+		base = (reg[1] << 6) & 0x300;
+	}
 
-	if (mmc3.expregs[0] & 0x40)
-		setchr1(A, outer_bank | (V & 0x7F) | ((mmc3.expregs[1] & 0x20) << 2));
-	else
-		setchr1(A, outer_bank | V);
+	setchr1(A, (base & ~mask) | (((reg[1] << 2) & 0x80) & ~mask) | (V & mask));
 }
 
 static void M215PW(uint32 A, uint8 V) {
-	uint8 outer_bank = ((mmc3.expregs[1] & 3) << 5);
+	uint16 mask = (reg[0] & 0x40) ? 0x0F : 0x1F;
+	uint16 base = (reg[1] << 5) & 0x60;
 
-	if (submapper == 1)
-		outer_bank |= ((mmc3.expregs[1] & 8) << 4);
+	if (iNESCart.submapper == 1) {
+		base |= (reg[1] << 4) & 0x80;
+	}
 
-	if (mmc3.expregs[0] & 0x40) {
-		uint8 sbank = (mmc3.expregs[1] & 0x10);
-		if (mmc3.expregs[0] & 0x80) { /* NROM */
-			uint8 bank = (outer_bank >> 1) | (mmc3.expregs[0] & 0x7) | (sbank >> 1);
-			if (mmc3.expregs[0] & 0x20) /* NROM-256 */
-				setprg32(0x8000, bank >> 1);
-			else { /* NROM-128 */
-				setprg16(0x8000, bank);
-				setprg16(0xC000, bank);
-			}
-		} else
-			setprg8(A, outer_bank | (V & 0x0F) | sbank);
+	if (reg[0] & 0x80) { /* NROM */
+		uint16 bank = (((reg[1] & 0x10) & ~mask) >> 1) | ((base & ~mask) >> 1) | (reg[0] & (mask >> 1));
+
+		if (reg[0] & 0x20) { /* NROM-256 */
+			setprg32(0x8000, bank >> 1);
+		} else { /* NROM-128 */
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
+		}
 	} else {
-		if (mmc3.expregs[0] & 0x80) { /* NROM */
-			uint8 bank = (outer_bank >> 1) | (mmc3.expregs[0] & 0xF);
-			if (mmc3.expregs[0] & 0x20) /* NROM-256 */
-				setprg32(0x8000, bank >> 1);
-			else { /* NROM-128 */
-				setprg16(0x8000, bank);
-				setprg16(0xC000, bank);
-			}
-		} else
-			setprg8(A, outer_bank | (V & 0x1F));
+		setprg8(A, ((reg[1] & 0x10) & ~mask) | (base & ~mask) | (V & mask));
 	}
 }
 
 static DECLFR(M215ProtRead) {
-	return (protarray[mmc3.expregs[3]][A & 7] & 0x0F) | 0x50;
+	return (X.DB & ~0x0F) | (protarray[reg[2] & 0x07][A & 0x07] & 0x0F);
 }
 
 static DECLFW(M215Write) {
-	uint8 dat = V;
-	uint8 adr = adrperm[mmc3.expregs[2]][((A >> 12) & 6) | (A & 1)];
-	uint16 addr = (adr & 1) | ((adr & 6) << 12) | 0x8000;
-	if (adr < 4) {
-		if (!adr)
-			dat = (dat & 0xC0) | (regperm[mmc3.expregs[2]][dat & 7]);
-		MMC3_CMDWrite(addr, dat);
-	} else
-		MMC3_IRQWrite(addr, dat);
+	A = adrperm[reg[3] & 0x07][((A >> 12) & 0x06) | (A & 0x01)];
+	switch (A & 0xE001) {
+	case 0x8000:
+		MMC3_Write(A, (V & 0xC0) | regperm[reg[3]][V & 0x07]);
+		break;
+	default:
+		MMC3_Write(A, V);
+		break;
+	}
 }
 
-static DECLFW(M215ExWrite) {
-	switch (A & 0xF007) {
-		case 0x5000:
-			mmc3.expregs[0] = V;
-			MMC3_FixPRG();
-			MMC3_FixCHR();
-			break;
-		case 0x5001:
-			mmc3.expregs[1] = V;
-			MMC3_FixPRG();
-			MMC3_FixCHR();
-			break;
-		case 0x5002:
-			mmc3.expregs[3] = V;
-			break;
-		case 0x5007:
-			mmc3.expregs[2] = V;
-			break;
+static DECLFW(M215Write5) {
+	switch (A & 0x07) {
+	case 0:
+		reg[0] = V;
+		MMC3_FixPRG();
+		MMC3_FixCHR();
+		break;
+	case 1:
+		reg[1] = V;
+		MMC3_FixPRG();
+		MMC3_FixCHR();
+		break;
+	case 2:
+		reg[2] = V;
+		break;
+	case 7:
+		reg[3] = V;
+		break;
 	}
 }
 
 static void M215Power(void) {
-	mmc3.expregs[0] = mmc3.expregs[2] = 0;
-	mmc3.expregs[1] = 0x0F;
-	mmc3.expregs[3] = 7;
-	GenMMC3Power();
-	SetWriteHandler(0x8000, 0xFFFF, M215Write);
+	reg[0] = 0x00;
+	reg[1] = 0x0F;
+	reg[3] = 0x04;
+	reg[2] = 0x07;
+	MMC3_Power();
 	SetReadHandler(0x5000, 0x5FFF, M215ProtRead);
-	SetWriteHandler(0x5000, 0x5FFF, M215ExWrite);
+	SetWriteHandler(0x5000, 0x5FFF, M215Write5);
+	SetWriteHandler(0x8000, 0xFFFF, M215Write);
 }
 
 static void M215Reset(void) {
-	mmc3.expregs[0] = mmc3.expregs[2] = 0;
-	mmc3.expregs[1] = 0x0F;
-	mmc3.expregs[3] = 7;
-	MMC3RegReset();
+	reg[0] = 0x00;
+	reg[1] = 0x0F;
+	reg[3] = 0x04;
+	reg[2] = 0x07;
+	MMC3_Reset();
 }
 
 void Mapper215_Init(CartInfo *info) {
-	GenMMC3_Init(info, 0, 0);
+	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M215CW;
 	MMC3_pwrap = M215PW;
+
 	info->Power = M215Power;
 	info->Reset = M215Reset;
-	AddExState(mmc3.expregs, 4, 0, "EXPR");
-	if (info->iNES2)
-		submapper = info->submapper;
-}
 
-void UNL8237A_Init(CartInfo *info) {
-	Mapper215_Init(info);
-	submapper = 1;
+	AddExState(reg, 4, 0, "EXPR");
+
+	if ((!info->iNES2) && ((ROM.prg.size * 16) >= 2048)) { /* UNL-8237A */
+		info->submapper = 1;
+	}
 }
