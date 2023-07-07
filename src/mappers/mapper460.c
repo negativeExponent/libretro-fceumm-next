@@ -103,7 +103,8 @@ void Mapper460_Init(CartInfo *info) {
 	info->Power = M460Power;
 	info->Reset = M460Reset;
 	info->Close = M460close;
-	AddExState(mmc3.expregs, 2, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(&dipsw, 1, 0, "DPSW");
 
 	CHRRAM = (uint8 *)FCEU_gmalloc(8192);
 	SetupCartCHRMapping(0x10, CHRRAM, 8192, 1);

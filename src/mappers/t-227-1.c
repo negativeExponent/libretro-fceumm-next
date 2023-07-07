@@ -24,34 +24,35 @@
 #include "mmc3.h"
 
 static uint8 reset_flag = 0x07;
+static uint8 reg;
 
 static void BMCT2271CW(uint32 A, uint8 V) {
 	uint32 va = V;
-	if (mmc3.expregs[0] & 0x20) {
+	if (reg & 0x20) {
 		va |= 0x200;
-		va |= (mmc3.expregs[0] & 0x10) << 4;
+		va |= (reg & 0x10) << 4;
 	} else {
 		va &= 0x7F;
-		va |= (mmc3.expregs[0] & 0x18) << 4;
+		va |= (reg & 0x18) << 4;
 	}
 	setchr1(A, va);
 }
 
 static void BMCT2271PW(uint32 A, uint8 V) {
 	uint32 va = V & 0x3F;
-	if (mmc3.expregs[0] & 0x20) {
+	if (reg & 0x20) {
 		va &= 0x1F;
 		va |= 0x40;
-		va |= (mmc3.expregs[0] & 0x10) << 1;
+		va |= (reg & 0x10) << 1;
 	} else {
 		va &= 0x0F;
-		va |= (mmc3.expregs[0] & 0x18) << 1;
+		va |= (reg & 0x18) << 1;
 	}
-	switch (mmc3.expregs[0] & 3) {
+	switch (reg & 3) {
 	case 0x00: setprg8(A, va); break;
 	case 0x02:
 	{
-		va = (va & 0xFD) | ((mmc3.expregs[0] & 4) >> 1);
+		va = (va & 0xFD) | ((reg & 4) >> 1);
 		if (A < 0xC000) {
 			setprg16(0x8000, va >> 1);
 			setprg16(0xC000, va >> 1);
@@ -64,27 +65,27 @@ static void BMCT2271PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(BMCT2271LoWrite) {
-	if (!(mmc3.expregs[0] & 0x80))
-		mmc3.expregs[0] = A & 0xFF;
+	if (!(reg & 0x80))
+		reg = A & 0xFF;
 	MMC3_FixPRG();
 	MMC3_FixCHR();
 }
 
 static DECLFR(BMCT2271HiRead) {
 	uint32 av = A;
-	if (mmc3.expregs[0] & 0x40) av = (av & 0xFFF0) | reset_flag;
+	if (reg & 0x40) av = (av & 0xFFF0) | reset_flag;
 	return CartBR(av);
 }
 
 static void BMCT2271Reset(void) {
-	mmc3.expregs[0] = 0x00;
+	reg = 0x00;
 	reset_flag++;
 	reset_flag &= 0x0F;
 	MMC3_Reset();
 }
 
 static void BMCT2271Power(void) {
-	mmc3.expregs[0] = 0x00;
+	reg = 0x00;
 	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, BMCT2271LoWrite);
 	SetReadHandler(0x8000, 0xFFFF, BMCT2271HiRead);
@@ -96,5 +97,5 @@ void BMCT2271_Init(CartInfo *info) {
 	MMC3_cwrap = BMCT2271CW;
 	info->Power = BMCT2271Power;
 	info->Reset = BMCT2271Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

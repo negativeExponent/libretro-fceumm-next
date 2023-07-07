@@ -62,5 +62,5 @@ void Mapper366_Init(CartInfo *info) {
 	MMC3_cwrap = M366CW;
 	info->Power = M366Power;
 	info->Reset = M366Reset;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

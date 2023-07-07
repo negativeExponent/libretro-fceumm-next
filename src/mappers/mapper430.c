@@ -65,5 +65,5 @@ void Mapper430_Init(CartInfo *info) {
 	MMC3_pwrap = M430PW;
 	info->Reset = M430Reset;
 	info->Power = M430Power;
-	AddExState(mmc3.expregs, 1, 0, "EXPR");
+	AddExState(&reg, 1, 0, "EXPR");
 }

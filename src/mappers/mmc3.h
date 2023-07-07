@@ -7,7 +7,6 @@ typedef struct {
     uint8 mirr;
     uint8 wram;
     uint8 reg[8];
-    uint8 expregs[8]; /* extra regs, mostly for pirate/multicart carts */
 } MMC3;
 
 extern MMC3 mmc3;
