@@ -22,7 +22,7 @@
 #include "mapinc.h"
 
 static uint8 *WRAM = NULL;
-static uint32 WRAMSIZE;
+static uint32 WRAMSIZE = 0;
 
 #ifdef DEBUG_MAPPER
 static DECLFW(NROMWrite) {
@@ -38,16 +38,24 @@ static void NROMClose(void) {
 }
 
 static void NROMPower(void) {
-	setprg8r(0x10, 0x6000, 0); /* Famili BASIC (v3.0) need it (uses only 4KB), FP-BASIC uses 8KB */
-	setprg16(0x8000, 0);
-	setprg16(0xC000, 1);
+	if (ROM.prg.size == 3) { /* NROM-368 */
+		setprg16(0x4000, 0);
+		setprg16(0x8000, 1);
+		setprg16(0xC000, 2);
+		SetReadHandler(0x4800, 0xFFFF, CartBR);
+	} else {
+		setprg32(0x8000, 0);
+		SetReadHandler(0x8000, 0xFFFF, CartBR);
+
+		if (WRAMSIZE) {
+			setprg8r(0x10, 0x6000, 0); /* Famili BASIC (v3.0) need it (uses only 4KB), FP-BASIC uses 8KB */
+			SetReadHandler(0x6000, 0x7FFF, CartBR);
+			SetWriteHandler(0x6000, 0x7FFF, CartBW);
+			FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+		}
+	}
+
 	setchr8(0);
-
-	SetReadHandler(0x6000, 0x7FFF, CartBR);
-	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-
-	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 
 #ifdef DEBUG_MAPPER
 	SetWriteHandler(0x4020, 0xFFFF, NROMWrite);
@@ -59,11 +67,24 @@ void Mapper000_Init(CartInfo *info) {
 	info->Close = NROMClose;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
-	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
-	if (info->battery) {
-		info->SaveGame[0] = WRAM;
-		info->SaveGameLen[0] = WRAMSIZE;
+	if (info->submapper) {
+		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
 	}
-	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+
+	if (WRAMSIZE) {
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
+		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+
+		if (info->battery) {
+			info->SaveGame[0] = WRAM;
+			info->SaveGameLen[0] = WRAMSIZE;
+		}
+	}
+
+	if (!UNIFchrrama && info->CHRRamSize) {
+		/* A variant of Wild Ball with both chr-rom and chr-ram indicated in header. */
+		/* Chr-rom in this case should be remapped as chr-ram */
+		SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], 1);
+	}
 }
