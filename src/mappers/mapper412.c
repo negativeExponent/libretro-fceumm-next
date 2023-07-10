@@ -31,17 +31,23 @@
 static uint8 reg[4];
 
 static void M412CW(uint32 A, uint8 V) {
+	uint16 mask = (reg[1] & 0x20) ? 0x7F : 0xFF;
+	uint16 base = ((reg[1] << 5) & 0x100) | (reg[1] & 0x80);
+	uint16 bank = reg[0] >> 2;
+
     if (reg[2] & 0x02) {
-        setchr8(reg[0] >> 2);
+        setchr8(bank);
     } else {
-        setchr1(A, (reg[1] & 0x80) | (V & 0x7F));
+        setchr1(A, (base & ~mask) | (V & mask));
     }
 }
 
 static void M412PW(uint32 A, uint8 V) {
-    if (reg[2] & 0x02) {
-        uint8 bank = reg[2] >> 3;
+	uint16 mask = 0x3F & ~(((reg[1] << 1) & 0x20) | ((reg[1] << 3) & 0x10));
+	uint16 base = ((reg[1] << 3) & 0x20) | ((reg[1] >> 2) & 0x10);
+	uint16 bank = reg[2] >> 3;
 
+    if (reg[2] & 0x02) {
         if (reg[2] & 0x04) {
             setprg32(0x8000, bank >> 1);
         } else {
@@ -49,29 +55,31 @@ static void M412PW(uint32 A, uint8 V) {
             setprg16(0xC000, bank);
         }
     } else {
-		uint32 mask = 0x3F & ~((reg[1] << 3) & 0x38);
-		uint32 base = (reg[1] >> 0x02) & 0x3E;
-
-		setprg8(A, base | (V & mask));
+		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
 static DECLFW(M412Write) {
 	if (MMC3_WRAMWritable(A)) {
-		reg[A & 3] = V;
-		MMC3_FixPRG();        
-		MMC3_FixCHR();
+		CartBW(A, V);
+		if (!(reg[1] & 0x01)) {
+			reg[A & 0x03] = V;
+			MMC3_FixPRG();
+			MMC3_FixCHR();
+		}
 	}
 }
 
 static void M412Reset(void) {
 	reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	MMC3_Reset();
+	mmc3.wram = 0x80;
 }
 
 static void M412Power(void) {
     reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	MMC3_Power();
+	mmc3.wram = 0x80;
 	SetWriteHandler(0x6000, 0x7FFF, M412Write);
 }
 

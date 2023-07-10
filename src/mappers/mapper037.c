@@ -24,15 +24,15 @@
 static uint8 reg;
 
 static void M037PW(uint32 A, uint8 V) {
-	uint16 base = ((reg << 2) & 0x10) | (((reg & 0x03) == 0x03) ? 0x08 : 0);
 	uint16 mask = (reg << 1) | 0x07;
+	uint16 base = ((reg << 2) & 0x10) | (((reg & 0x03) == 0x03) ? 0x08 : 0);
 
-	setprg8(A, base | (V & mask));
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void M037CW(uint32 A, uint8 V) {
-    uint16 base = reg << 5;
-	uint16 mask = 0x7F;
+    uint16 mask = 0x7F;
+	uint16 base = (reg << 5) & 0x80;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

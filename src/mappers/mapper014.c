@@ -29,26 +29,33 @@
 
 static uint8 reg;
 
-static uint16 CHRBase(uint32 A) {
+static uint8 GetChrBase(uint16 A) {
 	if (A & 0x1000) {
 		if (A & 0x800) {
-			return ((reg & 0x80) << 1);
+			return ((reg & 0x80) >> 7);
 		} else {
-			return ((reg & 0x20) << 3);
+			return ((reg & 0x20) >> 5);
 		}
 	}
-	return ((reg & 0x08) << 5);
+
+	return ((reg & 0x08) >> 3);
 }
 
 static void M014CW_MMC3(uint32 A, uint8 V) {
-	setchr1(A, (CHRBase(A) & 0x100) | (V & 0xFF));
+	uint16 mask = 0xFF;
+	uint16 base = GetChrBase(A) << 8;
+
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static void M014CW_VRC2(uint32 A, uint32 V) {
-	setchr1(A, (CHRBase(A) & 0x100) | (V & 0xFF));
+	uint16 mask = 0xFF;
+	uint16 base = GetChrBase(A) << 8;
+
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M014CMDWrite) {
+static DECLFW(M014Write) {
 	if (A == 0xA131) {
 		reg = V;
 		if (reg & 0x02) {
@@ -57,7 +64,7 @@ static DECLFW(M014CMDWrite) {
 			VRC24_FixCHR();
 		}
 	} else {
-		if (reg & 2) {
+		if (reg & 0x02) {
 			MMC3_Write(A, V);
 		} else {
 			VRC24_Write(A, V);
@@ -69,6 +76,7 @@ static void StateRestore(int version) {
 	if (reg & 0x02) {
 		MMC3_FixPRG();
 		MMC3_FixCHR();
+		MMC3_FixMIR();
 	} else {
 		VRC24_FixPRG();
 		VRC24_FixCHR();
@@ -77,8 +85,9 @@ static void StateRestore(int version) {
 }
 
 static void M014Power(void) {
+	reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x4100, 0xFFFF, M014CMDWrite);
+	SetWriteHandler(0x4100, 0xFFFF, M014Write);
 }
 
 void Mapper014_Init(CartInfo *info) {

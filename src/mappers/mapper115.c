@@ -25,11 +25,13 @@ static uint8 reg[2];
 
 static void M115PW(uint32 A, uint8 V) {
 	if (reg[0] & 0x80) {
+		uint8 bank = reg[0] & 0x0F;
+
 		if (reg[0] & 0x20) {
-			setprg32(0x8000, (reg[0] & 0x0F) >> 1);
+			setprg32(0x8000, bank >> 1);
 		} else {
-			setprg16(0x8000, reg[0] & 0x0F);
-			setprg16(0xC000, reg[0] & 0x0F);
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
 		}
 	} else {
 		setprg8(A, V & 0x3F);

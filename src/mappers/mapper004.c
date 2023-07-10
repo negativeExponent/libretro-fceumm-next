@@ -20,6 +20,7 @@
 
 #include "mapinc.h"
 #include "mmc3.h"
+#include "mmc6.h"
 
 static void M004PW(uint32 A, uint8 V) {
 	setprg8(A, V & 0xFF);
@@ -32,26 +33,30 @@ static void M004CW(uint32 A, uint8 V) {
 void Mapper004_Init(CartInfo *info) {
 	int ws = 8;
 
-	if (info->iNES2) {
-		if (info->submapper == 5) {
-			Mapper249_Init(info);
-		} else {
-			ws = (info->PRGRamSize + info->PRGRamSaveSize) / 1024;
-			if (info->submapper == 4) {
-				isRevB = 0;
-			}
-		}
-	} else {
-		if ((info->CRC32 == 0x93991433 || info->CRC32 == 0xaf65aa84)) {
+	if (info->submapper == 1) {
+		MMC6_Init(info);
+		return;
+	}
+
+	if (info->submapper == 5) {
+		Mapper249_Init(info);
+		return;
+	}
+
+	if (!info->iNES2) {
+		if ((info->CRC32 == 0x93991433) || (info->CRC32 == 0xaf65aa84)) {
 			FCEU_printf(
 			    "Low-G-Man can not work normally in the iNES format.\nThis game has been recognized by its CRC32 "
 			    "value, and the appropriate changes will be made so it will run.\nIf you wish to hack this game, "
 			    "you should use the UNIF format for your hack.\n\n");
 			ws = 0;
 		}
-		if (info->CRC32 == 0x97b6cb19) { /* or submapper 4 */
-			isRevB = 0;
-		}
+	} else {
+		ws = (info->PRGRamSize + info->PRGRamSaveSize) / 1024;
+	}
+
+	if ((info->submapper == 4) || (info->CRC32 == 0x97b6cb19)) {
+		isRevB = 0; /* MMC3A */
 	}
 
 	MMC3_Init(info, ws, info->battery);

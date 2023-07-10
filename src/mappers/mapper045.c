@@ -63,17 +63,15 @@ static DECLFW(M045WriteReg) {
 		cmd = (cmd + 1) & 0x03;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
-	} else {
-		CartBW(A, V);
 	}
 }
 
 static DECLFR(M045ReadDIP) {
 	uint32 addr = 1 << (dipsw + 4);
 	if (A & (addr | (addr - 1))) {
-		return X.DB | 0x01;
+		return 0x01;
 	}
-	return X.DB;
+	return 0x00;
 }
 
 static void M045Reset(void) {

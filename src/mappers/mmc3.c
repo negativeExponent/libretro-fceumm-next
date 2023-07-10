@@ -35,8 +35,6 @@ static uint32 WRAMSIZE;
 static uint8 IRQCount, IRQLatch, IRQa;
 static uint8 IRQReload;
 
-static uint8 isMMC6 = 0;
-
 static SFORMAT MMC3_StateRegs[] =
 {
 	{ mmc3.reg, 8, "REGS" },
@@ -50,8 +48,8 @@ static SFORMAT MMC3_StateRegs[] =
 	{ 0 }
 };
 
-static void GenFixPRG(void);
-static void GenFixCHR(void);
+static void GENFIXPRG(void);
+static void GENFIXCHR(void);
 
 static void GENPWRAP(uint32 A, uint8 V);
 static void GENCWRAP(uint32 A, uint8 V);
@@ -67,6 +65,14 @@ void (*MMC3_cwrap)(uint32 A, uint8 V);
 
 void MMC3_Init(CartInfo *info, int wram, int battery);
 
+static void GENCWRAP(uint32 A, uint8 V) {
+	setchr1(A, V & 0xFF);
+}
+
+static void GENPWRAP(uint32 A, uint8 V) {
+	setprg8(A, (V & 0x7F));
+}
+
 /* ----------------------------------------------------------------------
  * ------------------------- Generic MM3 Code ---------------------------
  * ----------------------------------------------------------------------
@@ -77,7 +83,7 @@ uint8 MMC3_GetPRGBank(int V) {
 		V ^= 0x02;
 	}
 	if (V & 0x02) {
-		return ((~1) | (V & 0x01));
+		return (0xFE | (V & 0x01));
 	}
 	return mmc3.reg[6 | (V & 0x01)];
 }
@@ -86,7 +92,7 @@ uint8 MMC3_GetCHRBank(int V) {
 	if (mmc3.cmd & 0x80) {
 		V ^= 0x04;
 	}
-	if (V & 4) {
+	if (V & 0x04) {
 		return mmc3.reg[V - 2];
 	}
 	return ((mmc3.reg[V >> 1] & ~0x01) | (V & 0x01));
@@ -99,14 +105,14 @@ int MMC3_WRAMWritable(uint32 A) {
 	return FALSE;
 }
 
-static void GenFixPRG(void) {
+static void GENFIXPRG(void) {
 	MMC3_pwrap(0x8000, MMC3_GetPRGBank(0));
 	MMC3_pwrap(0xA000, MMC3_GetPRGBank(1));
 	MMC3_pwrap(0xC000, MMC3_GetPRGBank(2));
 	MMC3_pwrap(0xE000, MMC3_GetPRGBank(3));
 }
 
-static void GenFixCHR(void) {
+static void GENFIXCHR(void) {
 	MMC3_cwrap(0x0000, MMC3_GetCHRBank(0));
 	MMC3_cwrap(0x0400, MMC3_GetCHRBank(1));
 	MMC3_cwrap(0x0800, MMC3_GetCHRBank(2));
@@ -118,7 +124,7 @@ static void GenFixCHR(void) {
 	MMC3_cwrap(0x1C00, MMC3_GetCHRBank(7));
 }
 
-static void GenFixMIR(void) {
+static void GENFIXMIR(void) {
 	setmirror((mmc3.mirr & 0x01) ^ 0x01);
 }
 
@@ -146,10 +152,12 @@ DECLFW(MMC3_CMDWrite) {
 	switch (A & 0xE001) {
 	case 0x8000:
 		mmc3.cmd = V;
-		if ((oldcmd & 0x40) != (mmc3.cmd & 0x40))
+		if ((oldcmd & 0x40) != (mmc3.cmd & 0x40)) {
 			MMC3_FixPRG();
-		if ((oldcmd & 0x80) != (mmc3.cmd & 0x80))
+		}
+		if ((oldcmd & 0x80) != (mmc3.cmd & 0x80)) {
 			MMC3_FixCHR();
+		}
 		break;
 	case 0x8001: {
 		int cbase = (mmc3.cmd & 0x80) << 5;
@@ -176,10 +184,11 @@ DECLFW(MMC3_CMDWrite) {
 			MMC3_cwrap(cbase ^ 0x1C00, V);
 			break;
 		case 6:
-			if (mmc3.cmd & 0x40)
+			if (mmc3.cmd & 0x40) {
 				MMC3_pwrap(0xC000, V);
-			else
+			} else {
 				MMC3_pwrap(0x8000, V);
+			}
 			break;
 		case 7:
 			MMC3_pwrap(0xA000, V);
@@ -235,12 +244,11 @@ void MMC3_IRQHBHook(void) {
 	if (!count || IRQReload) {
 		IRQCount = IRQLatch;
 		IRQReload = 0;
-	} else
+	} else {
 		IRQCount--;
-	if ((count | isRevB) && !IRQCount) {
-		if (IRQa) {
-			X6502_IRQBegin(FCEU_IQEXT);
-		}
+	}
+	if ((count | isRevB) && !IRQCount && IRQa) {
+		X6502_IRQBegin(FCEU_IQEXT);
 	}
 }
 
@@ -249,14 +257,16 @@ static void MMC3_hb(void) {
 }
 
 static void MMC3_hb_KickMasterHack(void) {
-	if (scanline == 238)
+	if (scanline == 238) {
 		MMC3_IRQHBHook();
+	}
 	MMC3_IRQHBHook();
 }
 
 static void MMC3_hb_PALStarWarsHack(void) {
-	if (scanline == 240)
+	if (scanline == 240) {
 		MMC3_IRQHBHook();
+	}
 	MMC3_IRQHBHook();
 }
 
@@ -264,51 +274,6 @@ static void StateRestore(int version) {
 	MMC3_FixPRG();
 	MMC3_FixCHR();
 	MMC3_FixMIR();
-}
-
-static void GENCWRAP(uint32 A, uint8 V) {
-	setchr1(A, V & 0xFF); /* Business Wars NEEDS THIS for 8K CHR-RAM */
-}
-
-static void GENPWRAP(uint32 A, uint8 V) {
-	/* [NJ102] Mo Dao Jie (C) has 1024Mb MMC3 BOARD, maybe something other will be broken
-	 * also HengGe BBC-2x boards enables this mode as default board mode at boot up
-	 */
-	setprg8(A, (V & 0x7F));
-}
-
-static DECLFW(MBWRAMMMC6) {
-	if (~mmc3.cmd & 0x20) {
-		/* wram disabled */
-		return;
-	}
-	A &= 0x3FF;
-	if (A & 0x200) {
-		/* 2nd bank writes are disabled */
-		if ((mmc3.wram & 0xC0) == 0x00) return;
-	} else {
-		/* 1st bank writes are disabled */
-		if ((mmc3.wram & 0x30) == 0x00) return;
-	}
-	WRAM[A] = V;
-}
-
-static DECLFR(MAWRAMMMC6) {
-	if (~mmc3.cmd & 0x20) {
-		/* wram disabled */
-		return X.DB;
-	}
-	A &= 0x3FF;
-	if (A & 0x200) {
-		/* 2nd bank */
-		if (mmc3.wram & 0x20) return 0x00;
-		if (mmc3.wram & 0x80) return WRAM[A];
-	} else {
-		/* 1st bank */
-		if (mmc3.wram & 0x20) return WRAM[A];
-		if (mmc3.wram & 0x80) return 0x00;
-	}
-	return X.DB;
 }
 
 void MMC3_Power(void) {
@@ -320,19 +285,12 @@ void MMC3_Power(void) {
 	SetWriteHandler(0xC000, 0xFFFF, MMC3_IRQWrite);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 
-	mmc3.wram = mmc3.mirr = 0;
 	setmirror(1);
 	if (mmc3.opts & 1) {
-		if (isMMC6) {
-			FCEU_CheatAddRAM(1, 0x7000, WRAM);
-			SetReadHandler(0x7000, 0x7FFF, MAWRAMMMC6);
-			SetWriteHandler(0x7000, 0x7FFF, MBWRAMMMC6);
-		} else {
-			FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
-			SetWriteHandler(0x6000, 0x6000 + ((WRAMSIZE - 1) & 0x1fff), CartBW);
-			SetReadHandler(0x6000, 0x6000 + ((WRAMSIZE - 1) & 0x1fff), CartBR);
-			setprg8r(0x10, 0x6000, 0);
-		}
+		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+		SetWriteHandler(0x6000, 0x6000 + ((WRAMSIZE - 1) & 0x1fff), CartBW);
+		SetReadHandler(0x6000, 0x6000 + ((WRAMSIZE - 1) & 0x1fff), CartBR);
+		setprg8r(0x10, 0x6000, 0);
 		if (!(mmc3.opts & 2)) {
 			FCEU_MemoryRand(WRAM, WRAMSIZE);
 		}
@@ -341,22 +299,21 @@ void MMC3_Power(void) {
 }
 
 void MMC3_Close(void) {
-	if (WRAM)
+	if (WRAM) {
 		FCEU_gfree(WRAM);
+	}
 	WRAM = NULL;
 }
 
 void MMC3_Init(CartInfo *info, int wram, int battery) {
-	MMC3_FixPRG = GenFixPRG;
-	MMC3_FixCHR = GenFixCHR;
-	MMC3_FixMIR = GenFixMIR;
+	MMC3_FixPRG = GENFIXPRG;
+	MMC3_FixCHR = GENFIXCHR;
+	MMC3_FixMIR = GENFIXMIR;
 
 	MMC3_pwrap = GENPWRAP;
 	MMC3_cwrap = GENCWRAP;
 
 	WRAMSIZE = wram << 10;
-
-	isMMC6 = ((info->mapper == 4) && ((info->submapper == 1) || (WRAMSIZE == 1024)));
 
 	if (wram) {
 		mmc3.opts |= 1;
@@ -377,13 +334,14 @@ void MMC3_Init(CartInfo *info, int wram, int battery) {
 	info->Reset = MMC3_Reset;
 	info->Close = MMC3_Close;
 
-	if (info->CRC32 == 0x5104833e) /* Kick Master */
+	if (info->CRC32 == 0x5104833e) { /* Kick Master */
 		GameHBIRQHook = MMC3_hb_KickMasterHack;
-	else if (info->CRC32 == 0x5a6860f1 || info->CRC32 == 0xae280e20) /* Shougi Meikan '92/'93 */
+	} else if (info->CRC32 == 0x5a6860f1 || info->CRC32 == 0xae280e20) { /* Shougi Meikan '92/'93 */
 		GameHBIRQHook = MMC3_hb_KickMasterHack;
-	else if (info->CRC32 == 0xfcd772eb) /* PAL Star Wars, similar problem as Kick Master. */
+	} else if (info->CRC32 == 0xfcd772eb) { /* PAL Star Wars, similar problem as Kick Master. */
 		GameHBIRQHook = MMC3_hb_PALStarWarsHack;
-	else
+	} else {
 		GameHBIRQHook = MMC3_hb;
+	}
 	GameStateRestore = StateRestore;
 }

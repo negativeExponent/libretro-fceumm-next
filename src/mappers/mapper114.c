@@ -36,14 +36,16 @@ static uint8 M114_index[2][8] = {
 
 static void M114PW(uint32 A, uint8 V) {
 	if (reg[0] & 0x80) {
+		uint8 bank = reg[0] & 0x0F;
+
 		if (reg[0] & 0x20) {
-			setprg32(0x8000, (reg[0] & 0x0F) >> 1);
+			setprg32(0x8000, bank >> 1);
 		} else {
-			setprg16(0x8000, reg[0] & 0x0F);
-			setprg16(0xC000, reg[0] & 0x0F);
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
 		}
 	} else {
-		setprg8(A, V);
+		setprg8(A, V & 0x3F);
 	}
 }
 
@@ -87,6 +89,7 @@ static void M114Power(void) {
 
 static void M114Reset(void) {
 	reg[0] = reg[1] = 0;
+	dipsw++;
 	MMC3_Reset();
 }
 

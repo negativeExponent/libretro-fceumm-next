@@ -31,12 +31,17 @@ static void M012CW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M012Write) {
-	reg = V;
-	MMC3_FixCHR();
+	if (A & 0x100) {
+		reg = V;
+		MMC3_FixCHR();
+	}
 }
 
 static DECLFR(M012Read) {
-	return dipsw;
+	if (A & 0x100) {
+		return dipsw;
+	}
+	return CartBR(A);
 }
 
 static void M012Power(void) {

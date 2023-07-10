@@ -134,7 +134,7 @@
 	{ 0x8dedea07,    3, DEFAULT,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Shui Guo Li (Ch) [a1].nes */
 	{ 0x684afccd,    3, DEFAULT,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Space Hunter (Japan).nes */
 
-	{ 0x97b6cb19,    4, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Aladdin (SuperGame) (Mapper 4) [!].nes */
+	{ 0x97b6cb19,    4,       4, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Aladdin (SuperGame) (Mapper 4) [!].nes */
 	{ 0xd97c31b0,  206, DEFAULT,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Lasalle Ishii no Child's Quest (Japan).nes */
 	{ 0x404b2e8b,    4, DEFAULT,    MI_4, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Rad Racer II (USA).nes */
 	{ 0x15141401,    4, DEFAULT, DFAULT8, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Asmik-kun Land (Japan).nes */
