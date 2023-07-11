@@ -50,7 +50,7 @@ static DECLFW(M524Write) {
 	}
 }
 
-void FP_FASTAPASS(1) M524IRQHook(int a) {
+void M524IRQHook(int a) {
 	if (!IRQa)
 		return;
 

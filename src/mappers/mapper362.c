@@ -54,7 +54,7 @@ static DECLFW(M362CHRWrite) {
 	}
 }
 
-static void FP_FASTAPASS(1) M362PPUHook(uint32 A) {
+static void M362PPUHook(uint32 A) {
     uint8 bank = (A & 0x1FFF) >> 10;
 	if ((game == 0) && (PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
 		PPUCHRBus = bank;

@@ -73,7 +73,7 @@ static void M518Power(void) {
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void FP_FASTAPASS(1) M518PPUHook(uint32 A) {
+static void M518PPUHook(uint32 A) {
 	if (mode & 2) {
 		if ((A & 0x3000) == 0x2000) {
 			uint32 curnt = A & 0x800;

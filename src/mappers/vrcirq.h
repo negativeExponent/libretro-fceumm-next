@@ -6,7 +6,7 @@ void VRCIRQ_Latch(uint8 V);
 void VRCIRQ_LatchNibble(uint8 V, uint8 highBit);
 void VRCIRQ_Control(uint8 V);
 void VRCIRQ_Acknowledge(void);
-void FP_FASTAPASS(1) VRCIRQ_CPUHook(int a);
+void VRCIRQ_CPUHook(int a);
 
 extern SFORMAT VRCIRQ_StateRegs[];
 

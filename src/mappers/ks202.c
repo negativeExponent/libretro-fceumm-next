@@ -79,7 +79,7 @@ DECLFW(KS202_Write) {
 	}
 }
 
-void FP_FASTAPASS(1) KS202IRQHook(int a) {
+void KS202IRQHook(int a) {
 	if (IRQa) {
 		IRQCount += a;
 		if (IRQCount >= 0xFFFF) {

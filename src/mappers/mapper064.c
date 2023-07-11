@@ -129,7 +129,7 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-static void FP_FASTAPASS(1) M064CPUHook(int a) {
+static void M064CPUHook(int a) {
 	static int32 smallcount;
 	if (IRQmode) {
 		smallcount += a;

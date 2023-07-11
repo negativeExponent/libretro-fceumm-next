@@ -109,7 +109,7 @@ static DECLFW(M556WriteASIC) {
 	}
 }
 
-static void FP_FASTAPASS(1) M556CPUIRQHook(int a) {
+static void M556CPUIRQHook(int a) {
 	if (reg[2] & 0x80) {
 		VRC24_IRQCPUHook(a);
 	}

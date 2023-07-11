@@ -74,7 +74,7 @@ static DECLFW(M526Write) {
 	}
 }
 
-static void FP_FASTAPASS(1) M526IRQHook(int a) {
+static void M526IRQHook(int a) {
 	IRQCount += a;
 	if (IRQCount & 4096)
 		X6502_IRQBegin(FCEU_IQEXT);

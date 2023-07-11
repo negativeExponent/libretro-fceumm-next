@@ -95,7 +95,7 @@ static void M127Power(void) {
 	SetWriteHandler(0x8000, 0xFFFF, M127Write);
 }
 
-static void FP_FASTAPASS(1) M127IRQHook(int a) {
+static void M127IRQHook(int a) {
     int count = a;
 	while (count--) {
         if (IRQa) {

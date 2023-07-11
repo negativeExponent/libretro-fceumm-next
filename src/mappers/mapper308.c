@@ -48,7 +48,7 @@ static DECLFW(M308Write) {
 	}
 }
 
-void FP_FASTAPASS(1) M308IRQHook(int a) {
+void M308IRQHook(int a) {
 	int count;
 
 	if (!IRQa)

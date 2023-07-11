@@ -50,7 +50,7 @@ static DECLFW(FDSWrite);
 static void FDSInit(void);
 static void FDSClose(void);
 
-static void FP_FASTAPASS(1) FDSFix(int a);
+static void FDSFix(int a);
 
 static int32 IRQLatch, IRQCount;
 static uint8 IRQa;
@@ -221,7 +221,7 @@ void FCEU_FDSSelect(void) {
 }
 
 /* 2018/12/15 - update irq timings */
-static void FP_FASTAPASS(1) FDSFix(int a) {
+static void FDSFix(int a) {
 	if (IRQa) {
 		IRQCount -= a;
 		if (IRQCount <= 0) {

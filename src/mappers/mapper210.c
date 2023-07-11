@@ -60,7 +60,7 @@ static void SyncMirror() {
 	}
 }
 
-static void FASTAPASS(2) DoCHRRAMROM(int x, uint8 V) {
+static void DoCHRRAMROM(int x, uint8 V) {
 	CHR[x] = V;
 	setchr1(x << 10, V);
 }

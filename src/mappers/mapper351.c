@@ -286,7 +286,7 @@ static DECLFW(writeVRC4) {
 	}
 }
 
-static void FP_FASTAPASS(1) M351CPUHook(int a) {
+static void M351CPUHook(int a) {
 	if ((reg[0] & 3) == 3) {
 		while (a--) { /* VRC4 mode */
 			if (VRCIRQ_mode & 0x02 && (VRCIRQ_mode & 0x04 || (VRCIRQ_cycles -= 3) <= 0)) {

@@ -89,7 +89,7 @@ DECLFW(MMC4_Write) {
 	}
 }
 
-static void FP_FASTAPASS(1) MMC4PPUHook(uint32 A) {
+static void MMC4PPUHook(uint32 A) {
 	uint8 bank = (A >> 12) & 0x01;
 	if ((A & 0x2000) || (((A & 0xFF0) != 0xFD0) && ((A & 0xFF0) != 0xFE0))) {
 		return;

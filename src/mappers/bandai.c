@@ -149,7 +149,7 @@ DECLFW(BANDAI_Write) {
 	}
 }
 
-void FP_FASTAPASS(1) BANDAI_IRQHook(int a) {
+void BANDAI_IRQHook(int a) {
 	if (IRQa) {
 		IRQCount -= a;
 		if (IRQCount < 0) {

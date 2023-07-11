@@ -74,7 +74,7 @@ static void M304Power(void) {
 	SetWriteHandler(0x4027, 0x4027, M304Write1);
 }
 
-static void FP_FASTAPASS(1) M304IRQHook(int a) {
+static void M304IRQHook(int a) {
 	if (IRQa) {
 		if (IRQCount < 5750) /* completely by guess */
 			IRQCount += a;

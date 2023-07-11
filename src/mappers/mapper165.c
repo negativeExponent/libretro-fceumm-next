@@ -57,7 +57,7 @@ static void M165CWM(uint32 A, uint8 V) {
 	}
 }
 
-static void FP_FASTAPASS(1) M165PPU(uint32 A) {
+static void M165PPU(uint32 A) {
 	if ((A & 0x1FF0) == 0x1FD0) {
 		reg = 0xFD;
 		M165PPUFD();

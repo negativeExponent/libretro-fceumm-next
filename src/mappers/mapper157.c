@@ -221,7 +221,7 @@ static DECLFW(M157Write) {
 	}
 }
 
-static void FP_FASTAPASS(1) M157IRQHook(int a) {
+static void M157IRQHook(int a) {
 	BANDAI_IRQHook(a);
 
 	BarcodeCycleCount += a;

@@ -48,7 +48,7 @@ static void Sync(void) {
 	setchr4(0x1000, (latch.data & 4) | 3);
 }
 
-static void FP_FASTAPASS(1) M096PPUHook(uint32 A) {
+static void M096PPUHook(uint32 A) {
 	uint16 addr = A & 0x3000;
 	if ((lastAddr != 0x2000) && ((A & 0x3000) == 0x2000)) {
 		ppulatch = (A >> 8) & 3;

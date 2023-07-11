@@ -36,7 +36,7 @@ static void M520PW(uint32 A, uint8 V) {
 	setprg8(A, ((vrc24.chr[PPUCHRBus] << 2) & 0x20) | (V & 0x1F));
 }
 
-static void FP_FASTAPASS(1) M520PPUHook(uint32 A) {
+static void M520PPUHook(uint32 A) {
 	uint8 bank = (A & 0x1FFF) >> 10;
 	if ((PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
 		PPUCHRBus = bank;

@@ -160,7 +160,7 @@ static void M042_Sub3_Power(void) {
 	SetWriteHandler(0xE000, 0xFFFF, M042_Sub3_Write);
 }
 
-static void FP_FASTAPASS(1) M042_Sub3_IRQHook(int a) {
+static void M042_Sub3_IRQHook(int a) {
 	while (a--) { /* NOTE: Possible performance hit, but whatever */
 		if (IRQa & 0x02) {
 			IRQCount++;

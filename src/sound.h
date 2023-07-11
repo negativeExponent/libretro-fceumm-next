@@ -62,7 +62,7 @@ void FCEUSND_Reset(void);
 void FCEUSND_SaveState(void);
 void FCEUSND_LoadState(int version);
 
-void FASTAPASS(1) FCEU_SoundCPUHook(int);
+void FCEU_SoundCPUHook(int);
 
 #define APU_SQUARE1        0
 #define APU_SQUARE2        1

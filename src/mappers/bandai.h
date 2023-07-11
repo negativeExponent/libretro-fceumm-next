@@ -5,7 +5,7 @@
 
 void BANDAI_Power(void);
 DECLFW(BANDAI_Write);
-void FP_FASTAPASS(1) BANDAI_IRQHook(int a);
+void BANDAI_IRQHook(int a);
 void BANDAI_Reset(void);
 
 void BANDAI_Init(CartInfo *info, EEPROM_TYPE _eeprom_type, int _isFCG);

@@ -22,7 +22,7 @@ SFORMAT VRCIRQ_StateRegs[] =
 	{ 0 }
 };
 
-void FP_FASTAPASS(1) VRCIRQ_CPUHook(int a)
+void VRCIRQ_CPUHook(int a)
 {
 	int count = a;
 

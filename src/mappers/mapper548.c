@@ -60,7 +60,7 @@ static DECLFW(M548Write5000) {
 }
 	
 
-static void FP_FASTAPASS(1) M548IRQ(int a) {
+static void M548IRQ(int a) {
 	int count = a;
 	if (IRQa) {
 		while (count > 0) {

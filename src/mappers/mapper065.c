@@ -125,7 +125,7 @@ static void M065Power(void) {
 	SetWriteHandler(0x8000, 0xFFFF, M065Write);
 }
 
-void FP_FASTAPASS(1) M065IRQ(int a) {
+void M065IRQ(int a) {
 	if (IRQa) {
 		IRQCount -= a;
 		if (IRQCount <= 0) {

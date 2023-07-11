@@ -77,7 +77,7 @@ static void M416Power(void) {
 	SetWriteHandler(0x4020, 0x4FFF, M416Write4);
 }
 
-static void FP_FASTAPASS(1) M416IRQHook(int a) {
+static void M416IRQHook(int a) {
 	if (IRQa) {
 		if (IRQCount < 4096)
 			IRQCount += a;

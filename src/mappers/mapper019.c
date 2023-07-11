@@ -53,7 +53,7 @@ static void SyncPRG(void) {
 	setprg8(0xe000, prg[3] & 0x3F);
 }
 
-static void FASTAPASS(2) DoNTARAMROM(int w, uint8 V) {
+static void DoNTARAMROM(int w, uint8 V) {
 	nt[w] = V;
 	if (V < 0xE0) {
 		V &= CHRmask1[0];
@@ -70,7 +70,7 @@ static void FixNTAR(void) {
 	}
 }
 
-static void FASTAPASS(2) DoCHRRAMROM(int x, uint8 V) {
+static void DoCHRRAMROM(int x, uint8 V) {
 	chr[x] = V;
 	if (((prg[1] >> ((x >> 2) + 6)) & 1) || (V < 0xE0)) {
 		setchr1(x << 10, V);
@@ -84,7 +84,7 @@ static void FixCRR(void) {
 	}
 }
 
-static void FP_FASTAPASS(1) NamcoIRQHook(int a) {
+static void NamcoIRQHook(int a) {
 	if (IRQa) {
 		IRQCount += a;
 		if (IRQCount >= 0x7FFF) {

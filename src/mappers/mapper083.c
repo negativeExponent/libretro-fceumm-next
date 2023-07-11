@@ -213,7 +213,7 @@ static void M083Close(void) {
 	WRAM = NULL;
 }
 
-static void FP_FASTAPASS(1) M083IRQHook(int a) {
+static void M083IRQHook(int a) {
 	if (IRQa && (IRQCount > 0)) {
 		if (mode & 0x40) {
 			IRQCount -= a;
