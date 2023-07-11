@@ -36,7 +36,7 @@ static void M457PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M457Write) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		CartBW(A, V);
 		reg = V;
 		MMC3_FixPRG();

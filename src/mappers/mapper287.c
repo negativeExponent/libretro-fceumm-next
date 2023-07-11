@@ -58,7 +58,7 @@ static void M287PW(uint32 A, uint8 V) {
 
 static DECLFW(M287LoWrite) {
 	/*	printf("Wr: A:%04x V:%02x\n", A, V); */
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		reg = A;
 		MMC3_FixPRG();
 		MMC3_FixCHR();

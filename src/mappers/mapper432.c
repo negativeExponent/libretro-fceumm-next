@@ -63,7 +63,7 @@ static DECLFR(M432Read) {
 }
 
 static DECLFW(M432Write) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		reg[A & 0x01] = V;
 		if (!(A & 0x01) && !(V & 0x01) && ((ROM.prg.size * 16) < 1024)) {
 			reg[1] &= ~0x20; /* Writing 0 to register 0 clears register 1's DIP bit */

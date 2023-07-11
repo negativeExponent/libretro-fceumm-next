@@ -46,7 +46,7 @@ static void M345MIR(void) {
 }
 
 static DECLFW(M345Write) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		reg = V;
 		MMC3_FixPRG();
 		MMC3_FixCHR();

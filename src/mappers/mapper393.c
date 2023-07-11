@@ -76,7 +76,7 @@ static DECLFW(M393Write8) {
 }
 
 static DECLFW(M393Write6) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		reg[0] = A & 0xFF;
 		MMC3_FixPRG();
 		MMC3_FixCHR();

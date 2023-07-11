@@ -98,11 +98,8 @@ uint8 MMC3_GetCHRBank(int V) {
 	return ((mmc3.reg[V >> 1] & ~0x01) | (V & 0x01));
 }
 
-int MMC3_WRAMWritable(uint32 A) {
-	if ((A >= 0x6000) && (A <= 0x7FFF)) {
-		return ((mmc3.wram & 0x80) && !(mmc3.wram & 0x40));
-	}
-	return FALSE;
+int MMC3_WramIsWritable(void) {
+	return ((mmc3.wram & 0x80) && !(mmc3.wram & 0x40)) ? TRUE : FALSE;
 }
 
 static void GENFIXPRG(void) {

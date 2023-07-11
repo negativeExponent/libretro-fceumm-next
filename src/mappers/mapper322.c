@@ -64,7 +64,7 @@ static void M322PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M322Write) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		reg = A & 0xFF;
 		MMC3_FixPRG();
 		MMC3_FixCHR();

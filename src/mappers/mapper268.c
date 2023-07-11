@@ -93,14 +93,14 @@ static void M268PW(uint32 A, uint8 V) {
 }
 
 static DECLFR(M268WramRead) {
-	if (MMC3_WRAMWritable(A) || (mmc3.wram & 0x20)) {
+	if (MMC3_WramIsWritable() || (mmc3.wram & 0x20)) {
 		return CartBR(A);
 	}
 	return X.DB;
 }
 
 static DECLFW(M268WramWrite) {
-	if (MMC3_WRAMWritable(A) || (mmc3.wram & 0x20)) {
+	if (MMC3_WramIsWritable() || (mmc3.wram & 0x20)) {
 		CartBW(A, V);
 	}
 }
@@ -137,7 +137,6 @@ static void M268Power(void) {
 	SetReadHandler(0x6000, 0x7FFF, M268WramRead);
 	if (iNESCart.submapper & 1) {
 		SetWriteHandler(0x5000, 0x5FFF, M268Write);
-		SetWriteHandler(0x6000, 0x7FFF, M268WramWrite);
 	} else {
 		SetWriteHandler(0x6000, 0x7FFF, M268Write);
 	}
@@ -151,9 +150,9 @@ static void M268Close(void) {
 	CHRRAM = NULL;
 }
 
-static void ComminInit(CartInfo *info, int _submapper) {
+static void Common_Init(CartInfo *info, int _submapper) {
 	MMC3_Init(info, (info->PRGRamSize + info->PRGRamSaveSize) >> 10, info->battery);
-	if (!info->submapper) {
+	if (info->submapper != _submapper) {
 		info->submapper = _submapper;
 	}
 	MMC3_pwrap = M268PW;
@@ -171,13 +170,13 @@ static void ComminInit(CartInfo *info, int _submapper) {
 }
 
 void COOLBOY_Init(CartInfo *info) {
-	ComminInit(info, 0);
+	Common_Init(info, 0);
 }
 
-void MINDKIDS_Init(CartInfo *info) {
-	ComminInit(info, 1);
+void MINDKIDS_Init(CartInfo *info) { /* M224 */
+	Common_Init(info, 1);
 }
 
 void Mapper268_Init(CartInfo *info) {
-	ComminInit(info, info->submapper);
+	Common_Init(info, info->submapper);
 }

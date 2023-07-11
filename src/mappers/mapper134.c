@@ -61,7 +61,7 @@ static DECLFR(M134Read) {
 }
 
 static DECLFW(M134Write) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		CartBW(A, V);
 		if (!(reg[0] & 0x80)) {
 			reg[A & 3] = V;

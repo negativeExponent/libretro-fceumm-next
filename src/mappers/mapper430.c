@@ -41,7 +41,7 @@ static void M430CW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M430Write) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 	    reg = A & 0xFF;
 	    MMC3_FixPRG();        
 	    MMC3_FixCHR();

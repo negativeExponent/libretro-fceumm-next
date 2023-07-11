@@ -62,7 +62,7 @@ static void M197CHR(void) {
 }
 
 static DECLFW(M197WriteWRAM) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		reg = V;
 		MMC3_FixPRG();
 	}

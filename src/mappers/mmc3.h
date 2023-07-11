@@ -19,7 +19,7 @@ void MMC3_Power(void);
 void MMC3_Reset(void);
 void MMC3_Close(void);
 void MMC3_IRQHBHook(void);
-int  MMC3_WRAMWritable(uint32 A);
+int  MMC3_WramIsWritable(void);
 void MMC3_Init(CartInfo *info, int wram, int battery);
 
 DECLFW(MMC3_CMDWrite); /* $ 0x8000 - 0xBFFF */

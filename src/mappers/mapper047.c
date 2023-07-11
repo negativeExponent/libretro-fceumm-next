@@ -32,7 +32,7 @@ static void M047CW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M047Write) {
-    if (MMC3_WRAMWritable(A)) {
+    if (MMC3_WramIsWritable()) {
 	    reg = V;
 	    MMC3_FixPRG();
 	    MMC3_FixCHR();

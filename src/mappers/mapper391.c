@@ -54,7 +54,7 @@ static void M391CW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M391Write) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		if (!(reg[0] & 0x80)) {
 			reg[0] = V;
 			reg[1] = ((A >> 8) & 0xFF);

@@ -46,7 +46,7 @@ static void M259PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M259Write) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		reg = V;
 		MMC3_FixPRG();
 	}

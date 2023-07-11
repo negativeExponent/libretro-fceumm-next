@@ -36,7 +36,7 @@ static DECLFW(M189Write4) {
 }
 
 static DECLFW(M189Write6) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		reg = V;
 		MMC3_FixPRG();
 	}

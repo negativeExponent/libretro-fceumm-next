@@ -68,7 +68,7 @@ static void M327CW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M327Write) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		CartBW(A, V);
 		if ((reg & 7) == 0) {
 			reg = A & 0x3F;

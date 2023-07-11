@@ -60,7 +60,7 @@ static void M412PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M412Write) {
-	if (MMC3_WRAMWritable(A)) {
+	if (MMC3_WramIsWritable()) {
 		CartBW(A, V);
 		if (!(reg[1] & 0x01)) {
 			reg[A & 0x03] = V;
