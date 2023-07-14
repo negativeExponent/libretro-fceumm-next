@@ -50,7 +50,7 @@ DECLFW(FME7Sound_WriteIndex) {
 	sndcmd = V % 14;
 }
 
-DECLFW(FME7Sound_WriteCMD) {
+DECLFW(FME7Sound_WriteReg) {
 	GameExpSound.Fill = AYSound;
 	GameExpSound.HiFill = AYSoundHQ;
 	switch (sndcmd) {

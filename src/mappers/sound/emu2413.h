@@ -1,5 +1,5 @@
-#ifndef _EMU2413_H_
-#define _EMU2413_H_
+#ifndef _EMU2413_H
+#define _EMU2413_H
 
 #include "fceu-types.h"
 
@@ -234,4 +234,4 @@ uint32 OPLL_toggleMask(OPLL *, uint32 mask);
 }
 #endif
 
-#endif
+#endif /* _EMU2413_H */

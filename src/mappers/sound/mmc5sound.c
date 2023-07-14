@@ -1,7 +1,7 @@
 #include "mapinc.h"
 #include "mmc5sound.h"
 
-MMC5APU MMC5Sound;
+MMC5SOUND MMC5Sound;
 
 static void (*sfun)(int P);
 static void (*psfun)(void);
@@ -121,7 +121,7 @@ static void MMC5RunSound(int Count) {
 		MMC5Sound.BC[x] = Count;
 }
 
-DECLFW(Mapper5_SW) {
+DECLFW(MMC5Sound_Write) {
 	A &= 0x1F;
 
 	GameExpSound.Fill   = MMC5RunSound;
@@ -169,8 +169,8 @@ DECLFW(Mapper5_SW) {
 	}
 }
 
-void Mapper5_ESI(void) {
-	GameExpSound.RChange = Mapper5_ESI;
+void MMC5Sound_ESI(void) {
+	GameExpSound.RChange = MMC5Sound_ESI;
 	if (FSettings.SndRate) {
 		if (FSettings.soundq >= 1) {
 			sfun  = Do5SQHQ;

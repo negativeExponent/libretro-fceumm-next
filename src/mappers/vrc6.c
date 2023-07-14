@@ -94,7 +94,7 @@ DECLFW(VRC6Write) {
 	case 0xA000:
 	case 0xB000:
 		if (A >= 0x9000 && A <= 0xB002) {
-			VRC6SW(A, V);
+			VRC6Sound_Write(A, V);
 		} else {
 			vrc6.mirr = (V >> 2) & 3;
 			if (vrc6.mwrap) {
@@ -197,10 +197,10 @@ void GenVRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram) {
 	MapIRQHook = VRCIRQ_CPUHook;
 	AddExState(&VRCIRQ_StateRegs, ~0, 0, 0);
 
-	VRC6_ESI();
+	VRC6Sound_ESI();
 }
 
 void NSFVRC6_Init(void) {
-	VRC6_ESI();
-	SetWriteHandler(0x8000, 0xbfff, VRC6SW);
+	VRC6Sound_ESI();
+	SetWriteHandler(0x8000, 0xbfff, VRC6Sound_Write);
 }

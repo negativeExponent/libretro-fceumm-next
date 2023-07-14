@@ -4,8 +4,9 @@
 #include "mapinc.h"
 #include "emu2413.h"
 
-void VRC7SoundRestore(void);
-DECLFW(VRC7SW);
-void VRC7_ESI(void);
+void VRC7Sound_StateRestore(void);
+void VRC7Sound_ESI(void);
 
-#endif
+DECLFW(VRC7Sound_Write);
+
+#endif /* _VRC7_SOUND_H */

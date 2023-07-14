@@ -216,7 +216,7 @@ static void VRC6SyncHQ(int32 ts) {
 	for (x = 0; x < 3; x++) cvbc[x] = ts;
 }
 
-DECLFW(VRC6SW) {
+DECLFW(VRC6Sound_Write) {
 	A &= 0xF003;
 	if (A >= 0x9000 && A <= 0x9002) {
 		vpsg1[A & 3] = V;
@@ -230,7 +230,7 @@ DECLFW(VRC6SW) {
 	}
 }
 
-static void VRC6_SC(void) {
+static void VRC6Sound_SC(void) {
 	GameExpSound.Fill = VRC6Sound;
 	GameExpSound.HiFill = VRC6SoundHQ;
 	GameExpSound.HiSync = VRC6SyncHQ;
@@ -253,8 +253,8 @@ static void VRC6_SC(void) {
 		memset(sfun, 0, sizeof(sfun));
 }
 
-void VRC6_ESI(void) {
-	GameExpSound.RChange = VRC6_SC;
-	VRC6_SC();
+void VRC6Sound_ESI(void) {
+	GameExpSound.RChange = VRC6Sound_SC;
+	VRC6Sound_SC();
     AddExState(&SStateRegs, ~0, 0, 0);
 }

@@ -1,7 +1,8 @@
 #ifndef _VRC6_SOUND_H
 #define _VRC6_SOUND_H
 
-DECLFW(VRC6SW);
-void VRC6_ESI(void);
+void VRC6Sound_ESI(void);
+
+DECLFW(VRC6Sound_Write);
 
 #endif /* _VRC6_SOUND_H */ 

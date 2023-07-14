@@ -42,11 +42,11 @@ static void M451FixCHR(void) {
 }
 
 static DECLFR(M451Read) {
-	return flashrom_read(A);
+	return FlashROM_Read(A);
 }
 
 static DECLFW(M451Write) {
-	flashrom_write(A, V);
+	FlashROM_Write(A, V);
 	switch (A & 0xE000) {
     case 0xA000:
         MMC3_CMDWrite(0xA000, A & 0x01);
@@ -86,7 +86,7 @@ void Mapper451_Init(CartInfo *info) {
 	info->Close = M451Close;
     MMC3_FixPRG = M451FixPRG;
 	MMC3_FixCHR = M451FixCHR;
-	MapIRQHook = flashrom_cpucycle;
+	MapIRQHook = FlashROM_CPUCyle;
 
 	info->battery = 1;
 	FLASHROM_size = PRGsize[0];
@@ -100,5 +100,5 @@ void Mapper451_Init(CartInfo *info) {
 		++r;
 	}
 	SetupCartPRGMapping(0x10, FLASHROM, FLASHROM_size, 0);
-	flashrom_init(FLASHROM, FLASHROM_size, 0x37, 0x86, 65536, 0x0555, 0x02AA);
+	FlashROM_Init(FLASHROM, FLASHROM_size, 0x37, 0x86, 65536, 0x0555, 0x02AA);
 }

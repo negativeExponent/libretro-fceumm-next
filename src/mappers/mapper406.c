@@ -33,11 +33,11 @@ static void M406PW(uint32 A, uint8 V) {
 }
 
 static DECLFR(M406Read) {
-	return flashrom_read(A);
+	return FlashROM_Read(A);
 }
 
 static DECLFW(M406Write) {
-	flashrom_write(A, V);
+	FlashROM_Write(A, V);
 	if (iNESCart.submapper == 0) {
 		A = (A & 0xFFFC) | ((A << 1) & 2) | ((A >> 1) & 1);
 	} else if ((A <= 0x9000) || (A >= 0xE000)) {
@@ -67,7 +67,7 @@ void Mapper406_Init(CartInfo *info) {
 	info->Power = M406Power;
 	info->Close = M406Close;
 	MMC3_pwrap = M406PW;
-	MapIRQHook = flashrom_cpucycle;
+	MapIRQHook = FlashROM_CPUCyle;
 
 	info->battery = 1;
 	FLASHROM_size = PRGsize[0];
@@ -83,5 +83,5 @@ void Mapper406_Init(CartInfo *info) {
 	SetupCartPRGMapping(0x10, FLASHROM_data, FLASHROM_size, 0);
 
 	id = (info->submapper == 0) ? 0xC2 : 0x01;
-	flashrom_init(FLASHROM_data, FLASHROM_size, id, 0xA4, 65536, 0x5555, 0x02AAA);
+	FlashROM_Init(FLASHROM_data, FLASHROM_size, id, 0xA4, 65536, 0x5555, 0x02AAA);
 }

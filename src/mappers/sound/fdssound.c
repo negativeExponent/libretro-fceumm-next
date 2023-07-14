@@ -18,13 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* Begin FDS sound */
-#include <string.h>
+#include "mapinc.h"
 #include "fdssound.h"
-#include "x6502.h"
-#include "fceu.h"
-#include "sound.h"
-#include "state.h"
 
 #define FDSClock (1789772.7272727272727272 / 2)
 
@@ -282,13 +277,13 @@ void FDSSoundReset(void) {
 	GameExpSound.RChange = FDS_ESI;
 }
 
-uint8 FDSSoundRead(uint32 A) {
+DECLFR(FDSSoundRead) {
 	if (A >= 0x4040 && A < 0x4080) return FDSWaveRead(A);
 	if (A >= 0x4090 && A < 0x4093) return FDSSRead(A);
 	return X.DB;
 }
 
-void FDSSoundWrite(uint32 A, uint8 V) {
+DECLFW(FDSSoundWrite) {
 	if (A >= 0x4040 && A < 0x4080) FDSWaveWrite(A, V);
 	else if (A >= 0x4080 && A < 0x408B) FDSSWrite(A, V);
 }

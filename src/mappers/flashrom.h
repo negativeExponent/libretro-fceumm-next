@@ -16,12 +16,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
 
-#ifndef FLASHROM_H_
-#define FLASHROM_H_
+#ifndef FLASHROM_H
+#define FLASHROM_H
 
-void flashrom_init(uint8 *data, uint32 size, uint8 manufacter_id, uint8 model_id, uint32 sector_size, uint32 adr1, uint32 adr2);
-void flashrom_write(uint32 address, uint8 value);
-uint8 flashrom_read(uint32 address);
-void flashrom_cpucycle(int a);
+void FlashROM_Init(uint8 *data, uint32 size, uint8 manufacter_id, uint8 model_id, uint32 sector_size, uint32 adr1, uint32 adr2);
+void FlashROM_CPUCyle(int a);
 
-#endif /* FLASHROM_H_ */
+DECLFW(FlashROM_Write);
+DECLFR(FlashROM_Read);
+
+#endif /* FLASHROM_H */

@@ -71,7 +71,7 @@ static void VRC7SKill(void) {
 	VRC7Sound = NULL;
 }
 
-DECLFW(VRC7SW) {
+DECLFW(VRC7Sound_Write) {
     switch (A & 0xF030) {
     case 0x9010:
         vrc7idx = V;
@@ -86,11 +86,11 @@ DECLFW(VRC7SW) {
 	}
 }
 
-void VRC7SoundRestore(void) {
+void VRC7Sound_StateRestore(void) {
     OPLL_forceRefresh(VRC7Sound);
 }
 
-void VRC7_ESI(void) {
+void VRC7Sound_ESI(void) {
 	GameExpSound.RChange = VRC7SC;
 	GameExpSound.Kill = VRC7SKill;
 	VRC7Sound = OPLL_new(3579545, FSettings.SndRate ? FSettings.SndRate : 44100);

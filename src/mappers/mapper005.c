@@ -482,11 +482,11 @@ void NSFMMC5_Init(void) {
 	memset(&MMC5Sound, 0, sizeof(MMC5Sound));
 	mul[0] = mul[1] = 0;
 	ExRAM = (uint8*)FCEU_gmalloc(1024);
-	Mapper5_ESI();
+	MMC5Sound_ESI();
 	SetWriteHandler(0x5c00, 0x5fef, MMC5_ExRAMWr);
 	SetReadHandler(0x5c00, 0x5fef, MMC5_ExRAMRd);
 	MMC5HackCHRMode = 2;
-	SetWriteHandler(0x5000, 0x5015, Mapper5_SW);
+	SetWriteHandler(0x5000, 0x5015, MMC5Sound_Write);
 	SetWriteHandler(0x5205, 0x5206, Mapper5_write);
 	SetReadHandler(0x5205, 0x5206, MMC5_read);
 }
@@ -550,7 +550,7 @@ static void GenMMC5Power(void) {
 	SetWriteHandler(0x6000, 0xFFFF, MMC5_WriteROMRAM);
 	SetReadHandler(0x6000, 0xFFFF, MMC5_ReadROMRAM);
 
-	SetWriteHandler(0x5000, 0x5015, Mapper5_SW);
+	SetWriteHandler(0x5000, 0x5015, MMC5Sound_Write);
 	SetWriteHandler(0x5205, 0x5206, Mapper5_write);
 	SetReadHandler(0x5205, 0x5206, MMC5_read);
 
@@ -639,7 +639,7 @@ static void GenMMC5_Init(CartInfo *info, int wsize, int battery) {
 	MMC5HackVROMPTR = CHRptr[0];
 	MMC5HackCHRMode = 0;
 	MMC5HackSPMode = MMC5HackSPScroll = MMC5HackSPPage = 0;
-	Mapper5_ESI();
+	MMC5Sound_ESI();
 }
 
 void Mapper005_Init(CartInfo *info) {

@@ -6,7 +6,6 @@
 void FME7Sound_ESI(void);
 
 DECLFW(FME7Sound_WriteIndex);
-DECLFW(FME7Sound_WriteCMD);
-
+DECLFW(FME7Sound_WriteReg);
 
 #endif /* _FME7_SOUND_H */

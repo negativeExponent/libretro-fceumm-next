@@ -34,13 +34,12 @@ static int32  time_out;
 static SFORMAT FlashStateRegs[] = {
     { &flash_state, 1, "STAT" },
     { &time_out,    4, "TIME" },
-
     { 0 }
 };
 
 #define PRG_OFFSET(A) (&Page[(A) >> 11][(A)] - flash_data)
 
-DECLFR(flashrom_read) {
+DECLFR(FlashROM_Read) {
 	if (flash_state == 0x90) {
         /* 0: manufacturer id */
         /* 1: model id */
@@ -51,10 +50,9 @@ DECLFR(flashrom_read) {
 	return flash_data[PRG_OFFSET(A)];
 }
 
-DECLFW(flashrom_write) {
+DECLFW(FlashROM_Write) {
 	uint32 chip_address = PRG_OFFSET(A);
 	uint32 cmd = chip_address & 0x7FFF;
-	int i;
 
 	switch (flash_state) {
 	default:
@@ -79,6 +77,7 @@ DECLFW(flashrom_write) {
 		if (V == 0x30) {
 			/* sector erase */
 			if (chip_address < flash_size) {
+				int i;
 				chip_address &= ~(flash_sect_size - 1);
 				for (i = 0; i < flash_sect_size; i++) {
 					flash_data[chip_address + i] = 0xFF;
@@ -87,6 +86,7 @@ DECLFW(flashrom_write) {
 				time_out = flash_sect_size;
 			}
 		} else if ((cmd == flash_addr1) && (V == 0x10)) {
+			int i;
 			/* chip erase */
 			for (i = 0; i <= flash_size; i++) {
 				flash_data[i] = 0xFF;
@@ -113,7 +113,7 @@ DECLFW(flashrom_write) {
 	/* FCEU_printf("%04x:%02x cmd:%04x state:%02x addr1:%04x addr2:%04x\n", A, V, cmd, flash_state, flash_addr1, flash_addr2); */
 }
 
-void flashrom_cpucycle(int a) {
+void FlashROM_CPUCyle(int a) {
 	if (time_out > 0) {
 		time_out -= a;
 		if (time_out <= 0) {
@@ -122,7 +122,7 @@ void flashrom_cpucycle(int a) {
 	}
 }
 
-void flashrom_init(uint8 *data, uint32 size, uint8 manufacter_id, uint8 model_id, uint32 sector_size, uint32 adr1, uint32 adr2) {
+void FlashROM_Init(uint8 *data, uint32 size, uint8 manufacter_id, uint8 model_id, uint32 sector_size, uint32 adr1, uint32 adr2) {
 	flash_data      = data;
 	flash_size      = size;
 	flash_id[0]     = manufacter_id;

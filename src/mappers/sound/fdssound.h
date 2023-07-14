@@ -1,14 +1,13 @@
-#ifndef FDS_APU_H
-#define FDS_APU_H
+#ifndef _FDS_APU_H
+#define _FDS_APU_H
 
-#include "fceu-types.h"
+#include "fceu.h"
 
+void FDSSoundPower(void); 
 void FDSSoundReset(void);
 void FDSSoundStateAdd(void);
 
-/* Used for fds conversion-based mappers to allow access to fds apu registers */
-void FDSSoundPower(void); 
-uint8 FDSSoundRead(uint32 A);          /* $4040-$407F, $4090-$4092 */
-void FDSSoundWrite(uint32 A, uint8 V); /* $4040-$407F, $4080-$408A */
+DECLFR(FDSSoundRead);  /* $4040-$407F, $4090-$4092 */
+DECLFW(FDSSoundWrite); /* $4040-$407F, $4080-$408A */
 
-#endif /* FDS_APU_H */
+#endif /* _FDS_APU_H */

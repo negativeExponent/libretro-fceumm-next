@@ -91,7 +91,7 @@ DECLFW(VRC7Write) {
 			FixVRC7PRG();
 			break;
 		default:
-			VRC7SW(A, V);
+			VRC7Sound_Write(A, V);
 			break;
 		}
 		break;
@@ -151,7 +151,7 @@ void GenVRC7Close(void) {
 }
 
 void GenVRC7Restore(int version) {
-	VRC7SoundRestore();
+	VRC7Sound_StateRestore();
 	FixVRC7PRG();
 	FixVRC7CHR();
 }
@@ -182,11 +182,11 @@ void GenVRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {
 	MapIRQHook = VRCIRQ_CPUHook;
 	AddExState(&VRCIRQ_StateRegs, ~0, 0, 0);
 
-	VRC7_ESI();
+	VRC7Sound_ESI();
 }
 
 void NSFVRC7_Init(void) {
 	SetWriteHandler(0x9010, 0x901F, VRC7Write);
 	SetWriteHandler(0x9030, 0x903F, VRC7Write);
-	VRC7_ESI();
+	VRC7Sound_ESI();
 }

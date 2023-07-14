@@ -1,7 +1,7 @@
 #ifndef _MMC5_AUDIO_H
 #define _MMC5_AUDIO_H
 
-typedef struct MMC5APU {
+typedef struct MMC5SOUND {
 	uint16 wl[2];
 	uint8 env[2];
 	uint8 enable;
@@ -11,11 +11,12 @@ typedef struct MMC5APU {
 	int32 dcount[2];
 	int32 BC[3];
 	int32 vcount[2];
-} MMC5APU;
+} MMC5SOUND;
 
-extern MMC5APU MMC5Sound;
+extern MMC5SOUND MMC5Sound;
 
-DECLFW(Mapper5_SW);
-void Mapper5_ESI(void);
+DECLFW(MMC5Sound_Write);
+
+void MMC5Sound_ESI(void);
 
 #endif /* _MMC5_AUDIO_H */

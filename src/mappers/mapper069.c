@@ -40,93 +40,75 @@ static SFORMAT StateRegs[] =
 };
 
 static void Sync(void) {
-	uint8 i;
-	if ((preg[3] & 0xC0) == 0xC0)
-		setprg8r(0x10, 0x6000, preg[3] & 0x3F);
-	else
-		setprg8(0x6000, preg[3] & 0x3F);
-	setprg8(0x8000, preg[0]);
-	setprg8(0xA000, preg[1]);
-	setprg8(0xC000, preg[2]);
+	if ((preg[0] & 0xC0) == 0xC0) {
+		setprg8r(0x10, 0x6000, preg[0] & 0x3F);
+	} else {
+		setprg8(0x6000, preg[0] & 0x3F);
+	}
+
+	setprg8(0x8000, preg[1]);
+	setprg8(0xA000, preg[2]);
+	setprg8(0xC000, preg[3]);
 	setprg8(0xE000, ~0);
-	for (i = 0; i < 8; i++)
-		setchr1(i << 10, creg[i]);
-	switch (mirr & 3) {
-		case 0: setmirror(MI_V); break;
-		case 1: setmirror(MI_H); break;
-		case 2: setmirror(MI_0); break;
-		case 3: setmirror(MI_1); break;
+
+	setchr1(0x0000, creg[0]);
+	setchr1(0x0400, creg[1]);
+	setchr1(0x0800, creg[2]);
+	setchr1(0x0C00, creg[3]);
+
+	setchr1(0x1000, creg[4]);
+	setchr1(0x1400, creg[5]);
+	setchr1(0x1800, creg[6]);
+	setchr1(0x1C00, creg[7]);
+
+	switch (mirr & 0x03) {
+	case 0: setmirror(MI_V); break;
+	case 1: setmirror(MI_H); break;
+	case 2: setmirror(MI_0); break;
+	case 3: setmirror(MI_1); break;
 	}
 }
 
 static DECLFW(M069WRAMWrite) {
-	if ((preg[3] & 0xC0) == 0xC0)
+	if ((preg[0] & 0xC0) == 0xC0) {
 		CartBW(A, V);
+	}
 }
 
 static DECLFR(M069WRAMRead) {
-	if ((preg[3] & 0xC0) == 0x40)
+	if ((preg[0] & 0xC0) == 0x40) {
 		return X.DB;
-	else
-		return CartBR(A);
+	}
+	return CartBR(A);
 }
 
-static DECLFW(M069WriteIndex) {
-	cmdreg = V & 0xF;
-}
-
-static DECLFW(M069WriteCMD) {
-	switch (cmdreg) {
+static DECLFW(M069Write) {
+	switch (A & 0xE000) {
+	case 0x8000:
+		cmdreg = V;
+		break;
+	case 0xA000:
+		switch (cmdreg & 0x0F) {
 		case 0x0:
-			creg[0] = V;
-			Sync();
-			break;
 		case 0x1:
-			creg[1] = V;
-			Sync();
-			break;
 		case 0x2:
-			creg[2] = V;
-			Sync();
-			break;
 		case 0x3:
-			creg[3] = V;
-			Sync();
-			break;
 		case 0x4:
-			creg[4] = V;
-			Sync();
-			break;
 		case 0x5:
-			creg[5] = V;
-			Sync();
-			break;
 		case 0x6:
-			creg[6] = V;
-			Sync();
-			break;
 		case 0x7:
-			creg[7] = V;
+			creg[cmdreg] = V;
 			Sync();
 			break;
 		case 0x8:
-			preg[3] = V;
-			Sync();
-			break;
 		case 0x9:
-			preg[0] = V;
-			Sync();
-			break;
 		case 0xA:
-			preg[1] = V;
-			Sync();
-			break;
 		case 0xB:
-			preg[2] = V;
+			preg[cmdreg & 0x03] = V;
 			Sync();
 			break;
 		case 0xC:
-			mirr = V & 3;
+			mirr = V;
 			Sync();
 			break;
 		case 0xD:
@@ -134,34 +116,53 @@ static DECLFW(M069WriteCMD) {
 			X6502_IRQEnd(FCEU_IQEXT);
 			break;
 		case 0xE:
-			IRQCount &= 0xFF00;
-			IRQCount |= V;
+			IRQCount = (IRQCount & 0xFF00) | (V & 0xFF);
 			break;
 		case 0xF:
-			IRQCount &= 0x00FF;
-			IRQCount |= V << 8;
+			IRQCount = (IRQCount & 0x00FF) | (V << 8);
 			break;
+		}
+		break;
+	case 0xC000:
+		FME7Sound_WriteIndex(A, V);
+		break;
+	case 0xE000:
+		FME7Sound_WriteReg(A, V);
+		break;
 	}
 }
 
 static void M069Power(void) {
+	preg[0] = 0;
+	preg[1] = 0;
+	preg[2] = 1;
+	preg[3] = ~1;
+	creg[0] = 0;
+	creg[1] = 1;
+	creg[2] = 2;
+	creg[3] = 3;
+	creg[4] = 4;
+	creg[5] = 5;
+	creg[6] = 6;
+	creg[7] = 7;
 	cmdreg = 0;
 	IRQCount = 0xFFFF;
 	IRQa = 0;
 	Sync();
+
 	SetReadHandler(0x6000, 0x7FFF, M069WRAMRead);
 	SetWriteHandler(0x6000, 0x7FFF, M069WRAMWrite);
+
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0x9FFF, M069WriteIndex);
-	SetWriteHandler(0xA000, 0xBFFF, M069WriteCMD);
-	SetWriteHandler(0xC000, 0xDFFF, FME7Sound_WriteIndex);
-	SetWriteHandler(0xE000, 0xFFFF, FME7Sound_WriteCMD);
+	SetWriteHandler(0x8000, 0xFFFF, M069Write);
+
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
 static void M069Close(void) {
-	if (WRAM)
+	if (WRAM) {
 		FCEU_gfree(WRAM);
+	}
 	WRAM = NULL;
 }
 
@@ -184,6 +185,9 @@ void Mapper069_Init(CartInfo *info) {
 	info->Power = M069Power;
 	info->Close = M069Close;
 	MapIRQHook = M069IRQHook;
+	GameStateRestore = StateRestore;
+	AddExState(&StateRegs, ~0, 0, 0);
+
 	WRAMSIZE = 8192;
 	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
@@ -192,13 +196,12 @@ void Mapper069_Init(CartInfo *info) {
 		info->SaveGame[0] = WRAM;
 		info->SaveGameLen[0] = WRAMSIZE;
 	}
-	GameStateRestore = StateRestore;
+	
 	FME7Sound_ESI();
-	AddExState(&StateRegs, ~0, 0, 0);
 }
 
 void NSFAY_Init(void) {
 	SetWriteHandler(0xC000, 0xDFFF, FME7Sound_WriteIndex);
-	SetWriteHandler(0xE000, 0xFFFF, FME7Sound_WriteCMD);
+	SetWriteHandler(0xE000, 0xFFFF, FME7Sound_WriteReg);
 	FME7Sound_ESI();
 }
