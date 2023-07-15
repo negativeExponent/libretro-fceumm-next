@@ -19,6 +19,7 @@
  */
 
 /* NES 2.0 Mapper 543 - 1996 無敵智カ卡 5-in-1 (CH-501) */
+/* NOTE: needs RAM to be initialized to all 0x00 */
 
 #include "mmc1.h"
 
@@ -27,7 +28,7 @@ static uint8 bits;
 static uint8 shift;
 
 static void M543PW(uint32 A, uint8 V) {
-	setprg16(A, (V & 0x0F) | (reg << 4));
+	setprg16(A, (reg << 4) | (V & 0x0F));
 }
 
 static void M543CW(uint32 A, uint8 V) {
@@ -71,7 +72,6 @@ static void M543Power(void) {
 }
 
 void Mapper543_Init(CartInfo *info) {
-	/* M543 has 32K CHR RAM but only uses 8K, so its safe to set this chr to 0 */
 	MMC1_Init(info, 64, info->battery ? 64 : 0);
 	info->Power = M543Power;
 	info->Reset = M543Reset;

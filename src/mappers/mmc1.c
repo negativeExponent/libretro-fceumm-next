@@ -200,22 +200,16 @@ void MMC1_Restore(int version) {
 }
 
 void MMC1_Reset(void) {
-	int i;
-
-	for (i = 0; i < 4; i++) {
-		mmc1.regs[i] = 0;
-	}
-
-	mmc1.buffer = mmc1.shift = 0;
-	mmc1.regs[0] = 0x1F;
-
+	mmc1.regs[0] = 0x0C;
 	mmc1.regs[1] = 0;
 	mmc1.regs[2] = 0;
 	mmc1.regs[3] = 0;
 
-	MMC1_FixMIR();
-	MMC1_FixCHR();
+	mmc1.buffer = mmc1.shift = 0;
+	
 	MMC1_FixPRG();
+	MMC1_FixCHR();
+	MMC1_FixMIR();
 }
 
 void MMC1_Power(void) {
