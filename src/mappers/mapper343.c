@@ -42,11 +42,11 @@ static void Sync(void) {
 }
 
 static DECLFW(M343Write) {
-	LatchWrite(A, ~V);
+	Latch_Write(A, ~V);
 }
 
 static void M343Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M343Write);
 }
 

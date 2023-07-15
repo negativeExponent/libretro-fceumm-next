@@ -3,9 +3,9 @@
 
 #include "mapinc.h"
 
-void FME7Sound_ESI(void);
-
 DECLFW(FME7Sound_WriteIndex);
 DECLFW(FME7Sound_WriteReg);
+
+void FME7Sound_ESI(void);
 
 #endif /* _FME7_SOUND_H */

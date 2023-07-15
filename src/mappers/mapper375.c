@@ -79,12 +79,12 @@ static DECLFW(M375Write) {
 }
 
 static void M375Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M375Write);
 }
 
 void Mapper375_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 1, 0);
 	info->Power = M375Power;
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }

@@ -54,7 +54,7 @@ static DECLFW(M237Write) {
 		latch.data |= (V & 0x07);
 		Sync();
 	} else {
-		LatchWrite(A, V);
+		Latch_Write(A, V);
 	}
 }
 
@@ -68,11 +68,11 @@ static DECLFR(M237Read) {
 static void M237Reset() {
 	dipswitch++;
 	dipswitch &= 3;
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 static void M237Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M237Write);
 }
 

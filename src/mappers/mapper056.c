@@ -42,37 +42,39 @@ static SFORMAT M056StateRegs[] =
 
 static void M056Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
+
 	setprg8(0x8000, (prg[0] & 0x10) | (ks202.reg[1] & 0x0F));
 	setprg8(0xA000, (prg[1] & 0x10) | (ks202.reg[2] & 0x0F));
 	setprg8(0xC000, (prg[2] & 0x10) | (ks202.reg[3] & 0x0F));
 	setprg8(0xE000, (prg[3] & 0x10) | (          ~0 & 0x0F));
+
 	setchr1(0x0000, chr[0]);
 	setchr1(0x0400, chr[1]);
 	setchr1(0x0800, chr[2]);
 	setchr1(0x0C00, chr[3]);
+
 	setchr1(0x1000, chr[4]);
 	setchr1(0x1400, chr[5]);
 	setchr1(0x1800, chr[6]);
 	setchr1(0x1C00, chr[7]);
+
 	setmirror(mirr & 1);
 }
 
 static DECLFW(M056Write) {
-	KS202_Write(0xF000, V);
 	switch (A & 0xC00) {
 	case 0x000:
 		prg[A & 0x03] = V;
-		M056Sync();
 		break;
 	case 0x800:
 		mirr = V;
-		M056Sync();
 		break;
 	case 0xC00:
 		chr[A & 0x07] = V;
-		M056Sync();
 		break;
 	}
+	ks202.reg[ks202.cmd & 0x07] = V;
+	M056Sync();
 }
 
 static void M056Reset(void) {
@@ -84,8 +86,11 @@ static void M056Reset(void) {
 }
 
 static void M056Power(void) {
-	GenKS202Power();
-	M056Reset();
+	prg[0] = prg[1] = prg[2] = prg[3] = 0x10;
+	chr[0] = chr[1] = chr[2] = chr[3] = 0;
+	chr[4] = chr[5] = chr[6] = chr[7] = 0;
+	mirr = 0;
+	KS202_Power();
 	SetWriteHandler(0xF000, 0xFFFF, M056Write);
 }
 

@@ -2,7 +2,7 @@
 #ifndef _JV001_H
 #define _JV001_H
 
-typedef struct {
+typedef struct __JV001 {
 	uint8 accumulator;
 	uint8 inverter;
 	uint8 staging;
@@ -16,12 +16,12 @@ typedef struct {
 
 extern JV001 jv001;
 
-void GenJV001Power(void);
-void JV001RegReset(void);
-void JV001StateRestore(int version);
-DECLFR(JV001_CMDRead);
-DECLFW(JV001_CMDWrite);
+void JV001_Power(void);
+void JV001_Reset(void);
 
-void GenJV001_Init(CartInfo *info, void (*proc)(void));
+void JV001_Init(CartInfo *info, void (*proc)(void));
+
+DECLFR(JV001_Read);
+DECLFW(JV001_Write);
 
 #endif /* _JV001_H */

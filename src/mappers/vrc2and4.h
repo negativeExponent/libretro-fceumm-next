@@ -20,7 +20,7 @@ enum {
 	VRC4,
 };
 
-typedef struct {
+typedef struct __VRC24 {
     uint8 prg[2];
     uint16 chr[8];
     uint8 cmd;

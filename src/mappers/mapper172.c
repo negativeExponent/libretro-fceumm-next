@@ -34,21 +34,21 @@ static uint8 GetVal(uint8 V) {
 }
 
 static DECLFW(M172Write) {
-	JV001_CMDWrite(A, GetVal(V));
+	JV001_Write(A, GetVal(V));
 }
 
 static DECLFR(M172Read) {
-	return (X.DB & 0xC0) | GetVal(JV001_CMDRead(A));
+	return (X.DB & 0xC0) | GetVal(JV001_Read(A));
 }
 
 static void M172Power(void) {
-	GenJV001Power();
+	JV001_Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetReadHandler(0x4100, 0x5FFF, M172Read);
 	SetWriteHandler(0x4100, 0xFFFF, M172Write);
 }
 
 void Mapper172_Init(CartInfo *info) {
-	GenJV001_Init(info, M172Sync);
+	JV001_Init(info, M172Sync);
 	info->Power = M172Power;
 }

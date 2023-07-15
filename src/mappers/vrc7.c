@@ -30,6 +30,10 @@ static uint32 vrc7_A1;
 
 VRC7 vrc7;
 
+void (*VRC7_pwrap)(uint32 A, uint8 V);
+void (*VRC7_cwrap)(uint32 A, uint8 V);
+void (*VRC7_mwrap)(uint8 V);
+
 static SFORMAT StateRegs[] =
 {
 	{ vrc7.prg, 3, "PREG" },
@@ -43,8 +47,8 @@ static void GENPWRAP(uint32 A, uint8 V) {
 	setprg8(A, V & 0x3F);
 }
 
-static void GENCWRAP(uint32 A, uint32 V) {
-	setchr1(A, V & 0x1FF);
+static void GENCWRAP(uint32 A, uint8 V) {
+	setchr1(A, V & 0xFF);
 }
 
 static void GENMWRAP(uint8 V) {
@@ -58,26 +62,26 @@ static void GENMWRAP(uint8 V) {
 	}
 }
 
-void FixVRC7PRG(void) {
+void VRC7_FixPRG(void) {
 	setprg8r(0x10, 0x6000, 0);
-	vrc7.pwrap(0x8000, vrc7.prg[0]);
-	vrc7.pwrap(0xa000, vrc7.prg[1]);
-	vrc7.pwrap(0xc000, vrc7.prg[2]);
-	vrc7.pwrap(0xe000, ~0);
+	VRC7_pwrap(0x8000, vrc7.prg[0]);
+	VRC7_pwrap(0xa000, vrc7.prg[1]);
+	VRC7_pwrap(0xc000, vrc7.prg[2]);
+	VRC7_pwrap(0xe000, ~0);
 }
 
-void FixVRC7CHR(void) {
+void VRC7_FixCHR(void) {
 	int i;
 	for (i = 0; i < 8; i++) {
-		vrc7.cwrap(i << 10, vrc7.chr[i]);
+		VRC7_cwrap(i << 10, vrc7.chr[i]);
 	}
 
-	if (vrc7.mwrap) {
-		vrc7.mwrap(vrc7.mirr);
+	if (VRC7_mwrap) {
+		VRC7_mwrap(vrc7.mirr);
 	}
 }
 
-DECLFW(VRC7Write) {
+DECLFW(VRC7_Write) {
 	int index;
 	switch (A & 0xF000) {
 	case 0x8000:
@@ -88,7 +92,7 @@ DECLFW(VRC7Write) {
 		case 0x01:
 		case 0x02:
 			vrc7.prg[index] = V;
-			FixVRC7PRG();
+			VRC7_FixPRG();
 			break;
 		default:
 			VRC7Sound_Write(A, V);
@@ -102,14 +106,14 @@ DECLFW(VRC7Write) {
 	case 0xD000:
 		index = ((A - 0xA000) >> 11) | ((A & vrc7_A0) ? 0x01 : 0x00);
 		vrc7.chr[index] = V;
-		FixVRC7CHR();
+		VRC7_FixCHR();
 		break;
 
 	case 0xE000:
 	case 0xF000:
 		index = ((A >> 11) & 0x02) | ((A & vrc7_A0) ? 0x01 : 0x00);
 		switch (index) {
-		case 0x00: if (vrc7.mwrap) vrc7.mwrap(V); break;
+		case 0x00: if (VRC7_mwrap) VRC7_mwrap(V); break;
 		case 0x01: VRCIRQ_Latch(V); break;
 		case 0x02: VRCIRQ_Control(V); break;
 		case 0x03: VRCIRQ_Acknowledge(); break;
@@ -118,7 +122,7 @@ DECLFW(VRC7Write) {
 	}
 }
 
-void GenVRC7Power(void) {
+void VRC7_Power(void) {
 	vrc7.prg[0] = 0;
 	vrc7.prg[1] = 1;
 	vrc7.prg[2] = ~1;
@@ -134,32 +138,33 @@ void GenVRC7Power(void) {
 
 	vrc7.mirr = 0;
 
-	FixVRC7PRG();
-	FixVRC7CHR();
+	VRC7_FixPRG();
+	VRC7_FixCHR();
 
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, VRC7Write);
+	SetWriteHandler(0x8000, 0xFFFF, VRC7_Write);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-void GenVRC7Close(void) {
+void VRC7_Close(void) {
 	if (WRAM) {
 		FCEU_gfree(WRAM);
 	}
 	WRAM = NULL;
 }
 
-void GenVRC7Restore(int version) {
+static void StateRestore(int version) {
 	VRC7Sound_StateRestore();
-	FixVRC7PRG();
-	FixVRC7CHR();
+
+	VRC7_FixPRG();
+	VRC7_FixCHR();
 }
 
-void GenVRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {
-	vrc7.pwrap = GENPWRAP;
-	vrc7.cwrap = GENCWRAP;
-	vrc7.mwrap = GENMWRAP;
+void VRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {
+	VRC7_pwrap = GENPWRAP;
+	VRC7_cwrap = GENCWRAP;
+	VRC7_mwrap = GENMWRAP;
 
 	vrc7_A0 = A0;
 	vrc7_A1 = A1;
@@ -174,9 +179,9 @@ void GenVRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {
 	}
 	AddExState(&StateRegs, ~0, 0, 0);
 
-	info->Power = GenVRC7Power;
-	info->Close = GenVRC7Close;
-	GameStateRestore = GenVRC7Restore;
+	info->Power = VRC7_Power;
+	info->Close = VRC7_Close;
+	GameStateRestore = StateRestore;
 
 	VRCIRQ_Init(TRUE);
 	MapIRQHook = VRCIRQ_CPUHook;
@@ -186,7 +191,7 @@ void GenVRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {
 }
 
 void NSFVRC7_Init(void) {
-	SetWriteHandler(0x9010, 0x901F, VRC7Write);
-	SetWriteHandler(0x9030, 0x903F, VRC7Write);
+	SetWriteHandler(0x9010, 0x901F, VRC7_Write);
+	SetWriteHandler(0x9030, 0x903F, VRC7_Write);
 	VRC7Sound_ESI();
 }

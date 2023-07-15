@@ -50,7 +50,7 @@ static DECLFW(M125Write) {
 }
 
 static void M125Power(void) {
-	FDSSoundPower();
+	FDSSound_Power();
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0xC000, 0xDFFF, CartBW);

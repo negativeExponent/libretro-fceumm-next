@@ -141,14 +141,14 @@ static DECLFW(M030FlashWrite) {
 }
 
 static void M030LatchPower(void) {
-	LatchPower();
+	Latch_Power();
 	if (flash_save) {
 		SetWriteHandler(0x8000, 0xBFFF, M030FlashWrite);
 	}
 }
 
 static void M030LatchClose(void) {
-	LatchClose();
+	Latch_Close();
 	if (flash_data) {
 		FCEU_gfree(flash_data);
 	}

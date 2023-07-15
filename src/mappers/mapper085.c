@@ -26,16 +26,16 @@ static void M085PW(uint32 A, uint8 V) {
     setprg8(A, V & 0x3F);
 }
 
-static void M085CW(uint32 A, uint32 V) {
+static void M085CW(uint32 A, uint8 V) {
     setchr1(A, V & 0xFF);
 }
 
 void Mapper085_Init(CartInfo *info) {
 	switch (info->submapper) {
-	case 0x01: GenVRC7_Init(info, 0x08, 0x20); break;
-	case 0x02: GenVRC7_Init(info, 0x10, 0x20); break;
-	default: GenVRC7_Init(info, 0x18, 0x20); break;
+	case 0x01: VRC7_Init(info, 0x08, 0x20); break;
+	case 0x02: VRC7_Init(info, 0x10, 0x20); break;
+	default: VRC7_Init(info, 0x18, 0x20); break;
 	}
-    vrc7.pwrap = M085PW;
-    vrc7.cwrap = M085CW;
+    VRC7_pwrap = M085PW;
+    VRC7_cwrap = M085CW;
 }

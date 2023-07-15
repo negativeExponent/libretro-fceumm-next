@@ -1,7 +1,7 @@
 #ifndef _MMC5_AUDIO_H
 #define _MMC5_AUDIO_H
 
-typedef struct MMC5SOUND {
+typedef struct __MMC5SOUND {
 	uint16 wl[2];
 	uint8 env[2];
 	uint8 enable;

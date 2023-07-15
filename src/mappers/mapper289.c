@@ -72,7 +72,7 @@ static DECLFW(WriteReg) {
 static void M289Power(void) {
 	reg[0] = reg[1] = 0;
 	solderpad = 0;
-	LatchPower();
+	Latch_Power();
 	SetReadHandler(0x6000, 0x7FFF, ReadPad);
 	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
@@ -80,7 +80,7 @@ static void M289Power(void) {
 static void M289Reset(void) {
 	reg[0] = reg[1] = 0;
 	solderpad++;
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 void Mapper289_Init(CartInfo *info) {

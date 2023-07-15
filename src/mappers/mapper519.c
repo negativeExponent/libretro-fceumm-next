@@ -63,14 +63,14 @@ static DECLFR(M519Read) {
 
 static void M519Power(void) {
 	hw_mode = lock = 0;
-	LatchPower();
+	Latch_Power();
 }
 
 static void M519Reset(void) {
 	lock = 0;
 	hw_mode = (hw_mode + 1) & 0xF;
 	FCEU_printf("Hardware Switch is %01X\n", hw_mode);
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 void Mapper519_Init(CartInfo *info) {

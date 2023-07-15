@@ -64,7 +64,7 @@ static DECLFR(M225LoRead) {
 }
 
 static void M225Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetReadHandler(0x5000, 0x5fff, M225LoRead);
 	SetWriteHandler(0x5000, 0x5fff, M225LoWrite);
 }

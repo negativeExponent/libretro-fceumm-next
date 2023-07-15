@@ -152,7 +152,7 @@ static DECLFW(M359WriteEx) {
 }
 
 static void M359Power(void) {
-	FDSSoundPower();
+	FDSSound_Power();
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0x8FFF, M359WritePRG);
@@ -162,7 +162,7 @@ static void M359Power(void) {
 }
 
 static void M359Reset(void) {
-	FDSSoundReset();
+	FDSSound_Reset();
 	Sync();
 }
 

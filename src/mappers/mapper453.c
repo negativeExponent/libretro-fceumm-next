@@ -47,12 +47,12 @@ static DECLFW(M453WriteLatch) {
 }
 
 static void M453Power() {
-    LatchPower();
+    Latch_Power();
     SetWriteHandler(0x8000, 0xFFFF, M453WriteLatch);
 }
 
 void Mapper453_Init(CartInfo *info) {
     Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M453Power;
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }

@@ -71,7 +71,7 @@ static DECLFW(M306Write) {
 }
 
 static void M306Power(void) {
-	FDSSoundPower();
+	FDSSound_Power();
 	preg = 8;
 	Sync();
 	SetReadHandler(0x6000, 0xffff, CartBR);

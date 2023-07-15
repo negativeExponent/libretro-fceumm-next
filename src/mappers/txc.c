@@ -70,7 +70,7 @@ static SFORMAT StateRegs[] =
 	{ 0 }
 };
 
-DECLFR(TXC_CMDRead) {
+DECLFR(TXC_Read) {
 	uint8 ret = X.DB;
 	if ((A & 0x103) == 0x100) {
 		ret = ((txc.accumulator & 0x07) | ((txc.inverter ^ txc.invert) & ~0x07));
@@ -80,7 +80,7 @@ DECLFR(TXC_CMDRead) {
 	return ret;
 }
 
-DECLFW(TXC_CMDWrite) {
+DECLFW(TXC_Write) {
 	if (A & 0x8000) {
 		txc.output = (txc.accumulator & 0x0F) | ((txc.inverter << 1) & 0x10);
 	} else {
@@ -113,7 +113,7 @@ void TXCRegReset(void) {
 	WSync();
 }
 
-void GenTXCPower(void) {
+void TXC_Power(void) {
 	txc.output      = 0;
 	txc.accumulator = 0;
 	txc.inverter    = 0;
@@ -127,12 +127,12 @@ void GenTXCPower(void) {
 	TXCRegReset();
 }
 
-void TXCStateRestore(int version) {
+void StateRestore(int version) {
 	WSync();
 }
 
-void GenTXC_Init(CartInfo *info, void (*proc)(void)) {
-	WSync            = proc;
-	GameStateRestore = TXCStateRestore;
+void TXC_Init(CartInfo *info, void (*proc)(void)) {
+	WSync = proc;
+	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, 0);
 }

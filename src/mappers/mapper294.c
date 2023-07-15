@@ -40,11 +40,11 @@ static DECLFW(M294Write) {
 
 static void M294Reset(void) {
 	reg = 0;
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 static void M294Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x4020, 0x4FFF, M294Write);
 }
 

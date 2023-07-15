@@ -42,17 +42,17 @@ static DECLFW(M265Write) {
 		latch.data = V;
 		Sync();
 	} else {
-		LatchWrite(A, V);
+		Latch_Write(A, V);
 	}
 }
 
 static void M265Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M265Write);
 }
 
 void Mapper265_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M265Power;
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }

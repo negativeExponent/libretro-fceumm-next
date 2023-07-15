@@ -69,12 +69,12 @@ static void Sync(void) {
 static DECLFW(M354_WriteLatch) {
 	uint32 adr = (submapper == 1) ? 0xE000 : 0xF000;
 	if (A >= adr) {
-		LatchWrite(A, V);
+		Latch_Write(A, V);
 	}
 }
 
 static void M354_Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M354_WriteLatch);
 	Sync();
@@ -84,5 +84,5 @@ void Mapper354_Init(CartInfo *info) {
    Latch_Init(info, Sync, NULL, 0, 0);
 	submapper   = info->submapper;
 	info->Power = M354_Power;
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }

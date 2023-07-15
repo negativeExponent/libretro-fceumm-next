@@ -101,7 +101,7 @@ static DECLFR(M216Read5000) {
 }
 
 static void M216Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x5000, 0x5000, M216Write5000);
 	SetReadHandler(0x5000, 0x5000, M216Read5000);
 }

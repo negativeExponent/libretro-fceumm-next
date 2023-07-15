@@ -84,7 +84,7 @@ static void M319Reset(void) {
 
 static void M319Power(void) {
 	reg[0] = reg[1] = pad = 0;
-	LatchPower();
+	Latch_Power();
 	SetReadHandler(0x5000, 0x5FFF, M319ReadPad);
 	SetWriteHandler(0x6000, 0x7FFF, M319WriteReg);
 }

@@ -1,7 +1,7 @@
 #ifndef _MMC3_H
 #define _MMC3_H
 
-typedef struct {
+typedef struct __MMC3 {
     uint8 cmd;
     uint8 opts;
     uint8 mirr;
@@ -15,16 +15,16 @@ extern int isRevB;
 uint8 MMC3_GetPRGBank(int V);
 uint8 MMC3_GetCHRBank(int V);
 
+DECLFW(MMC3_CMDWrite); /* $ 0x8000 - 0xBFFF */
+DECLFW(MMC3_IRQWrite); /* $ 0xC000 - 0xFFFF */
+DECLFW(MMC3_Write); /* $ 0x8000 - 0xFFFF */
+
 void MMC3_Power(void);
 void MMC3_Reset(void);
 void MMC3_Close(void);
 void MMC3_IRQHBHook(void);
 int  MMC3_WramIsWritable(void);
 void MMC3_Init(CartInfo *info, int wram, int battery);
-
-DECLFW(MMC3_CMDWrite); /* $ 0x8000 - 0xBFFF */
-DECLFW(MMC3_IRQWrite); /* $ 0xC000 - 0xFFFF */
-DECLFW(MMC3_Write); /* $ 0x8000 - 0xFFFF */
 
 extern void (*MMC3_FixPRG)(void);
 extern void (*MMC3_FixCHR)(void);

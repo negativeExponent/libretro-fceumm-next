@@ -32,7 +32,7 @@ static void Sync(void) {
 }
 
 static void M077Close(void) {
-	LatchClose();
+	Latch_Close();
 	if (CHRRAM)
 		FCEU_gfree(CHRRAM);
 	CHRRAM = NULL;

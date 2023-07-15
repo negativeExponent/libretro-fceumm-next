@@ -68,7 +68,7 @@ static void M235Reset(void) {
 	if ((ROM.prg.size * 16384) & 0x20000) {
 		unrom = (unrom + 1) & 1;
 	}
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 void Mapper235_Init(CartInfo *info) {

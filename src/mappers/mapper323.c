@@ -37,27 +37,27 @@ static void M323CHRHook(uint32 A, uint8 V) {
 static DECLFW(M323Write) {
 	if (!(mmc1.regs[3] & 0x10) && !(reg & 0x08)) {
 		reg = V;
-		FixMMC1CHR();
-		FixMMC1PRG();
-        FixMMC1MIRRORING();
+		MMC1_FixCHR();
+		MMC1_FixPRG();
+        MMC1_FixMIR();
 	}
 }
 
 static void M323Power(void) {
 	reg = 0;
-	GenMMC1Power();
+	MMC1_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M323Write);
 }
 
 static void M323Reset(void) {
     reg = 0;
-	MMC1RegReset();
+	MMC1_Reset();
 }
 
 void Mapper323_Init(CartInfo *info) {
-	GenMMC1_Init(info, 0, 0);
-	mmc1.cwrap = M323CHRHook;
-	mmc1.pwrap = M323PRGHook;
+	MMC1_Init(info, 0, 0);
+	MMC1_cwrap = M323CHRHook;
+	MMC1_pwrap = M323PRGHook;
 	info->Power = M323Power;
 	info->Reset = M323Reset;
 	AddExState(&reg, 1, 0, "REG0");

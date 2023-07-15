@@ -57,7 +57,7 @@ static DECLFW(M309Write) {
 }
 
 static void M309Power(void) {
-	FDSSoundPower();
+	FDSSound_Power();
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);

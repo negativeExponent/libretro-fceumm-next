@@ -21,7 +21,7 @@
 #include "mapinc.h"
 #include "mmc6.h"
 
-typedef struct {
+typedef struct __MMC6 {
 	uint8 cmd;
 	uint8 opts;
 	uint8 mirr;

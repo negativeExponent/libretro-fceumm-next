@@ -63,12 +63,12 @@ static DECLFR(M301Read) {
 
 static void M301Power(void) {	
 	reset = 0;
-	LatchPower();
+	Latch_Power();
 }
 
 static void M301Reset(void) {
 	reset = !reset;
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 void Mapper301_Init(CartInfo *info) {

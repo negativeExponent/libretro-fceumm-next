@@ -60,7 +60,7 @@ static void M096PPUHook(uint32 A) {
 static void M096Power(void) {
 	ppulatch = 0;
 	lastAddr = 0;
-	LatchPower();
+	Latch_Power();
 }
 
 void Mapper096_Init(CartInfo *info) {

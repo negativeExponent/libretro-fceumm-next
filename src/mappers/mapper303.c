@@ -68,7 +68,7 @@ static DECLFW(M303Write) {
 		} else if (A == 0x4025) {
 			mirr = ((V & 8) >> 3) ^ 1;
 		}
-		FDSSoundWrite(A, V);
+		FDSSound_Write(A, V);
 	}
 }
 
@@ -88,7 +88,7 @@ static void UNL7017IRQ(int a) {
 }
 
 static void M303Power(void) {
-	FDSSoundPower();
+	FDSSound_Power();
 	Sync();
 	setchr8(0);
 	setprg8r(0x10, 0x6000, 0);

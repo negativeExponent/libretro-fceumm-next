@@ -46,7 +46,7 @@ static void M437_Reset(void) {
 
 static void M437_Power(void) {
 	outer = 0;
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x5000, 0x5FFF, M437_WriteOuterBank);
 }
 

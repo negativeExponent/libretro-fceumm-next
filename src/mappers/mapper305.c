@@ -67,7 +67,7 @@ static DECLFW(M305Write) {
 }
 
 static void M305Power(void) {
-	FDSSoundPower();
+	FDSSound_Power();
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xffff, M305Write);

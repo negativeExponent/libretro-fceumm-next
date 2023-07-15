@@ -58,12 +58,12 @@ static DECLFW(M400WriteLED) {
 
 static void M400Reset(void) {
 	reg = 0x80;
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 static void M400Power() {
     reg = 0x80;
-    LatchPower();
+    Latch_Power();
     SetWriteHandler(0x7000, 0x7FFF, M400WriteReg);
     SetWriteHandler(0x8000, 0xBFFF, M400WriteLED);
 }

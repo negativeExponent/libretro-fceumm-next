@@ -177,7 +177,7 @@ static void FDSInit(void) {
 
 	IRQCount = IRQLatch = IRQa = 0;
 
-	FDSSoundReset();
+	FDSSound_Reset();
 	InDisk = 0;
 	SelectDisk = 0;
 
@@ -700,7 +700,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 	FCEU_FDSEject();
 
 	ResetExState(PreSave, PostSave);
-	FDSSoundStateAdd();
+	FDSSound_AddSaveState();
 
 	for (x = 0; x < TotalSides; x++) {
 		char temp[5];

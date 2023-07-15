@@ -65,7 +65,7 @@ static void Sync(void) {
 
 static void M337Reset(void) {
     bank = 0;
-    LatchHardReset();
+    Latch_RegReset();
 }
 
 void Mapper337_Init(CartInfo *info) {

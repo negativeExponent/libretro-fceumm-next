@@ -47,7 +47,7 @@ static void Sync(void) {
 
 static void M396Reset(void) {
 	outerbank = 0;
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 void Mapper396_Init(CartInfo *info) {

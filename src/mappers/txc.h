@@ -2,7 +2,7 @@
 #ifndef _TXC_H
 #define _TXC_H
 
-typedef struct {
+typedef struct __TXC {
 	uint8 accumulator;
 	uint8 inverter;
 	uint8 staging;
@@ -17,12 +17,11 @@ typedef struct {
 
 extern TXC txc;
 
-void GenTXCPower(void);
-void TXCRegReset(void);
-void TXCStateRestore(int version);
-DECLFR(TXC_CMDRead);
-DECLFW(TXC_CMDWrite);
+DECLFR(TXC_Read);
+DECLFW(TXC_Write);
 
-void GenTXC_Init(CartInfo *info, void (*proc)(void));
+void TXC_Power(void);
+
+void TXC_Init(CartInfo *info, void (*proc)(void));
 
 #endif /* _TXC_H */

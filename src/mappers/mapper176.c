@@ -62,8 +62,8 @@ static uint8 subType          = 0; /* NES 2.0 Submapper, denoting PCB variants *
 static uint8 dipsw_enable     = 0; /* Change the address mask on every reset? */
 static uint8 after_power      = 0; /* Used for detecting whether a DIP switch is used or not (see above) */
 
-static void (*cwrap)(uint32 A, uint32 V);
-static void (*SyncMIR)(void);
+static void (*FK23_cwrap)(uint32 A, uint32 V);
+static void (*SyncMIRR)(void);
 
 static SFORMAT StateRegs[] = {
    { fk23_regs,               8, "EXPR" },
@@ -121,15 +121,15 @@ static void SyncCHR(void) {
 		 * verified on original hardware. */
 		uint32 bank = ((subType == 5 ? outer : (outer & ~mask)) | (latch & mask)) << 3;
 
-		cwrap(0x0000, bank + 0);
-		cwrap(0x0400, bank + 1);
-		cwrap(0x0800, bank + 2);
-		cwrap(0x0C00, bank + 3);
+		FK23_cwrap(0x0000, bank + 0);
+		FK23_cwrap(0x0400, bank + 1);
+		FK23_cwrap(0x0800, bank + 2);
+		FK23_cwrap(0x0C00, bank + 3);
 
-		cwrap(0x1000, bank + 4);
-		cwrap(0x1400, bank + 5);
-		cwrap(0x1800, bank + 6);
-		cwrap(0x1C00, bank + 7);
+		FK23_cwrap(0x1000, bank + 4);
+		FK23_cwrap(0x1400, bank + 5);
+		FK23_cwrap(0x1800, bank + 6);
+		FK23_cwrap(0x1C00, bank + 7);
 	} else {
 		uint32 cbase = (INVERT_CHR ? 0x1000 : 0);
 		uint32 mask = (CHR_OUTER_BANK_SIZE ? 0x7F : 0xFF);
@@ -138,25 +138,25 @@ static void SyncCHR(void) {
 		                                 the outer bank or from the MMC3. */
 
 		if (MMC3_EXTENDED) {
-			cwrap(cbase ^ 0x0000, (mmc3_regs[0]  & mask) | outer);
-			cwrap(cbase ^ 0x0400, (mmc3_regs[10] & mask) | outer);
-			cwrap(cbase ^ 0x0800, (mmc3_regs[1]  & mask) | outer);
-			cwrap(cbase ^ 0x0c00, (mmc3_regs[11] & mask) | outer);
+			FK23_cwrap(cbase ^ 0x0000, (mmc3_regs[0]  & mask) | outer);
+			FK23_cwrap(cbase ^ 0x0400, (mmc3_regs[10] & mask) | outer);
+			FK23_cwrap(cbase ^ 0x0800, (mmc3_regs[1]  & mask) | outer);
+			FK23_cwrap(cbase ^ 0x0c00, (mmc3_regs[11] & mask) | outer);
 
-			cwrap(cbase ^ 0x1000, (mmc3_regs[2] & mask) | outer);
-			cwrap(cbase ^ 0x1400, (mmc3_regs[3] & mask) | outer);
-			cwrap(cbase ^ 0x1800, (mmc3_regs[4] & mask) | outer);
-			cwrap(cbase ^ 0x1c00, (mmc3_regs[5] & mask) | outer);
+			FK23_cwrap(cbase ^ 0x1000, (mmc3_regs[2] & mask) | outer);
+			FK23_cwrap(cbase ^ 0x1400, (mmc3_regs[3] & mask) | outer);
+			FK23_cwrap(cbase ^ 0x1800, (mmc3_regs[4] & mask) | outer);
+			FK23_cwrap(cbase ^ 0x1c00, (mmc3_regs[5] & mask) | outer);
 		} else {
-			cwrap(cbase ^ 0x0000, ((mmc3_regs[0] & 0xFE) & mask) | outer);
-			cwrap(cbase ^ 0x0400, ((mmc3_regs[0] | 0x01) & mask) | outer);
-			cwrap(cbase ^ 0x0800, ((mmc3_regs[1] & 0xFE) & mask) | outer);
-			cwrap(cbase ^ 0x0C00, ((mmc3_regs[1] | 0x01) & mask) | outer);
+			FK23_cwrap(cbase ^ 0x0000, ((mmc3_regs[0] & 0xFE) & mask) | outer);
+			FK23_cwrap(cbase ^ 0x0400, ((mmc3_regs[0] | 0x01) & mask) | outer);
+			FK23_cwrap(cbase ^ 0x0800, ((mmc3_regs[1] & 0xFE) & mask) | outer);
+			FK23_cwrap(cbase ^ 0x0C00, ((mmc3_regs[1] | 0x01) & mask) | outer);
 
-			cwrap(cbase ^ 0x1000, (mmc3_regs[2] & mask) | outer);
-			cwrap(cbase ^ 0x1400, (mmc3_regs[3] & mask) | outer);
-			cwrap(cbase ^ 0x1800, (mmc3_regs[4] & mask) | outer);
-			cwrap(cbase ^ 0x1c00, (mmc3_regs[5] & mask) | outer);
+			FK23_cwrap(cbase ^ 0x1000, (mmc3_regs[2] & mask) | outer);
+			FK23_cwrap(cbase ^ 0x1400, (mmc3_regs[3] & mask) | outer);
+			FK23_cwrap(cbase ^ 0x1800, (mmc3_regs[4] & mask) | outer);
+			FK23_cwrap(cbase ^ 0x1c00, (mmc3_regs[5] & mask) | outer);
 		}
 	}
 }
@@ -252,7 +252,7 @@ static void Sync(void) {
 	SyncPRG();
 	SyncCHR();
 	SyncWRAM();
-	SyncMIR();
+	SyncMIRR();
 }
 
 static DECLFW(Write4800) /* Only used by submapper 5 (HST-162) */
@@ -332,7 +332,7 @@ static DECLFW(Write8000) {
 			break;
 		case 0xA000:
 			mmc3_mirr = V;
-			SyncMIR();
+			SyncMIRR();
 			break;
 		case 0xA001:
 			/* ignore bits when ram config register is disabled */
@@ -457,8 +457,8 @@ static void StateRestore(int version) {
 
 void Init(CartInfo *info) {
 	/* Setup default function wrappers */
-	cwrap = CHRWRAP;
-	SyncMIR = FixMir;
+	FK23_cwrap = CHRWRAP;
+	SyncMIRR = FixMir;
 
 	/* Initialization for iNES and UNIF. subType and dipsw_enable must have been set. */
 	info->Power = M176Power;
@@ -594,6 +594,6 @@ void Mapper523_Init(CartInfo *info) { /* Jncota Fengshengban */
 	subType = 1;
 
 	Init(info);
-	cwrap = M523CW;
-	SyncMIR = M523MIR;
+	SyncMIRR = M523MIR;
+	FK23_cwrap = M523CW;
 }

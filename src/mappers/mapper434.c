@@ -46,7 +46,7 @@ static void M434Reset(void) {
 
 static void M434Power(void) {
 	outer = 0;
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M434WriteOuterBank);
 }
 

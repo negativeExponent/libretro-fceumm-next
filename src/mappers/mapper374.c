@@ -37,13 +37,13 @@ static void M374CHR(uint32 A, uint8 V) {
 
 static void M374Reset(void) {
 	game = (game + 1) & 3;
-	MMC1RegReset();
+	MMC1_Reset();
 }
 
 void Mapper374_Init(CartInfo *info) {
-	GenMMC1_Init(info, 0, 0);
-	mmc1.cwrap = M374CHR;
-	mmc1.pwrap = M374PRG;
+	MMC1_Init(info, 0, 0);
+	MMC1_cwrap = M374CHR;
+	MMC1_pwrap = M374PRG;
 	info->Reset = M374Reset;
 	AddExState(&game, 1, 0, "GAME");
 }

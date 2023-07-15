@@ -50,12 +50,12 @@ static DECLFW(M465WriteLatch) {
 }
 
 static void M465Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M465WriteLatch);
 }
 
 void Mapper465_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M465Power;
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }

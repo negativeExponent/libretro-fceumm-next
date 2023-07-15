@@ -29,7 +29,7 @@ static readfunc defread;
 
 LATCH latch;
 
-DECLFW(LatchWrite) {
+DECLFW(Latch_Write) {
 	/*	FCEU_printf("bs %04x %02x\n",A,V); */
 	if (bus_conflict)
 		V &= CartBR(A);
@@ -38,14 +38,14 @@ DECLFW(LatchWrite) {
 	WSync();
 }
 
-void LatchHardReset() {
+void Latch_RegReset() {
 	latch.addr = 0;
 	latch.data = 0;
 	WSync();
 }
 
-void LatchPower(void) {
-	LatchHardReset();
+void Latch_Power(void) {
+	Latch_RegReset();
 	WSync();
 	if (WRAM) {
 		SetReadHandler(0x6000, 0xFFFF, CartBR);
@@ -54,10 +54,10 @@ void LatchPower(void) {
 	} else {
 		SetReadHandler(0x8000, 0xFFFF, defread);
 	}
-	SetWriteHandler(0x8000, 0xFFFF, LatchWrite);
+	SetWriteHandler(0x8000, 0xFFFF, Latch_Write);
 }
 
-void LatchClose(void) {
+void Latch_Close(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
 	WRAM = NULL;
@@ -79,8 +79,8 @@ void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func,
 		defread = func;
 	else
 		defread = CartBROB;
-	info->Power = LatchPower;
-	info->Close = LatchClose;
+	info->Power = Latch_Power;
+	info->Close = Latch_Close;
 	info->Reset = LatchReset;
 	GameStateRestore = StateRestore;
 	if (wram) {

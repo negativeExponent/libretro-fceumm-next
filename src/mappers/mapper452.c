@@ -52,12 +52,12 @@ static void Sync(void) {
 }
 
 static void M452Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0xE000, 0xFFFF, CartBW);
 }
 
 void Mapper452_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 1, 0);
-	info->Reset      = LatchHardReset;
+	info->Reset      = Latch_RegReset;
 	info->Power      = M452Power;
 }

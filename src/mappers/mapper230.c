@@ -52,12 +52,12 @@ static void Sync(void) {
 
 static void M230Reset(void) {
 	reset ^= 1;
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 static void M230Power(void) {
 	reset = 0;
-	LatchPower();
+	Latch_Power();
 }
 
 void Mapper230_Init(CartInfo *info) {

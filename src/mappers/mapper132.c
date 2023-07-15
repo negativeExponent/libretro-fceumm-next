@@ -72,15 +72,15 @@ static void M132Sync(void) {
 }
 
 static DECLFW(M132Write) {
-	TXC_CMDWrite(A, V & 0x0F);
+	TXC_Write(A, V & 0x0F);
 }
 
 static DECLFR(M132Read) {
-	return ((X.DB & 0xF0) | (TXC_CMDRead(A) & 0x0F));
+	return ((X.DB & 0xF0) | (TXC_Read(A) & 0x0F));
 }
 
 static void M132Power(void) {
-	GenTXCPower();
+	TXC_Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetReadHandler(0x4100, 0x5FFF, M132Read);
 	SetWriteHandler(0x4100, 0xFFFF, M132Write);
@@ -93,6 +93,6 @@ void Mapper132_Init(CartInfo *info) {
 		UNL22211_Init(info);
         return;
 	}
-	GenTXC_Init(info, M132Sync);
+	TXC_Init(info, M132Sync);
 	info->Power = M132Power;
 }

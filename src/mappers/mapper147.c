@@ -28,22 +28,22 @@ static void M147Sync(void) {
 }
 
 static DECLFW(M147Write) {
-	JV001_CMDWrite(A, ((V >> 2) & 0x3F) | ((V << 6) & 0xC0));
+	JV001_Write(A, ((V >> 2) & 0x3F) | ((V << 6) & 0xC0));
 }
 
 static DECLFR(M147Read) {
-	uint8 ret = JV001_CMDRead(A);
+	uint8 ret = JV001_Read(A);
 	return ((ret << 2) | ((ret >> 6) & 0x03));
 }
 
 static void M147Power(void) {
-	GenJV001Power();
+	JV001_Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetReadHandler(0x4100, 0x5FFF, M147Read);
 	SetWriteHandler(0x4100, 0xFFFF, M147Write);
 }
 
 void Mapper147_Init(CartInfo *info) {
-	GenJV001_Init(info, M147Sync);
+	JV001_Init(info, M147Sync);
 	info->Power = M147Power;
 }

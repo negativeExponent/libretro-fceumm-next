@@ -65,7 +65,7 @@ static void M428Power(void) {
 	regs[1] = 0;
 	regs[2] = 0;
 
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x6000, 0x7FFF, WriteLo);
 	SetReadHandler(0x6000, 0x7FFF, ReadLo);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);

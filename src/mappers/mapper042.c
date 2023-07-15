@@ -76,7 +76,7 @@ static void M042_Sub1_Restore(int version) {
 static void M042_Sub1_Power(void) {
 	prg = 0;
 	chr = 0;
-	FDSSoundPower();
+	FDSSound_Power();
 	M042_Sub1_Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M042_Sub1_Write);
@@ -116,7 +116,7 @@ static void M042_Sub2_Restore(int version) {
 static void M042_Sub2_Power(void) {
 	reg = 0;
 	mirr = 0;
-	FDSSoundPower();
+	FDSSound_Power();
 	M042_Sub2_Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x4020, 0xFFFF, M042_Sub2_Write);
@@ -155,7 +155,7 @@ static void M042_Sub3_Power(void) {
 	prg = 0;
 	mirr = 0;
 	M042_Sub3_Sync();
-	FDSSoundPower();
+	FDSSound_Power();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0xE000, 0xFFFF, M042_Sub3_Write);
 }

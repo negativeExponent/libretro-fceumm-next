@@ -106,7 +106,7 @@ static DECLFW(M353Write) {
 }
 
 static void M353Power(void) {
-	FDSSoundPower();
+	FDSSound_Power();
 	reg = 0;
 	MMC3_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M353Write);
@@ -115,7 +115,7 @@ static void M353Power(void) {
 static void M353Reset(void) {
 	reg = 0;
 	MMC3_Reset();
-	FDSSoundReset();
+	FDSSound_Reset();
 }
 
 static void M353Close(void) {

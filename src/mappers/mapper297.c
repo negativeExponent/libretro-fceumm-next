@@ -36,9 +36,9 @@ static void M297CHR(uint32 A, uint8 V) {
 static void Sync(void) {
 	if (mode & 0x01) {
 		/* MMC1 */
-		FixMMC1PRG();
-		FixMMC1CHR();
-		FixMMC1MIRRORING();
+		MMC1_FixPRG();
+		MMC1_FixCHR();
+		MMC1_FixMIR();
 	} else {
 		/* Mapper 70 */
 		setprg16(0x8000, ((mode & 0x02) << 1) | ((latch >> 4) & 0x03));
@@ -57,7 +57,7 @@ static DECLFW(M297Mode) {
 
 static DECLFW(M297Latch) {
 	if (mode & 0x01) {
-		MMC1Write(A, V);
+		MMC1_Write(A, V);
 	} else {
 		latch = V;
 		Sync();
@@ -68,7 +68,7 @@ static void M297Power(void) {
 	latch = 0;
 	mode = 0;
 	Sync();
-	GenMMC1Power();
+	MMC1_Power();
 	SetWriteHandler(0x4100, 0x5FFF, M297Mode);
 	SetWriteHandler(0x8000, 0xFFFF, M297Latch);
 }
@@ -78,10 +78,10 @@ static void M297StateRestore(int version) {
 }
 
 void Mapper297_Init(CartInfo *info) {
-	GenMMC1_Init(info, 0, 0);
+	MMC1_Init(info, 0, 0);
 	info->Power = M297Power;
-	mmc1.cwrap = M297CHR;
-	mmc1.pwrap = M297PRG;
+	MMC1_cwrap = M297CHR;
+	MMC1_pwrap = M297PRG;
 	GameStateRestore = M297StateRestore;
 	AddExState(&latch, 1, 0, "LATC");
 	AddExState(&mode, 1, 0, "MODE");

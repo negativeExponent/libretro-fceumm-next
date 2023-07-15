@@ -35,7 +35,7 @@ static void Sync(void) {
 
 static DECLFW(M324Write) {
 	if ((V & 0x80) && !(latch.data & 0x80) && !(latch.data & 0x08)) {
-		LatchWrite(A, V);
+		Latch_Write(A, V);
 	} else {
 		latch.data = (latch.data & ~7) | (V & 7);
 		Sync();
@@ -43,12 +43,12 @@ static DECLFW(M324Write) {
 }
 
 static void M324Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M324Write);
 }
 
 void Mapper324_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 1);
 	info->Power = M324Power;
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }

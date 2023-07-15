@@ -45,7 +45,7 @@ static DECLFW(M501WriteReg) {
 
 static void M501Power() {
     reg[0] = reg[1] = 0;
-	LatchPower();
+	Latch_Power();
 	SetReadHandler(0x7000, 0x7FFF, CartBR);
     SetWriteHandler(0x6000, 0x6FFF, M501WriteReg);
 }

@@ -63,7 +63,7 @@ static DECLFW(M448WriteReg) {
 }
 
 static DECLFW(M448Write) {
-	LatchWrite(A, V);
+	Latch_Write(A, V);
     VRC24_Write(A, V);
 	Sync();
 }
@@ -75,7 +75,7 @@ static void M448Reset(void) {
 
 static void M448Power(void) {
 	reg = 0;
-	LatchPower();
+	Latch_Power();
 	VRC24_Power();
 	Sync();
 

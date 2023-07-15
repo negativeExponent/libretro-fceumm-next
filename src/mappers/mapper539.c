@@ -86,7 +86,7 @@ static DECLFW(M539Write) {
 }
 
 static void M539Power(void) {
-	FDSSoundPower();
+	FDSSound_Power();
 	preg = 0;
 	mirr = 0;
 	Sync();

@@ -28,21 +28,21 @@ static void M136Sync(void) {
 }
 
 static DECLFW(M136Write) {
-	JV001_CMDWrite(A, V & 0x3F);
+	JV001_Write(A, V & 0x3F);
 }
 
 static DECLFR(M136Read) {
-	return ((X.DB & 0xC0) | (JV001_CMDRead(A) & 0x3F));
+	return ((X.DB & 0xC0) | (JV001_Read(A) & 0x3F));
 }
 
 static void M136Power(void) {
-	GenJV001Power();
+	JV001_Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetReadHandler(0x4100, 0x5FFF, M136Read);
 	SetWriteHandler(0x4100, 0xFFFF, M136Write);
 }
 
 void Mapper136_Init(CartInfo *info) {
-	GenJV001_Init(info, M136Sync);
+	JV001_Init(info, M136Sync);
 	info->Power = M136Power;
 }

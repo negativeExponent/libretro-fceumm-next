@@ -1,19 +1,19 @@
 #ifndef _KS202_H
 #define _KS202_H
 
-typedef struct ks202_t {
+typedef struct __KS202 {
 	uint8 reg[8];
 	uint8 cmd;
-} ks202_t;
+} KS202;
 
-extern ks202_t ks202;
-
-void GenKS202Power(void);
-void GenKS202Close(void);
-void GenKS202Reset(void);
-void GenKS202Restore(int version);
+extern KS202 ks202;
 
 DECLFW(KS202_Write);
+
+void KS202_Power(void);
+void KS202_Close(void);
+void KS202_Reset(void);
+void KS202_Restore(int version);
 
 void KS202_Init(CartInfo *info, void (*proc)(void), int wram, int battery);
 

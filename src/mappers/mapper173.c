@@ -32,21 +32,21 @@ static void M173Sync(void) {
 }
 
 static DECLFW(M173Write) {
-	TXC_CMDWrite(A, V & 0x0F);
+	TXC_Write(A, V & 0x0F);
 }
 
 static DECLFR(M173Read) {
-	return ((X.DB & 0xF0) | (TXC_CMDRead(A) & 0x0F));
+	return ((X.DB & 0xF0) | (TXC_Read(A) & 0x0F));
 }
 
 static void M173Power(void) {
-	GenTXCPower();
+	TXC_Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetReadHandler(0x4100, 0x5FFF, M173Read);
 	SetWriteHandler(0x4100, 0xFFFF, M173Write);
 }
 
 void Mapper173_Init(CartInfo *info) {
-	GenTXC_Init(info, M173Sync);
+	TXC_Init(info, M173Sync);
 	info->Power = M173Power;
 }

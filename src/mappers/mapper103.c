@@ -81,7 +81,7 @@ static DECLFW(M103Write2) {
 }
 
 static void M103Power(void) {
-	FDSSoundPower();
+	FDSSound_Power();
 	reg0 = reg1 = 0;
 	reg2 = 0;
 	Sync();

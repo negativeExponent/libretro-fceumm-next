@@ -72,7 +72,7 @@ static DECLFW(M416Write4) {
 
 static void M416Power(void) {
 	smb2j_reg = IRQa = IRQCount = 0;
-	LatchPower();
+	Latch_Power();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x4020, 0x4FFF, M416Write4);
 }

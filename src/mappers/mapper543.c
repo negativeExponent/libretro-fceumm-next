@@ -40,7 +40,7 @@ static void M543WW(void) {
 	if (reg & 0x02) {
 		wramBank = 0x04 | ((reg >> 1) & 0x02) | (reg & 0x01) ;
 	} else {
-		wramBank = ((reg << 1) & 0x02) | ((MMC1GetCHRBank(0) >> 3) & 0x01);
+		wramBank = ((reg << 1) & 0x02) | ((MMC1_GetCHRBank(0) >> 3) & 0x01);
 	}
 	setprg8r(0x10, 0x6000, wramBank);
 }
@@ -50,8 +50,8 @@ static DECLFW(M543Write) {
 	if (shift == 4) {
 		reg = bits;
 		bits = shift = 0;
-		FixMMC1PRG();
-		FixMMC1CHR();
+		MMC1_FixPRG();
+		MMC1_FixCHR();
 	}
 }
 
@@ -59,25 +59,25 @@ static void M543Reset(void) {
 	bits = 0;
 	shift = 0;
 	reg = 0;
-	MMC1RegReset();
+	MMC1_Reset();
 }
 
 static void M543Power(void) {
 	bits = 0;
 	shift = 0;
 	reg = 0;
-	GenMMC1Power();
+	MMC1_Power();
 	SetWriteHandler(0x5000, 0x5FFF, M543Write);
 }
 
 void Mapper543_Init(CartInfo *info) {
 	/* M543 has 32K CHR RAM but only uses 8K, so its safe to set this chr to 0 */
-	GenMMC1_Init(info, 64, info->battery ? 64 : 0);
+	MMC1_Init(info, 64, info->battery ? 64 : 0);
 	info->Power = M543Power;
 	info->Reset = M543Reset;
-	mmc1.cwrap = M543CW;
-	mmc1.pwrap = M543PW;
-	mmc1.wwrap = M543WW;
+	MMC1_cwrap = M543CW;
+	MMC1_pwrap = M543PW;
+	MMC1_wwrap = M543WW;
 	AddExState(&bits, 1, 0, "BITS");
 	AddExState(&shift, 1, 0, "SHFT");
 	AddExState(&reg, 1, 0, "REG0");

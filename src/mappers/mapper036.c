@@ -33,23 +33,23 @@ static DECLFW(M036Write) {
 	if ((A & 0xF200) == 0x4200) {
 		chr = V;
 	}
-	TXC_CMDWrite(A, (V >> 4) & 0x03);
+	TXC_Write(A, (V >> 4) & 0x03);
 }
 
 static DECLFR(M036Read) {
-	return (X.DB & ~0x30) | ((TXC_CMDRead(A) << 4) & 0x30);
+	return (X.DB & ~0x30) | ((TXC_Read(A) << 4) & 0x30);
 }
 
 static void M036Power(void) {
 	chr = 0;
-	GenTXCPower();
+	TXC_Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetReadHandler(0x4100, 0x5FFF, M036Read);
 	SetWriteHandler(0x4100, 0xFFFF, M036Write);
 }
 
 void Mapper036_Init(CartInfo *info) {
-	GenTXC_Init(info, M036Sync);
+	TXC_Init(info, M036Sync);
 	info->Power = M036Power;
 	AddExState(&chr, 1, 0, "CREG");
 }

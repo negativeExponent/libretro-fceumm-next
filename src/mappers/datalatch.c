@@ -91,11 +91,11 @@ void Mapper011_Init(CartInfo *info) {
 
 static DECLFW(M144Write) {
     uint8 data = CartBR(A & (A | 1));
-	LatchWrite(A, data);
+	Latch_Write(A, data);
 }
 
 static void M144Power() {
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M144Write);
 }
 
@@ -286,7 +286,7 @@ static void M241Sync(void) {
 
 void Mapper241_Init(CartInfo *info) {
 	Latch_Init(info, M241Sync, NULL, 1, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /*------------------ Map 271 ---------------------------*/
@@ -350,12 +350,12 @@ static void M538Sync(void) {
 }
 
 static DECLFW(M538Write) {
-	LatchWrite(A, V);
+	Latch_Write(A, V);
 }
 
 static void M538Power(void) {
-	FDSSoundPower();
-	LatchHardReset();
+	FDSSound_Power();
+	Latch_RegReset();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0xC000, 0xDFFF, M538Write);
 }
@@ -417,7 +417,7 @@ static void M299Sync(void) {
 
 void Mapper299_Init(CartInfo *info) {
 	Latch_Init(info, M299Sync, NULL, 0, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /*------------------ BMC-K-3046 ---------------------------*/
@@ -432,7 +432,7 @@ static void M336Sync(void) {
 
 void Mapper336_Init(CartInfo *info) {
 	Latch_Init(info, M336Sync, NULL, 0, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /*------ Mapper 429: LIKO BBG-235-8-1B/Milowork FCFC1 ----*/
@@ -462,7 +462,7 @@ static void Mapper415_Sync(void) {
 }
 
 static void M415Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 }
 

@@ -27,8 +27,8 @@ static void M024PW(uint32 A, uint8 V) {
     setprg8(A, V & 0x3F);
 }
 
-static void M024CW(uint32 A, uint32 V) {
-    setchr1(A, V & 0x1FF);
+static void M024CW(uint32 A, uint8 V) {
+    setchr1(A, V & 0xFF);
 }
 
 void Mapper024_Init(CartInfo *info) {
@@ -38,7 +38,7 @@ void Mapper024_Init(CartInfo *info) {
     } else if (info->battery) {
         wram = 1;
     }
-	GenVRC6_Init(info, 0x01, 0x02, wram);
-    vrc6.pwrap = M024PW;
-    vrc6.cwrap = M024CW;
+	VRC6_Init(info, 0x01, 0x02, wram);
+    VRC6_pwrap = M024PW;
+    VRC6_cwrap = M024CW;
 }

@@ -47,7 +47,7 @@ static void Sync(void) {
 }
 
 static void M185Close(void) {
-	LatchClose();
+	Latch_Close();
 	if (DummyCHR)
 		FCEU_gfree(DummyCHR);
 	DummyCHR = NULL;

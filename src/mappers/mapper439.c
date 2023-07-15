@@ -50,12 +50,12 @@ static DECLFW(M439WriteLatch) {
 
 static void M439Reset() {
     reg[0] = reg[1] = ~0;
-    LatchHardReset();
+    Latch_RegReset();
 }
 
 static void M439Power() {
     reg[0] = reg[1] = ~0;
-    LatchPower();
+    Latch_Power();
     SetWriteHandler(0x6000, 0x7FFF, M439WriteReg);
     SetWriteHandler(0x8000, 0xFFFF, M439WriteLatch);
 }

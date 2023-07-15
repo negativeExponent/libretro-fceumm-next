@@ -63,7 +63,7 @@ static DECLFW(M394WriteReg) {
 	reg[A] = V;
 	if (A == 1) {
 		if (!(oldMode & 0x10) && (V & 0x10)) {
-			GenJYASICPower();
+			JYASIC_Power();
         } else if ((oldMode & 0x10) && !(V & 0x10)) {
 			JYASIC_restoreWriteHandlers();
 			MMC3_Power();
@@ -76,6 +76,7 @@ static DECLFW(M394WriteReg) {
 		} else {
 			MMC3_FixPRG();
 			MMC3_FixCHR();
+			MMC3_FixMIR();
 		}
 	}
 }
@@ -85,20 +86,20 @@ static void M394StateRestore(int version) {
 
 	JYASIC_restoreWriteHandlers();
 	if (reg[1] & 0x10) {
-		SetWriteHandler(0x5000, 0x5FFF, writeALU);
+		SetWriteHandler(0x5000, 0x5FFF, JYASIC_WriteALU);
 		SetWriteHandler(0x6000, 0x7fff, CartBW);
-		SetWriteHandler(0x8000, 0x87FF, writePRG); /* 8800-8FFF ignored */
-		SetWriteHandler(0x9000, 0x97FF, writeCHRLow); /* 9800-9FFF ignored */
-		SetWriteHandler(0xA000, 0xA7FF, writeCHRHigh); /* A800-AFFF ignored */
-		SetWriteHandler(0xB000, 0xB7FF, writeNT); /* B800-BFFF ignored */
-		SetWriteHandler(0xC000, 0xCFFF, writeIRQ);
-		SetWriteHandler(0xD000, 0xD7FF, writeMode); /* D800-DFFF ignored */
+		SetWriteHandler(0x8000, 0x87FF, JYASIC_WritePRG); /* 8800-8FFF ignored */
+		SetWriteHandler(0x9000, 0x97FF, JYASIC_WriteCHRLow); /* 9800-9FFF ignored */
+		SetWriteHandler(0xA000, 0xA7FF, JYASIC_WriteCHRHigh); /* A800-AFFF ignored */
+		SetWriteHandler(0xB000, 0xB7FF, JYASIC_WriteNT); /* B800-BFFF ignored */
+		SetWriteHandler(0xC000, 0xCFFF, JYASIC_WriteIRQ);
+		SetWriteHandler(0xD000, 0xD7FF, JYASIC_WriteMode); /* D800-DFFF ignored */
 		for (i = 0; i < 0x10000; i++) {
-			cpuWriteHandlers[i] = GetWriteHandler(i);
+			JYASIC_cpuWrite[i] = GetWriteHandler(i);
         }
-		SetWriteHandler(0x0000, 0xFFFF, trapCPUWrite); /* Trap all CPU writes for IRQ clocking purposes */
-		cpuWriteHandlersSet = 1;
-		SetReadHandler(0x5000, 0x5FFF, readALU_DIP);
+		SetWriteHandler(0x0000, 0xFFFF, JYASIC_trapCPUWrite); /* Trap all CPU writes for IRQ clocking purposes */
+		JYASIC_CPUWriteHandlersSet = 1;
+		SetReadHandler(0x5000, 0x5FFF, JYASIC_ReadALU_DIP);
 		SetReadHandler(0x6000, 0xFFFF, CartBR);
 		JYASIC_FixPRG();
 		JYASIC_FixCHR();

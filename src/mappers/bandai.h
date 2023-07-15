@@ -3,8 +3,9 @@
 
 #include "eeprom_x24c0x.h"
 
-void BANDAI_Power(void);
 DECLFW(BANDAI_Write);
+
+void BANDAI_Power(void);
 void BANDAI_IRQHook(int a);
 void BANDAI_Reset(void);
 

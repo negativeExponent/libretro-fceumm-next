@@ -32,6 +32,11 @@ static uint32 NONSaveRAMSIZE = 0;
 static uint8 *WRAM = NULL;
 static MMC1Type mmc1_type = MMC1B;
 
+void (*MMC1_pwrap)(uint32 A, uint8 V);
+void (*MMC1_cwrap)(uint32 A, uint8 V);
+void (*MMC1_mwrap)(uint8 V);
+void (*MMC1_wwrap)(void);
+
 MMC1 mmc1;
 
 static void GENWRAMWRAP(void) {
@@ -82,7 +87,7 @@ static DECLFR(MAWRAM) {
 	return CartBR(A);
 }
 
-uint32 MMC1GetPRGBank(int index) {
+uint32 MMC1_GetPRGBank(int index) {
 	uint32 bank;
 	uint8 prg = mmc1.regs[3];
 
@@ -107,7 +112,7 @@ uint32 MMC1GetPRGBank(int index) {
 	return (bank & 0x0F);
 }
 
-uint32 MMC1GetCHRBank(int index) {
+uint32 MMC1_GetCHRBank(int index) {
 	if (mmc1.regs[0] & 0x10) {
 		return (mmc1.regs[1 + index]);
 	}
@@ -115,21 +120,21 @@ uint32 MMC1GetCHRBank(int index) {
 	return ((mmc1.regs[1] & ~1) | index);
 }
 
-void FixMMC1CHR(void) {
-	if (mmc1.wwrap) {
-		mmc1.wwrap();
+void MMC1_FixCHR(void) {
+	if (MMC1_wwrap) {
+		MMC1_wwrap();
 	}
 
-	mmc1.cwrap(0x0000, MMC1GetCHRBank(0));
-	mmc1.cwrap(0x1000, MMC1GetCHRBank(1));
+	MMC1_cwrap(0x0000, MMC1_GetCHRBank(0));
+	MMC1_cwrap(0x1000, MMC1_GetCHRBank(1));
 }
 
-void FixMMC1PRG(void) {
-	mmc1.pwrap(0x8000, MMC1GetPRGBank(0));
-	mmc1.pwrap(0xc000, MMC1GetPRGBank(1));
+void MMC1_FixPRG(void) {
+	MMC1_pwrap(0x8000, MMC1_GetPRGBank(0));
+	MMC1_pwrap(0xC000, MMC1_GetPRGBank(1));
 }
 
-void FixMMC1MIRRORING(void) {
+void MMC1_FixMIR(void) {
 	switch (mmc1.regs[0] & 3) {
 	case 2: setmirror(MI_V); break;
 	case 3: setmirror(MI_H); break;
@@ -139,7 +144,7 @@ void FixMMC1MIRRORING(void) {
 }
 
 static uint64 lreset;
-DECLFW(MMC1Write) {
+DECLFW(MMC1_Write) {
 	int n = (A >> 13) - 4;
 
 	/* The MMC1 is busy so ignore the write. */
@@ -156,7 +161,7 @@ DECLFW(MMC1Write) {
 	if (V & 0x80) {
 		mmc1.regs[0] |= 0xC;
 		mmc1.shift = mmc1.buffer = 0;
-		FixMMC1PRG();
+		MMC1_FixPRG();
 		lreset = timestampbase + timestamp;
 		return;
 	}
@@ -169,32 +174,32 @@ DECLFW(MMC1Write) {
 		mmc1.shift = mmc1.buffer = 0;
 		switch (n) {
 		case 0:
-			FixMMC1MIRRORING();
-			FixMMC1CHR();
-			FixMMC1PRG();
+			MMC1_FixMIR();
+			MMC1_FixCHR();
+			MMC1_FixPRG();
 			break;
 		case 1:
-			FixMMC1CHR();
-			FixMMC1PRG();
+			MMC1_FixCHR();
+			MMC1_FixPRG();
 			break;
 		case 2:
-			FixMMC1CHR();
+			MMC1_FixCHR();
 			break;
 		case 3:
-			FixMMC1PRG();
+			MMC1_FixPRG();
 			break;
 		}
 	}
 }
 
-void GenMMC1Restore(int version) {
-	FixMMC1MIRRORING();
-	FixMMC1CHR();
-	FixMMC1PRG();
+void MMC1_Restore(int version) {
+	MMC1_FixMIR();
+	MMC1_FixCHR();
+	MMC1_FixPRG();
 	lreset = 0; /* timestamp(base) is not stored in save states. */
 }
 
-void MMC1RegReset(void) {
+void MMC1_Reset(void) {
 	int i;
 
 	for (i = 0; i < 4; i++) {
@@ -208,14 +213,14 @@ void MMC1RegReset(void) {
 	mmc1.regs[2] = 0;
 	mmc1.regs[3] = 0;
 
-	FixMMC1MIRRORING();
-	FixMMC1CHR();
-	FixMMC1PRG();
+	MMC1_FixMIR();
+	MMC1_FixCHR();
+	MMC1_FixPRG();
 }
 
-void GenMMC1Power(void) {
+void MMC1_Power(void) {
 	lreset = 0;
-	SetWriteHandler(0x8000, 0xFFFF, MMC1Write);
+	SetWriteHandler(0x8000, 0xFFFF, MMC1_Write);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 
 	if (WRAMSIZE) {
@@ -231,25 +236,25 @@ void GenMMC1Power(void) {
 		setprg8r(0x10, 0x6000, 0);
 	}
 
-	MMC1RegReset();
+	MMC1_Reset();
 }
 
-void GenMMC1Close(void) {
+void MMC1_Close(void) {
 	if (WRAM) {
 		FCEU_gfree(WRAM);
 	}
 	WRAM = NULL;
 }
 
-void GenMMC1_Init(CartInfo *info, int wram, int saveram) {
+void MMC1_Init(CartInfo *info, int wram, int saveram) {
 	if ((info->mapper == 155) ||
 		((info->mapper == 4) && (info->submapper == 3))) {
 		mmc1_type = MMC1A;
 	}
 
-	mmc1.pwrap = GENPWRAP;
-	mmc1.cwrap = GENCWRAP;
-	mmc1.wwrap = GENWRAMWRAP;
+	MMC1_pwrap = GENPWRAP;
+	MMC1_cwrap = GENCWRAP;
+	MMC1_wwrap = GENWRAMWRAP;
 
 	WRAMSIZE = wram * 1024;
 	NONSaveRAMSIZE = (wram - saveram) * 1024;
@@ -266,26 +271,26 @@ void GenMMC1_Init(CartInfo *info, int wram, int saveram) {
 
 	AddExState(mmc1.regs, 4, 0, "DREG");
 
-	info->Power = GenMMC1Power;
-	info->Close = GenMMC1Close;
-	GameStateRestore = GenMMC1Restore;
+	info->Power = MMC1_Power;
+	info->Close = MMC1_Close;
+	GameStateRestore = MMC1_Restore;
 	AddExState(&lreset, 8, 1, "LRST");
 	AddExState(&mmc1.buffer, 1, 1, "BFFR");
 	AddExState(&mmc1.shift, 1, 1, "BFRS");
 }
 
 void SAROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, 8, info->battery ? 8 : 0);
+	MMC1_Init(info, 8, info->battery ? 8 : 0);
 }
 
 void SKROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, 8, info->battery ? 8 : 0);
+	MMC1_Init(info, 8, info->battery ? 8 : 0);
 }
 
 void SNROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, 8, info->battery ? 8 : 0);
+	MMC1_Init(info, 8, info->battery ? 8 : 0);
 }
 
 void SOROM_Init(CartInfo *info) {
-	GenMMC1_Init(info, 16, info->battery ? 8 : 0);
+	MMC1_Init(info, 16, info->battery ? 8 : 0);
 }

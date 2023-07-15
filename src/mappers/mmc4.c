@@ -98,15 +98,15 @@ static void MMC4PPUHook(uint32 A) {
 	MMC4_FixCHR();
 }
 
-void GenMMC4Reset(void) {
+void MMC4_Reset(void) {
 	mmc4.prg = mmc4.mirr = 0;
 	mmc4.latch[0] = mmc4.latch[1] = 0;
 	MMC4_FixPRG();
 	MMC4_FixCHR();
 }
 
-void GenMMC4Power(void) {
-	GenMMC4Reset();
+void MMC4_Power(void) {
+	MMC4_Reset();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0xA000, 0xFFFF, MMC4_Write);
 	if (WRAMSIZE) {
@@ -117,12 +117,12 @@ void GenMMC4Power(void) {
 	}
 }
 
-void GenMMC4Restore(int version) {
+void MMC4_Restore(int version) {
 	MMC4_FixPRG();
 	MMC4_FixCHR();
 }
 
-void GenMMC4Close(void) {
+void MMC4_Close(void) {
 	if (WRAM) {
 		FCEU_gfree(WRAM);
 	}
@@ -134,11 +134,11 @@ void MMC4_Init(CartInfo *info, int wram, int battery) {
 	MMC4_cwrap = GENCWRAP;
 	MMC4_mwrap = GENMWRAP;
 
-	info->Power = GenMMC4Power;
-	info->Close = GenMMC4Close;
+	info->Power = MMC4_Power;
+	info->Close = MMC4_Close;
 	PPU_hook = MMC4PPUHook;
 
-	GameStateRestore = GenMMC4Restore;
+	GameStateRestore = MMC4_Restore;
 	AddExState(&StateRegs, ~0, 0, 0);
 
 	if (wram) {

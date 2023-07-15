@@ -33,7 +33,7 @@ static uint32 WRAMSIZE;
 
 static void (*WSync)(void);
 
-ks202_t ks202 = { 0 };
+KS202 ks202 = { 0 };
 
 static SFORMAT StateRegs[] =
 {
@@ -90,8 +90,8 @@ void KS202IRQHook(int a) {
 	}
 }
 
-void GenKS202Power(void) {
-	GenKS202Reset();
+void KS202_Power(void) {
+	KS202_Reset();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, KS202_Write);
@@ -101,7 +101,7 @@ void GenKS202Power(void) {
 	}
 }
 
-void GenKS202Reset(void) {
+void KS202_Reset(void) {
 	ks202.reg[0] = ks202.reg[1] = ks202.reg[2] = ks202.reg[3] = 0;
 	ks202.reg[4] = ks202.reg[5] = ks202.reg[6] = ks202.reg[7] = 0;
 	ks202.cmd = 0;
@@ -109,24 +109,24 @@ void GenKS202Reset(void) {
 	WSync();
 }
 
-void GenKS202Close(void) {
+void KS202_Close(void) {
 	if (WRAM) {
 		FCEU_gfree(WRAM);
 	}
 	WRAM = NULL;
 }
 
-void GenKS202Restore(int version) {
+void KS202_Restore(int version) {
 	WSync();
 }
 
 void KS202_Init(CartInfo *info, void (*proc)(void), int wram, int battery) {
 	WSync = proc;
 
-	info->Power = GenKS202Power;
-	info->Close = GenKS202Close;
+	info->Power = KS202_Power;
+	info->Close = KS202_Close;
 	MapIRQHook = KS202IRQHook;
-	GameStateRestore = GenKS202Restore;
+	GameStateRestore = KS202_Restore;
 
 	AddExState(&StateRegs, ~0, 0, 0);
 

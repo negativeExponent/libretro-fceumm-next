@@ -23,7 +23,7 @@
 
 #define FDSClock (1789772.7272727272727272 / 2)
 
-typedef struct {
+typedef struct __FDSSOUND {
 	int64 cycles;		/* Cycles per PCM sample */
 	int64 count;		/* Cycle counter */
 	int64 envcount;		/* Envelope cycle counter */
@@ -54,7 +54,7 @@ static FDSSOUND fdso;
 #define amplitude  fdso.amplitude
 #define speedo    fdso.speedo
 
-void FDSSoundStateAdd(void) {
+void FDSSound_AddSaveState(void) {
 	AddExState(fdso.cwave, 64, 0, "WAVE");
 	AddExState(fdso.mwave, 32, 0, "MWAV");
 	AddExState(amplitude, 2, 0, "AMPL");
@@ -268,7 +268,7 @@ static void FDS_ESI(void) {
 	SetReadHandler(0x4090, 0x4092, FDSSRead);
 }
 
-void FDSSoundReset(void) {
+void FDSSound_Reset(void) {
 	memset(&fdso, 0, sizeof(fdso));
 	FDS_ESI();
 	GameExpSound.HiSync = HQSync;
@@ -277,18 +277,18 @@ void FDSSoundReset(void) {
 	GameExpSound.RChange = FDS_ESI;
 }
 
-DECLFR(FDSSoundRead) {
+DECLFR(FDSSound_Read) {
 	if (A >= 0x4040 && A < 0x4080) return FDSWaveRead(A);
 	if (A >= 0x4090 && A < 0x4093) return FDSSRead(A);
 	return X.DB;
 }
 
-DECLFW(FDSSoundWrite) {
+DECLFW(FDSSound_Write) {
 	if (A >= 0x4040 && A < 0x4080) FDSWaveWrite(A, V);
 	else if (A >= 0x4080 && A < 0x408B) FDSSWrite(A, V);
 }
 
-void FDSSoundPower(void) {
-	FDSSoundReset();
-	FDSSoundStateAdd();
+void FDSSound_Power(void) {
+	FDSSound_Reset();
+	FDSSound_AddSaveState();
 }

@@ -41,12 +41,12 @@ static void Sync(void) {
 
 static DECLFW(M277Write) {
 	if (!(latch.data & 0x20)) {
-		LatchWrite(A, V);
+		Latch_Write(A, V);
 	}
 }
 
 static void M277Power(void) {
-    LatchPower();
+    Latch_Power();
     latch.data = 8;
     Sync();
 	SetWriteHandler(0x8000, 0xFFFF, M277Write);

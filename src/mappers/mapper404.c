@@ -38,27 +38,27 @@ static void M404CW(uint32 A, uint8 V) {
 static DECLFW(M404Write) {
 	if (!(reg & 0x80)) {
 		reg = V;
-		FixMMC1PRG();
-		FixMMC1CHR();
+		MMC1_FixPRG();
+		MMC1_FixCHR();
 	}
 }
 
 static void M404Reset(void) {
 	reg = 0;
-	MMC1RegReset();
+	MMC1_Reset();
 }
 
 static void M404Power(void) {
 	reg = 0;
-	GenMMC1Power();
+	MMC1_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M404Write);
 }
 
 void Mapper404_Init(CartInfo *info) {
-	GenMMC1_Init(info, 0, 0);
+	MMC1_Init(info, 0, 0);
 	info->Power = M404Power;
 	info->Reset = M404Reset;
-	mmc1.cwrap = M404CW;
-	mmc1.pwrap = M404PW;
+	MMC1_cwrap = M404CW;
+	MMC1_pwrap = M404PW;
 	AddExState(&reg, 1, 0, "BANK");
 }

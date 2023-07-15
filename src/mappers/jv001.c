@@ -69,7 +69,7 @@ static SFORMAT StateRegs[] =
 	{ 0 }
 };
 
-DECLFR(JV001_CMDRead) {
+DECLFR(JV001_Read) {
 	uint8 ret = X.DB;
 	if ((A & 0x103) == 0x100) {
 		ret = ((jv001.accumulator & 0x0F) | ((jv001.inverter ^ jv001.invert) & ~0x0F));
@@ -78,7 +78,7 @@ DECLFR(JV001_CMDRead) {
 	return ret;
 }
 
-DECLFW(JV001_CMDWrite) {
+DECLFW(JV001_Write) {
 	if (A & 0x8000) {
 		jv001.output = (jv001.accumulator & 0x0F) | (jv001.inverter & 0xF0);
 	} else {
@@ -106,11 +106,11 @@ DECLFW(JV001_CMDWrite) {
 	WSync();
 }
 
-void JV001RegReset(void) {
+void JV001_Reset(void) {
 	WSync();
 }
 
-void GenJV001Power(void) {
+void JV001_Power(void) {
 	jv001.output      = 0;
 	jv001.accumulator = 0;
 	jv001.inverter    = 0;
@@ -120,15 +120,15 @@ void GenJV001Power(void) {
 	jv001.X           = 0;
 	jv001.A           = 0;
 	jv001.B           = 1;
-	JV001RegReset();
+	JV001_Reset();
 }
 
-void JV001StateRestore(int version) {
+static void StateRestore(int version) {
 	WSync();
 }
 
-void GenJV001_Init(CartInfo *info, void (*proc)(void)) {
+void JV001_Init(CartInfo *info, void (*proc)(void)) {
 	WSync            = proc;
-	GameStateRestore = JV001StateRestore;
+	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, 0);
 }

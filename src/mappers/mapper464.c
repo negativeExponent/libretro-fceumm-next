@@ -36,5 +36,5 @@ static void Sync(void) {
 
 void Mapper464_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
-    info->Reset = LatchHardReset;
+    info->Reset = Latch_RegReset;
 }

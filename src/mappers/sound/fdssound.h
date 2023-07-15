@@ -3,11 +3,11 @@
 
 #include "fceu.h"
 
-void FDSSoundPower(void); 
-void FDSSoundReset(void);
-void FDSSoundStateAdd(void);
+DECLFR(FDSSound_Read);  /* $4040-$407F, $4090-$4092 */
+DECLFW(FDSSound_Write); /* $4040-$407F, $4080-$408A */
 
-DECLFR(FDSSoundRead);  /* $4040-$407F, $4090-$4092 */
-DECLFW(FDSSoundWrite); /* $4040-$407F, $4080-$408A */
+void FDSSound_Power(void); 
+void FDSSound_Reset(void);
+void FDSSound_AddSaveState(void);
 
 #endif /* _FDS_APU_H */

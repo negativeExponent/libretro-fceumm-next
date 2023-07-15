@@ -24,7 +24,7 @@
 #include "mapinc.h"
 #include "jyasic.h"
 
-JYASIC_t jyasic = { 0 };
+JYASIC jyasic = { 0 };
 
 static uint8* WRAM = NULL;
 static uint32 WRAMSIZE;
@@ -33,8 +33,8 @@ static uint8 dipSwitch;
 static uint8 allow_extended_mirroring;
 static uint32 lastPPUAddress;
 
-uint8 cpuWriteHandlersSet;
-writefunc cpuWriteHandlers[0x10000]; /* Actual write handlers for CPU write trapping as a method fo IRQ clocking */
+uint8 JYASIC_CPUWriteHandlersSet;
+writefunc JYASIC_cpuWrite[0x10000]; /* Actual write handlers for CPU write trapping as a method fo IRQ clocking */
 
 void (*JYASIC_pwrap)(uint32 A, uint32 V);
 void (*JYASIC_wwrap)(uint32 A, uint32 V);
@@ -262,11 +262,11 @@ static void clockIRQ(void) {
 	}
 }
 
-DECLFW(trapCPUWrite) {
+DECLFW(JYASIC_trapCPUWrite) {
 	if ((jyasic.irq.control & 0x03) == 0x03) {
 		clockIRQ(); /* Clock IRQ counter on CPU writes */
 	}
-	cpuWriteHandlers[A](A, V);
+	JYASIC_cpuWrite[A](A, V);
 }
 
 static void trapPPUAddressChange(uint32 A) {
@@ -303,7 +303,7 @@ static void cpuCycle(int a) {
 	}
 }
 
-DECLFR(readALU_DIP) {
+DECLFR(JYASIC_ReadALU_DIP) {
 	if ((A & 0x3FF) == 0 &&
 		A != 0x5800) { /* 5000, 5400, 5C00: read solder pad setting */
 		return dipSwitch | (X.DB & 0x3F);
@@ -322,7 +322,7 @@ DECLFR(readALU_DIP) {
 	return X.DB;
 }
 
-DECLFW(writeALU) {
+DECLFW(JYASIC_WriteALU) {
 	switch (A & 3) {
 	case 0: jyasic.mul[0] = V; break;
 	case 1: jyasic.mul[1] = V; break;
@@ -331,22 +331,22 @@ DECLFW(writeALU) {
 	}
 }
 
-DECLFW(writePRG) {
+DECLFW(JYASIC_WritePRG) {
 	jyasic.prg[A & 3] = V;
 	JYASIC_FixPRG();
 }
 
-DECLFW(writeCHRLow) {
+DECLFW(JYASIC_WriteCHRLow) {
 	jyasic.chr[A & 7] = (jyasic.chr[A & 7] & 0xFF00) | V;
 	JYASIC_FixCHR();
 }
 
-DECLFW(writeCHRHigh) {
+DECLFW(JYASIC_WriteCHRHigh) {
 	jyasic.chr[A & 7] = (jyasic.chr[A & 7] & 0x00FF) | V << 8;
 	JYASIC_FixCHR();
 }
 
-DECLFW(writeNT) {
+DECLFW(JYASIC_WriteNT) {
 	if (~A & 4) {
 		jyasic.nt[A & 3] = (jyasic.nt[A & 3] & 0xFF00) | V;
 	} else {
@@ -355,7 +355,7 @@ DECLFW(writeNT) {
 	JYASIC_FixMIR();
 }
 
-DECLFW(writeIRQ) {
+DECLFW(JYASIC_WriteIRQ) {
 	switch (A & 7) {
 	case 0:
 		jyasic.irq.enable = !!(V & 1);
@@ -387,7 +387,7 @@ DECLFW(writeIRQ) {
 	}
 }
 
-DECLFW(writeMode) {
+DECLFW(JYASIC_WriteMode) {
 	switch (A & 3) {
 	case 0:
 		jyasic.mode[0] = V;
@@ -415,15 +415,15 @@ DECLFW(writeMode) {
 
 void JYASIC_restoreWriteHandlers(void) {
 	int i;
-	if (cpuWriteHandlersSet) {
+	if (JYASIC_CPUWriteHandlersSet) {
 		for (i = 0; i < 0x10000; i++) {
-			SetWriteHandler(i, i, cpuWriteHandlers[i]);
+			SetWriteHandler(i, i, JYASIC_cpuWrite[i]);
 		}
-		cpuWriteHandlersSet = 0;
+		JYASIC_CPUWriteHandlersSet = 0;
 	}
 }
 
-void JYASICRegReset(void) {
+void JYASIC_RegReset(void) {
 	memset(jyasic.mode, 0, sizeof(jyasic.mode));
 	memset(jyasic.prg, 0, sizeof(jyasic.prg));
 	memset(jyasic.chr, 0, sizeof(jyasic.chr));
@@ -443,46 +443,46 @@ void JYASICRegReset(void) {
 	JYASIC_FixMIR();
 }
 
-void GenJYASICPower(void) {
+void JYASIC_Power(void) {
 	int i;
 
-	SetWriteHandler(0x5000, 0x5FFF, writeALU);
+	SetWriteHandler(0x5000, 0x5FFF, JYASIC_WriteALU);
 	SetWriteHandler(0x6000, 0x7fff, CartBW);
-	SetWriteHandler(0x8000, 0x87FF, writePRG); /* 8800-8FFF ignored */
-	SetWriteHandler(0x9000, 0x97FF, writeCHRLow); /* 9800-9FFF ignored */
-	SetWriteHandler(0xA000, 0xA7FF, writeCHRHigh); /* A800-AFFF ignored */
-	SetWriteHandler(0xB000, 0xB7FF, writeNT); /* B800-BFFF ignored */
-	SetWriteHandler(0xC000, 0xCFFF, writeIRQ);
-	SetWriteHandler(0xD000, 0xD7FF, writeMode); /* D800-DFFF ignored */
+	SetWriteHandler(0x8000, 0x87FF, JYASIC_WritePRG); /* 8800-8FFF ignored */
+	SetWriteHandler(0x9000, 0x97FF, JYASIC_WriteCHRLow); /* 9800-9FFF ignored */
+	SetWriteHandler(0xA000, 0xA7FF, JYASIC_WriteCHRHigh); /* A800-AFFF ignored */
+	SetWriteHandler(0xB000, 0xB7FF, JYASIC_WriteNT); /* B800-BFFF ignored */
+	SetWriteHandler(0xC000, 0xCFFF, JYASIC_WriteIRQ);
+	SetWriteHandler(0xD000, 0xD7FF, JYASIC_WriteMode); /* D800-DFFF ignored */
 
 	JYASIC_restoreWriteHandlers();
 	for (i = 0; i < 0x10000; i++) {
-		cpuWriteHandlers[i] = GetWriteHandler(i);
+		JYASIC_cpuWrite[i] = GetWriteHandler(i);
 	}
-	SetWriteHandler(0x0000, 0xFFFF, trapCPUWrite); /* Trap all CPU writes for IRQ clocking purposes */
-	cpuWriteHandlersSet = 1;
+	SetWriteHandler(0x0000, 0xFFFF, JYASIC_trapCPUWrite); /* Trap all CPU writes for IRQ clocking purposes */
+	JYASIC_CPUWriteHandlersSet = 1;
 
-	SetReadHandler(0x5000, 0x5FFF, readALU_DIP);
+	SetReadHandler(0x5000, 0x5FFF, JYASIC_ReadALU_DIP);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 
-	JYASICRegReset();
+	JYASIC_RegReset();
 }
 
-void GenJYASICReset(void) {
+void JYASIC_Reset(void) {
 	dipSwitch = (dipSwitch + 0x40) & 0xC0;
 	JYASIC_FixPRG();
 	JYASIC_FixCHR();
 	JYASIC_FixMIR();
 }
 
-void GenJYASICClose(void) {
+void JYASIC_Close(void) {
 	if (WRAM) {
 		FCEU_gfree(WRAM);
 	}
 	WRAM = NULL;
 }
 
-void GenJYASICRestore(int version) {
+static void StateRestore(int version) {
 	JYASIC_FixPRG();
 	JYASIC_FixCHR();
 	JYASIC_FixMIR();
@@ -498,17 +498,17 @@ void JYASIC_Init(CartInfo *info, int extended_mirr) {
 
 	allow_extended_mirroring = extended_mirr;
 
-	cpuWriteHandlersSet = 0;
-	info->Reset = GenJYASICReset;
-	info->Power = GenJYASICPower;
-	info->Close = GenJYASICClose;
+	JYASIC_CPUWriteHandlersSet = 0;
+	info->Reset = JYASIC_Reset;
+	info->Power = JYASIC_Power;
+	info->Close = JYASIC_Close;
 
 	PPU_hook = trapPPUAddressChange;
 	MapIRQHook = cpuCycle;
 	GameHBIRQHook2 = ppuScanline;
 
 	AddExState(JYASIC_StateRegs, ~0, 0, 0);
-	GameStateRestore = GenJYASICRestore;
+	GameStateRestore = StateRestore;
 
 	/* WRAM is present only in iNES mapper 35, or in mappers with numbers above 255 that require NES 2.0, which
 	 * explicitly denotes WRAM size */

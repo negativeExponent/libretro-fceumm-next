@@ -59,7 +59,7 @@ static DECLFR(M380Read) {
 
 static void M380Reset(void) {
 	dipswitch = (dipswitch + 1) & 0xF;
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 void Mapper380_Init(CartInfo *info) {

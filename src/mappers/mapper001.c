@@ -55,7 +55,7 @@ static void M001PW(uint32 A, uint8 V) {
 	if (submapper == 5) {
 		setprg32(0x8000, 0);
 	} else {
-		setprg16(A, (MMC1GetCHRBank(0) & 0x10) | (V & 0x0F));
+		setprg16(A, (MMC1_GetCHRBank(0) & 0x10) | (V & 0x0F));
 	}
 }
 
@@ -63,12 +63,12 @@ void Mapper001_Init(CartInfo *info) {
 	int bs = info->battery ? 8 : 0;
 	int ws = DetectMMC1WRAMSize(info, &bs);
 	submapper = info->submapper;
-	GenMMC1_Init(info, ws, bs);
-	mmc1.pwrap = M001PW;
+	MMC1_Init(info, ws, bs);
+	MMC1_pwrap = M001PW;
 }
 
 /* Same as mapper 1, without respect for WRAM enable bit. */
 void Mapper155_Init(CartInfo *info) {
-	GenMMC1_Init(info, 8, info->battery ? 8 : 0);
-    mmc1.pwrap = M001PW;
+	MMC1_Init(info, 8, info->battery ? 8 : 0);
+    MMC1_pwrap = M001PW;
 }

@@ -27,12 +27,12 @@ static void M026PW(uint32 A, uint8 V) {
     setprg8(A, V & 0x3F);
 }
 
-static void M026CW(uint32 A, uint32 V) {
+static void M026CW(uint32 A, uint8 V) {
     setchr1(A, V & 0x1FF);
 }
 
 void Mapper026_Init(CartInfo *info) {
-	GenVRC6_Init(info, 0x02, 0x01, 1);
-    vrc6.pwrap = M026PW;
-    vrc6.cwrap = M026CW;
+	VRC6_Init(info, 0x02, 0x01, 1);
+    VRC6_pwrap = M026PW;
+    VRC6_cwrap = M026CW;
 }

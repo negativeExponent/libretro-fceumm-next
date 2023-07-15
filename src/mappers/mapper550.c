@@ -44,40 +44,40 @@ static void M550CW(uint32 A, uint8 V) {
 static DECLFW(M550Write7) {
 	if (!(reg & 0x08)) {
 		reg = A & 0x0F;
-		FixMMC1PRG();
-		FixMMC1CHR();
+		MMC1_FixPRG();
+		MMC1_FixCHR();
 	}
 }
 
 static DECLFW(M550Write8) {
 	latch = V;
 	if ((reg & 0x06) == 0x06) {
-		MMC1Write(A, V);
+		MMC1_Write(A, V);
 	}
-	FixMMC1PRG();
-	FixMMC1CHR();
+	MMC1_FixPRG();
+	MMC1_FixCHR();
 }
 
 static void M550Reset(void) {
 	latch = 0;
 	reg = 0;
-	MMC1RegReset();
+	MMC1_Reset();
 }
 
 static void M550Power(void) {
 	latch = 0;
 	reg = 0;
-	GenMMC1Power();
+	MMC1_Power();
 	SetWriteHandler(0x7000, 0x7FFF, M550Write7);
 	SetWriteHandler(0x8000, 0xFFFF, M550Write8);
 }
 
 void Mapper550_Init(CartInfo *info) {
-	GenMMC1_Init(info, 8, 0);
+	MMC1_Init(info, 8, 0);
 	info->Power = M550Power;
 	info->Reset = M550Reset;
-	mmc1.cwrap = M550CW;
-	mmc1.pwrap = M550PW;
+	MMC1_cwrap = M550CW;
+	MMC1_pwrap = M550PW;
 	AddExState(&latch, 1, 0, "LATC");
 	AddExState(&reg, 1, 0, "REG0");
 }

@@ -38,7 +38,7 @@ static DECLFR(ExtDev) {
 }
 
 static void M118Power(void) {
-	LatchPower();
+	Latch_Power();
 	SetReadHandler(0x6000, 0x7FFF, ExtDev);
 }
 

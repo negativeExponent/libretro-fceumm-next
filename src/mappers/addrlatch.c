@@ -50,7 +50,7 @@ static DECLFW(M059Write) {
 	/* Only recognize the latch write if the lock bit has not been set. */
 	/* Needed for NT-234 "Road Fighter" */
 	if (~latch.addr & 0x200) {
-		LatchWrite(A, V);
+		Latch_Write(A, V);
 	}
 }
 
@@ -62,7 +62,7 @@ static void M059Reset(void) {
 }
 
 static void M059Power(void) {
-	LatchPower();
+	Latch_Power();
 
 	/* Trap latch writes to enforce the "Lock" bit */
 	SetWriteHandler(0x8000, 0xFFFF, M059Write);
@@ -90,7 +90,7 @@ static void M058Sync(void) {
 
 void Mapper058_Init(CartInfo *info) {
 	Latch_Init(info, M058Sync, NULL, 0, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /*------------------ Map 061 ---------------------------*/
@@ -107,7 +107,7 @@ static void M061Sync(void) {
 
 void Mapper061_Init(CartInfo *info) {
 	Latch_Init(info, M061Sync, NULL, 0, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /*------------------ Map 063 ---------------------------*/
@@ -146,7 +146,7 @@ static void M063Sync(void) {
 
 void Mapper063_Init(CartInfo *info) {
 	Latch_Init(info, M063Sync, M063Read, 0, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 	submapper = info->submapper;
 }
 
@@ -182,7 +182,7 @@ static void M092Sync(void) {
 }
 
 static void M092Power() {
-	LatchPower();
+	Latch_Power();
 	latch.addr = 0x80B0;
 	M092Sync();
 }
@@ -215,7 +215,7 @@ static void M201Sync(void) {
 
 void Mapper201_Init(CartInfo *info) {
 	Latch_Init(info, M201Sync, NULL, 0, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /*------------------ Map 202 ---------------------------*/
@@ -268,7 +268,7 @@ static void M212Sync(void) {
 }
 
 static void M212Power() {
-	LatchPower();
+	Latch_Power();
 	SetReadHandler(0x6000, 0x7FFF, M212Read);
 }
 
@@ -298,7 +298,7 @@ static void M217Sync(void) {
 
 void Mapper217_Init(CartInfo *info) {
 	Latch_Init(info, M217Sync, NULL, 0, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /*------------------ Map 227 ---------------------------*/
@@ -355,12 +355,12 @@ static DECLFR(M227Read) {
 
 static void M227Power() {
 	dipswitch = 0;
-	LatchPower();
+	Latch_Power();
 	SetReadHandler(0x8000, 0xFFFF, M227Read);
 }
 
 static void M227Reset() {
-	LatchHardReset();
+	Latch_RegReset();
 
 	dipswitch = (dipswitch + 1) & 0x0F;
 	M227Sync();
@@ -471,7 +471,7 @@ static DECLFR(M242Read) {
 }
 
 static void M242Power() {
-	LatchPower();
+	Latch_Power();
 
 	dipswitch = 0;
 	SetReadHandler(0x8000, 0xFFFF, M242Read);
@@ -479,7 +479,7 @@ static void M242Power() {
 
 static void M242Reset() {
 	dipswitch = (dipswitch + 1) & 0x1F;
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 void Mapper242_Init(CartInfo *info) {
@@ -532,7 +532,7 @@ static void M385Sync(void) {
 
 void Mapper385_Init(CartInfo *info) {
 	Latch_Init(info, M385Sync, NULL, 0, 1);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /*------------------ Map 541 ---------------------------*/
@@ -558,14 +558,14 @@ static void M541Write(uint32 A, uint8 V) {
 }
 
 static void M541Power() {
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M541Write);
 }
 
 void Mapper541_Init(CartInfo *info) {
 	Latch_Init(info, M541Sync, NULL, 0, 0);
 	info->Power = M541Power;
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /*------------------ BMC-190in1 ---------------------------*/
@@ -623,7 +623,7 @@ static void M290Sync(void) {
 
 void Mapper290_Init(CartInfo *info) {
 	Latch_Init(info, M290Sync, NULL, 0, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /*-------------- BMCG-146 ------------------------*/
@@ -661,7 +661,7 @@ static void M341Sync(void) {
 
 void Mapper341_Init(CartInfo *info) {
 	Latch_Init(info, M341Sync, NULL, 0, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /*-------------- BMC-SA005-A ------------------------*/
@@ -677,7 +677,7 @@ static void M338Sync(void) {
 
 void Mapper338_Init(CartInfo *info) {
 	Latch_Init(info, M338Sync, NULL, 0, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /* -------------- Mapper 402 ------------------------ */
@@ -703,7 +703,7 @@ static void M402Sync(void) {
 
 void Mapper402_Init(CartInfo *info) {
 	Latch_Init(info, M402Sync, NULL, 0, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }
 
 /* -------------- Mapper 409 ------------------------ */
@@ -743,5 +743,5 @@ static void M435Sync(void) {
 
 void Mapper435_Init(CartInfo *info) {
 	Latch_Init(info, M435Sync, NULL, 1, 0);
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }

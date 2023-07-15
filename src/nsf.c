@@ -109,7 +109,7 @@ void NSFGI(int h) {
 		} else if (NSFHeader.SoundChip & 2) {
 /*   NSFVRC7_Init(); */
 		} else if (NSFHeader.SoundChip & 4) {
-/*   FDSSoundReset(); */
+/*   FDSSound_Reset(); */
 		} else if (NSFHeader.SoundChip & 8) {
 			NSFMMC5_Close();
 		} else if (NSFHeader.SoundChip & 0x10) {
@@ -290,7 +290,7 @@ void NSF_init(void) {
 	} else if (NSFHeader.SoundChip & 2) {
 		NSFVRC7_Init();
 	} else if (NSFHeader.SoundChip & 4) {
-		FDSSoundReset();
+		FDSSound_Reset();
 	} else if (NSFHeader.SoundChip & 8) {
 		NSFMMC5_Init();
 	} else if (NSFHeader.SoundChip & 0x10) {

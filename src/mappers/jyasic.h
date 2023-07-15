@@ -1,7 +1,7 @@
 #ifndef _JYASIC_H
 #define _JYASIC_H
 
-typedef struct JYASIC_t {
+typedef struct __JYASIC {
 	uint8 mode[4];
 	uint8 prg[4];
 	uint8 mul[2];
@@ -17,29 +17,28 @@ typedef struct JYASIC_t {
 		uint8 counter;
 		uint8 xor;
 	} irq;
-} JYASIC_t;
+} JYASIC;
 
-extern JYASIC_t jyasic;
+extern JYASIC jyasic;
 
-extern uint8 cpuWriteHandlersSet;
-extern writefunc cpuWriteHandlers[0x10000];
+extern uint8     JYASIC_CPUWriteHandlersSet;
+extern writefunc JYASIC_cpuWrite[0x10000];
 
-DECLFR(readALU_DIP);
-DECLFW(trapCPUWrite);
-DECLFW(writeALU);
-DECLFW(writePRG);
-DECLFW(writeCHRLow);
-DECLFW(writeCHRHigh);
-DECLFW(writeNT);
-DECLFW(writeIRQ);
-DECLFW(writeMode);
+DECLFR(JYASIC_ReadALU_DIP);
+DECLFW(JYASIC_trapCPUWrite);
+DECLFW(JYASIC_WriteALU);
+DECLFW(JYASIC_WritePRG);
+DECLFW(JYASIC_WriteCHRLow);
+DECLFW(JYASIC_WriteCHRHigh);
+DECLFW(JYASIC_WriteNT);
+DECLFW(JYASIC_WriteIRQ);
+DECLFW(JYASIC_WriteMode);
 
 void JYASIC_restoreWriteHandlers(void);
-void JYASICRegReset(void);
-void GenJYASICReset(void);
-void GenJYASICClose(void);
-void GenJYASICRestore(int version);
-void GenJYASICPower(void);
+void JYASIC_RegReset(void);
+void JYASIC_Reset(void);
+void JYASIC_Close(void);
+void JYASIC_Power(void);
 void JYASIC_Init(CartInfo * info, int extended_mirr);
 
 void JYASIC_FixPRG(void);

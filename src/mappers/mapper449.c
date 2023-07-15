@@ -54,7 +54,7 @@ static DECLFR(M449Read) {
 
 static void M449Reset(void) {
 	dipswitch  = (dipswitch + 1) & 0xF;
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 void Mapper449_Init(CartInfo *info) {

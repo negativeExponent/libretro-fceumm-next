@@ -80,7 +80,7 @@ static void M548Power(void) {
 	reg = latch ^ 0x05;
 	IRQa = 0;
 	IRQCount = 0;
-	FDSSoundPower();
+	FDSSound_Power();
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x4800, 0x4FFF, M548Write4800);

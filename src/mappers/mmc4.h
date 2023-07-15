@@ -1,7 +1,7 @@
 #ifndef _MMC4_H
 #define _MMC4_H
 
-typedef struct MMC4 {
+typedef struct __MMC4 {
     uint8 prg;
     uint8 chr[4];
     uint8 latch[2];
@@ -10,10 +10,10 @@ typedef struct MMC4 {
 
 extern MMC4 mmc4;
 
-void GenMMC4Power(void);
-void GenMMC4Close(void);
-void GenMMC4Reset(void);
-void GenMMC4Restore(int version);
+void MMC4_Power(void);
+void MMC4_Close(void);
+void MMC4_Reset(void);
+void MMC4_Restore(int version);
 DECLFW(MMC4_Write);
 void MMC4_Init(CartInfo *info, int wram, int battery);
 

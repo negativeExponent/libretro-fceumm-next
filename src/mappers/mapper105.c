@@ -50,18 +50,18 @@ static void M105PW(uint32 A, uint8 V) {
 
 static void M105Power(void) {
     count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
-	GenMMC1Power();
+	MMC1_Power();
 }
 
 static void M105Reset(void) {
 	count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
-	MMC1RegReset();
+	MMC1_Reset();
 }
 
 void Mapper105_Init(CartInfo *info) {
-	GenMMC1_Init(info, 8, 0);
-	mmc1.cwrap = M105CW;
-	mmc1.pwrap = M105PW;
+	MMC1_Init(info, 8, 0);
+	MMC1_cwrap = M105CW;
+	MMC1_pwrap = M105PW;
 	MapIRQHook = M105IRQHook;
 	info->Power = M105Power;
 	info->Reset = M105Reset;

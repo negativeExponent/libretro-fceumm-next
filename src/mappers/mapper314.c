@@ -63,7 +63,7 @@ static void M314Power(void) {
 	regs[0] = 0x80;
 	regs[1] = 0x43;
 	regs[2] = regs[3] = 0;
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x5000, 0x5FFF, M314WriteLo);
 }
 

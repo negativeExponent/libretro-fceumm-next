@@ -50,7 +50,7 @@ static DECLFW(M312LoWrite) {
 
 static void M312Power(void) {
 	prg = 0;
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M312LoWrite);
 }
 

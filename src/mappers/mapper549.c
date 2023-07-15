@@ -34,13 +34,13 @@ static void Sync(void) {
 }
 
 static void M549Power() {
-	LatchPower();
-	FDSSoundPower();
+	Latch_Power();
+	FDSSound_Power();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 }
 
 static void M549Reset() {
-	FDSSoundReset();
+	FDSSound_Reset();
 	Sync();
 }
 

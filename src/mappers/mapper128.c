@@ -34,17 +34,17 @@ static DECLFW(M128Write) {
     if (outerbank < 0xF000) {
         outerbank = A;
     }
-    LatchWrite(A, V);
+    Latch_Write(A, V);
 }
 
 static void M128Reset() {
     outerbank = 0;
-    LatchHardReset();
+    Latch_RegReset();
 }
 
 static void M128Power() {
     outerbank = 0;
-    LatchPower();
+    Latch_Power();
     SetWriteHandler(0x8000, 0xFFFF, M128Write);
 }
 

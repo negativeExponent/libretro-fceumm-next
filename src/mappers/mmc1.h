@@ -8,33 +8,33 @@ typedef enum {
     MMC1B
 } MMC1Type;
 
-typedef struct {
+typedef struct __MMC1 {
     uint8 regs[4];
     uint8 buffer;
     uint8 shift;
-
-    void (*pwrap)(uint32 A, uint8 V);
-    void (*cwrap)(uint32 A, uint8 V);
-    void (*mwrap)(uint8 V);
-    void (*wwrap)(void);
 } MMC1;
 
 extern MMC1 mmc1;
 
-uint32 MMC1GetPRGBank(int index);
-uint32 MMC1GetCHRBank(int index);
+uint32 MMC1_GetPRGBank(int index);
+uint32 MMC1_GetCHRBank(int index);
 
-void GenMMC1Power(void);
-void GenMMC1Close(void);
-void GenMMC1Restore(int version);
-void MMC1RegReset(void);
+DECLFW(MMC1_Write);
 
-void FixMMC1PRG(void);
-void FixMMC1CHR(void);
-void FixMMC1MIRRORING(void);
+void MMC1_Power(void);
+void MMC1_Close(void);
+void MMC1_Restore(int version);
+void MMC1_Reset(void);
 
-DECLFW(MMC1Write);
+void MMC1_Init(CartInfo *info, int wram, int saveram);
 
-void GenMMC1_Init(CartInfo *info, int wram, int saveram);
+void MMC1_FixPRG(void);
+void MMC1_FixCHR(void);
+void MMC1_FixMIR(void);
+
+extern void (*MMC1_pwrap)(uint32 A, uint8 V);
+extern void (*MMC1_cwrap)(uint32 A, uint8 V);
+extern void (*MMC1_mwrap)(uint8 V);
+extern void (*MMC1_wwrap)(void);
 
 #endif /* _MMC1_H */

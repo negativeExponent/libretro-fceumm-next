@@ -42,7 +42,7 @@ static void Sync(void) {
 
 static DECLFW(M320Write) {
 	if ((A & 0xFFE0) == 0xF0E0) {
-		LatchWrite(A, V);
+		Latch_Write(A, V);
 	} else {
 		latch.data = V;
 		Sync();
@@ -50,12 +50,12 @@ static DECLFW(M320Write) {
 }
 
 static void M320Power() {
-	LatchPower();
+	Latch_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M320Write);
 }
 
 void Mapper320_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M320Power;
-	info->Reset = LatchHardReset;
+	info->Reset = Latch_RegReset;
 }

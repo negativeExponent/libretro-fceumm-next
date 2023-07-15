@@ -67,7 +67,7 @@ static void Sync(void) {
 
 static void M233Power(void) {
 	reset = 0;
-	LatchPower();
+	Latch_Power();
 }
 
 static void M233Reset(void) {

@@ -123,7 +123,7 @@ static DECLFW(M347Write1) {
 }
 
 static void M347Power(void) {
-	FDSSoundPower();
+	FDSSound_Power();
 	reg0 = reg1 = ~0;
 	Sync();
 	SetReadHandler(0x6000, 0x7FFF, M347RamRead0);

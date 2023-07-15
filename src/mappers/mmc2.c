@@ -100,15 +100,15 @@ static void MMC2PPUHook(uint32 A) {
 	MMC2_FixCHR();
 }
 
-void GenMMC2Reset(void) {
+void MMC2_Reset(void) {
 	mmc2.prg = mmc2.mirr = 0;
 	mmc2.latch[0] = mmc2.latch[1] = 0;
 	MMC2_FixPRG();
 	MMC2_FixCHR();
 }
 
-void GenMMC2Power(void) {
-	GenMMC2Reset();
+void MMC2_Power(void) {
+	MMC2_Reset();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0xA000, 0xFFFF, MMC2_Write);
 	if (WRAMSIZE) {
@@ -119,12 +119,12 @@ void GenMMC2Power(void) {
 	}
 }
 
-void GenMMC2Restore(int version) {
+void MMC2_Restore(int version) {
 	MMC2_FixPRG();
 	MMC2_FixCHR();
 }
 
-void GenMMC2Close(void) {
+void MMC2_Close(void) {
 	if (WRAM) {
 		FCEU_gfree(WRAM);
 	}
@@ -136,11 +136,11 @@ void MMC2_Init(CartInfo *info, int wram, int battery) {
 	MMC2_cwrap = GENCWRAP;
 	MMC2_mwrap = GENMWRAP;
 
-	info->Power = GenMMC2Power;
-	info->Close = GenMMC2Close;
+	info->Power = MMC2_Power;
+	info->Close = MMC2_Close;
 	PPU_hook = MMC2PPUHook;
 
-	GameStateRestore = GenMMC2Restore;
+	GameStateRestore = MMC2_Restore;
 	AddExState(&StateRegs, ~0, 0, 0);
 
 	if (wram) {

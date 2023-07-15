@@ -56,7 +56,7 @@ static void Sync(void) {
 
 static void M382Reset() {
 	outerbank = 0;
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 void Mapper382_Init(CartInfo *info) {

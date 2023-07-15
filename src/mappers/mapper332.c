@@ -77,7 +77,7 @@ static void M332Power(void) {
 	preg = 0;
 	creg = 0;
 	dipSwitch = 0;
-	LatchPower();
+	Latch_Power();
 	SetReadHandler(0x8000, 0xFFFF, M332Read);
 	SetWriteHandler(0x6000, 0x7FFF, M332Write);
 }
@@ -90,7 +90,7 @@ static void M332Reset(void) {
 	/* Always reset to menu */
 	preg = 0;
 	creg = 0;
-	LatchHardReset();
+	Latch_RegReset();
 }
 
 void Mapper332_Init(CartInfo *info) {
