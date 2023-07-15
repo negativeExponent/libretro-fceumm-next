@@ -30,11 +30,12 @@ typedef struct __VRC24 {
 
 extern VRC24 vrc24;
 
+DECLFW(VRC24_Write);
+
 void VRC24_IRQCPUHook(int a);
 void VRC24_Reset(void);
 void VRC24_Power(void);
 void VRC24_Close(void);
-DECLFW(VRC24_Write);
 
 void VRC24_Init(CartInfo *info, uint8 vrc4, uint32 A0, uint32 A1, int wram, int irqRepeated);
 

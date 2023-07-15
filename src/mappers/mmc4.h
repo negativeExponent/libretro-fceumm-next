@@ -10,11 +10,12 @@ typedef struct __MMC4 {
 
 extern MMC4 mmc4;
 
+DECLFW(MMC4_Write);
+
 void MMC4_Power(void);
 void MMC4_Close(void);
 void MMC4_Reset(void);
 void MMC4_Restore(int version);
-DECLFW(MMC4_Write);
 void MMC4_Init(CartInfo *info, int wram, int battery);
 
 void MMC4_FixPRG(void);
