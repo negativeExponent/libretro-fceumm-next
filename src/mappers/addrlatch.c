@@ -150,48 +150,6 @@ void Mapper063_Init(CartInfo *info) {
 	submapper = info->submapper;
 }
 
-/*------------------ Map 092 ---------------------------*/
-/* Another two-in-one mapper, two Jaleco carts uses similar
- * hardware, but with different wiring.
- * Original code provided by LULU
- * Additionally, PCB contains DSP extra sound chip, used for voice samples (unemulated)
- */
-
-static void M092Sync(void) {
-	uint8 reg = latch.addr & 0xF0;
-	setprg16(0x8000, 0);
-	if (latch.addr >= 0x9000) {
-		switch (reg) {
-			case 0xD0:
-				setprg16(0xc000, latch.addr & 15);
-				break;
-			case 0xE0:
-				setchr8(latch.addr & 15);
-				break;
-		}
-	} else {
-		switch (reg) {
-			case 0xB0:
-				setprg16(0xc000, latch.addr & 15);
-				break;
-			case 0x70:
-				setchr8(latch.addr & 15);
-				break;
-		}
-	}
-}
-
-static void M092Power() {
-	Latch_Power();
-	latch.addr = 0x80B0;
-	M092Sync();
-}
-
-void Mapper092_Init(CartInfo *info) {
-	Latch_Init(info, M092Sync, NULL, 0, 0);
-	info->Power = M092Power;
-}
-
 /*------------------ Map 200 ---------------------------*/
 
 static void M200Sync(void) {

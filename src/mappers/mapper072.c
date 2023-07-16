@@ -17,48 +17,76 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
+ * Mapper 72:
  * Moero!! Pro Tennis have ADPCM codec on-board, PROM isn't dumped, emulation isn't
  * possible just now.
+ * 
+ * Mapper 092
+ * Another two-in-one mapper, two Jaleco carts uses similar
+ * hardware, but with different wiring.
+ * Original code provided by LULU
+ * Additionally, PCB contains DSP extra sound chip, used for voice samples (unemulated)
+ * This mapper is identical to mapper 072 except for the different PRG Setup.
  */
-
+ 
 #include "mapinc.h"
 
-static uint8 preg, creg;
+static uint8 prg, chr, reg;
+
+static void (*WSync)(void);
 
 static SFORMAT StateRegs[] =
 {
-	{ &preg, 1, "PREG" },
-	{ &creg, 1, "CREG" },
+	{ &prg, 1, "PREG" },
+	{ &chr, 1, "CREG" },
+	{ &reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg16(0x8000, preg);
+static void M072Sync(void) {
+	setprg16(0x8000, prg);
 	setprg16(0xC000, ~0);
-	setchr8(creg);
+	setchr8(chr);
+}
+
+static void M092Sync(void) {
+	setprg16(0x8000, 0);
+	setprg16(0xC000, prg);
+	setchr8(chr);
 }
 
 static DECLFW(M072Write) {
-	if (V & 0x80)
-		preg = V & 0xF;
-	if (V & 0x40)
-		creg = V & 0xF;
-	Sync();
+	V &= CartBR(A);
+
+	reg = (reg ^ V) & V;
+	if (reg & 0x80) prg = V;
+	if (reg & 0x40) chr = V;
+
+	WSync();
 }
 
 static void M072Power(void) {
-	Sync();
+	WSync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0xFFFF, M072Write);
+	SetWriteHandler(0x8000, 0xFFFF, M072Write);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	WSync();
 }
 
 void Mapper072_Init(CartInfo *info) {
 	info->Power = M072Power;
 	GameStateRestore = StateRestore;
-
 	AddExState(&StateRegs, ~0, 0, 0);
+
+	WSync = M072Sync;
+}
+
+void Mapper092_Init(CartInfo *info) {
+	info->Power = M072Power;
+	GameStateRestore = StateRestore;
+	AddExState(&StateRegs, ~0, 0, 0);
+
+	WSync = M092Sync;
 }
