@@ -25,11 +25,14 @@
 #include "eeprom_93C66.h"
 #include "mapinc.h"
 
-static uint8 *WRAM;
-static uint32 WRAMSIZE;
 static uint8 reg[4];
+
 static uint8 haveEEPROM;
 static uint8 eeprom_data[512];
+
+static uint8 *WRAM;
+static uint32 WRAMSIZE;
+
 static SFORMAT StateRegs[] = {
    { reg, 4, "REGS" },
    { 0 }
@@ -38,11 +41,9 @@ static SFORMAT StateRegs[] = {
 static void Sync() {
 	setprg32(0x8000, (reg[1] << 4) | (reg[0] & 0xF) | ((reg[3] & 0x04) ? 0x00 : 0x03));
 	setprg8r(0x10, 0x6000, 0);
-	if (~reg[0] & 0x80)
+	if (!(reg[0] & 0x80)) {
 		setchr8(0);
-
-	if (haveEEPROM)
-		eeprom_93C66_write((reg[2] & 0x04), (reg[2] & 0x02), (reg[2] & 0x01));
+	}
 }
 
 static void M558HBIRQHook(void) {
@@ -51,29 +52,48 @@ static void M558HBIRQHook(void) {
 		                     PA13 rises. This does not seem possible with the current PPU emulation however. */
 		setchr4(0x0000, (scanline >= 127) ? 1 : 0);
 		setchr4(0x1000, (scanline >= 127) ? 1 : 0);
-	} else
+	} else {
 		setchr8(0);
+	}
 }
 
 static DECLFR(readReg) {
-	if (haveEEPROM)
+	if (haveEEPROM) {
 		return eeprom_93C66_read() ? 0x04 : 0x00;
-	else
-		return reg[2] & 0x04;
+	}
+	return reg[2] & 0x04;
 }
 
 static DECLFW(writeReg) {
-	uint8 index = A >> 8 & 3;
-
-	/* D0 and D1 are connected to the ASIC in reverse order, so swap once */
-	V = (V & ~3) | (V >> 1 & 1) | (V << 1 & 2);
-
-	/* Swap bits of registers 0-2 again if the "swap bits" bit is set. Exclude register 2 on when PRG-ROM is 1 MiB. */
-	if ((reg[3] & 0x02) && index <= (ROM.prg.size == 64 ? 1 : 2))
-		V = (V & ~3) | (V >> 1 & 1) | (V << 1 & 2);
-
-	reg[index] = V;
-	Sync();
+	switch (A & 0xFF00) {
+	case 0x5000:
+		if (!(reg[3] & 0x02)) {
+			V = (V & ~0x03) | ((V >> 1) & 0x01) | ((V << 1) & 0x02);
+		}
+		reg[0] = V;
+		Sync();
+		break;
+	case 0x5100:
+		if (!(reg[3] & 0x02)) {
+			V = (V & ~0x03) | ((V >> 1) & 0x01) | ((V << 1) & 0x02);
+		}
+		reg[1] = V;
+		Sync();
+		break;
+	case 0x5200:
+		if (((ROM.prg.size * 16) != 1024) && !(reg[3] & 0x02)) {
+			V = (V & ~0x03) | ((V >> 1) & 0x01) | ((V << 1) & 0x02);
+		}
+		reg[2] = V;
+		if (haveEEPROM) {
+			eeprom_93C66_write((reg[2] & 0x04), (reg[2] & 0x02), (reg[2] & 0x01));
+		}
+		break;
+	case 0x5300:
+		reg[3] = V;
+		Sync();
+		break;
+	}
 }
 
 static void M558Power(void) {
@@ -91,8 +111,9 @@ static void M558Reset(void) {
 }
 
 static void M558Close(void) {
-	if (WRAM)
+	if (WRAM) {
 		FCEU_gfree(WRAM);
+	}
 	WRAM = NULL;
 }
 
