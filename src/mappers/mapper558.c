@@ -4,6 +4,7 @@
  *  Copyright (C) 2002 Xodnizel
  *  Copyright (C) 2005 CaH4e3
  *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +23,9 @@
 
 /* Yancheng YC-03-09/Waixing FS??? PCB */
 
-#include "eeprom_93C66.h"
 #include "mapinc.h"
+
+#include "eeprom_93C66.h"
 
 static uint8 reg[4];
 
