@@ -20,17 +20,19 @@
 
 #include "mapinc.h"
 
-static DECLFR(Mapper553Read) {
-	return 0x3A;
+static DECLFR(M553Read) {
+	if (A < 0xC000) {
+		return 0x3A;
+	}
+	return CartBR(A);
 }
 
-static void Mapper553Power(void) {
+static void M553Power(void) {
 	setprg16(0xC000, 0);
 	setchr8(0);
-	SetReadHandler(0x8000, 0xBFFF, Mapper553Read);
-	SetReadHandler(0xC000, 0xFFFF, CartBR);
+	SetReadHandler(0x8000, 0xFFFF, M553Read);
 }
 
 void Mapper553_Init(CartInfo *info) {
-	info->Power = Mapper553Power;
+	info->Power = M553Power;
 }
