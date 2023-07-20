@@ -42,12 +42,12 @@ static void Sync(void) {
 	setchr8(0);
 	setprg8r(0x10, 0x6000, 0);
 	setprg16(0x8000, reg);
-	setprg16(0xC000, 3);
+	setprg16(0xC000, 0x03);
 }
 
 static DECLFW(M548Write4800) {
-	latch =  ((A >> 3) & 4) | ((A >> 2) & 3);
-	IRQa = (A & 4) != 4;
+	latch =  ((A >> 3) & 0x04) | ((A >> 2) & 0x03);
+	IRQa = (A & 0x04) != 0x04;
 	if (!IRQa) {
 		IRQCount = 0;
 		X6502_IRQEnd(FCEU_IQEXT);
@@ -90,8 +90,9 @@ static void M548Power(void) {
 }
 
 static void M548Close(void) {
-	if (WRAM)
+	if (WRAM) {
 		FCEU_gfree(WRAM);
+	}
 	WRAM = NULL;
 }
 
@@ -104,11 +105,10 @@ void Mapper548_Init(CartInfo *info) {
 	info->Close = M548Close;
 	MapIRQHook = M548IRQ;
 	GameStateRestore = StateRestore;
+	AddExState(&StateRegs, ~0, 0, 0);
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-
-	AddExState(&StateRegs, ~0, 0, 0);
 }

@@ -25,19 +25,25 @@
 static uint8 latch;
 static uint8 reg;
 
+static SFORMAT StateRegs[] = {
+	{ &latch, 1, "LATC" },
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
+
 static void M550PW(uint32 A, uint8 V) {
 	if ((reg & 0x06) == 0x06) {
-		setprg16(A, (V & 0x07) | (reg << 2));
+		setprg16(A, (reg << 2) | (V & 0x07));
 	} else {
-		setprg32(0x8000, (latch >> 4) | (reg << 1));
+		setprg32(0x8000, (reg << 1) | ((latch >> 4) & 0x01));
 	}
 }
 
 static void M550CW(uint32 A, uint8 V) {
 	if ((reg & 0x06) == 0x06) {
-		setchr4(A, (V & 0x07) | ((reg << 2) & 0x18));
+		setchr4(A, ((reg << 2) & 0x18) | (V & 0x07));
 	} else {
-		setchr8((latch & 0x03) | ((reg << 1) & 0x0C));
+		setchr8(((reg << 1) & 0x0C) | (latch & 0x03));
 	}
 }
 
@@ -78,6 +84,5 @@ void Mapper550_Init(CartInfo *info) {
 	info->Reset = M550Reset;
 	MMC1_cwrap = M550CW;
 	MMC1_pwrap = M550PW;
-	AddExState(&latch, 1, 0, "LATC");
-	AddExState(&reg, 1, 0, "REG0");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

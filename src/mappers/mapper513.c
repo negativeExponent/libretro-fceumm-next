@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
@@ -30,17 +30,11 @@ static void M513CW(uint32 A, uint8 V) {
 	setchr1(A, V & 0x3F);
 }
 
-static void M513PRG(void) {
-	if (mmc3.cmd & 0x40) {
-		setprg8(0x8000, ((~1) & 0x3F));
-		setprg8(0xA000, (reg & 0xC0) | (mmc3.reg[7] & 0x3F));
-		setprg8(0xC000, (reg & 0xC0) | (mmc3.reg[6] & 0x3F));
-		setprg8(0xE000, ((~0) & 0x3F));
+static void M513PW(uint32 A, uint8 V) {
+	if (!(A & 0x4000)) {
+		setprg8(A, (reg & 0xC0) | (V & 0x3F));
 	} else {
-		setprg8(0x8000, (reg & 0xC0) | (mmc3.reg[6] & 0x3F));
-		setprg8(0xA000, (reg & 0xC0) | (mmc3.reg[7] & 0x3F));
-		setprg8(0xC000, ((~1) & 0x3F));
-		setprg8(0xE000, ((~0) & 0x3F));
+		setprg8(A, (V & 0x3F));
 	}
 }
 
@@ -82,7 +76,7 @@ static void M513Power(void) {
 
 void Mapper513_Init(CartInfo *info) {
 	MMC3_Init(info, 0, 0);
-	MMC3_FixPRG = M513PRG;
+	MMC3_pwrap = M513PW;
 	MMC3_cwrap = M513CW;
 	mmc3.opts |= 2;
 	info->SaveGame[0] = UNIFchrrama;

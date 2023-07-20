@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,22 +21,22 @@
 
 #include "mapinc.h"
 
-static uint8 latche;
+static uint8 prg;
 
 static void Sync(void) {
-	setprg16(0x8000, latche);
-	setprg16(0xC000, 8);
+	setprg16(0x8000, prg);
+	setprg16(0xC000, 0x08);
+	setchr8(0);
 }
 
 static DECLFW(M521Write) {
-	latche = V & 7;
+	prg = V;
 	Sync();
 }
 
 static void M521Power(void) {
-	latche = 0;
+	prg = 0;
 	Sync();
-	setchr8(0);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x5020, 0x5020, M521Write);
 }
@@ -47,5 +48,5 @@ static void Restore(int version) {
 void Mapper521_Init(CartInfo *info) {
 	GameStateRestore = Restore;
 	info->Power = M521Power;
-	AddExState(&latche, 1, 0, "LATC");
+	AddExState(&prg, 1, 0, "LATC");
 }

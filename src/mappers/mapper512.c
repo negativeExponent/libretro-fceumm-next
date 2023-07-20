@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -38,9 +38,9 @@ extern uint8 *ExtraNTARAM;
 
 static void M512MIR(void) {
 	if (reg == 1) {
-		SetupCartMirroring(4, 1, ExtraNTARAM);
+		SetupCartMirroring(4, 0, ExtraNTARAM);
 	} else {
-		SetupCartMirroring((mmc3.mirr & 0x01) ^ 0x01, 0, 0);
+		setmirror((mmc3.mirr & 0x01) ^ 0x01);
 	}
 }
 
@@ -48,7 +48,7 @@ static void M512CW(uint32 A, uint8 V) {
 	if (reg & 0x02) {
 		setchr1r(0x10, A, (V & 0x03));
 	} else {
-		setchr1(A, V);
+		setchr1(A, V & 0xFF);
 	}
 }
 

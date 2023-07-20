@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -46,21 +46,21 @@ static void M559CW(uint32 A, uint32 V) {
     setchr1(A, V & 0x1FF);
 }
 
-static DECLFW(M559WriteExtra) {
-    if ((A & 0xC00) == 0xC00) {
-        if (A & 0x04) {
-            nt[A & 0x03] = V & 0x01;
-            setmirrorw(nt[0], nt[1], nt[2], nt[3]);
-        } else {
-            cpuC = V;
-            VRC24_FixPRG();
-        }
-    } else {
-        VRC24_Write(A, V);
-    }
+static void M559MW(uint8 V) {
+    setmirrorw(nt[0], nt[1], nt[2], nt[3]);
 }
 
-static DECLFW(M559WriteCHR_IRQ) {
+static DECLFW(M559WriteMisc) {
+	if (A & 0x04) {
+		nt[A & 0x03] = V & 0x01;
+		VRC24_mwrap(V); /* value does not matter */
+	} else {
+		cpuC = V;
+		VRC24_FixPRG();
+	}
+}
+
+static DECLFW(M559WriteNibble) {
     /* nibblize address */
     if (A & 0x400) {
         V >>= 4;
@@ -77,8 +77,7 @@ static void M559Power(void) {
     VRC24_Power();
     setprg8(0xC000, cpuC);
     setmirrorw(nt[0], nt[1], nt[2], nt[3]);
-    SetWriteHandler(0x9000, 0x9FFF, M559WriteExtra);
-    SetWriteHandler(0xB000, 0xFFFF, M559WriteCHR_IRQ);
+    SetWriteHandler(0xB000, 0xFFFF, M559WriteNibble);
 }
 
 void Mapper559_Init(CartInfo *info) {
@@ -86,5 +85,7 @@ void Mapper559_Init(CartInfo *info) {
     info->Power = M559Power;
     VRC24_pwrap = M559PW;
     VRC24_cwrap = M559CW;
+    VRC24_mwrap = M559MW;
+    VRC24_miscWrite = M559WriteMisc;
 	AddExState(StateRegs, ~0, 0, 0);
 }

@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,15 +42,8 @@ static SFORMAT StateRegs[] =
 static void Sync(void) {
 	setchr8(0);
 	setprg8(0x6000, reg);
-	setprg8(0x8000, 0xc);
-	setprg4(0xa000, (0xd << 1));
-	setprg2(0xb000, (0xd << 2) + 2);
-	setprg2r(0x10, 0xb800, 4);
-	setprg2r(0x10, 0xc000, 5);
-	setprg2r(0x10, 0xc800, 6);
-	setprg2r(0x10, 0xd000, 7);
-	setprg2(0xd800, (0xe << 2) + 3);
-	setprg8(0xe000, 0xf);
+	setprg32(0x8000, 0x03);
+	setprg8r(0x10, 0xB800, 0);
 }
 
 static DECLFW(M535RamWrite) {
@@ -62,17 +56,17 @@ static DECLFW(M535Write) {
 }
 
 static DECLFW(M535IRQaWrite) {
-	IRQa = V & 2;
+	IRQa = V & 0x02;
 	IRQCount = 0;
-	if (!IRQa)
-		X6502_IRQEnd(FCEU_IQEXT);
+	X6502_IRQEnd(FCEU_IQEXT);
 }
 
 static void M535IRQHook(int a) {
 	if (IRQa) {
 		IRQCount += a;
-		if (IRQCount > 7560)
+		if (IRQCount > 7560) {
 			X6502_IRQBegin(FCEU_IQEXT);
+		}
 	}
 }
 
@@ -87,8 +81,9 @@ static void M535Power(void) {
 }
 
 static void M535Close(void) {
-	if (WRAM)
+	if (WRAM) {
 		FCEU_gfree(WRAM);
+	}
 	WRAM = NULL;
 }
 
@@ -101,11 +96,10 @@ void Mapper535_Init(CartInfo *info) {
 	info->Close = M535Close;
 	MapIRQHook = M535IRQHook;
 	GameStateRestore = StateRestore;
+	AddExState(&StateRegs, ~0, 0, 0);
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-
-	AddExState(&StateRegs, ~0, 0, 0);
 }

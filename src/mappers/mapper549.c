@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -28,8 +28,8 @@
 #include "fdssound.h"
 
 static void Sync(void) {
-	setprg8(0x6000, ((latch.addr >> 3) & 4) | (latch.addr >> 2));
-	setprg32(0x8000, 2);
+	setprg8(0x6000, ((latch.addr >> 3) & 0x04) | (latch.addr >> 2));
+	setprg32(0x8000, 0x02);
 	setchr8(0);
 }
 

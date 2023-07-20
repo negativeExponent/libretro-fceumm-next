@@ -20,13 +20,13 @@
  */
 
 /* NES 2.0 Mapper 519 
- * UNIF board name UNL-M519
+ * UNIF board name UNL-EH8813A
  */
 
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 lock, hw_mode, chr;
+static uint8 lock, hw_mode, chr, ram[4];
 
 static SFORMAT StateRegs[] = {
 	{ &hw_mode, 1, "HWMO" },
@@ -52,18 +52,29 @@ static void Sync(void) {
 		chr = latch.data & 0x7C;
 	}
 
-	setchr8(chr | latch.data);
+	setchr8(chr | (latch.data & 0x03));
+}
+
+static DECLFR(M519ReadRAM) {
+	return ram[A & 0x03];
+}
+
+static DECLFW(M519WriteRAM) {
+	ram[A & 0x03] = V & 0x0F;
 }
 
 static DECLFR(M519Read) {
-	if (latch.addr & 0x40)
+	if (latch.addr & 0x40) {
 		A = (A & 0xFFF0) + hw_mode;
+	}
 	return CartBR(A);
 }
 
 static void M519Power(void) {
 	hw_mode = lock = 0;
 	Latch_Power();
+	SetReadHandler(0x5800, 0x5FFF, M519ReadRAM);
+	SetWriteHandler(0x5800, 0x5FFF, M519WriteRAM);
 }
 
 static void M519Reset(void) {

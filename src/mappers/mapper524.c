@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* -------------------- BTL-900218 -------------------- */
+/* NES 2.0 Mapper 524 - BTL-900218 */
 /* http://wiki.nesdev.com/w/index.php/UNIF/900218
  * NES 2.0 Mapper 524 describes the PCB used for the pirate port Lord of King or Axe of Fight.
  * UNIF board name is BTL-900218.
@@ -29,11 +29,10 @@
 #include "vrc2and4.h"
 
 static uint16 IRQCount;
-static uint8 IRQLatch, IRQa;
+static uint8 IRQa;
 
 static SFORMAT IRQStateRegs[] = {
 	{ &IRQCount, 2, "IRQC" },
-	{ &IRQLatch, 1, "IRQL" },
 	{ &IRQa, 1, "IRQA" },
 
 	{ 0 }
@@ -41,7 +40,9 @@ static SFORMAT IRQStateRegs[] = {
 
 static DECLFW(M524Write) {
 	switch (A & 0xF00C) {
-	case 0xF008: IRQa = 1; break;
+	case 0xF008:
+		IRQa = 1;
+		break;
 	case 0xF00C:
 		IRQa = 0;
 		IRQCount = 0;
@@ -60,7 +61,7 @@ void M524IRQHook(int a) {
 }
 
 static void M524Power(void) {
-	IRQa = IRQCount = IRQLatch = 0;
+	IRQa = IRQCount = 0;
 	VRC24_Power();
 	SetWriteHandler(0xF000, 0xFFFF, M524Write);
 }

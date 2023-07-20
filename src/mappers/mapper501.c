@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -31,14 +31,14 @@ static SFORMAT StateRegs[] = {
 
 static void Sync(void) {
 	setprg4(0x7000, 0);
-	setprg32(0x8000, (reg[0] << 2) + (latch.data & 7));
+	setprg32(0x8000, (reg[0] << 2) + (latch.data & 0x07));
 	setchr8(0);
-	setmirror(MI_0 + (reg[1] & 1));
+	setmirror(MI_0 + (reg[1] & 0x01));
 }
 
 static DECLFW(M501WriteReg) {
-	if (~reg[1] & 0x80) {
-		reg[A & 1] = V;
+	if (!(reg[1] & 0x80)) {
+		reg[A & 0x01] = V;
 		Sync();
 	}
 }

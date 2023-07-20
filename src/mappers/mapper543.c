@@ -27,6 +27,13 @@ static uint8 reg;
 static uint8 bits;
 static uint8 shift;
 
+static SFORMAT StateRegs[] = {
+	{ &bits, 1, "BITS" },
+	{ &shift, 1, "SHFT" },
+	{ &reg, 1, "REG0" },
+	{ 0 }
+};
+
 static void M543PW(uint32 A, uint8 V) {
 	setprg16(A, (reg << 4) | (V & 0x0F));
 }
@@ -78,7 +85,5 @@ void Mapper543_Init(CartInfo *info) {
 	MMC1_cwrap = M543CW;
 	MMC1_pwrap = M543PW;
 	MMC1_wwrap = M543WW;
-	AddExState(&bits, 1, 0, "BITS");
-	AddExState(&shift, 1, 0, "SHFT");
-	AddExState(&reg, 1, 0, "REG0");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

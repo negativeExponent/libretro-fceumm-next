@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -28,6 +28,7 @@
 
 static uint8 cmd;
 static uint8 reg[4];
+
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE = 0;
 

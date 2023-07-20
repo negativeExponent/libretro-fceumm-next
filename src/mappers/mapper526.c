@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,71 +27,83 @@
 
 #include "mapinc.h"
 
-static uint8 preg[4], creg[8];
+static uint8 prg[4], chr[8];
 static uint32 IRQCount;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
 static SFORMAT StateRegs[] =
 {
-	{ preg, 4, "PREG" },
-	{ creg, 8, "CREG" },
+	{ prg, 4, "PREG" },
+	{ chr, 8, "CREG" },
 	{ &IRQCount, 4, "IRQC" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 i;
 	setprg8r(0x10, 0x6000, 0);
-	setprg8(0x8000, preg[0]);
-	setprg8(0xA000, preg[1]);
-	setprg8(0xC000, preg[2]);
-	setprg8(0xE000, preg[3]);
-	for (i = 0; i < 8; i++)
-		setchr1((i << 10), creg[i]);
+
+	setprg8(0x8000, prg[0]);
+	setprg8(0xA000, prg[1]);
+	setprg8(0xC000, prg[2]);
+	setprg8(0xE000, prg[3]);
+
+	setchr1(0x0000, chr[0]);
+	setchr1(0x0400, chr[1]);
+	setchr1(0x0800, chr[2]);
+	setchr1(0x0C00, chr[3]);
+	setchr1(0x1000, chr[4]);
+	setchr1(0x1400, chr[5]);
+	setchr1(0x1800, chr[6]);
+	setchr1(0x1C00, chr[7]);
+
 	setmirror(MI_V);
 }
 
+extern int scanline;
+
 static DECLFW(M526Write) {
 	/*	FCEU_printf("Wr: A:%04x V:%02x\n", A, V); */
-	A &= 0xF00F;
-	if (A <= 0x8007) {
-		creg[A & 0x07] = V;
+	switch (A & 0x0F) {
+	case 0x00: case 0x01: case 0x02: case 0x03:
+	case 0x04: case 0x05: case 0x06: case 0x07:
+		chr[A & 0x07] = V;
 		Sync();
-	} else if (A <= 0x800B) {
-		preg[A & 0x03] = V;
+		break;
+	case 0x08: case 0x09: case 0x0A: case 0x0B:
+		prg[A & 0x03] = V;
 		Sync();
-	} else {
-		switch (A & 0x0F) {
-			case 0x0D:
-			case 0x0F:
-				/* One of these two acknowledges a pending IRQ, and the other
-				 * resets to IRQ counter to zero. Because they are always written
-				 * to one after the other, it's not clear which one does which. */
-				X6502_IRQEnd(FCEU_IQEXT);
-				IRQCount = 0;
-				break;
-		}
+		break;
+	case 0x0D:
+	case 0x0F:
+		/* One of these two acknowledges a pending IRQ, and the other
+		 * resets to IRQ counter to zero. Because they are always written
+		 * to one after the other, it's not clear which one does which. */
+		X6502_IRQEnd(FCEU_IQEXT);
+		IRQCount = 0;
+		break;
 	}
 }
 
 static void M526IRQHook(int a) {
 	IRQCount += a;
-	if (IRQCount & 4096)
+	if (IRQCount & 0x1000) {
 		X6502_IRQBegin(FCEU_IQEXT);
+	}
 }
 
 static void M526Close(void) {
-	if (WRAM)
+	if (WRAM) {
 		FCEU_gfree(WRAM);
+	}
 	WRAM = NULL;
 }
 
 static void M526Power(void) {
-	preg[0] = ~3;
-	preg[1] = ~2;
-	preg[2] = ~1;
-	preg[3] = ~0;
+	prg[0] = ~3;
+	prg[1] = ~2;
+	prg[2] = ~1;
+	prg[3] = ~0;
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);

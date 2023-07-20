@@ -35,8 +35,10 @@ static writefunc writePPU;
 extern uint32 RefreshAddr;
 
 static SFORMAT StateRegs[] = {
-	{ &cpuC, 1, "CPUC" },
     { nt, 4, "NTBL" },
+	{ &cpuC, 1, "CPUC" },
+	{ &chrRamMask, 1, "CHRM" },
+	{ &chrRamCompare, 1, "CHRB" },
 	{ 0 },
 };
 
@@ -121,7 +123,4 @@ void Mapper544_Init(CartInfo *info) {
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-
-	AddExState(&chrRamMask, 1, 0, "CHRM");
-	AddExState(&chrRamCompare, 1, 0, "CHRB");
 }

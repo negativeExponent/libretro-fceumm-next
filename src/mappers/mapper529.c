@@ -30,15 +30,9 @@
 static uint8 haveEEPROM;
 static uint8 eeprom_data[256];
 
-static void M529PRGSync(uint32 A, uint8 V) {
-	switch (A) {
-	case 0x8000:
-		setprg16(0x8000, vrc24.prg[1]);
-		break;
-	case 0xC000:
-		setprg16(0xC000, ~0);
-		break;
-	}
+static void M529PW(uint32 A, uint8 V) {
+	setprg16(0x8000, vrc24.prg[1]);
+	setprg16(0xC000, ~0);
 }
 
 static DECLFR(M529EEPROMRead) {
@@ -68,7 +62,7 @@ void Mapper529_Init(CartInfo *info) {
 	haveEEPROM = (info->PRGRamSaveSize & 0x100) != 0;
 	VRC24_Init(info, VRC4, 0x04, 0x08, !haveEEPROM, 1);
 	info->Power = M529Power;
-	VRC24_pwrap = M529PRGSync;
+	VRC24_pwrap = M529PW;
 	if (haveEEPROM) {
 		eeprom_93C66_init(eeprom_data, 256, 16);
 		info->battery = 1;

@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,9 +42,9 @@ static void Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
 	setchr4(0x0000, lastnt);
 	setchr4(0x1000, 1);
-	if (mode & 4)
+	if (mode & 4) {
 		setprg32(0x8000, prg & 7);
-	else {
+	} else {
 		setprg16(0x8000, prg & 0x0f);
 		setprg16(0xC000, 0);
 	}

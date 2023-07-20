@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
@@ -25,16 +25,22 @@
 #include "mapinc.h"
 #include "vrc2and4.h"
 
-static void M530PW(uint32 A, uint8 V) {
-	setprg8(A, ((V & 0x02) << 2) | ((V & 0x08) >> 2) | (V & ~0x0A));
-}
-
-static void M530CW(uint32 A, uint32 V) {
-	setchr1(A, ((V & 0x40) >> 1) | ((V & 0x20) << 1) | (V & ~0x60));
-}
-
 static DECLFW(UNLAX5705Write) {
-	A |= (A & 0x08) << 9;
+	A |= (A & 0x0008) ? 0x1000 : 0x0000;
+	switch (A & 0xF000) {
+	case 0x8000:
+	case 0xA000:
+		V = ((V & 0x02) << 2) | ((V & 0x08) >> 2) | (V & 0x05);
+		break;
+	case 0xB000:
+	case 0xC000:
+	case 0xD000:
+	case 0xE000:
+		if (A & 0x0001) {
+			V = ((V & 0x04) >> 1) | ((V & 0x02) << 1) | (V & 0x09);
+		}
+		break;
+	}
 	VRC24_Write(A, V);
 }
 
@@ -46,6 +52,4 @@ static void M530Power(void) {
 void Mapper530_Init(CartInfo *info) {
 	VRC24_Init(info, VRC4, 0x01, 0x02, 0, 1);
 	info->Power = M530Power;
-	VRC24_pwrap = M530PW;
-	VRC24_cwrap = M530CW;
 }

@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -36,12 +36,15 @@ static void M520PW(uint32 A, uint8 V) {
 	setprg8(A, ((vrc24.chr[PPUCHRBus] << 2) & 0x20) | (V & 0x1F));
 }
 
+static void M520CW(uint32 A, uint8 V) {
+	setchr1(A, V & 0x07);
+}
+
 static void M520PPUHook(uint32 A) {
 	uint8 bank = (A & 0x1FFF) >> 10;
 	if ((PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
 		PPUCHRBus = bank;
 		VRC24_FixPRG();
-		VRC24_FixCHR();
 	}
 }
 
@@ -49,5 +52,6 @@ void Mapper520_Init(CartInfo *info) {
 	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
 	PPU_hook = M520PPUHook;
 	VRC24_pwrap = M520PW;
+	VRC24_cwrap = M520CW;
 	AddExState(StateRegs, ~0, 0, 0);
 }
