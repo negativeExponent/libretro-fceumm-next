@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
- *   Copyright (C) 2023
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,12 @@ static uint8 reg[4];
 static uint8 cmd;
 
 static uint8 *CHRRAM;
+
+static SFORMAT StateRegs[] = {
+	{ reg, 4, "REGS" },
+	{ &cmd, 1, "CMD0" },
+	{ 0 }
+};
 
 static void M410PW(uint32 A, uint8 V) {
 	uint32 mask = ~reg[3] & 0x3F;
@@ -88,8 +94,7 @@ void Mapper410_Init(CartInfo *info) {
 	info->Reset = M410Reset;
 	info->Power = M410Power;
 	info->Close = M410Close;
-	AddExState(reg, 4, 0, "EXPR");
-	AddExState(&cmd, 1, 0, "CMD0");
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAM = (uint8 *)FCEU_gmalloc(8192);
 	SetupCartCHRMapping(0x10, CHRRAM, 8192, 1);

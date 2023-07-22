@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -26,13 +26,15 @@
 #include "latch.h"
 
 static void Sync(void) {
-	if (!(latch.data & 0x20))
-		setprg32(0x8000, (latch.data & 0x1f) >> 1);
-	else {
-		setprg16(0x8000, (latch.data & 0x1f));
-		setprg16(0xC000, (latch.data & 0x1f));
+	uint8 prg = latch.data & 0x1F;
+
+	if (latch.data & 0x20) {
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg);
+	} else {
+		setprg32(0x8000, prg >> 1);
 	}
-	setmirror(((latch.data >> 6) & 1) ^ 1);
+	setmirror(((latch.data >> 6) & 0x01) ^ 0x01);
 	setchr8(0);
 }
 

@@ -35,33 +35,41 @@
 static uint8 reg[2];
 
 static void M411CW(uint32 A, uint8 V) {
-	uint32 mask = (reg[1] & 0x02) ? 0xFF : 0x7F;
+	uint16 mask = (reg[1] & 0x02) ? 0xFF : 0x7F;
+	uint16 base = ((reg[0] << 4) & 0x100) | ((reg[1] << 5) & 0x80);
 
-	setchr1(A, ((reg[0] << 4) & 0x100) | ((reg[1] << 5) & 0x80) | (V & mask));
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static void M411PW(uint32 A, uint8 V) {
+	uint16 mask = (reg[1] & 0x02) ? 0x1F : 0x0F;
+	uint16 base = ((reg[1] >> 2) & 0x10) | (reg[1] & 0x08) | (reg[0] & 0x04) | ((reg[0] >> 2) & 0x02) | (reg[0] & 0x01);
+
 	/* NROM Mode */
 	if ((reg[0] & 0x40) && !(reg[0] & 0x20)) { /* $5xx0 bit 5 check required for JY-212 */
-		uint32 bank = ((reg[1] >> 2) & 0x10) | (reg[1] & 0x08) | (reg[0] & 0x04) | ((reg[0] >> 2) & 0x02) | (reg[0] & 0x01);
-
 		if (reg[0] & 0x02) { /* NROM-256 */
-			setprg32(0x8000, bank >> 1);
+			setprg32(0x8000, base >> 1);
 		} else { /* NROM-128 */
-			setprg16(0x8000, bank);
-			setprg16(0xC000, bank);
+			setprg16(0x8000, base);
+			setprg16(0xC000, base);
 		}
 	} else { /* MMC3 */
-		uint32 mask = (reg[1] & 0x02) ? 0x1F : 0x0F;
-
-		setprg8(A, ((reg[1] >> 1) & 0x20) | ((reg[1] << 1) & 0x10) | (V & mask));
+		setprg8(A, ((base << 1) & ~mask) | (V & mask));
 	}
 }
 
 static DECLFW(M411Write) {
-	reg[A & 0x01] = V;
-	MMC3_FixPRG();
-	MMC3_FixCHR();
+	if (A & 0x800) {
+		reg[A & 0x01] = V;
+		MMC3_FixPRG();
+		MMC3_FixCHR();
+	}
+}
+
+static void M411Reset(void) {
+	reg[0] = 0x80;
+	reg[1] = 0x82;
+	MMC3_Reset();
 }
 
 static void M411Power(void) {
@@ -76,5 +84,6 @@ void Mapper411_Init(CartInfo *info) {
 	MMC3_pwrap = M411PW;
 	MMC3_cwrap = M411CW;
 	info->Power = M411Power;
+	info->Reset = M411Reset;
 	AddExState(reg, 2, 0, "EXPR");
 }

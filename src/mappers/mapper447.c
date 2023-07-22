@@ -28,27 +28,28 @@
 static uint8 reg;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "OUTB" },
+	{ &reg, 1, "REGS" },
 	{ 0 },
 };
 
 static void M447PW(uint32 A, uint8 V) {
+    uint16 mask = 0x0F;
+    uint16 base = reg << 4;
+
     if (reg & 0x04) {
-        if (reg & 2) {
-            /* NROM-128 */
-            setprg8(0x8000, (reg << 4) | (vrc24.prg[0] & 0x0F));
-            setprg8(0xA000, (reg << 4) | (vrc24.prg[1] & 0x0F));
-            setprg8(0xC000, (reg << 4) | (vrc24.prg[0] & 0x0F));
-            setprg8(0xE000, (reg << 4) | (vrc24.prg[1] & 0x0F));
-        } else {
-            /* NROM-256 */
-            setprg8(0x8000, (reg << 4) | ((vrc24.prg[0] & ~0x02) & 0x0F));
-            setprg8(0xA000, (reg << 4) | ((vrc24.prg[1] & ~0x02) & 0x0F));
-            setprg8(0xC000, (reg << 4) | ((vrc24.prg[0] |  0x02) & 0x0F));
-            setprg8(0xE000, (reg << 4) | ((vrc24.prg[1] |  0x02) & 0x0F));
+        if (reg & 2) { /* NROM-128 */
+            setprg8(0x8000, (base & ~mask) | (vrc24.prg[0] & mask));
+            setprg8(0xA000, (base & ~mask) | (vrc24.prg[1] & mask));
+            setprg8(0xC000, (base & ~mask) | (vrc24.prg[0] & mask));
+            setprg8(0xE000, (base & ~mask) | (vrc24.prg[1] & mask));
+        } else { /* NROM-256 */
+            setprg8(0x8000, (base & ~mask) | ((vrc24.prg[0] & ~0x02) & mask));
+            setprg8(0xA000, (base & ~mask) | ((vrc24.prg[1] & ~0x02) & mask));
+            setprg8(0xC000, (base & ~mask) | ((vrc24.prg[0] |  0x02) & mask));
+            setprg8(0xE000, (base & ~mask) | ((vrc24.prg[1] |  0x02) & mask));
         }
     } else {
-        setprg8(A, (reg << 4) | (V & 0x0F));
+        setprg8(A, (base & ~mask) | (V & mask));
     }
 }
 
@@ -83,5 +84,5 @@ void Mapper447_Init(CartInfo *info) {
 	info->Power = M447Power;
     VRC24_pwrap = M447PW;
     VRC24_cwrap = M447CW;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

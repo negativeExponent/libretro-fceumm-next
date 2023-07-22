@@ -29,14 +29,16 @@ static uint8 reg[4];
 
 static void M445PW(uint32 A, uint8 V) {
     uint8 mask = (reg[2] & 0x01) ? 0x0F : 0x1F;
+	uint8 base = reg[0];
 
-    setprg8(A, (reg[0] & ~mask) | (V & mask));
+    setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void M445CW(uint32 A, uint8 V) {
-    uint8 mask = (reg[2] & 0x08) ? 0x7F : 0xFF;
+    uint16 mask = (reg[2] & 0x08) ? 0x7F : 0xFF;
+	uint16 base = reg[1] << 3;
 
-	setchr1(A, ((reg[1] << 3) & ~mask) | (V & mask));
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(M445Write) {

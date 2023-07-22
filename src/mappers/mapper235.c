@@ -22,11 +22,9 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 unrom, openbus;
+static uint8 unrom;
 
-static SFORMAT StateRegs[] =
-{
-	{ &openbus, 1, "OPNB" },
+static SFORMAT StateRegs[] = {
 	{ &unrom,   1, "UROM" },
 	{ 0 }
 };
@@ -38,27 +36,29 @@ static void Sync(void) {
 		setchr8(0);
 		setmirror(MI_V);
 	} else {
-		uint8 bank = ((latch.addr & 0x300) >> 3) | (latch.addr & 0x1F);
-		if (latch.addr & 0x400) {
-			setmirror(MI_0);
-		} else {
-			setmirror(((latch.addr >> 13) & 1) ^ 1);
-		}
-		if (bank >= (ROM.prg.size >> 1)) {
-			openbus = 1;
-		} else if (latch.addr & 0x800) {
-			setprg16(0x8000, (bank << 1) | ((latch.addr >> 12) & 1));
-			setprg16(0xC000, (bank << 1) | ((latch.addr >> 12) & 1));
+		uint8 bank = ((latch.addr >> 3) & 0x60) | (latch.addr & 0x1F);
+
+		if (latch.addr & 0x800) {
+			setprg16(0x8000, (bank << 1) | ((latch.addr >> 12) & 0x01));
+			setprg16(0xC000, (bank << 1) | ((latch.addr >> 12) & 0x01));
 		} else {
 			setprg32(0x8000, bank);
 		}
+
 		setchr8(0);
+
+		if (latch.addr & 0x400) {
+			setmirror(MI_0);
+		} else {
+			setmirror(((latch.addr >> 13) & 0x01) ^ 0x01);
+		}
 	}
 }
 
 static DECLFR(M235Read) {
-	if (openbus) {
-		openbus = 0;
+	uint8 bank = ((latch.addr >> 3) & 0x60) | (latch.addr & 0x1F);
+
+	if (!unrom && (bank >= (PRGsize[0] / 32768))) {
 		return X.DB;
 	}
 	return CartBR(A);

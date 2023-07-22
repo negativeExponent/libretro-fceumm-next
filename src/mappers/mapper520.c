@@ -36,7 +36,7 @@ static void M520PW(uint32 A, uint8 V) {
 	setprg8(A, ((vrc24.chr[PPUCHRBus] << 2) & 0x20) | (V & 0x1F));
 }
 
-static void M520CW(uint32 A, uint8 V) {
+static void M520CW(uint32 A, uint32 V) {
 	setchr1(A, V & 0x07);
 }
 

@@ -1,8 +1,7 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *
- *  Copyright (C) 2008 -2020 dragon2snow,loong2snow from www.nesbbs.com
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,67 +16,63 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- *
  */
 
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 regs[4];
-static uint8 hrd_flag;
+static uint8 reg[4];
+static uint8 dipsw;
 
-static SFORMAT StateRegs[] =
-{
-	{ &hrd_flag, 1, "FLAG" },
-	{ regs, 4, "REGS" },
+static SFORMAT StateRegs[] = {
+	{ &dipsw, 1, "DPSW" },
+	{ reg, 4, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	int mask = regs[2] >> 6; /* There is an CNROM mode that takes either two or four inner CHR banks from a CNROM-like
+	int mask = reg[2] >> 6; /* There is an CNROM mode that takes either two or four inner CHR banks from a CNROM-like
 	                            latch register at $8000-$FFFF. */
 
-	if (regs[1] & 0x10) {
-		setprg32(0x8000, (regs[1] & 0xC0) >> 6);
+	if (reg[1] & 0x10) {
+		setprg32(0x8000, reg[1] >> 6);
 	} else {
-		setprg16(0x8000, (regs[1] & 0xE0) >> 5);
-		setprg16(0xC000, (regs[1] & 0xE0) >> 5);
+		setprg16(0x8000, reg[1] >> 5);
+		setprg16(0xC000, reg[1] >> 5);
 	}
 
-	setchr8(((regs[1] & 0x07) & ~mask) | (latch.data & mask));
+	setchr8(((reg[1] & 0x07) & ~mask) | (latch.data & mask));
 
-	setmirror((regs[1] & 0x8) ? 0 : 1);
+	setmirror(((reg[1] >> 3) & 0x01) ^ 0x01);
 }
 
-static DECLFW(WriteLo) {
-	regs[A & 0x03] = V;
+static DECLFW(M428Write) {
+	reg[A & 0x03] = V;
 	Sync();
 }
 
-static DECLFR(ReadLo) {
-	return hrd_flag;
+static DECLFR(M428Read) {
+	return (X.DB & ~0x03) | (dipsw & 0x03);
 }
 
 static void M428Power(void) {
-	hrd_flag = 0; /* Solder pad, selecting different menus */
-
-	regs[1] = 0;
-	regs[2] = 0;
-
+	dipsw = 0;
+	reg[0] = 0;
+	reg[1] = 0;
+	reg[2] = 0;
+	reg[3] = 0;
 	Latch_Power();
-	SetWriteHandler(0x6000, 0x7FFF, WriteLo);
-	SetReadHandler(0x6000, 0x7FFF, ReadLo);
+	SetWriteHandler(0x6000, 0x7FFF, M428Write);
+	SetReadHandler(0x6000, 0x7FFF, M428Read);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
 static void M428Reset(void) {
-	hrd_flag++;
-	hrd_flag &= 3;
-
-	regs[1] = 0;
-	regs[2] = 0;
-
+	dipsw++;
+	reg[0] = 0;
+	reg[1] = 0;
+	reg[2] = 0;
+	reg[3] = 0;
 	Sync();
 }
 

@@ -20,18 +20,17 @@
  */
 
 /* NC7000M PCB, with incorrect UNIF MAPR BS-110 due to a mix-up. Submapper bits 0 and 1. denote the setting of two
- * solder pads that configure CHR banking. */
+ * solder info->submapper that configure CHR banking. */
 /* NC8000M PCB, indicated by submapper bit 2. */
 
 #include "mapinc.h"
 #include "mmc3.h"
 
 static uint8 reg;
-static uint8 pads;
-static uint8 dip;
+static uint8 dipsw;
 
 static void M444PW(uint32 A, uint8 V) {
-	uint16 mask = ((pads & 0x04) && (reg & 0x02)) ? 0x1F : 0x0F;
+	uint16 mask = ((iNESCart.submapper & 0x04) && (reg & 0x02)) ? 0x1F : 0x0F;
 	uint16 base = reg << 4;
 
 	if (reg & 0x04) {
@@ -52,14 +51,17 @@ static void M444PW(uint32 A, uint8 V) {
 }
 
 static void M444CW(uint32 A, uint8 V) {
-	uint16 mask = (pads & 1) ? 0xFF : 0x7F;
-	uint16 base = ((reg << 7) & ((pads & 1) ? 0x00 : 0x80)) | ((reg << ((pads & 2) ? 4 : 7)) & 0x100);
+	uint16 mask = (iNESCart.submapper & 0x01) ? 0xFF : 0x7F;
+	uint16 base = ((reg << 7) & ((iNESCart.submapper & 0x01) ? 0x00 : 0x80)) | ((reg << ((iNESCart.submapper & 0x02) ? 4 : 7)) & 0x100);
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFR(M444Read) {
-	return (reg & 0x0C) == 0x08 ? dip : CartBR(A);
+	if ((reg & 0x0C) == 0x08) {
+		return dipsw;
+	}
+	return CartBR(A);
 }
 
 static DECLFW(M444Write) {
@@ -69,14 +71,14 @@ static DECLFW(M444Write) {
 }
 
 static void M444Reset(void) {
-	dip++;
-	dip &= 3;
+	dipsw++;
+	dipsw &= 3;
 	reg = 0;
 	MMC3_Reset();
 }
 
 static void M444Power(void) {
-	dip = 0;
+	dipsw = 0;
 	reg = 0;
 	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M444Write);
@@ -84,12 +86,11 @@ static void M444Power(void) {
 }
 
 void Mapper444_Init(CartInfo *info) {
-	pads = info->submapper; /* UNIF represents submapper 0 */
 	MMC3_Init(info, 0, 0);
 	MMC3_cwrap = M444CW;
 	MMC3_pwrap = M444PW;
 	info->Power = M444Power;
 	info->Reset = M444Reset;
 	AddExState(&reg, 1, 0, "EXPR");
-	AddExState(&dip, 1, 0, "DIPS");
+	AddExState(&dipsw, 1, 0, "DIPS");
 }

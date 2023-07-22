@@ -28,11 +28,11 @@ static uint8 reg;
 
 static void M404PW(uint32 A, uint8 V) {
 	uint8 mask = (reg & 0x40) ? 0x07 : 0x0F;
-	setprg16(A, (V & mask) | ((reg << 3) & ~mask));
+	setprg16(A, ((reg << 3) & ~mask) | (V & mask));
 }
 
 static void M404CW(uint32 A, uint8 V) {
-	setchr4(A, (V & 0x1F) | (reg << 5));
+	setchr4(A, (reg << 5) | (V & 0x1F));
 }
 
 static DECLFW(M404Write) {

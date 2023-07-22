@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -28,20 +28,20 @@
 static uint8 reg[2];
 
 static void Sync(void) {
-	setprg16(0x8000, ((reg[0] >> 1) & ~7) | (latch.data & 7));
-	setprg16(0xC000, ((reg[0] >> 1) & ~7) | 7);
+	setprg16(0x8000, ((reg[0] >> 1) & ~0x07) | (latch.data & 0x07));
+	setprg16(0xC000, ((reg[0] >> 1) & ~0x07) | 0x07);
 	setchr8(0);
-	setmirror(((latch.data >> 7) & 1) ^ 1);
+	setmirror(((latch.data >> 7) & 0x01) ^ 0x01);
 }
 
 static DECLFW(M439WriteReg) {
-    reg[A & 1] = V;
+    reg[A & 0x01] = V;
     Sync();
 }
 
 static DECLFW(M439WriteLatch) {
     if (!(reg[0] & 0x80)) {
-        latch.data = (latch.data & ~7) | (V & 7);
+        latch.data = (latch.data & ~0x07) | (V & 0x07);
     } else {
         latch.data = V;
     }

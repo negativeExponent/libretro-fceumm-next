@@ -37,16 +37,11 @@ static void M401CW(uint32 A, uint8 V) {
 }
 
 static void M401PW(uint32 A, uint8 V) {
-	if ((dipsw & 1) && (reg[1] & 0x80)) {
-		/* openbus */
-	} else {
-		uint32 mask = (~reg[3] & 0x1F);
-		uint32 bank = (reg[1] & 0x1F) | (reg[2] & 0x80) |
-		    ((dipsw & 2) ? (reg[2] & 0x20) : ((reg[1] >> 1) & 0x20)) |
-		    ((dipsw & 4) ? (reg[2] & 0x40) : ((reg[1] << 1) & 0x40));
-
-		setprg8(A, bank | (V & mask));
-	}
+	uint32 mask = (~reg[3] & 0x1F);
+	uint32 bank = (reg[1] & 0x1F) | (reg[2] & 0x80) |
+	    ((dipsw & 2) ? (reg[2] & 0x20) : ((reg[1] >> 1) & 0x20)) |
+	    ((dipsw & 4) ? (reg[2] & 0x40) : ((reg[1] << 1) & 0x40));
+	setprg8(A, bank | (V & mask));
 }
 
 static DECLFR(M401Read) {

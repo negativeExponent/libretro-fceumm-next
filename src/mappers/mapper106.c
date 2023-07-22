@@ -41,7 +41,7 @@ static void Sync(void) {
 	setchr1(0x1000, reg[4]);
 	setchr1(0x1400, reg[5]);
 	setchr1(0x1800, reg[6]);
-	setchr1(0x1c00, reg[7]);
+	setchr1(0x1C00, reg[7]);
 	setprg8r(0x10, 0x6000, 0);
 	setprg8(0x8000, (reg[0x8] & 0xf) | 0x10);
 	setprg8(0xA000, (reg[0x9] & 0x1f));

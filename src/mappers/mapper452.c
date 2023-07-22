@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
@@ -26,38 +26,55 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 wramBank = ((latch.data >> 3) & 6) | 8;
 	uint16 prgbank = latch.addr >> 1;
-	if (latch.data & 2) {
+	uint16 prgram_addr = 0x8000 | ((latch.data << 9) & 0x6000);
+
+	if (latch.data & 0x02) {
 		setprg8(0x8000, prgbank);
 		setprg8(0xA000, prgbank);
 		setprg8(0xC000, prgbank);
 		setprg8(0xE000, prgbank);
-		setprg8r(0x10, (wramBank ^ 4) << 12, 0);
-	} else if (latch.data & 8) {
-		setprg8(0x8000, (prgbank & ~1) | 0);
-		setprg8(0xA000, (prgbank & ~1) | 1);
-		setprg8(0xC000, (prgbank & ~1) | 2);
-		setprg8(0xE000, 3 | (prgbank & ~1)
-			| (latch.data & 4)
-			| ((latch.data & 0x04)
-			&& (latch.data & 0x40) ? 8 : 0));
+	} else if (latch.data & 0x08) {
+		setprg8(0x8000, (prgbank & ~0x01) | 0);
+		setprg8(0xA000, (prgbank & ~0x01) | 1);
+		setprg8(0xC000, (prgbank & ~0x01) | 2);
+		setprg8(0xE000, (prgbank & ~0x01) | 3
+			| (latch.data & 0x04)
+			| ((latch.data & 0x04) && (latch.data & 0x40) ? 0x08 : 0x00));
 	} else {
 		setprg16(0x8000, latch.addr >> 2);
 		setprg16(0xC000, 0);
 	}
-	setprg8r(0x10, (wramBank << 12), 0);
+
 	setchr8(0);
-	setmirror((latch.data & 1) ^ 1);
+	setmirror((latch.data & 0x01) ^ 0x01);
+
+	setprg8r(0x10, prgram_addr, 0);
+	if (latch.data & 0x02) {
+		setprg8r(0x10, prgram_addr ^ 0x4000, 0);
+	}
+}
+
+static DECLFW(M452Write) {
+	switch (A & 0xE000) {
+	case 0x8000:
+	case 0xA000:
+	case 0xC000:
+		Latch_Write(A, V);
+		break;
+	case 0xE000:
+		CartBW(A, V);
+		break;
+	}
 }
 
 static void M452Power(void) {
 	Latch_Power();
-	SetWriteHandler(0xE000, 0xFFFF, CartBW);
+	SetWriteHandler(0x8000, 0xFFFF, M452Write);
 }
 
 void Mapper452_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 1, 0);
-	info->Reset      = Latch_RegReset;
-	info->Power      = M452Power;
+	info->Reset = Latch_RegReset;
+	info->Power = M452Power;
 }

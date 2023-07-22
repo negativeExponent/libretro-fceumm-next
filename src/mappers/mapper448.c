@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -34,7 +34,6 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	setchr8(0);
 	if (reg & 0x08) { /* AOROM */
 		setprg32(0x8000, ((reg << 2) & ~0x07) | (latch.data & 0x07));
 		setmirror(MI_0 + ((latch.data >> 4) & 0x01));
@@ -53,16 +52,17 @@ static void Sync(void) {
 		case 3: setmirror(MI_1); break;
 		}
 	}
+	setchr8(0);
 }
 
 static DECLFW(M448WriteReg) {
-	if (vrc24.cmd & 1) {
+	if (vrc24.cmd & 0x01) {
 		reg = A & 0xFF;
 		Sync();
 	}
 }
 
-static DECLFW(M448Write) {
+static DECLFW(M448WriteASIC) {
 	Latch_Write(A, V);
     VRC24_Write(A, V);
 	Sync();
@@ -81,7 +81,7 @@ static void M448Power(void) {
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, M448WriteReg);
-	SetWriteHandler(0x8000, 0xFFFF, M448Write);
+	SetWriteHandler(0x8000, 0xFFFF, M448WriteASIC);
 }
 
 static void StateRestore(int version) {

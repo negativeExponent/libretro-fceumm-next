@@ -123,22 +123,22 @@ static void SyncCHR(void) {
 			setchr1(0x0000, ((outer | base) & ~mask) | (vrc2_chr[0] & mask));
 			setchr1(0x0400, ((outer | base) & ~mask) | (vrc2_chr[1] & mask));
 			setchr1(0x0800, ((outer | base) & ~mask) | (vrc2_chr[2] & mask));
-			setchr1(0x0c00, ((outer | base) & ~mask) | (vrc2_chr[3] & mask));
+			setchr1(0x0C00, ((outer | base) & ~mask) | (vrc2_chr[3] & mask));
 			setchr1(0x1000, ((outer | base) & ~mask) | (vrc2_chr[4] & mask));
 			setchr1(0x1400, ((outer | base) & ~mask) | (vrc2_chr[5] & mask));
 			setchr1(0x1800, ((outer | base) & ~mask) | (vrc2_chr[6] & mask));
-			setchr1(0x1c00, ((outer | base) & ~mask) | (vrc2_chr[7] & mask));
+			setchr1(0x1C00, ((outer | base) & ~mask) | (vrc2_chr[7] & mask));
 			break;
 		case 1: {
 			uint32 swap = (mmc3_ctrl & 0x80) << 5;
 			setchr1(0x0000 ^ swap, ((outer | base) & ~mask) | ((mmc3_regs[0] & 0xFE) & mask));
 			setchr1(0x0400 ^ swap, ((outer | base) & ~mask) | ((mmc3_regs[0] | 1) & mask));
 			setchr1(0x0800 ^ swap, ((outer | base) & ~mask) | ((mmc3_regs[1] & 0xFE) & mask));
-			setchr1(0x0c00 ^ swap, ((outer | base) & ~mask) | ((mmc3_regs[1] | 1) & mask));
+			setchr1(0x0C00 ^ swap, ((outer | base) & ~mask) | ((mmc3_regs[1] | 1) & mask));
 			setchr1(0x1000 ^ swap, ((outer | base) & ~mask) | (mmc3_regs[2] & mask));
 			setchr1(0x1400 ^ swap, ((outer | base) & ~mask) | (mmc3_regs[3] & mask));
 			setchr1(0x1800 ^ swap, ((outer | base) & ~mask) | (mmc3_regs[4] & mask));
-			setchr1(0x1c00 ^ swap, ((outer | base) & ~mask) | (mmc3_regs[5] & mask));
+			setchr1(0x1C00 ^ swap, ((outer | base) & ~mask) | (mmc3_regs[5] & mask));
 			break;
 		}
 		case 2:

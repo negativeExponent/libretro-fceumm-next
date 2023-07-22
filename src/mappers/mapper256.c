@@ -111,11 +111,11 @@ static void CSync(void) {
 	setchr1(0x0000 ^ cswap, block | (bank0 & mask));
 	setchr1(0x0400 ^ cswap, block | (bank1 & mask));
 	setchr1(0x0800 ^ cswap, block | (bank2 & mask));
-	setchr1(0x0c00 ^ cswap, block | (bank3 & mask));
+	setchr1(0x0C00 ^ cswap, block | (bank3 & mask));
 	setchr1(0x1000 ^ cswap, block | (bank4 & mask));
 	setchr1(0x1400 ^ cswap, block | (bank5 & mask));
 	setchr1(0x1800 ^ cswap, block | (bank6 & mask));
-	setchr1(0x1c00 ^ cswap, block | (bank7 & mask));
+	setchr1(0x1C00 ^ cswap, block | (bank7 & mask));
 
 	setmirror((mirror ^ 1) & 1);
 }

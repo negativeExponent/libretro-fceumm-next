@@ -23,12 +23,13 @@
 
 static void Sync(void) {
 	uint8 prg = ((latch.addr >> 2) & 0x1F) | ((latch.addr >> 5) & 0x20);
+
 	if (latch.addr & 0x200) {
 		/* unrom */
-		setprg16(0x8000, (prg & ~7) | (latch.data & 7));
-		setprg16(0xC000, prg | 7);
+		setprg16(0x8000, (prg & ~0x07) | (latch.data & 0x07));
+		setprg16(0xC000, prg | 0x07);
 	} else {
-		if (latch.addr & 1) {
+		if (latch.addr & 0x01) {
 			setprg32(0x8000, prg >> 1);
 		} else {
 			setprg16(0x8000, prg);
@@ -36,7 +37,7 @@ static void Sync(void) {
 		}
 	}
 	setchr8(0);
-	setmirror(((latch.addr >> 1) & 1) ^ 1);
+	setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
 }
 
 static DECLFW(M465WriteLatch) {

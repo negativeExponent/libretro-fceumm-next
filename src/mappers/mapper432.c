@@ -17,8 +17,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- *
  */
 
 #include "mapinc.h"
@@ -36,7 +34,7 @@ static void M432CW(uint32 A, uint8 V) {
 
 static void M432PW(uint32 A, uint8 V) {
 	uint16 mask = (reg[1] & 0x02) ? 0x0F : 0x1F;
-	uint16 base  = ((reg[1] << 4) & 0x10) | ((reg[1] << 1) & 0x60);
+	uint16 base = ((reg[1] << 4) & 0x10) | ((reg[1] << 1) & 0x60);
 
 	if (reg[1] & 0x40) { /* NROM */
 		if (reg[1] & 0x80) { /* NROM-256 */

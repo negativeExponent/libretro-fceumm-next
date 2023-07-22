@@ -25,17 +25,23 @@ static uint8 *CHRRAM = NULL;
 static uint8 reg;
 static uint8 dipsw;
 
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ &dipsw, 1, "DPSW" },
+	{ 0 }
+};
+
 static void M460PW(uint32 A, uint8 V) {
 	uint32 mask = 0x0F;
 	uint32 base = reg << 4;
 
-	if ((reg & 0x20) && ((reg != 0x20) || (~dipsw & 0x01))) {
+	if (reg & 0x20) {
 		/* Menu selection by selectively connecting CPU D7 to reg or not */
 		if (reg & 0x10) {
-			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & ~2) & mask));
-			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & ~2) & mask));
-			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] |  2) & mask));
-			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  2) & mask));
+			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & ~0x02) & mask));
+			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & ~0x02) & mask));
+			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] |  0x02) & mask));
+			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  0x02) & mask));
 		} else {
 			setprg8(0x8000, (base & ~mask) | (mmc3.reg[6] & mask));
 			setprg8(0xA000, (base & ~mask) | (mmc3.reg[7] & mask));
@@ -50,7 +56,7 @@ static void M460PW(uint32 A, uint8 V) {
 static void M460CW(uint32 A, uint8 V) {
 	if (reg & 0x04) {
 		setchr2(0x0000, mmc3.reg[0] & 0xFE);
-		setchr2(0x0800, mmc3.reg[0] | 0x01);
+		setchr2(0x0800, mmc3.reg[1] | 0x01);
 		setchr2(0x1000, mmc3.reg[2]);
 		setchr2(0x1800, mmc3.reg[5]);
 	} else {
@@ -66,7 +72,7 @@ static DECLFR(M460Read) {
 	return CartBR(A);
 }
 
-static DECLFW(M460WriteLow) {
+static DECLFW(M460Write) {
 	if (MMC3_WramIsWritable()) {
 		reg = A & 0xFF;
 		MMC3_FixPRG();
@@ -85,7 +91,7 @@ static void M460Power(void) {
 	dipsw = 0;
 	MMC3_Power();
 	SetReadHandler(0x8000, 0xFFFF, M460Read);
-	SetWriteHandler(0x6000, 0x7FFF, M460WriteLow);
+	SetWriteHandler(0x6000, 0x7FFF, M460Write);
 }
 
 static void M460close(void) {
@@ -103,8 +109,7 @@ void Mapper460_Init(CartInfo *info) {
 	info->Power = M460Power;
 	info->Reset = M460Reset;
 	info->Close = M460close;
-	AddExState(&reg, 1, 0, "EXPR");
-	AddExState(&dipsw, 1, 0, "DPSW");
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAM = (uint8 *)FCEU_gmalloc(8192);
 	SetupCartCHRMapping(0x10, CHRRAM, 8192, 1);

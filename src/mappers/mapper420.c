@@ -24,9 +24,10 @@
 static uint8 reg[4];
 
 static void M420CW(uint32 A, uint8 V) {
-	uint8 mask = (reg[1] & 0x80) ? 0x7F : 0xFF;
+	uint16 mask = (reg[1] & 0x80) ? 0x7F : 0xFF;
+	uint16 base = ((reg[1] << 1) & 0x100) | ((reg[1] << 5) & 0x80);
 
-	setchr1(A, ((reg[1] << 1) & 0x100) | ((reg[1] << 5) & 0x80) | (V & mask));
+	setchr1(A, base | (V & mask));
 }
 
 static void M420PW(uint32 A, uint8 V) {
@@ -34,8 +35,9 @@ static void M420PW(uint32 A, uint8 V) {
 		setprg32(0x8000, ((reg[2] >> 2) & 0x08) | ((reg[0] >> 1) & 0x07));
 	} else {
 		uint8 mask = (reg[0] & 0x20) ? 0x0F : ((reg[3] & 0x20) ? 0x1F : 0x3F);
+		uint8 base = (reg[3] << 3) & 0x20;
 
-		setprg8(A, ((reg[3] << 3) & 0x20) | (V & mask));
+		setprg8(A, base | (V & mask));
 	}
 }
 

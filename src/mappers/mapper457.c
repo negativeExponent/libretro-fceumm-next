@@ -25,14 +25,16 @@ static uint8 reg;
 
 static void M457CW(uint32 A, uint8 V) {
 	uint32 mask = (reg & 0x08) ? 0xFF : 0x7F;
+	uint32 base = reg << 7;
 
-	setchr1(A, ((reg << 7) & ~mask) | (V & mask));
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static void M457PW(uint32 A, uint8 V) {
 	uint32 mask = (reg & 0x08) ? 0x1F : 0x0F;
+	uint32 base = reg << 4;
 
-	setprg8(A, (((reg & 7) << 4) & ~mask) | (V & mask));
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(M457Write) {

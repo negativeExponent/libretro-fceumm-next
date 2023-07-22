@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,10 +22,10 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 dipswitch;
+static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ &dipswitch, 1, "DPSW" },
+	{ &dipsw, 1, "DPSW" },
 	{ 0 }
 };
 
@@ -36,19 +37,19 @@ static void Sync(void) {
 		setprg16(0xC000, latch.addr >> 1);
 	}
 	setchr8(latch.data);
-	setmirror((latch.addr & 1) ^ 1);
+	setmirror((latch.addr & 0x01) ^ 0x01);
 }
 
 static DECLFR(M414Read) {
-	if ((A >= 0xC000) && !(latch.addr & 0x100 ) && (latch.addr & (dipswitch << 4))) {
+	if ((A >= 0xC000) && !(latch.addr & 0x100) && (latch.addr & (dipsw << 4))) {
 		return X.DB;
 	}
 	return CartBR(A);
 }
 
 static void M414Reset() {
-	dipswitch++;
-	dipswitch &= 0x0F;
+	dipsw++;
+	dipsw &= 0x0F;
 	Sync();
 }
 

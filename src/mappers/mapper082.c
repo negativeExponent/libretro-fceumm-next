@@ -60,7 +60,7 @@ static void Sync(void) {
 	setchr1(0x1000 ^ swap, creg[2]);
 	setchr1(0x1400 ^ swap, creg[3]);
 	setchr1(0x1800 ^ swap, creg[4]);
-	setchr1(0x1c00 ^ swap, creg[5]);
+	setchr1(0x1C00 ^ swap, creg[5]);
 	setprg8r(0x10, 0x6000, 0);
 	setprg8(0x8000, getPRGBank(preg[0]));
 	setprg8(0xA000, getPRGBank(preg[1]));

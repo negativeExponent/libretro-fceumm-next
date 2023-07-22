@@ -25,21 +25,26 @@ static uint8 reg;
 static uint8 dipsw;
 
 static void M458CW(uint32 A, uint8 V) {
-	setchr1(A, ((reg << 4) & ~0x7F) | (V & 0x7F));
+	uint16 mask = 0x7F;
+	uint16 base = reg << 4;
+
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static void M458PW(uint32 A, uint8 V) {
+	uint8 prg = reg & 0x0F;
+
 	if (reg & 0x10) {
-		setprg32(0x8000, reg >> 1);
+		setprg32(0x8000, prg >> 1);
 	} else {
-		setprg16(0x8000, reg);
-		setprg16(0xC000, reg);
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg);
 	}
 }
 
 static DECLFR(M458Read) {
 	if ((reg & 0x20) && (dipsw & 0x03)) {
-		return CartBR((A & ~0x03) | (dipsw & 0x03));
+		return CartBR((A & ~0x1F) | (dipsw & 0x1F));
 	}
 	return CartBR(A);
 }

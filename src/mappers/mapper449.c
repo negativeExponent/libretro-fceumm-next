@@ -21,39 +21,40 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 dipswitch;
+static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-    { &dipswitch,  1, "DIPS" },
+    { &dipsw,  1, "DPSW" },
     { 0 }
 };
 
 static void Sync(void) {
-	uint8 prgbank = ((latch.addr >> 2) & 0x1F) | ((latch.addr >> 3) & 0x20);
-	if (~latch.addr & 0x080) {
-		setprg16(0x8000, prgbank);
-		setprg16(0xC000, prgbank | 7);
+	uint8 bank = ((latch.addr >> 2) & 0x1F) | ((latch.addr >> 3) & 0x20);
+
+	if (!(latch.addr & 0x080)) {
+		setprg16(0x8000, bank);
+		setprg16(0xC000, bank | 0x07);
 	} else {
 		if (latch.addr & 0x001) {
-			setprg32(0x8000, prgbank >> 1);
+			setprg32(0x8000, bank >> 1);
 		} else {
-			setprg16(0x8000, prgbank);
-			setprg16(0xC000, prgbank);
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
 		}
 	}
 	setchr8(latch.data);
-    setmirror((((latch.addr >> 1) & 1) ^ 1));
+    setmirror((((latch.addr >> 1) & 0x01) ^ 0x01));
 }
 
 static DECLFR(M449Read) {
 	if (latch.addr & 0x200) {
-		return CartBR(A | dipswitch);
+		return CartBR(A | dipsw);
 	}
 	return CartBR(A);
 }
 
 static void M449Reset(void) {
-	dipswitch  = (dipswitch + 1) & 0xF;
+	dipsw  = (dipsw + 1) & 0xF;
 	Latch_RegReset();
 }
 

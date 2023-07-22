@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
@@ -26,14 +26,18 @@
 #include "latch.h"
 
 static void Sync(void) {
+	uint16 prg = latch.addr >> 1;
+	uint16 chr = latch.data >> 1;
+	uint16 mirr = (latch.data & 0x01) ^ 0x01;
+
 	if (latch.addr & 1)
-		setprg32(0x8000, latch.addr >> 2);
+		setprg32(0x8000, prg >> 1);
 	else {
-		setprg16(0x8000, latch.addr >> 1);
-		setprg16(0xC000, latch.addr >> 1);
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg);
 	}
-	setchr8(latch.data >> 1);
-	setmirror((latch.data & 1) ^ 1);
+	setchr8(chr);
+	setmirror(mirr);
 }
 
 void Mapper438_Init(CartInfo *info) {

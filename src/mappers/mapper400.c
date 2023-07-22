@@ -29,27 +29,21 @@ static uint8 led;
 
 static SFORMAT StateRegs[] = {
 	{ &reg, 1, "REG0" },
-
 	{ 0 }
 };
 
 static void Sync(void) {
-    uint8 outer = reg & ~7;
-	setprg16(0x8000, outer | (latch.data & 7));
-	setprg16(0xC000, outer | 7);
+	setprg16(0x8000, (reg & ~0x07) | (latch.data & 0x07));
+	setprg16(0xC000, (reg & ~0x07) | 0x07);
 	setchr8(0);
-    if (outer == 0x80) {
-        /* use default mirroring */
-    } else {
-        setmirror(((outer >> 5) & 1) ^ 1);
+    if (reg != 0x80) {
+        setmirror(((reg >> 5) & 0x01) ^ 0x01);
     }
 }
 
 static DECLFW(M400WriteReg) {
-    if (A & 0x800) {
-        reg = V;
-        Sync();
-    }
+    reg = V;
+    Sync();
 }
 
 static DECLFW(M400WriteLED) {
@@ -64,7 +58,7 @@ static void M400Reset(void) {
 static void M400Power() {
     reg = 0x80;
     Latch_Power();
-    SetWriteHandler(0x7000, 0x7FFF, M400WriteReg);
+    SetWriteHandler(0x7800, 0x7FFF, M400WriteReg);
     SetWriteHandler(0x8000, 0xBFFF, M400WriteLED);
 }
 

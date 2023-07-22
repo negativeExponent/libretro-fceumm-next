@@ -48,7 +48,7 @@ static void M456Reset(void) {
 static void M456Power(void) {
 	reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x4020, 0x5FFF, M456Write);
+	SetWriteHandler(0x4100, 0x5FFF, M456Write);
 }
 
 void Mapper456_Init(CartInfo *info) {

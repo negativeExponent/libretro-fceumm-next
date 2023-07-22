@@ -23,14 +23,22 @@
 
 static uint8 reg;
 
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
+
 static void M430PW(uint32 A, uint8 V) {
+	uint8 mask = 0x0F;
+	uint8 base = (reg << 4) & 0x30;
+
 	if (reg & 0x08) {
-		setprg8(0x8000, ((reg << 4) & 0x30) | ((mmc3.reg[6] & ~2) & 0x0F));
-		setprg8(0xA000, ((reg << 4) & 0x30) | ((mmc3.reg[7] & ~2) & 0x0F));
-		setprg8(0xC000, ((reg << 4) & 0x30) | ((mmc3.reg[6] |  2) & 0x0F));
-		setprg8(0xE000, ((reg << 4) & 0x30) | ((mmc3.reg[7] |  2) & 0x0F));
+		setprg8(0x8000, (base | ((mmc3.reg[6] & ~0x02) & mask)));
+		setprg8(0xA000, (base | ((mmc3.reg[7] & ~0x02) & mask)));
+		setprg8(0xC000, (base | ((mmc3.reg[6] |  0x02) & mask)));
+		setprg8(0xE000, (base | ((mmc3.reg[7] |  0x02) & mask)));
 	} else {
-		setprg8(A, ((reg << 4) & 0x30) | (V & 0x0F));
+		setprg8(A, (base | (V & mask)));
 	}
 }
 
@@ -65,5 +73,5 @@ void Mapper430_Init(CartInfo *info) {
 	MMC3_pwrap = M430PW;
 	info->Reset = M430Reset;
 	info->Power = M430Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

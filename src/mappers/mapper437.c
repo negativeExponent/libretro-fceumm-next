@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
@@ -20,39 +20,39 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* NTDEC TH2348 circuit board. UNROM plus outer bank register at $5FFx. */
+/* NTDEC TH2348 circuit board. UNROM plus reg bank register at $5FFx. */
 
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 outer;
+static uint8 reg;
 
 static void Sync(void) {
-	setprg16(0x8000, (outer << 3) | (latch.data & 7));
-	setprg16(0xC000, (outer << 3) | 7);
+	setprg16(0x8000, (reg << 3) | (latch.data & 0x07));
+	setprg16(0xC000, (reg << 3) | 0x07);
 	setchr8(0);
-	setmirror(((outer >> 3) & 1) ^ 1);
+	setmirror(((reg >> 3) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M437_WriteOuterBank) {
-	outer = A;
+static DECLFW(M437Write) {
+	reg = A & 0x0F;
 	Sync();
 }
 
 static void M437_Reset(void) {
-	outer = 0;
+	reg = 0;
 	Sync();
 }
 
 static void M437_Power(void) {
-	outer = 0;
+	reg = 0;
 	Latch_Power();
-	SetWriteHandler(0x5000, 0x5FFF, M437_WriteOuterBank);
+	SetWriteHandler(0x5000, 0x5FFF, M437Write);
 }
 
 void Mapper437_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 1);
 	info->Reset = M437_Reset;
 	info->Power = M437_Power;
-	AddExState(&outer, 1, 0, "OUTB");
+	AddExState(&reg, 1, 0, "OUTB");
 }

@@ -56,29 +56,29 @@ static void M467MIR(void) {
 }
 
 static DECLFW(M467Write) {
-	if ((A & 0xF000) == 0x9000) {
+	switch (A & 0xF000) {
+	case 0x9000:
 		reg = V;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 		MMC3_FixMIR();
-	} else {
+		break;
+	default:
 		switch (A & 0xE001) {
 		case 0x8000:
-			V &= 0x3F;
-			MMC3_Write(A, V);
+			mmc3.cmd = V & 0x3F;
 			break;
 		case 0x8001:
 			mmc3.reg[mmc3.cmd & 0x07] = V;
-			MMC3_FixPRG();
-			MMC3_FixCHR();
-		case 0xA000:
+			if (mmc3.cmd < 6) MMC3_FixCHR();
+			else MMC3_FixPRG();
 			break;
-		case 0xA001:
-			MMC3_Write(A, V);
+		case 0xA000:
 			break;
 		}
 	}
 }
+
 
 static void M467Reset(void) {
 	reg = 0;

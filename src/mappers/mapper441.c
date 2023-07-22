@@ -34,8 +34,9 @@ static void M441PW(uint32 A, uint8 V) {
 		setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & ~0x02) & mask));
 		setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] |  0x02) & mask));
 		setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  0x02) & mask));
-	} else
+	} else {
 		setprg8(A, (base & ~mask) | (V & mask));
+	}
 }
 
 static void M441CW(uint32 A, uint8 V) {

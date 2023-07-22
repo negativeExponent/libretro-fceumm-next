@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,29 +30,31 @@
 
 static uint8 reg[3];
 
-static void Sync(void) {
-	uint8 prg = reg[0];
-	uint8 chr = reg[1];
-	uint8 mode = reg[2];
+static SFORMAT StateRegs[] = {
+	{ reg, 3, "REGS" },
+	{ 0 }
+};
 
-	/* NROM-128 */
-	if (mode & 1) {
-		setprg16(0x8000, prg >> 1);
-		setprg16(0xC000, prg >> 1);
-		/* NROM-256 */
-	} else
-		setprg32(0x8000, prg >> 2);
-	setchr8(chr);
-	setmirror(((mode >> 4) & 1) ^ 1);
+static void Sync(void) {
+	if (reg[2] & 0x01) { /* NROM-128 */
+		setprg16(0x8000, reg[0] >> 1);
+		setprg16(0xC000, reg[0] >> 1);
+	} else { /* NROM-256 */
+		setprg32(0x8000, reg[0] >> 2);
+	}
+	setchr8(reg[1]);
+	setmirror(((reg[2] >> 4) & 0x01) ^ 0x01);
 }
 
 static DECLFW(M403Write4) {
-	reg[A & 3] = V;
-	Sync();
+	if (A & 0x100) {
+		reg[A & 0x03] = V;
+		Sync();
+	}
 }
 
 static DECLFW(M403Write8) {
-	if (reg[2] & 4) {
+	if (reg[2] & 0x04) {
 		reg[1] = V;
 		Sync();
 	}
@@ -67,7 +70,7 @@ static void M403Power(void) {
 	Sync();
 	SetReadHandler(0x6000, 0x7FFF, CartBR); /* For TetrisA (Tetris Family 19-in-1 NO 1683) */
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4100, 0x4103, M403Write4);
+	SetWriteHandler(0x4100, 0x5FFF, M403Write4);
 	SetWriteHandler(0x8000, 0xFFFF, M403Write8);
 }
 
@@ -79,5 +82,5 @@ void Mapper403_Init(CartInfo *info) {
 	info->Reset = M403Reset;
 	info->Power = M403Power;
 	GameStateRestore = StateRestore;
-	AddExState(&reg, 3, 0, "REGS");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

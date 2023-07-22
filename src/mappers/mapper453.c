@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -27,17 +27,18 @@
 #include "latch.h"
 
 static void Sync(void) {
-	setchr8(0);
 	if (latch.data & 0x40) {
-		setprg32(0x8000, ((latch.data >> 3) & 0x18) |  (latch.data & 7));
+		setprg32(0x8000, ((latch.data >> 3) & 0x18) |  (latch.data & 0x07));
+		setmirror(MI_0 + (((latch.data >> 4) & 0x01) ^ 0x01));
 	} else {
-		setprg16(0x8000, ((latch.data >> 2) & 0x38) | (latch.data & 7));
-		setprg16(0xC000, (latch.data >> 2 & 0x38) | 7);
+		setprg16(0x8000, ((latch.data >> 2) & 0x38) | (latch.data & 0x07));
+		setprg16(0xC000, (latch.data >> 2 & 0x38) | 0x07);
+		setmirror(((latch.data >> 4) & 0x01) ^ 0x01);
 	}
-    setmirror(((latch.data >> 5) & 2) + (((latch.data >> 4) & 1) ^ 1));
+    setchr8(0);
 }
 
-static DECLFW(M453WriteLatch) {
+static DECLFW(M453Write) {
 	if (latch.data & 0xE0) {
 		latch.data = (latch.data & 0xE0) | (V & ~0xE0);
     } else {
@@ -48,7 +49,7 @@ static DECLFW(M453WriteLatch) {
 
 static void M453Power() {
     Latch_Power();
-    SetWriteHandler(0x8000, 0xFFFF, M453WriteLatch);
+    SetWriteHandler(0x8000, 0xFFFF, M453Write);
 }
 
 void Mapper453_Init(CartInfo *info) {

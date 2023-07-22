@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
@@ -20,32 +20,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* S-009. UNROM plus outer bank register at $6000-$7FFF. */
+/* S-009. UNROM plus outerbank register at $6000-$7FFF. */
 
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 outer;
+static uint8 reg;
 
 static void Sync(void) {
-	setprg16(0x8000, (outer << 3) | (latch.data & 7));
-	setprg16(0xC000, (outer << 3) | 7);
+	setprg16(0x8000, (reg << 3) | (latch.data & 0x07));
+	setprg16(0xC000, (reg << 3) | 0x07);
 	setchr8(0);
-	setmirror((outer >> 5) & 1);
+	setmirror((reg >> 5) & 0x01);
 }
 
 static DECLFW(M434WriteOuterBank) {
-	outer = V;
+	reg = V;
 	Sync();
 }
 
 static void M434Reset(void) {
-	outer = 0;
+	reg = 0;
 	Sync();
 }
 
 static void M434Power(void) {
-	outer = 0;
+	reg = 0;
 	Latch_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M434WriteOuterBank);
 }
@@ -54,5 +54,5 @@ void Mapper434_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 1);
 	info->Reset = M434Reset;
 	info->Power = M434Power;
-	AddExState(&outer, 2, 0, "OUTB");
+	AddExState(&reg, 1, 0, "REGS");
 }

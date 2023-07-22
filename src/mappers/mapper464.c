@@ -22,8 +22,10 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 prg = latch.addr >> 7;
-	uint8 chr = latch.addr & 0x1F;
+	uint8 prg  = latch.addr >> 7;
+	uint8 chr  = latch.addr & 0x1F;
+	uint8 mirr = ((latch.addr >> 5) & 0x01) ^ 0x01;
+
 	if (latch.addr & 0x40) {
 		setprg32(0x8000, prg >> 1);
 	} else {
@@ -31,7 +33,7 @@ static void Sync(void) {
 		setprg16(0xC000, prg);
 	}
 	setchr8(chr);
-	setmirror(((latch.addr >> 5) & 1) ^ 1);
+	setmirror(mirr);
 }
 
 void Mapper464_Init(CartInfo *info) {

@@ -20,41 +20,45 @@
 
 #include "mapinc.h"
 
-static uint8 regs[4] = { 0 };
-static uint8 dipswitch = 0;
+static uint8 regs[4];
+static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ regs, 4, "EXPR" },
-	{ &dipswitch, 1, "DPSW" },
+	{ &dipsw, 1, "DPSW" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (regs[0] & 4) {
-		setprg16(0x8000, regs[1]);
-		setprg16(0xC000, regs[1]);
+	uint8 prg  = regs[1];
+	uint8 chr  = regs[2];
+	uint8 mirr = (regs[0] & 0x01) ^ 0x01;
+
+	if (regs[0] & 0x04) {
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg);
 	} else {
-		setprg32(0x8000, regs[1] >> 1);
+		setprg32(0x8000, prg >> 1);
 	}
-	setchr8(regs[2]);
-	setmirror((regs[0] & 1) ^ 1);
+	setchr8(chr);
+	setmirror(mirr);
 }
 
 static DECLFW(M463Write5000) {
-	if (A & (0x10 << dipswitch)) {
-		regs[A & 3] = V;
+	if (A & (0x10 << dipsw)) {
+		regs[A & 0x03] = V;
 		Sync();
 	}
 }
 
 static void M463Reset(void) {
-	dipswitch = (dipswitch + 1) & 7;
+	dipsw = (dipsw + 1) & 0x07;
 	regs[0] = regs[1] = regs[2] = regs[3] = 0;
 	Sync();
 }
 
 static void M463Power(void) {
-	dipswitch = 0;
+	dipsw = 0;
 	regs[0] = regs[1] = regs[2] = regs[3] = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
