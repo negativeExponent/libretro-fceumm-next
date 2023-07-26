@@ -1,9 +1,10 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *	Copyright (C) 2015 Cluster
  *	http://clusterrr.com
  *	clusterrr@clusterrr.com
+ *
  *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
@@ -99,14 +100,16 @@ static void M327Close(void) {
 
 void Mapper327_Init(CartInfo *info) {
 	MMC3_Init(info, 8, 0);
-	CHRRAMSize = 8192;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
-	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSize, 1);
-	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
 	MMC3_pwrap = M327PW;
 	MMC3_cwrap = M327CW;
+
 	info->Power = M327Power;
 	info->Reset = M327Reset;
 	info->Close = M327Close;
 	AddExState(&reg, 1, 0, "EXPR");
+
+	CHRRAMSize = 8192;
+	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSize);
+	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSize, 1);
+	AddExState(CHRRAM, CHRRAMSize, 0, "CHRR");
 }

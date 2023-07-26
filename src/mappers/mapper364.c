@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -23,6 +23,11 @@
 #include "mmc3.h"
 
 static uint8 reg;
+
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
 
 static void M364CW(uint32 A, uint8 V) {
 	uint8 mask = (reg & 0x20) ? 0x7F : 0xFF;
@@ -53,5 +58,5 @@ void Mapper364_Init(CartInfo *info) {
 	MMC3_pwrap = M364PW;
 	MMC3_cwrap = M364CW;
 	info->Power = M364Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

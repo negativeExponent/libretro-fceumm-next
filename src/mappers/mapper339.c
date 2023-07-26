@@ -30,18 +30,20 @@
 static uint8 reg;
 
 static void M339CW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | (reg & 0x18) << 4);
+	setchr1(A, ((reg << 4) & ~0x7F) | (V & 0x7F));
 }
 
 static void M339PW(uint32 A, uint8 V) {
-	if (reg & 0x20) {				/* MMC3 mode */
-		setprg8(A, (V & 0x0F) | (reg & 0x18) << 1);
+	uint16 base = reg & 0x1F;
+
+	if (reg & 0x20) { /* MMC3 mode */
+		setprg8(A, ((base << 1) & ~0x0F) | (V & 0x0F));
 	} else {
-		if ((reg & 0x07) == 0x06) {	/* NROM-256 */
-			setprg32(0x8000, (reg >> 1) & 0x0F);
-		} else {							/* NROM-128 */
-			setprg16(0x8000, reg & 0x1F);
-			setprg16(0xC000, reg & 0x1F);
+		if ((reg & 0x07) == 0x06) { /* NROM-256 */
+			setprg32(0x8000, base >> 1);
+		} else { /* NROM-128 */
+			setprg16(0x8000, base);
+			setprg16(0xC000, base);
 		}
 	}
 }

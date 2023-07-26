@@ -30,12 +30,17 @@
 
 static uint8 reg;
 
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
+
 static void M361PW(uint32 A, uint8 V) {
-	setprg8(A, (V & 0x0f) | reg);
+	setprg8(A, (reg & 0xF0) | (V & 0x0F));
 }
 
 static void M361CW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | (reg << 3));
+	setchr1(A, ((reg & 0xF0) << 3) | (V & 0x7F));
 }
 
 static void M361Reset(void) {
@@ -44,14 +49,15 @@ static void M361Reset(void) {
 }
 
 static DECLFW(M361Write) {
-	reg = V & 0xF0;
+	reg = V;
 	MMC3_FixPRG();
 	MMC3_FixCHR();
 }
 
 static void M361Power(void) {
+	reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x7000, 0x7fff, M361Write);
+	SetWriteHandler(0x6000, 0x7FFF, M361Write);
 }
 
 void Mapper361_Init(CartInfo *info) {
@@ -60,5 +66,5 @@ void Mapper361_Init(CartInfo *info) {
 	MMC3_cwrap = M361CW;
 	info->Power = M361Power;
 	info->Reset = M361Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

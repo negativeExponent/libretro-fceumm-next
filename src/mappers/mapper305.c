@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,15 +63,16 @@ static void Sync(void) {
 }
 
 static DECLFW(M305Write) {
-	reg[(A >> 11) & 3] = V;
+	reg[(A >> 11) & 0x03] = V;
 	Sync();
 }
 
 static void M305Power(void) {
+	memset(reg, 0, sizeof(reg));
 	FDSSound_Power();
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xffff, M305Write);
+	SetWriteHandler(0x8000, 0xFFFF, M305Write);
 }
 
 static void StateRestore(int version) {

@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -16,8 +16,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- *
  */
 
 #include "mapinc.h"
@@ -28,11 +26,16 @@ static uint8 reg[2];
 static uint8 *CHRRAM;
 static uint32 CHRRAMSIZE;
 
+static SFORMAT StateRegs[] = {
+	{ reg, 2, "REGS" },
+	{ 0 }
+};
+
 static void M393CW(uint32 A, uint8 V) {
 	if (reg[0] & 0x08) {
 		setchr8r(0x10, 0);
 	} else {
-		setchr1(A, (V & 0xFF) | (reg[0] << 8));
+		setchr1(A, (reg[0] << 8) | (V & 0xFF));
 	}
 }
 
@@ -45,28 +48,19 @@ static void M393PW(uint32 A, uint8 V) {
 			setprg32(0x8000, (reg[0] << 2) | ((mmc3.reg[6] >> 2) & 0x03));
 		}
 	} else {
-		setprg8(A, (V & 0x0F) | (reg[0] << 4));
+		setprg8(A, (reg[0] << 4) | (V & 0x0F));
 	}
 }
 
-static DECLFW(M393Write8) {
+static DECLFW(M393Write) {
 	reg[1] = V;
 	switch (A & 0xE001) {
 	case 0x8001:
-		switch (mmc3.cmd & 0x07) {
-		case 0:
-		case 1:
-		case 2:
-		case 3:
-		case 4:
-		case 5:
-			mmc3.reg[mmc3.cmd & 0x07] = V;
-			MMC3_FixPRG();
+		mmc3.reg[mmc3.cmd & 0x07] = V;
+		if ((mmc3.cmd & 0x07) < 6) {
 			MMC3_FixCHR();
-		default:
-			MMC3_CMDWrite(A, V);
-			MMC3_FixPRG();
 		}
+		MMC3_FixPRG();
 		break;
 	default:
 		MMC3_Write(A, V);
@@ -75,7 +69,7 @@ static DECLFW(M393Write8) {
 	}
 }
 
-static DECLFW(M393Write6) {
+static DECLFW(M393WriteReg) {
 	if (MMC3_WramIsWritable()) {
 		reg[0] = A & 0xFF;
 		MMC3_FixPRG();
@@ -86,8 +80,8 @@ static DECLFW(M393Write6) {
 static void M393Power(void) {
 	reg[0] = reg[1] = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M393Write6);
-	SetWriteHandler(0x8000, 0xFFFF, M393Write8);
+	SetWriteHandler(0x6000, 0x7FFF, M393WriteReg);
+	SetWriteHandler(0x8000, 0xFFFF, M393Write);
 }
 
 static void M393Reset(void) {
@@ -110,9 +104,10 @@ void Mapper393_Init(CartInfo *info) {
 	info->Power = M393Power;
 	info->Reset = M393Reset;
 	info->Close = M393lose;
+	AddExState(StateRegs, ~0, 0, NULL);
+
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-	AddExState(reg, 2, 0, "EXPR");
 }

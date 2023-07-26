@@ -31,20 +31,24 @@
 static uint8 reg;
 
 static void M315CCW(uint32 A, uint8 V) {
-	setchr1(A, ((reg << 8) & 0x100) | ((reg << 6) & 0x80) | ((reg << 3) & 0x40) | V);
+	uint16 mask = 0xFF;
+	uint16 base = reg << 8;
+
+	V = ((reg << 6) & 0x80) | ((reg << 3) & 0x40) | (V & 0xFF);
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static void M315CPW(uint32 A, uint8 V) {
-	uint8 mask = 0x0F;
-	uint8 base = reg >> 1;
+	uint16 mask = 0x0F;
+	uint16 base = reg << 3;
 
 	if ((reg & 0x06) == 0x06) { /* GNROM-like */
-		setprg8(0x8000, (base << 4) | ((mmc3.reg[6] & ~0x02) & mask));
-		setprg8(0xA000, (base << 4) | ((mmc3.reg[7] & ~0x02) & mask));
-		setprg8(0xC000, (base << 4) | ((mmc3.reg[6] |  0x02) & mask));
-		setprg8(0xE000, (base << 4) | ((mmc3.reg[7] |  0x02) & mask));
+		setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & ~0x02) & mask));
+		setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & ~0x02) & mask));
+		setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] |  0x02) & mask));
+		setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  0x02) & mask));
 	} else {
-		setprg8(A, (base << 4) | (V & mask));
+		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
@@ -62,8 +66,9 @@ static void M315CReset(void) {
 }
 
 static void M315CPower(void) {
+	reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6800, 0x68FF, M315CWrite);
+	SetWriteHandler(0x6000, 0x7FFF, M315CWrite);
 }
 
 void Mapper315_Init(CartInfo *info) {

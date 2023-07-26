@@ -26,11 +26,11 @@
 #include "mmc3.h"
 
 static void M325PW(uint32 A, uint8 V) {
-	setprg8(A, (V & 0xF3) | ((V & 0x08) >> 1) | ((V & 0x04) << 1));
+	setprg8(A, ((V << 1) & 0x08) | ((V >> 1) & 0x04) | (V & 0x03));
 }
 
 static void M325CW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0xDD) | ((V & 0x20) >> 4) | ((V & 0x02) << 4));
+	setchr1(A, (V & 0xDD) | ((V << 4) & 0x20) | ((V >> 4) & 0x02));
 }
 
 static DECLFW(M325Write) {

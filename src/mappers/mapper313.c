@@ -47,8 +47,11 @@ static void M313PW(uint32 A, uint8 V) {
 	case 2:  setprg8(A, (reg << 4) | (V & 0x0F)); break;
 	case 3:  setprg8(A, (reg << 5) | (V & 0x1F)); break;
 	case 4:
-		if (reg == 0) setprg8(A, (reg << 5) | (V & 0x1F));
-		else setprg8(A, (reg << 4) | (V & 0x0F));
+		if (reg == 0) {
+			setprg8(A, (reg << 5) | (V & 0x1F));
+		} else {
+			setprg8(A, (reg << 4) | (V & 0x0F));
+		}
 		break;
 	}
 }

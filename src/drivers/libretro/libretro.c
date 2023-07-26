@@ -2827,6 +2827,11 @@ static void FCEUD_UpdateInput(void)
    }
    else
       palette_switch_counter = 0;
+   
+   /* Power Switch on F12 */
+   if (input_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_F12)) {
+      PowerNES();
+   }
 }
 
 static void retro_run_blit(uint8_t *gfx)

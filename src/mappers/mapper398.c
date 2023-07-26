@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -25,35 +25,35 @@
 #include "mapinc.h"
 #include "vrc2and4.h"
 
-static uint8 latch;
+static uint8 reg;
 static uint8 PPUCHRBus;
 
 static SFORMAT StateRegs[] = {
-	{ &latch, 1, "LATC" },
+	{ &reg, 1, "REGS" },
 	{ &PPUCHRBus, 1, "PPUC" },
 	{ 0 },
 };
 
 static void M398PW(uint32 A, uint8 V) {
-	if (latch & 0x80) {
+	if (reg & 0x80) {
         /* GNROM-like */
-		setprg32(0x8000, ((latch >> 5) & 0x06) | ((vrc24.chr[PPUCHRBus] >> 2) & 0x01));
+		setprg32(0x8000, ((reg >> 5) & 0x06) | ((vrc24.chr[PPUCHRBus] >> 2) & 0x01));
 	} else {
 		setprg8(A, V & 0x0F);
 	}
 }
 
 static void M398CW(uint32 A, uint32 V) {
-	if (latch & 0x80) {
+	if (reg & 0x80) {
         /* GNROM-like */
-		setchr8(0x40 | ((latch >> 3) & 0x08) | (vrc24.chr[PPUCHRBus] & 0x07));
+		setchr8(0x40 | ((reg >> 3) & 0x08) | (vrc24.chr[PPUCHRBus] & 0x07));
 	} else {
 		setchr1(A, V & 0x1FF);
 	}
 }
 
 static DECLFW(M398WriteLatch) {
-	latch = A & 0xFF;
+	reg = A & 0xFF;
 	VRC24_FixPRG();
 	VRC24_FixCHR();
 	VRC24_Write(A, V);
@@ -69,14 +69,14 @@ static void M398PPUHook(uint32 A) {
 }
 
 static void M398Reset(void) {
-	latch = 0xC0;
+	reg = 0xC0;
 	VRC24_FixPRG();
 	VRC24_FixCHR();
 }
 
 static void M398Power(void) {
 	PPUCHRBus = 0;
-    latch = 0xC0;
+    reg = 0xC0;
 	VRC24_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M398WriteLatch);
 }

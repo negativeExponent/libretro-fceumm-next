@@ -28,6 +28,11 @@
 
 static uint8 reg;
 
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
+
 static void M377CW(uint32 A, uint8 V) {
 	uint16 base = ((reg & 0x20) >> 2) | (reg & 0x06);
 
@@ -65,5 +70,5 @@ void Mapper377_Init(CartInfo *info) {
 	MMC3_pwrap = M377PW;
 	info->Reset = M377Reset;
 	info->Power = M377Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

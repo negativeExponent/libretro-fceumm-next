@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
@@ -20,18 +20,16 @@
  *
  */
 
-/* NES 2.0 Mapper 329
- * UNL-EDU2000
- */
+/* NES 2.0 Mapper 329 - UNL-EDU2000 */
 
 #include "mapinc.h"
 #include "latch.h"
 
 static void Sync(void) {
-	setchr8(0);
 	setprg8r(0x10, 0x6000, latch.data >> 6);
 	setprg32(0x8000, latch.data & 0x1F);
-	setmirror(((latch.data >> 5) & 1) ^ 1);
+	setchr8(0);
+	setmirror(((latch.data >> 5) & 0x01) ^ 0x01);
 }
 
 void Mapper329_Init(CartInfo *info) {

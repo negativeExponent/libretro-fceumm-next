@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,21 +33,20 @@ static uint8 reg, mirr;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &reg, 1, "REG" },
 	{ &mirr, 1, "MIRR" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setchr8(0);
 	setprg8r(0x10, 0x6000, 0);
-	setprg8(0x8000, reg & 0x0F);
-	setprg8(0xA000, 13);
-	setprg8(0xC000, 14);
-	setprg8(0xE000, 15);
-	setmirror(((mirr >> 3) & 1) ^ 1);
+	setprg8(0x8000, reg);
+	setprg8(0xA000, ~2);
+	setprg8(0xC000, ~1);
+	setprg8(0xE000, ~0);
+	setchr8(0);
+	setmirror(((mirr >> 3) & 0x01) ^ 0x01);
 }
 
 static DECLFW(M309Write) {
@@ -66,8 +66,9 @@ static void M309Power(void) {
 }
 
 static void M309Close(void) {
-	if (WRAM)
+	if (WRAM) {
 		FCEU_gfree(WRAM);
+	}
 	WRAM = NULL;
 }
 
@@ -79,11 +80,10 @@ void Mapper309_Init(CartInfo *info) {
 	info->Power = M309Power;
 	info->Close = M309Close;
 	GameStateRestore = StateRestore;
+	AddExState(&StateRegs, ~0, 0, 0);
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-
-	AddExState(&StateRegs, ~0, 0, 0);
 }

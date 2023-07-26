@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,8 +28,7 @@ static int16 IRQCount, IRQPause;
 
 static int16 Count = 0x0000;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ reg, 4, "REGS" },
 	{ &IRQa, 1, "IRQA" },
 	{ &IRQCount, 2, "IRQC" },
@@ -45,26 +45,26 @@ static void Sync(void) {
 
 static DECLFW(UNL3DBlockWrite) {
 	switch (A) {
-			/* 4800 32 */
-			/* 4900 37 */
-			/* 4a00 01 */
-			/* 4e00 18 */
-		case 0x4800:
-			reg[0] = V;
-			break;
-		case 0x4900:
-			reg[1] = V;
-			break;
-		case 0x4a00:
-			reg[2] = V;
-			break;
-		case 0x4e00:
-			reg[3] = V;
-			IRQCount = Count;
-			IRQPause = Pause;
-			IRQa = 1;
-			X6502_IRQEnd(FCEU_IQEXT);
-			break;
+	/* 4800 32 */
+	/* 4900 37 */
+	/* 4a00 01 */
+	/* 4e00 18 */
+	case 0x4800:
+		reg[0] = V;
+		break;
+	case 0x4900:
+		reg[1] = V;
+		break;
+	case 0x4a00:
+		reg[2] = V;
+		break;
+	case 0x4e00:
+		reg[3] = V;
+		IRQCount = Count;
+		IRQPause = Pause;
+		IRQa = 1;
+		X6502_IRQEnd(FCEU_IQEXT);
+		break;
 	}
 }
 

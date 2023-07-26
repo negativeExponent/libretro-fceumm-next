@@ -28,21 +28,19 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 submapper;
-
 static void Sync(void) {
-	if (submapper == 1) {
+	if (iNESCart.submapper == 1) {
 		setprg32(0x8000, latch.data);
 	} else {
 		setprg16(0x8000, latch.data);
 		setprg16(0xC000, latch.data);
 	}
 	setchr8(latch.data);
-	setmirror(latch.data >> 7 & 1);
+	setmirror((latch.data >> 7) & 0x01);
 }
 
 static DECLFW(M343Write) {
-	Latch_Write(A, ~V);
+	Latch_Write(A, V ^ 0xFF);
 }
 
 static void M343Power(void) {
@@ -51,7 +49,6 @@ static void M343Power(void) {
 }
 
 void Mapper343_Init(CartInfo *info) {
-	submapper = info->submapper;
 	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M343Power;
 }

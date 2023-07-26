@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -35,13 +35,15 @@ static SFORMAT StateRegs[] = {
 };
 
 static void M362PW(uint32 A, uint8 V) {
-	uint8 prgBase = (game == 0) ? ((vrc24.chr[PPUCHRBus] & 0x180) >> 3) : 0x40;
+	uint16 prgBase = (game == 0) ? ((vrc24.chr[PPUCHRBus] & 0x180) >> 3) : 0x40;
+
 	setprg8(A, prgBase | (V & 0x0F));
 }
 
 static void M362CW(uint32 A, uint32 V) {
-	uint32 chrBase = (game == 0) ? (vrc24.chr[PPUCHRBus] & 0x180) : 0x200;
-	uint32 chrMask = (game == 0) ? 0x7F : 0x1FF;
+	uint16 chrBase = (game == 0) ? (vrc24.chr[PPUCHRBus] & 0x180) : 0x200;
+	uint16 chrMask = (game == 0) ? 0x7F : 0x1FF;
+
 	setchr1(A, chrBase | (V & chrMask));
 }
 

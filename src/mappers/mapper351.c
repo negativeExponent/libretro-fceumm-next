@@ -31,6 +31,7 @@ static uint8 VRCIRQ_latch;
 static uint8 VRCIRQ_mode;
 static uint8 VRCIRQ_count;
 static int16 VRCIRQ_cycles;
+
 static uint8 *CHRRAM = NULL;
 static uint8 *PRGCHR = NULL;
 

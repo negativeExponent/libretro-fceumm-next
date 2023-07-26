@@ -28,15 +28,21 @@
 static uint8 reg[4];
 static uint8 cmd;
 
-static uint8 *CHRRAM     = NULL;
+static uint8 *CHRRAM = NULL;
 static uint32 CHRRAMSIZE = 0;
 
 extern uint8 *ExtraNTARAM;
 
+static SFORMAT StateRegs[] = {
+	{ reg, 4, "REGS" },
+	{ &cmd, 1, "CMD0" },
+	{ 0 }
+};
+
 static void M356CW(uint32 A, uint8 V) {
 	if (reg[2] & 0x20) {
-		uint32 mask = 0xFF >> (~reg[2] & 0xF);
-		uint32 base = ((reg[2] << 4) & 0xF00) | reg[0];
+		uint16 mask = 0xFF >> (~reg[2] & 0xF);
+		uint16 base = ((reg[2] << 4) & 0xF00) | reg[0];
 
 		setchr1(A, (base & ~mask) | (V & mask));
 	} else {
@@ -45,17 +51,17 @@ static void M356CW(uint32 A, uint8 V) {
 }
 
 static void M356PW(uint32 A, uint8 V) {
-	uint32 mask = ~reg[3] & 0x3F;
-	uint32 base = ((reg[2] << 2) & 0x300) | reg[1];
+	uint16 mask = ~reg[3] & 0x3F;
+	uint16 base = ((reg[2] << 2) & 0x300) | reg[1];
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void M356MIR(void) {
 	if (reg[2] & 0x40) {
-		SetupCartMirroring(4, 1, ExtraNTARAM);
+		SetupCartMirroring(4, 0, ExtraNTARAM);
 	} else {
-		SetupCartMirroring((mmc3.mirr & 1) ^ 1, 0, 0);
+		setmirror((mmc3.mirr & 0x01) ^ 0x01);
 	}
 }
 
@@ -98,8 +104,7 @@ void Mapper356_Init(CartInfo *info) {
 	info->Reset = M356Reset;
 	info->Power = M356Power;
 	info->Close = M356Close;
-	AddExState(reg, 4, 0, "EXPR");
-	AddExState(&cmd, 1, 0, "CMD0");
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

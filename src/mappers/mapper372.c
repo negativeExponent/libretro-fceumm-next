@@ -32,6 +32,12 @@ static uint8 cmd;
 static uint32 CHRRAMSIZE;
 static uint8 *CHRRAM;
 
+static SFORMAT StateRegs[] = {
+	{ reg, 4, "REGS" },
+	{ &cmd, 1, "CMD0" },
+	{ 0 }
+};
+
 static void M372CW(uint32 A, uint8 V) {
 	if (reg[2] & 0x20) {
 		setchr8r(0x10, 0);
@@ -87,8 +93,7 @@ void Mapper372_Init(CartInfo *info) {
 	info->Reset = M372Reset;
 	info->Power = M372Power;
 	info->Close = M372Close;
-	AddExState(reg, 4, 0, "EXPR");
-	AddExState(&cmd, 1, 0, "CMD0");
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

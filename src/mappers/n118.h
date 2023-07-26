@@ -18,50 +18,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/*
- * Mapper 366 (GN-45):
- *  K-3131GS
- *  K-3131SS
-*/	
+#ifndef _N118_H
+#define _N118_H
 
 #include "mapinc.h"
-#include "mmc3.h"
 
-static uint8 reg;
+typedef struct __N118 {
+    uint8 reg[8];
+    uint8 cmd;
+} N118;
 
-static void M366PW(uint32 A, uint8 V) {
-	setprg8(A, reg | (V & 0x0F));
-}
+extern N118 n118;
 
-static void M366CW(uint32 A, uint8 V) {
-	setchr1(A, (reg << 3) | (V & 0x7F));
-}
+DECLFW(N118_Write);
 
-static void M366Reset(void) {
-	reg = 0;
-	MMC3_Reset();
-}
+void N118_Close(void);
+void N118_Power(void);
 
-static DECLFW(M366Write) {
-	CartBW(A, V);
-	if (!(reg & 0x80)) {
-		reg = A & 0xF0;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-	}	
-}
+void N118_Init(CartInfo *info, int wsize, int battery);
 
-static void M366Power(void) {
-	reg = 0;
-	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M366Write);
-}
+extern void (*N118_FixPRG)(void);
+extern void (*N118_FixCHR)(void);
 
-void Mapper366_Init(CartInfo *info) {
-	MMC3_Init(info, 8, 0);
-	MMC3_pwrap = M366PW;
-	MMC3_cwrap = M366CW;
-	info->Power = M366Power;
-	info->Reset = M366Reset;
-	AddExState(&reg, 1, 0, "EXPR");
-}
+extern void (*N118_pwrap)(uint32 A, uint8 V);
+extern void (*N118_cwrap)(uint32 A, uint8 V);
+
+#endif /* _N118_H */

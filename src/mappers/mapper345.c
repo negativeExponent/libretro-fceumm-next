@@ -30,18 +30,20 @@
 static uint8 reg;
 
 static void M345PW(uint32 A, uint8 V) {
+	uint8 base = reg >> 6;
+	
 	if (reg & 0x0C) {
-		setprg8(A, (V & 0x0F) | (reg & 0xC0) >> 2);
+		setprg8(A, (base << 4) | (V & 0x0F));
 	} else {
-		setprg32(0x8000, ((reg & 0xC0) >> 4) | (reg & 0x03));
+		setprg32(0x8000, (base << 2) | (reg & 0x03));
 	}
 }
 
 static void M345MIR(void) {
-	if (reg & 0x20)
+	if (reg & 0x20) {
 		setmirror(MI_0 + ((reg & 0x10) >> 1));
-	else {
-		setmirror((mmc3.mirr & 1) ^ 1);
+	} else {
+		setmirror((mmc3.mirr & 0x01) ^ 0x01);
 	}
 }
 

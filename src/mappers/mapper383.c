@@ -28,6 +28,13 @@
 
 static uint8 pal_A15, pal_A16, pal_A1718;
 
+static SFORMAT StateRegs[] = {
+	{ &pal_A15, 1, "A15_"},
+	{ &pal_A16, 1, "A16_"},
+	{ &pal_A1718, 1, "A178"},
+	{ 0 }
+};
+
 static void M383PW(uint32 A, uint8 V) {
 	uint16 base;
 	uint16 mask;
@@ -110,7 +117,5 @@ void Mapper383_Init(CartInfo *info) {
 	MMC3_cwrap = M383CW;
 	info->Power = M383Power;
 	info->Reset = M383Reset;
-	AddExState(&pal_A15, 1, 0, "PA15");
-	AddExState(&pal_A16, 1, 0, "PA16");
-	AddExState(&pal_A1718, 1, 0, "PA17");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -27,16 +27,21 @@
 
 static uint8 game = 0;
 
+static SFORMAT StateRegs[] = {
+	{ &game, 1, "GAME" },
+	{ 0 }
+};
+
 static void M374PRG(uint32 A, uint8 V) {
-	setprg16(A, (V & 0x07) | (game << 3));
+	setprg16(A, (game << 3) | (V & 0x07));
 }
 
 static void M374CHR(uint32 A, uint8 V) {
-	setchr4(A, (V & 0x1F) | (game << 5));
+	setchr4(A, (game << 5) | (V & 0x1F));
 }
 
 static void M374Reset(void) {
-	game = (game + 1) & 3;
+	game = (game + 1) & 0x03;
 	MMC1_Reset();
 }
 
@@ -45,5 +50,5 @@ void Mapper374_Init(CartInfo *info) {
 	MMC1_cwrap = M374CHR;
 	MMC1_pwrap = M374PRG;
 	info->Reset = M374Reset;
-	AddExState(&game, 1, 0, "GAME");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

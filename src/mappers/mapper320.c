@@ -29,24 +29,21 @@
 #include "latch.h"
 
 static void Sync(void) {
-	if (latch.addr & 0x10) { /* UNROM */
-		setprg16(0x8000, ((latch.addr << 3) & ~7) | (latch.data & 7));
-		setprg16(0xC000, ((latch.addr << 3) & ~7) | 7);
-	} else { /* UOROM */
-		setprg16(0x8000, ((latch.addr << 3) & ~7) | (latch.data & 0x0F));
-		setprg16(0xC000, ((latch.addr << 3) & ~7) | 0x0F);
-	}
+	uint16 mask = (latch.addr & 0x10) ? 0x07 : 0x0F;
+	uint16 base = latch.addr << 3;
+
+	setprg16(0x8000, base | (latch.data & mask));
+	setprg16(0xC000, base | (latch.data & mask) | ((~latch.addr >> 1) & 0x08) | 0x07);
 	setchr8(0);
 	setmirror(MI_V);
 }
 
 static DECLFW(M320Write) {
 	if ((A & 0xFFE0) == 0xF0E0) {
-		Latch_Write(A, V);
-	} else {
-		latch.data = V;
-		Sync();
+		latch.addr = A;
 	}
+	latch.data = V;
+	Sync();
 }
 
 static void M320Power() {

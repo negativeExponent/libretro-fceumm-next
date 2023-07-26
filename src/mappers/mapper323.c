@@ -24,14 +24,23 @@
 
 static uint8 reg;
 
-static void M323PRGHook(uint32 A, uint8 V) {
-    uint8 base = (reg & 0xF0) >> 4;
-	setprg16(A, (V & 0x07) | (base << 3));
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
+
+static void M323PW(uint32 A, uint8 V) {
+	uint8 mask = 0x07;
+    uint8 base = reg >> 1;
+
+	setprg16(A, (base & ~mask) | (V & mask));
 }
 
-static void M323CHRHook(uint32 A, uint8 V) {
-    uint8 base = (reg & 0xF0) >> 4;
-	setchr4(A, (V & 0x1F) | (base << 5));
+static void M323CW(uint32 A, uint8 V) {
+	uint16 mask = 0x1F;
+    uint16 base = reg << 1;
+
+	setchr4(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(M323Write) {
@@ -56,9 +65,9 @@ static void M323Reset(void) {
 
 void Mapper323_Init(CartInfo *info) {
 	MMC1_Init(info, 0, 0);
-	MMC1_cwrap = M323CHRHook;
-	MMC1_pwrap = M323PRGHook;
+	MMC1_cwrap = M323CW;
+	MMC1_pwrap = M323PW;
 	info->Power = M323Power;
 	info->Reset = M323Reset;
-	AddExState(&reg, 1, 0, "REG0");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

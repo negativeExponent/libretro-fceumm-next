@@ -25,51 +25,56 @@
  */
 
 #include "mapinc.h"
-#include "latch.h"
 
-static uint16 bank;
+static uint8 reg;
 
 static SFORMAT StateRegs[] = {
-	{ &bank, 2, "REG0" },
+	{ &reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-    if ((latch.addr & 0xC000) == 0xC000) {
-        bank = (bank & ~0x07) | (latch.data & 0x07);
-    } else {
-        bank = (latch.data & ~0x07) | (bank & 0x07);
-    }
+	uint8 bank = reg & 0x1F;
 
 	setprg8(0x6000, 1);
-	switch ((bank >> 6) & 3) {
-	case 0: /* NROM-128 */
+	if (reg & 0x80) { /* UNROM */
 		setprg16(0x8000, bank);
-		setprg16(0xC000, bank);
-		break;
-	case 1: /* NROM-256 */
-		setprg32(0x8000, bank >> 1);
-		break;
-	case 2:
-	case 3: /* UNROM */
-		setprg16(0x8000, bank);
-		setprg16(0xC000, bank | 7);
-		break;
+		setprg16(0xC000, bank | 0x07);
+	} else {
+		if (reg & 0x40) { /* NROM-256 */
+			setprg32(0x8000, bank >> 1);
+		} else { /* NROM-128 */
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
+		}
 	}
-
-	/* CHR-RAM Protect... kinda */
-	SetupCartCHRMapping(0, CHRptr[0], 0x2000, (bank & 0x80) != 0);
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, (reg & 0x80) ? FALSE : TRUE);
 	setchr8(0);
-	setmirror(((bank >> 5) & 1) ^ 1);
+	setmirror(((reg >> 5) & 0x01) ^ 0x01);
 }
 
-static void M337Reset(void) {
-    bank = 0;
-    Latch_RegReset();
+static DECLFW(M337Write) {
+	if (A < 0xC000) {
+		reg = (reg & 0x07) | (V & ~0x07);
+	} else {
+		reg = (reg & ~0x07) | (V & 0x07);
+	}
+	Sync();
+}
+
+static void StateRestore(int version) {
+	Sync();
+}
+
+static void M337Power(void) {
+	reg = 0;
+	Sync();
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, M337Write);
 }
 
 void Mapper337_Init(CartInfo *info) {
-    Latch_Init(info, Sync, NULL, 1, 0);
-	info->Reset = M337Reset;
+	info->Power = M337Power;
+	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

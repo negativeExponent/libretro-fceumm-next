@@ -23,6 +23,11 @@
 
 static uint8 reg[2];
 
+static SFORMAT StateRegs[] = {
+	{ reg, 2, "REGS" },
+	{ 0 }
+};
+
 static void M376CW(uint32 A, uint8 V) {
 	uint16 base = ((reg[1] << 8) & 0x100) | ((reg[0] << 1) & 0x80);
 
@@ -50,12 +55,6 @@ static DECLFW(M376Write) {
 	MMC3_FixCHR();
 }
 
-static void M376Reset(void) {
-	reg[0] = 0;
-	reg[1] = 0;
-	MMC3_Reset();
-}
-
 static void M376Power(void) {
 	reg[0] = 0;
 	reg[1] = 0;
@@ -68,6 +67,5 @@ void Mapper376_Init(CartInfo *info) {
 	MMC3_pwrap = M376PW;
 	MMC3_cwrap = M376CW;
 	info->Power = M376Power;
-	info->Reset = M376Reset;
-	AddExState(reg, 2, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

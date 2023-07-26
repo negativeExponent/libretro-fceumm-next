@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2008 CaH4e3
@@ -28,17 +28,23 @@
 static uint8 reg;
 
 static void M348CW(uint32 A, uint8 V) {
-	setchr1(A, ((reg << 5) & 0x180) | (V & 0x7F));
+	uint16 mask = 0x7F;
+	uint16 base = (reg << 5) & 0x180;
+
+	setchr1(A, base | (V & mask));
 }
 
 static void M348PW(uint32 A, uint8 V) {
+	uint8 mask = 0x0F;
+	uint8 base = (reg << 2) & 0x30;
+
 	if ((reg & 0x0C) == 0x0C) {
-		setprg8(0x8000, ((reg << 2) & 0x30) | ((mmc3.reg[6] & ~0x02) & 0x0F));
-		setprg8(0xA000, ((reg << 2) & 0x30) | ((mmc3.reg[7] & ~0x02) & 0x0F));
-		setprg8(0xC000, ((reg << 2) & 0x30) | ((mmc3.reg[6] |  0x02) & 0x0F));
-		setprg8(0xE000, ((reg << 2) & 0x30) | ((mmc3.reg[7] |  0x02) & 0x0F));
+		setprg8(0x8000, base | ((mmc3.reg[6] & ~0x02) & mask));
+		setprg8(0xA000, base | ((mmc3.reg[7] & ~0x02) & mask));
+		setprg8(0xC000, base | ((mmc3.reg[6] |  0x02) & mask));
+		setprg8(0xE000, base | ((mmc3.reg[7] |  0x02) & mask));
 	} else {
-		setprg8(A, ((reg << 2) & 0x30) | (V & 0x0F));
+		setprg8(A, base | (V & mask));
 	}
 }
 

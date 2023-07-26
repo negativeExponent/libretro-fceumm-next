@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -51,12 +52,12 @@ static void Sync(void) {
 }
 
 static DECLFW(M304Write1) {
-	prg = V & 1;
+	prg = V & 0x01;
 	Sync();
 }
 
 static DECLFW(M304Write2) {
-	IRQa = V & 1;
+	IRQa = V & 0x01;
 	IRQCount = 0;
 	X6502_IRQEnd(FCEU_IQEXT);
 }
@@ -67,18 +68,19 @@ static DECLFR(M304Read) {
 
 static void M304Power(void) {
 	prg = 0;
+	IRQCount = IRQa = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetReadHandler(0x4042, 0x4055, M304Read);
+	SetReadHandler(0x4020, 0x4FFF, M304Read);
 	SetWriteHandler(0x4068, 0x4068, M304Write2);
 	SetWriteHandler(0x4027, 0x4027, M304Write1);
 }
 
 static void M304IRQHook(int a) {
 	if (IRQa) {
-		if (IRQCount < 5750) /* completely by guess */
+		if (IRQCount < 5750) {
 			IRQCount += a;
-		else {
+		} else {
 			IRQa = 0;
 			X6502_IRQBegin(FCEU_IQEXT);
 		}

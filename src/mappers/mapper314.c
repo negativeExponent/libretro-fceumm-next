@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,46 +26,35 @@
 
 static uint8 regs[4];
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ regs, 4, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
+	uint8 prg = regs[1] & 0x3F;
+
 	if (regs[0] & 0x80) { /* NROM mode */
-		if (regs[1] & 0x80)
-			setprg32(0x8000, regs[1] & 0x3F);
-		else {
-			int bank = ((regs[1] & 0x3F) << 1) | ((regs[1] >> 6) & 1);
-			setprg16(0x8000, bank);
-			setprg16(0xC000, bank);
+		if (regs[1] & 0x80) {
+			setprg32(0x8000, prg);
+		} else {
+			setprg16(0x8000, (prg << 1) | ((regs[1] >> 6) & 0x01));
+			setprg16(0xC000, (prg << 1) | ((regs[1] >> 6) & 0x01));
 		}
 	} else { /* UNROM mode */
-		setprg16(0x8000, (regs[1] << 1) | (latch.data & 7));
-		setprg16(0xC000, (regs[1] << 1) | 7);
+		setprg16(0x8000, (prg << 1) | (latch.data & 0x07));
+		setprg16(0xC000, (prg << 1) | 0x07);
 	}
-	if (regs[0] & 0x20)
-		setmirror(MI_H);
-	else
-		setmirror(MI_V);
-	setchr8((regs[2] << 2) | ((regs[0] >> 1) & 3));
+	setchr8((regs[2] << 2) | ((regs[0] >> 1) & 0x03));
+	setmirror(((regs[0] >> 5) & 0x01) ^ 0x01);
+	
 }
 
-static DECLFW(M314WriteLo) {
-	A &= 3;
-	if (A == 3)
-		A = 1; /* K-42001's "Aladdin III" */
-	regs[A & 3] = V;
+static DECLFW(M314Write) {
+	A &= 0x03;
+	if (A == 0x03) A = 0x01; /* K-42001's "Aladdin III" */
+	regs[A] = V;
 	Sync();
-}
-
-static void M314Power(void) {
-	regs[0] = 0x80;
-	regs[1] = 0x43;
-	regs[2] = regs[3] = 0;
-	Latch_Power();
-	SetWriteHandler(0x5000, 0x5FFF, M314WriteLo);
 }
 
 static void M314Reset(void) {
@@ -73,11 +63,18 @@ static void M314Reset(void) {
 	regs[1] = 0x43;
 	regs[2] = regs[3] = 0;
 	Sync();
+}
 
+static void M314Power(void) {
+	regs[0] = 0x80;
+	regs[1] = 0x43;
+	regs[2] = regs[3] = 0;
+	Latch_Power();
+	SetWriteHandler(0x5000, 0x5FFF, M314Write);
 }
 
 void Mapper314_Init(CartInfo *info) {
-	Latch_Init(info, Sync, NULL, 0, 0);
+	Latch_Init(info, Sync, NULL, 0, 1);
 	info->Power = M314Power;
 	info->Reset = M314Reset;
 	AddExState(&StateRegs, ~0, 0, 0);

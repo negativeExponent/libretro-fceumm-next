@@ -26,36 +26,35 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 outerbank;
+static uint8 base;
 
 static SFORMAT StateRegs[] = {
-	{ &outerbank, 1, "BANK"},
-
+	{ &base, 1, "BASE"},
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (!(outerbank & 0x20)) {
-		outerbank = latch.addr & 0x3F;
+	if (!(base & 0x20)) {
+		base = latch.addr & 0x3F;
 	}
-	switch ((outerbank >> 3) & 1) {
-		case 1:
-			/* bnrom */
-			setprg32(0x8000, (outerbank<< 2) | (latch.data & 3));
-			break;
-		default:
-			/* unrom */
-			setprg16(0x8000, (outerbank << 3) | (latch.data & 7));
-			setprg16(0xC000, (outerbank << 3) | 7);
-			break;
+	switch (base & 0x08) {
+	case 1:
+		/* bnrom */
+		setprg32(0x8000, (base << 2) | (latch.data & 0x03));
+		break;
+	default:
+		/* unrom */
+		setprg16(0x8000, (base << 3) | (latch.data & 0x07));
+		setprg16(0xC000, (base << 3) | 0x07);
+		break;
 	}
 	setchr8(0);
-	setmirror(((outerbank >> 4) & 1) ^ 1);
+	setmirror(((base >> 4) & 0x01) ^ 0x01);
 	/* FCEU_printf("inB[0]:%02x outB[1]:%02x mode:%02x mirr:%02x lock:%02x\n", latch.data, latch.addr, mode, mirr, lock); */
 }
 
 static void M382Reset() {
-	outerbank = 0;
+	base = 0;
 	Latch_RegReset();
 }
 

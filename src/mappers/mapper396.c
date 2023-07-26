@@ -27,26 +27,25 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 outerbank;
+static uint8 reg;
 
 static SFORMAT StateRegs[] = {
-	{ &outerbank, 1, "BANK" },
-
+	{ &reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	if ((latch.addr & 0x6000) == 0x2000) {
-		outerbank = latch.data;
+		reg = latch.data;
 	}
-	setprg16(0x8000, (outerbank << 3) | (latch.data & 7));
-	setprg16(0xC000, (outerbank << 3) | 7);
+	setprg16(0x8000, (reg << 3) | (latch.data & 0x07));
+	setprg16(0xC000, (reg << 3) | 0x07);
 	setchr8(0);
-	setmirror((outerbank & 0x60) ? 0 : 1);
+	setmirror((reg & 0x60) ? MI_H : MI_V);
 }
 
 static void M396Reset(void) {
-	outerbank = 0;
+	reg = 0;
 	Latch_RegReset();
 }
 

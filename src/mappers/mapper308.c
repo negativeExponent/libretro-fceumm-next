@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* -------------------- UNL-TH2131-1 -------------------- */
+/* NES 2.0 Mapper 308 - UNL-TH2131-1 */
 /* https://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_308
  * NES 2.0 Mapper 308 is used for a bootleg version of the Sunsoft game Batman
  * similar to Mapper 23 Submapper 3) with custom IRQ functionality.
@@ -29,8 +29,8 @@
 #include "mapinc.h"
 #include "vrc2and4.h"
 
-static uint16 IRQCount;
 static uint8 IRQLatch, IRQa;
+static uint16 IRQCount;
 
 static SFORMAT IRQStateRegs[] = {
 	{ &IRQCount, 2, "IRQC" },
@@ -49,17 +49,16 @@ static DECLFW(M308Write) {
 }
 
 void M308IRQHook(int a) {
-	int count;
-
-	if (!IRQa)
-		return;
-
-	for (count = 0; count < a; count++) {
-		IRQCount++;
-		if ((IRQCount & 0x0FFF) == 2048)
-			IRQLatch--;
-		if (!IRQLatch && (IRQCount & 0x0FFF) < 2048)
-			X6502_IRQBegin(FCEU_IQEXT);
+	if (IRQa) {
+		while (a--) {
+			IRQCount++;
+			if ((IRQCount & 0x0FFF) == 2048) {
+				IRQLatch--;
+			}
+			if (!IRQLatch && (IRQCount & 0x0FFF) < 2048) {
+				X6502_IRQBegin(FCEU_IQEXT);
+			}
+		}
 	}
 }
 

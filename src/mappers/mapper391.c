@@ -25,21 +25,26 @@
 
 static uint8 reg[2];
 
-static void M391PW(uint32 A, uint8 V) {
-	uint8 mask = reg[0] & 0x08 ? 0x0F : 0x1F;
-	uint8 base = reg[0] << 4 & 0x30;
+static SFORMAT StateRegs[] = {
+	{ reg, 2, "REGS" },
+	{ 0 }
+};
 
-	if (reg[0] & 0x20) {     /* GNROM-like PRG banking */
+static void M391PW(uint32 A, uint8 V) {
+	uint8 mask = (reg[0] & 0x08) ? 0x0F : 0x1F;
+	uint8 base = (reg[0] << 4) & 0x30;
+
+	if (reg[0] & 0x20) {
 		if (reg[0] & 0x04) { /* NROM-256 */
-			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & ~0x02) & mask));
-			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & ~0x02) & mask));
-			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] |  0x02) & mask));
-			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  0x02) & mask));
+			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~0x03) | 0);
+			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & mask) & ~0x03) | 1);
+			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~0x03) | 2);
+			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] & mask) & ~0x03) | 3);
 		} else { /* NROM-128 */
-			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & ~0x01) & mask));
-			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] |  0x01) & mask));
-			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] & ~0x01) & mask));
-			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  0x01) & mask));
+			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~0x01) | 0);
+			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & mask) & ~0x01) | 1);
+			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~0x01) | 0);
+			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] & mask) & ~0x01) | 1);
 		}
 	} else {
 		setprg8(A, (base & ~mask) | (V & mask));
@@ -81,5 +86,5 @@ void Mapper391_Init(CartInfo *info) {
 	MMC3_pwrap = M391PW;
 	info->Power = M391Power;
 	info->Reset = M391Reset;
-	AddExState(reg, 2, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

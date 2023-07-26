@@ -28,7 +28,7 @@ static uint8 reg;
 static uint8 led;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REG0" },
+	{ &reg, 1, "REGS" },
 	{ 0 }
 };
 

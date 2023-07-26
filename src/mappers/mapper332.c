@@ -26,71 +26,59 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 preg, creg, dipSwitch;
+static uint8 reg[2], dipsw;
 
-static SFORMAT StateRegs[] =
-{
-	{ &preg, 1, "PREG" },
-	{ &creg, 1, "CREG" },
-	{ &dipSwitch, 1, "DPSW" },
+static SFORMAT StateRegs[] = {
+	{ reg, 2, "REGS" },
+	{ &dipsw, 1, "DPSW" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint32 prg = (preg & 7) | ((preg >> 3) & 0x08);			/* There is a high bit 3 of the PRG register that applies both to PRG and CHR */
-	uint32 chr = (creg & 7) | ((preg >> 3) & 0x08);			/* There is a high bit 3 of the PRG register that applies both to PRG and CHR */
-	uint32 mask = (creg & 0x10)? 0: (creg & 0x20)? 1: 3;	/* There is an CNROM mode that takes either two or four inner CHR banks from a CNROM-like latch.data register at $8000-$FFFF. */
+	uint32 prg = ((reg[0] >> 3) & 0x08) | (reg[0] & 0x07);
+	uint32 chr = ((reg[0] >> 3) & 0x08) | (reg[1] & 0x07);
+	uint32 mask = (reg[1] & 0x10) ? 0 : (reg[1] & 0x20) ? 1 : 3;
 
-	if (preg & 8) {
+	if (reg[0] & 0x08) {
 		setprg16(0x8000, prg);
 		setprg16(0xc000, prg);
-	} else
+	} else {
 		setprg32(0x8000, prg >> 1);
-
-	setchr8((chr & ~mask) | (latch.data & mask));			/* This "inner CHR bank" substitutes the respective bit(s) of the creg register. */
-	setmirror(((preg >> 4) & 1) ^ 1);
+	}
+	setchr8((chr & ~mask) | (latch.data & mask));
+	setmirror(((reg[0] >> 4) & 0x01) ^ 0x01);
 }
 
 static DECLFR(M332Read) {
-	if ((creg >> 6) & (dipSwitch & 3))
+	if ((reg[1] >> 6) & (dipsw & 0x03)) {
 		return X.DB;
+	}
 	return CartBR(A);
 }
 
 static DECLFW(M332Write) {
-	if (preg & 0x20)
-		return;
-
-	switch (A & 1) {
-		case 0:
-			preg = V;
-			Sync();
-			break;
-		case 1:
-			creg = V;
-			Sync();
-			break;
+	if (!(reg[0] & 0x20)) {
+		reg[A & 0x01] = V;
+		Sync();
 	}
 }
 
+static void M332Reset(void) {
+	dipsw++; /* Soft-resetting cycles through solder pad or DIP switch settings */
+	if (dipsw == 3) {
+		dipsw = 0; /* Only 00b, 01b and 10b settings are valid */
+	}
+	/* Always reset to menu */
+	reg[0] =  reg[1] = 0;
+	Latch_RegReset();
+}
+
 static void M332Power(void) {
-	preg = 0;
-	creg = 0;
-	dipSwitch = 0;
+	dipsw = 0;
+	reg[0] = reg[1] = 0;
 	Latch_Power();
 	SetReadHandler(0x8000, 0xFFFF, M332Read);
 	SetWriteHandler(0x6000, 0x7FFF, M332Write);
-}
-
-static void M332Reset(void) {
-	dipSwitch++; /* Soft-resetting cycles through solder pad or DIP switch settings */
-	if (dipSwitch == 3)
-		dipSwitch = 0; /* Only 00b, 01b and 10b settings are valid */
-
-	/* Always reset to menu */
-	preg = 0;
-	creg = 0;
-	Latch_RegReset();
 }
 
 void Mapper332_Init(CartInfo *info) {

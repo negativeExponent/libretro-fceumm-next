@@ -20,62 +20,69 @@
  */
 
 /* NES 2.0 Mapper 350 - BMC-891227
- * Super 15-in-1 Game Card 
+ * Super 15-in-1 Game Card
  * https://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_350
  */
 
 #include "mapinc.h"
 #include "latch.h"
 
-static uint16 bank;
+static uint8 reg[2];
 
 static SFORMAT StateRegs[] = {
-	{ &bank, 2, "REG0" },
+	{ reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-    if ((latch.addr & 0xC000) == 0xC000) {
-        bank = (bank & ~0x07) | (latch.data & 0x07);
-    } else {
-        bank = (latch.data & ~0x07) | (bank & 0x07);
-    }
+	uint8 bank = (reg[0] & 0x18) | (reg[1] & 0x07);
 
 	setprg8(0x6000, 1);
-	switch ((bank >> 5) & 3) {
-	case 0: /* NROM-128 */
-		setprg16(0x8000, bank & 0x1F);
-		setprg16(0xC000, bank & 0x1F);
-		break;
-	case 1: /* NROM-256 */
-		setprg32(0x8000, (bank & 0x1F) >> 1);
-		break;
-	case 2:
-	case 3: /* UNROM */
-        if (bank & 0x20) {
-            /* 2nd chip */
-            setprg16(0x8000, 0x20 | (bank & 0x07));
-		    setprg16(0xC000, 0x20 | 7);
-        } else {
-            setprg16(0x8000, bank & 0x1F);
-		    setprg16(0xC000, (bank & 0x1F) | 7);
-        }
-		break;
+	if (reg[0] & 0x40) { /* UNROM */
+		if (reg[0] & 0x20) {
+			/* 2nd chip only has 128K PRG */
+			bank &= 0x07;
+		}
+		setprg16(0x8000, (reg[0] & 0x20) | bank);
+		setprg16(0xC000, (reg[0] & 0x20) | bank | 0x07);
+	} else {
+		if (reg[0] & 0x20) { /* NROM-256 */
+			setprg32(0x8000, bank >> 1);
+		} else {
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
+		}
 	}
-
 	/* CHR-RAM Protect... kinda */
-	SetupCartCHRMapping(0, CHRptr[0], 0x2000, (bank & 0x40) != 0);
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, (reg[0] & 0x40) != 0);
 	setchr8(0);
-	setmirror(((bank >> 7) & 1) ^ 1);
+	setmirror(((reg[0] >> 7) & 0x01) ^ 0x01);
+}
+
+static DECLFW(M350Write) {
+	reg[(A >> 14) & 0x01] = V;
+	Sync();
 }
 
 static void M350Reset(void) {
-    bank = 0;
-    Latch_RegReset();
+	reg[0] = reg[1] = 0;
+	Sync();
+}
+
+static void M350Power(void) {
+	reg[0] = reg[1] = 0;
+	Sync();
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, M350Write);
+}
+
+static void StateRestore(int version) {
+	Sync();
 }
 
 void Mapper350_Init(CartInfo *info) {
-    Latch_Init(info, Sync, NULL, 1, 0);
-    info->Reset = M350Reset;
+	info->Power = M350Power;
+	info->Reset = M350Reset;
+	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

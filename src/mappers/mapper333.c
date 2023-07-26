@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2016 CaH4e3
@@ -29,6 +29,11 @@
 #include "mmc3.h"
 
 static uint8 reg;
+
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
 
 static void M333CW(uint32 A, uint8 V) {
 	setchr1(A, ((reg & 0x0C) << 5) | (V & 0x7F));
@@ -63,5 +68,5 @@ void Mapper333_Init(CartInfo *info) {
 	MMC3_cwrap = M333CW;
 	MMC3_pwrap = M333PW;
 	info->Power = M333Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(&StateRegs, ~0, 0, NULL);
 }

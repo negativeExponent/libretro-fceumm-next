@@ -2,6 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,18 +45,18 @@ static void Sync(void) {
 
 static DECLFW(M389Write) {
 	switch (A & 0xF000) {
-		case 0x8000:
-			regs[0] = (A & 0xFF);
-			Sync();
-			break;
-		case 0x9000:
-			regs[1] = (A & 0xFF);
-			Sync();
-			break;
-		default:
-			regs[2] = (A & 0xFF);
-			Sync();
-			break;
+	case 0x8000:
+		regs[0] = (A & 0xFF);
+		Sync();
+		break;
+	case 0x9000:
+		regs[1] = (A & 0xFF);
+		Sync();
+		break;
+	default:
+		regs[2] = (A & 0x0F);
+		Sync();
+		break;
 	}
 }
 

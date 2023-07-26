@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
@@ -25,49 +25,38 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reset;
-static SFORMAT StateRegs[] =
-{
-	{ &reset, 1, "PADS" },
+static uint8 dipsw;
+
+static SFORMAT StateRegs[] = {
+	{ &dipsw, 1, "DPSW" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint32 bank = (latch.addr >> 2) & 0x1F;
-	switch (((latch.addr >> 8) & 2) | ((latch.addr >> 7) & 1)) {
-	case 0:
-		setprg16(0x8000, bank);
-		setprg16(0xC000, 0);	
-		break;
-	case 1:
-		setprg16(0x8000, bank);
-		setprg16(0xC000, bank);
-		break;
-	case 2:
-	case 3:
-		setprg16(0x8000, bank);
-		setprg16(0xC000, bank | 7);	
-		break;
-	}
+	uint8 prg   = (latch.addr >> 2) & 0x1F;
+	uint8 nrom  = (latch.addr & 0x80) != 0;
+	uint8 unrom = (latch.addr & 0x200) != 0;
 
+	setprg16(0x8000, prg);
+	setprg16(0xC000, (prg & ~(0x07 * nrom)) | (0x07 * unrom));
 	setchr8(0);
 	setmirror(((latch.addr & 2) >> 1) ^ 1);
 }
 
 static DECLFR(M301Read) {
 	if ((latch.addr & 0x100) && (PRGsize[0] <= (512 * 1024))) {
-		A = (A & 0xFFFE) + reset;
+		A = (A & 0xFFFE) + (dipsw & 0x01);
 	}
 	return CartBR(A);
 }
 
-static void M301Power(void) {	
-	reset = 0;
+static void M301Power(void) {
+	dipsw = 0;
 	Latch_Power();
 }
 
 static void M301Reset(void) {
-	reset = !reset;
+	dipsw++;
 	Latch_RegReset();
 }
 

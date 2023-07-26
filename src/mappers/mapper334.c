@@ -26,22 +26,27 @@
 static uint8 reg;
 static uint8 dipsw;
 
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ &dipsw, 1, "DPSW" },
+	{ 0 }
+};
+
 static void M334PW(uint32 A, uint8 V) {
 	setprg32(0x8000, reg >> 1);
 }
 
 static DECLFW(M334Write) {
-	if (MMC3_WramIsWritable()) {
-		if (!(A & 1)) {
-			reg = V;
-			MMC3_FixPRG();
-		}
+	if (!(A & 0x01) && MMC3_WramIsWritable()) {
+		reg = V;
+		MMC3_FixPRG();
 	}
 }
 
 static DECLFR(M334Read) {
-	if (A & 2)
-		return ((X.DB & 0xFE) | (dipsw & 1));
+	if (A & 0x02) {
+		return ((X.DB & 0xFE) | (dipsw & 0x01));
+	}
 	return X.DB;
 }
 
@@ -64,5 +69,5 @@ void Mapper334_Init(CartInfo *info) {
 	MMC3_pwrap = M334PW;
 	info->Power = M334Power;
 	info->Reset = M334Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

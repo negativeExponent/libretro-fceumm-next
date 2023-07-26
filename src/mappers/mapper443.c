@@ -31,19 +31,15 @@ static void M443PW(uint32 A, uint8 V) {
 	uint8 mask = 0x0F;
 	uint8 base = ((reg << 4) & 0x20) | (reg & 0x10);
 
-	if (reg & 0x04) {
-		if (reg & 0x08) {
-			setprg8(0x8000, (base & ~mask) | (mmc3.reg[6] & mask));
-			setprg8(0xA000, (base & ~mask) | (mmc3.reg[7] & mask));
-			setprg8(0xC000, (base & ~mask) | (mmc3.reg[6] & mask));
-			setprg8(0xE000, (base & ~mask) | (mmc3.reg[7] & mask));
-		} else {
-			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & ~0x02) & mask));
-			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & ~0x02) & mask));
-			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] |  0x02) & mask));
-			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  0x02) & mask));
+	if (reg & 0x04) { /* NROM */
+		uint16 bank = (base & ~mask) | (mmc3.reg[6] & mask);
+		if (reg & 0x08) { /* NROM-128 */
+			setprg16(0x8000, bank >> 1);
+			setprg16(0xC000, bank >> 1);
+		} else { /* NROM-256 */
+			setprg32(0x8000, bank >> 2);
 		}
-	} else {
+	} else { /*  MMC3 */
 		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }

@@ -28,8 +28,7 @@
 
 static uint8 gameblock;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &gameblock, 1, "GAME" },
 	{ 0 }
 };
@@ -37,7 +36,7 @@ static SFORMAT StateRegs[] =
 static void Sync(void) {
 	setprg32(0x8000, gameblock);
 	setchr8(gameblock);
-	setmirror(gameblock & 1);
+	setmirror(gameblock & 0x01);
 }
 
 static void M352Power(void) {

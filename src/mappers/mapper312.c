@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2011 CaH4e3
@@ -28,28 +28,27 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 prg;
+static uint8 reg;
 
-static SFORMAT StateRegs[] =
-{
-	{ &prg, 1, "REGS" },
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg16(0x8000, prg);
+	setprg16(0x8000, reg);
 	setprg16(0xc000, ~0);
-	setmirror((latch.data & 1) ^ 1);
+	setmirror((latch.data & 0x01) ^ 0x01);
 	setchr8(0);
 }
 
 static DECLFW(M312LoWrite) {
-	prg = V;
+	reg = V;
 	Sync();
 }
 
 static void M312Power(void) {
-	prg = 0;
+	reg = 0;
 	Latch_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M312LoWrite);
 }

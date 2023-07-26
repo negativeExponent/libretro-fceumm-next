@@ -31,14 +31,15 @@ LATCH latch;
 
 DECLFW(Latch_Write) {
 	/*	FCEU_printf("bs %04x %02x\n",A,V); */
-	if (bus_conflict)
+	if (bus_conflict) {
 		V &= CartBR(A);
+	}
     latch.addr = A;
     latch.data = V;
 	WSync();
 }
 
-void Latch_RegReset() {
+void Latch_RegReset(void) {
 	latch.addr = 0;
 	latch.data = 0;
 	WSync();
@@ -46,7 +47,6 @@ void Latch_RegReset() {
 
 void Latch_Power(void) {
 	Latch_RegReset();
-	WSync();
 	if (WRAM) {
 		SetReadHandler(0x6000, 0xFFFF, CartBR);
 		SetWriteHandler(0x6000, 0x7FFF, CartBW);

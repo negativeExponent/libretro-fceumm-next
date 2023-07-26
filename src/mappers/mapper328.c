@@ -30,17 +30,10 @@
 #include "mapinc.h"
 
 static DECLFR(M328Read) {
-#if 0
-	u16 i, prot_areas[2][2] = {
-		{ 0x8E80, 0x8EFF },
-		{ 0xFE80, 0xFEFF },
-	};
-#endif
-	if(((A >= 0xCE80) && (A < 0xCF00)) ||
-	   ((A >= 0xFE80) && (A < 0xFF00))) {
+	if (((A >= 0xCE80) && (A < 0xCF00)) || ((A >= 0xFE80) && (A < 0xFF00))) {
 		return 0xF2 | (rand() & 0x0D);
-	} else
-		return CartBR(A);
+	}
+	return CartBR(A);
 }
 
 static void M328Power(void) {

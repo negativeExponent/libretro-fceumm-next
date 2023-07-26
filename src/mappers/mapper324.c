@@ -37,7 +37,7 @@ static DECLFW(M324Write) {
 	if ((V & 0x80) && !(latch.data & 0x80) && !(latch.data & 0x08)) {
 		Latch_Write(A, V);
 	} else {
-		latch.data = (latch.data & ~7) | (V & 7);
+		latch.data = (latch.data & ~0x07) | (V & 0x07);
 		Sync();
 	}
 }

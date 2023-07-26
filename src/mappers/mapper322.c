@@ -30,9 +30,14 @@
 
 static uint8 reg;
 
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
+
 static void M322CW(uint32 A, uint8 V) {
 	if (reg & 0x20) {
-		uint32 base = ((reg >> 4) & 0x04) | ((reg >> 3) & 0x03);
+		uint16 base = ((reg >> 4) & 0x04) | ((reg >> 3) & 0x03);
 
 		if (reg & 0x80) {
 			setchr1(A, (base << 8) | (V & 0xFF));
@@ -45,7 +50,7 @@ static void M322CW(uint32 A, uint8 V) {
 }
 
 static void M322PW(uint32 A, uint8 V) {
-	uint32 base = ((reg >> 4) & 0x04) | ((reg >> 3) & 0x03);
+	uint16 base = ((reg >> 4) & 0x04) | ((reg >> 3) & 0x03);
 
 	if (reg & 0x20) {
 		if (reg & 0x80) {
@@ -55,10 +60,10 @@ static void M322PW(uint32 A, uint8 V) {
 		}
 	} else {
 		if (reg & 0x03) {
-			setprg32(0x8000, (base << 3) | ((reg >> 1) & 3));
+			setprg32(0x8000, (base << 3) | ((reg >> 1) & 0x03));
 		} else {
-			setprg16(0x8000, (base << 3) | (reg & 7));
-			setprg16(0xC000, (base << 3) | (reg & 7));
+			setprg16(0x8000, (base << 3) | (reg & 0x07));
+			setprg16(0xC000, (base << 3) | (reg & 0x07));
 		}
 	}
 }
@@ -88,5 +93,5 @@ void Mapper322_Init(CartInfo *info) {
 	MMC3_cwrap = M322CW;
 	info->Power = M322Power;
 	info->Reset = M322Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -29,19 +29,21 @@ static uint8 reg;
 static uint8 dipsw;
 
 static void M370CW(uint32 A, uint8 V) {
-	uint8 mask = (reg & 0x04) ? 0xFF : 0x7F;
+	uint16 mask = (reg & 0x04) ? 0xFF : 0x7F;
+	uint16 base = reg << 7;
 
-	setchr1(A, ((reg << 7) & ~mask) | (V & mask));
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static void M370PW(uint32 A, uint8 V) {
-	uint8 mask = reg & 0x20 ? 0x0F : 0x1F;
+	uint16 mask = reg & 0x20 ? 0x0F : 0x1F;
+	uint16 base = reg << 1;
 
-	setprg8(A, ((reg << 1) & ~mask) | (V & mask));
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void M370MIR(void) {
-	if ((reg & 7) == 1) {
+	if ((reg & 0x07) == 1) {
 		if (mmc3.cmd & 0x80) {
 			setntamem(NTARAM + 0x400 * ((mmc3.reg[2] >> 7) & 0x01), 1, 0);
 			setntamem(NTARAM + 0x400 * ((mmc3.reg[3] >> 7) & 0x01), 1, 1);
@@ -59,7 +61,7 @@ static void M370MIR(void) {
 }
 
 static DECLFR(M370Read) {
-	return (dipsw << 7);
+	return (((dipsw << 7) & 0x80) | (X.DB & 0x7F));
 }
 
 static DECLFW(M370Write) {

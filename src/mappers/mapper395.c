@@ -30,21 +30,28 @@
 
 static uint8 reg[2];
 
-static void M395CW(uint32 A, uint8 V) {
-	uint8 mask = (reg[1] & 0x40) ? 0x7F : 0xFF;
+static SFORMAT StateRegs[] = {
+	{ reg, 2, "REGS" },
+	{ 0 }
+};
 
-	setchr1(A, ((reg[0] & 0x30) << 4) | ((reg[1] & 0x20) << 5) | ((reg[1] & 0x10) << 3) | (V & mask));
+static void M395CW(uint32 A, uint8 V) {
+	uint16 mask = (reg[1] & 0x40) ? 0x7F : 0xFF;
+	uint16 base = ((reg[0] << 4) & 0x300) | ((reg[1] << 5) & 0x400) | ((reg[1] << 3) & 0x80);
+
+	setchr1(A, base | (V & mask));
 }
 
 static void M395PW(uint32 A, uint8 V) {
-	uint8 mask = (reg[1] & 0x08) ? 0x0F : 0x1F;
+	uint16 mask = (reg[1] & 0x08) ? 0x0F : 0x1F;
+	uint16 base = ((reg[0] << 4) & 0x80) | ((reg[0] << 1) & 0x60) | ((reg[1] << 4) & 0x10);
 
-	setprg8(A, ((reg[0] & 0x30) << 1) | ((reg[0] & 8) << 4) | ((reg[1] & 1) << 4) | (V & mask));
+	setprg8(A, base | (V & mask));
 }
 
 static DECLFW(M395Write) {
 	if (!(reg[1] & 0x80)) {
-		reg[(A >> 4) & 1] = V;
+		reg[(A >> 4) & 0x01] = V;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
 	}
@@ -67,5 +74,5 @@ void Mapper395_Init(CartInfo *info) {
 	MMC3_pwrap = M395PW;
 	info->Power = M395Power;
 	info->Reset = M395Reset;
-	AddExState(reg, 2, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }
