@@ -29,7 +29,6 @@
 static void M307FixPRG(void) {
 	setprg4r(0x10, 0x6000, 0);
 	setprg4(0x7000, 15);
-
 	setprg8(0x8000, n118.reg[6]);
 	setprg4(0xA000, ~3);
 	setprg4r(0x10, 0xB000, 0x01);

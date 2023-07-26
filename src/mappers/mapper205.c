@@ -28,23 +28,29 @@
 static uint8 reg;
 static uint8 dipsw;
 
-static void M205PW(uint32 A, uint8 V) {
-	uint8 mask = (reg & 0x04) ? 0x0F : ((reg & 0x02) ? 0x0F : 0x1F);
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ &dipsw, 1, "DPSW" },
+	{ 0 }
+};
 
-	setprg8(A, ((reg & 0x03) << 4) | (V & mask));
+static void M205PW(uint32 A, uint8 V) {
+	uint8 mask = (reg & 0x02) ? 0x0F : 0x1F;
+
+	setprg8(A, (reg << 4) | (V & mask));
 }
 
 static void M205CW(uint32 A, uint8 V) {
 	uint8 mask = (reg & 0x02) ? 0x7F : 0xFF;
 
-	setchr1(A, ((reg & 0x03) << 7) | (V & mask));
+	setchr1(A, (reg << 7) | (V & mask));
 }
 
 static DECLFW(M205Write) {
 	CartBW(A, V);
-	reg = V;
+	reg = V & 0x03;
 	if ((V & 0x01) && dipsw) {
-		reg |= dipsw;
+		reg |= 0x02;
 	}
 	MMC3_FixPRG();
 	MMC3_FixCHR();
@@ -52,7 +58,7 @@ static DECLFW(M205Write) {
 
 static void M205Reset(void) {
 	reg = 0;
-	dipsw ^= 2; /* solder pad */
+	dipsw = (dipsw + 1) & 0x01; /* solder pad */
 	MMC3_Reset();
 }
 
@@ -68,6 +74,5 @@ void Mapper205_Init(CartInfo *info) {
 	MMC3_cwrap = M205CW;
 	info->Power = M205Power;
 	info->Reset = M205Reset;
-	AddExState(&reg, 1, 0, "EXPR");
-	AddExState(&dipsw, 1, 0, "DIPSW");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

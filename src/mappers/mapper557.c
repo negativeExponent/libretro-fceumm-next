@@ -1,7 +1,6 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2002 Xodnizel
  *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,19 +18,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* NES 2.0 Mapper 557 is used for Kaiser's cartridge conversion of the Famicom Disk System game Moero TwinBee: Cinnamon-hakase o Sukue!. */
+
 #include "mapinc.h"
 #include "n118.h"
 
-static void M206PW(uint32 A, uint8 V) {
-	if (iNESCart.submapper == 1) {
-		/* 3407, 3417 and 3451 PCBs */
-		setprg32(0x8000, 0);
-	} else {
-		setprg8(A, V & 0x0F);
-	}
+static void M557FixPRG(void) {
+    setprg8r(0x10, 0x6000, 0);
+    setprg8(0x8000, n118.reg[6] & 0x0F);
+    setprg8(0xA000, n118.reg[7] & 0x0F);
+    setprg8(0xC000, ~1);
+    setprg8(0xE000, ~0);
 }
 
-void Mapper206_Init(CartInfo *info) {
-	N118_Init(info, 0, 0);
-	N118_pwrap = M206PW;
+static void M557FixCHR(void) {
+	setchr8(0);
+    setmirror(((n118.reg[5] >> 5) & 0x01) ^ 0x01);
+}
+
+void Mapper557_Init(CartInfo *info) {
+	N118_Init(info, 8, 0);
+    N118_FixPRG = M557FixPRG;
+	N118_FixCHR = M557FixCHR;
 }

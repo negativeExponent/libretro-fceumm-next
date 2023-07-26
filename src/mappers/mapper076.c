@@ -28,66 +28,21 @@
  */
 
 #include "mapinc.h"
+#include "n118.h"
 
-static uint8 reg[8];
-static uint8 cmd;
-
-static SFORMAT StateRegs[] = {
-    { reg, 8, "REGS" },
-    { &cmd, 1, "CMD\0" },
-    { 0 }
-};
-
-static void Sync(void) {
-    setprg8(0x8000, reg[6] & 0x1F);
-    setprg8(0xA000, reg[7] & 0x1F);
-    setprg8(0xC000,   (~1) & 0x1F);
-    setprg8(0xE000,   (~0) & 0x1F);
-
-    setchr2(0x0000, reg[2] & 0x3F);
-    setchr2(0x0800, reg[3] & 0x3F);
-    setchr2(0x1000, reg[4] & 0x3F);
-    setchr2(0x1800, reg[5] & 0x3F);
+static void M076PW(uint32 A, uint8 V) {
+    setprg8(A, V & 0x1F); /* support for PRG bank for fan translations */
 }
 
-static DECLFW(M076Write) {
-    A &= 0xE001;
-    switch (A) {
-    case 0x8000:
-        cmd = V;
-        break;
-    case 0x8001:
-        reg[cmd & 0x07] = V;
-        break;
-    }
-    Sync();
-}
-
-static void StateRestore(int version) {
-    Sync();
-}
-
-static void M076Power(void) {
-    cmd = 0;
-
-    reg[0] = 0;
-    reg[1] = 2;
-    reg[2] = 4;
-    reg[3] = 5;
-    reg[4] = 6;
-    reg[5] = 7;
-
-    reg[6] = 0;
-    reg[7] = 1;
-
-    Sync();
-    
-    SetReadHandler(0x8000, 0xFFFF, CartBR);
-    SetWriteHandler(0x8000, 0x9FFF, M076Write);
+static void M076FixCHR(void) {
+    setchr2(0x0000, n118.reg[2] & 0x3F);
+    setchr2(0x0800, n118.reg[3] & 0x3F);
+    setchr2(0x1000, n118.reg[4] & 0x3F);
+    setchr2(0x1800, n118.reg[5] & 0x3F);
 }
 
 void Mapper076_Init(CartInfo *info) {
-	info->Power = M076Power;
-    GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, NULL);
+	N118_Init(info, 0, 0);
+    N118_pwrap = M076PW;
+    N118_FixCHR = M076FixCHR;
 }

@@ -39,11 +39,11 @@ static SFORMAT StateRegs[] = {
 };
 
 static void GENCWRAP(uint32 A, uint8 V) {
-    setchr1(A, V);
+    setchr1(A, V & 0x3F);
 }
 
 static void GENPWRAP(uint32 A, uint8 V) {
-    setprg8(A, V);
+    setprg8(A, V & 0x0F);
 }
 
 static void GENFIXCHR(void) {
