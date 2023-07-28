@@ -73,5 +73,5 @@ static void StateRestore(int version) {
 void Mapper335_Init(CartInfo *info) {
 	info->Power = M335Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

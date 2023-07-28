@@ -377,7 +377,7 @@ void Mapper116_Init(CartInfo *info) {
 	info->Reset = M116Reset;
 	GameHBIRQHook = M116HBIRQ;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 	submapper = info->submapper;
 	if (submapper == 0) {
 		/* PRG 128K and CHR 128K is Huang-2 (submapper 2) */

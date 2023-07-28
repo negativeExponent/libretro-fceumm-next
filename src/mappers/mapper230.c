@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
@@ -26,37 +26,37 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reset;
-static SFORMAT StateRegs[] =
-{
-	{ &reset, 1, "RST" },
+static uint8 mode;
+
+static SFORMAT StateRegs[] = {
+	{ &mode, 1, "MODE" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (reset) {  /* Contra mode */
-		setprg16(0x8000, latch.data & 7);
-		setprg16(0xC000, 7);
+	if (mode) {  /* Contra mode */
+		setprg16(0x8000, latch.data & 0x07);
+		setprg16(0xC000, 0x07);
 		setmirror(MI_V);
 	} else { /* multicart mode */
-		uint32 bank = (latch.data & 0x1F) + 8;
 		if (latch.data & 0x20) {
-			setprg16(0x8000, bank);
-			setprg16(0xC000, bank);
-		} else
-			setprg32(0x8000, bank >> 1);
-		setmirror((latch.data >> 6) & 1);
+			setprg16(0x8000, 8 + (latch.data & 0x1F));
+			setprg16(0xC000, 8 + (latch.data & 0x1F));
+		} else {
+			setprg32(0x8000, (8 + (latch.data & 0x1F)) >> 1);
+		}
+		setmirror((latch.data >> 6) & 0x01);
 	}
 	setchr8(0);
 }
 
 static void M230Reset(void) {
-	reset ^= 1;
+	mode ^= 1;
 	Latch_RegReset();
 }
 
 static void M230Power(void) {
-	reset = 0;
+	mode = 0;
 	Latch_Power();
 }
 
@@ -64,5 +64,5 @@ void Mapper230_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M230Power;
 	info->Reset = M230Reset;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -53,5 +53,5 @@ void Mapper520_Init(CartInfo *info) {
 	PPU_hook = M520PPUHook;
 	VRC24_pwrap = M520PW;
 	VRC24_cwrap = M520CW;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

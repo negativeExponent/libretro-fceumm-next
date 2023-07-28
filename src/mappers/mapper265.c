@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
@@ -25,29 +25,36 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint32 bank = ((latch.addr >> 3) & 0xE0) | ((latch.addr >> 2) & 0x18) | (latch.data & 7);
+	uint8 bank  = ((latch.addr >> 3) & 0x60) | ((latch.addr >> 2) & 0x18) | (latch.data & 0x07);
+
 	if (latch.addr & 0x80) {
-		setprg16(0x8000, bank & ~1);
-		setprg16(0xC000, bank |  1);
+		if (!bank) {
+			/* NOTE: Unofficial support but Tetris II in 11-in-1 variant
+			works as if its NROM-256 */
+			setprg32(0x8000, bank >> 1);
+		} else {
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
+		}
 	} else {
 		setprg16(0x8000, bank);
-		setprg16(0xC000, bank | 7);
+		setprg16(0xC000, bank | 0x07);
 	}
 	setchr8(0);
-	setmirror(((latch.addr >> 1) & 1) ^ 1);
+	setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
 }
 
 static DECLFW(M265Write) {
-	if (latch.addr & 0x2000) {
-		latch.data = V;
-		Sync();
-	} else {
-		Latch_Write(A, V);
+	if (!(latch.addr & 0x2000)) {
+		latch.addr = A;
 	}
+	latch.data = V;
+	Sync();
 }
 
 static void M265Power(void) {
 	Latch_Power();
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M265Write);
 }
 

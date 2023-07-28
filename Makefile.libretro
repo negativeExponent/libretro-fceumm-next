@@ -4,6 +4,7 @@ STATIC_LINKING=0
 ENDIANNESS_DEFINES=
 SIGNED_CHAR=0
 HAVE_NTSC=1
+C89_BUILD=1
 
 SPACE :=
 SPACE := $(SPACE) $(SPACE)
@@ -772,7 +773,10 @@ else
 WARNING_DEFINES = -Wall -Wno-write-strings
 endif
 
-CFLAGS += -Werror=implicit-function-declaration
+ifeq ($(C89_BUILD),1)
+	CFLAGS += -std=c89 -ansi -pedantic -Werror=implicit-function-declaration -Wimplicit-fallthrough -Wno-long-long -Werror=declaration-after-statement
+	CFLAGS += -D_GNU_SOURCE
+endif
 
 CFLAGS += $(fpic) $(WARNING_DEFINES) $(DEFINES) $(ENDIANNESS_DEFINES)
 LDFLAGS += $(LIBM)

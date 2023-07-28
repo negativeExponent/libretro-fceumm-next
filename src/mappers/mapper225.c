@@ -1,9 +1,10 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2011 CaH4e3
-  * Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2019 Libretro Team
  *  Copyright (C) 2020
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,20 +34,25 @@
 
 static uint8 extraRAM[4];
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ extraRAM, 4, "PROT" },
 	{ 0 }
 };
 
 static void Sync(void) {
+	uint8 base = (latch.addr >> 8) & 0x40; 
+	uint8 prg  = (latch.addr >> 6) & 0x3F;
+	uint8 chr  = latch.addr & 0x3F;
+	uint8 mirr = ((latch.addr >> 13) & 1) ^ 1;
+
 	if (latch.addr & 0x1000) {
-		setprg16(0x8000, ((latch.addr >> 8) & 0x40) | ((latch.addr >> 6) & 0x3F));
-		setprg16(0xC000, ((latch.addr >> 8) & 0x40) | ((latch.addr >> 6) & 0x3F));
-	} else
-		setprg32(0x8000, ((latch.addr >> 9) & 0x20) | ((latch.addr >> 7) & 0x1F));
-	setchr8(((latch.addr >> 8) & 0x40) | (latch.addr & 0x3F));
-	setmirror(((latch.addr >> 13) & 1) ^ 1);
+		setprg16(0x8000, base | prg);
+		setprg16(0xC000, base | prg);
+	} else {
+		setprg32(0x8000, (base | prg) >> 1);
+	}
+	setchr8(base | chr);
+	setmirror(mirr);
 }
 
 static DECLFW(M225LoWrite) {

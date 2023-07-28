@@ -20,20 +20,20 @@
 
 #include "mapinc.h"
 
-static uint8 *WRAM = NULL;
-static uint32 WRAMSIZE;
 static uint8 reg;
 
-static SFORMAT StateRegs[] =
-{
-	{ &reg, 1, "REG" },
+static uint8 *WRAM = NULL;
+static uint32 WRAMSIZE;
+
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync() {
-	setprg8r(0x10, 0x6000, 0);
 	setprg32(0x8000, reg >> 4);
-	setchr8(reg & 0xF);
+	setchr8(reg & 0x0F);
+	setprg8r(0x10, 0x6000, 0);
 }
 
 static DECLFW(M240Write) {
@@ -45,7 +45,7 @@ static void M240Power(void) {
 	reg = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4020, 0x5FFF, M240Write);
+	SetWriteHandler(0x4020, 0x4FFF, M240Write);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
@@ -56,16 +56,19 @@ static void StateRestore(int version) {
 void Mapper240_Init(CartInfo *info) {
 	info->Power = M240Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	if (info->iNES2)
+	if (info->iNES2) {
 		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
-	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
-	if (info->battery) {
-		info->SaveGame[0] = WRAM;
-		info->SaveGameLen[0] = WRAMSIZE;
 	}
-	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+	if (WRAMSIZE) {
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
+		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+		if (info->battery) {
+			info->SaveGame[0] = WRAM;
+			info->SaveGameLen[0] = WRAMSIZE;
+		}
+	}
 }

@@ -126,7 +126,7 @@ void Mapper330_Init(CartInfo *info) {
 	info->Power = M330Power;
 	MapIRQHook = M330IRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAM = (uint8 *)FCEU_gmalloc(8192);
 	SetupCartPRGMapping(0x10, WRAM, 8192, 1);

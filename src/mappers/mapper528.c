@@ -90,7 +90,7 @@ void Mapper528_Init(CartInfo *info) {
 	FME7_pwrap = M528PW;
 	FME7_cwrap = M528CW;
 	info->Power = M528Power;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	VRCIRQ_Init(TRUE);
 	MapIRQHook = VRCIRQ_CPUHook;

@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
@@ -33,7 +33,7 @@ static uint8 reg;
 static const uint8 lut[4] = { 0x00, 0x02, 0x02, 0x03 };
 
 static DECLFW(M238ProtWrite) {
-	reg = lut[V & 3];
+	reg = lut[V & 0x03];
 }
 
 static DECLFR(M238ProtRead) {
@@ -41,6 +41,7 @@ static DECLFR(M238ProtRead) {
 }
 
 static void M238Power(void) {
+	reg = 0;
 	MMC3_Power();
 	SetWriteHandler(0x4020, 0x7FFF, M238ProtWrite);
 	SetReadHandler(0x4020, 0x7FFF, M238ProtRead);

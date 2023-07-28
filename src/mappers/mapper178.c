@@ -193,7 +193,7 @@ void Mapper178_Init(CartInfo *info) {
 	}
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	mappernum = info->mapper;
 }

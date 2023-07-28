@@ -130,5 +130,5 @@ static void StateRestore(int version) {
 void JV001_Init(CartInfo *info, void (*proc)(void)) {
 	WSync            = proc;
 	GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

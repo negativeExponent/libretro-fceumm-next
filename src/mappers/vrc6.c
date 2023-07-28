@@ -192,7 +192,7 @@ void VRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram) {
 			}
 		}
 	}
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	info->Power = VRC6_Power;
 	info->Close = VRC6_Close;

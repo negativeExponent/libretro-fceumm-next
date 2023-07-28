@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
@@ -97,6 +97,7 @@ static DECLFW(M208WriteCMD) {
 			MMC3_CMDWrite(A, V);
 			break;
 		}
+		break;
 	default:
 		MMC3_CMDWrite(A, V);
 		break;
@@ -106,11 +107,11 @@ static DECLFW(M208WriteCMD) {
 static void M208Power(void) {
 	reg = 0x11;
 	MMC3_Power();
-	SetWriteHandler(0x4800, 0x4fff, M208Write);
-	SetWriteHandler(0x6800, 0x6fff, M208Write);
-	SetWriteHandler(0x5000, 0x5fff, M208ProtWrite);
-	SetReadHandler(0x5800, 0x5fff, M208ProtRead);
-	SetReadHandler(0x8000, 0xffff, CartBR);
+	SetWriteHandler(0x4800, 0x4FFF, M208Write);
+	SetWriteHandler(0x6800, 0x6FFF, M208Write);
+	SetWriteHandler(0x5000, 0x5FFF, M208ProtWrite);
+	SetReadHandler(0x5800, 0x5FFF, M208ProtRead);
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
 
 	if (iNESCart.submapper == 1) {
 		SetWriteHandler(0x8000, 0x9FFF, M208WriteCMD);

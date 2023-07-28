@@ -115,5 +115,5 @@ void Mapper127_Init(CartInfo *info) {
 	info->Power = M127Power;
 	MapIRQHook = M127IRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

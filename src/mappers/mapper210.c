@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2002 Xodnizel
@@ -29,46 +29,40 @@
 static uint8 *WRAM;
 static uint32 WRAMSIZE;
 
-static uint8 PRG[3];
-static uint8 CHR[8];
-static uint8 mirr;
+static uint8 prg[4];
+static uint8 chr[8];
 static uint8 wram_enable;
 
-static uint8 submapper;
-
 static SFORMAT StateRegs[] = {
-	{ PRG, 3, "PRG" },
-	{ CHR, 8, "CHR" },
-	{ &mirr, 1, "GORK" },
+	{ prg, 3, "PRG" },
+	{ chr, 8, "CHR" },
     { &wram_enable, 1, "WREN" },
 	{ 0 }
 };
 
-static void SyncPRG(void) {
-	setprg8(0x8000, PRG[0]);
-	setprg8(0xa000, PRG[1]);
-	setprg8(0xc000, PRG[2]);
-	setprg8(0xe000, 0x3F);
-}
+static void Sync(void) {
+	setprg8(0x8000, prg[0] & 0x3F);
+	setprg8(0xA000, prg[1] & 0x3F);
+	setprg8(0xC000, prg[2] & 0x3F);
+	setprg8(0xE000, prg[3] & 0x3F);
 
-static void SyncMirror() {
-	switch(mirr & 3) {
-	case 0: setmirror(MI_0); break;
-	case 1: setmirror(MI_V); break;
-	case 2: setmirror(MI_H); break;
-	case 3: setmirror(MI_0); break;
+	setchr1(0x0000, chr[0]);
+	setchr1(0x0400, chr[1]);
+	setchr1(0x0800, chr[2]);
+	setchr1(0x0C00, chr[3]);
+	setchr1(0x1000, chr[4]);
+	setchr1(0x1400, chr[5]);
+	setchr1(0x1800, chr[6]);
+	setchr1(0x1C00, chr[7]);
+
+	if (iNESCart.submapper != 1) {
+		switch((prg[0] >> 6) & 0x03) {
+		case 0: setmirror(MI_0); break;
+		case 1: setmirror(MI_V); break;
+		case 2: setmirror(MI_H); break;
+		case 3: setmirror(MI_0); break;
+		}
 	}
-}
-
-static void DoCHRRAMROM(int x, uint8 V) {
-	CHR[x] = V;
-	setchr1(x << 10, V);
-}
-
-static void FixCRR(void) {
-	int x;
-	for (x = 0; x < 8; x++)
-		DoCHRRAMROM(x, CHR[x]);
 }
 
 static DECLFR(AWRAM) {
@@ -84,36 +78,38 @@ static DECLFW(BWRAM) {
 }
 
 static DECLFW(M210Write) {
-	A &= 0xF800;
-	if (A >= 0x8000 && A <= 0xb800)
-		DoCHRRAMROM((A - 0x8000) >> 11, V);
-	else
-		switch (A) {
-        case 0xC000:
-            wram_enable = V & 0x01;
-            break;
-		case 0xE000:
-			PRG[0] = V & 0x3F;
-			SyncPRG();
-            if (submapper != 1) {
-                mirr = V >> 6;
-			    SyncMirror();
-            }
-			break;
-		case 0xE800:
-			PRG[1] = V & 0x3F;
-			SyncPRG();
-			break;
-		case 0xF000:
-			PRG[2] = V & 0x3F;
-			SyncPRG();
-			break;
-		}
+	switch (A & 0xF800) {
+	case 0x8000:
+	case 0x8800:
+	case 0x9000:
+	case 0x9800:
+	case 0xA000:
+	case 0xA800:
+	case 0xB000:
+	case 0xB800:
+		chr[(A - 0x8000) >> 11] = V;
+		Sync();
+		break;
+	case 0xC000:
+		wram_enable = V & 0x01;
+		break;
+	case 0xE000:
+	case 0xE800:
+	case 0xF000:
+		prg[(A - 0xE000) >> 11] = V;
+		Sync();
+		break;
+	}
 }
 
-static int battery = 0;
-
 static void M210Power(void) {
+	int i;
+	for (i = 0; i < 4; i++) prg[i] = 0xFC | i;
+	for (i = 0; i < 4; i++) chr[0 | i] = 0 | i;
+	for (i = 0; i < 4; i++) chr[4 | i] = 4 | i;
+	wram_enable = 0;
+	Sync();
+
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xffff, M210Write);
 
@@ -123,25 +119,19 @@ static void M210Power(void) {
 	    FCEU_CheatAddRAM(8, 0x6000, WRAM);
     }
 
-	SyncPRG();
-	FixCRR();
-
-	if (WRAM && !battery) {
+	if (WRAM && !iNESCart.battery) {
 		FCEU_MemoryRand(WRAM, sizeof(WRAM));
 	}
 }
 
 static void StateRestore(int version) {
-	SyncPRG();
-	FixCRR();
+	Sync();
 }
 
 void Mapper210_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	info->Power = M210Power;
-    submapper = info->submapper;
-    battery = info->battery;
-    AddExState(StateRegs, ~0, 0, 0);
+    AddExState(StateRegs, ~0, 0, NULL);
 
     WRAMSIZE = 8192;
     if (info->iNES2) {
@@ -152,7 +142,7 @@ void Mapper210_Init(CartInfo *info) {
         WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	    FCEU_MemoryRand(WRAM, sizeof(WRAM));
 	    AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-        if (battery) {
+        if (info->battery) {
             info->SaveGame[0] = WRAM;
             info->SaveGameLen[0] = WRAMSIZE;
         }

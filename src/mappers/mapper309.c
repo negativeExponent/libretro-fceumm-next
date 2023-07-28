@@ -80,7 +80,7 @@ void Mapper309_Init(CartInfo *info) {
 	info->Power = M309Power;
 	info->Close = M309Close;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);

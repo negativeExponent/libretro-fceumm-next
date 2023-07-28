@@ -81,7 +81,7 @@ static void StateRestore(int version) {
 void Mapper051_Init(CartInfo *info) {
 	info->Power = M051Power;
 	info->Reset = M051Reset;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 	GameStateRestore = StateRestore;
 	submapper        = info->submapper;
 	if (!UNIFchrrama && (ROM.chr.size == 1)) {

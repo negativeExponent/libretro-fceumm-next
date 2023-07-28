@@ -71,7 +71,7 @@ void Mapper168_Init(CartInfo *info) {
 	info->Power = M168Power;
 	info->Close = M168Close;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8192 * 8;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

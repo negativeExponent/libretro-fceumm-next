@@ -88,5 +88,5 @@ void Mapper362_Init(CartInfo *info) {
     PPU_hook = M362PPUHook;
 	VRC24_pwrap = M362PW;
 	VRC24_cwrap = M362CW;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

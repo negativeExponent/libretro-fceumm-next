@@ -22,82 +22,85 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[2];
+static uint8 reg;
+static uint8 extMode;
+
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ &extMode, 1, "MODE" },
+	{ 0 }
+};
 
 static void M219PW(uint32 A, uint8 V) {
-	setprg8(A, (reg[1] << 4) | (V & 0x0F));
+	setprg8(A, (reg << 4) | (V & 0x0F));
 }
 
 static void M219CW(uint32 A, uint8 V) {
-	setchr1(A, (reg[1] << 7) | (V & 0x7F));
+	setchr1(A, (reg << 7) | (V & 0x7F));
 }
 
 static DECLFW(M219WriteOuter) {
 	switch (A & 0x01) {
 	case 0:
-		reg[1] = (reg[1] & ~0x01) | ((V >> 3) & 0x01);
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		reg = (reg & ~0x01) | ((V >> 3) & 0x01);
 		break;
 	case 1:
-		reg[1] = (reg[1] & ~0x02) | ((V >> 4) & 0x02);
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		reg = (reg & ~0x02) | ((V >> 4) & 0x02);
 		break;
 	}
+	MMC3_FixPRG();
+	MMC3_FixCHR();
 }
 
 static DECLFW(M219WriteASIC) {
-	switch (A & 0xE001) {
-	case 0x8000: /* Register index */
-		MMC3_CMDWrite(A, V);
-		if (A & 2) {
-			reg[0] = V;
-		}
-		break;
-	case 0x8001:
-		if (!(reg[0] & 0x20)) { /* Scrambled mode inactive */
-			MMC3_CMDWrite(A, V);
-			break;
-		}
-		/* Scrambled mode active */
-		if ((mmc3.cmd >= 0x08) && (mmc3.cmd <= 0x1F)) {
-			/* Scrambled CHR register */
-			uint8 index = (mmc3.cmd - 8) >> 2;
-			if (mmc3.cmd & 0x01) {
-				/* LSB nibble */
-				mmc3.reg[index] &= ~0x0F;
-				mmc3.reg[index] |= ((V >> 1) & 0x0F);
-			} else {
-				/* MSB nibble */
-				mmc3.reg[index] &= ~0xF0;
-				mmc3.reg[index] |= ((V << 4) & 0xF0);
-			}
-			MMC3_FixCHR();
-		} else if ((mmc3.cmd >= 0x25) && (mmc3.cmd <= 0x26)) {
-			/* Scrambled PRG register */
-			V = ((V >> 5) & 0x01) | ((V >> 3) & 0x02) | ((V >> 1) & 0x04) | ((V << 1) & 0x08);
-			mmc3.reg[6 | (mmc3.cmd & 0x01)] = V;
+	uint8 oldcmd = mmc3.cmd;
+
+	if (!(A & 0x01)) { /* Register index */
+		mmc3.cmd = V;
+		if ((oldcmd & 0x40) != ((V & 0x40))) {
 			MMC3_FixPRG();
 		}
-		break;
-	default:
-		MMC3_CMDWrite(A, V);
-		break;
+		if ((oldcmd & 0x80) != ((V & 0x80))) {
+			MMC3_FixPRG();
+		}
+		if (A & 0x02) {
+			extMode = (V & 0x20) != 0;
+		}
+		if (V & 0xC0) FCEU_printf("Wr flip:%02x\n", V);
+	} else {
+		if (!extMode) { /* Scrambled mode inactive */
+			MMC3_CMDWrite(A, V);
+		} else { /* Scrambled mode active */
+			if ((mmc3.cmd >= 0x08) && (mmc3.cmd <= 0x1F)) { /* Scrambled CHR register */
+				uint8 index = (mmc3.cmd - 8) >> 2;
+				if (mmc3.cmd & 0x01) { /* LSB nibble */
+					mmc3.reg[index] &= ~0x0F;
+					mmc3.reg[index] |= ((V >> 1) & 0x0F);
+				} else { /* MSB nibble */
+					mmc3.reg[index] &= ~0xF0;
+					mmc3.reg[index] |= ((V << 4) & 0xF0);
+				}
+				MMC3_FixCHR();
+			} else if ((mmc3.cmd >= 0x25) && (mmc3.cmd <= 0x26)) { /* Scrambled PRG register */
+				V = ((V << 1) & 0x08) | ((V >> 1) & 0x04) | ((V >> 3) & 0x02) | ((V >> 5) & 0x01);
+				mmc3.reg[6 | (mmc3.cmd & 0x01)] = V;
+				MMC3_FixPRG();
+			}
+		}
 	}
 }
 
 static void M219Power(void) {
-	reg[0] = 0;
-	reg[1] = 3;
+	extMode = FALSE;
+	reg = 3;
 	MMC3_Power();
 	SetWriteHandler(0x5000, 0x5FFF, M219WriteOuter);
 	SetWriteHandler(0x8000, 0x9FFF, M219WriteASIC);
 }
 
 static void M219Reset(void) {
-	reg[0] = 0;
-	reg[1] = 3;
+	extMode = FALSE;
+	reg = ~0;
 	MMC3_Reset();
 }
 
@@ -107,5 +110,5 @@ void Mapper219_Init(CartInfo *info) {
 	MMC3_cwrap = M219CW;
 	info->Power = M219Power;
 	info->Reset = M219Reset;
-	AddExState(reg, 2, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -177,7 +177,7 @@ void VRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {
 		info->SaveGame[0] = WRAM;
 		info->SaveGameLen[0] = WRAMSIZE;
 	}
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	info->Power = VRC7_Power;
 	info->Close = VRC7_Close;

@@ -69,5 +69,5 @@ void Mapper193_Init(CartInfo *info) {
 	info->Reset = M193Reset;
 	info->Power = M193Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -88,5 +88,5 @@ void Mapper398_Init(CartInfo *info) {
 	PPU_hook = M398PPUHook;
 	VRC24_pwrap = M398PW;
 	VRC24_cwrap = M398CW;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

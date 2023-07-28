@@ -25,12 +25,18 @@
 static uint8 mode;
 static uint8 latch;
 
+static SFORMAT StateRegs[] = {
+	{ &mode, 1, "MODE" },
+	{ &latch, 1, "LATC" },
+	{ 0 }
+};
+
 static void M297PRG(uint32 A, uint8 V) {
-	setprg16(A, (V & 0x07) | 0x08);
+	setprg16(A, 0x08 | (V & 0x07));
 }
 
 static void M297CHR(uint32 A, uint8 V) {
-	setchr4(A, (V & 0x1F) | 0x20);
+	setchr4(A, 0x20 | (V & 0x1F));
 }
 
 static void Sync(void) {
@@ -73,7 +79,7 @@ static void M297Power(void) {
 	SetWriteHandler(0x8000, 0xFFFF, M297Latch);
 }
 
-static void M297StateRestore(int version) {
+static void StateRestore(int version) {
 	Sync();
 }
 
@@ -82,7 +88,6 @@ void Mapper297_Init(CartInfo *info) {
 	info->Power = M297Power;
 	MMC1_cwrap = M297CHR;
 	MMC1_pwrap = M297PRG;
-	GameStateRestore = M297StateRestore;
-	AddExState(&latch, 1, 0, "LATC");
-	AddExState(&mode, 1, 0, "MODE");
+	GameStateRestore = StateRestore;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

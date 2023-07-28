@@ -88,5 +88,5 @@ void Mapper519_Init(CartInfo *info) {
 	Latch_Init(info, Sync, M519Read, 0, 0);
 	info->Reset = M519Reset;
 	info->Power = M519Power;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

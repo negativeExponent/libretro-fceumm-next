@@ -141,7 +141,7 @@ void MMC2_Init(CartInfo *info, int wram, int battery) {
 	PPU_hook = MMC2PPUHook;
 
 	GameStateRestore = MMC2_Restore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	if (wram) {
 		WRAMSIZE = wram * 1024;

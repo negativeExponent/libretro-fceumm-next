@@ -117,5 +117,5 @@ void Mapper040_Init(CartInfo *info) {
 	MapIRQHook = M040IRQHook;
 	GameStateRestore = StateRestore;
 	submapper = info->submapper;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

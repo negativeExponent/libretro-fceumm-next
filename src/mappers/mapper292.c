@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2015 CaH4e3
@@ -33,53 +33,46 @@
 
 static uint8 reg[3];
 
+static SFORMAT StateRegs[] = {
+	{ reg, 3, "REGS" },
+	{ 0 }
+};
+
 static void M292PW(uint32 A, uint8 V) {
 	if (A == 0x8000) {
-		setprg8(A, reg[0] & 0x1F); /* the real hardware has this bank overrided with it's own register,
-		                                * but MMC3 prg swap still works and you can actually change bank C000 at the
-		                                * same time if use 0x46 cmd
-		                                */
-	} else {
-		setprg8(A, V);
+		V = reg[0] & 0x1F;
 	}
+	setprg8(A, V);
 }
 
 static void M292CW(uint32 A, uint8 V) {
-	setchr2(0x0000, (MMC3_GetCHRBank(0) >> 1) ^ reg[1]);
-	setchr2(0x0800, (MMC3_GetCHRBank(2) >> 1) | ((reg[2] & 0x40) << 1));
+	setchr2(0x0000, (mmc3.reg[0] >> 1) ^ reg[1]);
+	setchr2(0x0800, (mmc3.reg[1] >> 1) ^ ((reg[2] & 0x40) << 1));
 	setchr4(0x1000, reg[2] & 0x3F);
 }
 
 static DECLFW(M292ProtWrite) {
-	if (!(A & 1)) {
-		reg[0] = V;
-		MMC3_FixPRG();
-	}
+	reg[0] = V;
+	MMC3_FixPRG();
 }
 
 static DECLFR(M292ProtRead) {
-	if (!fceuindbg) {
-		if (!(A & 1)) {
-			int tmp;
-			if ((reg[0] & 0xE0) == 0xC0) {
-				reg[1] = ARead[0x6a](0x6a);	/* program can latch some data from the BUS, but I can't say how exactly, */
-			} else {							/* without more equipment and skills ;) probably here we can try to get any write */
-				reg[2] = ARead[0xff](0xff);	/* before the read operation */
-			}
-			/* TODO: Verify that nothing breaks here */
-			tmp = mmc3.cmd;
-			mmc3.cmd &= 0x7F;
-			MMC3_FixCHR();
-			mmc3.cmd = tmp;	/* there are more different behaviour of the board that's not used by game itself, so unimplemented here and */
-		}					/* actually will break the current logic ;) */
+	int tmp;
+
+	if ((reg[0] & 0xE0) == 0xC0) {
+		reg[1] = ARead[0x6A](0x6A);
+	} else {
+		reg[2] = ARead[0xFF](0xFF);
 	}
+	MMC3_FixCHR();
 	return 0;
 }
 
 static void M292Power(void) {
+	reg[0] = reg[1] = reg[2] = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x6FFF, M292ProtWrite);
-	SetReadHandler(0x6000, 0x6FFF, M292ProtRead);
+	SetWriteHandler(0x6000, 0x7FFF, M292ProtWrite);
+	SetReadHandler(0x6000, 0x7FFF, M292ProtRead);
 }
 
 void Mapper292_Init(CartInfo *info) {
@@ -87,5 +80,5 @@ void Mapper292_Init(CartInfo *info) {
 	MMC3_pwrap = M292PW;
 	MMC3_cwrap = M292CW;
 	info->Power = M292Power;
-	AddExState(reg, 3, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

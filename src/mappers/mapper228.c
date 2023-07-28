@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
@@ -32,19 +32,43 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static void Sync(void) {
-	uint32 prgl, prgh, page = (latch.addr >> 7) & 0x3F;
-	if ((page & 0x30) == 0x30)
-		page -= 0x10;
-	prgl = prgh = (page << 1) + (((latch.addr >> 6) & 1) & ((latch.addr >> 5) & 1));
-	prgh += ((latch.addr >> 5) & 1) ^ 1;
+static uint8 *prgromData;
+static uint32 prgromSize;
 
-	setmirror(((latch.addr >> 13) & 1) ^ 1);
-	setprg16(0x8000, prgl);
-	setprg16(0xc000, prgh);
-	setchr8(((latch.data & 0x3) | ((latch.addr & 0xF) << 2)));
+static void Sync(void) {
+	if (latch.addr & 0x20) {
+		setprg16(0x8000, (latch.addr >> 6) & 0x7F);
+		setprg16(0xC000, (latch.addr >> 6) & 0x7F);
+	} else {
+		setprg32(0x8000, (latch.addr >> 7) & 0x3F);
+	}
+	setchr8(((latch.addr << 2) & 0x3C) | (latch.data & 0x3));
+	setmirror(((latch.addr >> 13) & 0x01) ^ 0x01);
+}
+
+static void M228Close(void) {
+	Latch_Close();
+	if (prgromData) {
+		FCEU_gfree(prgromData);
+		prgromData = NULL;
+		prgromSize = 0;
+	}
 }
 
 void Mapper228_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
+	info->Close = M228Close;
+	if ((ROM.prg.size * 16 * 1024) == 0x180000) {
+		int i;
+		prgromSize = 0x200000;
+		prgromData = (uint8 *)FCEU_gmalloc(prgromSize);
+		for (i = 0; i < (ROM.prg.size * 16 * 1024); i++) {
+			prgromData[i] = ROM.prg.data[i];
+		}
+		for (i = 0x000000; i < 0x080000; i++) {
+			prgromData[0x180000 + i] = prgromData[0x100000 + i];
+			prgromData[0x100000 + i] = (i >> 8) & 0xFF;
+		}
+		SetupCartPRGMapping(0, prgromData, prgromSize, 0);
+	}
 }

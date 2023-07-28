@@ -67,5 +67,5 @@ void Mapper096_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 1);
 	info->Power = M096Power;
 	PPU_hook = M096PPUHook;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

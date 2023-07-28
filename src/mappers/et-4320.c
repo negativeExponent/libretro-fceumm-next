@@ -116,6 +116,7 @@ static DECLFW(BMC810131C_WriteCMD) {
 			MMC3_CMDWrite(A, V);
 			break;
 		}
+		break;
 	default:
 		MMC3_CMDWrite(A, V);
 		break;

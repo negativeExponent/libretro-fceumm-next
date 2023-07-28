@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,33 +37,35 @@ static uint8 IRQa;
 
 static uint16 lastAddr;
 
-static SFORMAT StateRegs[] =
-{
-	{ prg, 2, "PRG" },
-	{ chr, 8, "CHR" },
+static SFORMAT StateRegs[] = {
+	{ prg, 2, "PREG" },
+	{ chr, 8, "CREG" },
 	{ &mirr, 1, "MIRR" },
-	{ &IRQCount, 1, "CNTR" },
 	{ &pal_mirr, 1, "PALM" },
+	{ &IRQCount, 1, "CNTR" },
 	{ &IRQa, 1, "CCLK" },
+	{ &lastAddr, 1, "LADR" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 i;
 	setprg8(0x8000, prg[0]);
-	setprg8(0xa000, prg[1]);
-	setprg16(0xc000, -1);
-	for (i = 0; i < 8; ++i) {
-		setchr1(0x400 * i, chr[i]);
-	}
-	switch (pal_mirr) {
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
-	default:
-		switch (mirr) {
-		case 0: setmirror(MI_V); break;
-		case 1: setmirror(MI_H); break;
-		}
+	setprg8(0xA000, prg[1]);
+	setprg16(0xC000, ~0);
+
+	setchr1(0x0000, chr[0]);
+	setchr1(0x0400, chr[1]);
+	setchr1(0x0800, chr[2]);
+	setchr1(0x0C00, chr[3]);
+	setchr1(0x1000, chr[4]);
+	setchr1(0x1400, chr[5]);
+	setchr1(0x1800, chr[6]);
+	setchr1(0x1C00, chr[7]);
+
+	if (pal_mirr & 0x02) {
+		setmirror(MI_0 + (pal_mirr & 0x01));
+	} else {
+		setmirror((mirr & 0x01) ^ 0x01);
 	}
 }
 
@@ -73,7 +76,7 @@ static DECLFW(M272Write) {
 		prg[0] = V;
 		break;
 	case 0x9000:
-		mirr = V & 1;
+		mirr = V;
 		break;
 	case 0xA000:
 		prg[1] = V;
@@ -95,7 +98,7 @@ static DECLFW(M272Write) {
 	/* writes to PAL chip */
 	switch (A & 0xC00C) {
 	case 0x8004:
-		pal_mirr = V & 3;
+		pal_mirr = V;
 		break;
 	case 0x800c:
 		X6502_IRQBegin(FCEU_IQEXT);
@@ -129,12 +132,12 @@ static void M272Reset(void) {
 
 static void M272Power(void) {
 	M272Reset();
-	SetWriteHandler(0x8000, 0xFFFF, M272Write);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, M272Write);
 }
 
 static void M272Hook(uint32 A) {
-	if ((lastAddr & 0x2000) && (~A & 0x2000)) {
+	if ((lastAddr & 0x2000) && !(A & 0x2000)) {
 		if (IRQa) {
 			IRQCount++;
 			if (IRQCount == 84) {
@@ -155,5 +158,5 @@ void Mapper272_Init(CartInfo *info) {
 	info->Reset = M272Reset;
 	PPU_hook = M272Hook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -88,5 +88,5 @@ void Mapper319_Init(CartInfo *info) {
 	Latch_Init(info, M319Sync, NULL, 0, 0);
 	info->Power = M319Power;
 	info->Reset = M319Reset;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

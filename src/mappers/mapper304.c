@@ -95,5 +95,5 @@ void Mapper304_Init(CartInfo *info) {
 	info->Power = M304Power;
 	MapIRQHook = M304IRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

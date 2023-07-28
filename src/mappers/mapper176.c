@@ -466,7 +466,7 @@ void Init(CartInfo *info) {
 	info->Close = M176Close;
 	GameHBIRQHook = M176HBIRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	if (CHRRAMSIZE) {
 		CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

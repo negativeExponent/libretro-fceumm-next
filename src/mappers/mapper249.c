@@ -23,24 +23,6 @@
 
 static uint8 reg;
 
-static uint8 prg_pattern[4][4] = {
-	{ 3, 4, 2, 1 },
-	{ 4, 3, 1, 2 },
-	{ 1, 2, 3, 4 },
-	{ 2, 1, 4, 3 },
-};
-
-static uint8 chr_pattern[8][6] = {
-	{ 5, 2, 6, 7, 4, 3 },
-	{ 4, 5, 3, 2, 7, 6 },
-	{ 2, 3, 4, 5, 6, 7 },
-	{ 6, 4, 2, 3, 7, 5 },
-	{ 5, 3, 7, 6, 2, 4 },
-	{ 4, 2, 5, 6, 7, 3 },
-	{ 3, 6, 4, 5, 2, 7 },
-	{ 2, 5, 6, 7, 3, 4 },
-};
-
 static uint32 scrambleBankOrder(uint32 V, const uint8 *source, const uint8 *target, uint32 length) {
 	uint32 bank = 0;
 	uint32 bit = 0;
@@ -61,14 +43,28 @@ static uint32 scrambleBankOrder(uint32 V, const uint8 *source, const uint8 *targ
 }
 
 static void M249PW(uint32 A, uint8 V) {
+	static const uint8 prg_pattern[4][4] = {
+		{ 3, 4, 2, 1 },
+		{ 4, 3, 1, 2 },
+		{ 1, 2, 3, 4 },
+		{ 2, 1, 4, 3 },
+	};
 	uint32 bank = scrambleBankOrder(V, prg_pattern[reg & 0x03], prg_pattern[(iNESCart.mapper == 249) ? 0 : 2], 4);
-
 	setprg8(A, bank);
 }
 
 static void M249CW(uint32 A, uint8 V) {
+	static const uint8 chr_pattern[8][6] = {
+		{ 5, 2, 6, 7, 4, 3 },
+		{ 4, 5, 3, 2, 7, 6 },
+		{ 2, 3, 4, 5, 6, 7 },
+		{ 6, 4, 2, 3, 7, 5 },
+		{ 5, 3, 7, 6, 2, 4 },
+		{ 4, 2, 5, 6, 7, 3 },
+		{ 3, 6, 4, 5, 2, 7 },
+		{ 2, 5, 6, 7, 3, 4 },
+	};
 	uint32 bank = scrambleBankOrder(V, chr_pattern[reg & 0x07], chr_pattern[(iNESCart.mapper == 249) ? 0 : 2], 6);
-
 	setchr1(A, bank);
 }
 

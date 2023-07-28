@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
@@ -25,9 +25,15 @@
 #include "mmc3.h"
 
 static uint8 reg;
+static uint8 dipsw;
 
 static uint8 *CHRRAM;
-static uint8 dipsw;
+
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ &dipsw, 1, "DPSW" },
+	{ 0 }
+};
 
 static void M262CW(uint32 A, uint8 V) {
 	if (reg & 0x40) {
@@ -80,8 +86,9 @@ void Mapper262_Init(CartInfo *info) {
 	info->Power = M262Power;
 	info->Reset = M262Reset;
 	info->Close = M262Close;
+	AddExState(StateRegs, ~0, 0, NULL);
+
 	CHRRAM = (uint8*)FCEU_gmalloc(8192);
 	SetupCartCHRMapping(0x10, CHRRAM, 8192, 1);
-	AddExState(&reg, 1, 0, "EXPR");
-	AddExState(&dipsw, 1, 0, "DPSW");
+	AddExState(CHRRAM, 8192, 0, "CHRR");
 }

@@ -32,12 +32,12 @@ typedef enum {
 	VRC4e,		/* Mapper 23 */
 	VRC4f,		/* Mapper 23 */
 	VRC4_544,
-	VRC4_559,
+	VRC4_559
 } VRC24Type;
 
 enum {
 	VRC2 = 0,
-	VRC4,
+	VRC4
 };
 
 typedef struct __VRC24 {

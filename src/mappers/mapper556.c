@@ -172,7 +172,7 @@ void Mapper556_Init(CartInfo *info) {
 	MapIRQHook = M556CPUIRQHook;
 	GameHBIRQHook = M556HBIRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
 	if (WRAMSIZE) {

@@ -77,7 +77,7 @@ static void StateRestore(int version) {
 void Mapper104_Init(CartInfo *info) {
 	info->Power = M104Power;
 	info->Close = M104Close;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);

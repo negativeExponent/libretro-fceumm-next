@@ -139,7 +139,7 @@ void MMC4_Init(CartInfo *info, int wram, int battery) {
 	PPU_hook = MMC4PPUHook;
 
 	GameStateRestore = MMC4_Restore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	if (wram) {
 		WRAMSIZE = wram * 1024;

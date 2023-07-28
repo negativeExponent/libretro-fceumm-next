@@ -23,15 +23,20 @@
 
 static uint8 reg;
 
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
+
 static void M291CW(uint32 A, uint8 V) {
-	setchr1(A, V | ((reg << 2) & 0x100));
+	setchr1(A, ((reg << 2) & 0x100) | (V & 0xFF));
 }
 
 static void M291PW(uint32 A, uint8 V) {
 	if (reg & 0x20) {
-		setprg32(0x8000, ((reg >> 1) & 0x03) | ((reg >> 4) & 0x04));
+		setprg32(0x8000, ((reg >> 4) & 0x04) | ((reg >> 1) & 0x03));
 	} else {
-		setprg8(A, (V & 0x0F) | ((reg >> 2) & 0x10));
+		setprg8(A, ((reg >> 2) & 0x10) | (V & 0x0F));
 	}
 }
 

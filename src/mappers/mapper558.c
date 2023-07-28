@@ -130,7 +130,7 @@ void Mapper558_Init(CartInfo *info) {
 	GameHBIRQHook = M558HBIRQHook;
 
 	GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = info->PRGRamSize + (info->PRGRamSaveSize & ~0x7FF);
 	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);

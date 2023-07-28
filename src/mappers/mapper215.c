@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2011 CaH4e3
@@ -40,7 +40,7 @@
 
 static uint8 reg[4];
 
-static uint8 regperm[8][8] =
+static const uint8 regperm[8][8] =
 {
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0, 2, 6, 1, 7, 3, 4, 5 },
@@ -52,7 +52,7 @@ static uint8 regperm[8][8] =
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },		/* empty */
 };
 
-static uint16 adrperm[8][8] = {
+static const uint16 adrperm[8][8] = {
 	{ 0x8000, 0x8001, 0xA000, 0xA001, 0xC000, 0xC001, 0xE000, 0xE001 },
 	{ 0xA001, 0xA000, 0x8000, 0xC000, 0x8001, 0xC001, 0xE000, 0xE001 },
 	{ 0x8000, 0x8001, 0xA000, 0xA001, 0xC000, 0xC001, 0xE000, 0xE001 },	/* unused */
@@ -63,7 +63,7 @@ static uint16 adrperm[8][8] = {
 	{ 0x8000, 0x8001, 0xA000, 0xA001, 0xC000, 0xC001, 0xE000, 0xE001 },	/* empty */
 };
 
-static uint8 protarray[8][8] = {
+static const uint8 protarray[8][8] = {
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, /* 0 Super Hang-On               */
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00 }, /* 1 Monkey King                 */
 	{ 0x00, 0x00, 0x00, 0x00, 0x03, 0x04, 0x00, 0x00 }, /* 2 Super Hang-On/Monkey King   */
@@ -84,15 +84,18 @@ static void M215CW(uint32 A, uint8 V) {
 		base = (reg[1] << 6) & 0x300;
 	}
 
-	setchr1(A, (base & ~mask) | (((reg[1] << 2) & 0x80) & ~mask) | (V & mask));
+	base = (base & ~mask) | (((reg[1] << 2) & 0x80) & ~mask);
+	setchr1(A, base | (V & mask));
 }
 
 static void M215PW(uint32 A, uint8 V) {
 	uint16 mask = (reg[0] & 0x40) ? 0x0F : 0x1F;
-	uint16 base = (reg[1] << 5) & 0x60;
+	uint16 base;
 
 	if (iNESCart.submapper == 1) {
-		base |= (reg[1] << 4) & 0x80;
+		base = ((reg[1] << 5) & 0x60) | ((reg[1] << 4) & 0x80);
+	} else {
+		base = (reg[1] << 5) & 0x60;
 	}
 
 	if (reg[0] & 0x80) { /* NROM */
@@ -110,11 +113,11 @@ static void M215PW(uint32 A, uint8 V) {
 }
 
 static DECLFR(M215ProtRead) {
-	return (X.DB & ~0x0F) | (protarray[reg[2] & 0x07][A & 0x07] & 0x0F);
+	return (X.DB & ~0x0F) | (protarray[reg[2]][A & 0x07] & 0x0F);
 }
 
 static DECLFW(M215Write) {
-	A = adrperm[reg[3] & 0x07][((A >> 12) & 0x06) | (A & 0x01)];
+	A = adrperm[reg[3]][((A >> 12) & 0x06) | (A & 0x01)];
 	switch (A & 0xE001) {
 	case 0x8000:
 		MMC3_Write(A, (V & 0xC0) | regperm[reg[3]][V & 0x07]);
@@ -138,10 +141,10 @@ static DECLFW(M215Write5) {
 		MMC3_FixCHR();
 		break;
 	case 2:
-		reg[2] = V;
+		reg[2] = V & 0x07;
 		break;
 	case 7:
-		reg[3] = V;
+		reg[3] = V & 0x07;
 		break;
 	}
 }

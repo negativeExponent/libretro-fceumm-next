@@ -52,5 +52,5 @@ static void StateRestore(int version) {
 void Mapper140_Init(CartInfo *info) {
 	info->Power = M140Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

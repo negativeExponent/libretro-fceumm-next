@@ -80,5 +80,5 @@ void Mapper389_Init(CartInfo *info) {
 	info->Power = M389Power;
 	info->Reset = M389Reset;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

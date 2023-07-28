@@ -26,60 +26,50 @@
 #include "latch.h"
 
 static uint8 reg[2];
-static uint8 solderpad;
+static uint8 dipsw;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ reg, 2, "REGS" },
-	{ &solderpad, 1, "PADS" },
+	{ &dipsw, 1, "DPSW" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	uint32 bank = reg[1] & 0x7F;
-	switch (reg[0] & 3) {
-	case 0: /* NROM-128 */
-		setprg16(0x8000, bank);
-		setprg16(0xC000, bank);
-		break;
-	case 1: /* NROM-256 */
-		setprg32(0x8000, bank >> 1);
-		break;
-	case 2: /* UNROM */
-		setprg16(0x8000, bank | (latch.data & 7));
-		setprg16(0xC000, bank | 7);
-		break;
-	case 3: /* A14-A16=1 regardless of CPU A14 */
-		setprg16(0x8000, bank | 7);
-		setprg16(0xC000, bank | 7);
-		break;
+
+	if (reg[0] & 0x02) {
+		setprg16(0x8000, (bank & ~0x07) | ((reg[0] & 0x01) ? 0x07 : (latch.data & 0x07)));
+		setprg16(0xC000, bank | 0x07);
+	} else {
+		setprg16(0x8000, bank & ~(reg[0] & 0x01));
+		setprg16(0xC000, bank |  (reg[0] & 0x01));
 	}
 	/* CHR-RAM write-protect */
-	SetupCartCHRMapping(0, CHRptr[0], 0x2000, ((reg[0] >> 2) & 1) ^ 1);
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, ((reg[0] >> 2) & 0x01) ^ 0x01);
 	setchr8(0);
-	setmirror(((reg[0] >> 3) & 1) ^ 1);
+	setmirror(((reg[0] >> 3) & 0x01) ^ 0x01);
 }
 
-static DECLFR(ReadPad) {
-	return (X.DB & ~3) | (solderpad & 3);
+static DECLFR(M289Read) {
+	return (X.DB & ~0x03) | (dipsw & 0x03);
 }
 
-static DECLFW(WriteReg) {
-	reg[A & 1] = V;
+static DECLFW(M289Write) {
+	reg[A & 0x01] = V;
 	Sync();
 }
 
 static void M289Power(void) {
+	dipsw = 0;
 	reg[0] = reg[1] = 0;
-	solderpad = 0;
 	Latch_Power();
-	SetReadHandler(0x6000, 0x7FFF, ReadPad);
-	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
+	SetReadHandler(0x6000, 0x7FFF, M289Read);
+	SetWriteHandler(0x6000, 0x7FFF, M289Write);
 }
 
 static void M289Reset(void) {
+	dipsw++;
 	reg[0] = reg[1] = 0;
-	solderpad++;
 	Latch_RegReset();
 }
 
@@ -87,5 +77,5 @@ void Mapper289_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M289Power;
 	info->Reset = M289Reset;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

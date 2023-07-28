@@ -63,5 +63,5 @@ void Mapper360_Init(CartInfo *info) {
 	info->Reset = M360Reset;
 	info->Power = M360Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

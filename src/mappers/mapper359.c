@@ -213,7 +213,7 @@ void Mapper359_Init(CartInfo *info) {
 	MapIRQHook = M359CPUHook;
 	GameHBIRQHook = M359IRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }
 
 void Mapper540_Init(CartInfo *info) {
@@ -221,5 +221,5 @@ void Mapper540_Init(CartInfo *info) {
 	MapIRQHook = M359CPUHook;
 	GameHBIRQHook = M359IRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

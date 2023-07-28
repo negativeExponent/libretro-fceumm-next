@@ -58,5 +58,5 @@ void Mapper352_Init(CartInfo *info) {
 	info->Power = M352Power;
 	info->Reset = M352Reset;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

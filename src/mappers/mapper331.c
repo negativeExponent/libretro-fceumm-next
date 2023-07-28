@@ -80,5 +80,5 @@ void Mapper331_Init(CartInfo *info) {
 	info->Power = M331Power;
 	PPU_hook = M331PPUHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

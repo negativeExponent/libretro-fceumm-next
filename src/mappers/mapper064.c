@@ -160,7 +160,7 @@ void Mapper064_Init(CartInfo *info) {
 	GameHBIRQHook = M064HBHook;
 	MapIRQHook = M064CPUHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }
 
 void Mapper158_Init(CartInfo *info) {

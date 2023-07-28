@@ -87,5 +87,5 @@ void Mapper050_Init(CartInfo *info) {
 	info->Power = M050Power;
 	MapIRQHook = M050IRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

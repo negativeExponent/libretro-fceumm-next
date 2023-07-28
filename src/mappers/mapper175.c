@@ -75,5 +75,5 @@ void Mapper175_Init(CartInfo *info) {
 	info->Power = M175Power;
 	GameStateRestore = StateRestore;
 
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

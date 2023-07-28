@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2015 CaH4e3
@@ -37,12 +37,16 @@
 
 static uint8 reg;
 
-static void M259PW(uint32 A, uint8 V) {
-	uint32 bank = reg & 0xF;
-	uint32 mode = (reg & 8) >> 3;
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
 
-	setprg16(0x8000, (bank & ~mode));
-	setprg16(0xC000, (bank |  mode));
+static void M259PW(uint32 A, uint8 V) {
+	uint8 mode = (reg & 0x08) >> 3;
+
+	setprg16(0x8000, ((reg & 0x0F) & ~mode));
+	setprg16(0xC000, ((reg & 0x0F) |  mode));
 }
 
 static DECLFW(M259Write) {
@@ -62,5 +66,5 @@ void Mapper259_Init(CartInfo *info) {
 	MMC3_Init(info, 0, 0);
 	MMC3_pwrap = M259PW;
 	info->Power = M259Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

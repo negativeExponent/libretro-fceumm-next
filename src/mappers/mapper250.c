@@ -25,12 +25,12 @@ static DECLFW(M250Write) {
     MMC3_Write(((A & 0xE000) | ((A & 0x400) >> 10)), (A & 0xFF));
 }
 
-static void M250_Power(void) {
+static void M250Power(void) {
 	MMC3_Power();
     SetWriteHandler(0x8000, 0xFFFF, M250Write);
 }
 
 void Mapper250_Init(CartInfo *info) {
 	MMC3_Init(info, 8, info->battery);
-	info->Power = M250_Power;
+	info->Power = M250Power;
 }

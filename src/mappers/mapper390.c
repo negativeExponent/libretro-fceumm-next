@@ -86,5 +86,5 @@ void Mapper390_Init(CartInfo *info) {
 	info->Reset = M390Reset;
 	info->Power = M390Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

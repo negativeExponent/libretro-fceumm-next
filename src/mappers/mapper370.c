@@ -101,6 +101,7 @@ static DECLFW(M370WriteCMD) {
 			MMC3_CMDWrite(A, V);
 			break;
 		}
+		break;
 	default:
 		MMC3_CMDWrite(A, V);
 		break;

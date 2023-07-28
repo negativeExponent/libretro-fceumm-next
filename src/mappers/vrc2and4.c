@@ -272,7 +272,7 @@ void VRC24_Init(CartInfo *info, uint8 vrc4, uint32 A0, uint32 A1, int wram, int 
 		}
 	}
 
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	info->Power = VRC24_Power;
 	info->Close = VRC24_Close;

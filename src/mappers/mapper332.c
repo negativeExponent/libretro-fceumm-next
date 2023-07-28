@@ -85,5 +85,5 @@ void Mapper332_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Reset = M332Reset;
 	info->Power = M332Power;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -1,8 +1,9 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
  *  Copyright (C) 2020
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,17 +23,17 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 unrom;
+static uint8 mode;
 
 static SFORMAT StateRegs[] = {
-	{ &unrom,   1, "UROM" },
+	{ &mode,   1, "UROM" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (unrom) { /* Contra mode */
-		setprg16(0x8000, (ROM.prg.size & 0xC0) | (latch.data & 7));
-		setprg16(0xC000, (ROM.prg.size & 0xC0) | 7);
+	if (mode) { /* Contra mode */
+		setprg16(0x8000, (ROM.prg.size & 0xC0) | (latch.data & 0x07));
+		setprg16(0xC000, (ROM.prg.size & 0xC0) | 0x07);
 		setchr8(0);
 		setmirror(MI_V);
 	} else {
@@ -44,9 +45,7 @@ static void Sync(void) {
 		} else {
 			setprg32(0x8000, bank);
 		}
-
 		setchr8(0);
-
 		if (latch.addr & 0x400) {
 			setmirror(MI_0);
 		} else {
@@ -58,7 +57,7 @@ static void Sync(void) {
 static DECLFR(M235Read) {
 	uint8 bank = ((latch.addr >> 3) & 0x60) | (latch.addr & 0x1F);
 
-	if (!unrom && (bank >= (PRGsize[0] / 32768))) {
+	if (!mode && (bank >= (PRGsize[0] / 32768))) {
 		return X.DB;
 	}
 	return CartBR(A);
@@ -66,7 +65,7 @@ static DECLFR(M235Read) {
 
 static void M235Reset(void) {
 	if ((ROM.prg.size * 16384) & 0x20000) {
-		unrom = (unrom + 1) & 1;
+		mode = (mode + 1) & 1;
 	}
 	Latch_RegReset();
 }
@@ -74,5 +73,5 @@ static void M235Reset(void) {
 void Mapper235_Init(CartInfo *info) {
 	Latch_Init(info, Sync, M235Read, 0, 0);
 	info->Reset = M235Reset;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

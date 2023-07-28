@@ -111,7 +111,7 @@ void Mapper164_Init(CartInfo *info) {
 	info->Close = M164Close;
 
 	GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = info->iNES2 ? (info->PRGRamSize + (info->PRGRamSaveSize & ~0x7FF)) : 8192;
 	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);

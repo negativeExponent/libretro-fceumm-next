@@ -13,6 +13,7 @@ Recent Changes (in no particular order):
 - add volume controls for expansion audio (FDS, MMC5, VRC6, VRC7, Namco163, Sunsoft5B)
 - fix to audio controls not muting some channels when in low quality mode
 - add missing state variables, fixing runahead compatibility
+- Assign F12 as Hard Reset (PowerNES) hotkey
 - misc changes under the hood
 
 The core can be compiled similarly to libretro-fceumm. and be a drop-in replacement.

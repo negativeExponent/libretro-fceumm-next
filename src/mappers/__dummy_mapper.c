@@ -94,5 +94,5 @@ void MapperNNN_Init(CartInfo *info) {
 		info->SaveGameLen[0] = WRAMSIZE;
 	}
 #endif
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

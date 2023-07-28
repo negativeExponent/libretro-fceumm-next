@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2008 CaH4e3
@@ -38,25 +38,36 @@
 #include "mmc3.h"
 
 static uint8 reg;
-static uint8 dipsw = 0;
+static uint8 dipsw;
+
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ &dipsw, 1, "DPSW" },
+	{ 0 }
+};
 
 static void M287CW(uint32 A, uint8 V) {
-	setchr1(A, (V & 0x7F) | ((reg & 0x07) << 7));
+	uint16 base = reg & 0x07;
+
+	setchr1(A, (base << 7) | (V & 0x7F));
 }
 
 static void M287PW(uint32 A, uint8 V) {
-	if (reg & (8 | (dipsw && ((ROM.prg.size * 16) <= 512) ? 4 : 0))) {
+	uint16 mode = reg & ((dipsw && ((ROM.prg.size * 16) <= 512)) ? 0x0C : 0x08);
+	uint16 base = reg & 0x07;
+
+	if (mode) {
 		/* 32K Mode */
-		setprg32(0x8000, ((reg << 2) & 0x1C) | ((reg >> 4) & 0x03));
+		setprg32(0x8000, (base << 2) | ((reg >> 4) & 0x03));
 		/* FCEU_printf("32K mode: bank:%02x\n", ((reg >> 4) & 3) | ((reg & 7) << 2)); */
 	} else {
 		/* MMC3 Mode */
-		setprg8(A, ((reg & 7) << 4) | (V & 0x0F));
+		setprg8(A, (base << 4) | (V & 0x0F));
 		/* FCEU_printf("MMC3: %04x:%02x\n", A, (V & 0x0F) | ((reg & 7) << 4)); */
 	}
 }
 
-static DECLFW(M287LoWrite) {
+static DECLFW(M287WriteReg) {
 	/*	printf("Wr: A:%04x V:%02x\n", A, V); */
 	if (MMC3_WramIsWritable()) {
 		reg = A;
@@ -74,7 +85,7 @@ static void M287Reset(void) {
 static void M287Power(void) {
 	reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M287LoWrite);
+	SetWriteHandler(0x6000, 0x7FFF, M287WriteReg);
 }
 
 void Mapper287_Init(CartInfo *info) {

@@ -233,7 +233,7 @@ void FME7_Init(CartInfo *info, int wram, int battery) {
 	MapIRQHook = FME7_IRQHook;
 
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	FME7Sound_ESI();
 }

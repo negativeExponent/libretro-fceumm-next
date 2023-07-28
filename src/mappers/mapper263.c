@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
@@ -25,25 +25,20 @@
 #include "mmc3.h"
 
 static uint32 unscrambleAddr(uint32 A) {
-	return ((A & 0xE000) | ((A >> 12) & 1));
+	return ((A & 0xE000) | ((A >> 12) & 0x01));
 }
 
 static uint8 unscrambleData(uint8 V) {
-	return ((V & 0xD8) | ((V & 0x20) >> 4) | ((V & 4) << 3) | ((V & 2) >> 1) | ((V & 1) << 2));
+	return ((V & 0xD8) | ((V & 0x20) >> 4) | ((V & 0x04) << 3) | ((V & 0x02) >> 1) | ((V & 0x01) << 2));
 }
 
-static DECLFW(M263CMDWrite) {
-	MMC3_CMDWrite(unscrambleAddr(A), unscrambleData(V));
-}
-
-static DECLFW(M263IRQWrite) {
-	MMC3_IRQWrite(unscrambleAddr(A), unscrambleData(V));
+static DECLFW(M263Write) {
+	MMC3_Write(unscrambleAddr(A), unscrambleData(V));
 }
 
 static void M263Power(void) {
 	MMC3_Power();
-	SetWriteHandler(0x8000, 0xA000, M263CMDWrite);
-	SetWriteHandler(0xC000, 0xF000, M263IRQWrite);
+	SetWriteHandler(0x8000, 0xFFFF, M263Write);
 }
 
 void Mapper263_Init(CartInfo *info) {

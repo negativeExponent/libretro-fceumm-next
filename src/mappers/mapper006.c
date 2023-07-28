@@ -144,7 +144,7 @@ void Mapper006_Init(CartInfo *info) {
 		info->SaveGameLen[0] = WRAMSIZE;
 	}
 
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }
 
 void Mapper017_Init(CartInfo *info) {

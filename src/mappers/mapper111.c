@@ -239,7 +239,7 @@ void Mapper111_Init(CartInfo* info) {
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 
 	flash = (info->battery != 0);

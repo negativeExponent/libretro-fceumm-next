@@ -110,7 +110,7 @@ static void StateRestore(int version) {
 void Mapper080_Init(CartInfo *info) {
 	info->Power = M080Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 	if (info->battery) {
 		info->SaveGame[0] = wram;
 		info->SaveGameLen[0] = 256;
@@ -121,5 +121,5 @@ void Mapper080_Init(CartInfo *info) {
 void Mapper207_Init(CartInfo *info) {
 	info->Power = M207Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

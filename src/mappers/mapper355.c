@@ -105,5 +105,5 @@ void UNL3DBlock_Init(CartInfo *info) {
 	info->Reset = UNL3DBlockReset;
 	MapIRQHook = UNL3DBlockIRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

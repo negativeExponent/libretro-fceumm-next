@@ -77,5 +77,5 @@ void Mapper314_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 1);
 	info->Power = M314Power;
 	info->Reset = M314Reset;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -126,5 +126,5 @@ void N118_Init(CartInfo *info, int wsize, int battery) {
 	info->Power = N118_Power;
 
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

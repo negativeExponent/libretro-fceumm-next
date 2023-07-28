@@ -499,7 +499,7 @@ enum SLOT_UPDATE_FLAG {
   UPDATE_TLL = 2,
   UPDATE_RKS = 4,
   UPDATE_EG = 8,
-  UPDATE_ALL = 255,
+  UPDATE_ALL = 255
 };
 
 static INLINE void request_update(OPLL_SLOT *slot, int flag) { slot->update_requests |= flag; }

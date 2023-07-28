@@ -128,7 +128,7 @@ void KS202_Init(CartInfo *info, void (*proc)(void), int wram, int battery) {
 	MapIRQHook = KS202IRQHook;
 	GameStateRestore = KS202_Restore;
 
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	if (wram) {
 		WRAMSIZE = 8 * 1024;

@@ -73,5 +73,5 @@ void Mapper463_Init(CartInfo *info) {
 	info->Power = M463Power;
 	info->Reset = M463Reset;
 	GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -36,8 +36,6 @@ static void M218Power(void) {
 }
 
 void Mapper218_Init(CartInfo *info) {
-	int i;
-
 	info->Power = M218Power;
 
 	/* similar to mapper 30, this mapper interprets the two bits in headers mirroring in idiosyncratic ways */
@@ -45,10 +43,13 @@ void Mapper218_Init(CartInfo *info) {
 
 	/* cryptic logic to effect the CHR RAM mappings by mapping 1k blocks to NTARAM according to how the pins are wired
 	 this could be done by bit logic, but this is self-documenting */
-
-	for (i = 0; i < 8; i++) {
-		VPageR[i] = &NTARAM[mapping[info->mirror2bits][i]];
-	}
-
+	VPageR[0] = &NTARAM[mapping[info->mirror2bits][0]];
+	VPageR[1] = &NTARAM[mapping[info->mirror2bits][1]];
+	VPageR[2] = &NTARAM[mapping[info->mirror2bits][2]];
+	VPageR[3] = &NTARAM[mapping[info->mirror2bits][3]];
+	VPageR[4] = &NTARAM[mapping[info->mirror2bits][4]];
+	VPageR[5] = &NTARAM[mapping[info->mirror2bits][5]];
+	VPageR[6] = &NTARAM[mapping[info->mirror2bits][6]];
+	VPageR[7] = &NTARAM[mapping[info->mirror2bits][7]];
 	PPUCHRRAM = 0xFF;
 }

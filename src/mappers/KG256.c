@@ -103,7 +103,7 @@ void KG256_Init(CartInfo *info) {
 
 	info->Power = KG256Power;
 	info->Reset = KG256Reset;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 	GameStateRestore = StateRestore;
 }
 

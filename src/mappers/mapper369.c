@@ -161,5 +161,5 @@ void Mapper369_Init(CartInfo *info) {
 	MapIRQHook = SMB2JIRQHook;
 	GameHBIRQHook = MMC3IRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

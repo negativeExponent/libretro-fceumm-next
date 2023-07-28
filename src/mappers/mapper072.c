@@ -78,7 +78,7 @@ static void StateRestore(int version) {
 void Mapper072_Init(CartInfo *info) {
 	info->Power = M072Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WSync = M072Sync;
 }
@@ -86,7 +86,7 @@ void Mapper072_Init(CartInfo *info) {
 void Mapper092_Init(CartInfo *info) {
 	info->Power = M072Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WSync = M092Sync;
 }

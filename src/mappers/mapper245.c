@@ -23,8 +23,13 @@
 
 static uint8 reg;
 
+static SFORMAT StateRegs[] = {
+    { &reg, 1, "REGS" },
+    { 0 }
+};
+
 static void M245PW(uint32 A, uint8 V) {
-	setprg8(A, (V & 0x3F) | ((MMC3_GetCHRBank(reg) & 0x02) << 5));
+	setprg8(A, ((mmc3.reg[0] & 0x02) << 5) | (V & 0x3F));
 }
 
 static void M245CW(uint32 A, uint8 V) {
@@ -32,39 +37,13 @@ static void M245CW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M245Write) {
-    A &= 0xE001;
-    switch (A) {
-    case 0x8001:
-        switch (mmc3.cmd & 0x07) {
-        case 0:
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-            mmc3.reg[mmc3.cmd & 0x07] = V;
-			MMC3_FixPRG();
-            break;
-        default:
-            MMC3_CMDWrite(A, V);
-            break;
-        }
-        break;
-    default:
-        MMC3_CMDWrite(A, V);
-        break;
+    if (A & 0x01) {
+        mmc3.reg[mmc3.cmd & 0x07] = V;
+    } else {
+        mmc3.cmd = V;
     }
-}
-
-static void M245PPUHook(uint32 A) {
-	if (A < 0x2000) {
-		A >>= 10;
-		A &= 3;
-		if (A != reg) {
-			reg = A;
-			MMC3_FixPRG();
-		}
-	}
+    MMC3_FixPRG();
+    MMC3_FixCHR();
 }
 
 static void M245Power(void) {
@@ -78,6 +57,5 @@ void Mapper245_Init(CartInfo *info) {
 	info->Power = M245Power;
 	MMC3_pwrap = M245PW;
 	MMC3_cwrap = M245CW;
-	PPU_hook = M245PPUHook;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

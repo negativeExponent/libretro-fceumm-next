@@ -416,7 +416,7 @@ void Mapper256_Init(CartInfo *info) {
 	GameHBIRQHook = M256IRQHook;
 	MapIRQHook = M256CpuHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAM = (uint8 *)FCEU_gmalloc(8192);
 	SetupCartPRGMapping(0x10, WRAM, 8192, 1);

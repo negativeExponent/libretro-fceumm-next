@@ -85,7 +85,7 @@ static void StateRestore(int version) {
 void Mapper108_Init(CartInfo *info) {
 	info->Power = M108Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	submapper = info->submapper;
 	if (!info->iNES2 || !submapper) {

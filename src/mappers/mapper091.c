@@ -155,7 +155,7 @@ static void StateRestore(int version) {
 void Mapper091_Init(CartInfo *info) {
 	info->Power = M091Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 	if (info->submapper == 1) {
 		MapIRQHook = M091IRQHook;
 	} else {

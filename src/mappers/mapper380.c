@@ -67,5 +67,5 @@ static void M380Reset(void) {
 void Mapper380_Init(CartInfo *info) {
 	Latch_Init(info, Sync, M380Read, 0, 0);
 	info->Reset = M380Reset;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

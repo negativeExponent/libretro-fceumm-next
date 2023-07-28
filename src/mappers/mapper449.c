@@ -61,5 +61,5 @@ static void M449Reset(void) {
 void Mapper449_Init(CartInfo *info) {
 	Latch_Init(info, Sync, M449Read, 0, 0);
 	info->Reset = M449Reset;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

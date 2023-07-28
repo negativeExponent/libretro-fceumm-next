@@ -120,5 +120,5 @@ void Mapper117_Init(CartInfo *info) {
 	info->Power = M117Power;
 	GameHBIRQHook = M117IRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

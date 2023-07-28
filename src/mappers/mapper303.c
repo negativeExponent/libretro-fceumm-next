@@ -122,7 +122,7 @@ void Mapper303_Init(CartInfo *info) {
 	info->Close = M303Close;
 	MapIRQHook = UNL7017IRQ;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);

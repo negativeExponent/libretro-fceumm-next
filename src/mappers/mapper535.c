@@ -96,7 +96,7 @@ void Mapper535_Init(CartInfo *info) {
 	info->Close = M535Close;
 	MapIRQHook = M535IRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);

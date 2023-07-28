@@ -78,7 +78,7 @@ static void StateRestore(int version) {
 void Mapper166_Init(CartInfo *info) {
 	info->Power = M166Power;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8 * 1024;
 	if (info->iNES2) {

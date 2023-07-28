@@ -237,7 +237,7 @@ void Mapper083_Init(CartInfo *info) {
 	info->Close = M083Close;
 	MapIRQHook = M083IRQHook;
 	GameStateRestore = M083StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	if (!info->iNES2) {
 		if (info->CHRRomSize >= (1024 * 1024)) {
@@ -265,7 +265,7 @@ void Mapper264_Init(CartInfo *info) {
 	info->Close = M083Close;
 	MapIRQHook = M083IRQHook;
 	GameStateRestore = M083StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	chrMode = 1;
 	prgMask = 0x0F;

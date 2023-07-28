@@ -86,5 +86,5 @@ void Mapper190_Init(CartInfo *info) {
 	SetupCartPRGMapping(0x10, WRAM, 0x2000, 1);
 	AddExState(WRAM, 0x2000, 0, "WRAM");
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

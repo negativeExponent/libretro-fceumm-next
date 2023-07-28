@@ -60,5 +60,5 @@ void Mapper431_Init(CartInfo *info) {
 	info->Power = M431Power;
 	info->Reset = M431Reset;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

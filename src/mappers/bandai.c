@@ -214,7 +214,7 @@ void BANDAI_Init(CartInfo *info, EEPROM_TYPE _eeprom_type, int _isFCG) {
 	info->Power = BANDAI_Power;
 	MapIRQHook = BANDAI_IRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	if (eeprom != EEPROM_NONE) {
 		info->battery = 1;

@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022 NewRisingSun
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +25,11 @@
 
 static uint8 reg;
 
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
+
 static void Sync(void) {
 	setprg16(0x8000, (reg << 3) | (latch.data & 0x07));
 	setprg16(0xC000, (reg << 3) | 0x07);
@@ -44,13 +50,14 @@ static void M294Reset(void) {
 }
 
 static void M294Power(void) {
+	reg = 0;
 	Latch_Power();
-	SetWriteHandler(0x4020, 0x4FFF, M294Write);
+	SetWriteHandler(0x4100, 0x5FFF, M294Write);
 }
 
 void Mapper294_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = M294Power;
 	info->Reset = M294Reset;
-	AddExState(&reg, 1, 0, "REGS");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
@@ -23,20 +23,21 @@
 #include "latch.h"
 
 static void Sync(void) {
-    if (!(latch.data & 1) && (latch.data & 8)) {
-        setprg16(0x8000, latch.data & ~1);
-        setprg16(0xC000, latch.data |  1);
-    } else {
-        if (latch.data & 8) {
-            setprg16(0x8000, latch.data);
-            setprg16(0xC000, latch.data);
-        } else {
-            setprg16(0x8000, latch.data);
-            setprg16(0xC000, latch.data | 7);
-        }
-    }
+	uint8 prg = latch.data & 0x0F;
+
+	if (latch.data & 0x08) {
+		if (latch.data & 0x01) {
+			setprg16(0x8000, prg);
+			setprg16(0xC000, prg);
+		} else {
+			setprg32(0x8000, prg >> 1);
+		}
+	} else {
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg | 0x07);
+	}
 	setchr8(0);
-	setmirror(((latch.data >> 4) & 1) ^ 1);
+	setmirror(((latch.data >> 4) & 0x01) ^ 0x01);
 }
 
 static DECLFW(M277Write) {
@@ -46,15 +47,17 @@ static DECLFW(M277Write) {
 }
 
 static void M277Power(void) {
-    Latch_Power();
-    latch.data = 8;
-    Sync();
+	latch.addr = 0;
+	latch.data = 8;
+	Sync();
+	SetReadHandler(0x8000, 0xFFFF, CartBROB);
 	SetWriteHandler(0x8000, 0xFFFF, M277Write);
 }
 
 static void M277Reset() {
-    latch.data = 0x08;
-    Sync();
+	latch.addr = 0;
+	latch.data = 8;
+	Sync();
 }
 
 void Mapper277_Init(CartInfo *info) {

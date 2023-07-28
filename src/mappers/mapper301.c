@@ -64,5 +64,5 @@ void Mapper301_Init(CartInfo *info) {
 	Latch_Init(info, Sync, M301Read, 0, 0);
 	info->Power = M301Power;
 	info->Reset = M301Reset;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

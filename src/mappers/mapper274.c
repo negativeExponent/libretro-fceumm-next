@@ -1,6 +1,8 @@
 /* FCEUmm - NES/Famicom Emulator
  *
- * Copyright (C) 2019 Libretro Team
+ * Copyright notice for this file: 
+ *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,24 +27,24 @@
 
 #include "mapinc.h"
 
-static uint8 regs[2], extra_chip;
+static uint8 regs[2], chip;
 
 static SFORMAT StateRegs[] =
 {
 	{ regs, 2, "REGS" },
-	{ &extra_chip, 1, "XTRA" },
+	{ &chip, 1, "CHIP" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (extra_chip) {
+	if (chip) {
 		setprg16(0x8000, 0x80 | (regs[0] & ((ROM.prg.size - 1) & 0x0F)));
 	} else {
 		setprg16(0x8000, (regs[1] & 0x70) | (regs[0] & 0x0F));
 	}
 	setprg16(0xC000, regs[1] & 0x7F);
 	setchr8(0);
-	setmirror(((regs[0] >> 4) & 1) ^ 1);
+	setmirror(((regs[0] >> 4) & 0x01) ^ 0x01);
 }
 
 static DECLFW(M274Write8) {
@@ -52,13 +54,13 @@ static DECLFW(M274Write8) {
 
 static DECLFW(M274WriteA) {
 	regs[1] = V;
-	extra_chip = (A & 0x4000) == 0;
+	chip = (A & 0x4000) == 0;
 	Sync();
 }
 
 static void M274Power(void) {
 	regs[0] = regs[1] = 0;
-	extra_chip = 1;
+	chip = 1;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0x9FFF, M274Write8);
@@ -67,7 +69,7 @@ static void M274Power(void) {
 
 static void M274Reset(void) {
 	regs[0] = regs[1] = 0;
-	extra_chip = 1;
+	chip = 1;
 	Sync();
 }
 
@@ -79,5 +81,5 @@ void Mapper274_Init(CartInfo *info) {
 	info->Power = M274Power;
 	info->Reset = M274Reset;
 	GameStateRestore = M274Restore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
@@ -29,8 +29,7 @@
 static uint8 IRQCount;
 static uint8 IRQa;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &IRQCount, 1, "IRQC" },
 	{ &IRQa, 1, "IRQA" },
 	{ 0 }
@@ -46,7 +45,7 @@ static void M222IRQ(void) {
 }
 
 static DECLFW(M222WriteCHR) {
-	if (~A & 0x01) {
+	if (!(A & 0x01)) {
 		VRC24_Write(A, V);
 		VRC24_Write(A | 0x01, V >> 4);
 	}
@@ -66,7 +65,6 @@ static void M222Power(void) {
 	VRC24_Power();
 	SetWriteHandler(0xB000, 0xEFFF, M222WriteCHR);
 	SetWriteHandler(0xF000, 0xFFFF, M222WriteIRQ);
-
 }
 
 void Mapper222_Init(CartInfo *info) {
@@ -74,5 +72,5 @@ void Mapper222_Init(CartInfo *info) {
 	info->Power = M222Power;
 	MapIRQHook = NULL;
 	GameHBIRQHook = M222IRQ;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

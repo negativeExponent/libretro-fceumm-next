@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
@@ -24,47 +24,44 @@
 #include "mapinc.h"
 #include "vrc2and4.h"
 
-static uint8 prg_reg;
-static writefunc pcmwrite;
+static uint8 reg;
+static writefunc pcm;
 
-static SFORMAT StateRegs[] =
-{
-	{ &prg_reg, 1, "PREG" },
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void M266PW(uint32 A, uint8 V) {
-	setprg32(0x8000, prg_reg >> 2);
+	setprg32(0x8000, reg >> 2);
 }
 
 static DECLFW(M266Write) {
 	/* FCEU_printf("%04x %02x",A,V); */
-	switch (A & 0xF00C) {
-	case 0x900C:
-		if (A & 0x800) {
-			pcmwrite(0x4011, (V & 0xf) << 3);
-		} else {
-			prg_reg = V & 0xC;
-			VRC24_FixPRG();
-		}
-		break;
-	default:
-		A = (A & ~0x6000) | ((A << 1) & 0x4000) | ((A >> 1) & 0x2000);
-		VRC24_Write(A, V);
-		break;
+	A = (A & 0x9FFF) | ((A << 1) & 0x4000) | ((A >> 1) & 0x2000);
+	VRC24_Write(A, V);
+}
+
+static DECLFW(M266WriteMisc) {
+	if (A & 0x800) {
+		pcm(0x4011, (V & 0x0F) << 3);
+	} else {
+		reg = V & 0x0C;
+		VRC24_FixPRG();
 	}
 }
 
 static void M266Power(void) {
-	prg_reg = 0;
+	reg = 0;
 	VRC24_Power();
-	pcmwrite = GetWriteHandler(0x4011);
+	pcm = GetWriteHandler(0x4011);
 	SetWriteHandler(0x8000, 0xFFFF, M266Write);
 }
 
 void Mapper266_Init(CartInfo *info) {
-	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
+	VRC24_Init(info, VRC4, 0x04, 0x08, FALSE, TRUE);
 	info->Power = M266Power;
 	VRC24_pwrap = M266PW;
-	AddExState(&StateRegs, ~0, 0, 0);
+	VRC24_miscWrite = M266WriteMisc;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

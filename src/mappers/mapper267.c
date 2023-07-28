@@ -29,13 +29,13 @@ static uint8 reg;
 static void M267CW(uint32 A, uint8 V) {
 	uint16 base = ((reg & 0x20) >> 2) | (reg & 0x06);
 
-	setchr1(A, (V & 0x7F) | (base << 6));
+	setchr1(A, (base << 6) | (V & 0x7F));
 }
 
 static void M267PW(uint32 A, uint8 V) {
 	uint16 base = ((reg & 0x20) >> 2) | (reg & 0x06);
 
-	setprg8(A, (V & 0x1F) | (base << 4));
+	setprg8(A, (base << 4) | (V & 0x1F));
 }
 
 static DECLFW(M267Write) {

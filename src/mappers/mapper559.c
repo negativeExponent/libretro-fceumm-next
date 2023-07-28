@@ -87,5 +87,5 @@ void Mapper559_Init(CartInfo *info) {
     VRC24_cwrap = M559CW;
     VRC24_mwrap = M559MW;
     VRC24_miscWrite = M559WriteMisc;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

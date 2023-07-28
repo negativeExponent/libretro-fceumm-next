@@ -94,5 +94,5 @@ void Mapper448_Init(CartInfo *info) {
 	info->Reset = M448Reset;
 	info->Power = M448Power;
 	GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

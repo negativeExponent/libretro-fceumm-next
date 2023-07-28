@@ -65,5 +65,5 @@ void Mapper046_Init(CartInfo *info) {
 	info->Power = M046Power;
 	info->Reset = M046Reset;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, NULL);
 }
