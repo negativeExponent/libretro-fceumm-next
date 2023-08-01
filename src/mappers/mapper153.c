@@ -25,7 +25,7 @@
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
-static uint8 base;
+static uint8 outer;
 
 /* Famicom jump 2:
  * 0-7: Lower bit of data selects which 256KB PRG block is in use.
@@ -35,8 +35,13 @@ static uint8 base;
  * last CHR address read).
  */
 
+static SFORMAT StateRegs[] = {
+    { &outer, 1, "OUTB" },
+    { 0 }
+};
+
 static void M153PW(uint32 A, uint8 V) {
-    setprg16(A, ((base << 4) & 0x10) | (V & 0x0F));
+    setprg16(A, ((outer << 4) & 0x10) | (V & 0x0F));
 }
 
 static void M153CW(uint32 A, uint8 V) {
@@ -44,16 +49,11 @@ static void M153CW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M153Write) {
-    BANDAI_Write(A, V);
-    switch (A & 0x0F) {
-    case 0x00:
-    case 0x01:
-    case 0x02:
-    case 0x03:
-        base = V & 0x01;
+    if ((A & 0x0F) <= 0x03) {
+        outer = V;
         BANDAI_FixPRG();
-        break;
     }
+    BANDAI_Write(A, V);
 }
 
 static void M153Power(void) {
@@ -80,6 +80,7 @@ void Mapper153_Init(CartInfo *info) {
 	info->Close = M153Close;
     BANDAI_pwrap = M153PW;
     BANDAI_cwrap = M153CW;
+    AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
     if (info->iNES2) {
@@ -89,12 +90,9 @@ void Mapper153_Init(CartInfo *info) {
 		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-
 		if (info->battery) {
 			info->SaveGame[0] = WRAM;
 			info->SaveGameLen[0] = WRAMSIZE;
 		}
 	}
-
-    AddExState(&base, 1, 0, "BASE");
 }

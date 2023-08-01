@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
@@ -25,9 +25,9 @@
 #include "latch.h"
 
 static void Sync(void) {
-	setchr8(0);
 	setprg8r(0x10, 0x6000, 0);
-	setprg32(0x8000, latch.data & 0x1f);
+	setprg32(0x8000, latch.data & 0x1F);
+	setchr8(0);
 	setmirror(((latch.data & 0x20) >> 5) ^ 1);
 }
 

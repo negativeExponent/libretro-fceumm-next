@@ -30,7 +30,7 @@ static uint32 WRAMSIZE = 0;
 static uint32 NONSaveRAMSIZE = 0;
 
 static uint8 *WRAM = NULL;
-static MMC1Type mmc1_type = MMC1B;
+MMC1Type mmc1_type = MMC1B;
 
 void (*MMC1_pwrap)(uint32 A, uint8 V);
 void (*MMC1_cwrap)(uint32 A, uint8 V);

@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
@@ -26,13 +26,9 @@
 
 static uint8 reg;
 
-static const uint8 m114_perm[8] = {
-    0, 3, 1, 5, 6, 7, 2, 4
-};
-
 static void M123PW(uint32 A, uint8 V) {
 	if (reg & 0x40) {
-		uint8 bank = (reg & 0x05) | ((reg & 0x08) >> 2) | ((reg & 0x20) >> 2);
+		uint8 bank = ((reg & 0x28) >> 2) | (reg & 0x05);
 
 		if (reg & 2) {
 			setprg32(0x8000, bank >> 1);
@@ -46,14 +42,13 @@ static void M123PW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M123WriteHi) {
-	switch (A & 0xE001) {
-	case 0x8000:
-		MMC3_Write(0x8000, (V & 0xC0) | m114_perm[V & 0x07]);
-		break;
-	default:
-		MMC3_Write(A, V);
-		break;
+	static const uint8 m114_perm[8] = { 0, 3, 1, 5, 6, 7, 2, 4 };
+
+	if (!(A & 0x01)) {
+		V = (V & 0xC0) | m114_perm[V & 0x07];
 	}
+
+	MMC3_CMDWrite(A, V);
 }
 
 static DECLFW(M123WriteLo) {

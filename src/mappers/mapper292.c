@@ -57,8 +57,6 @@ static DECLFW(M292ProtWrite) {
 }
 
 static DECLFR(M292ProtRead) {
-	int tmp;
-
 	if ((reg[0] & 0xE0) == 0xC0) {
 		reg[1] = ARead[0x6A](0x6A);
 	} else {

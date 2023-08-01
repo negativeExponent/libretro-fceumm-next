@@ -48,15 +48,17 @@ static uint8 vrc2and4_VRC4;
 static uint32 vrc2and4_A0;
 static uint32 vrc2and4_A1;
 
+void (*VRC24_FixPRG)(void);
+void (*VRC24_FixCHR)(void);
+void (*VRC24_FixMIR)(void);
+
 void (*VRC24_pwrap)(uint32 A, uint8 V);
 void (*VRC24_cwrap)(uint32 A, uint32 V);
-void (*VRC24_mwrap)(uint8 V);
 void (*VRC24_miscWrite)(uint32 A, uint8 V);
 
 VRC24 vrc24;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ vrc24.prg, 2, "PREG" },
 	{ vrc24.chr, 16, "CREG" },
 	{ &vrc24.cmd, 1, "CMDR" },
@@ -66,7 +68,7 @@ static SFORMAT StateRegs[] =
 	{ 0 }
 };
 
-void VRC24_FixPRG(void) {
+static void GENFIXPRG(void) {
 	if (vrc24.cmd & 2) {
 		VRC24_pwrap(0x8000, ~1);
 		VRC24_pwrap(0xC000, vrc24.prg[0]);
@@ -78,18 +80,18 @@ void VRC24_FixPRG(void) {
 	VRC24_pwrap(0xE000, ~0);
 }
 
-void VRC24_FixCHR(void) {
-	int i;
-
-	for (i = 0; i < 8; i++) {
-		VRC24_cwrap(0x0400 * i, vrc24.chr[i]);
-	}
-	if (VRC24_mwrap) {
-		VRC24_mwrap(vrc24.mirr);
-	}
+static void GENFIXCHR(void) {
+	VRC24_cwrap(0x0000, vrc24.chr[0]);
+	VRC24_cwrap(0x0400, vrc24.chr[1]);
+	VRC24_cwrap(0x0800, vrc24.chr[2]);
+	VRC24_cwrap(0x0C00, vrc24.chr[3]);
+	VRC24_cwrap(0x1000, vrc24.chr[4]);
+	VRC24_cwrap(0x1400, vrc24.chr[5]);
+	VRC24_cwrap(0x1800, vrc24.chr[6]);
+	VRC24_cwrap(0x1C00, vrc24.chr[7]);
 }
 
-void VRC24_FixMIR(void) {
+static void GENFIXMIR(void) {
 	switch (vrc24.mirr & (vrc2and4_VRC4 ? 0x03 : 0x01)) {
 	case 0: setmirror(MI_V); break;
 	case 1: setmirror(MI_H); break;
@@ -134,9 +136,8 @@ DECLFW(VRC24_Write) {
 		case 0:
 		case 1:
 			if (V != 0xFF) {
-				if (VRC24_mwrap) {
-					VRC24_mwrap(V);
-				}
+				vrc24.mirr = V;
+				VRC24_FixMIR();
 			}
 			break;
 		case 2:
@@ -180,11 +181,6 @@ static void GENPWRAP(uint32 A, uint8 V) {
 
 static void GENCWRAP(uint32 A, uint32 V) {
 	setchr1(A, V & 0x1FF);
-}
-
-static void GENMWRAP(uint8 V) {
-	vrc24.mirr = V;
-	VRC24_FixMIR();
 }
 
 void VRC24_IRQCPUHook(int a) {
@@ -235,6 +231,7 @@ void VRC24_Power(void) {
 static void StateRestore(int version) {
 	VRC24_FixPRG();
 	VRC24_FixCHR();
+	VRC24_FixMIR();
 }
 
 void VRC24_Close(void) {
@@ -245,9 +242,12 @@ void VRC24_Close(void) {
 }
 
 void VRC24_Init(CartInfo *info, uint8 vrc4, uint32 A0, uint32 A1, int wram, int irqRepeated) {
+	VRC24_FixPRG = GENFIXPRG;
+	VRC24_FixCHR = GENFIXCHR;
+	VRC24_FixMIR = GENFIXMIR;
+
 	VRC24_pwrap = GENPWRAP;
 	VRC24_cwrap = GENCWRAP;
-	VRC24_mwrap = GENMWRAP;
 	VRC24_miscWrite = NULL;
 
 	vrc2and4_A0 = A0;

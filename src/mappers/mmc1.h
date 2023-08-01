@@ -35,6 +35,7 @@ typedef struct __MMC1 {
 } MMC1;
 
 extern MMC1 mmc1;
+extern MMC1Type mmc1_type;
 
 uint32 MMC1_GetPRGBank(int index);
 uint32 MMC1_GetCHRBank(int index);

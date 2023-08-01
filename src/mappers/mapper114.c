@@ -24,6 +24,12 @@
 static uint8 reg[2];
 static uint8 dipsw;
 
+static SFORMAT StateRegs[] = {
+	{ reg, 2, "REGS" },
+	{ &dipsw, 1, "DPSW" },
+	{ 0 }
+};
+
 static uint32 M114_addr[2][8] = {
 	{ 0xA001, 0xA000, 0x8000, 0xC000, 0x8001, 0xC001, 0xE000, 0xE001 }, /* 0: Aladdin, The Lion King */
 	{ 0xA001, 0x8001, 0x8000, 0xC001, 0xA000, 0xC000, 0xE000, 0xE001 }  /* 1: Boogerman */
@@ -107,6 +113,5 @@ void Mapper114_Init(CartInfo *info) {
 	MMC3_cwrap = M114CW;
 	info->Power = M114Power;
 	info->Reset = M114Reset;
-	AddExState(reg, 2, 0, "EXPR");
-	AddExState(&dipsw, 1, 0, "DPSW");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

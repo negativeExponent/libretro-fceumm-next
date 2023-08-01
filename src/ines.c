@@ -549,7 +549,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "TXC/UNL-22211",            132, Mapper132_Init         )
 	INES_BOARD( "SA72008",                  133, Mapper133_Init         )
 	INES_BOARD( "MMC3 BMC PIRATE",          134, Mapper134_Init         )
-/*    INES_BOARD( "",                            135, Mapper135_Init ) */
+/*    INES_BOARD( "",                            135, Mapper135_Init ) */ /* Duplicate of 135 */
 	INES_BOARD( "Sachen 3011",              136, Mapper136_Init         )
 	INES_BOARD( "S8259D",                   137, Mapper137_Init         )
 	INES_BOARD( "S8259B",                   138, Mapper138_Init         )

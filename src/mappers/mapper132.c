@@ -22,7 +22,7 @@
 #include "mapinc.h"
 #include "txc.h"
 
-/* === LEGACY MAPPER IMPLEMENTATION === */
+/**** LEGACY MAPPER IMPLEMENTATION ****/
 
 static uint8 reg[4];
 

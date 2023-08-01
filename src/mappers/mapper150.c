@@ -23,22 +23,24 @@
 
 #include "mapinc.h"
 
-static uint8 dip;
+static uint8 dipsw;
 static uint8 cmd;
 static uint8 reg[8];
 
+static SFORMAT StateRegs[] = {
+	{ reg, 8, "REGS" },
+	{ &dipsw, 1, "DPSW" },
+	{ &cmd, 1, "CMD0" },
+	{ 0 }
+};
+
 static void Sync(void) {
-	uint8 chrBank;
-
-	if (iNESCart.mapper == 243) {
-        chrBank = (reg[2] & 0x01) | ((reg[4] << 1) & 0x02) | (reg[6] << 2);
-    } else {
-        chrBank = (reg[6] & 0x03) | ((reg[4] << 2) & 0x04) | (reg[2] << 3);
-    }
-
 	setprg32(0x8000, (reg[2] & 0x01) | reg[5]);
-	setchr8(chrBank);
-
+	if (iNESCart.mapper == 243) {
+        setchr8((reg[2] & 0x01) | ((reg[4] << 1) & 0x02) | (reg[6] << 2));
+    } else {
+        setchr8((reg[6] & 0x03) | ((reg[4] << 2) & 0x04) | (reg[2] << 3));
+    }
 	switch ((reg[7] >> 1) & 0x03) {
 	case 0: setmirrorw(0, 1, 1, 1); break;
 	case 1: setmirror(MI_H); break;
@@ -49,7 +51,7 @@ static void Sync(void) {
 
 static DECLFR(M150Read) {
 	if ((A & 0x101) == 0x101) {
-		if (dip & 1)
+		if (dipsw & 1)
 			return (reg[cmd] & 0x03) | (X.DB & 0xFC);
 		else
 			return (reg[cmd] & 0x07) | (X.DB & 0xF8);
@@ -58,7 +60,7 @@ static DECLFR(M150Read) {
 }
 
 static DECLFW(M150Write) {
-	if (dip & 0x01)
+	if (dipsw & 0x01)
 		V |= 0x04;
 	switch (A & 0x101) {
 	case 0x100:
@@ -76,14 +78,14 @@ static void M150Restore(int version) {
 }
 
 static void M150Reset(void) {
-	dip ^= 0x01;
+	dipsw ^= 0x01;
 	reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	reg[4] = reg[5] = reg[6] = reg[7] = 0;
 	Sync();
 }
 
 static void M150Power(void) {
-	dip = 0;
+	dipsw = 0;
 	reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	reg[4] = reg[5] = reg[6] = reg[7] = 0;
 	Sync();
@@ -96,6 +98,5 @@ void Mapper150_Init(CartInfo *info) {
 	info->Power = M150Power;
 	info->Reset = M150Reset;
 	GameStateRestore = M150Restore;
-	AddExState(reg, 8, 0, "REGS");
-	AddExState(&cmd, 1, 0, "CMD");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

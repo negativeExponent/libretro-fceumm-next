@@ -64,5 +64,5 @@ void Mapper291_Init(CartInfo *info) {
 	MMC3_pwrap = M291PW;
 	info->Power = M291Power;
 	info->Reset = M291Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

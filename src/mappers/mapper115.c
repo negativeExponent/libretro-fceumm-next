@@ -23,6 +23,11 @@
 
 static uint8 reg[2];
 
+static SFORMAT StateRegs[] = {
+	{ reg, 2, "REGS" },
+	{ 0 }
+};
+
 static void M115PW(uint32 A, uint8 V) {
 	if (reg[0] & 0x80) {
 		uint8 bank = reg[0] & 0x0F;
@@ -58,5 +63,5 @@ void Mapper115_Init(CartInfo *info) {
 	MMC3_cwrap = M115CW;
 	MMC3_pwrap = M115PW;
 	info->Power = M115Power;
-	AddExState(reg, 2, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

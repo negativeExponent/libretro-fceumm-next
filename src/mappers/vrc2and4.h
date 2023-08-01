@@ -59,13 +59,12 @@ void VRC24_Close(void);
 
 void VRC24_Init(CartInfo *info, uint8 vrc4, uint32 A0, uint32 A1, int wram, int irqRepeated);
 
-void VRC24_FixPRG(void);
-void VRC24_FixCHR(void);
-void VRC24_FixMIR(void);
+extern void (*VRC24_FixPRG)(void);
+extern void (*VRC24_FixCHR)(void);
+extern void (*VRC24_FixMIR)(void);
 
 extern void (*VRC24_pwrap)(uint32 A, uint8 V);
 extern void (*VRC24_cwrap)(uint32 A, uint32 V);
-extern void (*VRC24_mwrap)(uint8 V);
 extern void (*VRC24_miscWrite)(uint32 A, uint8 V);
 
 #endif /* _VRC24_H */

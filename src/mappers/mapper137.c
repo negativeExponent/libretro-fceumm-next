@@ -25,6 +25,12 @@
 static uint8 cmd;
 static uint8 reg[8];
 
+static SFORMAT StateRegs[] = {
+	{ reg, 8, "REGS" },
+	{ &cmd, 1, "CMD0" },
+	{ 0 }
+};
+
 static void Sync(void) {
 	setprg32(0x8000, reg[5]);
 	setchr1(0x0000, (reg[0] & 0x07));
@@ -57,7 +63,7 @@ static void M137Reset(void) {
 	reg[4] = reg[5] = reg[6] = reg[7] = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4100, 0x7FFF, M137Write);
+	SetWriteHandler(0x4100, 0xFFFF, M137Write);
 }
 
 static void StateRestore(int version) {
@@ -67,6 +73,5 @@ static void StateRestore(int version) {
 void Mapper137_Init(CartInfo *info) {
 	info->Power = M137Reset;
 	GameStateRestore = StateRestore;
-	AddExState(reg, 8, 0, "REGS");
-	AddExState(&cmd, 1, 0, "CMD");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

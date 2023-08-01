@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2020 NewRisingSun
+ *  Copyright (C) 2020
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,17 +30,21 @@
 static uint8 reg[4];
 static uint8 dipsw;
 
+static SFORMAT StateRegs[] = {
+	{ reg, 4, "REGS" },
+	{ &dipsw, 1, "DPSW" },
+	{ 0 }
+};
+
 static void M126PW(uint32 A, uint8 V) {
 	uint16 mask = (reg[0] & 0x40) ? 0x0F : 0x1F; /* 128 KiB or 256 KiB inner PRG bank selection */
 	uint16 base = (((reg[0] << 4) & 0x70) | ((reg[0] << 3) & 0x180)) & ~mask; /* outer PRG bank */
 
 	switch (iNESCart.submapper) {
-	case 1:
-		/* uses PRG A21 as a chip select between two 1 MiB chips. */
+	case 1: /* uses PRG A21 as a chip select between two 1 MiB chips. */
 		base |= ((base & 0x100) >> 1);
 		break;
-	case 2:
-		/* uses $6001 bit 2 as a chip select between two 1 MiB chips. */
+	case 2: /* uses $6001 bit 2 as a chip select between two 1 MiB chips. */
 		base |= ((reg[1] & 0x02) << 5);
 		break;
 	}
@@ -76,38 +81,30 @@ static void M126CW(uint32 A, uint8 V) {
 	}
 }
 
-static DECLFW(M126WRAMWrite) {
-	if (!(reg[3] & 0x80)) {
-		/* Lock bit clear: Update any outer bank register */
-		reg[A & 0x03] = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-	} else if ((A & 0x03) == 2) {
-		/* Lock bit set: Only update the bottom one or two bits of the CNROM bank */
-		uint8 mask = (reg[2] & 0x10) ? 1 : 3; /* 16 or 32 KiB inner CHR bank selection */
-
-		reg[2] &= ~mask;
-		reg[2] |= V & mask;
-		MMC3_FixCHR();
-	}
-	CartBW(A, V);
-}
-
 static DECLFR(M126ReadDIP) {
-	uint8 result = CartBR(A);
-
 	if (reg[1] & 0x01) {
 		/* Replace bottom two bits with solder pad or DIP switch setting if so selected */
-		return ((result & ~0x03) | (dipsw & 0x03));
+		return CartBR((A & ~0x03) | (dipsw & 0x03));
 	}
-	return result;
+	return CartBR(A);
 }
 
-static DECLFW(M126IRQWrite) {
-	if (iNESCart.mapper == 534) {
-		/* Mapper 534 takes the inverted $C000 value for the scanline counter */
-		V ^= 0xFF;
+static DECLFW(M126WriteWRAM) {
+	CartBW(A, V);
+	if (!(reg[3] & 0x80)) { /* Lock bit clear: Update any outer bank register */
+		reg[A & 0x03] = V;
+		MMC3_FixPRG();
+	} else if ((A & 0x03) == 2) { /* Lock bit set: Only update the bottom one or two bits of the CNROM bank */
+		uint8 mask = ((reg[2] & 0x10) ? 0x01 : 0x03);
+
+		reg[2] = (reg[2] & ~mask) | (V & mask);
 	}
+	MMC3_FixCHR();
+}
+
+static DECLFW(M534IRQWrite) {
+	/* Mapper 534 takes the inverted $C000 value for the scanline counter */
+	V ^= 0xFF;
 	MMC3_IRQWrite(A, V);
 }
 
@@ -121,19 +118,24 @@ static void M126Power(void) {
 	dipsw = 0;
 	reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M126WRAMWrite);
+	SetWriteHandler(0x6000, 0x7FFF, M126WriteWRAM);
 	SetReadHandler(0x8000, 0xFFFF, M126ReadDIP);
-	SetWriteHandler(0xC000, 0xDFFF, M126IRQWrite);
+	if (iNESCart.mapper == 534) {
+		SetWriteHandler(0xC000, 0xDFFF, M534IRQWrite);
+	}
 }
 
 void Mapper126_Init(CartInfo *info) {
-	MMC3_Init(info, 8, info->battery);
+	uint8 ws = 8;
+	if (info->iNES2) {
+		ws = info->PRGRamSize + info->PRGRamSaveSize;
+	}
+	MMC3_Init(info, ws, info->battery);
 	MMC3_cwrap = M126CW;
 	MMC3_pwrap = M126PW;
 	info->Power = M126Power;
 	info->Reset = M126Reset;
-	AddExState(reg, 4, 0, "EXPR");
-	AddExState(&dipsw, 1, 0, "DPSW");
+	AddExState(StateRegs, ~0, 0, NULL);
 }
 
 void Mapper422_Init(CartInfo *info) {

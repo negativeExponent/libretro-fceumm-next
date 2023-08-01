@@ -28,18 +28,29 @@
 static uint8 reg[4];
 static uint8 dipsw;
 
+static SFORMAT StateRegs[] = {
+	{ reg, 1, "REGS" },
+	{ &dipsw, 1, "DPSW" },
+	{ 0 }
+};
+
 static void M134PW(uint32 A, uint8 V) {
 	uint16 mask = (reg[1] & 0x04) ? 0x0F : 0x1F;
 	uint16 base = ((reg[1] << 4) & 0x30) | ((reg[0] << 2) & 0x40);
 
 	if (reg[1] & 0x80) { /* NROM mode */
 		if (reg[1] & 0x08) { /* NROM-128 mode */
-			setprg16(0x8000, ((base & ~mask) | (mmc3.reg[6] & mask)) >> 1);
-			setprg16(0xC000, ((base & ~mask) | (mmc3.reg[6] & mask)) >> 1);
+			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 0);
+			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 1);
+			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 0);
+			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 1);
 		} else { /* NROM-256 mode */
-			setprg32(0x8000, ((base & ~mask) | (mmc3.reg[6] & mask)) >> 2);
+			setprg8(0x8000, (base & ~mask) | (((mmc3.reg[6] & ~0x02) & mask) & ~1) | 0);
+			setprg8(0xA000, (base & ~mask) | (((mmc3.reg[6] & ~0x02) & mask) & ~1) | 1);
+			setprg8(0xC000, (base & ~mask) | (((mmc3.reg[6] |  0x02) & mask) & ~1) | 0);
+			setprg8(0xE000, (base & ~mask) | (((mmc3.reg[6] |  0x02) & mask) & ~1) | 1);
 		}
-	} else {
+	} else { /* MMC3 */
 		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
@@ -48,27 +59,29 @@ static void M134CW(uint32 A, uint8 V) {
 	uint16 mask = (reg[1] & 0x40) ? 0x7F : 0xFF;
 	uint16 base = ((reg[1] << 3) & 0x180) | ((reg[0] << 4) & 0x200);
 
-	if (reg[0] & 0x08) {
-		/* In CNROM mode, outer bank register 2 replaces the MMC3's CHR registers, and CHR A10-A12 are PPU A10-A12. */
-		setchr8(reg[2]);
+	if (reg[0] & 0x08) { /* In CNROM mode, outer bank register 2 replaces the MMC3's CHR registers, and CHR A10-A12 are PPU A10-A12. */
+		setchr8(((base & ~mask) >> 3) | (reg[2] & (mask >> 3)));
 	} else {
 		setchr1(A, (base & ~mask) | (V & mask));
 	}
 }
 
 static DECLFR(M134Read) {
-	return (reg[0] & 0x40) ? dipsw : CartBR(A);
+	if (reg[0] & 0x40) {
+		return dipsw;
+	}
+	return CartBR(A);
 }
 
 static DECLFW(M134Write) {
 	if (MMC3_WramIsWritable()) {
 		CartBW(A, V);
 		if (!(reg[0] & 0x80)) {
-			reg[A & 3] = V;
+			reg[A & 0x03] = V;
 			MMC3_FixPRG();
 			MMC3_FixCHR();
-		} else if ((A & 3) == 2) {
-			reg[2] = (reg[A & 3] & ~3) | (V & 3);
+		} else if ((A & 0x03) == 2) {
+			reg[2] = (reg[2] & ~0x03) | (V & 0x03);
 			MMC3_FixCHR();
 		}
 	}
@@ -95,6 +108,5 @@ void Mapper134_Init(CartInfo *info) {
 	MMC3_pwrap = M134PW;
 	info->Power = M134Power;
 	info->Reset = M134Reset;
-	AddExState(reg, 4, 0, "EXPR");
-	AddExState(&dipsw, 1, 0, "DIPS");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

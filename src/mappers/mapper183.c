@@ -1,4 +1,4 @@
-/* FCEU mm - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
@@ -27,53 +27,61 @@
 
 static uint8 prg[4];
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ prg, 4, "PRG" },
 	{ 0 }
 };
 
-static void M183PW(uint32 A, uint8 V) {
-	setprg8(0x6000, prg[3]);
-	setprg8(0x8000, prg[0]);
-	setprg8(0xA000, prg[1]);
-	setprg8(0xC000, prg[2]);
-	setprg8(0xE000, ~0);
+static void M183PRG(void) {
+	setprg8(0x6000, prg[0] & 0x3F);
+	setprg8(0x8000, prg[1] & 0x3F);
+	setprg8(0xA000, prg[2] & 0x3F);
+	setprg8(0xC000, prg[3] & 0x3F);
+	setprg8(0xE000,   (~0) & 0x3F);
 }
 
 static DECLFW(M183Write) {
-	switch (A & 0xF80C) {
+	switch (A & 0xF800) {
 	case 0x6800:
-		prg[3] = A & 0x3F;
+		prg[0] = A;
 		VRC24_FixPRG();
 		break;
 	case 0x8800:
-		prg[0] = V;
-		VRC24_FixPRG();
-		break;
-	case 0x9800:
-		VRC24_Write(0x9000 | (A & 0xC0), V);
-		break;
-	case 0xA800:
 		prg[1] = V;
 		VRC24_FixPRG();
 		break;
-	case 0xA000:
+	case 0xA800:
 		prg[2] = V;
 		VRC24_FixPRG();
 		break;
+	case 0xA000:
+		prg[3] = V;
+		VRC24_FixPRG();
+		break;
+	case 0x9800:
+		VRC24_Write(0x9000, V);
+		break;
+	case 0x6000:
+	case 0x7000:
+	case 0x7800:
+	case 0x8000:
+	case 0x9000:
+		return;
+	default:
+		VRC24_Write(A, V);
+		return;
 	}
 }
 
 static void M183Power(void) {
 	VRC24_Power();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0xAFFF, M183Write);
+	SetWriteHandler(0x6000, 0xFFFF, M183Write);
 }
 
 void Mapper183_Init(CartInfo *info) {
 	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
 	info->Power = M183Power;
-	VRC24_pwrap = M183PW;
+	VRC24_FixPRG = M183PRG;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

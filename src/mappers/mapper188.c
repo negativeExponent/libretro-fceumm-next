@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2002 Xodnizel
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,15 +23,13 @@
 #include "latch.h"
 
 static void Sync(void) {
+	if (latch.data & 0x10) {
+		setprg16(0x8000, (latch.data & 0x07));
+	} else {
+		setprg16(0x8000, (0x08 | latch.data));
+	}
+	setprg16(0xC000, 0x07);
 	setchr8(0);
-	setprg16(0xc000, 0x7);
-	if (latch.data) {
-		if (latch.data & 0x10)
-			setprg16(0x8000, (latch.data & 7));
-		else
-			setprg16(0x8000, (latch.data & 7) | 8);
-	} else
-		setprg16(0x8000, 7 + (ROM.prg.size >> 4));
 }
 
 static DECLFR(ExtDev) {

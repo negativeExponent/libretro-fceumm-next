@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -23,13 +23,13 @@
 
 static void Sync(void) {
     if (latch.addr & 0x80) {
-        setprg32(0x8000, (latch.addr >> 5) & 3);
+        setprg32(0x8000, (latch.addr >> 5) & 0x03);
     } else {
-        setprg16(0x8000, (latch.addr >> 4) & 7);
-        setprg16(0xC000, (latch.addr >> 4) & 7);
+        setprg16(0x8000, (latch.addr >> 4) & 0x07);
+        setprg16(0xC000, (latch.addr >> 4) & 0x07);
     }
-	setchr8((latch.addr >> 1) & 7);
-    setmirror((latch.addr & 1) ^ 1);
+	setchr8((latch.addr >> 1) & 0x07);
+    setmirror((latch.addr & 0x01) ^ 0x01);
 }
 
 void Mapper174_Init(CartInfo *info) {

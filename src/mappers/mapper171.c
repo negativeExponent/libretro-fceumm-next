@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -23,9 +23,9 @@
 #include "mapinc.h"
 
 static uint8 chr[2];
-static SFORMAT StateRegs[] =
-{
-	{ chr, 2, "CHR" },
+
+static SFORMAT StateRegs[] = {
+	{ chr, 2, "CREG" },
 	{ 0 }
 };
 
@@ -36,11 +36,12 @@ static void Sync(void) {
 }
 
 static DECLFW(M171Write) {
-	chr[A & 1] = V;
+	chr[A & 0x01] = V;
 	Sync();
 }
 
 static void M171Power(void) {
+	chr[0] = chr[1] = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M171Write);

@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007-2008 Mad Dumper, CaH4e3
@@ -29,72 +29,27 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[5];
-static uint8 prot_lut;
-static uint8 prot_idx;
-static uint8 prot_value;
-static uint8 banks_updated;
+static uint8 prg[3];
+static uint8 reg;
+static uint8 readIndex;
+static uint8 protIndex;
+static uint8 protLatch;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 5, "EXPR" },
-	{ &prot_lut, 1, "PRLT" },
-	{ &prot_idx, 1, "PRID" },
-	{ &prot_value, 1, "PRVL" },
-	{ &banks_updated, 1, "BANK" },
+	{ prg, 3, "PREG" },
+	{ &reg, 2, "REGS" },
+	{ &readIndex, 1, "PRRD" },
+	{ &protIndex, 1, "PRID" },
+	{ &protLatch, 1, "PRLT" },
 	{ 0 }
 };
 
-static void Sync() {
-	switch (prot_idx & 0x3F) {
-	case 0x20:
-		banks_updated = 1;
-		reg[0] = prot_value;
-		break;
-	case 0x29:
-		banks_updated = 1;
-		reg[0] = prot_value;
-		break;
-	case 0x26:
-		banks_updated = 0;
-		reg[0] = prot_value;
-		break;
-	case 0x2B:
-		banks_updated = 1;
-		reg[0] = prot_value;
-		break;
-	case 0x2C:
-		banks_updated = 1;
-		if (prot_value) {
-			reg[0] = prot_value;
-		}
-		break;
-	case 0x3C:
-	case 0x3F:
-		banks_updated = 1;
-		reg[0] = prot_value;
-		break;
-	case 0x28:
-		banks_updated = 0;
-		reg[1] = prot_value;
-		break;
-	case 0x2A:
-		banks_updated = 0;
-		reg[2] = prot_value;
-		break;
-	case 0x2F:
-		break;
-	default:
-		prot_idx = 0;
-		break;
-	}
-}
-
 static void M121CW(uint32 A, uint8 V) {
-	if ((ROM.prg.size * 16) > 256) { /* A9713 multigame extension hack! */
-		setchr1(A, V | ((reg[4] & 0x80) << 1));
+	if ((ROM.prg.size * 16) > 256) {
+		setchr1(A, ((reg & 0x80) << 1) | V);
 	} else {
-		if ((A & 0x1000) && (mmc3.cmd & 0x80)) {
-			setchr1(A, V | 0x100);
+		if ((A & 0x1000) == (uint32)((mmc3.cmd & 0x80) << 5)){
+			setchr1(A, 0x100 | V);
 		} else {
 			setchr1(A, V);
 		}
@@ -102,69 +57,63 @@ static void M121CW(uint32 A, uint8 V) {
 }
 
 static void M121PW(uint32 A, uint8 V) {
-	setprg8(A, (V & 0x1F) | ((reg[4] & 0x80) >> 2));
-	if (prot_idx & 0x3F) {
-		setprg8(0xE000, (reg[0]) | ((reg[4] & 0x80) >> 2));
-		setprg8(0xC000, (reg[1]) | ((reg[4] & 0x80) >> 2));
-		setprg8(0xA000, (reg[2]) | ((reg[4] & 0x80) >> 2));
+	uint8 mask = 0x1F;
+	uint8 base = ((reg & 0x80) >> 2);
+
+	if ((protIndex & 0x20) && (A > 0x8000)) {
+		mask = 0xFF;
+		V = prg[((A >> 13) & 0x03) - 1];
+	}
+
+	setprg8(A, base | (V & mask));
+}
+
+static const uint8 prot_array[] = { 0x83, 0x83, 0x42, 0x00, 0x00, 0x02, 0x02, 0x03 };
+static DECLFR(M121ReadLUT) {
+	return prot_array[readIndex];
+}
+
+static DECLFW(M121WriteLUT) {
+	readIndex = ((A >> 6) & 0x04) | (V & 0x03);
+	if (A & 0x0100) {
+		reg = V;
+		MMC3_FixPRG();
+		MMC3_FixCHR();
 	}
 }
 
 static DECLFW(M121Write) {
-	/*	FCEU_printf("write: %04x:%04x\n",A&0xE003,V); */
-	switch (A & 0xE003) {
-	case 0x8000:
-		/*		FCEU_printf("gen: %02x\n",V); */
-		MMC3_CMDWrite(A, V);
-		MMC3_FixPRG();
-		break;
+	switch (A & 0xE001) {
 	case 0x8001:
-		prot_value =
-			((V << 5) & 0x20) |
-			((V << 3) & 0x10) |
-			((V << 1) & 0x08) |
-			((V >> 1) & 0x04) |
-			((V >> 3) & 0x02) |
-			((V >> 5) & 0x01);
-		/* FCEU_printf("bank: %02x (%02x)\n",V,prot_value); */
-		if (!banks_updated) {
-			Sync();
+		switch (A & 0x03) {
+		case 0x01:
+			protLatch = ((V & 0x01) << 5) | ((V & 0x02) << 3) |
+			            ((V & 0x04) << 1) | ((V & 0x08) >> 1) |
+			            ((V & 0x10) >> 3) | ((V & 0x20) >> 5);
+			if ((protIndex == 0x26) || (protIndex == 0x28) || (protIndex == 0x2A)) {
+				prg[0x15 - (protIndex >> 1)] = protLatch;
+			}
+			break;
+		case 0x03:
+			protIndex = V & 0x3F;
+			if ((protIndex & 0x20) && protLatch) {
+				prg[2] = protLatch;
+			}
+			break;
 		}
-		MMC3_CMDWrite(A, V);
-		MMC3_FixPRG();
-		break;
-	case 0x8003:
-		prot_idx = V & 0x3F;
-		/* banks_updated = 0; */
-		/* FCEU_printf("prot: %02x\n",prot_idx); */
-		Sync();
-		MMC3_CMDWrite(0x8000, V);
-		MMC3_FixPRG();
-		break;
-	}
-}
-
-static uint8 prot_array[16] = { 0x83, 0x83, 0x42, 0x00, 0x00, 0x02, 0x02, 0x03 };
-static DECLFW(M121WriteLUT) {
-	prot_lut = prot_array[((A >> 6) & 0x04) | (V & 0x03)]; /* 0x100 bit in address seems to be switch arrays 0, 2, 2, 3 (Contra Fighter) */
-	if (A & 0x100) { /* A9713 multigame extension */
-		reg[4] = V;
+		mmc3.reg[mmc3.cmd & 0x07] = V;
 		MMC3_FixPRG();
 		MMC3_FixCHR();
+		break;
+	default:
+		MMC3_CMDWrite(A, V);
+		break;
 	}
-	/*	FCEU_printf("write: %04x:%04x\n",A,V); */
-}
-
-static DECLFR(M121ReadLUT) {
-	/*	FCEU_printf("read:  %04x->\n",A,reg[0]); */
-	return prot_lut;
 }
 
 static void M121Power(void) {
-	reg[4] = 0;
-	prot_lut = 0;
-	prot_idx = 0;
-	prot_value = 0;
+	memset(prg, 0, sizeof(prg));
+	reg = readIndex = protIndex = protLatch = 0;
 	MMC3_Power();
 	SetReadHandler(0x5000, 0x5FFF, M121ReadLUT);
 	SetWriteHandler(0x5000, 0x5FFF, M121WriteLUT);

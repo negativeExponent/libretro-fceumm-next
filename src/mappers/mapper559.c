@@ -46,14 +46,14 @@ static void M559CW(uint32 A, uint32 V) {
     setchr1(A, V & 0x1FF);
 }
 
-static void M559MW(uint8 V) {
+static void M559MIRR(void) {
     setmirrorw(nt[0], nt[1], nt[2], nt[3]);
 }
 
 static DECLFW(M559WriteMisc) {
 	if (A & 0x04) {
 		nt[A & 0x03] = V & 0x01;
-		VRC24_mwrap(V); /* value does not matter */
+		VRC24_FixMIR();
 	} else {
 		cpuC = V;
 		VRC24_FixPRG();
@@ -83,9 +83,9 @@ static void M559Power(void) {
 void Mapper559_Init(CartInfo *info) {
     VRC24_Init(info, VRC4, 0x400, 0x800, 1, 1);
     info->Power = M559Power;
+    VRC24_FixMIR = M559MIRR;
     VRC24_pwrap = M559PW;
     VRC24_cwrap = M559CW;
-    VRC24_mwrap = M559MW;
     VRC24_miscWrite = M559WriteMisc;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

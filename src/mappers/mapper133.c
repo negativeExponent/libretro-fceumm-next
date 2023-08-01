@@ -24,9 +24,14 @@
 
 static uint8 reg = 0;
 
+static SFORMAT StateRegs[] = {
+	{ &reg, 1,  "REGS" },
+	{ 0 }
+};
+
 static void Sync(void) {
-	setprg32(0x8000, (reg >> 2) & 1);
-	setchr8(reg & 3);
+	setprg32(0x8000, (reg >> 2) & 0x01);
+	setchr8(reg & 0x03);
 }
 
 static DECLFW(M133Write) {
@@ -50,5 +55,5 @@ static void StateRestore(int version) {
 void Mapper133_Init(CartInfo *info) {
 	info->Power = M133Power;
 	GameStateRestore = StateRestore;
-	AddExState(&reg, 1, 0, "LATC");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

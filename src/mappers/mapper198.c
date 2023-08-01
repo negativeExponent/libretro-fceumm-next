@@ -22,7 +22,7 @@
 #include "mmc3.h"
 
 static void M198PW(uint32 A, uint8 V) {
-	if (V >= 0x50) { /* Tenchi o Kurau II - Shokatsu Koumei Den (J) (C).nes */
+	if (V >= 0x40) {
 		V = (0x40 | (V & 0x0F));
 	}
 	setprg8(A, V);

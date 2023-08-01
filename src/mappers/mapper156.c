@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2009 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,83 +27,77 @@
 
 #include "mapinc.h"
 
-static uint8 chrlo[8], chrhi[8], prg, mirr, mirrisused = 0;
+static uint8 prg, mirr;
+static uint16 chr[8];
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
+	{ chr, 16, "CREG" },
 	{ &prg, 1, "PREG" },
-	{ chrlo, 8, "CRGL" },
-	{ chrhi, 8, "CRGH" },
 	{ &mirr, 1, "MIRR" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint32 i;
-	for (i = 0; i < 8; i++)
-		setchr1(i << 10, chrlo[i] | (chrhi[i] << 8));
 	setprg8r(0x10, 0x6000, 0);
 	setprg16(0x8000, prg);
 	setprg16(0xC000, ~0);
-	if (mirrisused)
-		setmirror(mirr ^ 1);
-	else
-		setmirror(MI_0);
+
+	setchr1(0x0000, chr[0]);
+	setchr1(0x0400, chr[1]);
+	setchr1(0x0800, chr[2]);
+	setchr1(0x0C00, chr[3]);
+	setchr1(0x1000, chr[4]);
+	setchr1(0x1400, chr[5]);
+	setchr1(0x1800, chr[6]);
+	setchr1(0x1C00, chr[7]);
+
+	switch (mirr) {
+	case 0:  setmirror(MI_V); break;
+	case 1:  setmirror(MI_H); break;
+	default: setmirror(MI_0); break;
+	}
 }
 
 static DECLFW(M156Write) {
-	switch (A) {
-		case 0xC000:
-		case 0xC001:
-		case 0xC002:
-		case 0xC003:
-			chrlo[A & 3] = V;
-			Sync();
-			break;
-		case 0xC004:
-		case 0xC005:
-		case 0xC006:
-		case 0xC007:
-			chrhi[A & 3] = V;
-			Sync();
-			break;
-		case 0xC008:
-		case 0xC009:
-		case 0xC00A:
-		case 0xC00B:
-			chrlo[4 + (A & 3)] = V;
-			Sync();
-			break;
-		case 0xC00C:
-		case 0xC00D:
-		case 0xC00E:
-		case 0xC00F:
-			chrhi[4 + (A & 3)] = V;
-			Sync();
-			break;
-		case 0xC010:
-			prg = V;
-			Sync();
-			break;
-		case 0xC014:
-			mirr = V;
-			mirrisused = 1;
-			Sync();
-			break;
+	uint8 index = A & 0x03;
+
+	switch (A & 0xFFFC) {
+	case 0xC000:
+		chr[0 | index] &= (chr[0 | index] & 0xFF00) | V;
+		Sync();
+		break;
+	case 0xC004:
+		chr[0 | index] = (chr[0 | index] & 0x00FF) | V << 8;
+		Sync();
+		break;
+	case 0xC008:
+		chr[4 | index] = (chr[4 | index] & 0xFF00) | V;
+		Sync();
+		break;
+	case 0xC00C:
+		chr[4 | index] = (chr[4 | index] & 0x00FF) | V << 8;
+		Sync();
+		break;
+	case 0xC010:
+		prg = V;
+		Sync();
+		break;
+	case 0xC014:
+		mirr = V;
+		Sync();
+		break;
 	}
 }
 
 static void M156Reset(void) {
 	uint32 i;
 	for (i = 0; i < 8; i++) {
-		chrlo[i] = 0;
-		chrhi[i] = 0;
+		chr[i] = 0;
 	}
 	prg = 0;
-	mirr = 0;
-	mirrisused = 0;
+	mirr = 2;
 }
 
 static void M156Power(void) {
@@ -115,8 +110,9 @@ static void M156Power(void) {
 }
 
 static void M156Close(void) {
-	if (WRAM)
+	if (WRAM) {
 		FCEU_gfree(WRAM);
+	}
 	WRAM = NULL;
 }
 
@@ -128,12 +124,11 @@ void Mapper156_Init(CartInfo *info) {
 	info->Reset = M156Reset;
 	info->Power = M156Power;
 	info->Close = M156Close;
+	GameStateRestore = StateRestore;
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-
-	GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, NULL);
 }

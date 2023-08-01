@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -20,13 +20,12 @@
 
 #include "mapinc.h"
 
-static uint8 preg[4], creg[8], nt[4], IRQa;
-static uint8 IRQCount;
+static uint8 prg[4], chr[8], nt[4];
+static uint8 IRQCount, IRQa;
 
-static SFORMAT StateRegs[] =
-{
-	{ preg, 4, "PREG" },
-    { creg, 8, "CREG" },
+static SFORMAT StateRegs[] = {
+	{ prg, 4, "PREG" },
+    { chr, 8, "CREG" },
     { nt, 4, "NTAM" },
 	{ &IRQa, 1, "IRQA" },
 	{ &IRQCount, 1, "IRQC" },
@@ -34,36 +33,34 @@ static SFORMAT StateRegs[] =
 };
 
 static void Sync(void) {
-	setprg8(0x8000, preg[0]);
-    setprg8(0xA000, preg[1]);
-    setprg8(0xC000, preg[2]);
-    setprg8(0xE000, preg[3] | 0x0C);
+    prg[3] |= 0x0C;
+	setprg8(0x8000, prg[0] & 0x0F);
+    setprg8(0xA000, prg[1] & 0x0F);
+    setprg8(0xC000, prg[2] & 0x0F);
+    setprg8(0xE000, prg[3] & 0x0F);
 
-    setchr1(0x0000, creg[0]);
-    setchr1(0x0400, creg[1]);
-    setchr1(0x0800, creg[2]);
-    setchr1(0x0C00, creg[3]);
-    setchr1(0x1000, creg[4]);
-    setchr1(0x1400, creg[5]);
-    setchr1(0x1800, creg[6]);
-    setchr1(0x1C00, creg[7]);
+    setchr1(0x0000, chr[0] & 0x7F);
+    setchr1(0x0400, chr[1] & 0x7F);
+    setchr1(0x0800, chr[2] & 0x7F);
+    setchr1(0x0C00, chr[3] & 0x7F);
+    setchr1(0x1000, chr[4] & 0x7F);
+    setchr1(0x1400, chr[5] & 0x7F);
+    setchr1(0x1800, chr[6] & 0x7F);
+    setchr1(0x1C00, chr[7] & 0x7F);
 
-    setntamem(NTARAM + ((nt[0] & 1) << 10), 1, 0);
-    setntamem(NTARAM + ((nt[1] & 1) << 10), 1, 1);
-    setntamem(NTARAM + ((nt[2] & 1) << 10), 1, 2);
-    setntamem(NTARAM + ((nt[3] & 1) << 10), 1, 3);
+    setmirrorw(nt[0] & 0x01, nt[1] & 0x01, nt[2] & 0x01, nt[3] & 0x01);
 }
 
 static DECLFW(M127Write) {
 	switch (A & 0x73) {
     case 0x00: case 0x01: case 0x02: case 0x03:
-        preg[A & 3] = V;
+        prg[A & 3] = V;
         Sync();
         break;
     
     case 0x10: case 0x11: case 0x12: case 0x13:
     case 0x20: case 0x21: case 0x22: case 0x23:
-        creg[((A >> 3) & 4) | (A & 3)] = V;
+        chr[((A >> 3) & 4) | (A & 3)] = V;
         Sync();
         break;
     
@@ -85,9 +82,9 @@ static DECLFW(M127Write) {
 }
 
 static void M127Power(void) {
-    preg[0] = preg[1] = preg[2] = preg[3] = ~0;
-    creg[0] = creg[1] = creg[2] = creg[3] = 0;
-    creg[4] = creg[5] = creg[6] = creg[7] = 0;
+    prg[0] = prg[1] = prg[2] = prg[3] = ~0;
+    chr[0] = chr[1] = chr[2] = chr[3] = 0;
+    chr[4] = chr[5] = chr[6] = chr[7] = 0;
     nt[0] = nt[1] = nt[2] = nt[3] = 0;
     IRQa = IRQCount = 0;
 	Sync();

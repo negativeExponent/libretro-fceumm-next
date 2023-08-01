@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
@@ -33,16 +33,14 @@
 #include "mapinc.h"
 
 static uint8 reg;
-static uint8 submapper;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (submapper == 4) {
+	if (iNESCart.submapper == 4) {
 		setprg8(0x6000, ~0);	
 	} else {
 		setprg8(0x6000, reg);
@@ -63,18 +61,11 @@ static DECLFW(M108Write) {
 static void M108Power(void) {
 	reg = 0;
 	Sync();
-	SetReadHandler(0x6000, 0x7FFF, CartBR);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	switch (submapper) {
-	case 1:
-		SetWriteHandler(0xF000, 0xFFFF, M108Write);
-		break;
-	case 2:
-		SetWriteHandler(0xE000, 0xFFFF, M108Write);
-		break;
-	default:
-		SetWriteHandler(0x8000, 0xFFFF, M108Write);
-		break;
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	switch (iNESCart.submapper) {
+	case 1:  SetWriteHandler(0xF000, 0xFFFF, M108Write); break;
+	case 2:  SetWriteHandler(0xE000, 0xFFFF, M108Write); break;
+	default: SetWriteHandler(0x8000, 0xFFFF, M108Write); break;
 	}
 }
 
@@ -87,19 +78,18 @@ void Mapper108_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 
-	submapper = info->submapper;
-	if (!info->iNES2 || !submapper) {
+	if (!info->iNES2 || !info->submapper) {
 		if (UNIFchrrama) {
 			if (info->mirror == 0) {
-				submapper = 1;
+				info->submapper = 1;
 			} else {
-				submapper = 3;
+				info->submapper = 3;
 			}
 		} else {
 			if (CHRsize[0] > (16 * 1024)) {
-				submapper = 2;
+				info->submapper = 2;
 			} else {
-				submapper = 4;
+				info->submapper = 4;
 			}
 		}
 	}

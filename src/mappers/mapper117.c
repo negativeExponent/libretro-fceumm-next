@@ -24,14 +24,13 @@
 static uint8 prg[4], chr[8], mirr;
 static uint8 IRQa, IRQCount, IRQLatch;
 
-static SFORMAT StateRegs[] =
-{
-	{ &IRQa, 1, "IRQA" },
-	{ &IRQCount, 1, "IRQC" },
-	{ &IRQLatch, 1, "IRQL" },
+static SFORMAT StateRegs[] = {
 	{ prg, 4, "PREG" },
 	{ chr, 8, "CREG" },
 	{ &mirr, 1, "MREG" },
+	{ &IRQa, 1, "IRQA" },
+	{ &IRQCount, 1, "IRQC" },
+	{ &IRQLatch, 1, "IRQL" },
 	{ 0 }
 };
 

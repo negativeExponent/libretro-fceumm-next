@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -21,29 +21,34 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint16 outerbank = 0;
+static uint16 reg = 0;
+
+static SFORMAT StateRegs[] = {
+    { &reg, 1, "REGS" },
+    { 0 }
+};
 
 static void Sync(void) {
-	setprg16(0x8000, (outerbank >> 2) | (latch.data & 7));
-    setprg16(0xC000, (outerbank >> 2) | 7);
+	setprg16(0x8000, (reg >> 2) | (latch.data & 0x07));
+    setprg16(0xC000, (reg >> 2) | 0x07);
 	setchr8(0);
-    setmirror(((outerbank >> 1) & 1) ^ 1);
+    setmirror(((reg >> 1) & 0x01) ^ 0x01);
 }
 
 static DECLFW(M128Write) {
-    if (outerbank < 0xF000) {
-        outerbank = A;
+    if (reg < 0xF000) {
+        reg = A & 0xFFFF;
     }
     Latch_Write(A, V);
 }
 
 static void M128Reset() {
-    outerbank = 0;
+    reg = 0;
     Latch_RegReset();
 }
 
 static void M128Power() {
-    outerbank = 0;
+    reg = 0;
     Latch_Power();
     SetWriteHandler(0x8000, 0xFFFF, M128Write);
 }
@@ -52,5 +57,5 @@ void Mapper128_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
     info->Power = M128Power;
     info->Reset = M128Reset;
-    AddExState(&outerbank, 2, 0, "BANK");
+    AddExState(StateRegs, ~0, 0, NULL);
 }

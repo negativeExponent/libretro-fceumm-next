@@ -23,6 +23,11 @@
 
 static uint8 reg;
 
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
+
 static void M197PW(uint32 A, uint8 V) {
 	uint8 mask = (reg & 0x08) ? 0x0F : 0x1F;
 
@@ -61,7 +66,7 @@ static void M197CHR(void) {
 	}
 }
 
-static DECLFW(M197WriteWRAM) {
+static DECLFW(M197WriteReg) {
 	if (MMC3_WramIsWritable()) {
 		reg = V;
 		MMC3_FixPRG();
@@ -102,7 +107,7 @@ static void M197Reset(void) {
 static void M197Power(void) {
 	reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M197WriteWRAM);
+	SetWriteHandler(0x6000, 0x7FFF, M197WriteReg);
 	SetWriteHandler(0x8000, 0x9FFF, M197Write);
 }
 
@@ -112,5 +117,5 @@ void Mapper197_Init(CartInfo *info) {
 	info->Reset = M197Reset;
 	MMC3_FixCHR = M197CHR;
 	MMC3_pwrap = M197PW;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

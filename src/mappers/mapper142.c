@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -23,7 +23,7 @@
  #include "mapinc.h"
  #include "ks202.h"
 
- static void M142Sync(void) {
+ static void Sync(void) {
 	setprg8(0x6000, ks202.reg[4] & 0x0F);
 	setprg8(0x8000, ks202.reg[1] & 0x0F);
 	setprg8(0xA000, ks202.reg[2] & 0x0F);
@@ -33,5 +33,5 @@
 }
 
 void Mapper142_Init(CartInfo *info) {
-	KS202_Init(info, M142Sync, 0, 0);
+	KS202_Init(info, Sync, 0, 0);
 }

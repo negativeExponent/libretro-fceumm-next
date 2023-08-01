@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
@@ -25,42 +25,43 @@
 #include "mapinc.h"
 #include "fdssound.h"
 
-static uint8 reg;
+static uint8 prg;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
-static SFORMAT StateRegs[] =
-{
-	{ &reg, 1, "REG" },
+static SFORMAT StateRegs[] = {
+	{ &prg, 1, "PREG" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg8(0x6000, reg);
+	setprg8(0x6000, prg);
 	setprg8(0x8000, ~3);
 	setprg8(0xa000, ~2);
-	setprg8r(0x10, 0xc000, 0);
-	setprg8(0xe000, ~0);
+	setprg8r(0x10, 0xC000, 0);
+	setprg8(0xE000, ~0);
 	setchr8(0);
 }
 
-static DECLFW(M125Write) {
-	reg = V;
+static DECLFW(M125WritePRG) {
+	prg = V;
 	Sync();
 }
 
 static void M125Power(void) {
-	FDSSound_Power();
+	prg = 0;
 	Sync();
+	FDSSound_Power();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x6000, 0x6000, M125WritePRG);
 	SetWriteHandler(0xC000, 0xDFFF, CartBW);
-	SetWriteHandler(0x6000, 0x6000, M125Write);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
 static void M125Close(void) {
-	if (WRAM)
+	if (WRAM) {
 		FCEU_gfree(WRAM);
+	}
 	WRAM = NULL;
 }
 
@@ -71,12 +72,11 @@ static void StateRestore(int version) {
 void Mapper125_Init(CartInfo *info) {
 	info->Power = M125Power;
 	info->Close = M125Close;
+	GameStateRestore = StateRestore;
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-
-	GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, NULL);
 }
