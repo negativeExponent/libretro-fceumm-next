@@ -36,17 +36,25 @@ static void M052PW(uint32 A, uint8 V) {
 }
 
 static void M052CW(uint32 A, uint8 V) {
-	uint32 mask = (reg & 0x40) ? 0x7F : 0xFF;
-	uint32 bank = (iNESCart.submapper == 14) ? (((reg << 3) & 0x080) | ((reg << 7) & 0x300)) :
-		(((reg << 3) & 0x180) | ((reg << 7) & 0x200));
-	uint8 chrram = CHRRAM && (
-		((iNESCart.submapper == 13) && ((reg & 0x03) == 0x03)) ||
-		((iNESCart.submapper == 14) && (reg & 0x20)));
+	uint8 chrram = ((iNESCart.submapper == 13) && ((reg & 0x03) == 0x03)) ||
+	               ((iNESCart.submapper == 14) && (reg & 0x20));
 
 	if (chrram) {
 		setchr8r(0x10, 0);
 	} else {
-		setchr1(A, (bank & ~mask) | (V & mask));
+		uint16 mask = (reg & 0x40) ? 0x7F : 0xFF;
+		uint16 base = (((reg << 3) & 0x180) | ((reg << 7) & 0x200));
+
+		if (iNESCart.CRC32 == 0x68FE207F) {
+			/* Mario 7-in-1 (YH-705) with wrong bank order */
+			base = ((reg & 0x20) << 4) | ((reg & 0x04) << 6) |
+			       (reg & 0x40 ? (reg & 0x10) << 3 : 0x00);
+		} else if (iNESCart.submapper == 14) {
+			/* Well 8-in-1 (AB128) (Unl) (p1) */
+			base = ((reg << 3) & 0x080) | ((reg << 7) & 0x300);
+		}
+
+		setchr1(A, (base & ~mask) | (V & mask));
 	}
 }
 
@@ -97,7 +105,7 @@ void Mapper052_Init(CartInfo *info) {
 		info->submapper = 13; /* (YH-430) 97-98 Four-in-One */
 	} else if (info->CRC32 == 0xCCE8CA2F && info->submapper != 14) {
 		/* Well 8-in-1 (AB128) (Unl) (p1), with 1024 PRG and CHR is incompatible with submapper 13.
-		 * This was reassigned to submapper 14 instead. */
+		 * This is reassigned to submapper 14 instead. */
 		info->submapper = 14;
 	}
 

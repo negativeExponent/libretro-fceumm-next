@@ -20,8 +20,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "fme7sound.h"
+#include "mapinc.h"
 #include "fme7.h"
+#include "fme7sound.h"
 
 static uint8 IRQa;
 static int32 IRQCount;

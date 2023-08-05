@@ -25,17 +25,16 @@ static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 static writefunc old4016;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &latch, 1, "LATC" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setchr8((latch >> 2) & 1);
 	setprg8r(0x10, 0x6000, 0);
 	setprg32(0x8000, 0);
 	setprg8(0x8000, latch & 4); /* Special for VS Gumshoe */
+	setchr8((latch >> 2) & 1);
 }
 
 static DECLFW(M099Write) {

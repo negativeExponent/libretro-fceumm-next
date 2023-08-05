@@ -44,6 +44,7 @@ void Mapper074_Init(CartInfo *info) {
 	MMC3_Init(info, 8, info->battery);
     info->Close = M074Close;
 	MMC3_cwrap = M074CW;
+
 	CHRRAMSIZE = 2048;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);

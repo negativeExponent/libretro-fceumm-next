@@ -20,6 +20,7 @@
  *
  */
 
+#include "mapinc.h"
 #include "vrc7.h"
 
 static void M085PW(uint32 A, uint8 V) {

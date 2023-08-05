@@ -18,9 +18,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "vrc7.h"
+#include "mapinc.h"
 #include "vrcirq.h"
 #include "vrc7sound.h"
+#include "vrc7.h"
 
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
@@ -99,7 +100,7 @@ DECLFW(VRC7_Write) {
 			break;
 		}
 		break;
-	
+
 	case 0xA000:
 	case 0xB000:
 	case 0xC000:

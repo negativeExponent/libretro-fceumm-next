@@ -11,8 +11,6 @@ typedef int BOOL;
 #define FALSE 0
 #endif
 
-#include "../fceu-types.h"
-
 void SendCmd(uint8 *cmd, int size);
 int ReadResp(uint8 *resp, int size);
 

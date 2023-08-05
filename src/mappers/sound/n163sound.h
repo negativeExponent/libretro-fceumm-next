@@ -21,8 +21,6 @@
 #ifndef _N163_SOUND_H
 #define _N163_SOUND_H
 
-#include "mapinc.h"
-
 uint8 *GetIRAM_ptr(void); /* pointer to internal RAM */
 uint32 GetIRAM_size(void);
 

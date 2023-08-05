@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "mapinc.h"
+#include "emu2413.h"
 #include "vrc7sound.h"
 
 static int32 dwave = 0;

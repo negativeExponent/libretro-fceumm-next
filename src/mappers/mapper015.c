@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,32 +24,30 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 bank   = latch.data & 0x3F;
-	uint8 prgA13 = latch.data >> 7;
+	uint8 prg   = latch.data & 0x3F;
 
 	setprg8r(0x10, 0x6000, 0);
 	switch (latch.addr & 0x03) {
 	case 0:
-		setprg32(0x8000, bank >> 1);
+		setprg32(0x8000, prg >> 1);
 		break;
 	case 1:
-		setprg16(0x8000, bank);
-		setprg16(0xC000, bank | 7);
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg | 0x07);
 		break;
 	case 2:
-		setprg8(0x8000, (bank << 1) | prgA13);
-		setprg8(0xA000, (bank << 1) | prgA13);
-		setprg8(0xC000, (bank << 1) | prgA13);
-		setprg8(0xE000, (bank << 1) | prgA13);
+		setprg8(0x8000, (prg << 1) | (latch.data >> 7));
+		setprg8(0xA000, (prg << 1) | (latch.data >> 7));
+		setprg8(0xC000, (prg << 1) | (latch.data >> 7));
+		setprg8(0xE000, (prg << 1) | (latch.data >> 7));
 		break;
 	case 3:
-		setprg16(0x8000, bank);
-		setprg16(0xC000, bank);
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg);
 		break;
 	}
-
 	setchr8(0);
-	setmirror(((latch.data >> 6) & 1) ^ 1);
+	setmirror(((latch.data >> 6) & 0x01) ^ 0x01);
 }
 
 void Mapper015_Init(CartInfo *info) {

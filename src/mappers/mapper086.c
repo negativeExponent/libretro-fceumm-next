@@ -24,15 +24,14 @@
 
 static uint8 reg;
 
-static SFORMAT StateRegs[] =
-{
-	{ &reg, 1, "REG" },
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync() {
-	setprg32(0x8000, (reg >> 4) & 3);
-	setchr8((reg & 3) | ((reg >> 4) & 4));
+	setprg32(0x8000, (reg >> 4) & 0x03);
+	setchr8(((reg >> 4) & 0x04) | (reg & 0x03));
 }
 
 static DECLFW(M086Write) {

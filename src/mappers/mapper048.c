@@ -19,15 +19,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* iNES Mapper 33 - Taito TC0190/TC0350 */
+/* iNES Mapper 48 - Taito TC0690/TC190+PAL16R4 */
 
 #include "mapinc.h"
 
-static uint8 prg[2], chr[6];
+static uint8 prg[2], chr[6], mirr;
+static uint8 IRQa;
+static int16 IRQCount, IRQLatch;
 
 static SFORMAT StateRegs[] = {
 	{ prg, 2, "PREG" },
 	{ chr, 6, "CREG" },
+	{ &mirr, 1, "MIRR" },
+	{ &IRQCount, 2, "IRQC" },
+	{ &IRQLatch, 2, "IRQL" },
+	{ &IRQa, 1, "IRQA" },
 	{ 0 }
 };
 
@@ -43,10 +49,10 @@ static void Sync(void) {
 	setchr1(0x1800, chr[4]);
 	setchr1(0x1C00, chr[5]);
 
-	setmirror(((prg[0] >> 6) & 0x01) ^ 0x01);
+	setmirror(((mirr >> 6) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M033Write) {
+static DECLFW(M048Write) {
 	switch (A & 0xE003) {
 	case 0x8000:
 	case 0x8001:
@@ -65,22 +71,50 @@ static DECLFW(M033Write) {
 		chr[2 + (A & 0x03)] = V;
 		Sync();
 		break;
+	case 0xC000:
+		IRQLatch = V;
+		break;
+	case 0xC001:
+		IRQCount = IRQLatch;
+		break;
+	case 0xC002:
+		IRQa = TRUE;
+		break;
+	case 0xC003:
+		IRQa = FALSE;
+		X6502_IRQEnd(FCEU_IQEXT);
+		break;
+	case 0xE000:
+		mirr = V;
+		Sync();
+		break;
 	}
 }
 
-static void M33Power(void) {
+static void M048Power(void) {
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xBFFF, M033Write);
+	SetWriteHandler(0x8000, 0xFFFF, M048Write);
+}
+
+static void IRQHook(void) {
+	if (IRQa) {
+		IRQCount++;
+		if (IRQCount == 0x100) {
+			X6502_IRQBegin(FCEU_IQEXT);
+			IRQa = 0;
+		}
+	}
 }
 
 static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper033_Init(CartInfo *info) {
-	info->Power = M33Power;
+void Mapper048_Init(CartInfo *info) {
+	info->Power = M048Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
+	GameHBIRQHook = IRQHook;
 }
 

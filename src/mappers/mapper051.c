@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,30 +21,32 @@
 
 #include "mapinc.h"
 
-static uint8 bank, mode, submapper;
-static SFORMAT StateRegs[] =
-{
-	{ &bank, 1, "BANK" },
+static uint8 prg, mode;
+
+static SFORMAT StateRegs[] = {
+	{ &prg, 1, "PREG" },
 	{ &mode, 1, "MODE" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (submapper == 1) {
-		setprg8(0x6000, (bank << 1) | 0x23);
-		if (mode & 2)
-			setprg32(0x8000, bank >> 1);
+	if (iNESCart.submapper == 1) {
+		setprg8(0x6000, (prg << 1) | 0x23);
+		if (mode & 0x022)
+			setprg32(0x8000, prg >> 1);
 		else {
-			setprg16(0x8000, ((bank >> 2) & 0x10) | ((bank >> 1) & 0x08) | (bank & 7));
-			setprg16(0xC000, ((bank >> 2) & 0x10) | ((bank >> 1) & 0x08) | 7);
+			setprg16(0x8000, ((prg >> 2) & 0x10) | ((prg >> 1) & 0x08) | (prg & 0x07));
+			setprg16(0xC000, ((prg >> 2) & 0x10) | ((prg >> 1) & 0x08) | 0x07);
 		}
-	} else if (mode & 2) {
-		setprg8(0x6000, ((bank << 2) & 0x1C) | 0x23);
-		setprg32(0x8000, bank);
 	} else {
-		setprg8(0x6000, ((bank << 2) & 0x10) | 0x2F);
-		setprg16(0x8000, (bank << 1) | (bank >> 4));
-		setprg16(0xC000, (bank << 1) | 7);
+		if (mode & 0x02) {
+			setprg8(0x6000, ((prg << 2) & 0x1C) | 0x23);
+			setprg32(0x8000, prg);
+		} else {
+			setprg8(0x6000, ((prg << 2) & 0x10) | 0x2F);
+			setprg16(0x8000, (prg << 1) | (prg >> 4));
+			setprg16(0xC000, (prg << 1) | 0x07);
+		}
 	}
 	setchr8(0);
 	setmirror(((mode >> 4) & 1) ^ 1);
@@ -55,12 +58,12 @@ static DECLFW(M051WriteMode) {
 }
 
 static DECLFW(M051WriteBank) {
-	bank = V;
+	prg = V;
 	Sync();
 }
 
 static void M051Power(void) {
-	bank = 0;
+	prg = 0;
 	mode = 2;
 	Sync();
 	SetWriteHandler(0x6000, 0x7FFF, M051WriteMode);
@@ -69,7 +72,7 @@ static void M051Power(void) {
 }
 
 static void M051Reset(void) {
-	bank = 0;
+	prg = 0;
 	mode = 2;
 	Sync();
 }
@@ -83,7 +86,7 @@ void Mapper051_Init(CartInfo *info) {
 	info->Reset = M051Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 	GameStateRestore = StateRestore;
-	submapper        = info->submapper;
+
 	if (!UNIFchrrama && (ROM.chr.size == 1)) {
 		/* at least 1 variant has 8K CHR-ROM which should be treated as CHR-RAM */
 		SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], 1);

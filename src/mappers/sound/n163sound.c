@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "mapinc.h"
 #include "n163sound.h"
 
 static uint8 IRAM[128];

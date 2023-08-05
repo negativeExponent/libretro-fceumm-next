@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
@@ -24,10 +24,15 @@
  */
 
 #include "mapinc.h"
-#include "vrc2and4.h"
 #include "mmc3.h"
+#include "vrc2and4.h"
 
 static uint8 reg;
+
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 },
+};
 
 static uint8 GetChrBase(uint16 A) {
 	if (A & 0x1000) {
@@ -37,7 +42,6 @@ static uint8 GetChrBase(uint16 A) {
 			return ((reg & 0x20) >> 5);
 		}
 	}
-
 	return ((reg & 0x08) >> 3);
 }
 
@@ -63,12 +67,11 @@ static DECLFW(M014Write) {
 		} else {
 			VRC24_FixCHR();
 		}
+	}
+	if (reg & 0x02) {
+		MMC3_Write(A, V);
 	} else {
-		if (reg & 0x02) {
-			MMC3_Write(A, V);
-		} else {
-			VRC24_Write(A, V);
-		}
+		VRC24_Write(A, V);
 	}
 }
 
@@ -86,8 +89,8 @@ static void StateRestore(int version) {
 
 static void M014Power(void) {
 	reg = 0;
-	MMC3_Power();
-	SetWriteHandler(0x4100, 0xFFFF, M014Write);
+	VRC24_Power();
+	SetWriteHandler(0x8000, 0xFFFF, M014Write);
 }
 
 void Mapper014_Init(CartInfo *info) {
@@ -100,5 +103,5 @@ void Mapper014_Init(CartInfo *info) {
 	info->Power = M014Power;
 
 	GameStateRestore = StateRestore;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

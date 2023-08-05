@@ -28,7 +28,7 @@ static void M026PW(uint32 A, uint8 V) {
 }
 
 static void M026CW(uint32 A, uint8 V) {
-    setchr1(A, V & 0x1FF);
+    setchr1(A, V & 0xFF);
 }
 
 void Mapper026_Init(CartInfo *info) {

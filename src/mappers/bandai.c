@@ -34,8 +34,8 @@
  */
 
 #include "mapinc.h"
-#include "bandai.h"
 #include "eeprom_x24c0x.h"
+#include "bandai.h"
 
 EEPROM_TYPE eeprom = EEPROM_NONE;
 
@@ -86,7 +86,7 @@ void BANDAI_FixCHR(void) {
 }
 
 void BANDAI_FixMIR(void) {
-	switch (mirr & 3) {
+	switch (mirr & 0x03) {
 	case 0: setmirror(MI_V); break;
 	case 1: setmirror(MI_H); break;
 	case 2: setmirror(MI_0); break;

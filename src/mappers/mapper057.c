@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
@@ -25,16 +25,16 @@
 static uint8 regs[2];
 static uint8 hrd_flag;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &hrd_flag, 1, "DPSW" },
 	{ regs, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 prg = (regs[1] >> 5) & 7;
-	uint8 outer_chr = ((regs[0] >> 3) & 8) | (regs[1] & 7);
+	uint8 prg = (regs[1] >> 5) & 0x07;
+	uint8 chr = ((regs[0] >> 3) & 0x08) | (regs[1] & 0x07);
+
 	if (regs[1] & 0x10) {
 		setprg32(0x8000, prg >> 1);
 	} else {
@@ -42,11 +42,11 @@ static void Sync(void) {
 		setprg16(0xC000, prg);
 	}
 	if (regs[0] & 0x80) {
-		setchr8(outer_chr);
+		setchr8(chr);
 	} else {
-		setchr8((outer_chr & ~3) | (regs[0] & 3));
+		setchr8((chr & ~0x03) | (regs[0] & 0x03));
 	}
-	setmirror(((regs[1] >> 3) & 1) ^ 1);
+	setmirror(((regs[1] >> 3) & 0x01) ^ 0x01);
 }
 
 static DECLFR(M057Read) {

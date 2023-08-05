@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2002 Xodnizel
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,22 +25,42 @@
 
 #include "mapinc.h"
 
-static uint8 cmd, mirr, regs[11];
-static uint8 rmode, IRQmode, IRQCount, IRQa, IRQLatch;
+static uint8 cmd, mirr, regs[16];
+static uint8 IRQReload, IRQmode, IRQCount, IRQa, IRQLatch;
+static uint8 IRQPrescaler;
 
 static SFORMAT StateRegs[] = {
-	{ regs, 11, "REGS" },
+	{ regs, 16, "REGS" },
 	{ &cmd, 1, "CMDR" },
 	{ &mirr, 1, "MIRR" },
-	{ &rmode, 1, "RMOD" },
+	{ &IRQReload, 1, "IRQR" },
 	{ &IRQmode, 1, "IRQM" },
 	{ &IRQCount, 1, "IRQC" },
 	{ &IRQa, 1, "IRQA" },
 	{ &IRQLatch, 1, "IRQL" },
+	{ &IRQPrescaler, 1, "IRQP" },
 	{ 0 }
 };
 
 static void Sync(void) {
+	/*
+	0000: R0: Select 2 (K=0) or 1 (K=1) KiB CHR bank at PPU $0000 (or $1000)
+	0001: R1: Select 2 (K=0) or 1 (K=1) KiB CHR bank at PPU $0800 (or $1800)
+	0010: R2: Select 1 KiB CHR bank at PPU $1000-$13FF (or $0000-$03FF)
+	0011: R3: Select 1 KiB CHR bank at PPU $1400-$17FF (or $0400-$07FF)
+	0100: R4: Select 1 KiB CHR bank at PPU $1800-$1BFF (or $0800-$0BFF)
+	0101: R5: Select 1 KiB CHR bank at PPU $1C00-$1FFF (or $0C00-$0FFF)
+	0110: R6: Select 8 KiB PRG ROM bank at $8000-$9FFF (or $C000-$DFFF)
+	0111: R7: Select 8 KiB PRG ROM bank at $A000-$BFFF
+	1000: R8: If K=1, Select 1 KiB CHR bank at PPU $0400 (or $1400)
+	1001: R9: If K=1, Select 1 KiB CHR bank at PPU $0C00 (or $1C00)
+	1111: RF: Select 8 KiB PRG ROM bank at $C000-$DFFF (or $8000-$9FFF)
+	*/
+	setprg8(0x8000, regs[6]);
+	setprg8(0xA000, regs[7]);
+	setprg8(0xC000, regs[15]);
+	setprg8(0xE000, ~0);
+
 	if (cmd & 0x20) {
 		setchr1(0x0000, regs[0]);
 		setchr1(0x0400, regs[8]);
@@ -51,15 +72,11 @@ static void Sync(void) {
 		setchr1(0x0800, (regs[1] & 0xFE));
 		setchr1(0x0C00, (regs[1] & 0xFE) | 1);
 	}
+
 	setchr1(0x1000, regs[2]);
 	setchr1(0x1400, regs[3]);
 	setchr1(0x1800, regs[4]);
 	setchr1(0x1C00, regs[5]);
-
-	setprg8(0x8000, regs[6]);
-	setprg8(0xA000, regs[7]);
-	setprg8(0xC000, regs[10]);
-	setprg8(0xE000, ~0);
 
 	if (iNESCart.mapper == 158) {
 		if (cmd & 0x20) {
@@ -84,34 +101,36 @@ static DECLFW(M064Write) {
 		mirr = V;
 		Sync();
 		break;
-	case 0x8000: cmd = V; break;
+	case 0x8000:
+		cmd = V;
+		break;
 	case 0x8001:
-		if ((cmd & 0xF) < 10)
-			regs[cmd & 0xF] = V;
-		else if ((cmd & 0xF) == 0xF)
-			regs[10] = V;
+		regs[cmd & 0x0F] = V;
 		Sync();
 		break;
 	case 0xC000:
 		IRQLatch = V;
-		if (rmode == 1)
+		if (IRQReload) {
 			IRQCount = IRQLatch;
+		}
 		break;
 	case 0xC001:
-		rmode = 1;
+		IRQReload = TRUE;
 		IRQCount = IRQLatch;
 		IRQmode = V & 1;
 		break;
 	case 0xE000:
-		IRQa = 0;
+		IRQa = FALSE;
 		X6502_IRQEnd(FCEU_IQEXT);
-		if (rmode == 1)
+		if (IRQReload) {
 			IRQCount = IRQLatch;
+		}
 		break;
 	case 0xE001:
-		IRQa = 1;
-		if (rmode == 1)
+		IRQa = TRUE;
+		if (IRQReload) {
 			IRQCount = IRQLatch;
+		}
 		break;
 	}
 }
@@ -144,11 +163,11 @@ static void M064CPUHook(int a) {
 
 static void M064HBHook(void) {
 	if ((!IRQmode) && (scanline != 240)) {
-		rmode = 0;
+		IRQReload = 0;
 		IRQCount--;
 		if (IRQCount == 0xFF) {
 			if (IRQa) {
-				rmode = 1;
+				IRQReload = 1;
 				X6502_IRQBegin(FCEU_IQEXT);
 			}
 		}

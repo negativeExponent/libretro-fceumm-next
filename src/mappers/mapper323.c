@@ -20,6 +20,7 @@
 
 /* NES 2.0 Mapper 323 - UNIF FARID_SLROM_8-IN-1 */
 
+#include "mapinc.h"
 #include "mmc1.h"
 
 static uint8 reg;

@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +27,7 @@
 static uint8 reg;
 static uint32 IRQCount, IRQa;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &IRQCount, 4, "IRQC" },
 	{ &IRQa, 4, "IRQA" },
 	{ &reg, 1, "REG" },
@@ -35,44 +35,44 @@ static SFORMAT StateRegs[] =
 };
 
 static void Sync(void) {
-	setprg8(0x6000, 0xF);
-	setprg8(0x8000, 0x8);
-	setprg8(0xa000, 0x9);
-	setprg8(0xc000, reg);
-	setprg8(0xe000, 0xB);
+	uint8 prg = ((reg & 0x01) << 2) | ((reg & 0x02) >> 1) | ((reg & 0x04) >> 1) | (reg & 0x08);
+
+	setprg8(0x6000, 15);
+	setprg8(0x8000, 8);
+	setprg8(0xA000, 9);
+	setprg8(0xC000, prg);
+	setprg8(0xE000, 11);
 	setchr8(0);
 }
 
 static DECLFW(M050Write) {
 	switch (A & 0xD160) {
-		case 0x4120:
-			IRQa = V & 1;
-			if (!IRQa)
-				IRQCount = 0;
+	case 0x4120:
+		IRQa = V & 0x01;
+		if (!IRQa) {
+			IRQCount = 0;
 			X6502_IRQEnd(FCEU_IQEXT);
-			break;
-		case 0x4020:
-			reg = ((V & 1) << 2) | ((V & 2) >> 1) | ((V & 4) >> 1) | (V & 8);
-			Sync();
-			break;
+		}
+		break;
+	case 0x4020:
+		reg = V;
+		Sync();
+		break;
 	}
 }
 
 static void M050Power(void) {
 	reg = 0;
+	IRQa = IRQCount = 0;
 	Sync();
-	SetReadHandler(0x6000, 0xffff, CartBR);
-	SetWriteHandler(0x4020, 0x5fff, M050Write);
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x4020, 0x4FFF, M050Write);
 }
-
-static void M050Reset(void) { }
 
 static void M050IRQHook(int a) {
 	if (IRQa) {
-		if (IRQCount < 4096)
-			IRQCount += a;
-		else {
-			IRQa = 0;
+		IRQCount += a;
+		if (IRQCount & 0x1000) {
 			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
@@ -83,7 +83,6 @@ static void StateRestore(int version) {
 }
 
 void Mapper050_Init(CartInfo *info) {
-	info->Reset = M050Reset;
 	info->Power = M050Power;
 	MapIRQHook = M050IRQHook;
 	GameStateRestore = StateRestore;

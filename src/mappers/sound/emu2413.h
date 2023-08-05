@@ -1,8 +1,6 @@
 #ifndef _EMU2413_H
 #define _EMU2413_H
 
-#include "fceu-types.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

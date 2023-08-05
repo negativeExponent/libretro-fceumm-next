@@ -21,8 +21,6 @@
 #ifndef _VRC7_H
 #define _VRC7_H
 
-#include "mapinc.h"
-
 typedef struct __VRC7 {
     uint8 prg[4];
     uint8 chr[8];

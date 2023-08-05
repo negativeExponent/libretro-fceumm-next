@@ -21,6 +21,7 @@
 /* NES 2.0 Mapper 543 - 1996 無敵智カ卡 5-in-1 (CH-501) */
 /* NOTE: needs RAM to be initialized to all 0x00 */
 
+#include "mapinc.h"
 #include "mmc1.h"
 
 static uint8 reg;

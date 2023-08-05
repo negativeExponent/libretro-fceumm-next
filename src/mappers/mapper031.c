@@ -1,6 +1,8 @@
 /* FCEUmm - NES/Famicom Emulator
  *
- * Copyright (C) 2019 Libretro Team
+ * Copyright notice for this file:
+ *  Copyright (C) 2019 Libretro Team
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,33 +25,39 @@
 
 #include "mapinc.h"
 
-static uint8 preg[8];
+static uint8 prg[8];
 
-static SFORMAT StateRegs[] =
-{
-	{ preg, 8, "PREG" },
+static SFORMAT StateRegs[] = {
+	{ prg, 8, "PREG" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg4(0x8000, preg[0]);
-	setprg4(0x9000, preg[1]);
-	setprg4(0xA000, preg[2]);
-	setprg4(0xB000, preg[3]);
-	setprg4(0xC000, preg[4]);
-	setprg4(0xD000, preg[5]);
-	setprg4(0xE000, preg[6]);
-	setprg4(0xF000, preg[7]);
+	setprg4(0x8000, prg[0]);
+	setprg4(0x9000, prg[1]);
+	setprg4(0xA000, prg[2]);
+	setprg4(0xB000, prg[3]);
+	setprg4(0xC000, prg[4]);
+	setprg4(0xD000, prg[5]);
+	setprg4(0xE000, prg[6]);
+	setprg4(0xF000, prg[7]);
 	setchr8(0);
 }
 
 static DECLFW(M031Write) {
-	preg[A & 7] = V;
+	prg[A & 0x07] = V;
 	Sync();
 }
 
 static void M031Power(void) {
-	preg[7] = ~0;
+	prg[0] = ~7;
+	prg[1] = ~6;
+	prg[2] = ~5;
+	prg[3] = ~4;
+	prg[4] = ~3;
+	prg[5] = ~2;
+	prg[6] = ~1;
+	prg[7] = ~0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x5000, 0x5FFF, M031Write);

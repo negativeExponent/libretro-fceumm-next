@@ -21,6 +21,7 @@
 
 /* SUNSOFT-5/FME-7 Sound */
 
+#include "mapinc.h"
 #include "fme7sound.h"
 
 static void(*sfun[3]) (void);

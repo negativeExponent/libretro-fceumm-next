@@ -21,8 +21,6 @@
 #ifndef _BANDAI_H
 #define _BANDAI_H
 
-#include "eeprom_x24c0x.h"
-
 DECLFW(BANDAI_Write);
 
 void BANDAI_Power(void);

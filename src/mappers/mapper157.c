@@ -21,8 +21,8 @@
 /* FIXME: Bar code input interface not attached yet */
 
 #include "mapinc.h"
-#include "bandai.h"
 #include "eeprom_x24c0x.h"
+#include "bandai.h"
 
 /* Datach Barcode Battler */
 

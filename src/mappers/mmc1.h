@@ -21,8 +21,6 @@
 #ifndef _MMC1_H
 #define _MMC1_H
 
-#include "mapinc.h"
-
 typedef enum {
     MMC1A,
     MMC1B

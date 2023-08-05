@@ -25,12 +25,19 @@ static uint8 reg[4];
 static uint8 cmd;
 static uint8 dipsw;
 
+static SFORMAT StateRegs[] = {
+	{ reg, 4, "REGS" },
+	{ &cmd, 1, "CMD0" },
+	{ &dipsw, 1, "DPSW" },
+	{ 0 }
+};
+
 static void M045CW(uint32 A, uint8 V) {
 	if (UNIFchrrama) {
 		/* assume chr-ram, 4-in-1 Yhc-Sxx-xx variants */
 		setchr8(0);
 	} else {
-		uint32 mask = 0xFF >> (~reg[2] & 0xF);
+		uint32 mask = 0xFF >> (~reg[2] & 0x0F);
 		uint32 base = ((reg[2] << 4) & 0xF00) | reg[0];
 
 		setchr1(A, (base & ~mask) | (V & mask));
@@ -97,7 +104,5 @@ void Mapper045_Init(CartInfo *info) {
 	MMC3_pwrap = M045PW;
 	info->Reset = M045Reset;
 	info->Power = M045Power;
-	AddExState(reg, 4, 0, "EXPR");
-	AddExState(&cmd, 1, 0, "CMD0");
-	AddExState(&dipsw, 1, 0, "DPSW");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

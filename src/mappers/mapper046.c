@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,51 +20,42 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 reg0, reg1;
+static uint8 reg;
 
-static SFORMAT StateRegs[] =
-{
-	{ &reg0, 1, "REG0" },
-	{ &reg1, 1, "REG1" },
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg32(0x8000, (reg1 & 1) + ((reg0 & 0xF) << 1));
-	setchr8(((reg1 >> 4) & 7) + ((reg0 & 0xF0) >> 1));
+	uint8 prgBase = reg & 0x0F;
+	uint8 chrBase = reg & 0xF0;
+
+	setprg32(0x8000, (prgBase << 1) | (latch.data & 0x01));
+	setchr8((chrBase >> 1) | ((latch.data >> 4) & 0x07));
 }
 
-static DECLFW(M046Write0) {
-	reg0 = V;
-	Sync();
-}
-
-static DECLFW(M046Write1) {
-	reg1 = V;
+static DECLFW(M046WriteReg) {
+	reg = V;
 	Sync();
 }
 
 static void M046Power(void) {
-	reg0 = reg1 = 0;
-	Sync();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x7FFF, M046Write0);
-	SetWriteHandler(0x8000, 0xFFFF, M046Write1);
+	reg = 0;
+	Latch_Power();
+	SetWriteHandler(0x6000, 0x7FFF, M046WriteReg);
 }
 
 static void M046Reset(void) {
-	reg0 = reg1 = 0;
-	Sync();
-}
-
-static void StateRestore(int version) {
+	reg = 0;
 	Sync();
 }
 
 void Mapper046_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, FALSE, TRUE);
 	info->Power = M046Power;
 	info->Reset = M046Reset;
-	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

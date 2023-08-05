@@ -22,6 +22,7 @@
  * 1998 Super HiK 8-in-1 (JY-021B)
  */
 
+#include "mapinc.h"
 #include "mmc1.h"
 
 static uint8 reg;

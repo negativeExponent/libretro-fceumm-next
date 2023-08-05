@@ -19,8 +19,8 @@
  */
 
 #include "mapinc.h"
-#include "bandai.h"
 #include "eeprom_x24c0x.h"
+#include "bandai.h"
 
 static void M159PW(uint32 A, uint8 V) {
     setprg16(A, V & 0x1F); /* map upto 512K PRG for fan translations etc */

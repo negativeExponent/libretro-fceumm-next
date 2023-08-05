@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
@@ -28,78 +28,77 @@
 
 #include "mapinc.h"
 
-static uint8 cregs[4], pregs[2];
+static uint8 chr[4], prg[2];
 static uint8 outerbank;
 static uint8 mirr;
 
 static uint8 IRQa;
-static uint8 IRQp;
+static uint8 IRQPrescaler;
 static uint8 IRQCount;
-static int16 IRQCount2;
+static int16 IRQCount16;
 
-static SFORMAT StateRegs[] =
-{
-	{ cregs, 4, "CREG" },
-	{ pregs, 2, "PREG" },
+static SFORMAT StateRegs[] = {
+	{ chr, 4, "CREG" },
+	{ prg, 2, "PREG" },
 	{ &IRQa, 1, "IRQA" },
-	{ &IRQp, 1, "IRQP" },
+	{ &IRQPrescaler, 1, "IRQP" },
 	{ &IRQCount, 1, "IRQC" },
-	{ &IRQCount2, 4, "IRQ2" },
+	{ &IRQCount16, 4, "IRQ2" },
 	{ &outerbank, 1, "OUTB" },
 	{ &mirr, 1, "MIRR" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	/*	FCEU_printf("P0:%02x P1:%02x outerbank:%02x\n", pregs[0], pregs[1], outerbank);*/
-	setprg8(0x8000, pregs[0] | (outerbank & 6) << 3);
-	setprg8(0xa000, pregs[1] | (outerbank & 6) << 3);
-	setprg8(0xc000,      0xE | (outerbank & 6) << 3);
-	setprg8(0xe000,      0xF | (outerbank & 6) << 3);
+	/*	FCEU_printf("P0:%02x P1:%02x outerbank:%02x\n", prg[0], prg[1], outerbank);*/
+	setprg8(0x8000, ((outerbank << 3) & ~0x0F) | prg[0]);
+	setprg8(0xa000, ((outerbank << 3) & ~0x0F) | prg[1]);
+	setprg8(0xc000, ((outerbank << 3) & ~0x0F) | 0x0E);
+	setprg8(0xe000, ((outerbank << 3) & ~0x0F) | 0x0F);
 
-	setchr2(0x0000, cregs[0] | (outerbank & 1) << 8);
-	setchr2(0x0800, cregs[1] | (outerbank & 1) << 8);
-	setchr2(0x1000, cregs[2] | (outerbank & 1) << 8);
-	setchr2(0x1800, cregs[3] | (outerbank & 1) << 8);
+	setchr2(0x0000, ((outerbank << 8) & 0x100) | chr[0]);
+	setchr2(0x0800, ((outerbank << 8) & 0x100) | chr[1]);
+	setchr2(0x1000, ((outerbank << 8) & 0x100) | chr[2]);
+	setchr2(0x1800, ((outerbank << 8) & 0x100) | chr[3]);
 
-	if (iNESCart.submapper == 1) {
-		setmirror(mirr ^ 1);
+	if (iNESCart.submapper != 0) {
+		setmirror((mirr & 0x01) ^ 0x01);
 	}
 }
 
 static DECLFW(M091CHRWrite) {
 	if (iNESCart.submapper == 1) {
-		switch (A & 7) {
+		switch (A & 0x07) {
 		case 0:
 		case 1:
 		case 2:
 		case 3:
-			cregs[A & 3] = V;
+			chr[A & 0x03] = V;
 			Sync();
 			break;
 		case 4:
 		case 5:
-			mirr = V & 1;
+			mirr = V;
 			Sync();
 			break;
 		case 6:
-			IRQCount2 = (IRQCount2 & 0xFF00) | V;
+			IRQCount16 = (IRQCount16 & 0xFF00) | V;
 			break;
 		case 7:
-			IRQCount2 = (IRQCount2 & 0x00FF) | (V << 8);
+			IRQCount16 = (IRQCount16 & 0x00FF) | (V << 8);
 			break;
 		}
 	} else {
-		cregs[A & 3] = V;
+		chr[A & 0x03] = V;
 		Sync();
 	}
 }
 
 static DECLFW(M091IRQWrite) {
-	switch (A & 3) {
+	switch (A & 0x03) {
 	case 0:
 	case 1:
-		pregs[A & 1] = V;
+		prg[A & 0x01] = V;
 		Sync();
 		break;
 	case 2:
@@ -107,27 +106,28 @@ static DECLFW(M091IRQWrite) {
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	case 3:
-		IRQa = 1; IRQp = 3;
+		IRQa = 1;
+		IRQPrescaler = 3;
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	}
 }
 
 static DECLFW(M091OuterBankWrite) {
-	outerbank = A & 7;
+	outerbank = A & 0xFF;
 	Sync();
 }
 
 static void M091Power(void) {
 	Sync();
-	SetReadHandler(0x8000, 0xffff, CartBR);
-	SetWriteHandler(0x6000, 0x6fff, M091CHRWrite);
-	SetWriteHandler(0x7000, 0x7fff, M091IRQWrite);
-	SetWriteHandler(0x8000, 0x9fff, M091OuterBankWrite);
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x6000, 0x6FFF, M091CHRWrite);
+	SetWriteHandler(0x7000, 0x7FFF, M091IRQWrite);
+	SetWriteHandler(0x8000, 0x9FFF, M091OuterBankWrite);
 }
 
 static void M091HBHook(void) {
-	if (IRQCount < 8 && IRQa) {
+	if ((IRQCount < 8) && IRQa) {
 		IRQCount++;
 		if (IRQCount >= 8) {
 			X6502_IRQBegin(FCEU_IQEXT);
@@ -136,14 +136,12 @@ static void M091HBHook(void) {
 }
 
 static void M091IRQHook(int a) {
-	IRQp += a;
-	if (IRQp >= 4) {
-		IRQp -= 4;
-		IRQCount2 -= 5;
-		if (IRQCount2 <= 0) {
-			if (IRQa) {
-				X6502_IRQBegin(FCEU_IQEXT);
-			}
+	IRQPrescaler += a;
+	if (IRQPrescaler >= 4) {
+		IRQPrescaler -= 4;
+		IRQCount16 -= 5;
+		if ((IRQCount16 <= 0) && IRQa) {
+			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
 }

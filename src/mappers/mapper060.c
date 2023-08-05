@@ -1,7 +1,8 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- * Copyright (C) 2020
+ *  Copyright (C) 2020
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,7 +30,7 @@ static void Sync(void) {
 }
 
 static void M060Reset(void) {
-	game = (game + 1) & 3;
+	game++;
 	Sync();
 }
 
@@ -37,7 +38,6 @@ static void M060Power(void) {
 	game = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, CartBW);
 }
 
 static void StateRestore(int version) {

@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "mapinc.h"
 #include "mmc1.h"
 
 static uint32 IRQCount;

@@ -36,14 +36,11 @@ static void M044CW(uint32 A, uint8 V) {
 }
 
 static DECLFW (M044WriteA000) {
+    MMC3_CMDWrite(A, V);
     switch (A & 0xE001) {
     case 0xA001:
-        mmc3.wram = V;
         MMC3_FixPRG();
         MMC3_FixCHR();
-        break;
-    default:
-        MMC3_CMDWrite(A, V);
         break;
     }
 }

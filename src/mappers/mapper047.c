@@ -23,6 +23,11 @@
 
 static uint8 reg;
 
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
+
 static void M047PW(uint32 A, uint8 V) {
 	setprg8(A, (reg << 4) | (V & 0x0F));
 }
@@ -55,5 +60,5 @@ void Mapper047_Init(CartInfo *info) {
 	MMC3_cwrap = M047CW;
 	info->Power = M047Power;
 	info->Reset = M047Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

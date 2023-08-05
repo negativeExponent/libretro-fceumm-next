@@ -18,9 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "mapinc.h"
 #include "mmc1.h"
-
-static uint8 submapper;
 
 static int DetectMMC1WRAMSize(CartInfo *info, int *saveRAM) {
 	int workRAM = 8;
@@ -52,7 +51,7 @@ static int DetectMMC1WRAMSize(CartInfo *info, int *saveRAM) {
 }
 
 static void M001PW(uint32 A, uint8 V) {
-	if (submapper == 5) {
+	if (iNESCart.submapper == 5) {
 		setprg32(0x8000, 0);
 	} else {
 		setprg16(A, (MMC1_GetCHRBank(0) & 0x10) | (V & 0x0F));
@@ -60,15 +59,16 @@ static void M001PW(uint32 A, uint8 V) {
 }
 
 void Mapper001_Init(CartInfo *info) {
-	int bs = info->battery ? 8 : 0;
+	int bs = 0;
 	int ws = DetectMMC1WRAMSize(info, &bs);
-	submapper = info->submapper;
 	MMC1_Init(info, ws, bs);
 	MMC1_pwrap = M001PW;
+	mmc1_type = (info->submapper == 3) ? MMC1A : MMC1B;
 }
 
 /* Same as mapper 1, without respect for WRAM enable bit. */
 void Mapper155_Init(CartInfo *info) {
 	MMC1_Init(info, 8, info->battery ? 8 : 0);
     MMC1_pwrap = M001PW;
+	mmc1_type = MMC1A;
 }

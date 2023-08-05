@@ -20,6 +20,7 @@
 
 /* NES 2.0 Mapper 297 - 2-in-1 Uzi Lightgun (MGC-002) */
 
+#include "mapinc.h"
 #include "mmc1.h"
 
 static uint8 mode;

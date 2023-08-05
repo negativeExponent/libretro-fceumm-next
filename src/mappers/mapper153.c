@@ -19,8 +19,8 @@
  */
 
 #include "mapinc.h"
-#include "bandai.h"
 #include "eeprom_x24c0x.h"
+#include "bandai.h"
 
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;

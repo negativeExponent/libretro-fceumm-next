@@ -210,6 +210,7 @@ DECLFW(MMC3_IRQWrite) {
 		IRQLatch = V;
 		break;
 	case 0xC001:
+		IRQCount = 0;
 		IRQReload = 1;
 		break;
 	case 0xE000:

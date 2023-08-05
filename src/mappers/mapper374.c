@@ -23,6 +23,7 @@
  * 1996 Super HiK 4-in-1 - 新系列超級飛狼組合卡 (JY-051)
  */
 
+#include "mapinc.h"
 #include "mmc1.h"
 
 static uint8 game = 0;

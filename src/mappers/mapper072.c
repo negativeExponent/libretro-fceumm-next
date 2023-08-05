@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +21,7 @@
  * Mapper 72:
  * Moero!! Pro Tennis have ADPCM codec on-board, PROM isn't dumped, emulation isn't
  * possible just now.
- * 
+ *
  * Mapper 092
  * Another two-in-one mapper, two Jaleco carts uses similar
  * hardware, but with different wiring.
@@ -28,65 +29,58 @@
  * Additionally, PCB contains DSP extra sound chip, used for voice samples (unemulated)
  * This mapper is identical to mapper 072 except for the different PRG Setup.
  */
- 
+
 #include "mapinc.h"
 
 static uint8 prg, chr, reg;
 
-static void (*WSync)(void);
-
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &prg, 1, "PREG" },
 	{ &chr, 1, "CREG" },
 	{ &reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M072Sync(void) {
-	setprg16(0x8000, prg);
-	setprg16(0xC000, ~0);
-	setchr8(chr);
-}
-
-static void M092Sync(void) {
-	setprg16(0x8000, 0);
-	setprg16(0xC000, prg);
-	setchr8(chr);
+static void Sync(void) {
+	if (iNESCart.mapper == 92) {
+		setprg16(0x8000, 0);
+		setprg16(0xC000, prg);
+		setchr8(chr);
+	} else {
+		setprg16(0x8000, prg);
+		setprg16(0xC000, ~0);
+		setchr8(chr);
+	}
 }
 
 static DECLFW(M072Write) {
-	V &= CartBR(A);
+	V &= CartBR(A); /* bus conflict */
 
 	reg = (reg ^ V) & V;
 	if (reg & 0x80) prg = V;
 	if (reg & 0x40) chr = V;
 
-	WSync();
+	Sync();
 }
 
 static void M072Power(void) {
-	WSync();
+	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M072Write);
 }
 
 static void StateRestore(int version) {
-	WSync();
+	Sync();
 }
 
 void Mapper072_Init(CartInfo *info) {
 	info->Power = M072Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
-
-	WSync = M072Sync;
 }
 
 void Mapper092_Init(CartInfo *info) {
 	info->Power = M072Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
-
-	WSync = M092Sync;
 }

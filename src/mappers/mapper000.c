@@ -24,13 +24,6 @@
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE = 0;
 
-#ifdef DEBUG_MAPPER
-static DECLFW(NROMWrite) {
-	FCEU_printf("bs %04x %02x\n", A, V);
-	CartBW(A, V);
-}
-#endif
-
 static void NROMClose(void) {
 	if (WRAM)
 		FCEU_gfree(WRAM);
@@ -46,20 +39,16 @@ static void NROMPower(void) {
 	} else {
 		setprg32(0x8000, 0);
 		SetReadHandler(0x8000, 0xFFFF, CartBR);
+	}
 
-		if (WRAMSIZE) {
-			setprg8r(0x10, 0x6000, 0); /* Famili BASIC (v3.0) need it (uses only 4KB), FP-BASIC uses 8KB */
-			SetReadHandler(0x6000, 0x7FFF, CartBR);
-			SetWriteHandler(0x6000, 0x7FFF, CartBW);
-			FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
-		}
+	if (WRAMSIZE) {
+		setprg8r(0x10, 0x6000, 0); /* Famili BASIC (v3.0) need it (uses only 4KB), FP-BASIC uses 8KB */
+		SetReadHandler(0x6000, 0x7FFF, CartBR);
+		SetWriteHandler(0x6000, 0x7FFF, CartBW);
+		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 	}
 
 	setchr8(0);
-
-#ifdef DEBUG_MAPPER
-	SetWriteHandler(0x4020, 0xFFFF, NROMWrite);
-#endif
 }
 
 void Mapper000_Init(CartInfo *info) {
@@ -67,6 +56,7 @@ void Mapper000_Init(CartInfo *info) {
 	info->Close = NROMClose;
 
 	WRAMSIZE = 8192;
+
 	if (info->submapper) {
 		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
 	}

@@ -1,4 +1,6 @@
 #include <stdio.h>
+
+#include "../fceu-types.h"
 #include "__serial.h"
 
 #if defined(_WIN32) && !defined(_XBOX) && !defined(__LIBRETRO__)

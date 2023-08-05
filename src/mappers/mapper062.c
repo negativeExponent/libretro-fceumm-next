@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,51 +20,22 @@
  */
 
 #include "mapinc.h"
-
-static uint8 bank;
-static uint16 mode;
-static SFORMAT StateRegs[] =
-{
-	{ &bank, 1, "BANK" },
-	{ &mode, 2, "MODE" },
-	{ 0 }
-};
+#include "latch.h"
 
 static void Sync(void) {
-	setchr8(((mode & 0x1F) << 2) | (bank & 0x03));
-	if (mode & 0x20) {
-		setprg16(0x8000, (mode & 0x40) | ((mode >> 8) & 0x3F));
-		setprg16(0xc000, (mode & 0x40) | ((mode >> 8) & 0x3F));
-	} else
-		setprg32(0x8000, ((mode & 0x40) | ((mode >> 8) & 0x3F)) >> 1);
-	setmirror(((mode >> 7) & 1) ^ 1);
-}
+	uint8 prg = (latch.addr & 0x40) | ((latch.addr >> 8) & 0x3F);
 
-static DECLFW(M062Write) {
-	mode = A & 0x3FFF;
-	bank = V & 3;
-	Sync();
-}
-
-static void M062Power(void) {
-	bank = mode = 0;
-	Sync();
-	SetWriteHandler(0x8000, 0xFFFF, M062Write);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-}
-
-static void M062Reset(void) {
-	bank = mode = 0;
-	Sync();
-}
-
-static void StateRestore(int version) {
-	Sync();
+	if (latch.addr & 0x20) {
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg);
+	} else {
+		setprg32(0x8000, prg >> 1);
+	}
+	setchr8(((latch.addr & 0x1F) << 2) | (latch.data & 0x03));
+	setmirror(((latch.addr >> 7) & 1) ^ 1);
 }
 
 void Mapper062_Init(CartInfo *info) {
-	info->Power = M062Power;
-	info->Reset = M062Reset;
-	AddExState(StateRegs, ~0, 0, NULL);
-	GameStateRestore = StateRestore;
+	Latch_Init(info, Sync, NULL, FALSE, FALSE);
+	info->Reset = Latch_RegReset;
 }

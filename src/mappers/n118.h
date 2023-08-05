@@ -21,8 +21,6 @@
 #ifndef _N118_H
 #define _N118_H
 
-#include "mapinc.h"
-
 typedef struct __N118 {
     uint8 reg[8];
     uint8 cmd;

@@ -20,6 +20,7 @@
 
 /* NES 2.0 Mapper 550 - 7-in-1 1993 Chess Series (JY-015) */
 
+#include "mapinc.h"
 #include "mmc1.h"
 
 static uint8 latch;

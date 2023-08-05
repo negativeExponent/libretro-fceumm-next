@@ -38,8 +38,8 @@ static void Sync(void) {
 	setprg8(0xC000, prg[2]);
 	setprg8(0xE000, ~0);
 
-	setchr2(0x0000, (chr[0] >> 1) & 0x3F);
-	setchr2(0x0800, (chr[1] >> 1) & 0x3F);
+	setchr2(0x0000, chr[0] >> 1);
+	setchr2(0x0800, chr[1] >> 1);
 	setchr1(0x1000, chr[2]);
 	setchr1(0x1400, chr[3]);
 	setchr1(0x1800, chr[4]);

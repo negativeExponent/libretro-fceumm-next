@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,38 +21,38 @@
 
 #include "mapinc.h"
 
-static uint8 mainreg, chrreg, mirror;
+static uint8 reg[2];
 
-static SFORMAT StateRegs[] =
-{
-	{ &mainreg, 1, "MREG" },
-	{ &chrreg, 1, "CREG" },
-	{ &mirror, 1, "MIRR" },
+static SFORMAT StateRegs[] = {
+	{ reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg32(0x8000, mainreg & 7);
-	setchr8(chrreg);
-	setmirror(mirror);
+	setprg32(0x8000, reg[0] & 0x07);
+	setchr8(((reg[0] >> 1) & 0x0C) | (reg[1] & 0x03));
+	setmirror(((reg[0] >> 5) & 0x01) ^ 0x01);
 }
 
 static DECLFW(M041Write0) {
-	mainreg = A & 0xFF;
-	mirror = ((A >> 5) & 1) ^ 1;
-	chrreg = (chrreg & 3) | ((A >> 1) & 0xC);
+	reg[0] = A;
 	Sync();
 }
 
 static DECLFW(M041Write1) {
-	if (mainreg & 0x4) {
-		chrreg = (chrreg & 0xC) | (A & 3);
+	if (reg[0] & 0x04) {
+		reg[1] = (V & CartBR(A));
 		Sync();
 	}
 }
 
+static void M041Reset(void) {
+	reg[0] = reg[1] = 0;
+	Sync();
+}
+
 static void M041Power(void) {
-	mainreg = chrreg = 0;
+	reg[0] = reg[1] = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x67FF, M041Write0);
@@ -64,6 +65,7 @@ static void StateRestore(int version) {
 
 void Mapper041_Init(CartInfo *info) {
 	info->Power = M041Power;
+	info->Reset = M041Reset;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -1,3 +1,4 @@
+#include "mapinc.h"
 #include "eeprom_93C66.h"
 
 static uint8* eeprom_93C66_storage;
@@ -65,7 +66,7 @@ void eeprom_93C66_write (uint8 CS, uint8 CLK, uint8 DAT)
    else
    if (CLK && !eeprom_93C66_lastCLK)
    {
-      if (eeprom_93C66_state >=STATE_STARTBIT && eeprom_93C66_state <STATE_OPCODE) 
+      if (eeprom_93C66_state >=STATE_STARTBIT && eeprom_93C66_state <STATE_OPCODE)
          eeprom_93C66_opcode  =(eeprom_93C66_opcode  <<1) | (DAT? 1: 0);
       else
       if (eeprom_93C66_state >=STATE_OPCODE   && eeprom_93C66_state <state_address)
@@ -100,7 +101,7 @@ void eeprom_93C66_write (uint8 CS, uint8 CLK, uint8 DAT)
                      eeprom_93C66_writeEnabled = 0;
                      eeprom_93C66_state = STATE_FINISHED;
                      break;
-                  case OPCODE_WRITEENABLE: 
+                  case OPCODE_WRITEENABLE:
                      eeprom_93C66_writeEnabled = 1;
                      eeprom_93C66_state = STATE_FINISHED;
                      break;

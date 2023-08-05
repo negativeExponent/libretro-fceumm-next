@@ -19,15 +19,17 @@
  */
 
 /* iNES Mapper 49 */
-/* BMC-STREETFIGTER-GAME4IN1 */
-/* added 6-24-19:
- * BMC-STREETFIGTER-GAME4IN1 - Sic. $6000 set to $41 rather than $00 on power-up.
- */
+/* BMC-STREETFIGTER-GAME4IN1 - Sic. $6000 set to $41 rather than $00 on power-up. */
 
 #include "mapinc.h"
 #include "mmc3.h"
 
 static uint8 reg;
+
+static SFORMAT StateRegs[] = {
+	{ &reg, 1, "REGS" },
+	{ 0 }
+};
 
 static void M049PW(uint32 A, uint8 V) {
 	if (reg & 0x01) {
@@ -66,5 +68,5 @@ void Mapper049_Init(CartInfo *info) {
 	MMC3_pwrap = M049PW;
 	info->Reset = M049Reset;
 	info->Power = M049Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

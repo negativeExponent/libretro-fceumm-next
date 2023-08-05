@@ -20,6 +20,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include "mapinc.h"
 #include "mmc1.h"
 
 static uint32 WRAMSIZE = 0;
@@ -206,7 +207,7 @@ void MMC1_Reset(void) {
 	mmc1.regs[3] = 0;
 
 	mmc1.buffer = mmc1.shift = 0;
-	
+
 	MMC1_FixPRG();
 	MMC1_FixCHR();
 	MMC1_FixMIR();
@@ -241,11 +242,6 @@ void MMC1_Close(void) {
 }
 
 void MMC1_Init(CartInfo *info, int wram, int saveram) {
-	if ((info->mapper == 155) ||
-		((info->mapper == 4) && (info->submapper == 3))) {
-		mmc1_type = MMC1A;
-	}
-
 	MMC1_pwrap = GENPWRAP;
 	MMC1_cwrap = GENCWRAP;
 	MMC1_wwrap = GENWRAMWRAP;

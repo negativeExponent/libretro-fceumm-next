@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2013 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,9 +24,9 @@
 
 static void Sync(void) {
 	setprg32(0x8000, 0);
-	setchr4(0x0000, ((latch.addr << 1) & 2) | (latch.addr & 1));
-	setchr4(0x1000, ((latch.addr << 1) & 2) | (latch.addr & 1));
-	setmirror(MI_0 + (latch.addr & 1));
+	setchr4(0x0000, ((latch.addr << 1) & 0x02) | (latch.addr & 0x01));
+	setchr4(0x1000, ((latch.addr << 1) & 0x02) | (latch.addr & 0x01));
+	setmirror(MI_0 + (latch.addr & 0x01));
 }
 
 void Mapper027_Init(CartInfo *info) {

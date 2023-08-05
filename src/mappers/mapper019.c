@@ -22,18 +22,16 @@
 #include "mapinc.h"
 #include "n163sound.h"
 
-static uint16 IRQCount;
-static uint8 IRQa;
-
-static uint8 WRAM[8192];
-static uint32 WRAMSIZE;
-
 static uint8 prg[4];
 static uint8 chr[8];
 static uint8 nt[4];
 static uint8 wram_protect;
 
+static uint16 IRQCount;
+static uint8 IRQa;
 
+static uint8 WRAM[8192];
+static uint32 WRAMSIZE;
 
 static SFORMAT N163_StateRegs[] = {
 	{ prg, 4, "PREG" },
@@ -53,6 +51,20 @@ static void SyncPRG(void) {
 	setprg8(0xe000, prg[3] & 0x3F);
 }
 
+static void DoCHRRAMROM(int x, uint8 V) {
+	chr[x] = V;
+	if (((prg[1] >> ((x >> 2) + 6)) & 1) || (V < 0xE0)) {
+		setchr1(x << 10, V);
+	}
+}
+
+static void FixCRR(void) {
+	int x;
+	for (x = 0; x < 8; x++) {
+		DoCHRRAMROM(x, chr[x]);
+	}
+}
+
 static void DoNTARAMROM(int w, uint8 V) {
 	nt[w] = V;
 	if (V < 0xE0) {
@@ -67,20 +79,6 @@ static void FixNTAR(void) {
 	int x;
 	for (x = 0; x < 4; x++) {
 		DoNTARAMROM(x, nt[x]);
-	}
-}
-
-static void DoCHRRAMROM(int x, uint8 V) {
-	chr[x] = V;
-	if (((prg[1] >> ((x >> 2) + 6)) & 1) || (V < 0xE0)) {
-		setchr1(x << 10, V);
-	}
-}
-
-static void FixCRR(void) {
-	int x;
-	for (x = 0; x < 8; x++) {
-		DoCHRRAMROM(x, chr[x]);
 	}
 }
 
@@ -108,9 +106,8 @@ static DECLFW(BWRAM) {
 	}
 }
 
-static DECLFR(M019_Read) {
-	A &= 0xF800;
-	switch (A) {
+static DECLFR(M019Read) {
+	switch (A & 0xF800) {
 	case 0x4800:
 		return N163Sound_Read(A);
 	case 0x5000:
@@ -122,9 +119,8 @@ static DECLFR(M019_Read) {
 	return 0;
 }
 
-static DECLFW(M019_Write) {
-	A &= 0xF800;
-	switch (A) {
+static DECLFW(M019Write) {
+	switch (A & 0xF800) {
 	case 0x4800:
 		N163Sound_Write(A, V);
 		break;
@@ -177,10 +173,10 @@ static DECLFW(M019_Write) {
 }
 
 static void StateRestore(int version) {
+	N163Sound_FixCache();
 	SyncPRG();
 	FixNTAR();
 	FixCRR();
-	N163Sound_FixCache();
 }
 
 static int battery = 0;
@@ -211,11 +207,11 @@ static void N163_Power(void) {
 	FixCRR();
 	FixNTAR();
 
-	SetReadHandler(0x4800, 0x5fff, M019_Read);
-	SetWriteHandler(0x4800, 0x5fff, M019_Write);
+	SetReadHandler(0x4800, 0x5FFF, M019Read);
+	SetWriteHandler(0x4800, 0x5FFF, M019Write);
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M019_Write);
+	SetWriteHandler(0x8000, 0xFFFF, M019Write);
 
 	if (WRAMSIZE) {
 		SetReadHandler(0x6000, 0x7FFF, AWRAM);
@@ -257,8 +253,8 @@ void Mapper019_Init(CartInfo *info) {
 }
 
 void NSFN163_Init(void) {
-	SetWriteHandler(0xf800, 0xffff, M019_Write);
-	SetWriteHandler(0x4800, 0x4fff, M019_Write);
-	SetReadHandler(0x4800, 0x4fff, M019_Read);
+	SetWriteHandler(0xf800, 0xffff, M019Write);
+	SetWriteHandler(0x4800, 0x4fff, M019Write);
+	SetReadHandler(0x4800, 0x4fff, M019Read);
 	N163Sound_ESI();
 }
