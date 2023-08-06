@@ -19,26 +19,32 @@
  *
  */
 
-/* NES 2.0 Mapper 290 - BMC-NTD-03 */
+/* BMC-K-3046 */
+/* NES 2.0 mapper 336 is used for an 11-in-1 multicart
+ * http://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_336 */
 
 #include "mapinc.h"
 #include "latch.h"
 
 static void Sync(void) {
-	uint32 prg = ((latch.addr >> 10) & 0x1E) | ((latch.addr >> 6) & 0x01);
-	uint32 chr = ((latch.addr >> 5) & 0x18) | (latch.addr & 0x07);
-
-	if (latch.addr & 0x80) {
-		setprg16(0x8000, prg);
-		setprg16(0xC000, prg);
-	} else {
-		setprg32(0x8000, prg >> 1);
-	}
-	setchr8(chr);
-	setmirror(((latch.addr >> 10) & 0x01) ^ 0x01);
+	setprg16(0x8000, latch.data);
+	setprg16(0xC000, latch.data | 0x07);
+	setchr8(0);
 }
 
-void Mapper290_Init(CartInfo *info) {
+static DECLFW(M336Write) {
+    latch.addr = A;
+    latch.data = V | CartBR(A);
+    Sync();
+}
+
+static void M336Power(void) {
+    Latch_Power();
+    SetWriteHandler(0x8000, 0xFFFF, M336Write);
+}
+
+void Mapper336_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
+    info->Power = M336Power;
 	info->Reset = Latch_RegReset;
 }

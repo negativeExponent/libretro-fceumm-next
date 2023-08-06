@@ -19,26 +19,22 @@
  *
  */
 
-/* NES 2.0 Mapper 290 - BMC-NTD-03 */
-
 #include "mapinc.h"
 #include "latch.h"
 
 static void Sync(void) {
-	uint32 prg = ((latch.addr >> 10) & 0x1E) | ((latch.addr >> 6) & 0x01);
-	uint32 chr = ((latch.addr >> 5) & 0x18) | (latch.addr & 0x07);
-
-	if (latch.addr & 0x80) {
-		setprg16(0x8000, prg);
-		setprg16(0xC000, prg);
-	} else {
-		setprg32(0x8000, prg >> 1);
-	}
-	setchr8(chr);
-	setmirror(((latch.addr >> 10) & 0x01) ^ 0x01);
+	setprg8(0x6000, latch.data);
+	setprg32(0x8000, ~0);
+	setchr8(0);
+	setmirror(((latch.data >> 4) & 0x01) ^ 0x01);
 }
 
-void Mapper290_Init(CartInfo *info) {
+static void M415Power(void) {
+	Latch_Power();
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
+}
+
+void Mapper415_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
-	info->Reset = Latch_RegReset;
+	info->Power = M415Power;
 }

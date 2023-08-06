@@ -19,26 +19,19 @@
  *
  */
 
-/* NES 2.0 Mapper 290 - BMC-NTD-03 */
+/* BMC-11160 (m299) */
+/* Simple BMC discrete mapper by TXC */
 
 #include "mapinc.h"
 #include "latch.h"
 
 static void Sync(void) {
-	uint32 prg = ((latch.addr >> 10) & 0x1E) | ((latch.addr >> 6) & 0x01);
-	uint32 chr = ((latch.addr >> 5) & 0x18) | (latch.addr & 0x07);
-
-	if (latch.addr & 0x80) {
-		setprg16(0x8000, prg);
-		setprg16(0xC000, prg);
-	} else {
-		setprg32(0x8000, prg >> 1);
-	}
-	setchr8(chr);
-	setmirror(((latch.addr >> 10) & 0x01) ^ 0x01);
+	setprg32(0x8000, (latch.data >> 4) & 0x07);
+	setchr8(((latch.data >> 4) & 0x1C) | (latch.data & 0x03));
+	setmirror((latch.data >> 7) & 0x01);
 }
 
-void Mapper290_Init(CartInfo *info) {
+void Mapper299_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Reset = Latch_RegReset;
 }

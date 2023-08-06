@@ -19,5 +19,26 @@
  *
  */
 
+/* Map 381 - 2-in-1 High Standard Game (BC-019), reset-based */
+
 #include "mapinc.h"
 #include "latch.h"
+
+static uint8 reset = 0;
+
+static void Sync(void) {
+	setprg16(0x8000, (reset << 4) | ((latch.data & 0x07) << 1) | ((latch.data >> 4) & 0x0F));
+	setprg16(0xC000, (reset << 4) | 0x0F);
+	setchr8(0);
+}
+
+static void M381Reset(void) {
+	reset++;
+	Sync();
+}
+
+void Mapper381_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, 0, 0);
+    info->Reset = M381Reset;
+	AddExState(&reset, 1, 0, "RST0");
+}

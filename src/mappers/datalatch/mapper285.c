@@ -19,26 +19,40 @@
  *
  */
 
-/* NES 2.0 Mapper 290 - BMC-NTD-03 */
+/* Mapper 285 - A65AS  */
+/* actually, there is two cart in one... First have extra mirroring
+ * mode (one screen) and 32K bankswitching, second one have only
+ * 16 bankswitching mode and normal mirroring... But there is no any
+ * correlations between modes and they can be used in one mapper code.
+ *
+ * Submapper 0 - 3-in-1 (N068)
+ * Submapper 0 - 3-in-1 (N080)
+ * Submapper 1 - 4-in-1 (JY-066)
+ */
 
 #include "mapinc.h"
 #include "latch.h"
 
 static void Sync(void) {
-	uint32 prg = ((latch.addr >> 10) & 0x1E) | ((latch.addr >> 6) & 0x01);
-	uint32 chr = ((latch.addr >> 5) & 0x18) | (latch.addr & 0x07);
-
-	if (latch.addr & 0x80) {
-		setprg16(0x8000, prg);
-		setprg16(0xC000, prg);
+	if (latch.data & 0x40) {
+		setprg32(0x8000, (latch.data >> 1) & 0x0F);
 	} else {
-		setprg32(0x8000, prg >> 1);
+		if (iNESCart.submapper == 1) {
+			setprg16(0x8000, ((latch.data & 0x30) >> 1) | (latch.data & 0x07));
+			setprg16(0xC000, ((latch.data & 0x30) >> 1) | 0x07);
+		} else {
+			setprg16(0x8000, latch.data & 0x0F);
+			setprg16(0xC000, (latch.data & 0x0F) | 0x07);
+		}
 	}
-	setchr8(chr);
-	setmirror(((latch.addr >> 10) & 0x01) ^ 0x01);
+	setchr8(0);
+	if (latch.data & 0x80) {
+		setmirror(MI_0 + (((latch.data >> 5) & 0x01)));
+    } else {
+		setmirror(((latch.data >> 3) & 0x01) ^ 0x01);
+    }
 }
 
-void Mapper290_Init(CartInfo *info) {
+void Mapper285_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
-	info->Reset = Latch_RegReset;
 }
