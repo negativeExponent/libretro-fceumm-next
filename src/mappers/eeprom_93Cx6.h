@@ -18,11 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _EEPROM_93C66_H
-#define _EEPROM_93C66_H
+#ifndef _EEPROM_93Cx6_H
+#define _EEPROM_93Cx6_H
 
-void eeprom_93C66_init   (uint8 *data, uint32 capacity, uint8 wordsize);
-uint8 eeprom_93C66_read  (void);
-void  eeprom_93C66_write (uint8 CS, uint8 CLK, uint8 DAT);
+void eeprom_93Cx6_init   (uint8 *data, uint32 capacity, uint8 wordsize);
+uint8 eeprom_93Cx6_read  (void);
+void  eeprom_93Cx6_write (uint8 CS, uint8 CLK, uint8 DAT);
 
 #endif

@@ -25,7 +25,7 @@
 
 #include "mapinc.h"
 
-#include "eeprom_93C66.h"
+#include "eeprom_93Cx6.h"
 
 static uint8 reg[4];
 
@@ -61,7 +61,7 @@ static void M558HBIRQHook(void) {
 
 static DECLFR(readReg) {
 	if (haveEEPROM) {
-		return eeprom_93C66_read() ? 0x04 : 0x00;
+		return eeprom_93Cx6_read() ? 0x04 : 0x00;
 	}
 	return reg[2] & 0x04;
 }
@@ -88,7 +88,7 @@ static DECLFW(writeReg) {
 		}
 		reg[2] = V;
 		if (haveEEPROM) {
-			eeprom_93C66_write((reg[2] & 0x04), (reg[2] & 0x02), (reg[2] & 0x01));
+			eeprom_93Cx6_write((reg[2] & 0x04), (reg[2] & 0x02), (reg[2] & 0x01));
 		}
 		break;
 	case 0x5300:
@@ -139,7 +139,7 @@ void Mapper558_Init(CartInfo *info) {
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 	haveEEPROM = !!(info->PRGRamSaveSize & 0x200);
 	if (haveEEPROM) {
-		eeprom_93C66_init(eeprom_data, 512, 8);
+		eeprom_93Cx6_init(eeprom_data, 512, 8);
 		info->battery = 1;
 		info->SaveGame[0] = eeprom_data;
 		info->SaveGameLen[0] = 512;

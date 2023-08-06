@@ -25,7 +25,7 @@
 
 #include "mapinc.h"
 #include "vrc2and4.h"
-#include "eeprom_93C66.h"
+#include "eeprom_93Cx6.h"
 
 static uint8 haveEEPROM;
 static uint8 eeprom_data[256];
@@ -37,7 +37,7 @@ static void M529PW(uint32 A, uint8 V) {
 
 static DECLFR(M529EEPROMRead) {
 	if (haveEEPROM) {
-		return eeprom_93C66_read() ? 0x01 : 0x00;
+		return eeprom_93Cx6_read() ? 0x01 : 0x00;
 	}
 	return 0x01;
 }
@@ -45,7 +45,7 @@ static DECLFR(M529EEPROMRead) {
 static DECLFW(M529Write) {
 	if (A & 0x800) {
 		if (haveEEPROM) {
-			eeprom_93C66_write(!!(A & 0x04), !!(A & 0x02), !!(A & 0x01));
+			eeprom_93Cx6_write(!!(A & 0x04), !!(A & 0x02), !!(A & 0x01));
 		}
 	} else {
 		VRC24_Write(A, V);
@@ -64,7 +64,7 @@ void Mapper529_Init(CartInfo *info) {
 	info->Power = M529Power;
 	VRC24_pwrap = M529PW;
 	if (haveEEPROM) {
-		eeprom_93C66_init(eeprom_data, 256, 16);
+		eeprom_93Cx6_init(eeprom_data, 256, 16);
 		info->battery = 1;
 		info->SaveGame[0] = eeprom_data;
 		info->SaveGameLen[0] = 256;
