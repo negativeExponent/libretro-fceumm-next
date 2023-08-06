@@ -24,17 +24,17 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static void Mapper429_Sync(void) {
+static void Sync(void) {
 	setprg32(0x8000, latch.data >> 2);
 	setchr8(latch.data);
 }
 
 static void Mapper429_Reset(void) {
 	latch.data = 4; /* Initial CHR bank 0, initial PRG bank 1 */
-	Mapper429_Sync();
+	Sync();
 }
 
 void Mapper429_Init(CartInfo *info) {
-	Latch_Init(info, Mapper429_Sync, NULL, 0, 0);
+	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Reset = Mapper429_Reset;
 }
