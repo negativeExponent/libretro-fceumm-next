@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
@@ -22,8 +22,7 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint32 dipswitch = 0;
-static uint32 submapper = 0;
+static uint32 dipsw = 0;
 
 /*------------------ BMCD1038 ---------------------------*/
 /* iNES Mapper 59 */
@@ -41,7 +40,7 @@ static void M059Sync(void) {
 
 static DECLFR(M059Read) {
 	if (latch.addr & 0x100) {
-		return (X.DB & ~3) | (dipswitch & 3);
+		return (X.DB & ~3) | (dipsw & 3);
 	}
 	return CartBR(A);
 }
@@ -55,7 +54,7 @@ static DECLFW(M059Write) {
 }
 
 static void M059Reset(void) {
-	dipswitch++;
+	dipsw++;
 	/* Always reset to menu */
 	latch.addr = 0;
 	M059Sync();
@@ -72,7 +71,7 @@ void Mapper059_Init(CartInfo *info) {
 	Latch_Init(info, M059Sync, M059Read, 0, 0);
 	info->Reset = M059Reset;
 	info->Power = M059Power;
-	AddExState(&dipswitch, 1, 0, "DIPSW");
+	AddExState(&dipsw, 1, 0, "DIPSW");
 }
 
 /*------------------ Map 058 ---------------------------*/
@@ -127,9 +126,9 @@ static DECLFR(M063Read) {
 }
 
 static void M063Sync(void) {
-	uint8 prg_mask = (submapper == 0) ? 0xFF : 0x7F;
+	uint8 prg_mask = (iNESCart.submapper == 0) ? 0xFF : 0x7F;
 	uint8 prg_bank = (latch.addr >> 2) & prg_mask;
-	uint8 chr_protect = (latch.addr & ((submapper == 0) ? 0x400 : 0x200)) == 0;
+	uint8 chr_protect = (latch.addr & ((iNESCart.submapper == 0) ? 0x400 : 0x200)) == 0;
 	if (latch.addr & 2) {
 		setprg32(0x8000, prg_bank >> 1);
 	} else {
@@ -147,7 +146,6 @@ static void M063Sync(void) {
 void Mapper063_Init(CartInfo *info) {
 	Latch_Init(info, M063Sync, M063Read, 0, 0);
 	info->Reset = Latch_RegReset;
-	submapper = info->submapper;
 }
 
 /*------------------ Map 200 ---------------------------*/
@@ -156,12 +154,11 @@ static void M200Sync(void) {
 	setprg16(0x8000, latch.addr & 7);
 	setprg16(0xC000, latch.addr & 7);
 	setchr8(latch.addr & 7);
-	setmirror(((latch.addr >> ((submapper == 0) ? 3 : 2)) & 1) ^ 1);
+	setmirror(((latch.addr >> ((iNESCart.submapper == 0) ? 3 : 2)) & 1) ^ 1);
 }
 
 void Mapper200_Init(CartInfo *info) {
 	Latch_Init(info, M200Sync, NULL, 0, 0);
-	submapper = info->submapper;
 }
 
 /*------------------ Map 201 ---------------------------*/
@@ -305,14 +302,14 @@ static void M227Sync(void) {
 }
 
 static DECLFR(M227Read) {
-	if ((latch.addr & 0x400) && dipswitch) {
-		A |= dipswitch;
+	if ((latch.addr & 0x400) && dipsw) {
+		A |= dipsw;
 	}
 	return CartBROB(A);
 }
 
 static void M227Power() {
-	dipswitch = 0;
+	dipsw = 0;
 	Latch_Power();
 	SetReadHandler(0x8000, 0xFFFF, M227Read);
 }
@@ -320,7 +317,7 @@ static void M227Power() {
 static void M227Reset() {
 	Latch_RegReset();
 
-	dipswitch = (dipswitch + 1) & 0x0F;
+	dipsw = (dipsw + 1) & 0x0F;
 	M227Sync();
 }
 
@@ -329,7 +326,7 @@ void Mapper227_Init(CartInfo *info) {
 	info->Power = M227Power;
 	info->Reset = M227Reset;
 	hasBattery = info->battery;
-	AddExState(&dipswitch, 1, 0, "PADS");
+	AddExState(&dipsw, 1, 0, "PADS");
 }
 
 /*------------------ Map 229 ---------------------------*/
@@ -423,7 +420,7 @@ static void M242Sync(void) {
 
 static DECLFR(M242Read) {
 	if (latch.addr & 0x100) {
-		A |= dipswitch;
+		A |= dipsw;
 	}
 	return CartBROB(A);
 }
@@ -431,12 +428,12 @@ static DECLFR(M242Read) {
 static void M242Power() {
 	Latch_Power();
 
-	dipswitch = 0;
+	dipsw = 0;
 	SetReadHandler(0x8000, 0xFFFF, M242Read);
 }
 
 static void M242Reset() {
-	dipswitch = (dipswitch + 1) & 0x1F;
+	dipsw = (dipsw + 1) & 0x1F;
 	Latch_RegReset();
 }
 
@@ -446,7 +443,7 @@ void Mapper242_Init(CartInfo *info) {
 	info->Reset  = M242Reset;
 	M242TwoChips = info->PRGRomSize & 0x20000 && info->PRGRomSize > 0x20000;
 	hasBattery   = info->battery;
-	AddExState(&dipswitch, 1, 0, "PADS");
+	AddExState(&dipsw, 1, 0, "PADS");
 }
 
 /*------------------ Map 288 ---------------------------*/
@@ -462,21 +459,21 @@ static void M288Sync(void) {
 static DECLFR(M288Read) {
 	uint8 ret = CartBR(A);
 	if (latch.addr & 0x20)
-		ret |= (dipswitch << 2);
+		ret |= (dipsw << 2);
 	return ret;
 }
 
 static void M288Reset(void) {
-	dipswitch++;
-	dipswitch &= 3;
+	dipsw++;
+	dipsw &= 3;
 	M288Sync();
 }
 
 void Mapper288_Init(CartInfo *info) {
-	dipswitch = 0;
+	dipsw = 0;
 	Latch_Init(info, M288Sync, M288Read, 0, 0);
 	info->Reset = M288Reset;
-	AddExState(&dipswitch, 1, 0, "DIPSW");
+	AddExState(&dipsw, 1, 0, "DIPSW");
 }
 
 /*------------------ Map 385 ---------------------------*/

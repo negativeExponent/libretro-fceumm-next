@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2002 Xodnizel
@@ -22,8 +22,6 @@
 #include "mapinc.h"
 #include "latch.h"
 #include "fdssound.h"
-
-static uint8 submapper = 0;
 
 /*------------------ Map 2 ---------------------------*/
 
@@ -163,7 +161,7 @@ static void M078Sync(void) {
 	setprg16(0x8000, (latch.data & 7));
 	setprg16(0xc000, ~0);
 	setchr8(latch.data >> 4);
-	if (submapper == 3) {
+	if (iNESCart.submapper == 3) {
 		setmirror((latch.data >> 3) & 1);
 	} else {
 		setmirror(MI_0 + ((latch.data >> 3) & 1));
@@ -172,7 +170,6 @@ static void M078Sync(void) {
 
 void Mapper078_Init(CartInfo *info) {
 	Latch_Init(info, M078Sync, NULL, 0, 1);
-	submapper = info->iNES2 ? info->submapper : 0;
 }
 
 /*------------------ Map 89 ---------------------------*/
@@ -380,12 +377,11 @@ void Mapper538_Init(CartInfo *info) {
  * Submapper 1 - 4-in-1 (JY-066)
  */
 
-static int A65ASsubmapper;
 static void M285Sync(void) {
 	if (latch.data & 0x40)
 		setprg32(0x8000, (latch.data >> 1) & 0x0F);
 	else {
-		if (A65ASsubmapper == 1) {
+		if (iNESCart.submapper == 1) {
 			setprg16(0x8000, ((latch.data & 0x30) >> 1) | (latch.data & 7));
 			setprg16(0xC000, ((latch.data & 0x30) >> 1) | 7);
 		} else {
@@ -401,7 +397,6 @@ static void M285Sync(void) {
 }
 
 void Mapper285_Init(CartInfo *info) {
-	A65ASsubmapper = info->submapper;
 	Latch_Init(info, M285Sync, NULL, 0, 0);
 }
 
