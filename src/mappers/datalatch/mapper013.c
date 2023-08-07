@@ -23,9 +23,9 @@
 #include "latch.h"
 
 static void Sync(void) {
+	setprg32(0x8000, 0);
 	setchr4(0x0000, 0);
 	setchr4(0x1000, latch.data);
-	setprg32(0x8000, 0);
 }
 
 void Mapper013_Init(CartInfo *info) {

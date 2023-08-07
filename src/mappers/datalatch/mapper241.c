@@ -20,9 +20,7 @@
  */
 
 /* Map 241 */
-/* Mapper 7 mostly, but with SRAM or maybe prot circuit.
- * figure out, which games do need 5xxx area reading.
- */
+/* Mapper 7 mostly, but with SRAM or maybe prot circuit. */
 
 #include "mapinc.h"
 #include "latch.h"

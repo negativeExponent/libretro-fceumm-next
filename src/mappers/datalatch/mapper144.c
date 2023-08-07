@@ -28,8 +28,9 @@ static void Sync(void) {
 }
 
 static DECLFW(M144Write) {
-    uint8 data = CartBR(A & (A | 1));
-	Latch_Write(A, data);
+	uint8 reg = CartBR(A);
+	latch.data = reg & ((V & reg) | 0x01);
+	Sync();
 }
 
 static void M144Power() {
