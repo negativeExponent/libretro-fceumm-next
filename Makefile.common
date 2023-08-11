@@ -6,6 +6,7 @@ INCFLAGS := \
 	-I$(CORE_DIR) \
 	-I$(CORE_DIR)/input \
 	-I$(CORE_DIR)/mappers \
+	-I$(CORE_DIR)/mappers/hw \
 	-I$(CORE_DIR)/mappers/sound
 
 ifneq (,$(findstring msvc2003,$(platform)))
