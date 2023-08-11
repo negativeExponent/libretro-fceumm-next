@@ -20,8 +20,7 @@ COREDEFINES = \
 
 FCEU_SRC_DIRS := \
 	$(CORE_DIR)/mappers \
-	$(CORE_DIR)/mappers/addrlatch \
-	$(CORE_DIR)/mappers/datalatch \
+	$(CORE_DIR)/mappers/hw \
 	$(CORE_DIR)/mappers/sound \
 	$(CORE_DIR)/input \
 
