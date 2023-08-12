@@ -423,15 +423,6 @@ static void CheckHashInfo(void) {
 #define BMCFLAG_256KCHRR  0x10
 
 static BMAPPING bmap[] = {
-/*	{ "KONAMI-QTAI",            NO_INES, Mapper190_Init,        0 }, */
-	{ "SSS-NROM-256",           NO_INES, SSSNROM_Init,   0 }, /* famicombox - cant find similar cart */
-	{ "T-227-1",                NO_INES, BMCT2271_Init,  0 }, /* cant find similar cart */
-	{ "Transformer",            NO_INES, Transformer_Init, 0 },
-	{ "81-01-31-C",             NO_INES, BMC810131C_Init, 0 }, /* might be 327 with m118-like mirroring */
-	{ "KG256",                  NO_INES, KG256_Init,     0 }, /* cant find similar cart */
-	{ "HP898F",                 NO_INES, Mapper319_Init, 0 }, /* UNIF implementation of mapper 319 */
-	{ "VRC7",                   NO_INES, Mapper085_Init, 0 },
-	{ "CHINA_ER_SAN2",          NO_INES, Mapper019_Init, 0 }, /* Needs more than just what mapper 19 can handle */
 	{ "NROM",                         0, Mapper000_Init, 0 },
 	{ "NROM-128",                     0, Mapper000_Init, 0 },
 	{ "NROM-256",                     0, Mapper000_Init, 0 },
@@ -484,6 +475,7 @@ static BMAPPING bmap[] = {
 	{ "MHROM",                       66, Mapper066_Init, 0 },
 	{ "NTBROM",                      68, Mapper068_Init, 0 },
 	{ "SA-016-1M",                   79, Mapper079_Init, 0 },
+	{ "VRC7",                        85, Mapper085_Init, 0 },
 	{ "TEK90",                       90, Mapper090_Init, 0 },
 	{ "SUNSOFT_UNROM",               93, Mapper093_Init, 0 }, /* fix me, real pcb name, real pcb type */
 	{ "BB",                         108, Mapper108_Init, 0 },
@@ -573,6 +565,7 @@ static BMAPPING bmap[] = {
 	{ "RESET-TXROM",                313, Mapper313_Init, 0 },
 	{ "64in1NoRepeat",              314, Mapper314_Init, 0 },
 	{ "830134C",                    315, Mapper315_Init, 0 },
+	{ "HP898F",                     319, Mapper319_Init, 0 }, /* UNIF implementation of mapper 319 */
 	{ "830425C-4391T",              320, Mapper320_Init, 0 },
 	{ "K-3033",                     322, Mapper322_Init, 0 },
 	{ "FARID_SLROM_8-IN-1",         323, Mapper323_Init, 0 },
@@ -632,6 +625,14 @@ static BMAPPING bmap[] = {
 	{ "AX5705",                     530, Mapper530_Init, 0 },
 	{ "LH53",                       535, Mapper535_Init, 0 },
 	{ "82112C",                     540, Mapper540_Init, 0 },
+
+/*	{ "KONAMI-QTAI",            NO_INES, Mapper190_Init,        0 }, */
+	{ "SSS-NROM-256",           NO_INES, SSSNROM_Init,   0 }, /* famicombox - cant find similar cart */
+	{ "T-227-1",                NO_INES, BMCT2271_Init,  0 }, /* cant find similar cart */
+	{ "Transformer",            NO_INES, Transformer_Init, 0 },
+	{ "81-01-31-C",             NO_INES, BMC810131C_Init, 0 }, /* might be 327 with m118-like mirroring */
+	{ "KG256",                  NO_INES, KG256_Init,     0 }, /* cant find similar cart */
+	{ "CHINA_ER_SAN2",          NO_INES, Mapper019_Init, 0 }, /* Needs more than just what mapper 19 can handle */
 
 	{ NULL, NO_INES, NULL, 0 }
 };
