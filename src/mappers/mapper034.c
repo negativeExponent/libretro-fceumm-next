@@ -28,71 +28,128 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 regs[3];
+#define M034_NINA001  1
+#define M034_BNROM    2
+#define M034_NESTICLE 3
+
+static uint8 reg[3];
+
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
+static uint8 type;
+static void (*WSync)(void);
+
 static SFORMAT StateRegs[] = {
-	{ regs, 3, "REGS" },
+	{ reg, 3, "REGS" },
 	{ 0 }
 };
 
-static void Sync(void) {
+/* submapper 1 - AVE NINA-001 */
+
+static void Sync_NINA001(void) {
 	setprg8r(0x10, 0x6000, 0);
-	setprg32(0x8000, regs[0]);
-	setchr4(0x0000, regs[1]);
-	setchr4(0x1000, regs[2]);
+	setprg32(0x8000, reg[0]);
+	setchr4(0x0000, reg[1]);
+	setchr4(0x1000, reg[2]);
 }
 
-static DECLFW(M034Write) {
-	if (A >= 0x8000)
-		regs[0] = V;
-	else
-		switch (A) {
-			case 0x7ffd:
-				regs[0] = V;
-				break;
-			case 0x7ffe:
-				regs[1] = V;
-				break;
-			case 0x7fff:
-				regs[2] = V;
-				break;
+static DECLFW(M034Write_NINA001) {
+	CartBW(A, V);
+	if (A >= 0x7FFD) {
+		reg[A - 0x7FFD] = V;
+		WSync();
+	}
+}
+
+static void M034Power_NINA001(void) {
+	reg[0] = reg[1] = 0;
+	reg[2] = 1;
+	WSync();
+
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x6000, 0x7FFF, M034Write_NINA001);
+	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+}
+
+/* submapper 2 - BNROM */
+
+static void Sync_BNROM(void) {
+	setprg32(0x8000, latch.data);
+	setchr8(0);
+}
+
+/* nesticle */
+
+static void Sync_Nesticle(void) {
+	setprg8r(0x10, 0x6000, 0);
+	setprg32(0x8000, reg[0]);
+	setchr4(0x0000, reg[1]);
+	setchr4(0x1000, reg[2]);
+}
+
+static DECLFW(M034Write_Nesticle) {
+	if (A >= 0x8000) {
+		reg[0] = V;
+		WSync();
+	} else {
+		CartBW(A, V);
+		if (A >= 0x7FFD) {
+			reg[A - 0x7FFD] = V;
+			WSync();
 		}
-	Sync();
+	}
 }
 
-static void M034Power(void) {
-	regs[0] = regs[1] = 0;
-	regs[2] = 1;
-	Sync();
-	SetReadHandler(0x6000, 0x7ffc, CartBR);
-	SetWriteHandler(0x6000, 0x7ffc, CartBW);
-	SetReadHandler(0x8000, 0xffff, CartBR);
-	SetWriteHandler(0x7ffd, 0xffff, M034Write);
+static void M034Power_Nesticle(void) {
+	reg[0] = reg[1] = 0;
+	reg[2] = 1;
+	WSync();
+
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x6000, 0xFFFF, M034Write_Nesticle);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
 static void M034Close(void) {
-	if (WRAM)
+	if (WRAM) {
 		FCEU_gfree(WRAM);
+	}
 	WRAM = NULL;
 }
 
 static void StateRestore(int version) {
-	Sync();
+	WSync();
 }
 
 void Mapper034_Init(CartInfo *info) {
-	info->Power = M034Power;
-	info->Close = M034Close;
-	GameStateRestore = StateRestore;
+	if (ROM.trainer.data && (ROM.trainer.size > 0)) {
+		type = M034_NESTICLE;
+		WSync = Sync_Nesticle;
+		info->Power = M034Power_Nesticle;
+	} else if ((info->submapper == 1) || ((info->submapper != 2) && ROM.chr.size > 0)) {
+		type = M034_NINA001;
+		WSync = Sync_NINA001;
+		info->Power = M034Power_NINA001;
+	} else if ((info->submapper == 2) || ((info->submapper != 1) && ROM.chr.size == 0)) {
+		type = M034_BNROM;
+		Latch_Init(info, Sync_BNROM, NULL, FALSE, FALSE);
+		info->Reset = Latch_RegReset;
+	}
 
-	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
-	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
-	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+	switch (type) {
+	case M034_NESTICLE:
+	case M034_NINA001:
+		info->Close = M034Close;
+		GameStateRestore = StateRestore;
+		AddExState(StateRegs, ~0, 0, NULL);
 
-	AddExState(StateRegs, ~0, 0, NULL);
+		WRAMSIZE = 8192;
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
+		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+		break;
+	}
 }
