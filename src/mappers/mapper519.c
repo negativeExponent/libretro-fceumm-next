@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2015 CaH4e3
@@ -19,17 +19,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* NES 2.0 Mapper 519 
+/* NES 2.0 Mapper 519
  * UNIF board name UNL-EH8813A
  */
 
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 lock, hw_mode, chr, ram[4];
+static uint8 lock, dipsw, chr, ram[4];
 
 static SFORMAT StateRegs[] = {
-	{ &hw_mode, 1, "HWMO" },
+	{ &dipsw, 1, "DPSW" },
 	{ &lock, 1, "LOCK" },
 	{ &chr, 1, "CREG" },
 	{ 0 }
@@ -37,21 +37,16 @@ static SFORMAT StateRegs[] = {
 
 static void Sync(void) {
 	if (lock == 0) {
-		uint8 prg = (latch.addr & 0x3F);
-		
 		if (latch.addr & 0x80) {
-			setprg16(0x8000, prg);
-			setprg16(0xC000, prg);
+			setprg16(0x8000, latch.addr);
+			setprg16(0xC000, latch.addr);
 		} else {
-			setprg32(0x8000, prg >> 1);
+			setprg32(0x8000, latch.addr >> 1);
 		}
-
-		setmirror(((latch.data >> 7) & 1) ^ 1);
-
-		lock = (latch.addr & 0x100) >> 8;
+		setmirror(((latch.data >> 7) & 0x01) ^ 0x01);
+		lock = (latch.addr & 0x100) == 0x100;
 		chr = latch.data & 0x7C;
 	}
-
 	setchr8(chr | (latch.data & 0x03));
 }
 
@@ -65,13 +60,13 @@ static DECLFW(M519WriteRAM) {
 
 static DECLFR(M519Read) {
 	if (latch.addr & 0x40) {
-		A = (A & 0xFFF0) + hw_mode;
+		return CartBR((A & 0xFFF0) | (dipsw & 0x0F));
 	}
 	return CartBR(A);
 }
 
 static void M519Power(void) {
-	hw_mode = lock = 0;
+	dipsw = lock = 0;
 	Latch_Power();
 	SetReadHandler(0x5800, 0x5FFF, M519ReadRAM);
 	SetWriteHandler(0x5800, 0x5FFF, M519WriteRAM);
@@ -79,8 +74,7 @@ static void M519Power(void) {
 
 static void M519Reset(void) {
 	lock = 0;
-	hw_mode = (hw_mode + 1) & 0xF;
-	FCEU_printf("Hardware Switch is %01X\n", hw_mode);
+	dipsw++;
 	Latch_RegReset();
 }
 

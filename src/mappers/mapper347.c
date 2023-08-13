@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -164,7 +165,7 @@ static DECLFW(M347Write) {
 static void M347Power(void) {
 	FDSSound_Power();
 	reg[0] = reg[1] = ~0;
-	
+
 	if (iNESCart.PRGCRC32 == 0xFA4DAC91) {
 		SetReadHandler(0x6000, 0xFFFF, M347Read2);
 		SetWriteHandler(0x6000, 0xFFFF, M347Write2);

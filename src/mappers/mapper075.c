@@ -82,3 +82,8 @@ void Mapper075_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }
+
+void Mapper151_Init(CartInfo *info) {
+	Mapper075_Init(info);
+	info->mirror = 2;
+}

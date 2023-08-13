@@ -36,8 +36,6 @@ ifeq ($(HAVE_NTSC),1)
 endif
 
 SOURCES_C += \
-	$(CORE_DIR)/drivers/libretro/libretro.c \
-	$(CORE_DIR)/drivers/libretro/libretro_dipswitch.c \
 	$(CORE_DIR)/cart.c \
 	$(CORE_DIR)/cheat.c \
 	$(CORE_DIR)/crc32.c \
@@ -78,3 +76,7 @@ ifneq ($(STATIC_LINKING), 1)
 		$(LIBRETRO_COMM_DIR)/time/rtime.c \
 		$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
 endif
+
+SOURCES_C += \
+	$(CORE_DIR)/drivers/libretro/libretro_dipswitch.c \
+	$(CORE_DIR)/drivers/libretro/libretro.c

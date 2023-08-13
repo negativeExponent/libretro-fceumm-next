@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2023
@@ -26,9 +26,11 @@
 #include "vrc2and4.h"
 
 static uint8 reg;
+static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &reg, 1, "REGS" },
+    { &dipsw, 1, "DPSW" },
 	{ 0 },
 };
 
@@ -36,25 +38,26 @@ static void M447PW(uint32 A, uint8 V) {
     uint16 mask = 0x0F;
     uint16 base = reg << 4;
 
-    if (reg & 0x04) {
-        if (reg & 2) { /* NROM-128 */
-            setprg8(0x8000, (base & ~mask) | (vrc24.prg[0] & mask));
-            setprg8(0xA000, (base & ~mask) | (vrc24.prg[1] & mask));
-            setprg8(0xC000, (base & ~mask) | (vrc24.prg[0] & mask));
-            setprg8(0xE000, (base & ~mask) | (vrc24.prg[1] & mask));
-        } else { /* NROM-256 */
-            setprg8(0x8000, (base & ~mask) | ((vrc24.prg[0] & ~0x02) & mask));
-            setprg8(0xA000, (base & ~mask) | ((vrc24.prg[1] & ~0x02) & mask));
-            setprg8(0xC000, (base & ~mask) | ((vrc24.prg[0] |  0x02) & mask));
-            setprg8(0xE000, (base & ~mask) | ((vrc24.prg[1] |  0x02) & mask));
-        }
-    } else {
-        setprg8(A, (base & ~mask) | (V & mask));
-    }
+	if (reg & 0x04) {
+		uint8 A14 = (reg & 0x02) ^ 0x02;
+		setprg8(0x8000, (base & ~mask) | ((vrc24.prg[0] & ~A14) & mask));
+		setprg8(0xA000, (base & ~mask) | ((vrc24.prg[1] & ~A14) & mask));
+		setprg8(0xC000, (base & ~mask) | ((vrc24.prg[0] |  A14) & mask));
+		setprg8(0xE000, (base & ~mask) | ((vrc24.prg[1] |  A14) & mask));
+	} else {
+		setprg8(A, (base & ~mask) | (V & mask));
+	}
 }
 
 static void M447CW(uint32 A, uint32 V) {
     setchr1(A, (reg << 7) | (V & 0x7F));
+}
+
+static DECLFR(M447Read) {
+    if ((A & 0x8000) && (reg & 0x08)) {
+        return CartBR((A & ~0x03) | (dipsw & 0x03));
+    }
+    return CartBR(A);
 }
 
 static DECLFW(M447WriteReg) {
@@ -68,13 +71,16 @@ static DECLFW(M447WriteReg) {
 
 static void M447Reset(void) {
 	reg = 0;
+    dipsw++;
 	VRC24_FixPRG();
     VRC24_FixCHR();
 }
 
 static void M447Power(void) {
 	reg = 0;
+    dipsw = 0;
 	VRC24_Power();
+    SetReadHandler(0x8000, 0xFFFF, M447Read);
 	SetWriteHandler(0x6000, 0x7FFF, M447WriteReg);
 }
 

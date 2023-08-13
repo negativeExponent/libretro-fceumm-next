@@ -667,7 +667,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                         250, Mapper250_Init         )
 /*    INES_BOARD( "",                            251, Mapper251_Init ) */ /* No good dumps for this mapper, use UNIF version */
 	INES_BOARD( "SAN GUO ZHI PIRATE",       252, Mapper252_Init         )
-	INES_BOARD( "DRAGON BALL PIRATE",       253, Mapper253_Init         )
+	INES_BOARD( "DRAGON BALL PIRATE",       253, Mapper252_Init         )
 	INES_BOARD( "",                         254, Mapper254_Init         )
 	INES_BOARD( "",                         255, Mapper255_Init         ) /* Duplicate of M225? */
 

@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
+ *  Copyright (C) 2023
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +42,7 @@
  * - World Heroes 2 Pro//快打英雄榜 2 Pro
  * 1024 KiB CHR-ROM => Submapper 2 (1 KiB CHR-ROM banking with outer bank, 32 KiB banked WRAM)
  * - Dragon Ball Party
- * 
+ *
  * NES 2.0 264 - UNL-Yoko
  * - Mortal Kombat II/V Pro
  * - Master Fighter VI'
