@@ -39,6 +39,9 @@
 #include "mmc3.h"
 #include "mmc1.h"
 
+#define MODE_MMC1 mode & 0x02
+#define MODE_MMC3 mode & 0x01
+
 static uint8 mode = 0;
 static uint8 game = 0;
 
@@ -49,11 +52,17 @@ static SFORMAT StateRegs[] = {
 };
 
 static uint32 GetPRGMask(void) {
-	return ((iNESCart.submapper != 3) ? 0x3F : (game ? 0x0F : 0x1F));
+	if (iNESCart.submapper != 3) {
+		return 0x3F;
+	}
+	return (game ? 0x0F : 0x1F);
 }
 
 static uint32 GetPRGBase(void) {
-	return (game ? (game + 1) * 0x10 : 0);
+	if (game) {
+		return (game + 1) * 0x10;
+	}
+	return 0;
 }
 
 static uint32 GetCHRMask(void) {
@@ -68,8 +77,16 @@ static void M116PW_vrc2(uint32 A, uint8 V) {
 	setprg8(A, GetPRGBase() | (V & GetPRGMask()));
 }
 
+static void M116CW_vrc2(uint32 A, uint32 V) {
+	setchr1(A, ((mode << 6) & 0x100) | GetCHRBase() | (V & GetCHRMask()));
+}
+
 static void M116PW_mmc3(uint32 A, uint8 V) {
 	setprg8(A, GetPRGBase() | (V & GetPRGMask()));
+}
+
+static void M116CW_mmc3(uint32 A, uint8 V) {
+	setchr1(A, ((mode << 6) & 0x100) | GetCHRBase() | (V & GetCHRMask()));
 }
 
 static void M116PW_mmc1(uint32 A, uint8 V) {
@@ -80,60 +97,44 @@ static void M116PW_mmc1(uint32 A, uint8 V) {
 	}
 }
 
-static void M116CW_vrc2(uint32 A, uint32 V) {
-	setchr1(A, ((mode << 6) & 0x100) | GetCHRBase() | (V & GetCHRMask()));
-}
-
-static void M116CW_mmc3(uint32 A, uint8 V) {
-	setchr1(A, ((mode << 6) & 0x100) | GetCHRBase() | (V & GetCHRMask()));
-}
-
 static void M116CW_mmc1(uint32 A, uint8 V) {
 	setchr4(A, (GetCHRBase() >> 2) | (V & (GetCHRMask() >> 2)));
 }
 
 static void Sync(void) {
-	switch (mode & 0x03) {
-	case 0:
-		VRC24_FixPRG();
-		VRC24_FixCHR();
-		VRC24_FixMIR();
-		break;
-	case 1:
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-		MMC3_FixMIR();
-		break;
-	default:
+	if (MODE_MMC1) {
 		MMC1_FixPRG();
 		MMC1_FixCHR();
 		MMC1_FixMIR();
-		break;
+	} else if (MODE_MMC3) {
+		MMC3_FixPRG();
+		MMC3_FixCHR();
+		MMC3_FixMIR();
+	} else {
+		VRC24_FixPRG();
+		VRC24_FixCHR();
+		VRC24_FixMIR();
+	}
+}
+
+static void applyMode(void) {
+	if (MODE_MMC1) {
+		SetWriteHandler(0x8000, 0xFFFF, MMC1_Write);
+		if (iNESCart.submapper != 1) {
+			MMC1_Write(0x8000, 0x80);
+		}
+	} else if (MODE_MMC3) {
+		SetWriteHandler(0x8000, 0xFFFF, MMC3_Write);
+	} else {
+		SetWriteHandler(0x8000, 0xFFFF, VRC24_Write);
 	}
 }
 
 static DECLFW(M116ModeWrite) {
 	if (A & 0x100) {
 		mode = V;
-		switch (mode & 0x03) {
-		case 0: break;
-		case 1: break;
-		default:
-			if (iNESCart.submapper != 1) {
-				MMC1_Write(0x8000, 0x80);
-			}
-			break;
-		}
+		applyMode();
 		Sync();
-	}
-}
-
-static DECLFW(M116Write) {
-	/*FCEU_printf("%04X:%02X mode:%02x\n",A,V,mode);*/
-	switch (mode & 0x03) {
-	case 0:  VRC24_Write(A, V); break;
-	case 1:  MMC3_Write(A, V); break;
-	default: MMC1_Write(A, V); break;
 	}
 }
 
@@ -154,6 +155,7 @@ static void M116Reset(void) {
 			game = 0;
 		}
 	}
+	applyMode();
 	Sync();
 }
 
@@ -167,13 +169,13 @@ static void M116Power(void) {
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x4100, 0x5FFF, M116ModeWrite);
-	SetWriteHandler(0x8000, 0xFFFF, M116Write);
 
 	vrc24.chr[0] = ~0;
 	vrc24.chr[1] = ~0;
 	vrc24.chr[2] = ~0;
 	vrc24.chr[3] = ~0;
 
+	applyMode();
 	Sync();
 }
 
