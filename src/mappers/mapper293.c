@@ -23,17 +23,17 @@
 
 #include "mapinc.h"
 
-static uint8 regs[2];
+static uint8 reg[2];
 
 static SFORMAT StateRegs[] = {
-	{ regs, 2, "REGS" },
+	{ reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 mode = ((regs[0] >> 2) & 0x02) | ((regs[1] >> 6) & 0x01);
-	uint8 base = ((regs[1] << 5) & 0x20) | ((regs[1] >> 1) & 0x18);
-	uint8 bank = (regs[0] & 0x07);
+	uint8 mode = ((reg[0] >> 2) & 0x02) | ((reg[1] >> 6) & 0x01);
+	uint8 base = ((reg[1] << 5) & 0x20) | ((reg[1] >> 1) & 0x18);
+	uint8 bank = (reg[0] & 0x07);
 
 	switch (mode) {
 	case 0: /* UNROM */
@@ -49,37 +49,30 @@ static void Sync(void) {
 		setprg16(0xC000, base | bank);
 		break;
 	case 3: /* NROM-256 */
-		setprg16(0x8000, (base | bank) & ~1);
+		setprg16(0x8000, (base | bank) & 0xFE);
 		setprg16(0xC000, (base | bank) | 1);
 		break;
 	}
 	setchr8(0);
-	setmirror(((regs[1] >> 7) & 0x01) ^ 0x01);
+	setmirror(((reg[1] >> 7) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M293Write1) {
-	regs[0] = V;
-	regs[1] = V;
-	Sync();
-}
-
-static DECLFW(M293Write2) {
-	regs[1] = V;
-	Sync();
-}
-
-static DECLFW(M293Write3) {
-	regs[0] = V;
-	Sync();
+static DECLFW(M293Write) {
+	if (!(A & 0x2000)) {
+		/* First Banking Register ($8000-$9FFF, $C000-$DFFF) */
+		reg[0] = V;
+	}
+	if (!(A & 0x4000)) {
+		/* Second Banking Register ($8000-$BFFF) */
+		reg[1] = V;
+	}
 }
 
 static void M293Power(void) {
-	regs[0] = regs[1] = 0;
+	reg[0] = reg[1] = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0x9FFF, M293Write1);
-	SetWriteHandler(0xA000, 0xBFFF, M293Write2);
-	SetWriteHandler(0xC000, 0xDFFF, M293Write3);
+	SetWriteHandler(0x8000, 0xDFFF, M293Write);
 }
 
 static void StateRestore(int version) {

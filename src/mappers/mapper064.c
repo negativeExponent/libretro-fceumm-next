@@ -25,12 +25,12 @@
 
 #include "mapinc.h"
 
-static uint8 cmd, mirr, regs[16];
+static uint8 cmd, mirr, reg[16];
 static uint8 IRQReload, IRQmode, IRQCount, IRQa, IRQLatch;
 static uint8 IRQPrescaler;
 
 static SFORMAT StateRegs[] = {
-	{ regs, 16, "REGS" },
+	{ reg, 16, "REGS" },
 	{ &cmd, 1, "CMDR" },
 	{ &mirr, 1, "MIRR" },
 	{ &IRQReload, 1, "IRQR" },
@@ -56,39 +56,39 @@ static void Sync(void) {
 	1001: R9: If K=1, Select 1 KiB CHR bank at PPU $0C00 (or $1C00)
 	1111: RF: Select 8 KiB PRG ROM bank at $C000-$DFFF (or $8000-$9FFF)
 	*/
-	setprg8(0x8000, regs[6]);
-	setprg8(0xA000, regs[7]);
-	setprg8(0xC000, regs[15]);
+	setprg8(0x8000, reg[6]);
+	setprg8(0xA000, reg[7]);
+	setprg8(0xC000, reg[15]);
 	setprg8(0xE000, ~0);
 
 	if (cmd & 0x20) {
-		setchr1(0x0000, regs[0]);
-		setchr1(0x0400, regs[8]);
-		setchr1(0x0800, regs[1]);
-		setchr1(0x0C00, regs[9]);
+		setchr1(0x0000, reg[0]);
+		setchr1(0x0400, reg[8]);
+		setchr1(0x0800, reg[1]);
+		setchr1(0x0C00, reg[9]);
 	} else {
-		setchr1(0x0000, (regs[0] & 0xFE));
-		setchr1(0x0400, (regs[0] & 0xFE) | 1);
-		setchr1(0x0800, (regs[1] & 0xFE));
-		setchr1(0x0C00, (regs[1] & 0xFE) | 1);
+		setchr1(0x0000, (reg[0] & 0xFE));
+		setchr1(0x0400, (reg[0] & 0xFE) | 1);
+		setchr1(0x0800, (reg[1] & 0xFE));
+		setchr1(0x0C00, (reg[1] & 0xFE) | 1);
 	}
 
-	setchr1(0x1000, regs[2]);
-	setchr1(0x1400, regs[3]);
-	setchr1(0x1800, regs[4]);
-	setchr1(0x1C00, regs[5]);
+	setchr1(0x1000, reg[2]);
+	setchr1(0x1400, reg[3]);
+	setchr1(0x1800, reg[4]);
+	setchr1(0x1C00, reg[5]);
 
 	if (iNESCart.mapper == 158) {
 		if (cmd & 0x20) {
-			setntamem(NTARAM + ((regs[0] >> 7) << 10), 1, 0);
-			setntamem(NTARAM + ((regs[8] >> 7) << 10), 1, 1);
-			setntamem(NTARAM + ((regs[1] >> 7) << 10), 1, 2);
-			setntamem(NTARAM + ((regs[9] >> 7) << 10), 1, 3);
+			setntamem(NTARAM + ((reg[0] >> 7) << 10), 1, 0);
+			setntamem(NTARAM + ((reg[8] >> 7) << 10), 1, 1);
+			setntamem(NTARAM + ((reg[1] >> 7) << 10), 1, 2);
+			setntamem(NTARAM + ((reg[9] >> 7) << 10), 1, 3);
 		} else {
-			setntamem(NTARAM + ((regs[0] >> 7) << 10), 1, 0);
-			setntamem(NTARAM + ((regs[0] >> 7) << 10), 1, 1);
-			setntamem(NTARAM + ((regs[1] >> 7) << 10), 1, 2);
-			setntamem(NTARAM + ((regs[1] >> 7) << 10), 1, 3);
+			setntamem(NTARAM + ((reg[0] >> 7) << 10), 1, 0);
+			setntamem(NTARAM + ((reg[0] >> 7) << 10), 1, 1);
+			setntamem(NTARAM + ((reg[1] >> 7) << 10), 1, 2);
+			setntamem(NTARAM + ((reg[1] >> 7) << 10), 1, 3);
 		}
 	} else {
 		setmirror((mirr & 1) ^ 1);
@@ -105,7 +105,7 @@ static DECLFW(M064Write) {
 		cmd = V;
 		break;
 	case 0x8001:
-		regs[cmd & 0x0F] = V;
+		reg[cmd & 0x0F] = V;
 		Sync();
 		break;
 	case 0xC000:
@@ -137,8 +137,8 @@ static DECLFW(M064Write) {
 
 static void M064Power(void) {
 	cmd = mirr = 0;
-	regs[0] = regs[1] = regs[2] = regs[3] = regs[4] = regs[5] = ~0;
-	regs[6] = regs[7] = regs[8] = regs[9] = regs[10] = ~0;
+	reg[0] = reg[1] = reg[2] = reg[3] = reg[4] = reg[5] = ~0;
+	reg[6] = reg[7] = reg[8] = reg[9] = reg[10] = ~0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M064Write);
@@ -180,8 +180,4 @@ void Mapper064_Init(CartInfo *info) {
 	MapIRQHook = M064CPUHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
-}
-
-void Mapper158_Init(CartInfo *info) {
-	Mapper064_Init(info);
 }

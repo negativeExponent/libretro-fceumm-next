@@ -22,60 +22,59 @@
 
 #include "mapinc.h"
 
-static uint8 regs[2];
-static uint8 hrd_flag;
+static uint8 reg[2];
+static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ &hrd_flag, 1, "DPSW" },
-	{ regs, 2, "REGS" },
+	{ &dipsw, 1, "DPSW" },
+	{ reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 prg = (regs[1] >> 5) & 0x07;
-	uint8 chr = ((regs[0] >> 3) & 0x08) | (regs[1] & 0x07);
+	uint8 prg = (reg[1] >> 5) & 0x07;
+	uint8 chr = ((reg[0] >> 3) & 0x08) | (reg[1] & 0x07);
 
-	if (regs[1] & 0x10) {
+	if (reg[1] & 0x10) {
 		setprg32(0x8000, prg >> 1);
 	} else {
 		setprg16(0x8000, prg);
 		setprg16(0xC000, prg);
 	}
-	if (regs[0] & 0x80) {
+	if (reg[0] & 0x80) {
 		setchr8(chr);
 	} else {
-		setchr8((chr & ~0x03) | (regs[0] & 0x03));
+		setchr8((chr & ~0x03) | (reg[0] & 0x03));
 	}
-	setmirror(((regs[1] >> 3) & 0x01) ^ 0x01);
+	setmirror(((reg[1] >> 3) & 0x01) ^ 0x01);
 }
 
 static DECLFR(M057Read) {
-	return hrd_flag;
+	return dipsw & 0x03;
 }
 
 static DECLFW(M057Write) {
 	if (A & 0x2000) {
-		regs[(A >> 11) & 1] = (regs[(A >> 11) & 1] & ~0x40) | (V & 0x40);
+		reg[(A >> 11) & 0x01] = (reg[(A >> 11) & 0x01] & ~0x40) | (V & 0x40);
 	} else {
-		regs[(A >> 11) & 1] = V;
+		reg[(A >> 11) & 0x01] = V;
 	}
 	Sync();
 }
 
 static void M057Power(void) {
-	regs[1] = regs[0] = 0; /* Always reset to menu */
-	hrd_flag = 1; /* YH-xxx "Olympic" multicarts disable the menu after one selection */
+	reg[1] = reg[0] = 0; /* Always reset to menu */
+	dipsw = 1; /* YH-xxx "Olympic" multicarts disable the menu after one selection */
+	SetReadHandler(0x5000, 0x6FFF, M057Read);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M057Write);
-	SetReadHandler(0x6000, 0x6000, M057Read);
 	Sync();
 }
 
 static void M057Reset(void) {
-	regs[1] = regs[0] = 0; /* Always reset to menu */
-	hrd_flag++;
-	hrd_flag &= 3;
-	FCEU_printf("Select Register = %02x\n", hrd_flag);
+	reg[1] = reg[0] = 0; /* Always reset to menu */
+	dipsw++;
+	FCEU_printf("Select Register = %02x\n", dipsw);
 	Sync();
 }
 

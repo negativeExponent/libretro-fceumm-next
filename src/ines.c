@@ -572,7 +572,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                         155, Mapper155_Init         )
 	INES_BOARD( "",                         156, Mapper156_Init         )
 	INES_BOARD( "BANDAI BARCODE",           157, Mapper157_Init         )
-	INES_BOARD( "TENGEN 800037",            158, Mapper158_Init         )
+	INES_BOARD( "TENGEN 800037",            158, Mapper064_Init         )
 	INES_BOARD( "BANDAI 24C01",             159, Mapper159_Init         ) /* Different type of EEPROM on the  bandai board */
 /*	INES_BOARD( "SA009",                    160, Mapper160_Init         ) */
 /*    INES_BOARD( "",                            161, Mapper161_Init ) */

@@ -24,24 +24,24 @@
 
 static uint8 SWRAM[3072];
 static uint8 *WRAM = NULL;
-static uint8 regs[4];
+static uint8 reg[4];
 
-static SFORMAT StateRegs[] =
-{
-	{ regs, 4, "DREG" },
+static SFORMAT StateRegs[] = {
+	{ reg, 4, "DREG" },
 	{ SWRAM, 3072, "SWRM" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg8r(0x10, 0x6000, regs[0] >> 6);
-	setprg16(0x8000, regs[1]);
+	setprg8r(0x10, 0x6000, reg[0] >> 6);
+	setprg16(0x8000, reg[1]);
 	setprg16(0xc000, 0);
+	setchr8(0);
 }
 
 static DECLFW(M186Write) {
 	if (A & 0x4203)
-		regs[A & 3] = V;
+		reg[A & 3] = V;
 	Sync();
 }
 
@@ -67,7 +67,6 @@ static DECLFW(BSWRAM) {
 }
 
 static void M186Power(void) {
-	setchr8(0);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0xFFFF, CartBW);
 	SetReadHandler(0x4200, 0x43FF, M186Read);
@@ -75,7 +74,7 @@ static void M186Power(void) {
 	SetReadHandler(0x4400, 0x4FFF, ASWRAM);
 	SetWriteHandler(0x4400, 0x4FFF, BSWRAM);
 	FCEU_CheatAddRAM(32, 0x6000, WRAM);
-	regs[0] = regs[1] = regs[2] = regs[3];
+	reg[0] = reg[1] = reg[2] = reg[3];
 	Sync();
 }
 

@@ -27,40 +27,39 @@
 
 #include "mapinc.h"
 
-static uint8 regs[2], chip;
+static uint8 reg[2], extraChip;
 
-static SFORMAT StateRegs[] =
-{
-	{ regs, 2, "REGS" },
-	{ &chip, 1, "CHIP" },
+static SFORMAT StateRegs[] = {
+	{ reg, 2, "REGS" },
+	{ &extraChip, 1, "CHIP" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (chip) {
-		setprg16(0x8000, 0x80 | (regs[0] & ((ROM.prg.size - 1) & 0x0F)));
+	if (extraChip) {
+		setprg16(0x8000, 0x80 | (reg[0] & ((ROM.prg.size - 1) & 0x0F)));
 	} else {
-		setprg16(0x8000, (regs[1] & 0x70) | (regs[0] & 0x0F));
+		setprg16(0x8000, (reg[1] & 0x70) | (reg[0] & 0x0F));
 	}
-	setprg16(0xC000, regs[1] & 0x7F);
+	setprg16(0xC000, reg[1] & 0x7F);
 	setchr8(0);
-	setmirror(((regs[0] >> 4) & 0x01) ^ 0x01);
+	setmirror(((reg[0] >> 4) & 0x01) ^ 0x01);
 }
 
 static DECLFW(M274Write8) {
-	regs[0] = V;
+	reg[0] = V;
 	Sync();
 }
 
 static DECLFW(M274WriteA) {
-	regs[1] = V;
-	chip = (A & 0x4000) == 0;
+	reg[1] = V;
+	extraChip = (A & 0x4000) == 0;
 	Sync();
 }
 
 static void M274Power(void) {
-	regs[0] = regs[1] = 0;
-	chip = 1;
+	reg[0] = reg[1] = 0;
+	extraChip = 1;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0x9FFF, M274Write8);
@@ -68,8 +67,8 @@ static void M274Power(void) {
 }
 
 static void M274Reset(void) {
-	regs[0] = regs[1] = 0;
-	chip = 1;
+	reg[0] = reg[1] = 0;
+	extraChip = 1;
 	Sync();
 }
 

@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
@@ -24,25 +24,23 @@
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
-static uint8 regs[4];
+static uint8 reg[4];
 
-static SFORMAT StateRegs[] =
-{
-	{ regs, 4, "DREG" },
+static SFORMAT StateRegs[] = {
+	{ reg, 4, "DREG" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	int base, bank;
-	base = ((regs[0] ^ regs[1]) & 0x10) << 1;
-	bank = (regs[2] ^ regs[3]) & 0x1f;
+	uint16 base = ((reg[0] ^ reg[1]) & 0x10) << 1;
+	uint16 bank = (reg[2] ^ reg[3]) & 0x1f;
 
-	if (regs[1] & 0x08) {
+	if (reg[1] & 0x08) {
 		bank &= 0xFE;
 		setprg16(0x8000, base + bank + 1);
 		setprg16(0xC000, base + bank + 0);
 	} else {
-		if (regs[1] & 0x04) {
+		if (reg[1] & 0x04) {
 			setprg16(0x8000, 0x1F);
 			setprg16(0xC000, base + bank);
 		} else {
@@ -54,12 +52,12 @@ static void Sync(void) {
 }
 
 static DECLFW(M167Write) {
-	regs[(A >> 13) & 0x03] = V;
+	reg[(A >> 13) & 0x03] = V;
 	Sync();
 }
 
 static void M167Power(void) {
-	regs[0] = regs[1] = regs[2] = regs[3] = 0;
+	reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
