@@ -27,7 +27,7 @@ typedef enum {
 } MMC1Type;
 
 typedef struct __MMC1 {
-    uint8 regs[4];
+    uint8 reg[4];
     uint8 buffer;
     uint8 shift;
 } MMC1;

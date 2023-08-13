@@ -45,7 +45,7 @@ static void M323CW(uint32 A, uint8 V) {
 }
 
 static DECLFW(M323Write) {
-	if (!(mmc1.regs[3] & 0x10) && !(reg & 0x08)) {
+	if (!(mmc1.reg[3] & 0x10) && !(reg & 0x08)) {
 		reg = V;
 		MMC1_FixCHR();
 		MMC1_FixPRG();

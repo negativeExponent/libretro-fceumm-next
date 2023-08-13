@@ -53,7 +53,7 @@ static void M111CW_mmc1(uint32 A, uint8 V) {
 }
 
 static DECLFW(M111Write_mmc1) {
-	mmc1.regs[(A >> 13) & 0x03] =  V;
+	mmc1.reg[(A >> 13) & 0x03] =  V;
 	MMC1_FixPRG();
 	MMC1_FixCHR();
 	MMC1_FixMIR();

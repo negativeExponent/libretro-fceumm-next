@@ -48,9 +48,9 @@ static void GENWRAMWRAP(void) {
 	}
 	if (WRAMSIZE > 8192) {
 		if (WRAMSIZE > 16384) {
-			bank = (mmc1.regs[1] >> 2) & 3;
+			bank = (mmc1.reg[1] >> 2) & 3;
 		} else {
-			bank = (mmc1.regs[1] >> 3) & 1;
+			bank = (mmc1.reg[1] >> 3) & 1;
 		}
 	}
 	setprg8r(0x10, 0x6000, bank);
@@ -65,7 +65,7 @@ static void GENCWRAP(uint32 A, uint8 V) {
 }
 
 static uint8 MMC1WRAMEnabled(void) {
-	if ((mmc1.regs[3] & 0x10) && (mmc1_type == MMC1B)) {
+	if ((mmc1.reg[3] & 0x10) && (mmc1_type == MMC1B)) {
 		return FALSE;
 	}
 
@@ -90,9 +90,9 @@ static DECLFR(MAWRAM) {
 
 uint32 MMC1_GetPRGBank(int index) {
 	uint32 bank;
-	uint8 prg = mmc1.regs[3];
+	uint8 prg = mmc1.reg[3];
 
-	switch (mmc1.regs[0] & 0xC) {
+	switch (mmc1.reg[0] & 0xC) {
 	case 0xC:
 		bank = prg | (index * 0x0F);
 		break;
@@ -106,19 +106,19 @@ uint32 MMC1_GetPRGBank(int index) {
 		break;
 	}
 
-	if ((mmc1.regs[3] & 0x10) && (mmc1_type == MMC1A)) {
-		return ((bank & 0x07) | (mmc1.regs[3] & 0x08));
+	if ((mmc1.reg[3] & 0x10) && (mmc1_type == MMC1A)) {
+		return ((bank & 0x07) | (mmc1.reg[3] & 0x08));
 	}
 
 	return (bank & 0x0F);
 }
 
 uint32 MMC1_GetCHRBank(int index) {
-	if (mmc1.regs[0] & 0x10) {
-		return (mmc1.regs[1 + index]);
+	if (mmc1.reg[0] & 0x10) {
+		return (mmc1.reg[1 + index]);
 	}
 
-	return ((mmc1.regs[1] & ~1) | index);
+	return ((mmc1.reg[1] & ~1) | index);
 }
 
 void MMC1_FixCHR(void) {
@@ -136,7 +136,7 @@ void MMC1_FixPRG(void) {
 }
 
 void MMC1_FixMIR(void) {
-	switch (mmc1.regs[0] & 3) {
+	switch (mmc1.reg[0] & 3) {
 	case 2: setmirror(MI_V); break;
 	case 3: setmirror(MI_H); break;
 	case 0: setmirror(MI_0); break;
@@ -160,7 +160,7 @@ DECLFW(MMC1_Write) {
 
 	/* FCEU_printf("Write %04x:%02x\n",A,V); */
 	if (V & 0x80) {
-		mmc1.regs[0] |= 0xC;
+		mmc1.reg[0] |= 0xC;
 		mmc1.shift = mmc1.buffer = 0;
 		MMC1_FixPRG();
 		lreset = timestampbase + timestamp;
@@ -171,7 +171,7 @@ DECLFW(MMC1_Write) {
 
 	if (mmc1.shift == 5) {
 		/* FCEU_printf("REG[%d]=%02x\n",n,mmc1.buffer); */
-		mmc1.regs[n] = mmc1.buffer;
+		mmc1.reg[n] = mmc1.buffer;
 		mmc1.shift = mmc1.buffer = 0;
 		switch (n) {
 		case 0:
@@ -201,10 +201,10 @@ void MMC1_Restore(int version) {
 }
 
 void MMC1_Reset(void) {
-	mmc1.regs[0] = 0x0C;
-	mmc1.regs[1] = 0;
-	mmc1.regs[2] = 0;
-	mmc1.regs[3] = 0;
+	mmc1.reg[0] = 0x0C;
+	mmc1.reg[1] = 0;
+	mmc1.reg[2] = 0;
+	mmc1.reg[3] = 0;
 
 	mmc1.buffer = mmc1.shift = 0;
 
@@ -259,7 +259,7 @@ void MMC1_Init(CartInfo *info, int wram, int saveram) {
 		}
 	}
 
-	AddExState(mmc1.regs, 4, 0, "DREG");
+	AddExState(mmc1.reg, 4, 0, "DREG");
 
 	info->Power = MMC1_Power;
 	info->Close = MMC1_Close;

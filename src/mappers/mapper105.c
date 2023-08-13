@@ -25,7 +25,7 @@ static uint32 IRQCount;
 static uint32 count_target = 0x28000000;
 
 static void M105IRQHook(int a) {
-	if (mmc1.regs[1] & 0x10) {
+	if (mmc1.reg[1] & 0x10) {
 		IRQCount = 0;
 		X6502_IRQEnd(FCEU_IQEXT);
 	} else {
@@ -42,10 +42,10 @@ static void M105CW(uint32 A, uint8 V) {
 }
 
 static void M105PW(uint32 A, uint8 V) {
-	if (mmc1.regs[1] & 0x08) {
+	if (mmc1.reg[1] & 0x08) {
 		setprg16(A, 8 | (V & 0x7));
 	} else {
-		setprg32(0x8000, (mmc1.regs[1] >> 1) & 0x03);
+		setprg32(0x8000, (mmc1.reg[1] >> 1) & 0x03);
 	}
 }
 
