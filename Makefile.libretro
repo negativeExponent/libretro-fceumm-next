@@ -172,6 +172,7 @@ else ifeq ($(platform), ps2)
 	EXTERNAL_ZLIB=1
 
 	HAVE_NTSC = 0
+	C89_BUILD = 0
 # PSP
 else ifeq ($(platform), psp1)
 	TARGET := $(TARGET_NAME)_libretro_$(platform).a
