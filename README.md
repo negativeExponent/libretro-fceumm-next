@@ -14,6 +14,7 @@ Recent Changes (in no particular order):
 - fix to audio controls not muting some channels when in low quality mode
 - add missing state variables, fixing runahead compatibility
 - Assign F12 as Hard Reset (PowerNES) hotkey
+- Write instructions now update the databus (backport https://github.com/TASEmulators/fceux/pull/659)
 - misc changes under the hood
 
 The core can be compiled similarly to libretro-fceumm. and be a drop-in replacement.

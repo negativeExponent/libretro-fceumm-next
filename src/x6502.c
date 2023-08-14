@@ -63,6 +63,7 @@ static INLINE uint8 RdMemNorm(uint32 A) {
 
 static INLINE void WrMemNorm(uint32 A, uint8 V) {
 	BWrite[A](A, V);
+	_DB = V;
 }
 
 #ifdef FCEUDEF_DEBUGGER
@@ -80,6 +81,7 @@ static INLINE void WrMemHook(uint32 A, uint8 V) {
 		X.WriteHook(&X, A, V);
 	else
 		BWrite[A](A, V);
+	_DB = V;
 }
 #endif
 
@@ -89,6 +91,7 @@ static INLINE uint8 RdRAMFast(uint32 A) {
 
 static INLINE void WrRAMFast(uint32 A, uint8 V) {
 	RAM[A] = V;
+	_DB = V;
 }
 
 uint8 X6502_DMR(uint32 A) {
