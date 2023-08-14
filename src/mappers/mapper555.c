@@ -25,9 +25,9 @@
 #include "mmc3.h"
 
 static uint8 reg[2];
-static uint8 counter_expired;
-static uint32 counter;
-static uint32 counter_target = 0x20000000;
+static uint8 count_expired;
+static uint32 count;
+static uint32 count_target = 0x20000000;
 
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
@@ -37,8 +37,8 @@ static uint32 CHRRAMSIZE;
 
 static SFORMAT StateRegs[] = {
 	{ reg, 2, "REGS" },
-	{ &counter, 2, "CNTR" },
-	{ &counter_expired, 2, "CNTE" },
+	{ &count, 2, "CNTR" },
+	{ &count_expired, 2, "CNTE" },
 	{ 0 }
 };
 
@@ -63,11 +63,9 @@ static void M555PW(uint32 A, uint8 V) {
 	setprg8(A, base | (V & mask));
 }
 
-extern uint8 *WRAM;
-
 static DECLFR(M555Read5) {
 	if (A & 0x800) {
-		return (0x5C | (counter_expired ? 0x80 : 0));
+		return (0x5C | (count_expired ? 0x80 : 0));
 	}
 	return WRAM[0x2000 | (A & 0xFFF)];
 }
@@ -83,15 +81,15 @@ static DECLFW(M555Write5) {
 }
 
 static void M555Reset(void) {
-	counter_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
-	counter = 0;
+	count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
+	count = 0;
 	memset(reg, 0, sizeof(reg));
 	MMC3_Reset();
 }
 
 static void M555Power(void) {
-	counter_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
-	counter = 0;
+	count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
+	count = 0;
 	memset(reg, 0, sizeof(reg));
 	MMC3_Power();
 
@@ -106,14 +104,14 @@ static void M555Power(void) {
 static void M555CPUIRQHook(int a) {
 	while (a--) {
 		if (!(reg[0] & 0x08)) {
-			counter = 0;
-			counter_expired = false;
+			count = 0;
+			count_expired = false;
 		} else {
-			if (++counter == counter_target) {
-				counter_expired = TRUE;
+			if (++count == count_target) {
+				count_expired = TRUE;
 			}
-			if ((counter % 1789773) == 0) {
-				uint32 seconds = (counter_target - counter) / 1789773;
+			if ((count % 1789773) == 0) {
+				uint32 seconds = (count_target - count) / 1789773;
 				FCEU_DispMessage(RETRO_LOG_INFO, 1000, "Time left: %02i:%02i\n", seconds / 60, seconds % 60);
 			}
 		}

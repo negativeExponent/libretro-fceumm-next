@@ -21,20 +21,20 @@
 #include "mapinc.h"
 #include "mmc1.h"
 
-static uint32 counter;
-static uint32 counter_target = 0x28000000;
+static uint32 count;
+static uint32 count_target = 0x28000000;
 
 static void M105IRQHook(int a) {
 	while (a--) {
 		if (mmc1.reg[1] & 0x10) {
-			counter = 0;
+			count = 0;
 			X6502_IRQEnd(FCEU_IQEXT);
 		} else {
-			if (++counter == counter_target) {
+			if (++count == count_target) {
 				X6502_IRQBegin(FCEU_IQEXT);
 			}
-			if ((counter % 1789773) == 0) {
-				uint32 seconds = (counter_target - counter) / 1789773;
+			if ((count % 1789773) == 0) {
+				uint32 seconds = (count_target - count) / 1789773;
 				FCEU_DispMessage(RETRO_LOG_INFO, 1000, "Time left: %02i:%02i\n", seconds / 60, seconds % 60);
 			}
 		}
@@ -54,12 +54,12 @@ static void M105PW(uint32 A, uint8 V) {
 }
 
 static void M105Power(void) {
-    counter_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
+    count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
 	MMC1_Power();
 }
 
 static void M105Reset(void) {
-	counter_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
+	count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
 	MMC1_Reset();
 }
 
@@ -70,5 +70,5 @@ void Mapper105_Init(CartInfo *info) {
 	MapIRQHook = M105IRQHook;
 	info->Power = M105Power;
 	info->Reset = M105Reset;
-    AddExState(&counter, 4, 0, "IRQC");
+    AddExState(&count, 4, 0, "IRQC");
 }
