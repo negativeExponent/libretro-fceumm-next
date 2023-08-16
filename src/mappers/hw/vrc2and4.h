@@ -50,6 +50,10 @@ typedef struct __VRC24 {
 
 extern VRC24 vrc24;
 
+extern uint8 vrc2and4_VRC4;
+extern uint32 vrc2and4_A0;
+extern uint32 vrc2and4_A1;
+
 DECLFW(VRC24_Write);
 
 void VRC24_IRQCPUHook(int a);

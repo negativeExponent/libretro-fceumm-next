@@ -44,9 +44,9 @@
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
-static uint8 vrc2and4_VRC4;
-static uint32 vrc2and4_A0;
-static uint32 vrc2and4_A1;
+uint8 vrc2and4_VRC4;
+uint32 vrc2and4_A0;
+uint32 vrc2and4_A1;
 
 void (*VRC24_FixPRG)(void);
 void (*VRC24_FixCHR)(void);

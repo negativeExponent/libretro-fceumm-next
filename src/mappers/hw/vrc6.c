@@ -36,7 +36,6 @@ VRC6 vrc6;
 
 void (*VRC6_pwrap)(uint32 A, uint8 V);
 void (*VRC6_cwrap)(uint32 A, uint8 V);
-void (*VRC6_mwrap)(uint8 V);
 
 static SFORMAT StateRegs[] =
 {
@@ -55,9 +54,7 @@ static void GENCWRAP(uint32 A, uint8 V) {
 	setchr1(A, V & 0xFF);
 }
 
-static void GENMWRAP(uint8 V) {
-	vrc6.mirr = V;
-
+void VRC6_FixMIR(void) {
 	switch (vrc6.mirr & 3) {
 	case 0: setmirror(MI_V); break;
 	case 1: setmirror(MI_H); break;
@@ -79,10 +76,6 @@ void VRC6_FixCHR(void) {
 	for (i = 0; i < 8; i++) {
 		VRC6_cwrap(i << 10, vrc6.chr[i]);
 	}
-
-	if (VRC6_mwrap) {
-		VRC6_mwrap(vrc6.mirr);
-	}
 }
 
 DECLFW(VRC6_Write) {
@@ -102,9 +95,7 @@ DECLFW(VRC6_Write) {
 			VRC6Sound_Write(A, V);
 		} else {
 			vrc6.mirr = (V >> 2) & 3;
-			if (VRC6_mwrap) {
-				VRC6_mwrap(vrc6.mirr);
-			}
+			VRC6_FixMIR();
 		}
 		break;
 	case 0xC000:
@@ -127,7 +118,11 @@ DECLFW(VRC6_Write) {
 	}
 }
 
-void VRC6_Power(void) {
+void VRC6_IRQCPUHook(int a) {
+	VRCIRQ_CPUHook(a);
+}
+
+void VRC6_Reset(void) {
 	vrc6.prg[0] = 0;
 	vrc6.prg[1] = 1;
 
@@ -144,6 +139,11 @@ void VRC6_Power(void) {
 
 	VRC6_FixPRG();
 	VRC6_FixCHR();
+	VRC6_FixMIR();
+}
+
+void VRC6_Power(void) {
+	VRC6_Reset();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, VRC6_Write);
@@ -166,12 +166,12 @@ void VRC6_Close(void) {
 void VRC6_Restore(int version) {
 	VRC6_FixPRG();
 	VRC6_FixCHR();
+	VRC6_FixMIR();
 }
 
 void VRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram) {
 	VRC6_pwrap = GENPWRAP;
 	VRC6_cwrap = GENCWRAP;
-	VRC6_mwrap = GENMWRAP;
 
 	vrc6_A0 = A0;
 	vrc6_A1 = A1;
@@ -199,7 +199,7 @@ void VRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram) {
 	GameStateRestore = VRC6_Restore;
 
 	VRCIRQ_Init(TRUE);
-	MapIRQHook = VRCIRQ_CPUHook;
+	MapIRQHook = VRC6_IRQCPUHook;
 	AddExState(&VRCIRQ_StateRegs, ~0, 0, 0);
 
 	VRC6Sound_ESI();

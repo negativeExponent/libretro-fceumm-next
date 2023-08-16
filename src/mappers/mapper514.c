@@ -90,6 +90,7 @@ static void StateRestore(int version) {
 void Mapper514_Init(CartInfo *info) {
 	info->Power = M514Power;
 	info->Reset = M514Reset;
+	info->Close = M514Close;
 	PPU_hook = M514PPUHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
