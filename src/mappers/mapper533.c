@@ -30,16 +30,19 @@
 
 static void Sync(void) {
 	setprg32(0x8000, 0);
-	setchr8((latch.data >> 4) & 1);
+	setchr8((latch.data >> 4) & 0x01);
 }
 
 static DECLFR(M533Read) {
-	if ((A & 0xF000) == 0xE000) {
-		return ((PRGptr[0][0x6000 | A] & 0xF0) | (latch.data >> 4));
+	switch (A & 0xF000) {
+	case 0xE000:
+		return ((PRGptr[0][0x6000 | (A & 0xFFFF)] & 0xF0) | (latch.data >> 4));
+	default:
+		break;
 	}
 	return CartBROB(A);
 }
 
 void Mapper533_Init(CartInfo *info) {
-	Latch_Init(info, Sync, M533Read, 0, 1);
+	Latch_Init(info, Sync, M533Read, FALSE, TRUE);
 }

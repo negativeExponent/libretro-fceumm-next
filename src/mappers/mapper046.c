@@ -30,11 +30,8 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 prgBase = reg & 0x0F;
-	uint8 chrBase = reg & 0xF0;
-
-	setprg32(0x8000, (prgBase << 1) | (latch.data & 0x01));
-	setchr8((chrBase >> 1) | ((latch.data >> 4) & 0x07));
+	setprg32(0x8000, ((reg & 0x0F) << 1) | (latch.data & 0x01));
+	setchr8(((reg & 0xF0) >> 1) | ((latch.data >> 4) & 0x07));
 }
 
 static DECLFW(M046WriteReg) {

@@ -31,12 +31,10 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 base = reg[0] & 0x0F;
-
-	setprg8(0x6000, 0x04 + ((base << 4) | 0x0F));
+	setprg8(0x6000, 0x04 + (((reg[0] & 0x0F) << 4) | 0x0F));
 	if (reg[0] & 0x10) {
-		setprg16(0x8000, 0x02 + ((base << 3) | (reg[1] & 0x07)));
-		setprg16(0xc000, 0x02 + ((base << 3) | 0x07));
+		setprg16(0x8000, 0x02 + (((reg[0] & 0x0F) << 3) | (reg[1] & 0x07)));
+		setprg16(0xc000, 0x02 + (((reg[0] & 0x0F) << 3) | 0x07));
 	} else {
 		setprg32(0x8000, 0);
 	}

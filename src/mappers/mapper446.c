@@ -439,6 +439,7 @@ void Mapper446_Init(CartInfo *info) {
 
 	info->Power = M446Power;
 	info->Reset = M446Reset;
+	info->Close = M446Close;
 
 	MapIRQHook = M446CPUIRQHook;
 	GameHBIRQHook = M446HBIRQHook;

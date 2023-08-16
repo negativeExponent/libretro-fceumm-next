@@ -33,7 +33,7 @@ static void Sync(void) {
 	setprg4(0x7000, 0);
 	setprg32(0x8000, (reg[0] << 2) + (latch.data & 0x07));
 	setchr8(0);
-	setmirror(MI_0 + (reg[1] & 0x01));
+	setmirror(MI_0 + ((latch.data >> 4) & 0x01));
 }
 
 static DECLFW(M501WriteReg) {
