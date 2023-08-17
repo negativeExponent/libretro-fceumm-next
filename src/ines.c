@@ -538,7 +538,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "MMC3 PIRATE PROT. A",      121, Mapper121_Init         )
 /*    INES_BOARD( "",                            122, Mapper122_Init ) */
 	INES_BOARD( "MMC3 PIRATE H2288",        123, Mapper123_Init         )
-/*    INES_BOARD( "",                            124, Mapper124_Init ) */
+    INES_BOARD( "Super Game Mega Type III", 124, Mapper124_Init         )
 	INES_BOARD( "FDS LH32",                 125, Mapper125_Init         )
 	INES_BOARD( "PowerJoy 84-in-1 PJ-008",  126, Mapper126_Init         )
     INES_BOARD( "Double Dragon II (Pirate)", 127, Mapper127_Init        )

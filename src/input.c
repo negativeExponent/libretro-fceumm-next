@@ -235,7 +235,8 @@ static INPUTC GPCVS = { ReadGPVS, 0, StrobeGP, UpdateGP, 0, 0 };
 static INPUTCFC FAMI4C = { ReadFami4, 0, StrobeFami4, 0, 0, 0 };
 
 /**********************************************************************/
-
+#include "cart.h"
+extern CartInfo iNESCart;
 void FCEU_UpdateInput(void)
 {
    int x;
@@ -249,7 +250,7 @@ void FCEU_UpdateInput(void)
    if (FCExp && FCExp->Update)
       FCExp->Update(InputDataPtrFC, JPAttribFC);
 
-   if (GameInfo && GameInfo->type == GIT_VSUNI)
+   if (GameInfo && ((GameInfo->type == GIT_VSUNI) || (iNESCart.mapper == 124)))
       if (coinon) coinon--;
 
    if (GameInfo->type == GIT_VSUNI)
@@ -524,4 +525,3 @@ void FCEUI_PowerNES(void)
 {
 	FCEU_QSimpleCommand(FCEUNPCMD_POWER);
 }
-
