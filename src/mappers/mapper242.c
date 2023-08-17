@@ -25,56 +25,33 @@
 static uint8 dipsw;
 
 static void Sync(void) {
-	uint32 S = latch.addr & 1;
-	uint32 p = (latch.addr >> 2) & 0x1F;
-	uint32 L = (latch.addr >> 9) & 1;
+	uint32 prg = (latch.addr >> 2) & 0x1F;
+	uint32 cpuA14 = latch.addr & 0x01;
+	uint32 nrom = (latch.addr >> 7) & 0x01;
+	uint32 unrom = (latch.addr >> 9) & 0x01;
     uint32 M242TwoChips = (iNESCart.PRGRomSize & 0x20000) && (iNESCart.PRGRomSize > 0x20000);
 
 	if (M242TwoChips) {
 		if (latch.addr & 0x600) { /* First chip */
-			p &= ((ROM.prg.size & ~8) - 1);
+			prg &= ((ROM.prg.size & ~0x08) - 1);
 		} else { /* Second chip */
-			p &= 0x07;
-			p += (ROM.prg.size & ~8);
+			prg &= 0x07;
+			prg += (ROM.prg.size & ~0x08);
 		}
 	}
 
-	if ((latch.addr >> 7) & 1) {
-		if (S) {
-			setprg32(0x8000, p >> 1);
-		} else {
-			setprg16(0x8000, p);
-			setprg16(0xC000, p);
-		}
-	} else {
-		if (S) {
-			if (L) {
-				setprg16(0x8000, p & 0x3E);
-				setprg16(0xC000, p | 7);
-			} else {
-				setprg16(0x8000, p & 0x3E);
-				setprg16(0xC000, p & 0x38);
-			}
-		} else {
-			if (L) {
-				setprg16(0x8000, p);
-				setprg16(0xC000, p | 7);
-			} else {
-				setprg16(0x8000, p);
-				setprg16(0xC000, p & 0x38);
-			}
-		}
-	}
+	setprg8r(0x10, 0x6000, 0);
+	setprg16(0x8000, prg & ~cpuA14);
+	setprg16(0xC000, ((prg | cpuA14) & ~(0x07 * !nrom * !unrom)) | (0x07 * !nrom * unrom));
 
-	if (!iNESCart.battery && (latch.addr & 0x80) == 0x80 && (ROM.prg.size * 16) > 256)
+	setchr8(0);
+	setmirror(((latch.addr >> 1) & 1) ^ 1);
+	if (!iNESCart.battery && (latch.addr & 0x80) == 0x80 && (ROM.prg.size * 16) > 256) {
 		/* CHR-RAM write protect hack, needed for some multicarts */
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
-	else
+	} else {
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
-
-	setmirror(((latch.addr >> 1) & 1) ^ 1);
-	setchr8(0);
-	setprg8r(0x10, 0x6000, 0);
+	}
 }
 
 static DECLFR(M242Read) {
@@ -85,10 +62,8 @@ static DECLFR(M242Read) {
 }
 
 static void M242Power() {
-	Latch_Power();
-
 	dipsw = 0;
-	SetReadHandler(0x8000, 0xFFFF, M242Read);
+	Latch_Power();
 }
 
 static void M242Reset() {
@@ -97,8 +72,8 @@ static void M242Reset() {
 }
 
 void Mapper242_Init(CartInfo *info) {
-	Latch_Init(info, Sync, NULL, 1, 0);
-	info->Power  = M242Power;
-	info->Reset  = M242Reset;
+	Latch_Init(info, Sync, M242Read, TRUE, FALSE);
+	info->Power = M242Power;
+	info->Reset = M242Reset;
 	AddExState(&dipsw, 1, 0, "PADS");
 }

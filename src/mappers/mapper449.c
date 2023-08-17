@@ -29,26 +29,20 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 bank = ((latch.addr >> 2) & 0x1F) | ((latch.addr >> 3) & 0x20);
+	uint32 prg = ((latch.addr >> 3) & 0x20) | ((latch.addr >> 2) & 0x1F);
+	uint32 cpuA14 = latch.addr & 0x01;
+	uint32 nrom = (latch.addr >> 7) & 0x01;
 
-	if (!(latch.addr & 0x080)) {
-		setprg16(0x8000, bank);
-		setprg16(0xC000, bank | 0x07);
-	} else {
-		if (latch.addr & 0x001) {
-			setprg32(0x8000, bank >> 1);
-		} else {
-			setprg16(0x8000, bank);
-			setprg16(0xC000, bank);
-		}
-	}
+	setprg16(0x8000, prg & ~(cpuA14 * nrom));
+	setprg16(0xC000, prg | (cpuA14 * nrom) | (0x07 * !nrom));
+
 	setchr8(latch.data);
     setmirror((((latch.addr >> 1) & 0x01) ^ 0x01));
 }
 
 static DECLFR(M449Read) {
 	if (latch.addr & 0x200) {
-		return CartBR(A | dipsw);
+		A |= dipsw;
 	}
 	return CartBR(A);
 }

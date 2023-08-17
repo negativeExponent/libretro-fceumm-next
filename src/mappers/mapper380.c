@@ -32,24 +32,17 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint16 prg = (latch.addr >> 2) & 0x1F;
+	uint32 prg = (latch.addr >> 2) & 0x1F;
+	uint32 cpuA14 = (latch.addr & 0x01) != 0x01;
+	uint32 ourom = (latch.addr >> 8) & 0x01;
+	uint32 nrom = (latch.addr >> 9) & 0x01;
 
-	if (latch.addr & 0x200) {
-		if (latch.addr & 0x01) { /* NROM 128 */
-			setprg16(0x8000, prg);
-			setprg16(0xC000, prg);
-		} else /* NROM-256 */
-			setprg32(0x8000, prg >> 1);
-	} else { /* UxROM */
-		uint8 uorom = ((iNESCart.submapper == 1) && (latch.addr & 0x100)) ? TRUE : FALSE;
+	setprg16(0x8000, prg & ~(cpuA14 * nrom));
+	setprg16(0xC000, (prg | (cpuA14 * nrom)) | (0x07 * !nrom) | (0x08 * (iNESCart.submapper == 1) * !nrom * ourom));
 
-		setprg16(0x8000, prg);
-		setprg16(0xC000, prg | (0x08 * uorom) | 0x07);
-	}
-
-	SetupCartCHRMapping(0, CHRptr[0], 0x2000, !(latch.addr & 0x80));
 	setchr8(0);
 	setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, !(latch.addr & 0x80));
 }
 
 static DECLFR(M380Read) {
