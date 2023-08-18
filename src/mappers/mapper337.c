@@ -48,7 +48,6 @@ static void Sync(void) {
 			setprg16(0xC000, bank);
 		}
 	}
-	SetupCartCHRMapping(0, CHRptr[0], 0x2000, (reg & 0x80) ? FALSE : TRUE);
 	setchr8(0);
 	setmirror(((reg >> 5) & 0x01) ^ 0x01);
 }
