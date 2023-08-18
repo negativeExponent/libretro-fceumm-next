@@ -29,7 +29,7 @@ static uint8 reg[4];
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 1, "REGS" },
+	{ reg, 4, "REGS" },
 	{ &dipsw, 1, "DPSW" },
 	{ 0 }
 };
@@ -44,11 +44,13 @@ static void M134PW(uint32 A, uint8 V) {
 			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 1);
 			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 0);
 			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 1);
+			FCEU_printf("nrom128\n");
 		} else { /* NROM-256 mode */
 			setprg8(0x8000, (base & ~mask) | (((mmc3.reg[6] & ~0x02) & mask) & ~1) | 0);
 			setprg8(0xA000, (base & ~mask) | (((mmc3.reg[6] & ~0x02) & mask) & ~1) | 1);
 			setprg8(0xC000, (base & ~mask) | (((mmc3.reg[6] |  0x02) & mask) & ~1) | 0);
 			setprg8(0xE000, (base & ~mask) | (((mmc3.reg[6] |  0x02) & mask) & ~1) | 1);
+			FCEU_printf("nrom256\n");
 		}
 	} else { /* MMC3 */
 		setprg8(A, (base & ~mask) | (V & mask));
