@@ -71,6 +71,7 @@ static void M305Power(void) {
 	memset(reg, 0, sizeof(reg));
 	FDSSound_Power();
 	Sync();
+	setmirror(MI_V);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M305Write);
 }
