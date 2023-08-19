@@ -57,6 +57,7 @@ static DECLFW(M522Write) {
 }
 
 static void M522Power(void) {
+	FDSSound_Power();
 	reg[0] = reg[1] = reg[2] = reg[3] = reg[4] = reg[5] = reg[6] = reg[7] = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);

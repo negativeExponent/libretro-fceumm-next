@@ -29,8 +29,7 @@
 
 static uint8 reg[4];
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ reg, 4, "REGS" },
 	{ 0 }
 };

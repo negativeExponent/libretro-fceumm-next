@@ -27,8 +27,7 @@ static uint8 prg;
 static uint8 mirr;
 static uint8 WRAM[8192];
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &prg, 1, "PREG" },
 	{ &mirr, 1, "MIRR" },
 	{ 0 }

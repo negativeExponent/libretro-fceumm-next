@@ -31,6 +31,7 @@
  */
 
 #include "mapinc.h"
+#include "fdssound.h"
 
 static uint8 reg;
 
@@ -67,6 +68,7 @@ static void M108Power(void) {
 	case 2:  SetWriteHandler(0xE000, 0xFFFF, M108Write); break;
 	default: SetWriteHandler(0x8000, 0xFFFF, M108Write); break;
 	}
+	FDSSound_Power();
 }
 
 static void StateRestore(int version) {

@@ -32,8 +32,7 @@ static uint32 IRQCount;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ prg, 4, "PREG" },
 	{ chr, 8, "CREG" },
 	{ &IRQCount, 4, "IRQC" },
@@ -59,8 +58,6 @@ static void Sync(void) {
 
 	setmirror(MI_V);
 }
-
-extern int scanline;
 
 static DECLFW(M526Write) {
 	/*	FCEU_printf("Wr: A:%04x V:%02x\n", A, V); */

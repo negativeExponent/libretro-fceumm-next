@@ -104,7 +104,6 @@ static DECLFW(M042_Sub2_Write) {
 static void M042_Sub2_Power(void) {
 	reg[0] = 0;
 	reg[1] = 0;
-	FDSSound_Power();
 	WSync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x4020, 0xFFFF, M042_Sub2_Write);

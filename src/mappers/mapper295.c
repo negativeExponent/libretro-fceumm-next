@@ -20,6 +20,7 @@
 
 #include "mapinc.h"
 #include "jyasic.h"
+#include "fdssound.h"
 
 static uint32 GetPRGBank(uint32 V) {
 	return ((jyasic.mode[3] << 4) | (V & 0x0F));
@@ -29,9 +30,15 @@ static uint32 GetCHRBank(uint32 V) {
     return ((jyasic.mode[3] << 7) | (V & 0x7F));
 }
 
+static void M295Power(void) {
+	JYASIC_Power();
+	FDSSound_Power();
+}
+
 void Mapper295_Init(CartInfo *info) {
 	/* Multicart */
 	JYASIC_Init(info, TRUE);
     JYASIC_GetPRGBank = GetPRGBank;
 	JYASIC_GetCHRBank = GetCHRBank;
+	info->Power = M295Power;
 }

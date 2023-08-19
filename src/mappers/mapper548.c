@@ -29,8 +29,7 @@ static int32 IRQCount;
 static uint8 *WRAM = NULL;
 static uint32 WRAMSIZE;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &reg, 1, "REG" },
 	{ &latch, 1, "LATC" },
 	{ &IRQa, 1, "IRQA" },
