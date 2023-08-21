@@ -71,8 +71,8 @@ void FDSSound_AddSaveState(void) {
 
 static DECLFR(FDSSRead) {
 	switch (A & 0xF) {
-	case 0x0: return(amplitude[0] | (X.DB & 0xC0));
-	case 0x2: return(amplitude[1] | (X.DB & 0xC0));
+	case 0x0: return(0x40 | amplitude[0]);
+	case 0x2: return(0x40 | amplitude[1]);
 	}
 	return(X.DB);
 }
@@ -141,7 +141,7 @@ static void DoEnv() {
 }
 
 static DECLFR(FDSWaveRead) {
-	return(fdso.cwave[A & 0x3f] | (X.DB & 0xC0));
+	return(0x40 | fdso.cwave[A & 0x3f]);
 }
 
 static DECLFW(FDSWaveWrite) {
