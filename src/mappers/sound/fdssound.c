@@ -21,6 +21,9 @@
 #include "mapinc.h"
 #include "fdssound.h"
 
+static void RenderSound(void);
+static void RenderSoundHQ(void);
+
 #define FDSClock (1789772.7272727272727272 / 2)
 
 typedef struct __FDSSOUND {
@@ -43,16 +46,17 @@ typedef struct __FDSSOUND {
 } FDSSOUND;
 
 static FDSSOUND fdso;
+static int32 FBC = 0;
 
-#define  SPSG  fdso.SPSG
-#define b19shiftreg60  fdso.b19shiftreg60
-#define b24adder66  fdso.b24adder66
-#define b24latch68  fdso.b24latch68
-#define b17latch76  fdso.b17latch76
+#define SPSG          fdso.SPSG
+#define b19shiftreg60 fdso.b19shiftreg60
+#define b24adder66    fdso.b24adder66
+#define b24latch68    fdso.b24latch68
+#define b17latch76    fdso.b17latch76
 #define b8shiftreg88  fdso.b8shiftreg88
-#define clockcount  fdso.clockcount
-#define amplitude  fdso.amplitude
-#define speedo    fdso.speedo
+#define clockcount    fdso.clockcount
+#define amplitude     fdso.amplitude
+#define speedo        fdso.speedo
 
 void FDSSound_AddSaveState(void) {
 	AddExState(fdso.cwave, 64, 0, "WAVE");
@@ -76,9 +80,6 @@ static DECLFR(FDSSRead) {
 	}
 	return(X.DB);
 }
-
-static void RenderSound(void);
-static void RenderSoundHQ(void);
 
 static DECLFW(FDSSWrite) {
 	if (FSettings.SndRate) {
@@ -116,7 +117,6 @@ static DECLFW(FDSSWrite) {
  * $4087 - Same as $4086($4087 is the upper 4 bits)
  */
 
-
 static void DoEnv() {
 	int x;
 
@@ -149,11 +149,8 @@ static DECLFW(FDSWaveWrite) {
 		fdso.cwave[A & 0x3f] = V & 0x3F;
 }
 
-static int ta;
 static INLINE void ClockRise(void) {
 	if (!clockcount) {
-		ta++;
-
 		b19shiftreg60 = (SPSG[0x2] | ((SPSG[0x3] & 0xF) << 8));
 		b17latch76 = (SPSG[0x6] | ((SPSG[0x07] & 0xF) << 8)) + b17latch76;
 
@@ -210,8 +207,6 @@ static INLINE int32 FDSDoSound(void) {
 		return GetVolume(APU_FDS, (fdso.cwave[b24latch68 >> 19] * k) * 4 / ((SPSG[0x9] & 0x3) + 2));
 	}
 }
-
-static int32 FBC = 0;
 
 static void RenderSound(void) {
 	int32 end, start;
