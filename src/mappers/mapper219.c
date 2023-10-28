@@ -66,7 +66,6 @@ static DECLFW(M219WriteASIC) {
 		if (A & 0x02) {
 			extMode = (V & 0x20) != 0;
 		}
-		if (V & 0xC0) FCEU_printf("Wr flip:%02x\n", V);
 	} else {
 		if (!extMode) { /* Scrambled mode inactive */
 			MMC3_CMDWrite(A, V);
