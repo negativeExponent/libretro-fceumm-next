@@ -116,8 +116,7 @@ static int aspect_ratio_par;
 #define TURBO_BUTTONS 2
 unsigned char turbo_button_toggle[MAX_PLAYERS][TURBO_BUTTONS] = { {0} };
 
-typedef struct
-{
+typedef struct {
    unsigned retro;
    unsigned nes;
 } keymap;
@@ -197,8 +196,6 @@ static unsigned serialize_size;
 /* extern forward decls.*/
 extern FCEUGI *GameInfo;
 extern uint8 *XBuf;
-extern CartInfo iNESCart;
-extern CartInfo UNIFCart;
 extern int show_crosshair;
 extern int option_ramstate;
 
@@ -757,8 +754,7 @@ enum stereo_filter_type
 static enum stereo_filter_type current_stereo_filter = STEREO_FILTER_NULL;
 
 #define STEREO_FILTER_DELAY_MS_DEFAULT 15.0f
-typedef struct
-{
+typedef struct {
    int32_t *samples;
    size_t samples_size;
    size_t samples_pos;
@@ -1835,20 +1831,42 @@ void retro_reset(void)
    ResetNES();
 }
 
-static void set_apu_channels(int chan)
+static void set_apu_channels(void)
 {
-   FSettings.SquareVolume[1] = (chan & 1) ? 256 : 0;
-   FSettings.SquareVolume[0] = (chan & 2) ? 256 : 0;
-   FSettings.TriangleVolume  = (chan & 3) ? 256 : 0;
-   FSettings.NoiseVolume     = (chan & 4) ? 256 : 0;
-   FSettings.PCMVolume       = (chan & 5) ? 256 : 0;
+   char apu_name[][25] = {
+      "fceumm_apu_sq1",
+      "fceumm_apu_sq2",
+      "fceumm_apu_tri",
+      "fceumm_apu_noise",
+      "fceumm_apu_dpcm",
+      "fceumm_apu_fds",
+      "fceumm_apu_s5b",
+      "fceumm_apu_n163",
+      "fceumm_apu_vrc6",
+      "fceumm_apu_vrc7",
+      "fceumm_apu_mmc5",
+   };
+
+   struct retro_variable var = { 0 };
+   int i = 0;
+   int ssize = sizeof(apu_name) / sizeof(apu_name[0]);
+
+   for (i = 0; i < ssize; i++) {
+      var.key = apu_name[i];
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
+         int newval = atoi(var.value);
+         if (FSettings.volume[i] != newval) {
+            FSettings.volume[i] = newval;
+         }
+      } else {
+         FSettings.volume[i] = 256; /* set to max volume */
+      }
+   }
 }
 
 static void check_variables(bool startup)
 {
-   struct retro_variable var = {0};
-   char key[256];
-   int i, enable_apu;
+   struct retro_variable var = { 0 };
    bool stereo_filter_updated = false;
 
    /* 1 = Performs only geometry update: e.g. overscans */
@@ -2257,19 +2275,7 @@ static void check_variables(bool startup)
          swapDuty = newval;
    }
 
-   var.key = key;
-
-   enable_apu = 0xff;
-
-   strcpy(key, "fceumm_apu_x");
-   for (i = 0; i < 5; i++)
-   {
-      key[strlen("fceumm_apu_")] = '1' + i;
-      var.value = NULL;
-      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && !strcmp(var.value, "disabled"))
-         enable_apu &= ~(1 << i);
-   }
-   set_apu_channels(enable_apu);
+   set_apu_channels();
 
    update_dipswitch();
 
@@ -2821,6 +2827,11 @@ static void FCEUD_UpdateInput(void)
    }
    else
       palette_switch_counter = 0;
+   
+   /* Power Switch on F12 */
+   if (input_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_F12)) {
+      PowerNES();
+   }
 }
 
 static void retro_run_blit(uint8_t *gfx)
@@ -3650,25 +3661,22 @@ unsigned retro_get_region(void)
 
 void *retro_get_memory_data(unsigned type)
 {
-   uint8_t* data;
+   uint8_t* data = NULL;
 
    switch(type)
    {
       case RETRO_MEMORY_SAVE_RAM:
          if (iNESCart.battery && iNESCart.SaveGame[0] && iNESCart.SaveGameLen[0])
+         {
             return iNESCart.SaveGame[0];
-         else if (UNIFCart.battery && UNIFCart.SaveGame[0] && UNIFCart.SaveGameLen[0])
-            return UNIFCart.SaveGame[0];
+         }
          else if (GameInfo->type == GIT_FDS)
+         {
             return FDSROM_ptr();
-         else
-            data = NULL;
+         }
          break;
       case RETRO_MEMORY_SYSTEM_RAM:
          data = RAM;
-         break;
-      default:
-         data = NULL;
          break;
    }
 
@@ -3677,25 +3685,22 @@ void *retro_get_memory_data(unsigned type)
 
 size_t retro_get_memory_size(unsigned type)
 {
-   unsigned size;
+   unsigned size = 0;
 
    switch(type)
    {
       case RETRO_MEMORY_SAVE_RAM:
          if (iNESCart.battery && iNESCart.SaveGame[0] && iNESCart.SaveGameLen[0])
+         {
             size = iNESCart.SaveGameLen[0];
-         else if (UNIFCart.battery && UNIFCart.SaveGame[0] && UNIFCart.SaveGameLen[0])
-            size = UNIFCart.SaveGameLen[0];
+         }
          else if (GameInfo->type == GIT_FDS)
+         {
             size = FDSROM_size();
-         else
-            size = 0;
+         }
          break;
       case RETRO_MEMORY_SYSTEM_RAM:
          size = 0x800;
-         break;
-      default:
-         size = 0;
          break;
    }
 
