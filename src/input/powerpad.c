@@ -22,12 +22,16 @@
 #include        <stdlib.h>
 #include        "share.h"
 
+enum POWERPAD {
+	POWERPAD_A = 0,
+	POWERPAD_B = 1
+};
 
-static char side;
+static enum POWERPAD side = POWERPAD_A;
 static uint32 pprsb[2];
 static uint32 pprdata[2];
 
-static uint8 FP_FASTAPASS(1) ReadPP(int w) {
+static uint8 ReadPP(int w) {
 	uint8 ret = 0;
 	ret |= ((pprdata[w] >> pprsb[w]) & 1) << 3;
 	ret |= ((pprdata[w] >> (pprsb[w] + 8)) & 1) << 4;
@@ -43,23 +47,21 @@ static uint8 FP_FASTAPASS(1) ReadPP(int w) {
 	return ret;
 }
 
-static void FP_FASTAPASS(1) StrobePP(int w) {
+static void StrobePP(int w) {
 	pprsb[w] = 0;
 }
 
-void FP_FASTAPASS(3) UpdatePP(int w, void *data, int arg) {
-	static const char shifttableA[12] = { 8, 9, 0, 1, 11, 7, 4, 2, 10, 6, 5, 3 };
-	static const char shifttableB[12] = { 1, 0, 9, 8, 2, 4, 7, 11, 3, 5, 6, 10 };
+static void UpdatePP(int w, void *data, int arg) {
+	static const uint8 shifttable[2][12] = {
+		{ 8, 9, 0, 1, 11, 7, 4, 2, 10, 6, 5, 3 },
+		{ 1, 0, 9, 8, 2, 4, 7, 11, 3, 5, 6, 10 }
+	};
 	int x;
 
 	pprdata[w] = 0;
-
-	if (side == 'A')
-		for (x = 0; x < 12; x++)
-			pprdata[w] |= (((*(uint32*)data) >> x) & 1) << shifttableA[x];
-	else
-		for (x = 0; x < 12; x++)
-			pprdata[w] |= (((*(uint32*)data) >> x) & 1) << shifttableB[x];
+	for (x = 0; x < 12; x++) {
+		pprdata[w] |= (((*(uint32*)data) >> x) & 1) << shifttable[side == POWERPAD_A][x];
+	}
 }
 
 static INPUTC PwrPadCtrl = { ReadPP, 0, StrobePP, UpdatePP, 0, 0 };
@@ -70,11 +72,11 @@ static INPUTC *FCEU_InitPowerpad(int w) {
 }
 
 INPUTC *FCEU_InitPowerpadA(int w) {
-	side = 'A';
+	side = POWERPAD_A;
 	return(FCEU_InitPowerpad(w));
 }
 
 INPUTC *FCEU_InitPowerpadB(int w) {
-	side = 'B';
+	side = POWERPAD_B;
 	return(FCEU_InitPowerpad(w));
 }

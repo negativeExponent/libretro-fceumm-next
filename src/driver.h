@@ -10,11 +10,14 @@ extern "C" {
 #include "fceu-types.h"
 #include "git.h"
 #include "debug.h"
+#include "palette.h"
 
 #define FCEUNPCMD_RESET       0x01
 #define FCEUNPCMD_POWER       0x02
 
 #define FCEUNPCMD_VSUNICOIN   0x07
+#define FCEUNPCMD_VSUNICOIN2   0x20
+#define FCEUNPCMD_VSUNISERVICE 0x21
 #define FCEUNPCMD_VSUNIDIP0   0x08
 #define FCEUNPCMD_FDSINSERTx  0x10
 #define FCEUNPCMD_FDSINSERT   0x18
@@ -28,14 +31,14 @@ extern "C" {
 #define FCEUNPCMD_TEXT        0x90
 
 /* This makes me feel dirty for some reason. */
-void FCEU_printf(char *format, ...);
 #define FCEUI_printf FCEU_printf
 
 /* Video interface */
-void FCEUD_SetPalette(uint8 index, uint8 r, uint8 g, uint8 b);
+void FCEUD_SetPalette(int index, uint8 r, uint8 g, uint8 b);
 
 /* Displays an error.  Can block or not. */
 void FCEUD_PrintError(char *s);
+void FCEUD_PrintDebug(char *s);
 void FCEUD_Message(char *s);
 
 void FCEUD_DispMessage(enum retro_log_level level, unsigned duration, const char *str);
@@ -46,51 +49,16 @@ void FCEUI_PowerNES(void);
 
 void FCEUI_SetInput(int port, int type, void *ptr, int attrib);
 void FCEUI_SetInputFC(int type, void *ptr, int attrib);
-void FCEUI_DisableFourScore(int s);
-
-#define SI_UNSET           -1
-#define SI_NONE            0
-#define SI_GAMEPAD         1
-#define SI_ZAPPER          2
-#define SI_POWERPADA       3
-#define SI_POWERPADB       4
-#define SI_ARKANOID        5
-#define SI_MOUSE           6
-#define SI_LCDCOMP_ZAPPER  7
-#define SI_SNES_MOUSE      8
-#define SI_SNES_GAMEPAD    9
-#define SI_VIRTUALBOY      10
-
-#define SIFC_UNSET         -1
-#define SIFC_NONE          0
-#define SIFC_ARKANOID      1
-#define SIFC_SHADOW        2
-#define SIFC_4PLAYER       3
-#define SIFC_FKB           4
-#define SIFC_SUBORKB       5
-#define SIFC_PEC586KB      6
-#define SIFC_HYPERSHOT     7
-#define SIFC_MAHJONG       8
-#define SIFC_QUIZKING      9
-#define SIFC_FTRAINERA     10
-#define SIFC_FTRAINERB     11
-#define SIFC_OEKAKIDS      12
-#define SIFC_BWORLD        13
-#define SIFC_TOPRIDER      14
-
-#define SIS_NONE           0
-#define SIS_DATACH         1
-#define SIS_NWC            2
-#define SIS_VSUNISYSTEM    3
-#define SIS_NSF            4
+void FCEUI_SetInputFourScore(int useFourScore);
 
 /* New interface functions */
 
 /* 0 to keep 8-sprites limitation, 1 to remove it */
 void FCEUI_DisableSpriteLimitation(int a);
 
-/* -1 = no change, 0 = show, 1 = hide, 2 = internal toggle */
-void FCEUI_SetRenderDisable(int sprites, int bg);
+/* 1 = show, 0 = hide */
+void FCEUI_SetRenderPlanes(int sprites, int bg);
+void FCEUI_GetRenderPlanes(int *sprites, int *bg);
 
 /* frontend_post_load_init_cb() is called immediately
  * after loading the ROM, allowing any frontend
@@ -105,7 +73,7 @@ FCEUGI *FCEUI_LoadGame(const char *name, const uint8_t *databuf, size_t databufs
 int FCEUI_Initialize(void);
 
 /* Emulates a frame. */
-void FCEUI_Emulate(uint8 **, int32 **, int32 *, int);
+void FCEUI_Emulate(uint8 **, uint8 **, int32 **, int32 *, int);
 
 /* Closes currently loaded game */
 void FCEUI_CloseGame(void);
@@ -138,18 +106,29 @@ void FCEUI_SetRenderedLines(int ntscf, int ntscl, int palf, int pall);
 void FCEUI_SetBaseDirectory(const char *dir);
 
 /* Tells FCE Ultra to copy the palette data pointed to by pal and use it.
-   Data pointed to by pal needs to be 64*3 bytes in length.
+   Data pointed to by pal needs to be 64*3 or 512x3 bytes in length.
 */
-void FCEUI_SetPaletteArray(uint8 *pal);
+void FCEU_SetPaletteUser(const pal *pal, const unsigned nEntries);
+
+/* Sets default palette */
+void FCEU_SetPalette(void);
+
+/* Get VS Unisystem palette number */
+int  FCEU_VSUniGetPaletteNum(void);
 
 /* Sets up sound code to render sound at the specified rate, in samples
    per second.  Only sample rates of 44100, 48000, and 96000 are currently
    supported.
-   If "Rate" equals 0, sound is disabled.
-*/
+   If "Rate" equals 0, sound is disabled. */
 void FCEUI_Sound(int Rate);
-void FCEUI_SetSoundVolume(uint32 volume);
 void FCEUI_SetSoundQuality(int quality);
+
+/* Sets up volume on each sound channel.
+   If "volume" equals 0, then sound for that channel is muted. Max volume is 256. */
+void FCEUI_SetSoundVolume(int channel, int volume);
+
+/* Gets the current volume of the specific audio channel. */
+int FCEUI_GetSoundVolume(int channel);
 
 int32 FCEUI_GetDesiredFPS(void);
 
@@ -183,6 +162,7 @@ void FCEUI_GetIVectors(uint16 *reset, uint16 *irq, uint16 *nmi);
 #endif
 
 void FCEUI_SetLowPass(int q);
+void FCEUI_ReduceDmcPopping(int d);
 
 void FCEUI_NSFSetVis(int mode);
 int FCEUI_NSFChange(int amount);
@@ -193,9 +173,11 @@ void FCEUI_VSUniToggleDIP(int w);
 uint8 FCEUI_VSUniGetDIPs(void);
 void FCEUI_VSUniSetDIP(int w, int state);
 void FCEUI_VSUniCoin(void);
+void FCEUI_VSUniCoin2(void);
+void FCEUI_VSUniService(void);
 
-int FCEUI_FDSInsert(int oride);
-int FCEUI_FDSEject(void);
+void FCEUI_FDSInsert(void);
+void FCEUI_FDSEject(void);
 void FCEUI_FDSSelect(void);
 
 int FCEUI_DatachSet(uint8 *rcode);

@@ -4,6 +4,9 @@ STATIC_LINKING=0
 ENDIANNESS_DEFINES=
 SIGNED_CHAR=0
 HAVE_NTSC=1
+C89_BUILD=1
+V=1
+WANT_32BPP=1
 
 SPACE :=
 SPACE := $(SPACE) $(SPACE)
@@ -48,7 +51,11 @@ else ifneq ($(findstring MINGW,$(shell uname -a)),)
 	system_platform = win
 endif
 
-TARGET_NAME := fceumm
+ifneq ($(V),1)
+   Q := @
+endif
+
+TARGET_NAME := fceumm_next
 GIT_VERSION := " $(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
 	CFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
@@ -69,13 +76,13 @@ ifneq ($(findstring SunOS,$(shell uname -a)),)
 	CC = gcc
 	SHARED := -shared -z defs
 else
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 endif
 
 else ifeq ($(platform), linux-portable)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC -nostdlib
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T
+	SHARED := -shared -Wl,--version-script=libretro/link.T
 	LIBM :=
 # OS X
 else ifeq ($(platform), osx)
@@ -149,7 +156,7 @@ else ifeq ($(platform), theos_ios)
 else ifeq ($(platform), qnx)
 	TARGET := $(TARGET_NAME)_libretro_qnx.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 	CC = qcc -Vgcc_ntoarmv7le
 	AR = qcc -Vgcc_ntoarmv7le
 	PLATFORM_DEFINES := -D__BLACKBERRY_QNX__ -marm -mcpu=cortex-a9 -mfpu=neon -mfloat-abi=softfp
@@ -159,14 +166,15 @@ else ifeq ($(platform), ps2)
 	TARGET := $(TARGET_NAME)_libretro_$(platform).a
 	CC = mips64r5900el-ps2-elf-gcc$(EXE_EXT)
 	AR = mips64r5900el-ps2-elf-ar$(EXE_EXT)
-	FCEU_DEFINES := -DPATH_MAX=1024 -DINLINE=inline -DFCEU_VERSION_NUMERIC=9813 -DHAVE_ASPRINTF
 	ENDIANNESS_DEFINES := -DLSB_FIRST -DLOCAL_LE=1
 	PLATFORM_DEFINES := -DPS2 -D_EE -G0 -DFRONTEND_SUPPORTS_ABGR1555 -DRENDER_GSKIT_PS2
 	PLATFORM_DEFINES += -I$(PS2SDK)/ee/include -I$(PS2SDK)/common/include -I$(PS2DEV)/gsKit/include
+	PLATFORM_DEFINES += -DPATH_MAX=1024 -DINLINE=inline -DHAVE_ASPRINTF
 	STATIC_LINKING=1
 	EXTERNAL_ZLIB=1
 
 	HAVE_NTSC = 0
+	C89_BUILD = 0
 # PSP
 else ifeq ($(platform), psp1)
 	TARGET := $(TARGET_NAME)_libretro_$(platform).a
@@ -203,7 +211,7 @@ else ifeq ($(platform), ctr)
 	TARGET := $(TARGET_NAME)_libretro_$(platform).a
 	CC = $(DEVKITARM)/bin/arm-none-eabi-gcc$(EXE_EXT)
 	AR = $(DEVKITARM)/bin/arm-none-eabi-ar$(EXE_EXT)
-	PLATFORM_DEFINES := -DARM11 -D_3DS
+	PLATFORM_DEFINES := -DARM11 -D_3DS -DFRONTEND_SUPPORTS_RGB565
 	CFLAGS += -march=armv6k -mtune=mpcore -mfloat-abi=hard
 	CFLAGS += -Wall -mword-relocations
 	CFLAGS += -fomit-frame-pointer -fstrict-aliasing -ffast-math
@@ -215,7 +223,7 @@ else ifeq ($(platform), ctr)
 else ifeq ($(platform), rpi1)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 	CFLAGS += -DARM11
 	CFLAGS += -marm -march=armv6j -mfpu=vfp -mfloat-abi=hard -funsafe-math-optimizations
 	CFLAGS += -fomit-frame-pointer -fstrict-aliasing -ffast-math
@@ -224,7 +232,7 @@ else ifeq ($(platform), rpi1)
 else ifeq ($(platform), rpi2)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 	CFLAGS += -DARM
 	CFLAGS += -marm -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard -funsafe-math-optimizations
 	CFLAGS += -fomit-frame-pointer -fstrict-aliasing -ffast-math
@@ -233,7 +241,7 @@ else ifeq ($(platform), rpi2)
 else ifeq ($(platform), rpi3)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 	CFLAGS += -DARM
 	CFLAGS += -marm -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard -funsafe-math-optimizations
 	CFLAGS += -fomit-frame-pointer -fstrict-aliasing -ffast-math
@@ -242,7 +250,7 @@ else ifeq ($(platform), rpi3)
 else ifeq ($(platform), rpi3_64)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 	CFLAGS += -mcpu=cortex-a53 -mtune=cortex-a53 -funsafe-math-optimizations
 	CFLAGS += -fomit-frame-pointer -fstrict-aliasing -ffast-math
 
@@ -250,7 +258,7 @@ else ifeq ($(platform), rpi3_64)
 else ifeq ($(platform), rpi4)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 	CFLAGS += -mcpu=cortex-a72 -mtune=cortex-a72 -funsafe-math-optimizations
 	CFLAGS += -fomit-frame-pointer -fstrict-aliasing -ffast-math
 
@@ -348,7 +356,7 @@ else ifeq ($(platform), libnx)
 else ifeq ($(platform), classic_armv7_a7)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 	CFLAGS += -Ofast \
 	-flto=4 -fwhole-program -fuse-linker-plugin \
 	-fdata-sections -ffunction-sections -Wl,--gc-sections \
@@ -379,7 +387,7 @@ else ifeq ($(platform), classic_armv7_a7)
 else ifeq ($(platform), classic_armv8_a35)
 	TARGET := $(TARGET_NAME)_libretro.so
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 	CFLAGS += -Ofast \
 	-flto=4 -fwhole-program -fuse-linker-plugin \
 	-fdata-sections -ffunction-sections -Wl,--gc-sections \
@@ -402,7 +410,7 @@ else ifeq ($(platform), classic_armv8_a35)
 # ARM
 else ifneq (,$(findstring armv,$(platform)))
 	TARGET := $(TARGET_NAME)_libretro.so
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 	fpic := -fPIC
 	ifneq (,$(findstring cortexa5,$(platform)))
 		PLATFORM_DEFINES += -marm -mcpu=cortex-a5
@@ -435,7 +443,7 @@ else ifeq ($(platform), gcw0)
 	CXX = /opt/gcw0-toolchain/usr/bin/mipsel-linux-g++
 	AR = /opt/gcw0-toolchain/usr/bin/mipsel-linux-ar
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 	PLATFORM_DEFINES += -ffast-math -march=mips32 -mtune=mips32r2 -mhard-float -fomit-frame-pointer
 	EXTERNAL_ZLIB = 1
 
@@ -446,7 +454,7 @@ else ifeq ($(platform), retrofw)
 	CXX = /opt/retrofw-toolchain/usr/bin/mipsel-linux-g++
 	AR = /opt/retrofw-toolchain/usr/bin/mipsel-linux-ar
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 	PLATFORM_DEFINES += -ffast-math -march=mips32 -mtune=mips32 -mhard-float -fomit-frame-pointer
 	EXTERNAL_ZLIB = 1
 
@@ -457,9 +465,19 @@ else ifeq ($(platform), miyoo)
 	CXX = /opt/miyoo/usr/bin/arm-linux-g++
 	AR = /opt/miyoo/usr/bin/arm-linux-ar
 	fpic := -fPIC
-	SHARED := -shared -Wl,--version-script=src/drivers/libretro/link.T -Wl,-no-undefined
+	SHARED := -shared -Wl,--version-script=libretro/link.T -Wl,-no-undefined
 	PLATFORM_DEFINES += -fomit-frame-pointer -ffast-math -mcpu=arm926ej-s
 	EXTERNAL_ZLIB = 1
+
+# cross Windows
+else ifeq ($(platform), wincross64)
+	TARGET := $(TARGET_NAME)_libretro.dll
+	AR = x86_64-w64-mingw32-ar
+	CC = x86_64-w64-mingw32-gcc
+	CXX = x86_64-w64-mingw32-g++
+	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=libretro/link.T
+	LDFLAGS += -static-libgcc -static-libstdc++
+	SHARED += -Wl,--export-all-symbols
 
 # Windows MSVC 2017 all architectures
 else ifneq (,$(findstring windows_msvc2017,$(platform)))
@@ -695,29 +713,39 @@ CFLAGS += -D_CRT_SECURE_NO_DEPRECATE
 else
 	TARGET := $(TARGET_NAME)_libretro.dll
 	CC ?= gcc
-	SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=src/drivers/libretro/link.T
+	SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=libretro/link.T
 endif
 
 ifeq ($(DEBUG), 1)
-	ifneq (,$(findstring msvc,$(platform)))
-      CFLAGS   += -MTd
-      CXXFLAGS += -MTd
-      CFLAGS   += -Od -Zi -D_DEBUG
-      CXXFLAGS += -Od -Zi -D_DEBUG
-	else
-      CFLAGS   += -O0 -g
-      CXXFLAGS += -O0 -g
-	endif
-      CFLAGS   += -DDEBUG
-      CXXFLAGS += -DDEBUG
+ifneq (,$(findstring msvc,$(platform)))
+CFLAGS   += -MTd
+CXXFLAGS += -MTd
+CFLAGS   += -Od -Zi -D_DEBUG
+CXXFLAGS += -Od -Zi -D_DEBUG
 else
-	ifneq (,$(findstring msvc,$(platform)))
-      CFLAGS     += -MT
-      CXXFLAGS   += -MT
-	endif
-      CFLAGS     += -O2 -DNDEBUG
-      CXXFLAGS   += -O2 -DNDEBUG
+CFLAGS   += -O0 -g
+CXXFLAGS += -O0 -g
 endif
+CFLAGS   += -DDEBUG
+CXXFLAGS += -DDEBUG
+else
+ifneq (,$(findstring msvc,$(platform)))
+CFLAGS   += -MT
+CXXFLAGS += -MT
+endif
+CFLAGS   += -O2 -DNDEBUG
+CXXFLAGS += -O2 -DNDEBUG
+endif
+
+ifeq ($(C89_BUILD),1)
+	CFLAGS += -std=c89 -ansi -pedantic -Wno-write-strings -Werror=implicit-function-declaration -Wimplicit-fallthrough -Wno-long-long -Werror=declaration-after-statement
+	CFLAGS += -D_GNU_SOURCE
+endif
+
+SOURCE_DIR := src
+LIBRETRO_DIR := libretro
+
+include Makefile.common
 
 ifneq ($(SANITIZER),)
 CFLAGS += -fsanitize=$(SANITIZER)
@@ -733,9 +761,13 @@ ifeq ($(SIGNED_CHAR), 1)
 	CFLAGS += -fsigned-char
 endif
 
-CORE_DIR := src
+COREDEFINES += -DPATH_MAX=1024
 
-include Makefile.common
+ifeq ($(WANT_32BPP),1)
+COREDEFINES += -DFRONTEND_SUPPORTS_ARGB888
+else
+COREDEFINES += -DFRONTEND_SUPPORTS_RGB565
+endif
 
 INCLUDE_STDINT = 0
 ifneq (,$(findstring msvc200,$(platform)))
@@ -750,7 +782,7 @@ ifneq (,$(findstring msvc,$(platform)))
 COREDEFINES += -DINLINE=_inline
 endif
 
-OBJECTS := $(SOURCES_C:.c=.o)
+OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) 
 OBJECTS += $(RETROARCH_OBJECTS)
 
 DEFINES := $(COREDEFINES) $(PLATFORM_DEFINES)
@@ -765,18 +797,17 @@ else ifneq (,$(findstring msvc,$(platform)))
 WARNING_DEFINES =
 LIBM :=
 else
-WARNING_DEFINES = -Wall -Wno-write-strings
+WARNING_DEFINES =
 endif
 
-CFLAGS += -Werror=implicit-function-declaration
-
-CFLAGS += $(fpic) $(WARNING_DEFINES) $(DEFINES) $(ENDIANNESS_DEFINES)
+CFLAGS += -D__LIBRETRO__ $(fpic)  $(WARNING_DEFINES) $(DEFINES) $(ENDIANNESS_DEFINES)
 LDFLAGS += $(LIBM)
 
 ifeq ($(platform), psp1)
 	INCFLAGS += -I$(shell psp-config --pspsdk-path)/include
 endif
 
+CXXFLAGS += $(CFLAGS)
 
 ifneq (,$(findstring msvc,$(platform)))
 	OBJOUT = -Fo
@@ -814,18 +845,26 @@ else
 	$(AR) rcs $@ $(OBJECTS)
 endif
 else
-	$(LD) $(LINKOUT)$@ $(SHARED) $(OBJECTS) $(LDFLAGS) $(LIBS)
+	@$(if $(Q), $(shell echo echo LD $@),)
+	$(Q)$(LD) $(LINKOUT)$@ $(SHARED) $(OBJECTS) $(LDFLAGS) $(LIBS)
 endif
 
+%.o: %.cpp
+	@$(if $(Q), $(shell echo echo CXX $<),)
+	$(Q)$(CXX) -c $(OBJOUT)$@ $< $(CXXFLAGS) $(INCFLAGS)
+
 %.o: %.c
-	$(CC) -c $(OBJOUT)$@ $< $(CFLAGS) $(INCFLAGS)
+	@$(if $(Q), $(shell echo echo CC $<),)
+	$(Q)$(CC) -c $(OBJOUT)$@ $< $(CFLAGS) $(INCFLAGS)
 
 clean-objs:
 	rm -f $(OBJECTS)
 
 clean:
-	rm -f $(OBJECTS)
-	rm -f $(TARGET)
+	@$(if $(Q), $(shell echo echo rm -rf *.o),)
+	$(Q)rm -f $(OBJECTS)
+	@$(if $(Q), $(shell echo echo rm -rf $(TARGET)),)
+	$(Q)rm -f $(TARGET)
 
 .PHONY: clean clean-objs
 endif

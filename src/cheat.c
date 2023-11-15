@@ -102,7 +102,7 @@ static DECLFR(SubCheatsRead) {
 	return(0);	/* We should never get here. */
 }
 
-void RebuildSubCheats(void) {
+static void RebuildSubCheats(void) {
 	int x;
 	struct CHEATF *c = cheats;
 
@@ -127,7 +127,7 @@ void RebuildSubCheats(void) {
 	}
 }
 
-void FCEU_PowerCheats() {
+void FCEU_PowerCheats(void) {
 	numsubcheats = 0;	/* Quick hack to prevent setting of ancient read addresses. */
 	RebuildSubCheats();
 }

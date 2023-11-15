@@ -22,18 +22,11 @@
 #include        <stdlib.h>
 
 #include        "share.h"
+#include        "zapper.h"
 
-typedef struct {
-	uint32 mzx, mzy, mzb;
-	int zap_readbit;
-	int bogo;
-	int zappo;
-	uint64 zaphit;
-} ZAPPER;
+#define ZD ZD[0]
 
-static ZAPPER ZD;
-
-static void FP_FASTAPASS(3) ZapperFrapper(uint8 * bg, uint8 * spr, uint32 linets, int final) {
+static void ZapperFrapper(uint8 * bg, uint8 * spr, uint32 linets, int final) {
 	int xs, xe;
 	int zx, zy;
 
@@ -66,7 +59,7 @@ static void FP_FASTAPASS(3) ZapperFrapper(uint8 * bg, uint8 * spr, uint32 linets
 
 				sum = palo[a1].r + palo[a1].g + palo[a1].b;
 				if (sum >= 100 * 3) {
-					ZD.zaphit = ((uint64)linets + (uint64)(xs + 16) * (PAL ? 15 : 16)) / 48 + timestampbase;
+					ZD.zaphit = ((uint64)linets + (uint64)(xs + 16) * (isPAL ? 15 : 16)) / 48 + timestampbase;
 					goto endo;
 				}
 			}
@@ -80,13 +73,38 @@ static void FP_FASTAPASS(3) ZapperFrapper(uint8 * bg, uint8 * spr, uint32 linets
 static INLINE int CheckColor(void) {
 	FCEUPPU_LineUpdate();
 
-	if ((ZD.zaphit + 10) >= (timestampbase + timestamp)) return(0);
+	if (newppu) {
+		int x = (int)ZD.mzx;
+		int y = (int)ZD.mzy;
+		int b = (int)ZD.mzb;
+		bool block = (b & 2) != 0;
+
+		int mousetime = y * 256 + x;
+		int nowtime = scanline * 256 + g_rasterpos;
+
+		if (!block && mousetime < nowtime && mousetime >= nowtime - 384) {
+			extern uint8 *XBuf;
+			uint8 *pix = XBuf + (ZD.mzy << 8);
+			uint8 a1 = (pix[ZD.mzx]) & 63;
+			uint32 sum = palo[a1].r + palo[a1].g + palo[a1].b;
+			/* return ZD.zaphit = sum != 0; */
+			ZD.zaphit = (sum >= 100 * 3) ? 1 : 0;
+		} else {
+			ZD.zaphit = 0;
+		}
+
+		return ZD.zaphit ? 0 : 1;
+	}
+
+	if ((ZD.zaphit + 10) >= (timestampbase + timestamp)) {
+		return(0);
+	}
 
 	return(1);
 }
 
 
-static uint8 FP_FASTAPASS(2) ReadZapper(int w, uint8 ret) {
+static uint8 ReadZapper(int w, uint8 ret) {
 	if (w) {
 		ret &= ~0x18;
 		if (ZD.bogo)
@@ -104,12 +122,12 @@ static uint8 FP_FASTAPASS(2) ReadZapper(int w, uint8 ret) {
 	return ret;
 }
 
-static void FP_FASTAPASS(2) DrawZapper(uint8 * buf, int arg) {
+static void DrawZapper(uint8 * buf, int arg) {
 	if (arg)
 		FCEU_DrawGunSight(buf, ZD.mzx, ZD.mzy);
 }
 
-static void FP_FASTAPASS(2) UpdateZapper(void *data, int arg) {
+static void UpdateZapper(void *data, int arg) {
 	uint32 *ptr = (uint32*)data;
 
 	if (ZD.bogo)

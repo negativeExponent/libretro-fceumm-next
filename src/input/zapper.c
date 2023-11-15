@@ -22,27 +22,29 @@
 #include        <stdlib.h>
 
 #include        "share.h"
+#include        "zapper.h"
 
 #define ROUNDED_TARGET
 #ifdef ROUNDED_TARGET
 #define MAX_TOLERANCE 20
-static uint32 targetExpansion[MAX_TOLERANCE+1];
+static uint32 targetExpansion[MAX_TOLERANCE + 1];
 #endif
 static int tolerance;
 
-typedef struct {
-	uint32 mzx, mzy, mzb;
-	int zap_readbit;
-	int bogo;
-	int zappo;
-	uint64 zaphit;
-} ZAPPER;
+static uint8 stmode = FALSE;
+static uint8 invert_trigger = TRUE;
+static uint8 invert_sensor = TRUE;
 
-static ZAPPER ZD[2];
+ZAPPER ZD[2];
 
-static void FP_FASTAPASS(3) ZapperFrapper(int w, uint8 * bg, uint8 * spr, uint32 linets, int final) {
+static void ZapperFrapper(int w, uint8 * bg, uint8 * spr, uint32 linets, int final) {
 	int xs, xe;
 	int zx, zy;
+
+	if (stmode) {
+		ZD[w].zappo = 0;
+		return;
+	}
 
 	if (!bg) {	/* New line, so reset stuff. */
 		ZD[w].zappo = 0;
@@ -82,7 +84,7 @@ static void FP_FASTAPASS(3) ZapperFrapper(int w, uint8 * bg, uint8 * spr, uint32
 
 				sum = palo[a1].r + palo[a1].g + palo[a1].b;
 				if (sum >= 100 * 3) {
-					ZD[w].zaphit = ((uint64)linets + (uint64)(xs + 16) * (PAL ? 15 : 16)) / 48 + timestampbase;
+					ZD[w].zaphit = ((uint64)linets + (uint64)(xs + 16) * (isPAL ? 15 : 16)) / 48 + timestampbase;
 					goto endo;
 				}
 			}
@@ -91,18 +93,46 @@ static void FP_FASTAPASS(3) ZapperFrapper(int w, uint8 * bg, uint8 * spr, uint32
 	}
  endo:
 	ZD[w].zappo = final;
+	/* if this was a miss, clear out the hit */
+	if (ZD[w].mzb & 2) {
+		ZD[w].zaphit = 0;
+	}
 }
 
 static INLINE int CheckColor(int w) {
 	FCEUPPU_LineUpdate();
 
-	if ((ZD[w].zaphit + 100) >= (timestampbase + timestamp)
-		&& !(ZD[w].mzb & 2)) return(0);
+	if (newppu) {
+		int x = (int)ZD[w].mzx;
+		int y = (int)ZD[w].mzy;
+		int b = (int)ZD[w].mzb;
+		bool block = (b & 2) != 0;
+
+		int mousetime = y * 256 + x;
+		int nowtime = scanline * 256 + g_rasterpos;
+
+		if (!block && mousetime < nowtime && mousetime >= nowtime - 384) {
+			extern uint8 *XBuf;
+			uint8 *pix = XBuf + (ZD[w].mzy << 8);
+			uint8 a1 = (pix[ZD[w].mzx]) & 63;
+			uint32 sum = palo[a1].r + palo[a1].g + palo[a1].b;
+			/* return ZD[w].zaphit = sum != 0; */
+			ZD[w].zaphit = (sum >= 100 * 3) ? 1 : 0;
+		} else {
+			ZD[w].zaphit = 0;
+		}
+
+		return ZD[w].zaphit ? 0 : 1;
+	}
+
+	if ((ZD[w].zaphit + 100) >= (timestampbase + timestamp)) {
+		return (0);
+	}
 
 	return(1);
 }
 
-static uint8 FP_FASTAPASS(1) ReadZapperVS(int w) {
+static uint8 ReadZapperVS(int w) {
 	uint8 ret = 0;
 
 	if (ZD[w].zap_readbit == 4) ret = 1;
@@ -112,8 +142,13 @@ static uint8 FP_FASTAPASS(1) ReadZapperVS(int w) {
 			ret |= 0x1;
 	}
 	if (ZD[w].zap_readbit == 6) {
-		if (!CheckColor(w))
-			ret |= 0x1;
+		if (stmode) {
+			if (!ZD[w].mzs)
+				ret |= 0x1;
+		} else {
+			if (!CheckColor(w))
+				ret |= 0x1;
+		}
 	}
 				#ifdef FCEUDEF_DEBUGGER
 	if (!fceuindbg)
@@ -122,25 +157,33 @@ static uint8 FP_FASTAPASS(1) ReadZapperVS(int w) {
 	return ret;
 }
 
-static void FP_FASTAPASS(1) StrobeZapperVS(int w) {
+static void StrobeZapperVS(int w) {
 	ZD[w].zap_readbit = 0;
 }
 
-static uint8 FP_FASTAPASS(1) ReadZapper(int w) {
+static uint8 ReadZapper(int w) {
 	uint8 ret = 0;
 	if (ZD[w].bogo)
 		ret |= 0x10;
-	if (CheckColor(w))
-		ret |= 0x8;
+	if (stmode) {
+		if (ZD[w].mzs)
+			ret |= 0x8;
+	} else {
+		if (CheckColor(w))
+			ret |= 0x8;
+	}
 	return ret;
 }
 
-static void FASTAPASS(3) DrawZapper(int w, uint8 * buf, int arg) {
+static void DrawZapper(int w, uint8 * buf, int arg) {
+	if (stmode)
+		return;
+
 	if (arg)
 		FCEU_DrawGunSight(buf, ZD[w].mzx, ZD[w].mzy);
 }
 
-static void FP_FASTAPASS(3) UpdateZapper(int w, void *data, int arg) {
+static void UpdateZapper(int w, void *data, int arg) {
 	uint32 *ptr = (uint32*)data;
 
 	if (ZD[w].bogo)
@@ -150,7 +193,16 @@ static void FP_FASTAPASS(3) UpdateZapper(int w, void *data, int arg) {
 
 	ZD[w].mzx = ptr[0];
 	ZD[w].mzy = ptr[1];
-	ZD[w].mzb = ptr[2];
+
+	if (invert_trigger)
+		ZD[w].mzb = ptr[2];
+	else
+		ZD[w].mzb = !ptr[2];
+
+	if (invert_sensor)
+		ZD[w].mzs = !ptr[3];
+	else
+		ZD[w].mzs = ptr[3];
 }
 
 static INPUTC ZAPC = { ReadZapper, 0, 0, UpdateZapper, ZapperFrapper, DrawZapper };
@@ -174,6 +226,18 @@ void FCEU_ZapperSetTolerance(int t)
 #else
 	tolerance = t;
 #endif
+}
+
+void FCEU_ZapperSetSTMode(int mode) {
+	stmode = mode ? TRUE : FALSE;
+}
+
+void FCEU_ZapperInvertTrigger(int invert) {
+	invert_trigger = invert ? TRUE : FALSE;
+}
+
+void FCEU_ZapperInvertSensor(int invert) {
+	invert_sensor = invert ? TRUE : FALSE;
 }
 
 INPUTC *FCEU_InitZapper(int w) {

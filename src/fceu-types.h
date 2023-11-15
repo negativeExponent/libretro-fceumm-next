@@ -23,6 +23,8 @@
 #define __FCEU_TYPES_H
 
 #include <stdint.h>
+#include <retro_inline.h>
+
 typedef int8_t int8;
 typedef int16_t int16;
 typedef int32_t int32;
@@ -34,50 +36,34 @@ typedef uint32_t uint32;
 #ifdef __GNUC__
 typedef unsigned long long uint64;
 typedef long long int64;
-	#define GINLINE inline
 #elif MSVC | _MSC_VER
 typedef __int64 int64;
 typedef unsigned __int64 uint64;
-	#define GINLINE		/* Can't declare a function INLINE
-						 * and global in MSVC.  Bummer.
-						 */
 #else
 typedef unsigned long long uint64;
 typedef long long int64;
 #endif
 
-#ifndef INLINE
+#define FCEU_UNUSED(x)    (void)(x)
+#define FCEU_MAYBE_UNUSED __attribute__((unused))
 
-#if defined(_MSC_VER)
-#define INLINE __forceinline
-#elif defined(__GNUC__)
-#define INLINE __inline__
-#elif defined(_MWERKS_)
-#define INLINE inline
-#else
-#define INLINE
-#endif
+#if !defined(FALSE)
+#define FALSE 0
 #endif
 
-#ifdef __GNUC__
-	#ifdef C80x86
-		#define FASTAPASS(x) __attribute__((regparm(x)))
-		#define FP_FASTAPASS FASTAPASS
-	#else
-		#define FASTAPASS(x)
-		#define FP_FASTAPASS(x)
-	#endif
-#elif MSVC
-	#define FP_FASTAPASS(x)
-	#define FASTAPASS(x) __fastcall
-#else
-	#define FP_FASTAPASS(x)
-	#define FASTAPASS(x)
+#if !defined(TRUE)
+#define TRUE 1
 #endif
 
-#define FCEU_MAYBE_UNUSED(x) (void)(x)
+#ifndef MAX
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
 
-typedef void (FP_FASTAPASS(2) *writefunc)(uint32 A, uint8 V);
-typedef uint8 (FP_FASTAPASS(1) *readfunc)(uint32 A);
+#ifndef MIN
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+
+typedef void (*writefunc)(uint16 A, uint8 V);
+typedef uint8 (*readfunc)(uint16 A);
 
 #endif

@@ -28,7 +28,7 @@ static void StrobeLCDCompZapper(int w) {
 	lcdCompZapperStrobe[w] = 0;
 }
 
-void UpdateLCDCompZapper(int w, void *data, int arg) {
+static void UpdateLCDCompZapper(int w, void *data, int arg) {
 	/* In the '(*(uint32*)data)' variable, bit 0 holds the trigger value and bit 1 holds the light sense value.
 	 * Ultimately this needs to be converted from 0000 00lt to 000t l000 where l is the light bit and t
 	 * is the trigger bit.

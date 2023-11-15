@@ -1,76 +1,117 @@
-LIBRETRO_COMM_DIR := $(CORE_DIR)/drivers/libretro/libretro-common
+LIBRETRO_COMM_DIR := $(LIBRETRO_DIR)/libretro-common
 
 INCFLAGS := \
-	-I$(CORE_DIR)/drivers/libretro \
+	-I$(LIBRETRO_DIR) \
 	-I$(LIBRETRO_COMM_DIR)/include \
-	-I$(CORE_DIR) \
-	-I$(CORE_DIR)/input \
-	-I$(CORE_DIR)/boards
+	-I$(SOURCE_DIR) \
+	-I$(SOURCE_DIR)/input \
+	-I$(SOURCE_DIR)/mappers \
+	-I$(SOURCE_DIR)/mappers/hw \
+	-I$(SOURCE_DIR)/mappers/sound
 
 ifneq (,$(findstring msvc2003,$(platform)))
 	INCFLAGS += -I$(LIBRETRO_COMM_DIR)/include/compat/msvc
 endif
 
-COREDEFINES = \
-	-D__LIBRETRO__ \
-	-DPATH_MAX=1024 \
-	-DFCEU_VERSION_NUMERIC=9813 \
-	-DFRONTEND_SUPPORTS_RGB565
-
 FCEU_SRC_DIRS := \
-	$(CORE_DIR)/boards \
-	$(CORE_DIR)/input
+	$(SOURCE_DIR)/input \
+	$(SOURCE_DIR)/mappers
 
 SOURCES_C := $(foreach dir,$(FCEU_SRC_DIRS),$(wildcard $(dir)/*.c))
+
+# HW
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/eeprom_93Cx6.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/eeprom_x24c0x.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/flashrom.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/pic16c5x.c
+
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/bandai.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/fme7.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/jv001.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/jyasic.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/ks202.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/latch.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/mmc1.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/mmc2.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/mmc3.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/mmc4.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/n118.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/txc.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/vrc24.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/vrc6.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/vrc7.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/vrcirq.c
+
+# SOUND
+SOURCES_C += $(SOURCE_DIR)/mappers/sound/dripsound.c
+SOURCES_C += $(SOURCE_DIR)/mappers/sound/emu2149.c
+SOURCES_C += $(SOURCE_DIR)/mappers/sound/emu2413.c
+SOURCES_C += $(SOURCE_DIR)/mappers/sound/fdssound.c
+SOURCES_C += $(SOURCE_DIR)/mappers/sound/mmc5sound.c
+SOURCES_C += $(SOURCE_DIR)/mappers/sound/n163sound.c
+SOURCES_C += $(SOURCE_DIR)/mappers/sound/s5bsound.c
+SOURCES_C += $(SOURCE_DIR)/mappers/sound/vrc6sound.c
+SOURCES_C += $(SOURCE_DIR)/mappers/sound/vrc7sound.c
 
 ifeq ($(HAVE_NTSC),1)
 	COREDEFINES += \
 		-DHAVE_NTSC_FILTER \
-		-I$(CORE_DIR)/ntsc
-	SOURCES_C += $(CORE_DIR)/ntsc/nes_ntsc.c
+		-I$(SOURCE_DIR)/ntsc
+	SOURCES_C += \
+		$(SOURCE_DIR)/ntsc/nes_ntsc.c
 endif
 
 SOURCES_C += \
-	$(CORE_DIR)/drivers/libretro/libretro.c \
-	$(CORE_DIR)/drivers/libretro/libretro_dipswitch.c \
-	$(CORE_DIR)/cart.c \
-	$(CORE_DIR)/cheat.c \
-	$(CORE_DIR)/crc32.c \
-	$(CORE_DIR)/fceu-endian.c \
-	$(CORE_DIR)/fceu-memory.c \
-	$(CORE_DIR)/fceu.c \
-	$(CORE_DIR)/fds.c \
-	$(CORE_DIR)/fds_apu.c \
-	$(CORE_DIR)/file.c \
-	$(CORE_DIR)/filter.c \
-	$(CORE_DIR)/general.c \
-	$(CORE_DIR)/input.c \
-	$(CORE_DIR)/md5.c \
-	$(CORE_DIR)/nsf.c \
-	$(CORE_DIR)/palette.c \
-	$(CORE_DIR)/ppu.c \
-	$(CORE_DIR)/sound.c \
-	$(CORE_DIR)/state.c \
-	$(CORE_DIR)/video.c \
-	$(CORE_DIR)/vsuni.c \
-	$(CORE_DIR)/ines.c \
-	$(CORE_DIR)/unif.c \
-	$(CORE_DIR)/x6502.c
+	$(SOURCE_DIR)/cart.c \
+	$(SOURCE_DIR)/cheat.c \
+	$(SOURCE_DIR)/crc32.c \
+	$(SOURCE_DIR)/drawing.c \
+	$(SOURCE_DIR)/fceu-endian.c \
+	$(SOURCE_DIR)/fceu-memory.c \
+	$(SOURCE_DIR)/fceu.c \
+	$(SOURCE_DIR)/fds.c \
+	$(SOURCE_DIR)/file.c \
+	$(SOURCE_DIR)/filter.c \
+	$(SOURCE_DIR)/gamegenie.c \
+	$(SOURCE_DIR)/general.c \
+	$(SOURCE_DIR)/input.c \
+	$(SOURCE_DIR)/mappers.c \
+	$(SOURCE_DIR)/md5.c \
+	$(SOURCE_DIR)/nsf.c \
+	$(SOURCE_DIR)/nsfe.c \
+	$(SOURCE_DIR)/palette.c \
+	$(SOURCE_DIR)/ppu.c \
+	$(SOURCE_DIR)/sound.c \
+	$(SOURCE_DIR)/state.c \
+	$(SOURCE_DIR)/video.c \
+	$(SOURCE_DIR)/vsuni.c \
+	$(SOURCE_DIR)/ines.c \
+	$(SOURCE_DIR)/unif.c \
+	$(SOURCE_DIR)/x6502.c
 
 ifneq ($(STATIC_LINKING), 1)
 	SOURCES_C += \
 		$(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c \
-		$(LIBRETRO_COMM_DIR)/compat/compat_snprintf.c \
 		$(LIBRETRO_COMM_DIR)/compat/compat_strcasestr.c \
 		$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
 		$(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
 		$(LIBRETRO_COMM_DIR)/encodings/encoding_utf.c \
 		$(LIBRETRO_COMM_DIR)/file/file_path.c \
 		$(LIBRETRO_COMM_DIR)/file/file_path_io.c \
+		$(LIBRETRO_COMM_DIR)/memmap/memalign.c \
 		$(LIBRETRO_COMM_DIR)/streams/file_stream.c \
 		$(LIBRETRO_COMM_DIR)/streams/file_stream_transforms.c \
 		$(LIBRETRO_COMM_DIR)/streams/memory_stream.c \
 		$(LIBRETRO_COMM_DIR)/string/stdstring.c \
 		$(LIBRETRO_COMM_DIR)/time/rtime.c \
 		$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c
+ifdef _MSC_VER
+	SOURCES_C += \
+ 		$(LIBRETRO_COMM_DIR)/compat/compat_snprintf.c
 endif
+endif
+
+SOURCES_C += \
+	$(LIBRETRO_DIR)/libretro_input.c \
+	$(LIBRETRO_DIR)/libretro_dipswitch.c \
+	$(LIBRETRO_DIR)/libretro.c

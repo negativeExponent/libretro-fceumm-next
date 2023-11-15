@@ -22,17 +22,22 @@
 #include <stdlib.h>
 #include "share.h"
 
-static uint32 FTVal, FTValR;
-static char side;
+enum FTRAINER {
+	FTRAINER_A = 0,
+	FTRAINER_B = 1
+};
 
-static uint8 FP_FASTAPASS(2) FT_Read(int w, uint8 ret) {
+static uint32 FTVal, FTValR;
+static enum FTRAINER side = FTRAINER_A;
+
+static uint8 FT_Read(int w, uint8 ret) {
 	if (w) {
 		ret |= FTValR;
 	}
 	return(ret);
 }
 
-static void FP_FASTAPASS(1) FT_Write(uint8 V) {
+static void FT_Write(uint8 V) {
 	FTValR = 0;
 
 	if (!(V & 0x1))
@@ -43,25 +48,25 @@ static void FP_FASTAPASS(1) FT_Write(uint8 V) {
 		FTValR = FTVal;
 
 	FTValR = (~FTValR) & 0xF;
-	if (side == 'B')
+	if (side == FTRAINER_B)
 		FTValR = ((FTValR & 0x8) >> 3) | ((FTValR & 0x4) >> 1) | ((FTValR & 0x2) << 1) | ((FTValR & 0x1) << 3);
 	FTValR <<= 1;
 }
 
-static void FP_FASTAPASS(2) FT_Update(void *data, int arg) {
+static void FT_Update(void *data, int arg) {
 	FTVal = *(uint32*)data;
 }
 
 static INPUTCFC FamilyTrainer = { FT_Read, FT_Write, 0, FT_Update, 0, 0 };
 
 INPUTCFC *FCEU_InitFamilyTrainerA(void) {
-	side = 'A';
+	side = FTRAINER_A;
 	FTVal = FTValR = 0;
 	return(&FamilyTrainer);
 }
 
 INPUTCFC *FCEU_InitFamilyTrainerB(void) {
-	side = 'B';
+	side = FTRAINER_B;
 	FTVal = FTValR = 0;
 	return(&FamilyTrainer);
 }
