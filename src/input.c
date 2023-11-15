@@ -33,6 +33,8 @@
 #include "vsuni.h"
 #include "fds.h"
 
+#include "input/zapper.h"
+
 extern INPUTC *FCEU_InitZapper(int w);
 extern INPUTC *FCEU_InitMouse(int w);
 extern INPUTC *FCEU_InitPowerpadA(int w);
@@ -60,8 +62,6 @@ extern INPUTCFC *FCEU_InitBarcodeWorld(void);
 static uint8 joy_readbit[2];
 static uint8 joy[4] = { 0, 0, 0, 0 };
 static uint8 LastStrobe;
-
-extern uint8 coinon;
 
 static int FSDisable = 0; /* Set to 1 if NES-style four-player adapter is disabled. */
 static int JPAttrib[2] = { 0, 0 };
@@ -114,7 +114,7 @@ static DECLFR(JPRead)
 		}
 	}
 
-	ret |= X.DB & 0xC0;
+	ret |= cpu.openbus & 0xC0;
 
 	return(ret);
 }
@@ -170,7 +170,7 @@ static void StrobeFami4(void) {
 	F4ReadBit[0] = F4ReadBit[1] = 0;
 }
 
-static uint8 FP_FASTAPASS(2) ReadFami4(int w, uint8 ret) {
+static uint8 ReadFami4(int w, uint8 ret) {
 	ret &= 1;
 	ret |= ((joy[2 + w] >> (F4ReadBit[w])) & 1) << 1;
 	if (F4ReadBit[w] >= 8) ret |= 2;
@@ -179,7 +179,7 @@ static uint8 FP_FASTAPASS(2) ReadFami4(int w, uint8 ret) {
 }
 
 /* VS. Unisystem inputs */
-static uint8 FP_FASTAPASS(1) ReadGPVS(int w) {
+static uint8 ReadGPVS(int w) {
 	uint8 ret = 0;
 	if (joy_readbit[w] >= 8)
 		ret = 1;
@@ -194,7 +194,7 @@ static uint8 FP_FASTAPASS(1) ReadGPVS(int w) {
 }
 
 /* standard gamepad inputs */
-static uint8 FP_FASTAPASS(1) ReadGP(int w) {
+static uint8 ReadGP(int w) {
 	uint8 ret;
 	if (joy_readbit[w] >= 8)
 		ret = ((joy[2 + w] >> (joy_readbit[w] & 7)) & 1);
@@ -215,7 +215,7 @@ static uint8 FP_FASTAPASS(1) ReadGP(int w) {
 	return ret;
 }
 
-static void FP_FASTAPASS(3) UpdateGP(int w, void *data, int arg) {
+static void UpdateGP(int w, void *data, int arg) {
 	uint32 *ptr = (uint32*)data;
 	if (!w) {
 		joy[0] = *(uint32*)ptr;
@@ -226,7 +226,7 @@ static void FP_FASTAPASS(3) UpdateGP(int w, void *data, int arg) {
 	}
 }
 
-static void FP_FASTAPASS(1) StrobeGP(int w) {
+static void StrobeGP(int w) {
 	joy_readbit[w] = 0;
 }
 
@@ -235,7 +235,8 @@ static INPUTC GPCVS = { ReadGPVS, 0, StrobeGP, UpdateGP, 0, 0 };
 static INPUTCFC FAMI4C = { ReadFami4, 0, StrobeFami4, 0, 0, 0 };
 
 /**********************************************************************/
-
+#include "cart.h"
+extern CartInfo iNESCart;
 void FCEU_UpdateInput(void)
 {
    int x;
@@ -249,8 +250,11 @@ void FCEU_UpdateInput(void)
    if (FCExp && FCExp->Update)
       FCExp->Update(InputDataPtrFC, JPAttribFC);
 
-   if (GameInfo && GameInfo->type == GIT_VSUNI)
-      if (coinon) coinon--;
+   if (GameInfo && ((GameInfo->type == GIT_VSUNI) || (iNESCart.mapper == 124))) {
+      if (vsuni_system.coinon[0]) vsuni_system.coinon[0]--;
+      if (vsuni_system.coinon[1]) vsuni_system.coinon[1]--;
+      if (vsuni_system.service) vsuni_system.service--;
+   }
 
    if (GameInfo->type == GIT_VSUNI)
       FCEU_VSUniSwap(&joy[0], &joy[1]);
@@ -263,9 +267,12 @@ static DECLFR(VSUNIRead0)
    if (JPorts[0]->Read)
       ret |= (JPorts[0]->Read(0)) & 1;
 
-   ret |= (vsdip & 3) << 3;
-   if (coinon)
-      ret |= 0x4;
+   ret |= (vsuni_system.vsdip & 3) << 3;
+
+   if (vsuni_system.coinon[0]) ret |= 0x20;
+   if (vsuni_system.coinon[1]) ret |= 0x40;
+   if (vsuni_system.service) ret |= 0x04;
+
    return ret;
 }
 
@@ -275,7 +282,7 @@ static DECLFR(VSUNIRead1)
 
 	if (JPorts[1] && JPorts[1]->Read)
 		ret |= (JPorts[1]->Read(1)) & 1;
-	ret |= vsdip & 0xFC;
+	ret |= vsuni_system.vsdip & 0xFC;
 	return ret;
 }
 
@@ -302,7 +309,7 @@ static void CheckSLHook(void)
       InputScanlineHook = SLHLHook;
 }
 
-static void FASTAPASS(1) SetInputStuff(int x)
+static void SetInputStuff(int x)
 {
 	switch (JPType[x])
    {
@@ -445,6 +452,14 @@ SFORMAT FCEUCTRL_STATEINFO[] = {
 	{ joy_readbit, 2, "JYRB" },
 	{ joy, 4, "JOYS" },
 	{ &LastStrobe, 1, "LSTS" },
+   { &ZD[0].bogo,	1, "ZBG0"},
+	{ &ZD[1].bogo,	1, "ZBG1"},
+   { &ZD[0].zaphit, sizeof(ZD[0].zaphit), "ZHT0"},
+   { &ZD[1].zaphit, sizeof(ZD[1].zaphit), "ZHT1"},
+   { &ZD[0].zappo, sizeof(ZD[0].zappo), "ZAP0"},
+   { &ZD[1].zappo, sizeof(ZD[1].zappo), "ZAP1"},
+   { &ZD[0].zap_readbit, sizeof(ZD[0].zap_readbit), "ZRB0"},
+   { &ZD[1].zap_readbit, sizeof(ZD[1].zap_readbit), "ZRB1"},
 	{ 0 }
 };
 
@@ -462,7 +477,13 @@ void FCEU_DoSimpleCommand(int cmd)
          FCEU_FDSEject();
          break;
       case FCEUNPCMD_VSUNICOIN:
-         FCEU_VSUniCoin();
+         FCEU_VSUniCoin(0);
+         break;
+      case FCEUNPCMD_VSUNICOIN2:
+         FCEU_VSUniCoin(1);
+         break;
+      case FCEUNPCMD_VSUNISERVICE:
+         FCEU_VSUniService();
          break;
       case FCEUNPCMD_VSUNIDIP0:
       case (FCEUNPCMD_VSUNIDIP0 + 1):
@@ -493,16 +514,14 @@ void FCEUI_FDSSelect(void)
 	FCEU_QSimpleCommand(FCEUNPCMD_FDSSELECT);
 }
 
-int FCEUI_FDSInsert(int oride)
+void FCEUI_FDSInsert(void)
 {
 	FCEU_QSimpleCommand(FCEUNPCMD_FDSINSERT);
-	return(1);
 }
 
-int FCEUI_FDSEject(void)
+void FCEUI_FDSEject(void)
 {
 	FCEU_QSimpleCommand(FCEUNPCMD_FDSEJECT);
-	return(1);
 }
 
 void FCEUI_VSUniToggleDIP(int w)
@@ -515,6 +534,16 @@ void FCEUI_VSUniCoin(void)
 	FCEU_QSimpleCommand(FCEUNPCMD_VSUNICOIN);
 }
 
+void FCEUI_VSUniCoin2(void)
+{
+	FCEU_QSimpleCommand(FCEUNPCMD_VSUNICOIN2);
+}
+
+void FCEUI_VSUniService(void)
+{
+	FCEU_QSimpleCommand(FCEUNPCMD_VSUNISERVICE);
+}
+
 void FCEUI_ResetNES(void)
 {
 	FCEU_QSimpleCommand(FCEUNPCMD_RESET);
@@ -524,4 +553,3 @@ void FCEUI_PowerNES(void)
 {
 	FCEU_QSimpleCommand(FCEUNPCMD_POWER);
 }
-

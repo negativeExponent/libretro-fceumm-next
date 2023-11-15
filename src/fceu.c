@@ -22,6 +22,7 @@
 #include  <string.h>
 #include  <stdlib.h>
 #include  <stdarg.h>
+#include  <time.h>
 
 #include  "fceu.h"
 #include  "fceu-types.h"
@@ -53,8 +54,8 @@ void (*GameInterface)(int h);
 
 void (*GameStateRestore)(int version);
 
-readfunc ARead[0x10000];
-writefunc BWrite[0x10000];
+readfunc ARead[0x10000 + 0x200];
+writefunc BWrite[0x10000 + 0x200];
 static readfunc *AReadG = NULL;
 static writefunc *BWriteG = NULL;
 static int RWWrap = 0;
@@ -65,7 +66,7 @@ static DECLFW(BNull)
 
 static DECLFR(ANull)
 {
-	return(X.DB);
+	return(cpu.openbus);
 }
 
 int AllocGenieRW(void)
@@ -109,7 +110,7 @@ void FlushGenieRW(void)
    RWWrap = 0;
 }
 
-readfunc FASTAPASS(1) GetReadHandler(int32 a)
+readfunc GetReadHandler(int32 a)
 {
 	if (a >= 0x8000 && RWWrap)
 		return AReadG[a - 0x8000];
@@ -117,7 +118,7 @@ readfunc FASTAPASS(1) GetReadHandler(int32 a)
 		return ARead[a];
 }
 
-void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
+void SetReadHandler(int32 start, int32 end, readfunc func)
 {
 	int32 x;
 
@@ -137,7 +138,7 @@ void FASTAPASS(3) SetReadHandler(int32 start, int32 end, readfunc func)
 			ARead[x] = func;
 }
 
-writefunc FASTAPASS(1) GetWriteHandler(int32 a)
+writefunc GetWriteHandler(int32 a)
 {
 	if (RWWrap && a >= 0x8000)
 		return BWriteG[a - 0x8000];
@@ -145,7 +146,7 @@ writefunc FASTAPASS(1) GetWriteHandler(int32 a)
 		return BWrite[a];
 }
 
-void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
+void SetWriteHandler(int32 start, int32 end, writefunc func)
 {
 	int32 x;
 
@@ -165,9 +166,17 @@ void FASTAPASS(3) SetWriteHandler(int32 start, int32 end, writefunc func)
 			BWrite[x] = func;
 }
 
-uint8 RAM[0x800];
+uint8 RAM[RAM_SIZE];
 
-uint8 PAL = 0;
+uint8 isPAL = FALSE;
+uint8 isDendy = FALSE;
+
+static int AllocBuffers(void) {
+	return 1;
+}
+
+static void FreeBuffers(void) {
+}
 
 static DECLFW(BRAML)
 {
@@ -181,12 +190,25 @@ static DECLFR(ARAML)
 
 static DECLFW(BRAMH)
 {
-	RAM[A & 0x7FF] = V;
+	RAM[A & RAM_MASK] = V;
 }
 
 static DECLFR(ARAMH)
 {
-	return RAM[A & 0x7FF];
+	return RAM[A & RAM_MASK];
+}
+
+static DECLFW(BOverflow)
+{
+	A &= 0xFFFF;
+	BWrite[A](A, V);
+}
+
+static DECLFR(AOverflow)
+{
+	A &= 0xFFFF;
+	cpu.PC &= 0xFFFF;
+	return ARead[A](A);
 }
 
 void FCEUI_CloseGame(void)
@@ -222,8 +244,8 @@ void ResetGameLoaded(void)
 	MapIRQHook = NULL;
 	MMC5Hack = 0;
 	PEC586Hack = 0;
-	PAL &= 1;
-	pale = 0;
+	isPAL &= 1;
+	palette_nes_selected = PAL_NES_DEFAULT;
 }
 
 int UNIFLoad(const char *name, FCEUFILE *fp);
@@ -305,25 +327,47 @@ endlseq:
 }
 
 int FCEUI_Initialize(void) {
+	srand(time(0));
+
+	if (!AllocBuffers())
+		return 0;
+
 	if (!FCEU_InitVirtualVideo())
 		return 0;
+
 	memset(&FSettings, 0, sizeof(FSettings));
+
 	FSettings.UsrFirstSLine[0] = 8;
 	FSettings.UsrFirstSLine[1] = 0;
 	FSettings.UsrLastSLine[0] = 231;
 	FSettings.UsrLastSLine[1] = 239;
-	FSettings.SoundVolume = 100;
+
+	FSettings.volume[APU_MASTER] = 256;
+	FSettings.volume[APU_SQUARE1] = 256;
+	FSettings.volume[APU_SQUARE2] = 256;
+	FSettings.volume[APU_TRIANGLE] = 256;
+	FSettings.volume[APU_NOISE] = 256;
+	FSettings.volume[APU_DPCM] = 256;
+	FSettings.volume[APU_FDS] = 256;
+	FSettings.volume[APU_MMC5] = 256;
+	FSettings.volume[APU_N163] = 256;
+	FSettings.volume[APU_S5B] = 256;
+	FSettings.volume[APU_VRC6] = 256;
+	FSettings.volume[APU_VRC7] = 256;
+
 	FCEUPPU_Init();
 	X6502_Init();
+
 	return 1;
 }
 
 void FCEUI_Kill(void) {
 	FCEU_KillVirtualVideo();
 	FCEU_KillGenie();
+	FreeBuffers();
 }
 
-void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int skip) {
+void FCEUI_Emulate(uint8 **pXBuf, uint8 **pXDBuf, int32 **SoundBuf, int32 *SoundBufSize, int skip) {
 	int ssize;
 
 	FCEU_UpdateInput();
@@ -338,6 +382,8 @@ void FCEUI_Emulate(uint8 **pXBuf, int32 **SoundBuf, int32 *SoundBufSize, int ski
 	sound_timestamp = 0;
 
 	*pXBuf = skip ? 0 : XBuf;
+	*pXDBuf = skip ? 0 : XDBuf;
+
 	*SoundBuf = WaveFinal;
 	*SoundBufSize = ssize;
 }
@@ -385,7 +431,7 @@ void xoroshiro128plus_seed(uint32 input)
 }
 
 /* http://vigna.di.unimi.it/xorshift/xoroshiro128plus.c */
-uint64 xoroshiro128plus_next() {
+uint64 xoroshiro128plus_next(void) {
 	const uint64 s0 = xoroshiro128plus_s[0];
 	uint64 s1 = xoroshiro128plus_s[1];
 	const uint64 result = s0 + s1;
@@ -400,16 +446,11 @@ uint64 xoroshiro128plus_next() {
 void FCEU_MemoryRand(uint8 *ptr, uint32 size)
 {
 	int x = 0;
+
+	if (!ptr || !size)
+		return;
+
 	while (size) {
-#if 0
-		*ptr = (x & 4) ? 0xFF : 0x00;	/* Huang Di DEBUG MODE enabled by default */
-										/* Cybernoid NO MUSIC by default */
-		*ptr = (x & 4) ? 0x7F : 0x00;	/* Huang Di DEBUG MODE enabled by default */
-										/* Minna no Taabou no Nakayoshi Daisakusen DOESN'T BOOT */
-										/* Cybernoid NO MUSIC by default */
-		*ptr = (x & 1) ? 0x55 : 0xAA;	/* F-15 Sity War HISCORE is screwed... */
-										/* 1942 SCORE/HISCORE is screwed... */
-#endif
 		uint8 v = 0;
 		switch (option_ramstate)
 		{
@@ -443,10 +484,13 @@ void PowerNES(void)
 
 	FCEU_GeniePower();
 
-	FCEU_MemoryRand(RAM, 0x800);
+	FCEU_MemoryRand(RAM, RAM_SIZE);
 
 	SetReadHandler(0x0000, 0xFFFF, ANull);
 	SetWriteHandler(0x0000, 0xFFFF, BNull);
+
+	SetReadHandler(0x10000, 0x10000 + 0x200, AOverflow);
+	SetWriteHandler(0x10000, 0x10000 + 0x200, BOverflow);
 
 	SetReadHandler(0, 0x7FF, ARAML);
 	SetWriteHandler(0, 0x7FF, BRAML);
@@ -479,26 +523,41 @@ void FCEU_ResetVidSys(void)
 	else if (GameInfo->vidsys == GIV_PAL)
    {
       w = 1;
-      dendy = 0;
+      isDendy = FALSE;
    }
 	else
 		w = FSettings.PAL;
 
-	PAL = w ? 1 : 0;
+	isPAL = w ? TRUE : FALSE;
 
-   if (PAL)
-      dendy = 0;
+   if (isPAL)
+      isDendy = FALSE;
 
-   ppu.normal_scanlines = dendy ? 290 : 240;
+   ppu.normal_scanlines = isDendy ? 290 : 240;
    ppu.totalscanlines   = ppu.normal_scanlines;
    if (ppu.overclock_enabled)
       ppu.totalscanlines += ppu.extrascanlines;
 
-	FCEUPPU_SetVideoSystem(w || dendy);
+	FCEUPPU_SetVideoSystem(w || isDendy);
 	SetSoundVariables();
 }
 
 FCEUS FSettings;
+
+void FCEU_DispMessage(enum retro_log_level level, unsigned duration, const char *format, ...)
+{
+   static char msg[512] = {0};
+   va_list ap;
+
+   if (!format || (*format == '\0'))
+      return;
+
+   va_start(ap, format);
+   vsprintf(msg, format, ap);
+   va_end(ap);
+
+   FCEUD_DispMessage(level, duration, msg);
+}
 
 void FCEU_printf(char *format, ...)
 {
@@ -509,6 +568,19 @@ void FCEU_printf(char *format, ...)
 	va_start(ap, format);
 	vsprintf(temp, format, ap);
 	FCEUD_Message(temp);
+
+	va_end(ap);
+}
+
+void FCEU_PrintDebug(char *format, ...)
+{
+	char temp[2048];
+
+	va_list ap;
+
+	va_start(ap, format);
+	vsprintf(temp, format, ap);
+	FCEUD_PrintDebug(temp);
 
 	va_end(ap);
 }
@@ -532,7 +604,7 @@ void FCEUI_SetRenderedLines(int ntscf, int ntscl, int palf, int pall)
 	FSettings.UsrLastSLine[0] = ntscl;
 	FSettings.UsrFirstSLine[1] = palf;
 	FSettings.UsrLastSLine[1] = pall;
-	if (PAL || dendy)
+	if (isPAL || isDendy)
    {
 		FSettings.FirstSLine = FSettings.UsrFirstSLine[1];
 		FSettings.LastSLine = FSettings.UsrLastSLine[1];
@@ -561,7 +633,7 @@ int FCEUI_GetCurrentVidSystem(int *slstart, int *slend)
 		*slstart = FSettings.FirstSLine;
 	if (slend)
 		*slend = FSettings.LastSLine;
-	return(PAL);
+	return(isPAL);
 }
 
 void FCEUI_SetGameGenie(int a)
@@ -571,8 +643,7 @@ void FCEUI_SetGameGenie(int a)
 
 int32 FCEUI_GetDesiredFPS(void)
 {
-	if (PAL || dendy)
-		return(838977920);	/* ~50.007 */
-	else
-		return(1008307711);	/* ~60.1 */
+	if (isPAL || isDendy)
+		return (838977920); /* ~50.007 */
+	return (1008307711);    /* ~60.1 */
 }

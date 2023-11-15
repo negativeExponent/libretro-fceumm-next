@@ -26,6 +26,19 @@
 #include "fceu-memory.h"
 #include "general.h"
 
+#include "memalign.h"
+
+void *FCEU_amalloc(uint32 size)
+{
+   void *ret = memalign_alloc(256, size);
+   if (!ret)
+   {
+      FCEU_PrintError("Error allocating memory!  Doing a hard exit.");
+      exit(1);
+   }
+   return ret;
+}
+
 void *FCEU_gmalloc(uint32 size)
 {
    void *ret = malloc(size);
@@ -34,7 +47,7 @@ void *FCEU_gmalloc(uint32 size)
       FCEU_PrintError("Error allocating memory!  Doing a hard exit.");
       exit(1);
    }
-   memset(ret, 0, size);
+   FCEU_MemoryRand((uint8 *)ret, size);
    return ret;
 }
 
@@ -49,6 +62,11 @@ void *FCEU_malloc(uint32 size)
    }
    memset(ret, 0, size);
    return ret;
+}
+
+void FCEU_afree(void *ptr)
+{
+	memalign_free(ptr);
 }
 
 void FCEU_free(void *ptr)

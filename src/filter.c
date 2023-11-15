@@ -46,7 +46,7 @@ void SexyFilter(int32 *in, int32 *out, int32 count) {
 
 	mul1 = (94 << 16) / FSettings.SndRate;
 	mul2 = (24 << 16) / FSettings.SndRate;
-	vmul = (FSettings.SoundVolume << 16) * 3 / 4 / 100;
+	vmul = (FSettings.volume[APU_MASTER] << 16) * 3 / 4 / 100;
 
 	if (FSettings.soundq)
 		vmul /= 4;
@@ -157,12 +157,12 @@ void MakeFilters(int32 rate) {
 		nco = NCOEFFS;
 
 	mrindex = (nco + 1) << 16;
-	mrratio = (PAL ? (int64)(PAL_CPU * 65536) : (int64)(NTSC_CPU * 65536)) / rate;
+	mrratio = (isPAL ? (int64)(PAL_CPU * 65536) : (int64)(NTSC_CPU * 65536)) / rate;
 
 	if (FSettings.soundq == 2)
-		tmp = sq2tabs[(PAL ? 1 : 0) | (rate == 48000 ? 2 : 0) | (rate == 96000 ? 4 : 0)];
+		tmp = sq2tabs[(isPAL ? 1 : 0) | (rate == 48000 ? 2 : 0) | (rate == 96000 ? 4 : 0)];
 	else
-		tmp = tabs[(PAL ? 1 : 0) | (rate == 48000 ? 2 : 0) | (rate == 96000 ? 4 : 0)];
+		tmp = tabs[(isPAL ? 1 : 0) | (rate == 48000 ? 2 : 0) | (rate == 96000 ? 4 : 0)];
 
 	if (FSettings.soundq == 2)
 		for (x = 0; x < (SQ2NCOEFFS >> 1); x++)

@@ -33,6 +33,7 @@
 #include        "fceu-memory.h"
 
 #include        "cart.h"
+#include        "ines.h"
 #include        "palette.h"
 #include        "state.h"
 #include        "video.h"
@@ -44,18 +45,20 @@
 #define SpAdrHI         (PPU[0] & 0x08)		/* Sprite pattern adr $0000/$1000 */
 #define INC32           (PPU[0] & 0x04)		/* auto increment 1/32 */
 
-#define SpriteON        (PPU[1] & 0x10)		/* Show Sprite */
-#define ScreenON        (PPU[1] & 0x08)		/* Show screen */
 #define GRAYSCALE       (PPU[1] & 0x01)		/* Grayscale (AND palette entries with 0x30) */
+#define BGLeft8ON       (PPU[1] & 0x02)     /* show background in leftmost 8 pixels of screen. 0: hides */
+#define SpriteLeft8ON   (PPU[1] & 0x04)     /* show sprites in leftmost 8 pixels of screen. 0: hides */
+#define ScreenON        (PPU[1] & 0x08)		/* Show screen */
+#define SpriteON        (PPU[1] & 0x10)		/* Show Sprite */
 
 #define PPU_status      (PPU[2])
+#define Sprite0Hit      (PPU_status & 0x40)
 
-#define READPALNOGS(ofs) (PALRAM[(ofs)])
 #define READPAL(ofs)    (PALRAM[(ofs)] & (GRAYSCALE ? 0x30 : 0xFF))
 #define READUPAL(ofs)   (UPALRAM[(ofs)] & (GRAYSCALE ? 0x30 : 0xFF))
 
 static void FetchSpriteData(void);
-static void FASTAPASS(1) RefreshLine(int lastpixel);
+static void RefreshLine(int lastpixel);
 static void RefreshSprites(void);
 static void CopySprites(uint8 *target);
 
@@ -94,7 +97,7 @@ static uint8 ppudead = 1;
 static uint8 kook = 0;
 int fceuindbg = 0;
 
-int MMC5Hack = 0, PEC586Hack = 0;
+int MMC5Hack = 0;
 uint32 MMC5HackVROMMask = 0;
 uint8 *MMC5HackExNTARAMPtr = 0;
 uint8 *MMC5HackVROMPTR = 0;
@@ -103,6 +106,12 @@ uint8 MMC5HackSPMode = 0;
 uint8 MMC50x5130 = 0;
 uint8 MMC5HackSPScroll = 0;
 uint8 MMC5HackSPPage = 0;
+
+int PEC586Hack = 0;
+
+int QTAIHack = 0;
+uint8 qtaintramreg;
+uint8 QTAINTRAM[0x800];
 
 uint8 VRAMBuffer = 0, PPUGenLatch = 0;
 uint8 *vnapage[4];
@@ -114,7 +123,7 @@ static uint8 deemp = 0;
 static int deempcnt[8];
 
 void (*GameHBIRQHook)(void), (*GameHBIRQHook2)(void);
-void FP_FASTAPASS(1) (*PPU_hook)(uint32 A);
+void (*PPU_hook)(uint32 A);
 
 uint8 vtoggle = 0;
 uint8 XOffset = 0;
@@ -324,8 +333,12 @@ static DECLFW(B2007) {
 		if (PPUCHRRAM & (1 << (tmp >> 10)))
 			VPage[tmp >> 10][tmp] = V;
 	} else if (tmp < 0x3F00) {
-		if (PPUNTARAM & (1 << ((tmp & 0xF00) >> 10)))
-			vnapage[((tmp & 0xF00) >> 10)][tmp & 0x3FF] = V;
+		if (QTAIHack && (qtaintramreg & 1)) {
+			QTAINTRAM[((((tmp & 0xF00) >> 10) >> ((qtaintramreg >> 1)) & 1) << 10) | (tmp & 0x3FF)] = V;
+		} else {
+			if (PPUNTARAM & (1 << ((tmp & 0xF00) >> 10)))
+				vnapage[((tmp & 0xF00) >> 10)][tmp & 0x3FF] = V;
+		}
 	} else {
 		if (!(tmp & 3)) {
 			if (!(tmp & 0xC))
@@ -351,9 +364,7 @@ static DECLFW(B4014) {
 		X6502_DMW(0x2004, X6502_DMR(t + x));
 }
 
-#define PAL(c)  ((c) + cc)
-
-#define GETLASTPIXEL    (PAL ? ((timestamp * 48 - linestartts) / 15) : ((timestamp * 48 - linestartts) >> 4))
+#define GETLASTPIXEL (isPAL ? ((timestamp * 48 - linestartts) / 15) : ((timestamp * 48 - linestartts) >> 4))
 
 static uint8 *Pline, *Plinef;
 static int firsttile;
@@ -367,7 +378,7 @@ static void ResetRL(uint8 *target) {
 	Plinef = target;
 	Pline = target;
 	firsttile = 0;
-	linestartts = timestamp * 48 + X.count;
+	linestartts = timestamp * 48 + cpu.count;
 	tofix = 0;
 	FCEUPPU_LineUpdate();
 	tofix = 1;
@@ -385,17 +396,17 @@ void FCEUPPU_LineUpdate(void) {
 	}
 }
 
-static int rendis = 0;
+static int show_sprites = 1;
+static int show_background = 1;
 
-void FCEUI_SetRenderDisable(int sprites, int bg) {
-	if (sprites >= 0) {
-		if (sprites == 2) rendis ^= 1;
-		else rendis = (rendis & ~1) | sprites ? 1 : 0;
-	}
-	if (bg >= 0) {
-		if (bg == 2) rendis ^= 2;
-		else rendis = (rendis & ~2) | bg ? 2 : 0;
-	}
+void FCEUI_SetRenderPlanes(int sprites, int bg) {
+	show_sprites = sprites;
+	show_background = bg;
+}
+
+void FCEUI_GetRenderPlanes(int *sprites, int *bg) {
+	*sprites = show_sprites;
+	*bg = show_background;
 }
 
 static void CheckSpriteHit(int p);
@@ -432,7 +443,7 @@ static void CheckSpriteHit(int p) {
 static int spork = 0;
 
 /* lasttile is really "second to last tile." */
-static void FASTAPASS(1) RefreshLine(int lastpixel) {
+static void RefreshLine(int lastpixel) {
 	static uint32 pshift[2];
 	static uint32 atlatch;
 	uint32 smorkus = RefreshAddr;
@@ -441,7 +452,7 @@ static void FASTAPASS(1) RefreshLine(int lastpixel) {
 	uint32 vofs;
 	int X1;
 
-	register uint8 *P = Pline;
+	uint8 *P = Pline;
 	int lasttile = lastpixel >> 3;
 	int numtiles;
 	static int norecurse = 0;	/* Yeah, recursion would be bad.
@@ -452,7 +463,7 @@ static void FASTAPASS(1) RefreshLine(int lastpixel) {
 								 */
 	if (norecurse) return;
 
-	if (sphitx != 0x100 && !(PPU_status & 0x40)) {
+	if (sphitx != 0x100 && !Sprite0Hit) {
 		if ((sphitx < (lastpixel - 16)) && !(sphitx < ((lasttile - 2) * 8)))
 			lasttile++;
 	}
@@ -473,7 +484,7 @@ static void FASTAPASS(1) RefreshLine(int lastpixel) {
 
 	if (!ScreenON && !SpriteON) {
 		uint32 tem;
-		tem = READPALNOGS(0) | (READPALNOGS(0) << 8) | (READPALNOGS(0) << 16) | (READPALNOGS(0) << 24);
+		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
 		tem |= 0x40404040;
 		FCEU_dwmemset(Pline, tem, numtiles * 8);
 		P += numtiles * 8;
@@ -562,6 +573,12 @@ static void FASTAPASS(1) RefreshLine(int lastpixel) {
 				#include "pputile.h"
 			}
 			#undef PPU_BGFETCH
+		} else if (QTAIHack) {
+			#define PPU_VRC5FETCH
+			for (X1 = firsttile; X1 < lasttile; X1++) {
+				#include "pputile.h"
+			}
+			#undef PPU_VRC5FETCH
 		} else {
 			for (X1 = firsttile; X1 < lasttile; X1++) {
 				#include "pputile.h"
@@ -579,9 +596,9 @@ static void FASTAPASS(1) RefreshLine(int lastpixel) {
 	PALRAM[0xC] &= 63;
 
 	RefreshAddr = smorkus;
-	if (firsttile <= 2 && 2 < lasttile && !(PPU[1] & 2)) {
+	if (firsttile <= 2 && 2 < lasttile && !BGLeft8ON) {
 		uint32 tem;
-		tem = READPALNOGS(0) | (READPALNOGS(0) << 8) | (READPALNOGS(0) << 16) | (READPALNOGS(0) << 24);
+		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
 		tem |= 0x40404040;
 		*(uint32*)Plinef = *(uint32*)(Plinef + 4) = tem;
 	}
@@ -589,7 +606,7 @@ static void FASTAPASS(1) RefreshLine(int lastpixel) {
 	if (!ScreenON) {
 		uint32 tem;
 		int tstart, tcount;
-		tem = READPALNOGS(0) | (READPALNOGS(0) << 8) | (READPALNOGS(0) << 16) | (READPALNOGS(0) << 24);
+		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
 		tem |= 0x40404040;
 
 		tcount = lasttile - firsttile;
@@ -662,14 +679,14 @@ static void DoLine(void)
 	target = XBuf + ((scanline < 240 ? scanline : 240) << 8);
 	dtarget = XDBuf + ((scanline < 240 ? scanline : 240) << 8);
 
-	if (MMC5Hack && (ScreenON || SpriteON)) MMC5_hb(scanline);
+	if (MMC5Hack /* && (ScreenON || SpriteON) */) MMC5_hb(scanline);
 
 	X6502_Run(256);
 	EndRL();
 
-	if (rendis & 2) {/* User asked to not display background data. */
+	if (!show_background) {/* User asked to not display background data. */
 		uint32 tem;
-		tem = READPALNOGS(0) | (READPALNOGS(0) << 8) | (READPALNOGS(0) << 16) | (READPALNOGS(0) << 24);
+		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
 		tem |= 0x40404040;
 		FCEU_dwmemset(target, tem, 256);
 	}
@@ -890,19 +907,19 @@ static void RefreshSprites(void) {
 	spr = (SPRB*)SPRBUF + numsprites;
 
 	for (n = numsprites; n >= 0; n--, spr--) {
-		register uint32 pixdata;
-		register uint8 J, atr;
+		uint32 pixdata;
+		uint8 J, atr;
 
 		int x = spr->x;
 		uint8 *C;
-		uint8 *VB;
+		int VB;
 
 		pixdata = ppulut1[spr->ca[0]] | ppulut2[spr->ca[1]];
 		J = spr->ca[0] | spr->ca[1];
 		atr = spr->atr;
 
 		if (J) {
-			if (n == 0 && SpriteBlurp && !(PPU_status & 0x40)) {
+			if (n == 0 && SpriteBlurp && !Sprite0Hit) {
 				sphitx = x;
 				sphitdata = J;
 				if (atr & H_FLIP)
@@ -917,75 +934,75 @@ static void RefreshSprites(void) {
 			}
 
 			C = sprlinebuf + x;
-			VB = (PALRAM + 0x10) + ((atr & 3) << 2);
+			VB = 0x10 + ((atr & 3) << 2);
 
 			if (atr & SP_BACK) {
 				if (atr & H_FLIP) {
-					if (J & 0x80) C[7] = VB[pixdata & 3] | 0x40;
+					if (J & 0x80) C[7] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x40) C[6] = VB[pixdata & 3] | 0x40;
+					if (J & 0x40) C[6] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x20) C[5] = VB[pixdata & 3] | 0x40;
+					if (J & 0x20) C[5] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x10) C[4] = VB[pixdata & 3] | 0x40;
+					if (J & 0x10) C[4] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x08) C[3] = VB[pixdata & 3] | 0x40;
+					if (J & 0x08) C[3] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x04) C[2] = VB[pixdata & 3] | 0x40;
+					if (J & 0x04) C[2] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x02) C[1] = VB[pixdata & 3] | 0x40;
+					if (J & 0x02) C[1] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x01) C[0] = VB[pixdata] | 0x40;
+					if (J & 0x01) C[0] = READPAL(VB | pixdata) | 0x40;
 				} else {
-					if (J & 0x80) C[0] = VB[pixdata & 3] | 0x40;
+					if (J & 0x80) C[0] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x40) C[1] = VB[pixdata & 3] | 0x40;
+					if (J & 0x40) C[1] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x20) C[2] = VB[pixdata & 3] | 0x40;
+					if (J & 0x20) C[2] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x10) C[3] = VB[pixdata & 3] | 0x40;
+					if (J & 0x10) C[3] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x08) C[4] = VB[pixdata & 3] | 0x40;
+					if (J & 0x08) C[4] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x04) C[5] = VB[pixdata & 3] | 0x40;
+					if (J & 0x04) C[5] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x02) C[6] = VB[pixdata & 3] | 0x40;
+					if (J & 0x02) C[6] = READPAL(VB | (pixdata & 3)) | 0x40;
 					pixdata >>= 4;
-					if (J & 0x01) C[7] = VB[pixdata] | 0x40;
+					if (J & 0x01) C[7] = READPAL(VB | pixdata) | 0x40;
 				}
 			} else {
 				if (atr & H_FLIP) {
-					if (J & 0x80) C[7] = VB[pixdata & 3];
+					if (J & 0x80) C[7] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x40) C[6] = VB[pixdata & 3];
+					if (J & 0x40) C[6] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x20) C[5] = VB[pixdata & 3];
+					if (J & 0x20) C[5] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x10) C[4] = VB[pixdata & 3];
+					if (J & 0x10) C[4] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x08) C[3] = VB[pixdata & 3];
+					if (J & 0x08) C[3] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x04) C[2] = VB[pixdata & 3];
+					if (J & 0x04) C[2] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x02) C[1] = VB[pixdata & 3];
+					if (J & 0x02) C[1] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x01) C[0] = VB[pixdata];
+					if (J & 0x01) C[0] = READPAL(VB | pixdata);
 				} else {
-					if (J & 0x80) C[0] = VB[pixdata & 3];
+					if (J & 0x80) C[0] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x40) C[1] = VB[pixdata & 3];
+					if (J & 0x40) C[1] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x20) C[2] = VB[pixdata & 3];
+					if (J & 0x20) C[2] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x10) C[3] = VB[pixdata & 3];
+					if (J & 0x10) C[3] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x08) C[4] = VB[pixdata & 3];
+					if (J & 0x08) C[4] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x04) C[5] = VB[pixdata & 3];
+					if (J & 0x04) C[5] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x02) C[6] = VB[pixdata & 3];
+					if (J & 0x02) C[6] = READPAL(VB | (pixdata & 3));
 					pixdata >>= 4;
-					if (J & 0x01) C[7] = VB[pixdata];
+					if (J & 0x01) C[7] = READPAL(VB | pixdata);
 				}
 			}
 		}
@@ -995,13 +1012,15 @@ static void RefreshSprites(void) {
 }
 
 static void CopySprites(uint8 *target) {
-	uint8 n = ((PPU[1] & 4) ^ 4) << 1;
+	uint8 n = SpriteLeft8ON ? 0 : 8;
 	uint8 *P = target;
 
 	if (!spork) return;
 	spork = 0;
 
-	if (rendis & 1) return;	/* User asked to not display sprites. */
+	if (!show_sprites) return;	/* User asked to not display sprites. */
+
+	if(!SpriteON) return;
 
    do
 	{
@@ -1057,7 +1076,7 @@ static void CopySprites(uint8 *target) {
 
 void FCEUPPU_SetVideoSystem(int w) {
 	if (w) {
-		scanlines_per_frame = dendy ? 262 : 312;
+		scanlines_per_frame = isDendy ? 262 : 312;
 		FSettings.FirstSLine = FSettings.UsrFirstSLine[1];
 		FSettings.LastSLine = FSettings.UsrLastSLine[1];
 	} else {
@@ -1084,11 +1103,21 @@ void FCEUPPU_Reset(void) {
 void FCEUPPU_Power(void) {
 	int x;
 
-	memset(NTARAM, 0x00, 0x800);
-	memset(PALRAM, 0x00, 0x20);
-	memset(UPALRAM, 0x00, 0x03);
-	memset(SPRAM, 0x00, 0x100);
+	/* initialize PPU memory regions according to settings */
+	FCEU_MemoryRand(NTARAM, 0x800);
+	FCEU_MemoryRand(PALRAM, 0x20);
+	FCEU_MemoryRand(SPRAM, 0x100);
+
+	/* palettes can only store values up to $3F, and PALRAM X4/X8/XC are mirrors of X0 for rendering purposes (UPALRAM is used for $2007 readback)*/
+	for (x = 0; x < 0x20; ++x) PALRAM[x] &= 0x3F;
+	UPALRAM[0] = PALRAM[0x04];
+	UPALRAM[1] = PALRAM[0x08];
+	UPALRAM[2] = PALRAM[0x0C];
+	PALRAM[0x0C] = PALRAM[0x08] = PALRAM[0x04] = PALRAM[0x00];
+	PALRAM[0x1C] = PALRAM[0x18] = PALRAM[0x14] = PALRAM[0x10];
+
 	FCEUPPU_Reset();
+
 	for (x = 0x2000; x < 0x4000; x += 8) {
 		ARead[x] = A200x;
 		BWrite[x] = B2000;
@@ -1153,10 +1182,11 @@ int FCEUPPU_Loop(int skip) {
 			if (ScreenON || SpriteON) {
 				if (GameHBIRQHook && ((PPU[0] & 0x38) != 0x18))
 					GameHBIRQHook();
-				if (PPU_hook)
+				if (PPU_hook) {
 					for (x = 0; x < 42; x++) {
 						PPU_hook(0x2000); PPU_hook(0);
 					}
+				}
 				if (GameHBIRQHook2)
 					GameHBIRQHook2();
 			}
@@ -1223,7 +1253,7 @@ int FCEUPPU_Loop(int skip) {
 			}
 
 			DMC_7bit = 0;
-			if (MMC5Hack && (ScreenON || SpriteON)) MMC5_hb(scanline);
+			if (MMC5Hack /*&& (ScreenON || SpriteON)*/) MMC5_hb(scanline);
 			for (x = 1, max = 0, maxref = 0; x < 7; x++) {
 				if (deempcnt[x] > max) {
 					max = deempcnt[x];

@@ -127,7 +127,7 @@ void RebuildSubCheats(void) {
 	}
 }
 
-void FCEU_PowerCheats() {
+void FCEU_PowerCheats(void) {
 	numsubcheats = 0;	/* Quick hack to prevent setting of ancient read addresses. */
 	RebuildSubCheats();
 }

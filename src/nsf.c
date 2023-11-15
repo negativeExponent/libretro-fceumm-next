@@ -33,7 +33,7 @@
 #include "fceu-memory.h"
 #include "file.h"
 #include "fds.h"
-#include "fds_apu.h"
+#include "fdssound.h"
 #include "cart.h"
 #include "input.h"
 
@@ -105,17 +105,17 @@ void NSFGI(int h) {
 			free(ExWRAM); ExWRAM = 0;
 		}
 		if (NSFHeader.SoundChip & 1) {
-/*   NSFVRC6_Init(); */
+		/*   NSFVRC6_Init(); */
 		} else if (NSFHeader.SoundChip & 2) {
-/*   NSFVRC7_Init(); */
+		/*   NSFVRC7_Init(); */
 		} else if (NSFHeader.SoundChip & 4) {
-/*   FDSSoundReset(); */
+		/*   FDSSound_Reset(); */
 		} else if (NSFHeader.SoundChip & 8) {
 			NSFMMC5_Close();
 		} else if (NSFHeader.SoundChip & 0x10) {
-/*   NSFN106_Init(); */
+		/*   NSFN163_Init(); */
 		} else if (NSFHeader.SoundChip & 0x20) {
-/*   NSFAY_Init(); */
+		/*   NSFAY_Init(); */
 		}
 		break;
 	case GI_RESETM2:
@@ -212,10 +212,13 @@ int NSFLoad(FCEUFILE *fp) {
 	FCEU_printf(" %s\n", (NSFHeader.VideoSystem & 1) ? "PAL" : "NTSC");
 	FCEU_printf(" Starting song:  %d / %d\n\n", NSFHeader.StartingSong, NSFHeader.TotalSongs);
 
+	/*ExWRAMSIZE = 8192;
 	if (NSFHeader.SoundChip & 4)
-		ExWRAM = FCEU_gmalloc(32768 + 8192);
-	else
-		ExWRAM = FCEU_gmalloc(8192);
+		ExWRAMSIZE = 32768 + 8192;*/
+	/* ExWRAM default size is 8192. FDS format adds additional 32K for RAM.
+	 * For simplicity for savestates and runahead, lets just use the maximum size here. */
+	ExWRAM = (uint8 *)FCEU_gmalloc(32768 + 8192);
+
 	return 1;
 }
 
@@ -227,7 +230,7 @@ static DECLFR(NSFVectorRead) {
 		else if (A == 0xFFFD) {
 			doreset = 0; return(0x38);
 		}
-		return(X.DB);
+		return(cpu.openbus);
 	} else
 		return(CartBR(A));
 }
@@ -235,7 +238,7 @@ static DECLFR(NSFVectorRead) {
 void NSFVRC6_Init(void);
 void NSFVRC7_Init(void);
 void NSFMMC5_Init(void);
-void NSFN106_Init(void);
+void NSFN163_Init(void);
 void NSFAY_Init(void);
 
 void NSF_init(void) {
@@ -290,11 +293,11 @@ void NSF_init(void) {
 	} else if (NSFHeader.SoundChip & 2) {
 		NSFVRC7_Init();
 	} else if (NSFHeader.SoundChip & 4) {
-		FDSSoundReset();
+		FDSSound_Reset();
 	} else if (NSFHeader.SoundChip & 8) {
 		NSFMMC5_Init();
 	} else if (NSFHeader.SoundChip & 0x10) {
-		NSFN106_Init();
+		NSFN163_Init();
 	} else if (NSFHeader.SoundChip & 0x20) {
 		NSFAY_Init();
 	}
@@ -365,7 +368,7 @@ static DECLFR(NSF_read) {
 			}
 			return(CurrentSong - 1);
 		}
-	case 0x3FF3: return PAL;
+	case 0x3FF3: return isPAL;
 	}
 	return 0;
 }
@@ -391,8 +394,8 @@ void DrawNSF(uint8 *XBuf) {
 		l = GetSoundBuffer(&Bufpl);
 
 		if (special == 0) {
-			if (FSettings.SoundVolume)
-				mul = 8192 * 240 / (16384 * FSettings.SoundVolume / 50);
+			if (FSettings.volume[APU_MASTER])
+				mul = 8192 * 240 / (16384 * FSettings.volume[APU_MASTER] / 50);
 			for (x = 0; x < 256; x++) {
 				uint32 y;
 				y = 142 + ((Bufpl[(x * l) >> 8] * mul) >> 14);
@@ -400,8 +403,8 @@ void DrawNSF(uint8 *XBuf) {
 					XBuf[x + y * 256] = 3;
 			}
 		} else if (special == 1) {
-			if (FSettings.SoundVolume)
-				mul = 8192 * 240 / (8192 * FSettings.SoundVolume / 50);
+			if (FSettings.volume[APU_MASTER])
+				mul = 8192 * 240 / (8192 * FSettings.volume[APU_MASTER] / 50);
 			for (x = 0; x < 256; x++) {
 				double r;
 				uint32 xp, yp;
@@ -415,8 +418,8 @@ void DrawNSF(uint8 *XBuf) {
 			}
 		} else if (special == 2) {
 			static double theta = 0;
-			if (FSettings.SoundVolume)
-				mul = 8192 * 240 / (16384 * FSettings.SoundVolume / 50);
+			if (FSettings.volume[APU_MASTER])
+				mul = 8192 * 240 / (16384 * FSettings.volume[APU_MASTER] / 50);
 			for (x = 0; x < 128; x++) {
 				double xc, yc;
 				double r, t;

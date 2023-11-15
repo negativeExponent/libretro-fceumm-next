@@ -28,14 +28,13 @@ void X6502_Debug(void (*CPUHook)(X6502 *),
 				 uint8 (*ReadHook)(X6502 *, uint32),
 				 void (*WriteHook)(X6502 *, uint32, uint8));
 
-extern void (*X6502_Run)(int32 cycles);
-#else
-void X6502_Run(int32 cycles);
 #endif
+
+void X6502_Run(int32 cycles);
 
 extern uint32 timestamp;
 extern uint32 sound_timestamp;
-extern X6502 X;
+extern X6502 cpu;
 
 #define N_FLAG  0x80
 #define V_FLAG  0x40
@@ -46,20 +45,29 @@ extern X6502 X;
 #define Z_FLAG  0x02
 #define C_FLAG  0x01
 
-extern void FP_FASTAPASS(1) (*MapIRQHook)(int a);
+extern void (*MapIRQHook)(int a);
 
-#define NTSC_CPU (dendy ? 1773447.467 : 1789772.7272727272727272)
-#define PAL_CPU  1662607.125
+/* 21.47~ MHz ÷ 12 = 1.789773 MHz */
+#define NTSC_CLOCK_SPEED  1789772.7272727272727272
 
-#define FCEU_IQEXT      0x001
-#define FCEU_IQEXT2     0x002
+/* 26.60~ MHz ÷ 16 = 1.662607 MHz */
+#define PAL_CLOCK_SPEED   1662607.125
+
+/* 26.60~ MHz ÷ 15 = 1.773448 MHz */
+#define DENDY_CLOCK_SPEED 1773447.467
+
+#define NTSC_CPU (isDendy ? DENDY_CLOCK_SPEED : NTSC_CLOCK_SPEED)
+#define PAL_CPU  PAL_CLOCK_SPEED
+
+#define FCEU_IQEXT    0x001
+#define FCEU_IQEXT2   0x002
 /* ... */
-#define FCEU_IQRESET    0x020
-#define FCEU_IQNMI2  0x040	/* Delayed NMI, gets converted to *_IQNMI */
-#define FCEU_IQNMI  0x080
-#define FCEU_IQDPCM     0x100
-#define FCEU_IQFCOUNT   0x200
-#define FCEU_IQTEMP     0x800
+#define FCEU_IQRESET  0x020
+#define FCEU_IQNMI2   0x040 /* Delayed NMI, gets converted to *_IQNMI */
+#define FCEU_IQNMI    0x080
+#define FCEU_IQDPCM   0x100
+#define FCEU_IQFCOUNT 0x200
+#define FCEU_IQTEMP   0x800
 
 void X6502_Init(void);
 void X6502_Reset(void);
@@ -68,10 +76,10 @@ void X6502_Power(void);
 void TriggerNMI(void);
 void TriggerNMI2(void);
 
-uint8 FASTAPASS(1) X6502_DMR(uint32 A);
-void FASTAPASS(2) X6502_DMW(uint32 A, uint8 V);
+uint8 X6502_DMR(uint32 A);
+void X6502_DMW(uint32 A, uint8 V);
 
-void FASTAPASS(1) X6502_IRQBegin(int w);
-void FASTAPASS(1) X6502_IRQEnd(int w);
+void X6502_IRQBegin(int w);
+void X6502_IRQEnd(int w);
 
 #endif

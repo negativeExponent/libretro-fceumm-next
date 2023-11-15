@@ -21,6 +21,30 @@
 #ifndef _FCEU_SOUND_H
 #define _FCEU_SOUND_H
 
+enum APU_CHANNELS {
+	APU_MASTER = 0,
+	APU_SQUARE1,
+	APU_SQUARE2,
+	APU_TRIANGLE,
+	APU_NOISE,
+	APU_DPCM,
+	APU_FDS,
+	APU_S5B,
+	APU_N163,
+	APU_VRC6,
+	APU_VRC7,
+	APU_MMC5,
+	APU_LAST
+};
+
+typedef struct {
+	uint8 Speed;
+	uint8 Mode;
+	uint8 DecCountTo1;
+	uint8 decvolume;
+	int reloaddec;
+} ENVUNIT;
+
 typedef struct {
 	void (*Fill)(int Count);	/* Low quality ext sound. */
 
@@ -54,14 +78,18 @@ extern uint32 soundtsinc;
 extern uint32 soundtsoffs;
 #define SOUNDTS (sound_timestamp + soundtsoffs)
 
-void SetNESSoundMap(void);
-void FrameSoundUpdate(void);
-
 void FCEUSND_Power(void);
 void FCEUSND_Reset(void);
 void FCEUSND_SaveState(void);
 void FCEUSND_LoadState(int version);
 
-void FASTAPASS(1) FCEU_SoundCPUHook(int);
+void FCEU_SoundCPUHook(int);
+
+/* Modify channel wave volume based on volume modifiers
+ * Note: the formulat x = x * y /256 does not yield exact results,
+ * but is "close enough" and avoids the need for using double values
+ * or implicit cohersion which are slower (we need speed here) */
+/* TODO: Optimize this. */
+int32 GetSndOutput(int channel, int32 in);
 
 #endif

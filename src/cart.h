@@ -1,15 +1,29 @@
 #ifndef _FCEU_CART_H
 #define _FCEU_CART_H
 
+enum DefaultValues {
+	DEFAULT = -1,
+	NOEXTRA = -1
+};
+
+enum ConsoleSystem {
+	NES_NTSC = 0,
+	NES_PAL  = 1,
+	MULTI    = 2,
+	DENDY    = 3
+};
+
 typedef struct {
 	/* Set by mapper/board code: */
 	void (*Power)(void);
 	void (*Reset)(void);
 	void (*Close)(void);
+
 	uint8 *SaveGame[4];		/* Pointers to memory to save/load. */
 	uint32 SaveGameLen[4];	/* How much memory to save/load. */
 
 	/* Set by iNES/UNIF loading code. */
+	int format;
 	int iNES2;		/* iNES version */
 	int mapper;		/* mapper used */
 	int submapper;	/* submapper used */ /* TODO: */
@@ -24,19 +38,20 @@ typedef struct {
 					  * mapper 30.
                       */
 	int battery;	/* Presence of an actual battery. */
-	int PRGRomSize;		/* prg rom size in bytes */
-	int CHRRomSize;		/* chr rom size in bytes */
+	int trainer;    /* Presense of trainer data */
+	int MiscRoms;	/* Presense of misc roms */
+	int region;			/* video system timing (NTSC, PAL, Dendy */
+	int ConsoleType;
+	int InputTypes;
+	int VS_PPUTypes;
+	int VS_HWType;
+
+	int PRGRomSize;		/* actual prg rom size in bytes */
+	int CHRRomSize;		/* actual chr rom size in bytes */
 	int PRGRamSize;		/* prg ram size in bytes (volatile) */
 	int CHRRamSize;		/* chr ram size in bytes (volatile) */
 	int PRGRamSaveSize;	/* prg ram size in bytes (non-volatile or battery backed) */
 	int CHRRamSaveSize;	/* chr ram size in bytes (non-volatile or battery backed) */
-	int region;			/* video system timing (ntsc, pal, dendy */
-
-	int ConsoleType;
-	int ExtConsoleType;
-	int InputTypes;
-	int VS_PPUTypes;
-	int VS_HWType;
 
 	uint8 MD5[16];
 	uint32 PRGCRC32;
@@ -75,38 +90,45 @@ extern uint32 CHRmask2[32];
 extern uint32 CHRmask4[32];
 extern uint32 CHRmask8[32];
 
-void FASTAPASS(2) setprg2(uint32 A, uint32 V);
-void FASTAPASS(2) setprg4(uint32 A, uint32 V);
-void FASTAPASS(2) setprg8(uint32 A, uint32 V);
-void FASTAPASS(2) setprg16(uint32 A, uint32 V);
-void FASTAPASS(2) setprg32(uint32 A, uint32 V);
+extern uint8 *WRAM;
+extern uint32 WRAMSIZE;
 
-void FASTAPASS(3) setprg2r(int r, uint32 A, uint32 V);
-void FASTAPASS(3) setprg4r(int r, uint32 A, uint32 V);
-void FASTAPASS(3) setprg8r(int r, uint32 A, uint32 V);
-void FASTAPASS(3) setprg16r(int r, uint32 A, uint32 V);
-void FASTAPASS(3) setprg32r(int r, uint32 A, uint32 V);
+void setprg2(uint32 A, uint32 V);
+void setprg4(uint32 A, uint32 V);
+void setprg8(uint32 A, uint32 V);
+void setprg16(uint32 A, uint32 V);
+void setprg32(uint32 A, uint32 V);
 
-void FASTAPASS(3) setchr1r(int r, uint32 A, uint32 V);
-void FASTAPASS(3) setchr2r(int r, uint32 A, uint32 V);
-void FASTAPASS(3) setchr4r(int r, uint32 A, uint32 V);
-void FASTAPASS(2) setchr8r(int r, uint32 V);
+void setprg2r(int r, uint32 A, uint32 V);
+void setprg4r(int r, uint32 A, uint32 V);
+void setprg8r(int r, uint32 A, uint32 V);
+void setprg16r(int r, uint32 A, uint32 V);
+void setprg32r(int r, uint32 A, uint32 V);
 
-void FASTAPASS(2) setchr1(uint32 A, uint32 V);
-void FASTAPASS(2) setchr2(uint32 A, uint32 V);
-void FASTAPASS(2) setchr4(uint32 A, uint32 V);
-void FASTAPASS(2) setchr8(uint32 V);
+void setchr1r(int r, uint32 A, uint32 V);
+void setchr2r(int r, uint32 A, uint32 V);
+void setchr4r(int r, uint32 A, uint32 V);
+void setchr8r(int r, uint32 V);
 
-void FASTAPASS(1) setmirror(int t);
+void setchr1(uint32 A, uint32 V);
+void setchr2(uint32 A, uint32 V);
+void setchr4(uint32 A, uint32 V);
+void setchr8(uint32 V);
+
+void setmirror(int t);
 void setmirrorw(int a, int b, int c, int d);
-void FASTAPASS(3) setntamem(uint8 *p, int ram, uint32 b);
+void setntamem(uint8 *p, int ram, uint32 b);
 
-#define MI_H 0
-#define MI_V 1
-#define MI_0 2
-#define MI_1 3
+enum MirroringType {
+	MI_H    = 0, /* horizontal */
+	MI_V    = 1, /* vertical */
+	MI_0    = 2, /* single-screen 0 */
+	MI_1    = 3, /* single-screen 1 */
+	MI_4    = 4 /* four-screen */
+};
 
 extern int geniestage;
+extern CartInfo iNESCart;
 
 void FCEU_GeniePower(void);
 
