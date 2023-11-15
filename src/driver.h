@@ -32,7 +32,8 @@ void FCEU_printf(char *format, ...);
 #define FCEUI_printf FCEU_printf
 
 /* Video interface */
-void FCEUD_SetPalette(uint8 index, uint8 r, uint8 g, uint8 b);
+void FCEUD_SetPalette(int index, uint8 r, uint8 g, uint8 b);
+void FCEUD_SetPaletteFull(int index, uint8 r, uint8 g, uint8 b);
 
 /* Displays an error.  Can block or not. */
 void FCEUD_PrintError(char *s);
@@ -140,7 +141,7 @@ void FCEUI_SetBaseDirectory(const char *dir);
 /* Tells FCE Ultra to copy the palette data pointed to by pal and use it.
    Data pointed to by pal needs to be 64*3 bytes in length.
 */
-void FCEUI_SetPaletteArray(uint8 *pal);
+void FCEUI_SetPaletteUser(uint8 *pal, int Entries);
 
 /* Sets up sound code to render sound at the specified rate, in samples
    per second.  Only sample rates of 44100, 48000, and 96000 are currently
@@ -148,8 +149,10 @@ void FCEUI_SetPaletteArray(uint8 *pal);
    If "Rate" equals 0, sound is disabled.
 */
 void FCEUI_Sound(int Rate);
-void FCEUI_SetSoundVolume(uint32 volume);
 void FCEUI_SetSoundQuality(int quality);
+
+void FCEUI_SetSoundVolume(int channel, uint32 volume);
+uint32 FCEUI_GetSoundVolume(int channel);
 
 int32 FCEUI_GetDesiredFPS(void);
 

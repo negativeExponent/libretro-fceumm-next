@@ -4,6 +4,7 @@ STATIC_LINKING=0
 ENDIANNESS_DEFINES=
 SIGNED_CHAR=0
 HAVE_NTSC=1
+C89_BUILD=1
 
 SPACE :=
 SPACE := $(SPACE) $(SPACE)
@@ -46,6 +47,10 @@ else
 endif
 else ifneq ($(findstring MINGW,$(shell uname -a)),)
 	system_platform = win
+endif
+
+ifneq ($(V),1)
+   Q := @
 endif
 
 TARGET_NAME := fceumm
@@ -167,6 +172,7 @@ else ifeq ($(platform), ps2)
 	EXTERNAL_ZLIB=1
 
 	HAVE_NTSC = 0
+	C89_BUILD = 0
 # PSP
 else ifeq ($(platform), psp1)
 	TARGET := $(TARGET_NAME)_libretro_$(platform).a
@@ -768,7 +774,10 @@ else
 WARNING_DEFINES = -Wall -Wno-write-strings
 endif
 
-CFLAGS += -Werror=implicit-function-declaration
+ifeq ($(C89_BUILD),1)
+	CFLAGS += -std=c89 -ansi -pedantic -Werror=implicit-function-declaration -Wimplicit-fallthrough -Wno-long-long -Werror=declaration-after-statement
+	CFLAGS += -D_GNU_SOURCE
+endif
 
 CFLAGS += $(fpic) $(WARNING_DEFINES) $(DEFINES) $(ENDIANNESS_DEFINES)
 LDFLAGS += $(LIBM)
@@ -814,18 +823,22 @@ else
 	$(AR) rcs $@ $(OBJECTS)
 endif
 else
-	$(LD) $(LINKOUT)$@ $(SHARED) $(OBJECTS) $(LDFLAGS) $(LIBS)
+	@$(if $(Q), $(shell echo echo LD $@),)
+	$(Q)$(LD) $(LINKOUT)$@ $(SHARED) $(OBJECTS) $(LDFLAGS) $(LIBS)
 endif
 
 %.o: %.c
-	$(CC) -c $(OBJOUT)$@ $< $(CFLAGS) $(INCFLAGS)
+	@$(if $(Q), $(shell echo echo CC $<),)
+	$(Q)$(CC) -c $(OBJOUT)$@ $< $(CFLAGS) $(INCFLAGS)
 
 clean-objs:
 	rm -f $(OBJECTS)
 
 clean:
-	rm -f $(OBJECTS)
-	rm -f $(TARGET)
+	@$(if $(Q), $(shell echo echo rm -rf *.o),)
+	$(Q)rm -f $(OBJECTS)
+	@$(if $(Q), $(shell echo echo rm -rf $(TARGET)),)
+	$(Q)rm -f $(TARGET)
 
 .PHONY: clean clean-objs
 endif

@@ -46,7 +46,7 @@ void SexyFilter(int32 *in, int32 *out, int32 count) {
 
 	mul1 = (94 << 16) / FSettings.SndRate;
 	mul2 = (24 << 16) / FSettings.SndRate;
-	vmul = (FSettings.SoundVolume << 16) * 3 / 4 / 100;
+	vmul = (FSettings.volume[APU_MASTER] << 16) * 3 / 4 / 100;
 
 	if (FSettings.soundq)
 		vmul /= 4;

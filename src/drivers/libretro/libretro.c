@@ -116,8 +116,7 @@ static int aspect_ratio_par;
 #define TURBO_BUTTONS 2
 unsigned char turbo_button_toggle[MAX_PLAYERS][TURBO_BUTTONS] = { {0} };
 
-typedef struct
-{
+typedef struct {
    unsigned retro;
    unsigned nes;
 } keymap;
@@ -176,6 +175,7 @@ static bool opt_showAdvSystemOptions = true;
 static __attribute__((aligned(16))) uint16_t retro_palette[256];
 #else
 static uint16_t retro_palette[256];
+static uint16_t retro_palette_full[512];
 #endif
 #if defined(RENDER_GSKIT_PS2)
 static uint8_t* fceu_video_out;
@@ -197,8 +197,6 @@ static unsigned serialize_size;
 /* extern forward decls.*/
 extern FCEUGI *GameInfo;
 extern uint8 *XBuf;
-extern CartInfo iNESCart;
-extern CartInfo UNIFCart;
 extern int show_crosshair;
 extern int option_ramstate;
 
@@ -247,7 +245,7 @@ const char * GetKeyboard(void)
 #define BLUE_EXPAND 3
 #endif
 
-void FCEUD_SetPalette(uint8_t index, uint8_t r, uint8_t g, uint8_t b)
+void FCEUD_SetPalette(int index, uint8_t r, uint8_t g, uint8_t b)
 {
    unsigned char index_to_write = index;
 #if defined(RENDER_GSKIT_PS2)
@@ -264,6 +262,16 @@ void FCEUD_SetPalette(uint8_t index, uint8_t r, uint8_t g, uint8_t b)
    retro_palette[index_to_write] = BUILD_PIXEL_RGB565(r >> RED_EXPAND, g >> GREEN_EXPAND, b >> BLUE_EXPAND);
 #else
    retro_palette[index_to_write] =
+      ((r >> RED_EXPAND) << RED_SHIFT) | ((g >> GREEN_EXPAND) << GREEN_SHIFT) | ((b >> BLUE_EXPAND) << BLUE_SHIFT);
+#endif
+}
+
+void FCEUD_SetPaletteFull(int index, uint8_t r, uint8_t g, uint8_t b)
+{
+#ifdef FRONTEND_SUPPORTS_RGB565
+   retro_palette_full[index] = BUILD_PIXEL_RGB565(r >> RED_EXPAND, g >> GREEN_EXPAND, b >> BLUE_EXPAND);
+#else
+   retro_palette_full[index] =
       ((r >> RED_EXPAND) << RED_SHIFT) | ((g >> GREEN_EXPAND) << GREEN_SHIFT) | ((b >> BLUE_EXPAND) << BLUE_SHIFT);
 #endif
 }
@@ -334,7 +342,7 @@ void FCEUD_DispMessage(enum retro_log_level level, unsigned duration, const char
 
 void FCEUD_SoundToggle (void)
 {
-   FCEUI_SetSoundVolume(sndvolume);
+   FCEUI_SetSoundVolume(APU_MASTER, sndvolume);
 }
 
 /*palette for FCEU*/
@@ -345,10 +353,8 @@ void FCEUD_SoundToggle (void)
 #define PAL_TOTAL    PAL_CUSTOM
 
 static int external_palette_exist = 0;
-extern int ipalette;
-
-/* table for currently loaded palette */
-static uint8_t base_palette[192];
+extern int palette_game_available;
+extern int palette_user_available;
 
 struct st_palettes {
    char name[32];
@@ -757,8 +763,7 @@ enum stereo_filter_type
 static enum stereo_filter_type current_stereo_filter = STEREO_FILTER_NULL;
 
 #define STEREO_FILTER_DELAY_MS_DEFAULT 15.0f
-typedef struct
-{
+typedef struct {
    int32_t *samples;
    size_t samples_size;
    size_t samples_pos;
@@ -977,13 +982,16 @@ static void NTSCFilter_Setup(void)
    }
 
    ntsc_setup.merge_fields = 0;
-   if ((GameInfo->type != GIT_VSUNI) && (current_palette == PAL_DEFAULT || current_palette == PAL_RAW))
+   if ((GameInfo->type != GIT_VSUNI) && (current_palette == PAL_DEFAULT || current_palette == PAL_RAW)) {
       /* use ntsc default palette instead of internal default palette for that "identity" effect */
+      ntsc_setup.palette = NULL;
       ntsc_setup.base_palette = NULL;
-   else
+   } else {
       /* use internal palette, this includes palette presets, external palette and custom palettes
           * for VS. System games */
-      ntsc_setup.base_palette = (unsigned char const *)palo;
+      /* ntsc_setup.base_palette = (unsigned char const *)palo; */
+      ntsc_setup.palette = (unsigned char const *)palo;
+   }
 
    nes_ntsc_init(&nes_ntsc, &ntsc_setup);
 }
@@ -1724,7 +1732,8 @@ static void retro_set_custom_palette(void)
 {
    unsigned i;
 
-   ipalette = 0;
+   palette_game_available = FALSE;
+   palette_user_available = FALSE;
    use_raw_palette = false;
 
    /* VS UNISystem uses internal palette presets regardless of options */
@@ -1734,13 +1743,13 @@ static void retro_set_custom_palette(void)
    /* Reset and choose between default internal or external custom palette */
    else if (current_palette == PAL_DEFAULT || current_palette == PAL_CUSTOM)
    {
-      ipalette = external_palette_exist && (current_palette == PAL_CUSTOM);
+      palette_game_available = external_palette_exist && (current_palette == PAL_CUSTOM);
 
-      /* if ipalette is set to 1, external palette
+      /* if palette_game_available is set to 1, external palette
        * is loaded, else it will load default NES palette.
-       * FCEUI_SetPaletteArray() both resets the palette array to
+       * FCEUI_SetPaletteUser() both resets the palette array to
        * internal default palette and then chooses which one to use. */
-      FCEUI_SetPaletteArray( NULL );
+      FCEUI_SetPaletteUser( NULL, 0 );
    }
 
    /* setup raw palette */
@@ -1760,15 +1769,18 @@ static void retro_set_custom_palette(void)
    /* setup palette presets */
    else
    {
-      unsigned *palette_data = palettes[current_palette].data;
+      uint32 *in = palettes[current_palette].data;
+      uint8 ptmp[192];
+
       for ( i = 0; i < 64; i++ )
       {
-         unsigned data = palette_data[i];
-         base_palette[ i * 3 + 0 ] = ( data >> 16 ) & 0xff; /* red */
-         base_palette[ i * 3 + 1 ] = ( data >>  8 ) & 0xff; /* green */
-         base_palette[ i * 3 + 2 ] = ( data >>  0 ) & 0xff; /* blue */
+         int idx = i * 3;
+         ptmp[idx + 0] = (in[i] >> 16) & 0xFF;
+         ptmp[idx + 1] = (in[i] >>  8) & 0xFF;
+         ptmp[idx + 2] = (in[i] >>  0) & 0xFF;
       }
-      FCEUI_SetPaletteArray( base_palette );
+
+      FCEUI_SetPaletteUser( ptmp, 64 );
    }
 }
 
@@ -1835,20 +1847,43 @@ void retro_reset(void)
    ResetNES();
 }
 
-static void set_apu_channels(int chan)
+static void set_apu_volume(void)
 {
-   FSettings.SquareVolume[1] = (chan & 1) ? 256 : 0;
-   FSettings.SquareVolume[0] = (chan & 2) ? 256 : 0;
-   FSettings.TriangleVolume  = (chan & 3) ? 256 : 0;
-   FSettings.NoiseVolume     = (chan & 4) ? 256 : 0;
-   FSettings.PCMVolume       = (chan & 5) ? 256 : 0;
+   struct {
+      int channel;
+      char *name;
+   } apu_channels[] = {
+      { APU_SQUARE1, "fceumm_apu_square_1" },
+      { APU_SQUARE2, "fceumm_apu_square_2" },
+      { APU_TRIANGLE, "fceumm_apu_triangle" },
+      { APU_NOISE, "fceumm_apu_noise" },
+      { APU_DPCM, "fceumm_apu_dpcm" },
+      { APU_FDS, "fceumm_apu_fds" },
+      { APU_S5B, "fceumm_apu_s5b" },
+      { APU_N163, "fceumm_apu_n163" },
+      { APU_VRC6, "fceumm_apu_vrc6" },
+      { APU_VRC7, "fceumm_apu_vrc7" },
+      { APU_MMC5, "fceumm_apu_mmc5" },
+   };
+   struct retro_variable var = { 0 };
+   int i = 0;
+   int ssize = sizeof(apu_channels) / sizeof(apu_channels[0]);
+
+   for (i = 0; i < ssize; i++) {
+      int channel = apu_channels[i].channel;
+      var.key = apu_channels[i].name;
+      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
+         uint32 newval = atoi(var.value);
+         if (FCEUI_GetSoundVolume(channel) != newval) {
+            FCEUI_SetSoundVolume(channel, newval);
+         }
+      }
+   }
 }
 
 static void check_variables(bool startup)
 {
-   struct retro_variable var = {0};
-   char key[256];
-   int i, enable_apu;
+   struct retro_variable var = { 0 };
    bool stereo_filter_updated = false;
 
    /* 1 = Performs only geometry update: e.g. overscans */
@@ -2257,19 +2292,7 @@ static void check_variables(bool startup)
          swapDuty = newval;
    }
 
-   var.key = key;
-
-   enable_apu = 0xff;
-
-   strcpy(key, "fceumm_apu_x");
-   for (i = 0; i < 5; i++)
-   {
-      key[strlen("fceumm_apu_")] = '1' + i;
-      var.value = NULL;
-      if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && !strcmp(var.value, "disabled"))
-         enable_apu &= ~(1 << i);
-   }
-   set_apu_channels(enable_apu);
+   set_apu_volume();
 
    update_dipswitch();
 
@@ -2821,6 +2844,11 @@ static void FCEUD_UpdateInput(void)
    }
    else
       palette_switch_counter = 0;
+   
+   /* Power Switch on F12 */
+   if (input_cb(0, RETRO_DEVICE_KEYBOARD, 0, RETROK_F12)) {
+      PowerNES();
+   }
 }
 
 static void retro_run_blit(uint8_t *gfx)
@@ -2949,9 +2977,10 @@ static void retro_run_blit(uint8_t *gfx)
       }
       else
       {
-         for (y = 0; y < height; y++, gfx += incr)
-            for (x = 0; x < width; x++, gfx++)
-               fceu_video_out[y * width + x] = retro_palette[*gfx];
+         uint8_t *deemp = XDBuf + (gfx - XBuf);
+         for (y = 0; y < height; y++, gfx += incr, deemp += incr)
+            for (x = 0; x < width; x++, gfx++, deemp++)
+               fceu_video_out[y * width + x] = retro_palette_full[(*gfx & 0x3F) | (*deemp << 6)];
       }
       video_cb(fceu_video_out, width, height, pitch);
    }
@@ -3474,11 +3503,9 @@ bool retro_load_game(const struct retro_game_info *info)
    if (environ_cb(RETRO_ENVIRONMENT_GET_SYSTEM_DIRECTORY, &system_dir) && system_dir)
       FCEUI_SetBaseDirectory(system_dir);
 
-   memset(base_palette, 0, sizeof(base_palette));
-
    FCEUI_Initialize();
 
-   FCEUI_SetSoundVolume(sndvolume);
+   FCEUI_SetSoundVolume(APU_MASTER, sndvolume);
    FCEUI_Sound(sndsamplerate);
 
    GameInfo = (FCEUGI*)FCEUI_LoadGame(content_path, content_data, content_size,
@@ -3501,7 +3528,7 @@ bool retro_load_game(const struct retro_game_info *info)
 
    update_input_descriptors();
 
-   external_palette_exist = ipalette;
+   external_palette_exist = palette_game_available;
    if (external_palette_exist)
       FCEU_printf(" Loading custom palette: %s%cnes.pal\n",
             system_dir, PATH_DEFAULT_SLASH_C());
@@ -3650,25 +3677,22 @@ unsigned retro_get_region(void)
 
 void *retro_get_memory_data(unsigned type)
 {
-   uint8_t* data;
+   uint8_t* data = NULL;
 
    switch(type)
    {
       case RETRO_MEMORY_SAVE_RAM:
          if (iNESCart.battery && iNESCart.SaveGame[0] && iNESCart.SaveGameLen[0])
+         {
             return iNESCart.SaveGame[0];
-         else if (UNIFCart.battery && UNIFCart.SaveGame[0] && UNIFCart.SaveGameLen[0])
-            return UNIFCart.SaveGame[0];
+         }
          else if (GameInfo->type == GIT_FDS)
+         {
             return FDSROM_ptr();
-         else
-            data = NULL;
+         }
          break;
       case RETRO_MEMORY_SYSTEM_RAM:
          data = RAM;
-         break;
-      default:
-         data = NULL;
          break;
    }
 
@@ -3677,25 +3701,22 @@ void *retro_get_memory_data(unsigned type)
 
 size_t retro_get_memory_size(unsigned type)
 {
-   unsigned size;
+   unsigned size = 0;
 
    switch(type)
    {
       case RETRO_MEMORY_SAVE_RAM:
          if (iNESCart.battery && iNESCart.SaveGame[0] && iNESCart.SaveGameLen[0])
+         {
             size = iNESCart.SaveGameLen[0];
-         else if (UNIFCart.battery && UNIFCart.SaveGame[0] && UNIFCart.SaveGameLen[0])
-            size = UNIFCart.SaveGameLen[0];
+         }
          else if (GameInfo->type == GIT_FDS)
+         {
             size = FDSROM_size();
-         else
-            size = 0;
+         }
          break;
       case RETRO_MEMORY_SYSTEM_RAM:
          size = 0x800;
-         break;
-      default:
-         size = 0;
          break;
    }
 

@@ -62,7 +62,7 @@ int FCEU_InitVirtualVideo(void)
       return 0;
 
    memset(XBuf, 128, 256 * (256 + ppu.extrascanlines + 8));
-   memset(XDBuf, 128, 256 * (256 + ppu.extrascanlines + 8));
+   memset(XDBuf, 0, 256 * (256 + ppu.extrascanlines + 8));
    return 1;
 }
 
