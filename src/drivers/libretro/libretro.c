@@ -268,11 +268,13 @@ void FCEUD_SetPalette(int index, uint8_t r, uint8_t g, uint8_t b)
 
 void FCEUD_SetPaletteFull(int index, uint8_t r, uint8_t g, uint8_t b)
 {
+#if !defined(PSP) || !defined(PS2)
 #ifdef FRONTEND_SUPPORTS_RGB565
    retro_palette_full[index] = BUILD_PIXEL_RGB565(r >> RED_EXPAND, g >> GREEN_EXPAND, b >> BLUE_EXPAND);
 #else
    retro_palette_full[index] =
       ((r >> RED_EXPAND) << RED_SHIFT) | ((g >> GREEN_EXPAND) << GREEN_SHIFT) | ((b >> BLUE_EXPAND) << BLUE_SHIFT);
+#endif
 #endif
 }
 
