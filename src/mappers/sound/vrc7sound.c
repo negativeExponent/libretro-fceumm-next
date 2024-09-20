@@ -23,8 +23,8 @@
 #include "vrc7sound.h"
 
 static int32 dwave = 0;
-
 static OPLL *chip = NULL;
+static uint8 chip_type = OPLL_VRC7_TONE;
 
 static void OPLL_fillbuf(OPLL *opll, int32 *buf, int32 len, int shift) {
 	while (len > 0) {
@@ -53,10 +53,12 @@ DECLFW(VRC7Sound_Write) {
 		return;
 	}
 
-    switch (A & 0xF030) {
-    case 0x9010:
+    switch (A & 0xF031) {
+    case 0:
+	case 0x9010:
 		OPLL_writeIO(chip, 0, V);
         break;
+	case 1:
 	case 0x9030:
 		GameExpSound[SND_VRC7].Fill = UpdateOPL;
 		GameExpSound[SND_VRC7].NeoFill = UpdateOPLNEO;
@@ -67,9 +69,9 @@ DECLFW(VRC7Sound_Write) {
 
 static void VRC7SC(void) {
 	if (chip) {
-		OPLL_setChipType(chip, OPLL_VRC7_TONE);
+		OPLL_setChipType(chip, chip_type);
 		OPLL_setRate(chip, FSettings.SndRate ? FSettings.SndRate : 44100);
-		OPLL_resetPatch(chip, OPLL_VRC7_TONE);
+		OPLL_resetPatch(chip, chip_type);
 	}
 }
 
@@ -80,13 +82,15 @@ static void VRC7SKill(void) {
 	}
 }
 
-void VRC7Sound_ESI(void) {
+void VRC7Sound_ESI(int isVRC7) {
 	if (!(chip = OPLL_new(3579545, FSettings.SndRate ? FSettings.SndRate : 44100))) {
 		return;
 	}
 
 	GameExpSound[SND_VRC7].RChange = VRC7SC;
 	GameExpSound[SND_VRC7].Kill = VRC7SKill;
+
+	chip_type = isVRC7 ? OPLL_VRC7_TONE : OPLL_2413_TONE;
 
 	VRC7SC();
 }
@@ -138,6 +142,16 @@ void VRC7Sound_AddStateInfo(void) {
     AddExState(&chip->slot[9], sizeof(chip->slot[9]), 0, "SL09");
     AddExState(&chip->slot[10], sizeof(chip->slot[10]), 0, "SL10");
     AddExState(&chip->slot[11], sizeof(chip->slot[11]), 0, "SL11");
+
+	if (chip_type != OPLL_VRC7_TONE)
+	{
+		AddExState(&chip->slot[12], sizeof(chip->slot[11]), 0, "SL12");
+		AddExState(&chip->slot[13], sizeof(chip->slot[11]), 0, "SL13");
+		AddExState(&chip->slot[14], sizeof(chip->slot[11]), 0, "SL14");
+		AddExState(&chip->slot[15], sizeof(chip->slot[11]), 0, "SL15");
+		AddExState(&chip->slot[16], sizeof(chip->slot[11]), 0, "SL16");
+		AddExState(&chip->slot[17], sizeof(chip->slot[11]), 0, "SL17");
+	}
 
 	AddExState(&chip->mask, sizeof(chip->mask), 0, "MASK");
 

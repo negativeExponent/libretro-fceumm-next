@@ -1342,6 +1342,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                         512, Mapper512_Init         )
 	INES_BOARD( "SA-9602B",                 513, Mapper513_Init         )
 	INES_BOARD( "Subor Karaoke",            514, Mapper514_Init         )
+	INES_BOARD( "Family Noraebang",         515, Mapper515_Init         )
 	INES_BOARD( "Brilliant Com Cocoma Pack", 516, Mapper516_Init        )
 	INES_BOARD( "Kkachi-wa Nolae Chingu",   517, Mapper517_Init         ) /* Korean Karaoke */
 	INES_BOARD( "DANCE2000",                518, Mapper518_Init         )

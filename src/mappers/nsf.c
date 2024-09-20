@@ -437,7 +437,7 @@ void NSF_init(void) {
 		SetWriteHandler(0xB000, 0xB002, NSF_write);
 	}
 	if (NSFInfo->SoundChip & NSFSOUND_VRC7) {
-		VRC7Sound_ESI();
+		VRC7Sound_ESI(1);
 		SetWriteHandler(0x9010, 0x9010, NSF_write);
 		SetWriteHandler(0x9030, 0x9030, NSF_write);
 	}

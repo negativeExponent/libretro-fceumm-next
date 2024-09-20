@@ -21,7 +21,8 @@
 #ifndef _VRC7_SOUND_H
 #define _VRC7_SOUND_H
 
-void VRC7Sound_ESI(void);
+/* 1 = VRC7 tone, 0 = YM2413 */
+void VRC7Sound_ESI(int isVRC7);
 DECLFW(VRC7Sound_Write);
 void VRC7Sound_AddStateInfo(void);
 

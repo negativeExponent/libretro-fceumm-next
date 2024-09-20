@@ -180,6 +180,6 @@ void VRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {
 	MapIRQHook = VRCIRQ_CPUHook;
 	AddExState(&VRCIRQ_StateRegs, ~0, 0, 0);
 
-	VRC7Sound_ESI();
+	VRC7Sound_ESI(1);
 	VRC7Sound_AddStateInfo();
 }
