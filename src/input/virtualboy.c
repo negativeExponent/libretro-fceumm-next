@@ -1,8 +1,5 @@
 /* FCE Ultra - NES/Famicom Emulator
  *
- * Copyright notice for this file:
- *  Copyright (C) 2003 Xodnizel
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -18,46 +15,41 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include <string.h>
 #include "share.h"
 
-/* 2024-09-20: DEPRECATED in favor for PartyTap */
+static uint32 rsb[2];
+static uint32 rdata[2];
 
-#if 0
-
-static uint8 QZVal, QZValR;
-static uint8 FunkyMode;
-
-static uint8 FP_FASTAPASS(2) QZ_Read(int w, uint8 ret) {
-	if (w) {
-		ret |= (QZValR & 0x7) << 2;
-		QZValR = QZValR >> 3;
-
-		if (FunkyMode) {
-			QZValR |= 0x28;
-		} else {
-			QZValR |= 0x38;
-		}
+static uint8 Read(int w) {
+	uint8 ret = 0;
+	ret |= (rdata[w] >> rsb[w]) & 1;
+	if (rsb[w] >= 16) {
+		ret |= 0x1;
+		rsb[w] = 16;
 	}
-	return(ret);
+	if (!fceuindbg)
+		rsb[w]++;
+	return ret;
 }
 
-static void QZ_Strobe(void) {
-	QZValR = QZVal;
+static void Strobe(int w) {
+	rsb[w] = 0;
 }
 
-static void FP_FASTAPASS(1) QZ_Write(uint8 V) {
-	FunkyMode = V & 4;
+static void Update(int w, void *data, int arg) {
+	int x;
+	int ret = 0;
+	for (x = 0; x < 14; x++) {
+		ret |= (((*(uint32 *)data) >> x) & 1) << x;
+	}
+	rdata[w] = ret;
+	/* fixed signature bit */
+	rdata[w] |= (1 << 14);
 }
 
-static void FP_FASTAPASS(2) QZ_Update(void *data, int arg) {
-	QZVal = *(uint8*)data;
-}
+static INPUTC VirtualBoyController = { Read, 0, Strobe, Update, 0, 0 };
 
-static INPUTCFC QuizKing = { QZ_Read, QZ_Write, QZ_Strobe, QZ_Update, 0, 0 };
-
-INPUTCFC *FCEU_InitQuizKing(void) {
-	QZVal = QZValR = 0;
-	return(&QuizKing);
+INPUTC *FCEU_InitVirtualBoy(int w) {
+	rsb[w] = rdata[w] = 0;
+	return (&VirtualBoyController);
 }
-#endif

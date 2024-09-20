@@ -40,6 +40,9 @@ extern INPUTC *FCEU_InitMouse(int w);
 extern INPUTC *FCEU_InitPowerpadA(int w);
 extern INPUTC *FCEU_InitPowerpadB(int w);
 extern INPUTC *FCEU_InitArkanoid(int w);
+extern INPUTC *FCEU_InitSNESMouse(int w);
+extern INPUTC *FCEU_InitSNESGamepad(int w);
+extern INPUTC *FCEU_InitVirtualBoy(int w);
 
 extern INPUTCFC *FCEU_InitArkanoidFC(void);
 extern INPUTCFC *FCEU_InitSpaceShadow(void);
@@ -48,12 +51,14 @@ extern INPUTCFC *FCEU_InitSuborKB(void);
 extern INPUTCFC *FCEU_InitPEC586KB(void);
 extern INPUTCFC *FCEU_InitHS(void);
 extern INPUTCFC *FCEU_InitMahjong(void);
-extern INPUTCFC *FCEU_InitQuizKing(void);
+extern INPUTCFC *FCEU_InitPartyTap(void);
 extern INPUTCFC *FCEU_InitFamilyTrainerA(void);
 extern INPUTCFC *FCEU_InitFamilyTrainerB(void);
 extern INPUTCFC *FCEU_InitOekaKids(void);
 extern INPUTCFC *FCEU_InitTopRider(void);
 extern INPUTCFC *FCEU_InitBarcodeWorld(void);
+extern INPUTCFC *FCEU_InitFamiNetSys(void);
+extern INPUTCFC *FCEU_InitExcitingBoxing(void);
 
 static uint8 joy_readbit[2];
 static uint8 joy[4] = { 0, 0, 0, 0 };
@@ -151,6 +156,31 @@ static uint8 FP_FASTAPASS(2) ReadFami4(int w, uint8 ret) {
 	return(ret);
 }
 
+/* Hori 4 player driver for expansion port */
+static uint8 Hori4ReadBit[2];
+static void StrobeHori4(void) {
+	Hori4ReadBit[0] = Hori4ReadBit[1] = 0;
+}
+
+static uint8 ReadHori4(int w, uint8 ret) {
+	ret &= 0x01;
+	if (Hori4ReadBit[w] < 8) {
+		ret |= ((joy[w] >> (Hori4ReadBit[w])) & 0x01) << 1;
+	} else if (Hori4ReadBit[w] < 16) {
+		ret |= ((joy[2 + w] >> (Hori4ReadBit[w] - 8)) & 0x01) << 1;
+	} else if (Hori4ReadBit[w] < 24) {
+		ret |= (((w ? 0x10 : 0x20) >> (7 - (Hori4ReadBit[w] - 16))) & 0x01) << 1;
+	}
+
+	if (Hori4ReadBit[w] >= 24) {
+		ret |= 0x02;
+	} else {
+		Hori4ReadBit[w]++;
+	}
+
+	return (ret);
+}
+
 /* VS. Unisystem inputs */
 static uint8 FP_FASTAPASS(1) ReadGPVS(int w) {
 	uint8 ret = 0;
@@ -206,6 +236,7 @@ static void FP_FASTAPASS(1) StrobeGP(int w) {
 static INPUTC GPC = { ReadGP, 0, StrobeGP, UpdateGP, 0, 0 };
 static INPUTC GPCVS = { ReadGPVS, 0, StrobeGP, UpdateGP, 0, 0 };
 static INPUTCFC FAMI4C = { ReadFami4, 0, StrobeFami4, 0, 0, 0 };
+static INPUTCFC HORI4C = { ReadHori4, 0, StrobeHori4, 0, 0, 0 };
 
 /**********************************************************************/
 
@@ -303,6 +334,15 @@ static void FASTAPASS(1) SetInputStuff(int x)
       case SI_POWERPADB:
          JPorts[x] = FCEU_InitPowerpadB(x);
          break;
+      case SI_SNES_GAMEPAD:
+		   JPorts[x] = FCEU_InitSNESGamepad(x);
+		   break;
+	   case SI_SNES_MOUSE:
+		   JPorts[x] = FCEU_InitSNESMouse(x);
+		   break;
+	   case SI_VIRTUALBOY:
+		   JPorts[x] = FCEU_InitVirtualBoy(x);
+		   break;
    }
 	CheckSLHook();
 }
@@ -342,8 +382,8 @@ static void SetInputStuffFC(void)
       case SIFC_MAHJONG:
          FCExp = FCEU_InitMahjong();
          break;
-      case SIFC_QUIZKING:
-         FCExp = FCEU_InitQuizKing();
+      case SIFC_PARTYTAP:
+         FCExp = FCEU_InitPartyTap();
          break;
       case SIFC_FTRAINERA:
          FCExp = FCEU_InitFamilyTrainerA();
@@ -356,6 +396,16 @@ static void SetInputStuffFC(void)
          break;
       case SIFC_TOPRIDER:
          FCExp = FCEU_InitTopRider();
+         break;
+      case SIFC_FAMINETSYS:
+         FCExp = FCEU_InitFamiNetSys();
+         break;
+      case SIFC_EXCITINGBOXING:
+         FCExp = FCEU_InitExcitingBoxing();
+         break;
+      case SIFC_HORI4PLAYER:
+         FCExp = &HORI4C;
+         memset(&Hori4ReadBit, 0, sizeof(Hori4ReadBit));
          break;
    }
 	CheckSLHook();

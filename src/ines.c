@@ -158,8 +158,8 @@ static void SetInput(void) {
 		{0xea90f3e2,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERB	},	/* Family Trainer:  Running Stadium */
 		{0xbba58be5,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERB	},	/* Family Trainer: Manhattan Police */
 		{0x3e58a87e,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Freedom Force */
-		{0xd9f45be9,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_QUIZKING	},	/* Gimme a Break ... */
-		{0x1545bd13,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_QUIZKING	},	/* Gimme a Break ... 2 */
+		{0xd9f45be9,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_PARTYTAP	},	/* Gimme a Break ... */
+		{0x1545bd13,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_PARTYTAP	},	/* Gimme a Break ... 2 */
 		{0x4e959173,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Gotcha! - The Sport! */
 		{0xbeb8ab01,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Gumshoe */
 		{0xff24d794,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Hogan's Alley */

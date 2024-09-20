@@ -1,7 +1,7 @@
 /* FCE Ultra - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2003 Xodnizel
+ *  Copyright (C) 2019 CaH4e3
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,48 +16,38 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Family Network System controller
+ *
  */
 
 #include <string.h>
 #include "share.h"
 
-/* 2024-09-20: DEPRECATED in favor for PartyTap */
+static int readbit;
+static int32 readdata;
 
-#if 0
-
-static uint8 QZVal, QZValR;
-static uint8 FunkyMode;
-
-static uint8 FP_FASTAPASS(2) QZ_Read(int w, uint8 ret) {
-	if (w) {
-		ret |= (QZValR & 0x7) << 2;
-		QZValR = QZValR >> 3;
-
-		if (FunkyMode) {
-			QZValR |= 0x28;
-		} else {
-			QZValR |= 0x38;
-		}
+static uint8 Read(int w, uint8 ret) {
+	if (!w) {
+		if (readbit < 24) {
+			ret |= ((readdata >> readbit) & 1) << 1;
+			readbit++;
+		} else
+			ret |= 2; /* sense! */
 	}
-	return(ret);
+	return ret;
 }
 
-static void QZ_Strobe(void) {
-	QZValR = QZVal;
+static void Strobe(void) {
+	readbit = 0;
 }
 
-static void FP_FASTAPASS(1) QZ_Write(uint8 V) {
-	FunkyMode = V & 4;
+static void Update(void *data, int arg) {
+	readdata = *(uint32 *)data;
 }
 
-static void FP_FASTAPASS(2) QZ_Update(void *data, int arg) {
-	QZVal = *(uint8*)data;
-}
+static INPUTCFC FamiNetSys = { Read, 0, Strobe, Update, 0, 0 };
 
-static INPUTCFC QuizKing = { QZ_Read, QZ_Write, QZ_Strobe, QZ_Update, 0, 0 };
-
-INPUTCFC *FCEU_InitQuizKing(void) {
-	QZVal = QZValR = 0;
-	return(&QuizKing);
+INPUTCFC *FCEU_InitFamiNetSys(void) {
+	return (&FamiNetSys);
 }
-#endif

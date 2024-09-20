@@ -21,43 +21,47 @@
 #include <string.h>
 #include "share.h"
 
-/* 2024-09-20: DEPRECATED in favor for PartyTap */
+/* supported games:
+Casino Derby
+Gimmi a Break - Shijou Saikyou no Quiz OuKetteisen
+Gimmi a Break - Shijou Saikyou no Quiz OuKetteisen 2
+Project Q
+*/
 
-#if 0
+static uint8 PTVal, PTValR;
+static int readcount = 0;
 
-static uint8 QZVal, QZValR;
-static uint8 FunkyMode;
-
-static uint8 FP_FASTAPASS(2) QZ_Read(int w, uint8 ret) {
+static uint8 PT_Read(int w, uint8 ret) {
 	if (w) {
-		ret |= (QZValR & 0x7) << 2;
-		QZValR = QZValR >> 3;
-
-		if (FunkyMode) {
-			QZValR |= 0x28;
+		/* The first read returns the state of buttons 1 to 3,
+		the 2nd read gives buttons 4 to 6. The third read apparently returns a detection value ($14). */
+		if (readcount < 2) {
+			ret |= (PTValR & 0x7) << 2;
+			PTValR = PTValR >> 3;
+			readcount++;
+			return ret;
 		} else {
-			QZValR |= 0x38;
+			return (ret | 0x14);
 		}
 	}
 	return(ret);
 }
 
-static void QZ_Strobe(void) {
-	QZValR = QZVal;
+static void PT_Strobe(void) {
+	readcount = 0;
+	PTValR = PTVal;
 }
 
-static void FP_FASTAPASS(1) QZ_Write(uint8 V) {
-	FunkyMode = V & 4;
+static void PT_Write(uint8 V) {
 }
 
-static void FP_FASTAPASS(2) QZ_Update(void *data, int arg) {
-	QZVal = *(uint8*)data;
+static void PT_Update(void *data, int arg) {
+	PTVal = *(uint8*)data;
 }
 
-static INPUTCFC QuizKing = { QZ_Read, QZ_Write, QZ_Strobe, QZ_Update, 0, 0 };
+static INPUTCFC PartyTap = { PT_Read, PT_Write, PT_Strobe, PT_Update, 0, 0 };
 
-INPUTCFC *FCEU_InitQuizKing(void) {
-	QZVal = QZValR = 0;
-	return(&QuizKing);
+INPUTCFC *FCEU_InitPartyTap(void) {
+	PTVal = PTValR = 0;
+	return(&PartyTap);
 }
-#endif
