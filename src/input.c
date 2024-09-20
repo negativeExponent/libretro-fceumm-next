@@ -66,7 +66,7 @@ static uint8 LastStrobe;
 
 extern uint8 coinon;
 
-static int FSDisable = 0; /* Set to 1 if NES-style four-player adapter is disabled. */
+static int FourScoreDisable = 0; /* Set to 1 if NES-style four-player adapter is disabled. */
 static int JPAttrib[2] = { 0, 0 };
 static int JPType[2] = { 0, 0 };
 static void *InputDataPtr[2];
@@ -81,16 +81,40 @@ static INPUTCFC *FCExp = 0;
 
 void (*InputScanlineHook)(uint8 *bg, uint8 *spr, uint32 linets, int final);
 
+static uint8 microphone = 0;
+
 static DECLFR(JPRead)
 {
 	uint8 ret = 0;
 
 	if (JPorts[A & 1]->Read)
 		ret |= JPorts[A & 1]->Read(A & 1);
+   
+   /* Test if the port 2 start button is being pressed.
+	 * On a famicom, port 2 start shouldn't exist, so this removes it.
+	 * Games can't automatically be checked for NES/Famicom status,
+	 * so it's an all-encompassing change in the input config menu.
+	 */
+	if ((FSettings.ReplaceP2StartWithMicrophone) && (A & 0x01) && (joy_readbit[1] == 0x04)) {
+		/* Nullify Port 2 Start Button */
+		ret &= 0xFE;
+	}
 
 	if (FCExp)
 		if (FCExp->Read)
 			ret = FCExp->Read(A & 1, ret);
+   
+   /* Not verified against hardware. */
+	if (FSettings.ReplaceP2StartWithMicrophone) {
+		if (joy[1] & 0x08) {
+			microphone = !microphone;
+			if (microphone) {
+				ret |= 0x04;
+			}
+		} else {
+			microphone = 0;
+		}
+	}
 
 	ret |= X.DB & 0xC0;
 
@@ -119,18 +143,6 @@ static DECLFW(B4016)
             FCExp->Strobe();
    }
 	LastStrobe = V & 0x1;
-}
-
-void FCEU_DrawInput(uint8 *buf)
-{
-   int x;
-
-   for (x = 0; x < 2; x++)
-      if (JPorts[x]->Draw)
-         JPorts[x]->Draw(x, buf, JPAttrib[x]);
-   if (FCExp)
-      if (FCExp->Draw)
-         FCExp->Draw(buf, JPAttribFC);
 }
 
 /**********************************************************************/
@@ -204,7 +216,7 @@ static uint8 FP_FASTAPASS(1) ReadGP(int w) {
 	else
 		ret = ((joy[w] >> (joy_readbit[w])) & 1);
 	if (joy_readbit[w] >= 16) ret = 0;
-	if (FSDisable) {
+	if (FourScoreDisable) {
 		if (joy_readbit[w] >= 8)
 			ret |= 1;
 	} else {
@@ -239,6 +251,17 @@ static INPUTCFC FAMI4C = { ReadFami4, 0, StrobeFami4, 0, 0, 0 };
 static INPUTCFC HORI4C = { ReadHori4, 0, StrobeHori4, 0, 0, 0 };
 
 /**********************************************************************/
+void FCEU_DrawInput(uint8 *buf)
+{
+   int x;
+
+   for (x = 0; x < 2; x++)
+      if (JPorts[x]->Draw)
+         JPorts[x]->Draw(x, buf, JPAttrib[x]);
+   if (FCExp)
+      if (FCExp->Draw)
+         FCExp->Draw(buf, JPAttribFC);
+}
 
 void FCEU_UpdateInput(void)
 {
@@ -448,8 +471,8 @@ void FCEUI_SetInputFC(int type, void *ptr, int attrib)
 	SetInputStuffFC();
 }
 
-void FCEUI_DisableFourScore(int s) {
-	FSDisable = s;
+void FCEUI_SetInputFourScore(int useFourScore) {
+	FourScoreDisable = (useFourScore == 0);
 }
 
 SFORMAT FCEUCTRL_STATEINFO[] = {
@@ -504,10 +527,9 @@ void FCEUI_FDSSelect(void)
 	FCEU_QSimpleCommand(FCEUNPCMD_FDSSELECT);
 }
 
-int FCEUI_FDSInsert(int oride)
+void FCEUI_FDSInsert(void)
 {
 	FCEU_QSimpleCommand(FCEUNPCMD_FDSINSERT);
-	return(1);
 }
 
 int FCEUI_FDSEject(void)
@@ -535,4 +557,3 @@ void FCEUI_PowerNES(void)
 {
 	FCEU_QSimpleCommand(FCEUNPCMD_POWER);
 }
-

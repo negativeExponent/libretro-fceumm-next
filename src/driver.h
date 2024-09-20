@@ -46,7 +46,7 @@ void FCEUI_PowerNES(void);
 
 void FCEUI_SetInput(int port, int type, void *ptr, int attrib);
 void FCEUI_SetInputFC(int type, void *ptr, int attrib);
-void FCEUI_DisableFourScore(int s);
+void FCEUI_SetInputFourScore(int useFourScore);
 
 #define SI_UNSET            -1
 #define SI_NONE             0
@@ -196,7 +196,7 @@ uint8 FCEUI_VSUniGetDIPs(void);
 void FCEUI_VSUniSetDIP(int w, int state);
 void FCEUI_VSUniCoin(void);
 
-int FCEUI_FDSInsert(int oride);
+void FCEUI_FDSInsert(void);
 int FCEUI_FDSEject(void);
 void FCEUI_FDSSelect(void);
 

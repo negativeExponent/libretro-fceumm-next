@@ -21,7 +21,7 @@ extern "C" {
  ********************************
 */
 
-#define MAX_CORE_OPTIONS 37
+#define MAX_CORE_OPTIONS 48
 
 /* RETRO_LANGUAGE_ENGLISH */
 

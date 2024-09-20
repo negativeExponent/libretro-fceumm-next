@@ -35,6 +35,8 @@
 #include "../../vsuni.h"
 #include "../../video.h"
 
+#include "libretro_input.h"
+
 #ifdef PSP
 #include "pspgu.h"
 #endif
@@ -98,76 +100,9 @@ static int crop_overscan_v_bottom;
 
 static bool use_raw_palette;
 static int aspect_ratio_par;
-
-/*
- * Flags to keep track of whether turbo
- * buttons toggled on or off.
- *
- * There are two values in array
- * for Turbo A and Turbo B for
- * each player
- */
-
-#define MAX_BUTTONS 9
-#define TURBO_BUTTONS 2
-unsigned char turbo_button_toggle[MAX_PLAYERS][TURBO_BUTTONS] = { {0} };
-
-typedef struct
-{
-   unsigned retro;
-   unsigned nes;
-} keymap;
-
-static const keymap turbomap[] = {
-   { RETRO_DEVICE_ID_JOYPAD_X, JOY_A },
-   { RETRO_DEVICE_ID_JOYPAD_Y, JOY_B },
-};
-
-static const keymap bindmap[] = {
-   { RETRO_DEVICE_ID_JOYPAD_A, JOY_A },
-   { RETRO_DEVICE_ID_JOYPAD_B, JOY_B },
-   { RETRO_DEVICE_ID_JOYPAD_L3, JOY_A | JOY_B },
-   { RETRO_DEVICE_ID_JOYPAD_SELECT, JOY_SELECT },
-   { RETRO_DEVICE_ID_JOYPAD_START, JOY_START },
-   { RETRO_DEVICE_ID_JOYPAD_UP, JOY_UP },
-   { RETRO_DEVICE_ID_JOYPAD_DOWN, JOY_DOWN },
-   { RETRO_DEVICE_ID_JOYPAD_LEFT, JOY_LEFT },
-   { RETRO_DEVICE_ID_JOYPAD_RIGHT, JOY_RIGHT },
-};
-
-static const uint32_t powerpadmap[] = {
-   RETROK_q, RETROK_w, RETROK_e, RETROK_r,
-   RETROK_a, RETROK_s, RETROK_d, RETROK_f,
-   RETROK_z, RETROK_x, RETROK_c, RETROK_v,
-};
-
-
-typedef struct {
-   bool enable_4player;                /* four-score / 4-player adapter used */
-   bool up_down_allowed;               /* disabled simultaneous up+down and left+right dpad combinations */
-
-   /* turbo related */
-   uint32_t turbo_enabler[MAX_PLAYERS];
-   uint32_t turbo_delay;
-
-   uint32_t type[MAX_PLAYERS + 1];     /* 4-players + famicom expansion */
-
-   /* input data */
-   uint32_t JSReturn;                     /* player input data, 1 byte per player (1-4) */
-   uint32_t MouseData[MAX_PORTS][4];      /* nes mouse data */
-   uint32_t FamicomData[3];               /* Famicom expansion port data */
-   uint32_t PowerPadData;
-} NES_INPUT_T;
-
-static NES_INPUT_T nes_input = { 0 };
-enum RetroZapperInputModes{RetroCLightgun, RetroSTLightgun, RetroMouse, RetroPointer};
-enum RetroZapperInputModes zappermode = RetroCLightgun;
-enum RetroArkanoidInputModes{RetroArkanoidMouse, RetroArkanoidPointer, RetroArkanoidAbsMouse, RetroArkanoidStelladaptor};
-enum RetroArkanoidInputModes arkanoidmode = RetroArkanoidMouse;
-static int mouseSensitivity = 100;
 extern int switchZapper;
 
-static bool libretro_supports_bitmasks = false;
+bool libretro_supports_bitmasks = false;
 static bool libretro_supports_option_categories = false;
 static unsigned libretro_msg_interface_version = 0;
 
@@ -223,8 +158,6 @@ extern CartInfo iNESCart;
 extern CartInfo UNIFCart;
 extern int show_crosshair;
 extern int option_ramstate;
-extern int zapper_trigger_invert_option;
-extern int zapper_sensor_invert_option;
 
 /* emulator-specific callback functions */
 
@@ -788,7 +721,7 @@ struct st_palettes palettes[] = {
 #define PALETTE_SWITCH_PERIOD 30
 
 static bool libretro_supports_set_variable         = false;
-static bool palette_switch_enabled                 = false;
+bool palette_switch_enabled                        = false;
 static unsigned palette_switch_counter             = 0;
 struct retro_core_option_value *palette_opt_values = NULL;
 static const char *palette_labels[PAL_TOTAL]       = {0};
@@ -925,6 +858,37 @@ static void palette_switch_set_index(uint32_t palette_index)
 
    /* Display notification message */
    FCEUD_DispMessage(RETRO_LOG_INFO, 2000, palette_labels[palette_index]);
+}
+
+void input_palette_switch(bool palette_next, bool palette_prev) {
+	if (palette_prev || palette_next) {
+		if (palette_switch_counter == 0) {
+			unsigned new_palette_index = palette_switch_get_current_index();
+
+			if (palette_prev) {
+				if (new_palette_index > 0) {
+					new_palette_index--;
+				} else {
+					new_palette_index = PAL_TOTAL - 1;
+				}
+			} else { /* palette_next */
+				if (new_palette_index < PAL_TOTAL - 1) {
+					new_palette_index++;
+				} else {
+					new_palette_index = 0;
+				}
+			}
+
+			palette_switch_set_index(new_palette_index);
+		}
+
+		palette_switch_counter++;
+		if (palette_switch_counter >= PALETTE_SWITCH_PERIOD) {
+			palette_switch_counter = 0;
+		}
+	} else {
+		palette_switch_counter = 0;
+	}
 }
 
 /* ========================================
@@ -1214,182 +1178,10 @@ void retro_set_input_state(retro_input_state_t cb)
    input_cb = cb;
 }
 
-static void update_nes_controllers(unsigned port, unsigned device)
-{
-   nes_input.type[port] = device;
-
-   if (port < 4)
-   {
-      switch (device)
-      {
-      case RETRO_DEVICE_NONE:
-         FCEUI_SetInput(port, SI_NONE, &Dummy, 0);
-         FCEU_printf(" Player %u: None Connected\n", port + 1);
-         break;
-      case RETRO_DEVICE_ZAPPER:
-         FCEUI_SetInput(port, SI_ZAPPER, nes_input.MouseData[port], 1);
-         FCEU_printf(" Player %u: Zapper\n", port + 1);
-         break;
-      case RETRO_DEVICE_ARKANOID:
-         FCEUI_SetInput(port, SI_ARKANOID, nes_input.MouseData[port], 0);
-         FCEU_printf(" Player %u: Arkanoid\n", port + 1);
-         break;
-      case RETRO_DEVICE_POWERPADA:
-         nes_input.type[port] = RETRO_DEVICE_POWERPADA;
-         FCEUI_SetInput(port, SI_POWERPADA, &nes_input.PowerPadData, 0);
-         FCEU_printf(" Player %u: Power Pad\n", port + 1);
-         break;
-      case RETRO_DEVICE_POWERPADB:
-         nes_input.type[port] = RETRO_DEVICE_POWERPADB;
-         FCEUI_SetInput(port, SI_POWERPADB, &nes_input.PowerPadData, 0);
-         FCEU_printf(" Player %u: Power Pad\n", port + 1);
-         break;
-      case RETRO_DEVICE_GAMEPAD:
-      default:
-         nes_input.type[port] = RETRO_DEVICE_GAMEPAD;
-         FCEUI_SetInput(port, SI_GAMEPAD, &nes_input.JSReturn, 0);
-         FCEU_printf(" Player %u: Gamepad\n", port + 1);
-         break;
-      }
-   }
-
-   if (port == 4)
-   {
-      switch (device)
-      {
-      case RETRO_DEVICE_FC_ARKANOID:
-         FCEUI_SetInputFC(SIFC_ARKANOID, nes_input.FamicomData, 0);
-         FCEU_printf(" Famicom Expansion: Arkanoid\n");
-         break;
-      case RETRO_DEVICE_FC_SHADOW:
-         FCEUI_SetInputFC(SIFC_SHADOW, nes_input.FamicomData, 1);
-         FCEU_printf(" Famicom Expansion: (Bandai) Hyper Shot\n");
-         break;
-      case RETRO_DEVICE_FC_OEKAKIDS:
-         FCEUI_SetInputFC(SIFC_OEKAKIDS, nes_input.FamicomData, 1);
-         FCEU_printf(" Famicom Expansion: Oeka Kids Tablet\n");
-         break;
-      case RETRO_DEVICE_FC_4PLAYERS:
-         FCEUI_SetInputFC(SIFC_4PLAYER, &nes_input.JSReturn, 0);
-         FCEU_printf(" Famicom Expansion: Famicom 4-Player Adapter\n");
-         break;
-      case RETRO_DEVICE_FC_HYPERSHOT:
-         FCEUI_SetInputFC(SIFC_HYPERSHOT, nes_input.FamicomData, 0);
-         FCEU_printf(" Famicom Expansion: Konami Hyper Shot\n");
-         break;
-      case RETRO_DEVICE_FC_FTRAINERA:
-         FCEUI_SetInputFC(SIFC_FTRAINERA, &nes_input.PowerPadData, 0);
-         FCEU_printf(" Famicom Expansion: Family Trainer A\n");
-         break;
-      case RETRO_DEVICE_FC_FTRAINERB:
-         FCEUI_SetInputFC(SIFC_FTRAINERB, &nes_input.PowerPadData, 0);
-         FCEU_printf(" Famicom Expansion: Family Trainer B\n");
-         break;
-      case RETRO_DEVICE_NONE:
-      default:
-         FCEUI_SetInputFC(SIFC_NONE, &Dummy, 0);
-         FCEU_printf(" Famicom Expansion: None Connected\n");
-         break;
-      }
-   }
-}
-
-static unsigned nes_to_libretro(int d)
-{
-   switch(d)
-   {
-   case SI_UNSET:
-   case SI_GAMEPAD:
-      return RETRO_DEVICE_GAMEPAD;
-   case SI_NONE:
-      return RETRO_DEVICE_NONE;
-   case SI_ZAPPER:
-      return RETRO_DEVICE_ZAPPER;
-   case SI_ARKANOID:
-      return RETRO_DEVICE_ARKANOID;
-   case SI_POWERPADB:
-      return RETRO_DEVICE_POWERPADB;
-   }
-
-   return (RETRO_DEVICE_GAMEPAD);
-}
-
-static unsigned fc_to_libretro(int d)
-{
-   switch(d)
-   {
-   case SIFC_UNSET:
-   case SIFC_NONE:
-      return RETRO_DEVICE_NONE;
-   case SIFC_ARKANOID:
-      return RETRO_DEVICE_FC_ARKANOID;
-   case SIFC_SHADOW:
-      return RETRO_DEVICE_FC_SHADOW;
-   case SIFC_OEKAKIDS:
-      return RETRO_DEVICE_FC_OEKAKIDS;
-   case SIFC_4PLAYER:
-      return RETRO_DEVICE_FC_4PLAYERS;
-   case SIFC_HYPERSHOT:
-      return RETRO_DEVICE_FC_HYPERSHOT;
-   case SIFC_FTRAINERA:
-      return RETRO_DEVICE_FC_FTRAINERA;
-   case SIFC_FTRAINERB:
-      return RETRO_DEVICE_FC_FTRAINERB;
-   }
-
-   return (RETRO_DEVICE_NONE);
-}
-
 void retro_set_controller_port_device(unsigned port, unsigned device)
 {
    if (port < 5)
-   {
-      if (port < 2) /* player 1-2 */
-      {
-         if (device != RETRO_DEVICE_AUTO)
-            update_nes_controllers(port, device);
-         else
-            update_nes_controllers(port, nes_to_libretro(GameInfo->input[port]));
-      }
-      else
-      {
-         if (port < 4) /* player 3-4 */
-         {
-            /* This section automatically enables 4players support
-             * when player 3 or 4 used */
-
-            nes_input.type[port] = RETRO_DEVICE_NONE;
-
-            if (device == RETRO_DEVICE_AUTO)
-            {
-               if (nes_input.enable_4player)
-                  nes_input.type[port] = RETRO_DEVICE_GAMEPAD;
-            }
-            else if (device == RETRO_DEVICE_GAMEPAD)
-               nes_input.type[port] = RETRO_DEVICE_GAMEPAD;
-
-            FCEU_printf(" Player %u: %s\n", port + 1,
-               (nes_input.type[port] == RETRO_DEVICE_NONE) ? "None Connected" : "Gamepad");
-         }
-         else /* do famicom controllers here */
-         {
-            if (device != RETRO_DEVICE_FC_AUTO)
-               update_nes_controllers(4, device);
-            else
-               update_nes_controllers(4, fc_to_libretro(GameInfo->inputfc));
-         }
-
-         if (nes_input.type[2] == RETRO_DEVICE_GAMEPAD
-         || nes_input.type[3] == RETRO_DEVICE_GAMEPAD)
-            FCEUI_DisableFourScore(0);
-         else
-            FCEUI_DisableFourScore(1);
-
-         /* check if famicom 4player adapter is used */
-         if (nes_input.type[4] == RETRO_DEVICE_FC_4PLAYERS)
-            FCEUI_DisableFourScore(1);
-      }
-   }
+      input_set_controller_port_device(port, device);
 }
 
 /* Core options 'update display' callback */
@@ -1600,58 +1392,6 @@ void retro_set_environment(retro_environment_t cb)
 {
    struct retro_vfs_interface_info vfs_iface_info;
 
-   static const struct retro_controller_description pads1[] = {
-      { "Auto",    RETRO_DEVICE_AUTO },
-      { "Gamepad", RETRO_DEVICE_GAMEPAD },
-      { "Zapper",  RETRO_DEVICE_ZAPPER },
-      { 0, 0 },
-   };
-
-   static const struct retro_controller_description pads2[] = {
-      { "Auto",     RETRO_DEVICE_AUTO },
-      { "Gamepad",  RETRO_DEVICE_GAMEPAD },
-      { "Arkanoid", RETRO_DEVICE_ARKANOID },
-      { "Zapper",   RETRO_DEVICE_ZAPPER },
-      { "Power Pad A",   RETRO_DEVICE_POWERPADA },
-      { "Power Pad B",   RETRO_DEVICE_POWERPADB },
-      { 0, 0 },
-   };
-
-   static const struct retro_controller_description pads3[] = {
-      { "Auto",     RETRO_DEVICE_AUTO },
-      { "Gamepad",  RETRO_DEVICE_GAMEPAD },
-      { "Power Pad A",   RETRO_DEVICE_POWERPADA },
-      { "Power Pad B",   RETRO_DEVICE_POWERPADB },
-      { 0, 0 },
-   };
-
-   static const struct retro_controller_description pads4[] = {
-      { "Auto",     RETRO_DEVICE_AUTO },
-      { "Gamepad",  RETRO_DEVICE_GAMEPAD },
-      { 0, 0 },
-   };
-
-   static const struct retro_controller_description pads5[] = {
-      { "Auto",                  RETRO_DEVICE_FC_AUTO },
-      { "Arkanoid",              RETRO_DEVICE_FC_ARKANOID },
-      { "(Bandai) Hyper Shot",   RETRO_DEVICE_FC_SHADOW },
-      { "(Konami) Hyper Shot",   RETRO_DEVICE_FC_HYPERSHOT },
-      { "Oeka Kids Tablet",      RETRO_DEVICE_FC_OEKAKIDS },
-      { "4-Player Adapter",      RETRO_DEVICE_FC_4PLAYERS },
-      { "Family Trainer A",      RETRO_DEVICE_FC_FTRAINERA },
-      { "Family Trainer B",      RETRO_DEVICE_FC_FTRAINERB },
-      { 0, 0 },
-   };
-
-   static const struct retro_controller_info ports[] = {
-      { pads1, 3 },
-      { pads2, 6 },
-      { pads3, 4 },
-      { pads4, 2 },
-      { pads5, 8 },
-      { 0, 0 },
-   };
-
    static const struct retro_system_content_info_override content_overrides[] = {
       {
          "fds|nes|unf|unif", /* extensions */
@@ -1662,8 +1402,6 @@ void retro_set_environment(retro_environment_t cb)
    };
 
    environ_cb = cb;
-
-   environ_cb(RETRO_ENVIRONMENT_SET_CONTROLLER_INFO, (void*)ports);
 
    vfs_iface_info.required_interface_version = 1;
    vfs_iface_info.iface                      = NULL;
@@ -2053,9 +1791,10 @@ static void check_variables(bool startup)
    var.key = "fceumm_up_down_allowed";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-      nes_input.up_down_allowed = (!strcmp(var.value, "enabled")) ? true : false;
-   else
-      nes_input.up_down_allowed = false;
+   {
+      bool value = !strcmp(var.value, "enabled") ? true : false;
+		input_allow_updown_leftright(value);
+   }
 
    var.key = "fceumm_nospritelimit";
 
@@ -2111,40 +1850,31 @@ static void check_variables(bool startup)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (!strcmp(var.value, "mouse")) {
-         zappermode = RetroMouse;
-         switchZapper = 0;
-      }
-      else if (!strcmp(var.value, "touchscreen")) {
-         zappermode = RetroPointer;
-         switchZapper = 0;
-      }
-      else if (!strcmp(var.value, "stlightgun")) {
-         zappermode = RetroSTLightgun;
-         switchZapper = 1;
-      }
-      else {
-         zappermode = RetroCLightgun; /*default setting*/
-         switchZapper = 0;
-      }
+      FCEU_ZapperSetSTMode(false);
+		if (!strcmp(var.value, "mouse")) {
+			input_set_zapper_mode(RetroMouse);
+		} else if (!strcmp(var.value, "touchscreen")) {
+			input_set_zapper_mode(RetroPointer);
+		} else if (!strcmp(var.value, "stlightgun")) {
+			input_set_zapper_mode(RetroSTLightgun);
+			FCEU_ZapperSetSTMode(true);
+		} else {
+			input_set_zapper_mode(RetroLightgun); /*default setting*/
+		}
    }
 
    var.key = "fceumm_arkanoid_mode";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (!strcmp(var.value, "touchscreen")) {
-         arkanoidmode = RetroArkanoidPointer;
-      }
-      else if (!strcmp(var.value, "abs_mouse")) {
-         arkanoidmode = RetroArkanoidAbsMouse;
-      }
-      else if (!strcmp(var.value, "stelladaptor")) {
-         arkanoidmode = RetroArkanoidStelladaptor;
-      }
-      else {
-         arkanoidmode = RetroArkanoidMouse; /*default setting*/
-      }
+      if (!strcmp(var.value, "touchscreen"))
+         input_set_arkanoid_mode(RetroArkanoidPointer);
+      else if (!strcmp(var.value, "abs_mouse"))
+         input_set_arkanoid_mode(RetroArkanoidAbsMouse);
+      else if (!strcmp(var.value, "stelladaptor"))
+         input_set_arkanoid_mode(RetroArkanoidStelladaptor);
+      else
+         input_set_arkanoid_mode(RetroArkanoidMouse); /*default setting*/
    }
 
    var.key = "fceumm_zapper_tolerance";
@@ -2158,7 +1888,8 @@ static void check_variables(bool startup)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      mouseSensitivity = atoi(var.value);
+      double value = atof(var.value);
+		input_set_mousesensitivity(value);
    }
 
    var.key = "fceumm_show_crosshair";
@@ -2173,16 +1904,28 @@ static void check_variables(bool startup)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (!strcmp(var.value, "enabled")) zapper_trigger_invert_option = 1;
-      else if (!strcmp(var.value, "disabled")) zapper_trigger_invert_option = 0;
+      if (!strcmp(var.value, "enabled"))
+      {
+         FCEU_ZapperInvertTrigger(true);
+      }
+      else if (!strcmp(var.value, "disabled"))
+      {
+         FCEU_ZapperInvertTrigger(false);
+      }
    }
 
    var.key = "fceumm_zapper_sensor";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (!strcmp(var.value, "enabled")) zapper_sensor_invert_option = 1;
-      else if (!strcmp(var.value, "disabled")) zapper_sensor_invert_option = 0;
+      if (!strcmp(var.value, "enabled"))
+      {
+         FCEU_ZapperInvertSensor(true);
+      }
+      else if (!strcmp(var.value, "disabled"))
+      {
+         FCEU_ZapperInvertSensor(false);
+      }
    }
 
 #ifdef PSP
@@ -2272,24 +2015,33 @@ static void check_variables(bool startup)
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      nes_input.turbo_enabler[0] = 0;
-      nes_input.turbo_enabler[1] = 0;
-
       if (!strcmp(var.value, "Player 1"))
-         nes_input.turbo_enabler[0] = 1;
-      else if (!strcmp(var.value, "Player 2"))
-         nes_input.turbo_enabler[1] = 1;
-      else if (!strcmp(var.value, "Both"))
       {
-         nes_input.turbo_enabler[0] = 1;
-         nes_input.turbo_enabler[1] = 1;
+         input_enable_turbo_buttons(0, true);
+      }
+      else if (!strcmp(var.value, "Player 2"))
+      {
+         input_enable_turbo_buttons(1, true);
+      }
+      else if (!strcmp(var.value, "Players 1 and 2"))
+      {
+         input_enable_turbo_buttons(0, true);
+         input_enable_turbo_buttons(1, true);
+      }
+      else
+      {
+         input_enable_turbo_buttons(0, false);
+         input_enable_turbo_buttons(1, false);
       }
    }
 
    var.key = "fceumm_turbo_delay";
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-      nes_input.turbo_delay = atoi(var.value);
+   {
+      int value = atoi(var.value);
+		input_set_turbo_delay(value);
+   }
 
    var.key = "fceumm_region";
 
@@ -2405,436 +2157,6 @@ static void check_variables(bool startup)
    update_dipswitch();
 
    update_option_visibility();
-}
-
-void add_powerpad_input(unsigned port, uint32 variant, uint32_t *ppdata) 
-{
-   unsigned k;
-   const uint32_t* map = powerpadmap;
-   for (k = 0 ; k < 12 ; k++)
-   	if (input_cb(0, RETRO_DEVICE_KEYBOARD, 0, map[k]))
-            *ppdata |= (1 << k);
-}
-
-static int mzx = 0, mzy = 0;
-
-void get_mouse_input(unsigned port, uint32 variant, uint32_t *mousedata)
-{
-   int min_width, min_height, max_width, max_height;
-
-   max_width   = 256;
-   max_height  = 240;
-   mousedata[2]  = 0; /* reset click state */
-   
-   if (variant == RETRO_DEVICE_FC_ARKANOID)
-       variant = RETRO_DEVICE_ARKANOID;
-
-   if ((variant != RETRO_DEVICE_ARKANOID && zappermode == RetroMouse) || 
-       (variant == RETRO_DEVICE_ARKANOID && arkanoidmode == RetroArkanoidMouse)) /* mouse device */
-   {
-      int mouse_Lbutton;
-      int mouse_Rbutton;
-
-      min_width   = crop_overscan_h_left + 1;
-      min_height  = crop_overscan_v_top + 1;
-      max_width  -= crop_overscan_h_right;
-      max_height -= crop_overscan_v_bottom;
-
-      mzx += mouseSensitivity * input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_X) / 100;
-      mzy += mouseSensitivity * input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_Y) / 100;      
-
-      switch(variant) {
-        case RETRO_DEVICE_ARKANOID:
-            if (mzx < 0) mzx = 0;
-            else if (mzx > 240) mzx = 240;
-            if (mzy < min_height) mzy = min_height;
-            else if (mzy > max_height) mzy = max_height;
-            mousedata[1] = mzy;
-            break; 
-
-        case RETRO_DEVICE_ZAPPER:
-        default:
-      /* Set crosshair within the limits of current screen resolution */
-      if (mzx < min_width) mzx = min_width;
-      else if (mzx > max_width) mzx = max_width;
-            break;
-      }
-
-      mousedata[0] = mzx;
-      
-      mouse_Lbutton = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT);
-      mouse_Rbutton = input_cb(port, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT);
-
-      if (mouse_Lbutton)
-         mousedata[2] |= 0x1;
-      if (mouse_Rbutton)
-         mousedata[2] |= 0x2;
-   }
-   else if (variant != RETRO_DEVICE_ARKANOID && zappermode == RetroPointer) {
-      int offset_x = (crop_overscan_h_left * 0x120) - 1;
-      int offset_y = (crop_overscan_v_top * 0x133) + 1;
-
-      int _x = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X);
-      int _y = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y);
-
-      if (_x == 0 && _y == 0)
-      {
-         mousedata[0] = 0;
-      }
-      else
-      {
-         mousedata[0] = (_x + (0x7FFF + offset_x)) * max_width  / ((0x7FFF + offset_x) * 2);
-         mousedata[1] = (_y + (0x7FFF + offset_y)) * max_height  / ((0x7FFF + offset_y) * 2);
-      }
-
-      if (input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED))
-         mousedata[2] |= 0x1;
-   }
-   else if (variant == RETRO_DEVICE_ARKANOID && (arkanoidmode == RetroArkanoidAbsMouse || arkanoidmode == RetroArkanoidPointer)) {
-      int offset_x = (crop_overscan_h_left * 0x120) - 1;
-
-      int _x = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_X);
-      int _y = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y);
-
-      if (_x != 0 || _y != 0)
-      {
-         int32 raw = (_x + (0x7FFF + offset_x)) * max_width  / ((0x7FFF + offset_x) * 2);
-         if (arkanoidmode == RetroArkanoidAbsMouse) {
-             /* remap so full screen movement ends up within the encoder range 0-240
-                game board: 176 wide
-                paddle: 32
-                range of movement: 176-32 = 144
-                left edge: 16
-                right edge: 64
-             
-                increase movement by 10 to allow edges to be reached in case of problems
-	     */
-             raw = (raw - 128) * 140 / 128 + 128;
-             if (raw < 0)
-                 raw = 0;
-             else if (raw > 255)
-                 raw = 255;
-              
-             mousedata[0] = raw * 240 / 255;
-         }
-         else {
-             /* remap so full board movement ends up within the encoder range 0-240 */
-             if (mousedata[0] < 16+(32/2))
-                 mousedata[0] = 0;
-             else
-                 mousedata[0] -= 16+(32/2);
-             if (mousedata[0] > 144)
-                 mousedata[0] = 144;
-             mousedata[0] = raw * 240 / 144;
-         }
-      }
-      
-
-      if (input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_PRESSED))
-         mousedata[2] |= 0x1;
-   }
-   else if (variant == RETRO_DEVICE_ARKANOID && arkanoidmode == RetroArkanoidStelladaptor) {
-      int x = input_cb(port, RETRO_DEVICE_ANALOG, 0, RETRO_DEVICE_ID_ANALOG_X);
-      mousedata[0] = (x+32768)*240/65535;
-      if (input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A) || input_cb(port, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
-         mousedata[2] |= 0x1;
-   }
-   else  if (zappermode == RetroCLightgun) /* Crosshair lightgun device */
-   {
-      int offset_x = (crop_overscan_h_left * 0x120) - 1;
-      int offset_y = (crop_overscan_v_top * 0x133) + 1;
-      int offscreen;
-      int offscreen_shot;
-      int trigger;
-
-      offscreen = input_cb( port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_IS_OFFSCREEN );
-      offscreen_shot = input_cb( port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_RELOAD );
-      trigger = input_cb( port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER );
-
-      if ( offscreen || offscreen_shot )
-      {
-         mousedata[0] = 0;
-         mousedata[1] = 0;
-      }
-      else
-      {
-         int _x = input_cb( port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_X );
-         int _y = input_cb( port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_SCREEN_Y );
-
-         mousedata[0] = (_x + (0x7FFF + offset_x)) * max_width  / ((0x7FFF + offset_x) * 2);
-         mousedata[1] = (_y + (0x7FFF + offset_y)) * max_height  / ((0x7FFF + offset_y) * 2);
-      }
-
-      if ( trigger || offscreen_shot )
-         mousedata[2] |= 0x1;
-   }
-   else /* Sequential targets lightgun device integration */
-   {
-      mousedata[2] = input_cb( port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_TRIGGER );
-      mousedata[3] = input_cb( port, RETRO_DEVICE_LIGHTGUN, 0, RETRO_DEVICE_ID_LIGHTGUN_AUX_A );
-   }
-}
-
-static void FCEUD_UpdateInput(void)
-{
-   unsigned player, port;
-   bool palette_prev = false;
-   bool palette_next = false;
-
-   poll_cb();
-
-   /* Reset input states */
-   nes_input.JSReturn = 0;
-
-   /* nes gamepad */
-   for (player = 0; player < MAX_PLAYERS; player++)
-   {
-      int i              = 0;
-      uint8_t input_buf  = 0;
-      int player_enabled = (nes_input.type[player] == RETRO_DEVICE_GAMEPAD) ||
-            (nes_input.type[player] == RETRO_DEVICE_JOYPAD);
-
-      if (player_enabled)
-      {
-         int16_t ret;
-
-         if (libretro_supports_bitmasks)
-         {
-            bool dpad_enabled = true;
-
-            ret = input_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_MASK);
-
-            /* If palette switching is enabled, check if
-             * player 1 has the L2 button held down */
-            if ((player == 0) &&
-                palette_switch_enabled &&
-                (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L2)))
-            {
-               /* D-Pad left/right are used to switch palettes */
-               palette_prev = (bool)(ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT));
-               palette_next = (bool)(ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT));
-
-               /* Regular D-Pad input is disabled */
-               dpad_enabled = false;
-            }
-
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_A))
-               input_buf |= JOY_A;
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_B))
-               input_buf |= JOY_B;
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_L3))
-               input_buf |= JOY_A | JOY_B;
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_SELECT))
-               input_buf |= JOY_SELECT;
-            if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_START))
-               input_buf |= JOY_START;
-
-            if (dpad_enabled)
-            {
-               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_UP))
-                  input_buf |= JOY_UP;
-               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_DOWN))
-                  input_buf |= JOY_DOWN;
-               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_LEFT))
-                  input_buf |= JOY_LEFT;
-               if (ret & (1 << RETRO_DEVICE_ID_JOYPAD_RIGHT))
-                  input_buf |= JOY_RIGHT;
-            }
-         }
-         else
-         {
-            for (i = 0; i < MAX_BUTTONS; i++)
-               input_buf |= input_cb(player, RETRO_DEVICE_JOYPAD, 0,
-                     bindmap[i].retro) ? bindmap[i].nes : 0;
-
-            /* If palette switching is enabled, check if
-             * player 1 has the L2 button held down */
-            if ((player == 0) &&
-                palette_switch_enabled &&
-                input_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2))
-            {
-               /* D-Pad left/right are used to switch palettes */
-               palette_prev = (bool)(input_buf & JOY_LEFT);
-               palette_next = (bool)(input_buf & JOY_RIGHT);
-
-               /* Regular D-Pad input is disabled */
-               input_buf &= ~(JOY_UP | JOY_DOWN | JOY_LEFT | JOY_RIGHT);
-            }
-         }
-
-         /* Turbo A and Turbo B buttons are
-          * mapped to Joypad X and Joypad Y
-          * in RetroArch joypad.
-          * Turbo A+B button is mapped to R3
-          * in RetroArch joypad.
-          *
-          * We achieve this by keeping track of
-          * the number of times it increments
-          * the toggle counter and fire or not fire
-          * depending on whether the delay value has
-          * been reached.
-          *
-          * Each turbo button is activated by
-          * corresponding mapped button
-          * OR mapped Turbo A+B button.
-          * This allows Turbo A+B button to use
-          * the same toggle counters as Turbo A
-          * and Turbo B buttons use separately.
-          */
-
-         if (nes_input.turbo_enabler[player])
-         {
-            /* Handle Turbo A, B & A+B buttons */
-            for (i = 0; i < TURBO_BUTTONS; i++)
-            {
-               if (input_cb(player, RETRO_DEVICE_JOYPAD, 0, turbomap[i].retro) || input_cb(player, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3))
-               {
-                  if (!turbo_button_toggle[player][i])
-                     input_buf |= turbomap[i].nes;
-                  turbo_button_toggle[player][i]++;
-                  turbo_button_toggle[player][i] %= nes_input.turbo_delay + 1;
-               }
-               else
-                  /* If the button is not pressed, just reset the toggle */
-                  turbo_button_toggle[player][i] = 0;
-            }
-         }
-      }
-
-      if (!nes_input.up_down_allowed)
-      {
-         if ((input_buf & JOY_UP) && (input_buf & JOY_DOWN))
-            input_buf &= ~(JOY_UP | JOY_DOWN);
-         if ((input_buf & JOY_LEFT) && (input_buf & JOY_RIGHT))
-            input_buf &= ~(JOY_LEFT | JOY_RIGHT);
-      }
-
-      nes_input.JSReturn |= (input_buf & 0xff) << (player << 3);
-   }
-
-   /* other inputs*/
-   for (port = 0; port < MAX_PORTS; port++)
-   {
-      switch (nes_input.type[port])
-      {
-         case RETRO_DEVICE_ARKANOID:
-         case RETRO_DEVICE_FC_ARKANOID:
-         case RETRO_DEVICE_ZAPPER:
-               get_mouse_input(port, nes_input.type[port], nes_input.MouseData[port]);
-            break;
-      }
-   }
-
-   nes_input.PowerPadData = 0;
-   for (port = 0; port < MAX_PORTS; port++)
-   {
-      switch (nes_input.type[port])
-      {
-         case RETRO_DEVICE_POWERPADB:
-         case RETRO_DEVICE_POWERPADA:
-            add_powerpad_input(port, nes_input.type[port], &nes_input.PowerPadData);
-            break;
-      }
-   }
-
-   /* famicom inputs */
-   switch (nes_input.type[4])
-   {
-      case RETRO_DEVICE_FC_ARKANOID:
-      case RETRO_DEVICE_FC_OEKAKIDS:
-      case RETRO_DEVICE_FC_SHADOW:
-         get_mouse_input(0, nes_input.type[4], nes_input.FamicomData);
-         break;
-      case RETRO_DEVICE_FC_HYPERSHOT:
-      {
-         static int toggle;
-         int i;
-
-         nes_input.FamicomData[0] = 0;
-         toggle ^= 1;
-         for (i = 0; i < 2; i++)
-         {
-
-            if (input_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B))
-               nes_input.FamicomData[0] |= 0x02 << (i * 2);
-            else if (input_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y))
-            {
-               if (toggle)
-                  nes_input.FamicomData[0] |= 0x02 << (i * 2);
-               else
-                  nes_input.FamicomData[0] &= ~(0x02 << (i * 2));
-            }
-            if (input_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A))
-               nes_input.FamicomData[0] |= 0x04 << (i * 2);
-            else if (input_cb(i, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X))
-            {
-               if (toggle)
-                  nes_input.FamicomData[0] |= 0x04 << (i * 2);
-               else
-                  nes_input.FamicomData[0] &= ~(0x04 << (i * 2));
-            }
-         }
-         break;
-      }
-      case RETRO_DEVICE_FC_FTRAINERB:
-      case RETRO_DEVICE_FC_FTRAINERA:
-         add_powerpad_input(4, nes_input.type[4], &nes_input.PowerPadData);
-         break;
-   }
-
-   if (input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2))
-      FCEU_VSUniCoin();             /* Insert Coin VS System */
-
-   if (GameInfo->type == GIT_FDS)   /* Famicom Disk System */
-   {
-      bool curL = input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L);
-      bool curR = input_cb(0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R);
-      static bool prevL = false, prevR = false;
-
-      if (curL && !prevL)
-         FCEU_FDSSelect();          /* Swap FDisk side */
-      prevL = curL;
-
-      if (curR && !prevR)
-         FCEU_FDSInsert(-1);        /* Insert or eject the disk */
-      prevR = curR;
-   }
-
-   /* Handle internal palette switching */
-   if (palette_prev || palette_next)
-   {
-      if (palette_switch_counter == 0)
-      {
-         int new_palette_index = palette_switch_get_current_index();
-
-         if (palette_prev)
-         {
-            if (new_palette_index > 0)
-               new_palette_index--;
-            else
-               new_palette_index = PAL_TOTAL - 1;
-         }
-         else /* palette_next */
-         {
-            if (new_palette_index < PAL_TOTAL - 1)
-               new_palette_index++;
-            else
-               new_palette_index = 0;
-         }
-
-         palette_switch_set_index(new_palette_index);
-      }
-
-      palette_switch_counter++;
-      if (palette_switch_counter >= PALETTE_SWITCH_PERIOD)
-         palette_switch_counter = 0;
-   }
-   else
-      palette_switch_counter = 0;
-}
-
-void FCEUD_Update(uint8 *XBuf, int32 *Buffer, int Count)
-{
 }
 
 static void retro_run_blit(uint8_t *gfx)
@@ -2980,7 +2302,8 @@ void retro_run(void)
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)
       check_variables(false);
 
-   FCEUD_UpdateInput();
+   input_update(&input_cb);
+
    FCEUI_Emulate(&gfx, &sound, &ssize, 0);
 
    retro_run_blit(gfx);
@@ -3128,394 +2451,11 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code)
    }
 }
 
-typedef struct cartridge_db
-{
-   char title[256];
-   uint32_t crc;
-} cartridge_db_t;
-
-static const struct cartridge_db fourscore_db_list[] =
-{
-   {
-      "Bomberman II (USA)",
-      0x1ebb5b42
-   },
-#if 0
-   {
-      "Championship Bowling (USA)",
-      0xeac38105
-   },
-#endif
-   {
-      "Chris Evert & Ivan Lendl in Top Players' Tennis (USA)",
-      0xf99e37eb
-   },
-#if 0
-   {
-      "Crash 'n' the Boys - Street Challenge (USA)",
-      0xc7f0c457
-   },
-#endif
-   {
-      "Four Players' Tennis (Europe)",
-      0x48b8ee58
-   },
-   {
-      "Danny Sullivan's Indy Heat (Europe)",
-      0x27ca0679,
-   },
-   {
-      "Gauntlet II (Europe)",
-      0x79f688bc
-   },
-   {
-      "Gauntlet II (USA)",
-      0x1b71ccdb
-   },
-   {
-      "Greg Norman's Golf Power (USA)",
-      0x1352f1b9
-   },
-   {
-      "Harlem Globetrotters (USA)",
-      0x2e6ee98d
-   },
-   {
-      "Ivan 'Ironman' Stewart's Super Off Road (Europe)",
-      0x05104517
-   },
-   {
-      "Ivan 'Ironman' Stewart's Super Off Road (USA)",
-      0x4b041b6b
-   },
-   {
-      "Kings of the Beach - Professional Beach Volleyball (USA)",
-      0xf54b34bd
-   },
-   {
-      "Magic Johnson's Fast Break (USA)",
-      0xc6c2edb5
-   },
-   {
-      "M.U.L.E. (USA)",
-      0x0939852f
-   },
-   {
-      "Micro Mages",
-      0x4e6b9078
-   },
-   {
-      "Monster Truck Rally (USA)",
-      0x2f698c4d
-   },
-   {
-      "NES Play Action Football (USA)",
-      0xb9b4d9e0
-   },
-   {
-      "Nightmare on Elm Street, A (USA)",
-      0xda2cb59a
-   },
-   {
-      "Nintendo World Cup (Europe)",
-      0x8da6667d
-   },
-   {
-      "Nintendo World Cup (Europe) (Rev A)",
-      0x7c16f819
-   },
-   {
-      "Nintendo World Cup (Europe) (Rev B)",
-      0x7f08d0d9
-   },
-   {
-      "Nintendo World Cup (USA)",
-      0xa22657fa
-   },
-   {
-      "R.C. Pro-Am II (Europe)",
-      0x308da987
-   },
-   {
-      "R.C. Pro-Am II (USA)",
-      0x9edd2159
-   },
-   {
-      "Rackets & Rivals (Europe)",
-      0x8fa6e92c
-   },
-   {
-      "Roundball - 2-on-2 Challenge (Europe)",
-      0xad0394f0
-   },
-   {
-      "Roundball - 2-on-2 Challenge (USA)",
-      0x6e4dcfd2
-   },
-   {
-      "Spot - The Video Game (Japan)",
-      0x0abdd5ca
-   },
-   {
-      "Spot - The Video Game (USA)",
-      0xcfae9dfa
-   },
-   {
-      "Smash T.V. (Europe)",
-      0x0b8f8128
-   },
-   {
-      "Smash T.V. (USA)",
-      0x6ee94d32
-   },
-   {
-      "Super Jeopardy! (USA)",
-      0xcf4487a2
-   },
-   {
-      "Super Spike V'Ball (Europe)",
-      0xc05a63b2
-   },
-   {
-      "Super Spike V'Ball (USA)",
-      0xe840fd21
-   },
-   {
-      "Super Spike V'Ball + Nintendo World Cup (USA)",
-      0x407d6ffd
-   },
-   {
-      "Swords and Serpents (Europe)",
-      0xd153caf6
-   },
-   {
-      "Swords and Serpents (France)",
-      0x46135141
-   },
-   {
-      "Swords and Serpents (USA)",
-      0x3417ec46
-   },
-   {
-      "Battle City (Japan) (4 Players Hack) http://www.romhacking.net/hacks/2142/",
-      0x69977c9e
-   },
-   {
-      "Bomberman 3 (Homebrew) http://tempect.de/senil/games.html",
-      0x2da5ece0
-   },
-   {
-      "K.Y.F.F. (Homebrew) http://slydogstudios.org/index.php/k-y-f-f/",
-      0x90d2e9f0
-   },
-   {
-      "Super PakPak (Homebrew) http://wiki.nesdev.com/w/index.php/Super_PakPak",
-      0x1394ded0
-   },
-   {
-      "Super Mario Bros. + Tetris + Nintendo World Cup (Europe)",
-      0x73298c87
-   },
-   {
-      "Super Mario Bros. + Tetris + Nintendo World Cup (Europe) (Rev A)",
-      0xf46ef39a
-   }
-};
-
-static const struct cartridge_db famicom_4p_db_list[] =
-{
-   {
-      "Bakutoushi Patton-Kun (Japan) (FDS)",
-      0xc39b3bb2
-   },
-   {
-      "Bomber Man II (Japan)",
-      0x0c401790
-   },
-   {
-      "Championship Bowling (Japan)",
-      0x9992f445
-   },
-   {
-      "Downtown - Nekketsu Koushinkyoku - Soreyuke Daiundoukai (Japan)",
-      0x3e470fe0
-   },
-   {
-      "Ike Ike! Nekketsu Hockey-bu - Subette Koronde Dairantou (Japan)",
-      0x4f032933
-   },
-   {
-      "Kunio-kun no Nekketsu Soccer League (Japan)",
-      0x4b5177e9
-   },
-   {
-      "Moero TwinBee - Cinnamon Hakase o Sukue! (Japan)",
-      0x9f03b11f
-   },
-   {
-      "Moero TwinBee - Cinnamon Hakase wo Sukue! (Japan) (FDS)",
-      0x13205221
-   },
-   {
-      "Nekketsu Kakutou Densetsu (Japan)",
-      0x37e24797
-   },
-   {
-      "Nekketsu Koukou Dodgeball-bu (Japan)",
-      0x62c67984
-   },
-   {
-      "Nekketsu! Street Basket - Ganbare Dunk Heroes (Japan)",
-      0x88062d9a
-   },
-   {
-      "Super Dodge Ball (USA) (3-4p with Game Genie code GEUOLZZA)",
-      0x689971f9
-   },
-   {
-      "Super Dodge Ball (USA) (patched) http://www.romhacking.net/hacks/71/",
-      0x4ff17864
-   },
-   {
-      "U.S. Championship V'Ball (Japan)",
-      0x213cb3fb
-   },
-   {
-      "U.S. Championship V'Ball (Japan) (Beta)",
-      0xd7077d96
-   },
-   {
-      "Wit's (Japan)",
-      0xb1b16b8a
-   }
-};
-
 bool retro_load_game(const struct retro_game_info *info)
 {
    unsigned i, j;
    const char *system_dir = NULL;
-   size_t fourscore_len = sizeof(fourscore_db_list)   / sizeof(fourscore_db_list[0]);
-   size_t famicom_4p_len = sizeof(famicom_4p_db_list) / sizeof(famicom_4p_db_list[0]);
    enum retro_pixel_format rgb565;
-
-   struct retro_input_descriptor desc[] = {
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "(VSSystem) Insert Coin" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "(FDS) Disk Side Change" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "(FDS) Insert/Eject Disk" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 0 },
-   };
-
-   struct retro_input_descriptor desc_ps[] = { /* ps: palette switching */
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L2,     "Switch Palette (+ Left/Right)" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R2,     "(VSSystem) Insert Coin" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L,      "(FDS) Disk Side Change" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R,      "(FDS) Insert/Eject Disk" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 0, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 1, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 2, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_LEFT,   "D-Pad Left" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_UP,     "D-Pad Up" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_DOWN,   "D-Pad Down" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_RIGHT,  "D-Pad Right" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_B,      "B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_A,      "A" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_L3,     "A+B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_SELECT, "Select" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_START,  "Start" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_X,      "Turbo A" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_Y,      "Turbo B" },
-      { 3, RETRO_DEVICE_JOYPAD, 0, RETRO_DEVICE_ID_JOYPAD_R3,     "Turbo A+B" },
-
-      { 0 },
-   };
 
    size_t desc_base = 64;
    struct retro_memory_descriptor descs[64 + 4];
@@ -3625,16 +2565,6 @@ bool retro_load_game(const struct retro_game_info *info)
       return false;
    }
 
-   if (palette_switch_enabled)
-      environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc_ps);
-   else
-      environ_cb(RETRO_ENVIRONMENT_SET_INPUT_DESCRIPTORS, desc);
-
-   for (i = 0; i < MAX_PORTS; i++) {
-      FCEUI_SetInput(i, SI_GAMEPAD, &nes_input.JSReturn, 0);
-      nes_input.type[i] = RETRO_DEVICE_JOYPAD;
-   }
-
    external_palette_exist = ipalette;
    if (external_palette_exist)
       FCEU_printf(" Loading custom palette: %s%cnes.pal\n",
@@ -3651,28 +2581,9 @@ bool retro_load_game(const struct retro_game_info *info)
    stereo_filter_init();
    PowerNES();
 
-   FCEUI_DisableFourScore(1);
-
-   for (i = 0; i < fourscore_len; i++)
-   {
-      if (fourscore_db_list[i].crc == iNESCart.CRC32)
-      {
-         FCEUI_DisableFourScore(0);
-         nes_input.enable_4player = true;
-         break;
-      }
-   }
-
-   for (i = 0; i < famicom_4p_len; i++)
-   {
-      if (famicom_4p_db_list[i].crc == iNESCart.CRC32)
-      {
-         GameInfo->inputfc = SIFC_4PLAYER;
-         FCEUI_SetInputFC(SIFC_4PLAYER, &nes_input.JSReturn, 0);
-         nes_input.enable_4player = true;
-         break;
-      }
-   }
+   input_init_env(&environ_cb);
+   input_set_defaults();
+   input_update_descriptors();
 
    memset(descs, 0, sizeof(descs));
    i = 0;

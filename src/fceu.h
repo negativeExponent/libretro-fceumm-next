@@ -3,6 +3,10 @@
 
 #include "fceu-types.h"
 
+#define NES_WIDTH  256
+#define NES_HEIGHT 240
+#define NTSC_WIDTH 602
+
 extern int fceuindbg;
 
 /* Overclocking-related */
@@ -94,9 +98,12 @@ typedef struct {
 	 */
 	int UsrFirstSLine[2];
 	int UsrLastSLine[2];
+
 	uint32 SndRate;
 	int soundq;
 	int lowpass;
+
+	int ReplaceP2StartWithMicrophone;
 } FCEUS;
 
 extern FCEUS FSettings;

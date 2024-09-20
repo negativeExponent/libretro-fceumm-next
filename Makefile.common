@@ -38,6 +38,7 @@ endif
 SOURCES_C += \
 	$(CORE_DIR)/drivers/libretro/libretro.c \
 	$(CORE_DIR)/drivers/libretro/libretro_dipswitch.c \
+	$(CORE_DIR)/drivers/libretro/libretro_input.c \
 	$(CORE_DIR)/cart.c \
 	$(CORE_DIR)/cheat.c \
 	$(CORE_DIR)/crc32.c \

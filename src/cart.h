@@ -20,13 +20,20 @@ typedef struct {
 					 * set to mapper 4.
 					 */
 	int battery;	/* Presence of an actual battery. */
+	int HasTrainer; /* indicated the presence of trainer rom data */
+	int HasMisc;    /* indicated the presence of misc rom data */
+	int region;		/* video system timing (ntsc, pal, dendy */
+	int ConsoleType;
+	int InputTypes;
+	int VS_PPUTypes;
+	int VS_HWType;
+
 	int PRGRomSize;		/* prg rom size in bytes */
 	int CHRRomSize;		/* chr rom size in bytes */
 	int PRGRamSize;		/* prg ram size in bytes (volatile) */
 	int CHRRamSize;		/* chr ram size in bytes (volatile) */
 	int PRGRamSaveSize;	/* prg ram size in bytes (non-volatile or battery backed) */
 	int CHRRamSaveSize;	/* chr ram size in bytes (non-volatile or battery backed) */
-	int region;			/* video system timing (ntsc, pal, dendy */
 
 	uint8 MD5[16];
 	uint32 PRGCRC32;
@@ -35,9 +42,6 @@ typedef struct {
 					 * code, used by mapper/board code, maybe
 					 * other code in the future.
 					 */
-
-	int HasTrainer; /* indicated the presence of trainer rom data */
-	int HasMisc;    /* indicated the presence of misc rom data */
 } CartInfo;
 
 extern CartInfo iNESCart;
