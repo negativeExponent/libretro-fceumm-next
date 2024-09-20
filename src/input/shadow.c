@@ -22,16 +22,9 @@
 #include        <stdlib.h>
 
 #include        "share.h"
+#include        "zapper.h"
 
-typedef struct {
-	uint32 mzx, mzy, mzb;
-	int zap_readbit;
-	int bogo;
-	int zappo;
-	uint64 zaphit;
-} ZAPPER;
-
-static ZAPPER ZD;
+#define ZD ZD[0]
 
 static void FP_FASTAPASS(3) ZapperFrapper(uint8 * bg, uint8 * spr, uint32 linets, int final) {
 	int xs, xe;
@@ -80,7 +73,34 @@ static void FP_FASTAPASS(3) ZapperFrapper(uint8 * bg, uint8 * spr, uint32 linets
 static INLINE int CheckColor(void) {
 	FCEUPPU_LineUpdate();
 
-	if ((ZD.zaphit + 10) >= (timestampbase + timestamp)) return(0);
+#ifdef NEWPPU
+	if (newppu) {
+		int x = (int)ZD.mzx;
+		int y = (int)ZD.mzy;
+		int b = (int)ZD.mzb;
+		bool block = (b & 2) != 0;
+
+		int mousetime = y * 256 + x;
+		int nowtime = scanline * 256 + g_rasterpos;
+
+		if (!block && mousetime < nowtime && mousetime >= nowtime - 384) {
+			extern uint8 *XBuf;
+			uint8 *pix = XBuf + (ZD.mzy << 8);
+			uint8 a1 = (pix[ZD.mzx]) & 63;
+			uint32 sum = palo[a1].r + palo[a1].g + palo[a1].b;
+			/* return ZD.zaphit = sum != 0; */
+			ZD.zaphit = (sum >= 100 * 3) ? 1 : 0;
+		} else {
+			ZD.zaphit = 0;
+		}
+
+		return ZD.zaphit ? 0 : 1;
+	}
+#endif
+
+	if ((ZD.zaphit + 10) >= (timestampbase + timestamp)) {
+		return(0);
+	}
 
 	return(1);
 }
@@ -132,5 +152,3 @@ INPUTCFC *FCEU_InitSpaceShadow(void) {
 	memset(&ZD, 0, sizeof(ZAPPER));
 	return(&SHADOWC);
 }
-
-

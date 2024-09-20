@@ -27,4 +27,9 @@ extern void (*InputScanlineHook)(uint8 *bg, uint8 *spr, uint32 linets, int final
 
 void FCEU_DoSimpleCommand(int cmd);
 
+void FCEU_ZapperSetTolerance(int t);
+void FCEU_ZapperSetSTMode(int mode);
+void FCEU_ZapperInvertTrigger(int invert);
+void FCEU_ZapperInvertSensor(int invert);
+
 #endif
