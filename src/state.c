@@ -39,6 +39,8 @@
 #include "ppu.h"
 #include "video.h"
 
+void FCEUFDSSND_LoadState(int version);
+
 static void (*SPreSave)(void);
 static void (*SPostSave)(void);
 
@@ -309,6 +311,8 @@ void FCEUSS_Load_Mem(void)
    {
       FCEUPPU_LoadState(stateversion);
       FCEUSND_LoadState(stateversion);
+      if (GameInfo->type == GIT_FDS)
+         FCEUFDSSND_LoadState(stateversion);
    }
 
    memstream_close(mem);
@@ -341,4 +345,3 @@ void AddExState(void *v, uint32 s, int type, char *desc)
 void FCEU_DrawSaveStates(uint8 *XBuf)
 {
 }
-

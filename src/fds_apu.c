@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* credits @Mednafen for the FDS sound emulation */
+
 /* Begin FDS sound */
 #include <string.h>
 #include "fceu-types.h"
@@ -26,203 +28,341 @@
 #include "sound.h"
 #include "state.h"
 
-#define FDSClock (1789772.7272727272727272 / 2)
-
-typedef struct {
-	int64 cycles;		/* Cycles per PCM sample */
-	int64 count;		/* Cycle counter */
-	int64 envcount;		/* Envelope cycle counter */
-	uint32 b19shiftreg60;
-	uint32 b24adder66;
-	uint32 b24latch68;
-	uint32 b17latch76;
-	int32 clockcount;	/* Counter to divide frequency by 8. */
-	uint8 b8shiftreg88;	/* Modulation register. */
-	uint8 amplitude[2];	/* Current amplitudes. */
-	uint8 speedo[2];
-	uint8 mwcount;
-	uint8 mwstart;
-	uint8 mwave[0x20];	/* Modulation waveform */
-	uint8 cwave[0x40];	/* Game-defined waveform(carrier) */
-	uint8 SPSG[0xB];
-} FDSSOUND;
-
-static FDSSOUND fdso;
-
-#define  SPSG  fdso.SPSG
-#define b19shiftreg60  fdso.b19shiftreg60
-#define b24adder66  fdso.b24adder66
-#define b24latch68  fdso.b24latch68
-#define b17latch76  fdso.b17latch76
-#define b8shiftreg88  fdso.b8shiftreg88
-#define clockcount  fdso.clockcount
-#define amplitude  fdso.amplitude
-#define speedo    fdso.speedo
-
-void FDSSoundStateAdd(void) {
-	AddExState(fdso.cwave, 64, 0, "WAVE");
-	AddExState(fdso.mwave, 32, 0, "MWAV");
-	AddExState(amplitude, 2, 0, "AMPL");
-	AddExState(SPSG, 0xB, 0, "SPSG");
-
-	AddExState(&b8shiftreg88, 1, 0, "B88");
-
-	AddExState(&clockcount, 4, 1, "CLOC");
-	AddExState(&b19shiftreg60, 4, 1, "B60");
-	AddExState(&b24adder66, 4, 1, "B66");
-	AddExState(&b24latch68, 4, 1, "B68");
-	AddExState(&b17latch76, 4, 1, "B76");
-}
-
-static DECLFR(FDSSRead) {
-	switch (A & 0xF) {
-	case 0x0: return(amplitude[0] | (X.DB & 0xC0));
-	case 0x2: return(amplitude[1] | (X.DB & 0xC0));
-	}
-	return(X.DB);
-}
-
 static void RenderSoundHQ(void);
 
-static DECLFW(FDSSWrite) {
-	if (FSettings.SndRate) {
-		RenderSoundHQ();
-	}
-	A -= 0x4080;
-	switch (A) {
-	case 0x0:
-	case 0x4:
-		if (V & 0x80)
-			amplitude[(A & 0xF) >> 2] = V & 0x3F;
-		break;
-	case 0x7:
-		b17latch76 = 0;
-		SPSG[0x5] = 0;
-		break;
-	case 0x8:
-		b17latch76 = 0;
-		fdso.mwave[SPSG[0x5] & 0x1F] = V & 0x7;
-		SPSG[0x5] = (SPSG[0x5] + 1) & 0x1F;
-		break;
-	}
-	SPSG[A] = V;
-}
+static DECLFW(FDSWaveWrite);
+static DECLFR(FDSWaveRead);
 
-/* $4080 - Fundamental wave amplitude data register 92
- * $4082 - Fundamental wave frequency data register 58
- * $4083 - Same as $4082($4083 is the upper 4 bits).
- *
- * $4084 - Modulation amplitude data register 78
- * $4086 - Modulation frequency data register 72
- * $4087 - Same as $4086($4087 is the upper 4 bits)
- */
+static DECLFR(FDSSRead);
+static DECLFW(FDSSWrite);
 
+// static bool cwave_ip = true;
 
-static void DoEnv() {
-	int x;
+static int32 env_divider; // Main envelope clock divider.
 
-	for (x = 0; x < 2; x++)
-		if (!(SPSG[x << 2] & 0x80) && !(SPSG[0x3] & 0x40)) {
-			static int counto[2] = { 0, 0 };
+static int32 sample_out_cache; // Sample out cache, with volume stuff applied.
 
-			if (counto[x] <= 0) {
-				if (!(SPSG[x << 2] & 0x80)) {
-					if (SPSG[x << 2] & 0x40) {
-						if (amplitude[x] < 0x3F)
-							amplitude[x]++;
-					} else {
-						if (amplitude[x] > 0)
-							amplitude[x]--;
-					}
-				}
-				counto[x] = (SPSG[x << 2] & 0x3F);
-			} else
-				counto[x]--;
-		}
-}
+static uint32 cwave_freq; // $4082 and lower 4 bits of $4083
+static uint32 cwave_pos;
+static uint8 cwave_control; // $4083, lower 6 bits masked out.
 
-static DECLFR(FDSWaveRead) {
-	return(fdso.cwave[A & 0x3f] | (X.DB & 0xC0));
-}
+static uint32 mod_freq;	  // $4086 and lower 4 bits of $4087
+static uint32 mod_pos;	  // Should be named "mwave_pos", but "mod_pos"
+						  // distinguishes it more.
+static bool mod_disabled; // Upper bit of $4087
 
-static DECLFW(FDSWaveWrite) {
-	if (SPSG[0x9] & 0x80)
-		fdso.cwave[A & 0x3f] = V & 0x3F;
-}
+static uint8 master_control; // Waveform write enable and master volume($4089)
+static uint8 env_speed;		 // Master envelope speed controller($408A).
 
-static int ta;
-static INLINE void ClockRise(void) {
-	if (!clockcount) {
-		ta++;
+static uint8 env_control[2]; // Envelope control(4080/4084)
+static uint8 volume[2];		 // Current volumes.
 
-		b19shiftreg60 = (SPSG[0x2] | ((SPSG[0x3] & 0xF) << 8));
-		b17latch76 = (SPSG[0x6] | ((SPSG[0x07] & 0xF) << 8)) + b17latch76;
+static int32 mwave[0x20]; // Modulation waveform.  Stored in expanded(after LUT)
+						  // form. Set to 0x10 if the original value is
+						  // 0x4(reset sweep bias accumulator).
+static uint8 cwave[0x40]; // Game-defined waveform(carrier)
 
-		if (!(SPSG[0x7] & 0x80)) {
-			int t = fdso.mwave[(b17latch76 >> 13) & 0x1F] & 7;
-			int t2 = amplitude[1];
-			int adj = 0;
+static int32 env_counter[2];
 
-			if ((t & 3)) {
-				if ((t & 4))
-					adj -= (t2 * ((4 - (t & 3))));
-				else
-					adj += (t2 * ((t & 3)));
-			}
-			adj *= 2;
-			if (adj > 0x7F) adj = 0x7F;
-			if (adj < -0x80) adj = -0x80;
-			b8shiftreg88 = 0x80 + adj;
-		} else {
-			b8shiftreg88 = 0x80;
-		}
-	} else {
-		b19shiftreg60 <<= 1;
-		b8shiftreg88 >>= 1;
-	}
-	b24adder66 = (b24latch68 + b19shiftreg60) & 0x1FFFFFF;
-}
+static uint32 sweep_bias;
 
-static INLINE void ClockFall(void) {
-	if ((b8shiftreg88 & 1))
-		b24latch68 = b24adder66;
-	clockcount = (clockcount + 1) & 7;
-}
-
-static INLINE int32 FDSDoSound(void) {
-	fdso.count += fdso.cycles;
-	if (fdso.count >= ((int64)1 << 40)) {
- dogk:
-		fdso.count -= (int64)1 << 40;
-		ClockRise();
-		ClockFall();
-		fdso.envcount--;
-		if (fdso.envcount <= 0) {
-			fdso.envcount += SPSG[0xA] * 3;
-			DoEnv();
-		}
-	}
-	if (fdso.count >= 32768) goto dogk;
-
-	/* Might need to emulate applying the amplitude to the waveform a bit better... */
-	{
-		int k = amplitude[0];
-		if (k > 0x20) k = 0x20;
-		return (fdso.cwave[b24latch68 >> 19] * k) * 4 / ((SPSG[0x9] & 0x3) + 2);
-	}
-}
+static int32 cov; // Current out volume, 8 bits of after-decimal place precision.
 
 static int32 FBC = 0;
+
+// We need to call this function whenever volume[0] changes, and on changes in
+// the lower 2 bits of master_control,
+static INLINE void CalcCOV(void)
+{
+	int k = volume[0];
+
+	// printf("%d %d\n", volume[0], master_control & 0x3);
+
+	if (k > 0x20)
+		k = 0x20;
+
+	cov = 256 * k * 6 / ((master_control & 0x3) + 2);
+}
+
+static DECLFR(FDSSRead)
+{
+	if (!fceuindbg)
+		RenderSoundHQ();
+
+	// printf("Read: %04x\n", A);
+	switch (A & 0xF)
+	{
+	case 0x0:
+		return (volume[0] | (X.DB & 0xC0));
+	case 0x2:
+		return (volume[1] | (X.DB & 0xC0));
+	}
+	return (X.DB);
+}
+
+static INLINE int GetEnvReload(uint8 value)
+{
+	int ret;
+
+	ret = (value & 0x3F) + 1;
+
+	return (ret);
+}
+
+static DECLFW(FDSSWrite)
+{
+	RenderSoundHQ();
+
+	// printf("%04x %02x, %lld\n", A, V, timestampbase + timestamp);
+	A -= 0x4080;
+	switch (A)
+	{
+	default: // printf("%04x %02x\n", A, V);
+		break;
+
+	case 0x0:
+		if (V & 0x80)
+		{
+			volume[0] = V & 0x3F;
+			CalcCOV();
+		}
+		else if (env_control[0] & 0x80)
+			env_counter[0] = GetEnvReload(V);
+
+		env_control[0] = V;
+		break;
+
+	case 0x2:
+		cwave_freq &= 0xFF00;
+		cwave_freq |= V << 0;
+		break;
+
+	case 0x3:
+		if (!(V & 0x80) && (cwave_control & 0x80))
+			cwave_pos = 0;
+
+		// if(!(V & 0x40) && (cwave_control & 0x40))
+		//  env_divider = env_speed << 3;
+
+		cwave_freq &= 0x00FF;
+		cwave_freq |= (V & 0xF) << 8;
+		cwave_control = V & 0xC0;
+		break;
+
+	case 0x4:
+		if (V & 0x80)
+		{
+			volume[1] = V & 0x3F;
+		}
+		else if (env_control[1] & 0x80)
+			env_counter[1] = GetEnvReload(V);
+
+		env_control[1] = V;
+		break;
+
+	case 0x5:
+		sweep_bias = (V & 0x7F) << 4;
+		mod_pos = 0;
+		// printf("Sweep Bias: %02x\n", V & 0x7F);
+		break;
+
+	case 0x6:
+		mod_freq &= 0xFF00;
+		mod_freq |= V << 0;
+		break;
+
+	case 0x7:
+		// if(!(V & 0x80) && mod_disabled)
+		//  mod_pos = 0;
+
+		mod_freq &= 0x00FF;
+		mod_freq |= (V & 0xF) << 8;
+		mod_disabled = (bool)(V & 0x80);
+		break;
+
+	case 0x8:
+		if (mod_disabled)
+		{
+			static const int bias_tab[8] = {0, 1, 2, 4, 0, -4, -2, -1};
+
+			for (int i = 0; i < 31; i++)
+				mwave[i] = mwave[i + 1];
+
+			mwave[0x1F] = bias_tab[V & 0x7];
+
+			if ((V & 0x7) == 0x4)
+				mwave[0x1F] = 0x10;
+		}
+		// else
+		//  puts("NYAR");
+		break;
+
+	case 0x9:
+		master_control = V;
+		CalcCOV();
+		break;
+
+	case 0xA:
+		env_speed = V;
+		break;
+	}
+}
+
+static void ClockEnv(void)
+{
+	for (int x = 0; x < 2; x++)
+	{
+		if ((env_control[x] & 0x80) || (cwave_control & 0x40))
+			continue;
+
+		env_counter[x]--;
+
+		if (env_counter[x] <= 0)
+		{
+			if (env_control[x] & 0x40) // Fade in
+			{
+				if (volume[x] < 0x20)
+					volume[x]++;
+			}
+			else // Fade out
+			{
+				if (volume[x] > 0)
+					volume[x]--;
+			}
+			if (!x)
+				CalcCOV();
+
+			env_counter[x] = GetEnvReload(env_control[x]);
+		}
+	}
+}
+
+static DECLFR(FDSWaveRead)
+{
+	if (master_control & 0x80)
+		return (cwave[A & 0x3f] | (X.DB & 0xC0));
+	else
+	{
+		// puts("MEOWARG");
+		return (X.DB);
+	}
+}
+
+static DECLFW(FDSWaveWrite)
+{
+	if (master_control & 0x80)
+	{
+		const int index = A & 0x3F;
+
+		// printf("%04x %02x, %lld\n", A, V, timestampbase + timestamp);
+
+		cwave[index] = V & 0x3F;
+	}
+}
+
+static uint32 prev_mod_pos = 0;
+static int32 temp = 0;
+
+static INLINE void ClockMod(void)
+{
+	if (!mod_disabled)
+	{
+		prev_mod_pos = mod_pos;
+
+		mod_pos += mod_freq;
+
+		if ((mod_pos & (0x3F << 12)) != (prev_mod_pos & (0x3F << 12)))
+		{
+			const int32 mw = mwave[((mod_pos >> 17) & 0x1F)];
+
+			sweep_bias = (sweep_bias + mw) & 0x7FF;
+			// printf("%d %d\n", mod_pos >> 17, sweep_bias);
+			if (mw == 0x10)
+				sweep_bias = 0;
+		}
+
+		#define sign_x_to_s32(n, v) ((int32)((uint32)(v) << (32 - (n))) >> (32 - (n)))
+		temp = sign_x_to_s32(11, sweep_bias) * ((volume[1] > 0x20) ? 0x20 : volume[1]);
+
+		// >> 4 or / 16?  / 16 sounds better in Zelda...
+		if (temp & 0x0F0)
+		{
+			temp /= 256;
+			if (sweep_bias & 0x400)
+				temp--;
+			else
+				temp += 2;
+		}
+		else
+			temp /= 256;
+
+		if (temp >= 194)
+		{
+			// printf("Oops: %d\n", temp);
+			temp -= 258;
+		}
+		if (temp < -64)
+		{
+			// printf("Oops2: %d\n", temp);
+			temp += 256;
+		}
+	}
+}
+
+static INLINE void ClockCarrier(void)
+{
+	int32 cur_cwave_freq;
+
+	if (!mod_disabled)
+	{
+		cur_cwave_freq = (int32)(cwave_freq << 6) + (int32)cwave_freq * temp;
+
+		if (cur_cwave_freq < 0)
+			cur_cwave_freq = 0;
+	}
+	else
+		cur_cwave_freq = cwave_freq << 6;
+
+	cwave_pos += cur_cwave_freq;
+}
+
+static INLINE int32 FDSDoSound(void)
+{
+	uint32 prev_cwave_pos = cwave_pos;
+
+	ClockMod();
+
+	if (!(master_control & 0x80) && !(cwave_control & 0x80))
+		ClockCarrier();
+
+	if (env_speed)
+	{
+		env_divider--;
+		if (env_divider <= 0)
+		{
+			env_divider = env_speed << 3;
+
+			ClockEnv();
+		}
+	}
+
+	if ((cwave_pos ^ prev_cwave_pos) & (1 << 22))
+	// if(!(master_control & 0x80) && !(cwave_control & 0x80))
+	{
+		// printf("%d, %d, %lld\n", prev_cwave_pos >> 22, cwave_pos >> 22,
+		// timestampbase + timestamp);
+
+		sample_out_cache = ((cwave[(cwave_pos >> 22) & 0x3F] - 0) * cov) >> 8;
+	}
+}
 
 static void RenderSoundHQ(void) {
 	uint32 x;
 
-	if (!(SPSG[0x9] & 0x80))
-		for (x = FBC; x < SOUNDTS; x++) {
-			uint32 t = FDSDoSound();
-			t += t >> 1;
-			WaveHi[x] += t;	/* (t<<2)-(t<<1); */
-		}
+	for (x = FBC; x < SOUNDTS; x++) {
+		FDSDoSound();
+		WaveHi[x] += sample_out_cache;
+	}
 	FBC = SOUNDTS;
 }
 
@@ -231,9 +371,6 @@ static void HQSync(int32 ts) {
 }
 
 static void FDS_ESI(void) {
-	if (FSettings.SndRate) {
-		fdso.cycles = (int64)1 << 39;
-	}
 	SetReadHandler(0x4040, 0x407f, FDSWaveRead);
 	SetWriteHandler(0x4040, 0x407f, FDSWaveWrite);
 	SetWriteHandler(0x4080, 0x408A, FDSSWrite);
@@ -241,7 +378,28 @@ static void FDS_ESI(void) {
 }
 
 void FDSSoundReset(void) {
-	memset(&fdso, 0, sizeof(fdso));
+	env_divider = 0;
+	sample_out_cache = 0;
+
+	cwave_freq = 0;
+	cwave_pos = 0;
+	cwave_control = 0;
+
+	mod_freq = 0;
+	mod_pos = 0;
+	mod_disabled = 0;
+
+	master_control = 0;
+	env_speed = 0;
+
+	memset(&env_control, 0, sizeof(env_control));
+	memset(&volume, 0, sizeof(volume));
+	memset(cwave, 0, sizeof(cwave));
+	memset(mwave, 0, sizeof(mwave));
+	memset(env_counter, 0, sizeof(env_counter));
+
+	sweep_bias = 0;
+
 	FDS_ESI();
 	GameExpSound.HiSync = HQSync;
 	GameExpSound.HiFill = RenderSoundHQ;
@@ -257,6 +415,42 @@ uint8 FDSSoundRead(uint32 A) {
 void FDSSoundWrite(uint32 A, uint8 V) {
 	if (A >= 0x4040 && A < 0x4080) FDSWaveWrite(A, V);
 	else if (A >= 0x4080 && A < 0x408B) FDSSWrite(A, V);
+}
+
+void FCEUFDSSND_LoadState(int version)
+{
+	int i;
+	for (int i = 0; i < 0x40; i++)
+		cwave[i] &= 0x3F;
+
+	CalcCOV();
+}
+
+void FDSSoundStateAdd(void)
+{
+	AddExState(&env_divider, 4, 0, "ENVD");
+
+	AddExState(&sample_out_cache, 4, 0, "OUT ");
+
+	AddExState(&cwave_freq, 4, 0, "CFRQ");
+	AddExState(&cwave_pos, 4, 0, "CPOS");
+	AddExState(&cwave_control, 1, 0, "CTRL");
+
+	AddExState(&mod_freq, 4, 0, "MFRQ");
+	AddExState(&mod_pos, 4, 0, "MPOS");
+	AddExState(&mod_disabled, 4, 0, "MDIS");
+
+	AddExState(&master_control, 1, 0, "MCTL");
+	AddExState(&env_speed, 1, 0, "ESPD");
+
+	AddExState(env_control, 2, 0, "ECTL");
+	AddExState(volume, 2, 0, "EVOL");
+	AddExState(mwave, sizeof(mwave), 0, "MWAV");
+	AddExState(cwave, sizeof(cwave), 0, "CWAV");
+
+	AddExState(env_counter, sizeof(env_control), 0, "ECNT");
+
+	AddExState(&sweep_bias, 4, 0, "BIAS");
 }
 
 void FDSSoundPower(void) {
