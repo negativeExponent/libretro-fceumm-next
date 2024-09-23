@@ -99,9 +99,7 @@ static DECLFW(M69Write1) {
 
 /* SUNSOFT-5/FME-7 Sound */
 
-static void AYSound(int Count);
 static void AYSoundHQ(void);
-static void DoAYSQ(int x);
 static void DoAYSQHQ(int x);
 
 static uint8 sndcmd, sreg[14];
@@ -135,7 +133,6 @@ static DECLFW(M69SWrite0) {
 }
 
 static DECLFW(M69SWrite1) {
-	GameExpSound.Fill = AYSound;
 	GameExpSound.HiFill = AYSoundHQ;
 	switch (sndcmd) {
 	case 0:
@@ -153,31 +150,6 @@ static DECLFW(M69SWrite1) {
 		break;
 	}
 	sreg[sndcmd] = V;
-}
-
-static void DoAYSQ(int x) {
-	int32 freq = ((sreg[x << 1] | ((sreg[(x << 1) + 1] & 15) << 8)) + 1) << (4 + 17);
-	int32 amp = (sreg[0x8 + x] & 15) << 2;
-	int32 start, end;
-	int V;
-
-	amp += amp >> 1;
-
-	start = CAYBC[x];
-	end = (SOUNDTS << 16) / soundtsinc;
-	if (end <= start) return;
-	CAYBC[x] = end;
-
-	if (amp && !(sreg[0x7] & (1 << x)))
-		for (V = start; V < end; V++) {
-			if (dcount[x])
-				Wave[V >> 4] += amp;
-			vcount[x] -= nesincsize;
-			while (vcount[x] <= 0) {
-				dcount[x] ^= 1;
-				vcount[x] += freq;
-			}
-		}
 }
 
 static void DoAYSQHQ(int x) {
@@ -201,18 +173,6 @@ static void DoAYSQHQ(int x) {
 	CAYBC[x] = SOUNDTS;
 }
 
-static void DoAYSQ1(void) {
-	DoAYSQ(0);
-}
-
-static void DoAYSQ2(void) {
-	DoAYSQ(1);
-}
-
-static void DoAYSQ3(void) {
-	DoAYSQ(2);
-}
-
 static void DoAYSQ1HQ(void) {
 	DoAYSQHQ(0);
 }
@@ -223,15 +183,6 @@ static void DoAYSQ2HQ(void) {
 
 static void DoAYSQ3HQ(void) {
 	DoAYSQHQ(2);
-}
-
-static void AYSound(int Count) {
-	int x;
-	DoAYSQ1();
-	DoAYSQ2();
-	DoAYSQ3();
-	for (x = 0; x < 3; x++)
-		CAYBC[x] = Count;
 }
 
 static void AYSoundHQ(void) {
@@ -254,15 +205,9 @@ void Mapper69_ESI(void) {
 	memset(vcount, 0, sizeof(vcount));
 	memset(CAYBC, 0, sizeof(CAYBC));
 	if (FSettings.SndRate) {
-		if (FSettings.soundq >= 1) {
-			sfun[0] = DoAYSQ1HQ;
-			sfun[1] = DoAYSQ2HQ;
-			sfun[2] = DoAYSQ3HQ;
-		} else {
-			sfun[0] = DoAYSQ1;
-			sfun[1] = DoAYSQ2;
-			sfun[2] = DoAYSQ3;
-		}
+		sfun[0] = DoAYSQ1HQ;
+		sfun[1] = DoAYSQ2HQ;
+		sfun[2] = DoAYSQ3HQ;
 	} else
 		memset(sfun, 0, sizeof(sfun));
 }

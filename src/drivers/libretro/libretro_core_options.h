@@ -290,21 +290,6 @@ struct retro_core_option_v2_definition option_defs[] = {
    },
 #endif
    {
-      "fceumm_sndquality",
-      "Sound Quality",
-      NULL,
-      "Enable higher quality sound. Increases performance requirements.",
-      NULL,
-      "audio",
-      {
-         { "Low",       NULL },
-         { "High",      NULL },
-         { "Very High", NULL },
-         { NULL, NULL },
-      },
-      "Low",
-   },
-   {
       "fceumm_sndlowpass",
       "Audio RF Filter",
       NULL,

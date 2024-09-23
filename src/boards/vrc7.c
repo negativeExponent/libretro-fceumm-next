@@ -21,7 +21,6 @@
 #include "mapinc.h"
 #include "emu2413.h"
 
-static int32 dwave = 0;
 static OPLL *VRC7Sound = NULL;
 static uint8 vrc7idx, preg[3], creg[8], mirr;
 static uint8 IRQLatch, IRQa, IRQd;
@@ -45,27 +44,8 @@ static SFORMAT StateRegs[] =
 
 /* VRC7 Sound */
 
-void DoVRC7Sound(void) {
-	int32 z, a;
-	if (FSettings.soundq >= 1)
-		return;
-	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
-	a = z - dwave;
-	OPLL_fillbuf(VRC7Sound, &Wave[dwave], a, 1);
-	dwave += a;
-}
-
 void UpdateOPLNEO(int32 *Wave, int Count) {
 	OPLL_fillbuf(VRC7Sound, Wave, Count, 4);
-}
-
-void UpdateOPL(int Count) {
-	int32 z, a;
-	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
-	a = z - dwave;
-	if (VRC7Sound && a)
-		OPLL_fillbuf(VRC7Sound, &Wave[dwave], a, 1);
-	dwave = 0;
 }
 
 static void VRC7SC(void) {
@@ -109,7 +89,6 @@ static void Sync(void) {
 static DECLFW(VRC7SW) {
 	if (FSettings.SndRate) {
 		OPLL_writeReg(VRC7Sound, vrc7idx, V);
-		GameExpSound.Fill = UpdateOPL;
 		GameExpSound.NeoFill = UpdateOPLNEO;
 	}
 }

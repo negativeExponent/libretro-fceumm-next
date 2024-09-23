@@ -25,7 +25,6 @@
 static void (*sfun)(int P);
 static void (*psfun)(void);
 
-void MMC5RunSound(int Count);
 void MMC5RunSoundHQ(void);
 
 static INLINE void MMC5SPRVROM_BANK1(uint32 A, uint32 V) {
@@ -481,21 +480,6 @@ typedef struct {
 
 static MMC5APU MMC5Sound;
 
-
-static void Do5PCM(void) {
-	int32 V;
-	int32 start, end;
-
-	start = MMC5Sound.BC[2];
-	end = (SOUNDTS << 16) / soundtsinc;
-	if (end <= start) return;
-	MMC5Sound.BC[2] = end;
-
-	if (!(MMC5Sound.rawcontrol & 0x40) && MMC5Sound.raw)
-		for (V = start; V < end; V++)
-			Wave[V >> 4] += MMC5Sound.raw << 1;
-}
-
 static void Do5PCMHQ(void) {
 	uint32 V;
 	if (!(MMC5Sound.rawcontrol & 0x40) && MMC5Sound.raw)
@@ -508,7 +492,6 @@ static void Do5PCMHQ(void) {
 static DECLFW(Mapper5_SW) {
 	A &= 0x1F;
 
-	GameExpSound.Fill = MMC5RunSound;
 	GameExpSound.HiFill = MMC5RunSoundHQ;
 
 	switch (A) {
@@ -540,41 +523,6 @@ static DECLFW(Mapper5_SW) {
 		MMC5Sound.running &= V;
 		MMC5Sound.enable = V;
 		break;
-	}
-}
-
-static void Do5SQ(int P) {
-	static int tal[4] = { 1, 2, 4, 6 };
-	int32 V, amp, rthresh, wl;
-	int32 start, end;
-
-	start = MMC5Sound.BC[P];
-	end = (SOUNDTS << 16) / soundtsinc;
-	if (end <= start) return;
-	MMC5Sound.BC[P] = end;
-
-	wl = MMC5Sound.wl[P] + 1;
-	amp = (MMC5Sound.env[P] & 0xF) << 4;
-	rthresh = tal[(MMC5Sound.env[P] & 0xC0) >> 6];
-
-	if (wl >= 8 && (MMC5Sound.running & (P + 1))) {
-		int dc, vc;
-
-		wl <<= 18;
-		dc = MMC5Sound.dcount[P];
-		vc = MMC5Sound.vcount[P];
-
-		for (V = start; V < end; V++) {
-			if (dc < rthresh)
-				Wave[V >> 4] += amp;
-			vc -= nesincsize;
-			while (vc <= 0) {
-				vc += wl;
-				dc = (dc + 1) & 7;
-			}
-		}
-		MMC5Sound.dcount[P] = dc;
-		MMC5Sound.vcount[P] = vc;
 	}
 }
 
@@ -621,25 +569,11 @@ void MMC5HiSync(int32 ts) {
 		MMC5Sound.BC[x] = ts;
 }
 
-void MMC5RunSound(int Count) {
-	int x;
-	Do5SQ(0);
-	Do5SQ(1);
-	Do5PCM();
-	for (x = 0; x < 3; x++)
-		MMC5Sound.BC[x] = Count;
-}
-
 void Mapper5_ESI(void) {
 	GameExpSound.RChange = Mapper5_ESI;
 	if (FSettings.SndRate) {
-		if (FSettings.soundq >= 1) {
-			sfun = Do5SQHQ;
-			psfun = Do5PCMHQ;
-		} else {
-			sfun = Do5SQ;
-			psfun = Do5PCM;
-		}
+		sfun = Do5SQHQ;
+		psfun = Do5PCMHQ;
 	} else {
 		sfun = 0;
 		psfun = 0;

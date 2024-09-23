@@ -48,10 +48,7 @@ void SexyFilter(int32 *in, int32 *out, int32 count) {
 	mul2 = (24 << 16) / FSettings.SndRate;
 	vmul = (FSettings.SoundVolume << 16) * 3 / 4 / 100;
 
-	if (FSettings.soundq)
-		vmul /= 4;
-	else
-		vmul *= 2;	/* TODO:  Increase volume in low quality sound rendering code itself */
+	vmul /= 4;
 
 	while (count) {
 		int64 ino = (int64) * in * vmul;
@@ -88,23 +85,7 @@ int32 NeoFilterSound(int32 *in, int32 *out, uint32 inlen, int32 *leftover) {
 	int32 count = 0;
 	uint32 max = (inlen - 1) << 16;
 
-	if (FSettings.soundq == 2) {
-		for (x = mrindex; x < max; x += mrratio) {
-			int32 acc = 0, acc2 = 0;
-			uint32 c;
-			int32 *S, *D;
-
-			for (c = SQ2NCOEFFS, S = &in[(x >> 16) - SQ2NCOEFFS], D = sq2coeffs; c; c--, D++) {
-				acc += (S[c] * *D) >> 6;
-				acc2 += (S[1 + c] * *D) >> 6;
-			}
-
-			acc = ((int64)acc * (65536 - (x & 65535)) + (int64)acc2 * (x & 65535)) >> (16 + 11);
-			*out = acc;
-			out++;
-			count++;
-		}
-	} else {
+	{
 		for (x = mrindex; x < max; x += mrratio) {
 			int32 acc = 0, acc2 = 0;
 			uint32 c;
@@ -124,10 +105,7 @@ int32 NeoFilterSound(int32 *in, int32 *out, uint32 inlen, int32 *leftover) {
 
 	mrindex = x - max;
 
-	if (FSettings.soundq == 2) {
-		mrindex += SQ2NCOEFFS * 65536;
-		*leftover = SQ2NCOEFFS + 1;
-	} else {
+	{
 		mrindex += NCOEFFS * 65536;
 		*leftover = NCOEFFS + 1;
 	}
@@ -151,23 +129,13 @@ void MakeFilters(int32 rate) {
 	int32 x;
 	uint32 nco;
 
-	if (FSettings.soundq == 2)
-		nco = SQ2NCOEFFS;
-	else
-		nco = NCOEFFS;
+	nco = NCOEFFS;
 
 	mrindex = (nco + 1) << 16;
 	mrratio = (PAL ? (int64)(PAL_CPU * 65536) : (int64)(NTSC_CPU * 65536)) / rate;
 
-	if (FSettings.soundq == 2)
-		tmp = sq2tabs[(PAL ? 1 : 0) | (rate == 48000 ? 2 : 0) | (rate == 96000 ? 4 : 0)];
-	else
-		tmp = tabs[(PAL ? 1 : 0) | (rate == 48000 ? 2 : 0) | (rate == 96000 ? 4 : 0)];
+	tmp = tabs[(PAL ? 1 : 0) | (rate == 48000 ? 2 : 0) | (rate == 96000 ? 4 : 0)];
 
-	if (FSettings.soundq == 2)
-		for (x = 0; x < (SQ2NCOEFFS >> 1); x++)
-			sq2coeffs[x] = sq2coeffs[SQ2NCOEFFS - 1 - x] = tmp[x];
-	else
-		for (x = 0; x < (NCOEFFS >> 1); x++)
-			coeffs[x] = coeffs[NCOEFFS - 1 - x] = tmp[x];
+	for (x = 0; x < (NCOEFFS >> 1); x++)
+		coeffs[x] = coeffs[NCOEFFS - 1 - x] = tmp[x];
 }

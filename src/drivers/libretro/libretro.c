@@ -1460,7 +1460,6 @@ static bool update_option_visibility(void)
          unsigned size;
          char options_list[][25] = {
             "fceumm_sndvolume",
-            "fceumm_sndquality",
             "fceumm_sndlowpass",
             "fceumm_sndstereodelay",
             "fceumm_swapduty",
@@ -2230,21 +2229,6 @@ static void check_variables(bool startup)
          FCEUD_RegionOverride(opt_region);
          audio_video_updated = 2;
       }
-   }
-
-   var.key = "fceumm_sndquality";
-
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      unsigned oldval = sndquality;
-      if (!strcmp(var.value, "Low"))
-         sndquality = 0;
-      else if (!strcmp(var.value, "High"))
-         sndquality = 1;
-      else if (!strcmp(var.value, "Very High"))
-         sndquality = 2;
-      if (sndquality != oldval)
-         FCEUI_SetSoundQuality(sndquality);
    }
 
    var.key = "fceumm_sndlowpass";

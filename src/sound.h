@@ -22,8 +22,6 @@
 #define _FCEU_SOUND_H
 
 typedef struct {
-	void (*Fill)(int Count);	/* Low quality ext sound. */
-
 	/* NeoFill is for sound devices that are emulated in a more
 		high-level manner(VRC7) in HQ mode.  Interestingly,
 		this device has slightly better sound quality(updated more

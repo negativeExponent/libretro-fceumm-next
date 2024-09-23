@@ -82,15 +82,11 @@ static DECLFR(FDSSRead) {
 	return(X.DB);
 }
 
-static void RenderSound(void);
 static void RenderSoundHQ(void);
 
 static DECLFW(FDSSWrite) {
 	if (FSettings.SndRate) {
-		if (FSettings.soundq >= 1)
-			RenderSoundHQ();
-		else
-			RenderSound();
+		RenderSoundHQ();
 	}
 	A -= 0x4080;
 	switch (A) {
@@ -218,25 +214,6 @@ static INLINE int32 FDSDoSound(void) {
 
 static int32 FBC = 0;
 
-static void RenderSound(void) {
-	int32 end, start;
-	int32 x;
-
-	start = FBC;
-	end = (SOUNDTS << 16) / soundtsinc;
-	if (end <= start)
-		return;
-	FBC = end;
-
-	if (!(SPSG[0x9] & 0x80))
-		for (x = start; x < end; x++) {
-			uint32 t = FDSDoSound();
-			t += t >> 1;
-			t >>= 4;
-			Wave[x >> 4] += t;	/* (t>>2)-(t>>3); */ /* >>3; */
-		}
-}
-
 static void RenderSoundHQ(void) {
 	uint32 x;
 
@@ -253,19 +230,9 @@ static void HQSync(int32 ts) {
 	FBC = ts;
 }
 
-void FDSSound(int c) {
-	RenderSound();
-	FBC = c;
-}
-
 static void FDS_ESI(void) {
 	if (FSettings.SndRate) {
-		if (FSettings.soundq >= 1) {
-			fdso.cycles = (int64)1 << 39;
-		} else {
-			fdso.cycles = ((int64)1 << 40) * FDSClock;
-			fdso.cycles /= FSettings.SndRate * 16;
-		}
+		fdso.cycles = (int64)1 << 39;
 	}
 	SetReadHandler(0x4040, 0x407f, FDSWaveRead);
 	SetWriteHandler(0x4040, 0x407f, FDSWaveWrite);
@@ -278,7 +245,6 @@ void FDSSoundReset(void) {
 	FDS_ESI();
 	GameExpSound.HiSync = HQSync;
 	GameExpSound.HiFill = RenderSoundHQ;
-	GameExpSound.Fill = FDSSound;
 	GameExpSound.RChange = FDS_ESI;
 }
 

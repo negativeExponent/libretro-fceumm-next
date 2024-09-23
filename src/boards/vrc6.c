@@ -173,91 +173,6 @@ static void StateRestore(int version) {
 
 /* VRC6 Sound */
 
-static void DoSQV1(void);
-static void DoSQV2(void);
-static void DoSawV(void);
-
-static INLINE void DoSQV(int x) {
-	int32 V;
-	int32 amp = (((vpsg1[x << 2] & 15) << 8) * 6 / 8) >> 4;
-	int32 start, end;
-
-	start = cvbc[x];
-	end = (SOUNDTS << 16) / soundtsinc;
-	if (end <= start) return;
-	cvbc[x] = end;
-
-	if (vpsg1[(x << 2) | 0x2] & 0x80) {
-		if (vpsg1[x << 2] & 0x80) {
-			for (V = start; V < end; V++)
-				Wave[V >> 4] += amp;
-		} else {
-			int32 thresh = (vpsg1[x << 2] >> 4) & 7;
-			int32 freq = ((vpsg1[(x << 2) | 0x1] | ((vpsg1[(x << 2) | 0x2] & 15) << 8)) + 1) << 17;
-			int32 dc = dcount[x];
-			int32 vc = vcount[x];
-
-			for (V = start; V < end; V++) {
-				if (dc > thresh)
-					Wave[V >> 4] += amp;
-				vc -= nesincsize;
-				while (vc <= 0) {
-					vc += freq;
-					dc = (dc + 1) & 15;
-				}
-			}
-			vcount[x] = vc;
-			dcount[x] = dc;
-		}
-	}
-}
-
-static void DoSQV1(void) {
-	DoSQV(0);
-}
-
-static void DoSQV2(void) {
-	DoSQV(1);
-}
-
-static void DoSawV(void) {
-	int V;
-	int32 start, end;
-
-	start = cvbc[2];
-	end = (SOUNDTS << 16) / soundtsinc;
-	if (end <= start) return;
-	cvbc[2] = end;
-
-	if (vpsg2[2] & 0x80) {
-		uint32 freq3;
-		static uint32 duff = 0;
-
-		freq3 = (vpsg2[1] + ((vpsg2[2] & 15) << 8) + 1);
-
-		for (V = start; V < end; V++) {
-			vcount[2] -= nesincsize;
-			if (vcount[2] <= 0) {
-				int32 t;
- rea:
-				t = freq3;
-				t <<= 18;
-				vcount[2] += t;
-				phaseacc += vpsg2[0] & 0x3f;
-				dcount[2]++;
-				if (dcount[2] == 7) {
-					dcount[2] = 0;
-					phaseacc = 0;
-				}
-				if (vcount[2] <= 0)
-					goto rea;
-				duff = (((phaseacc >> 3) & 0x1f) << 4) * 6 / 8;
-			}
-			Wave[V >> 4] += duff;
-		}
-	}
-}
-
 static INLINE void DoSQVHQ(int x) {
 	int32 V;
 	int32 amp = ((vpsg1[x << 2] & 15) << 8) * 6 / 8;
@@ -316,16 +231,6 @@ static void DoSawVHQ(void) {
 	cvbc[2] = SOUNDTS;
 }
 
-void VRC6Sound(int Count) {
-	int x;
-
-	DoSQV1();
-	DoSQV2();
-	DoSawV();
-	for (x = 0; x < 3; x++)
-		cvbc[x] = Count;
-}
-
 void VRC6SoundHQ(void) {
 	DoSQV1HQ();
 	DoSQV2HQ();
@@ -339,7 +244,6 @@ void VRC6SyncHQ(int32 ts) {
 
 static void VRC6_ESI(void) {
 	GameExpSound.RChange = VRC6_ESI;
-	GameExpSound.Fill = VRC6Sound;
 	GameExpSound.HiFill = VRC6SoundHQ;
 	GameExpSound.HiSync = VRC6SyncHQ;
 
@@ -348,15 +252,9 @@ static void VRC6_ESI(void) {
 	memset(vcount, 0, sizeof(vcount));
 	memset(dcount, 0, sizeof(dcount));
 	if (FSettings.SndRate) {
-		if (FSettings.soundq >= 1) {
-			sfun[0] = DoSQV1HQ;
-			sfun[1] = DoSQV2HQ;
-			sfun[2] = DoSawVHQ;
-		} else {
-			sfun[0] = DoSQV1;
-			sfun[1] = DoSQV2;
-			sfun[2] = DoSawV;
-		}
+		sfun[0] = DoSQV1HQ;
+		sfun[1] = DoSQV2HQ;
+		sfun[2] = DoSawVHQ;
 	} else
 		memset(sfun, 0, sizeof(sfun));
 }

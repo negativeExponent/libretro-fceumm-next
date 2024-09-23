@@ -828,14 +828,13 @@ endif
 	$(Q)$(CC) -c $(OBJOUT)$@ $< $(CFLAGS) $(INCFLAGS)
 
 clean-objs:
+	rm -f $(OBJECTS)
+
+clean:
 	@$(if $(Q), $(shell echo echo rm -rf *.o),)
 	$(Q)rm -f $(OBJECTS)
 	@$(if $(Q), $(shell echo echo rm -rf $(TARGET)),)
 	$(Q)rm -f $(TARGET)
-
-clean:
-	rm -f $(OBJECTS)
-	rm -f $(TARGET)
 
 .PHONY: clean clean-objs
 endif
