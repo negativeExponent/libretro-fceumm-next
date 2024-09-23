@@ -4,6 +4,7 @@ STATIC_LINKING=0
 ENDIANNESS_DEFINES=
 SIGNED_CHAR=0
 HAVE_NTSC=1
+V=0
 
 SPACE :=
 SPACE := $(SPACE) $(SPACE)
@@ -700,6 +701,10 @@ else
 	SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=src/drivers/libretro/link.T
 endif
 
+ifneq ($(V),1)
+   Q := @
+endif
+
 ifeq ($(DEBUG), 1)
 	ifneq (,$(findstring msvc,$(platform)))
       CFLAGS   += -MTd
@@ -767,7 +772,7 @@ else ifneq (,$(findstring msvc,$(platform)))
 WARNING_DEFINES =
 LIBM :=
 else
-WARNING_DEFINES = -Wno-write-strings
+WARNING_DEFINES = -Wno-write-strings -Wunused-function -Wunused-variable
 endif
 
 CFLAGS += $(fpic) $(WARNING_DEFINES) $(DEFINES) $(ENDIANNESS_DEFINES) 
@@ -814,14 +819,19 @@ else
 	$(AR) rcs $@ $(OBJECTS)
 endif
 else
-	$(LD) $(LINKOUT)$@ $(SHARED) $(OBJECTS) $(LDFLAGS) $(LIBS)
+	@$(if $(Q), $(shell echo echo LD $@),)
+	$(Q)$(LD) $(LINKOUT)$@ $(SHARED) $(OBJECTS) $(LDFLAGS) $(LIBS)
 endif
 
 %.o: %.c
-	$(CC) -c $(OBJOUT)$@ $< $(CFLAGS) $(INCFLAGS)
+	@$(if $(Q), $(shell echo echo CC $<),)
+	$(Q)$(CC) -c $(OBJOUT)$@ $< $(CFLAGS) $(INCFLAGS)
 
 clean-objs:
-	rm -f $(OBJECTS)
+	@$(if $(Q), $(shell echo echo rm -rf *.o),)
+	$(Q)rm -f $(OBJECTS)
+	@$(if $(Q), $(shell echo echo rm -rf $(TARGET)),)
+	$(Q)rm -f $(TARGET)
 
 clean:
 	rm -f $(OBJECTS)
