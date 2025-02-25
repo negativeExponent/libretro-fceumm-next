@@ -378,7 +378,6 @@ static void MMC5CHRB(void) {
 
 static void MMC5WRAM(uint32 A, uint32 V) {
 	V = MMC5WRAMIndex[V & (MMC5WRAMMAX - 1)];
-	FCEU_printf("wram wr %04x %02x\n", A, V);
 	if (V != 255) {
 		setprg8r(0x10, A, V);
 		FCEU_CheatAddRAM(8, 0x6000, (WRAM + ((V * 8192) & (WRAMSIZE - 1))));
