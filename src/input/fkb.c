@@ -50,30 +50,35 @@ static uint16 matrix[9][2][4] =
 };
 
 static void FKB_Write(uint8 v) {
+	uint8 clear = v & 1;
 	v >>= 1;
 	if (v & 2) {
 		if ((ksmode & 1) && !(v & 1))
-			ksindex = (ksindex + 1) % 9;
+			ksindex = (ksindex + 1) % 10;
+		if (clear)
+			ksindex = 0;
 	}
 	ksmode = v;
 }
 
 static uint8 FKB_Read(int w, uint8 ret) {
 	if (w) {
+		int state = 0;
 		int x;
 
 		ret &= ~0x1E;
-		for (x = 0; x < 4; x++)
-			if (bufit[ matrix[ksindex][ksmode & 1][x] & 0xFF ] || bufit[ matrix[ksindex][ksmode & 1][x] >> 8])
-				ret |= 1 << (x + 1);
-		ret ^= 0x1E;
+		if (ksindex == 9) return(ret);
+		for (x = 0; x < 4; x++) {
+			if (bufit[ matrix[ksindex][ksmode & 1][x] & 0xFF ] || bufit[ matrix[ksindex][ksmode & 1][x] >> 8]) {
+				state |= 1 << (x + 1);
+			}
+		}
+		return(ret | ((ksmode & 2) ? (state ^ 0x1E) : 0));
 	}
 	return(ret);
 }
 
 static void FKB_Strobe(void) {
-	ksmode = 0;
-	ksindex = 0;
 }
 
 static void FKB_Update(void *data, int arg) {
