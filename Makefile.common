@@ -35,6 +35,7 @@ SOURCES_C += $(SOURCE_DIR)/mappers/hw/mmc1.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/mmc2.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/mmc3.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/mmc4.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/mmc5.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/n118.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/onebus.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/txc.c

@@ -1037,7 +1037,7 @@ static void RefreshLine(int lastpixel) {
 		uint32 tem;
 		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
 		tem |= 0x40404040;
-		FCEU_dwmemset(Pline, tem, numtiles * 8);
+		FCEU_dwmemset32(Pline, tem, numtiles * 8);
 		P += numtiles * 8;
 		Pline = P;
 
@@ -1167,7 +1167,7 @@ static void RefreshLine(int lastpixel) {
 			tstart = 0;
 		}
 		if (tcount > 0)
-			FCEU_dwmemset(Plinef + tstart * 8, tem, tcount * 8);
+			FCEU_dwmemset32(Plinef + tstart * 8, tem, tcount * 8);
 	}
 
 	if (lastpixel >= TOFIXNUM && tofix) {
@@ -1239,7 +1239,7 @@ static void DoLine(void)
 		uint32 tem;
 		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
 		tem |= 0x40404040;
-		FCEU_dwmemset(target, tem, 256);
+		FCEU_dwmemset32(target, tem, 256);
 	}
 
 	if (SpriteON)
@@ -1453,7 +1453,7 @@ static void RefreshSprites(void) {
 	spork = 0;
 	if (!numsprites) return;
 
-	FCEU_dwmemset(sprlinebuf, 0x80808080, 256);
+	FCEU_dwmemset32(sprlinebuf, 0x80808080, 256);
 	numsprites--;
 	spr = (SPRB*)SPRBUF + numsprites;
 
