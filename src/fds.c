@@ -273,9 +273,10 @@ static DECLFR(FDSRead) {
 
 	switch (A) {
 	case 0x4030:
-		ret &= 0x2C;
+		ret &= 0x24;
 		ret |= (cpu.IRQlow & FCEU_IQEXT) ? 0x01 : 0;
 		ret |= mapperFDS_transferflag ? 0x02 : 0;
+		ret |= mapperFDS_control & 0x08 ? 0x08 : 0;
 		ret |= 0x80; /* disk is readable/writeable */
 		X6502_IRQEnd(FCEU_IQEXT);
 		X6502_IRQEnd(FCEU_IQEXT2);
