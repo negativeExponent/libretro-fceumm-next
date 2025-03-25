@@ -37,12 +37,17 @@ static void Sync(void) {
 	uint32 ourom = (latch.addr >> 8) & 0x01;
 	uint32 nrom = (latch.addr >> 9) & 0x01;
 
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, !(latch.addr & 0x80));
+
 	setprg16(0x8000, prg & ~(cpuA14 * nrom));
 	setprg16(0xC000, (prg | (cpuA14 * nrom)) | (0x07 * !nrom) | (0x08 * (iNESCart.submapper == 1) * !nrom * ourom));
 
 	setchr8(0);
-	setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
-	SetupCartCHRMapping(0, CHRptr[0], 0x2000, !(latch.addr & 0x80));
+	if (iNESCart.submapper == 2) {
+		setmirror(((latch.addr >> 6) & 0x01) ^ 0x01);
+	} else {
+		setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
+	}
 }
 
 static DECLFR(M380Read) {
