@@ -427,8 +427,8 @@ static void CheckHInfo(CartInfo *info, uint64 partialmd5) {
 				}
 			}
 			if (nesdb[x].submapper >= 0) {
-				info->iNES2 = 1;
 				if (nesdb[x].submapper != info->submapper) {
+					tofix |= 1;
 					info->submapper = nesdb[x].submapper;
 				}
 			}
@@ -503,7 +503,7 @@ static void CheckHInfo(CartInfo *info, uint64 partialmd5) {
 	if (tofix) {
 		FCEU_printf(" The iNES header contains incorrect information.  For now, the information will be corrected in RAM.\n");
 		if (tofix & 1) {
-			FCEU_printf(" [DB] Mapper: %3d\n", info->mapper);
+			FCEU_printf(" [DB] Mapper: %3d.%d\n", info->mapper,info->submapper);
 		}
 		if (tofix & 2) {
 			FCEU_printf(" [DB] Mirroring: %s\n", mirroring_str[info->mirror]);

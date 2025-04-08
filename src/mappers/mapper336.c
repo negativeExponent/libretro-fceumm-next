@@ -21,6 +21,17 @@
 
 /* BMC-K-3046 */
 /* NES 2.0 mapper 336 is used for an 11-in-1 multicart
+ * Submapper 0:
+
+ * 11-in-1 (K-3046)
+ * 2-in-1 (YH-217)
+ * 4-in-1 (YH-4109)
+ * Submapper 1 (M1K30 PCB):
+
+ * Top Gun III 2-in-1
+ * Submapper 2:
+
+ * 2-in-1 (YH-218)
  * http://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_336 */
 
 #include "mapinc.h"
@@ -30,12 +41,19 @@ static void Sync(void) {
 	setprg16(0x8000, latch.data);
 	setprg16(0xC000, latch.data | 0x07);
 	setchr8(0);
+    if (iNESCart.submapper == 2) {
+        setmirror(((latch.data >> 3) & 0x01) ^ 0x01);
+    } else {
+        setmirror(((latch.data >> 5) & 0x01) ^ 0x01);
+    }
 }
 
 static DECLFW(M336Write) {
-    latch.addr = A;
-    latch.data = V | CartBR(A);
-    Sync();
+    if (iNESCart.submapper == 1) {
+        uint8 ret = CartBR(A);
+        V = ((V & ret) & ~0x08) | (ret & 0x08);
+    }
+    Latch_Write(A, V);
 }
 
 static void M336Power(void) {
