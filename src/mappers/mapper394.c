@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,6 +19,7 @@
  */
 
 /* Mapper 394: HSK007 circuit board that can simulate J.Y. ASIC, MMC3, and NROM. */
+/* submapper 0: Super Value HiK 6-in-1 (Top002) */
 
 #include "mapinc.h"
 #include "jyasic.h"
@@ -26,14 +27,22 @@
 
 static uint8 reg[4];
 
+static uint32 PRGBase(void) {
+	return ((reg[1] << 5) & 0x060) | ((reg[3] << 1) & 0x010);
+}
+
+static uint32 CHRBase(void) {
+	return ((reg[1] << 8) & 0x200) | ((reg[1] << 6) & 0x100) | ((reg[3] << 1) & 0x080);
+}
+
 static uint32 M394_PRGBank_JY(uint32 V) {
-    uint8 base = ((reg[1] << 5) & 0x020) | ((reg[3] << 1) & 0x010);
+    uint8 base = PRGBase();
 
 	return (base | (V & 0x1F));
 }
 
 static uint32 M394_CHRBank_JY(uint32 V) {
-    uint32 base = ((reg[1] << 8) & 0x100) | ((reg[3] << 1) & 0x080);
+    uint16 base = CHRBase();
 
 	return (base | (V & 0x0FF));
 }
@@ -56,7 +65,7 @@ static void M394JYMW(uint16 A, uint32 V) {
 
 static void M394MMC3PW(uint16 A, uint16 V) {
 	uint8 mask = (reg[3] & 0x10) ? 0x1F : 0x0F;
-	uint8 base = ((reg[1] << 5) & 0x020) | ((reg[3] << 1) & 0x010);
+	uint8 base = PRGBase();
 
 	if (reg[1] & 0x08) {
 		setprg8(A, base | (V & mask));
@@ -67,7 +76,11 @@ static void M394MMC3PW(uint16 A, uint16 V) {
 
 static void M394MMC3CW(uint16 A, uint16 V) {
 	uint16 mask  = (reg[3] & 0x80) ? 0xFF : 0x7F;
-	uint16 base = ((reg[3] << 1) & 0x080) | ((reg[1] << 8) & 0x100);
+	uint16 base = CHRBase();
+
+	if (iNESCart.submapper != 1) {
+		base = (((reg[1] << 8) & 0x100) | ((reg[3] << 1) & 0x080));
+	}
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
@@ -77,23 +90,34 @@ static DECLFW(M394WriteReg) {
 
 	A &= 3;
 	reg[A] = V;
-	if (A == 1) {
+	switch (A) {
+	case 1:
 		if (!(oldMode & 0x10) && (V & 0x10)) {
 			JYASIC_Power();
-        } else if ((oldMode & 0x10) && !(V & 0x10)) {
+		}
+		if ((oldMode & 0x10) && !(V & 0x10)) {
 			JYASIC_restoreWriteHandlers();
 			MMC3_Power();
 		}
-	} else {
+		break;
+	default:
 		if (reg[1] & 0x10) {
 			JYASIC_FixPRG();
-            JYASIC_FixCHR();
-            JYASIC_FixMIR();
+			JYASIC_FixCHR();
+			JYASIC_FixMIR();
 		} else {
 			MMC3_FixPRG();
 			MMC3_FixCHR();
 			MMC3_FixMIR();
 		}
+		break;
+	}
+}
+
+static DECLFW(M394_WriteASIC) {
+	if (reg[1] & 0x10) {
+	} else {
+
 	}
 }
 
@@ -121,6 +145,7 @@ static void M394StateRestore(int version) {
 		JYASIC_FixCHR();
 		JYASIC_FixMIR();
 	} else {
+		SetWriteHandler(0x5000, 0x5FFF, M394WriteReg);
 		SetWriteHandler(0x8000, 0xBFFF, MMC3_CMDWrite);
 		SetWriteHandler(0xC000, 0xFFFF, MMC3_IRQWrite);
 		SetReadHandler(0x8000, 0xFFFF, CartBR);
@@ -133,7 +158,7 @@ static void M394Power(void) {
 	reg[0] = 0x00;
 	reg[1] = 0x0F; /* start in MMC3 mode */
 	reg[2] = 0x00;
-	reg[3] = 0x10;
+	reg[3] = 0x90; /* set default chr/prg mask */
 	MMC3_Power();
 	SetWriteHandler(0x5000, 0x5FFF, M394WriteReg);
 }
