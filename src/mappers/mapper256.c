@@ -109,11 +109,30 @@ static DECLFW(M256WriteMMC3) {
 	OneBus_WriteMMC3(A, V);
 }
 
+static uint8 M256OpcodeCallback(uint8 opcode) {
+	if (iNESCart.submapper == 14 && onebus.cpu41xx[0x1C] & 0x40) {
+		return (((opcode << 1) & 0x80) | ((opcode >> 1) & 0x40) | (opcode & 0x3F));
+	}
+	return opcode;
+}
+
 static void M256Power(void) {
 	OneBus_Power();
 	SetWriteHandler(0x2012, 0x2017, M256WritePPU201X);
 	SetWriteHandler(0x4107, 0x410A, M256WriteCPU410X);
 	SetWriteHandler(0x8000, 0x9FFF, M256WriteMMC3);
+	if (iNESCart.submapper == 14) {
+		onebus.cpu41xx[0x1C] = 0x40;
+		X6502_SetOpcodeEncryptCB(&M256OpcodeCallback);
+	}
+}
+
+static void M256Reset(void) {
+	OneBus_Reset();
+	if (iNESCart.submapper == 14) {
+		onebus.cpu41xx[0x1C] = 0x40;
+		X6502_SetOpcodeEncryptCB(&M256OpcodeCallback);
+	}
 }
 
 void Mapper256_Init(CartInfo *info) {
@@ -129,4 +148,5 @@ void Mapper256_Init(CartInfo *info) {
 
 	OneBus_Init(info, M256Sync, ws, info->battery);
 	info->Power = M256Power;
+	info->Reset = M256Reset;
 }

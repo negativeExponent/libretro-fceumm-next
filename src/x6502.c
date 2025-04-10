@@ -400,6 +400,10 @@ void X6502_SetNewPC(uint16 newPC) {
 	cpu.newPC = newPC;
 }
 
+void X6502_SetOpcodeEncryptCB(uint8 (*callback)(uint8 opcode)) {
+	cpu.encryptOpcodeCB = callback;
+}
+
 void X6502_Run(int32 cycles) {
 	if (isPAL) {
 		cycles *= 15;	/* 15*4=60 */
@@ -472,6 +476,9 @@ void X6502_Run(int32 cycles) {
 
 		if (MapIRQHook) MapIRQHook(temp);
 		if (!ppu.overclock.overclocked_state) FCEU_SoundCPUHook(temp);
+		if (cpu.encryptOpcodeCB) {
+			cpu.opcode = cpu.encryptOpcodeCB(cpu.opcode);
+		}
 
 		switch (cpu.opcode) {
 		/* BRK */

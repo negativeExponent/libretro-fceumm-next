@@ -71,6 +71,7 @@ typedef struct __X6502 {
 	uint16 opcode_PC;
 	int32 opcode_cycles;
 	uint8 opcode;
+	uint8 (*encryptOpcodeCB)(uint8 opcode);
 
 	#ifdef FCEUDEF_DEBUGGER
 	int preexec;		/* Pre-exec'ing for debug breakpoints. */
@@ -99,6 +100,7 @@ void X6502_Init(void);
 void X6502_Reset(void);
 void X6502_Power(void);
 void X6502_SetNewPC(uint16 newPC);
+void X6502_SetOpcodeEncryptCB(uint8 (*callback)(uint8 opcode));
 
 void TriggerNMI(void);
 void TriggerNMI2(void);
