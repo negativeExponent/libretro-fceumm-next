@@ -507,7 +507,7 @@ static BMAPPING bmap[] = {
 	{ "SC-127",                      35, 0, Mapper209_Init, 0 },
 	{ "AC08",                        42, 0, Mapper042_Init, 0 },
 	{ "SuperHIK8in1",                45, 0, Mapper045_Init, 0 },
-	{ "STREETFIGTER-GAME4IN1",       49, 0, Mapper049_Init, 0 }, /* mapper 49? submapper 1*/
+	{ "STREETFIGTER-GAME4IN1",       49, 1, Mapper049_Init, 0 }, /* mapper 49? submapper 1*/
 	{ "Supervision16in1",            53, 0, Mapper053_Init, 0 },
 	{ "MARIO1-MALEE2",               55, 0, Mapper055_Init, 0 },
 	{ "GK-192",                      58, 0, Mapper058_Init, 0 },
@@ -791,6 +791,8 @@ static int InitializeBoard(void) {
 			}
 			if (submapper >= 0) {
 				iNESCart.submapper = (uint8)submapper;
+			} else if (tmp->submapper >= 0) {
+				iNESCart.submapper = tmp->submapper;
 			}
 			GameInfo->cspecial = cspecial;
 

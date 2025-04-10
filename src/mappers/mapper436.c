@@ -1,9 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2008 CaH4e3
- *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,47 +18,34 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* NES 2.0 Mapper 436: 820401/T-217 */
-
+/* NES 2.0 Mapper 436 denotes the ZLX-08 plug-and-play VT02 console PCB, used by
+ * the Entertainment System 620-in-1 plug-and-play console. It is uses normal
+ * OneBus banking, with one exception: the VT02's PRG A23 output (register $4100
+ * bit 6 for PRG and bit 2 for CHR accesses) is connected to PRG-ROM A24, and
+ * PRG A23 comes from the VT02's I/O port at $410F, bit 5 instead. Since the I/O
+ * port is high-impedance on reset, which is pulled-up to a logical "1", the
+ * reset vectors are in the second 8 MiB part of ROM.
+ *
+ * 620-in-1 (Mini Games Anniversary Edition) (Unl)
+ */
+ 
 #include "mapinc.h"
-#include "mmc3.h"
+#include "onebus.h"
 
 static uint8 reg;
 
-static void M436PW(uint16 A, uint16 V) {
-	if (reg & 0x01) {
-		setprg8(A, ((reg >> 2) & 0x30) | (V & 0x0F));
-	} else {
-		setprg32(0x8000, (reg >> 4));
-	}
-}
-
-static void M436CW(uint16 A, uint16 V) {
-	setchr1(A, ((reg << 1) & ~0x7F) | (V & 0x7F));
-}
-
-static DECLFW(M436Write) {
-	reg = A & 0xFF;
-	MMC3_FixPRG();
-	MMC3_FixCHR();
-}
-
-static void M436Reset(void) {
-	reg = 0;
-	MMC3_Reset();
-}
-
-static void M436Power(void) {
-	reg = 0;
-	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M436Write);
+static void Sync(void) {
+	OneBus_FixPRG(0xF3FF, 
+		((onebus.cpu41xx[0x0F] << 5) & 0x0400) | 
+		((onebus.cpu41xx[0x00] << 5) & 0x0800)
+	);
+	OneBus_FixCHR(0x9FFF, 
+		((onebus.cpu41xx[0x0F] << 8) & 0x2000) | 
+		((onebus.cpu41xx[0x00] << 12) & 0x4000)
+	);
+	OneBus_FixMIR();
 }
 
 void Mapper436_Init(CartInfo *info) {
-	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_pwrap = M436PW;
-	MMC3_cwrap = M436CW;
-	info->Power = M436Power;
-	info->Reset = M436Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	OneBus_Init(info, Sync, 0, 0);
 }

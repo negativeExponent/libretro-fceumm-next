@@ -32,15 +32,21 @@ static SFORMAT StateRegs[] = {
 };
 
 static void M049PW(uint16 A, uint16 V) {
+	uint32 prg_offset = 0;
 	if (reg & 0x01) {
 		setprg8(A, ((reg >> 2) & ~0x0F) | (V & 0x0F));
 	} else {
-		setprg32(0x8000, (reg >> 4) & 0x03);
+		uint8 mask = 0x0F;
+		if (iNESCart.submapper == 1) {
+			/* Street Fighter 2 of the UNIF variant */
+			mask = 0x03;
+		}
+		setprg32(0x8000, (reg >> 4) & mask);
 	}
 }
 
 static void M049CW(uint16 A, uint16 V) {
-	setchr1(A, ((reg << 1) & 0x180) | (V & 0x7F));
+	setchr1(A, ((reg << 1) & ~0x7F) | (V & 0x7F));
 }
 
 static DECLFW(M049Write) {
