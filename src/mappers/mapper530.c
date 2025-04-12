@@ -16,28 +16,33 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  *
- * NES 2.0 Mapper 530 - UNL-AX5705
+ * NES 2.0 Mapper 530 is used for Super Mario Bros. Pocker Mali (sic), a bootleg
+ * version of Bandai's Crayon Shin-chan: Ora to Poi Poi. It's a VRC4 clone
+ * (A0/A1, VRC4f) with the PRG and CHR address lines scrambled: PRG A14 is
+ * swapped with PRG A16, and CHR A15 is swapped with CHR A16. Its UNIF board
+ * name is UNL-AX5705.
+ * 
  * Super Bros. Pocker Mali (VRC4 mapper)
  */
 
 #include "mapinc.h"
 #include "vrc24.h"
 
-static DECLFW(UNLAX5705Write) {
-	A |= (A & 0x0008) ? 0x1000 : 0x0000;
+static DECLFW(M530Write) {
+	A = (A & ~0x1000) | ((A << 9) & 0x1000);
 	switch (A & 0xF000) {
 	case 0x8000:
 	case 0xA000:
-		V = ((V & 0x02) << 2) | ((V & 0x08) >> 2) | (V & 0x05);
+		V = ((V << 2) & 0x08) | ((V >> 2) & 0x02) | (V & ~0x0A);
 		break;
 	case 0xB000:
 	case 0xC000:
 	case 0xD000:
 	case 0xE000:
 		if (A & 0x0001) {
-			V = ((V & 0x04) >> 1) | ((V & 0x02) << 1) | (V & 0x09);
+			V = ((V >> 1) & 0x02) | ((V << 1) & 0x04) | (V & ~0x06);
 		}
 		break;
 	}
@@ -46,7 +51,7 @@ static DECLFW(UNLAX5705Write) {
 
 static void M530Power(void) {
 	VRC24_Power();
-	SetWriteHandler(0x8000, 0xFFFF, UNLAX5705Write);
+	SetWriteHandler(0x8000, 0xFFFF, M530Write);
 }
 
 void Mapper530_Init(CartInfo *info) {
