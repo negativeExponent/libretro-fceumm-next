@@ -25,7 +25,7 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 PPUCHRBus;
+static uint8 PPUCHRBus = 0;
 
 static SFORMAT StateRegs[] = {
 	{ &PPUCHRBus, 1, "PPUC" },
@@ -48,8 +48,19 @@ static void M520PPUHook(uint32 A) {
 	}
 }
 
+static DECLFW(M520WriteCHR) {
+	VRC24_Write(A, V);
+	VRC24_FixPRG();
+}
+
+static void M520Power(void) {
+	VRC24_Power();
+	SetWriteHandler(0xB000, 0xEFFF, M520WriteCHR);
+}
+
 void Mapper520_Init(CartInfo *info) {
 	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
+	info->Power = M520Power;
 	PPU_hook = M520PPUHook;
 	VRC24_pwrap = M520PW;
 	VRC24_cwrap = M520CW;
