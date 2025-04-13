@@ -23,7 +23,6 @@
  */
 
 #include "mapinc.h"
-#include "latch.h"
 #include "vrc24.h"
 
 static uint8 reg;
@@ -33,10 +32,9 @@ static SFORMAT StateRegs[] = {
 	{ 0 },
 };
 
-static void Sync(void) {
+static void M448FixPRG(void) {
 	if (reg & 0x08) { /* AOROM */
-		setprg32(0x8000, ((reg << 2) & ~0x07) | (latch.data & 0x07));
-		setmirror(MI_0 + ((latch.data >> 4) & 0x01));
+		setprg32(0x8000, ((reg << 2) & ~0x07) | (vrc24.prg[0] & 0x07));
 	} else {
 		if (reg & 0x04) { /* UOROM */
 			setprg16(0x8000, ((reg << 3) & ~0x0F) | (vrc24.prg[0] & 0x0F));
@@ -45,39 +43,53 @@ static void Sync(void) {
 			setprg16(0x8000, (reg << 3) | (vrc24.prg[0] & 0x07));
 			setprg16(0xC000, (reg << 3) | 0x07);
 		}
-		switch (vrc24.mirr & 0x03) {
+	}
+}
+
+static void M448FixCHR(void) {
+	setchr8(0);
+}
+
+static void M448FixMIRR(void) {
+	if (reg & 0x08) { /* AOROM */
+		setmirror(MI_0 + ((vrc24.prg[0] >> 4) & 0x01));
+	} else {
+		uint8 mask = vrc24.type ? 0x03 : 0x01;
+		switch (vrc24.mirr & mask) {
 		case 0: setmirror(MI_V); break;
 		case 1: setmirror(MI_H); break;
 		case 2: setmirror(MI_0); break;
 		case 3: setmirror(MI_1); break;
 		}
 	}
-	setchr8(0);
 }
 
 static DECLFW(M448WriteReg) {
 	if (vrc24.cmd & 0x01) {
 		reg = A & 0xFF;
-		Sync();
+		VRC24_FixPRG();
+		VRC24_FixCHR();
+		VRC24_FixMIR();
 	}
 }
 
 static DECLFW(M448WriteASIC) {
-	Latch_Write(A, V);
-    VRC24_Write(A, V);
-	Sync();
+	if (reg & 0x08) {
+		VRC24_Write(0x8000, V);
+		M448FixMIRR();
+	} else {
+		VRC24_Write(A, V);
+	}
 }
 
 static void M448Reset(void) {
 	reg = 0;
-	Sync();
+	VRC24_Reset();
 }
 
 static void M448Power(void) {
 	reg = 0;
-	Latch_Power();
 	VRC24_Power();
-	Sync();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, M448WriteReg);
@@ -85,12 +97,16 @@ static void M448Power(void) {
 }
 
 static void StateRestore(int version) {
-	Sync();
+	VRC24_FixPRG();
+	VRC24_FixCHR();
+	VRC24_FixMIR();
 }
 
 void Mapper448_Init(CartInfo *info) {
-	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
+	VRC24_FixPRG = M448FixPRG;
+	VRC24_FixCHR = M448FixCHR;
+	VRC24_FixMIR = M448FixMIRR;
 	info->Reset = M448Reset;
 	info->Power = M448Power;
 	GameStateRestore = StateRestore;
