@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
  * iNES mapper 183
- * Gimmick Bootleg (VRC4 mapper)
+ * shui guan pipe (Gimmick Bootleg - VRC4 mapper)
  */
 
 #include "mapinc.h"
@@ -33,50 +33,44 @@ static SFORMAT StateRegs[] = {
 };
 
 static void M183PRG(void) {
-	setprg8(0x6000, prg[0] & 0x3F);
-	setprg8(0x8000, prg[1] & 0x3F);
-	setprg8(0xA000, prg[2] & 0x3F);
-	setprg8(0xC000, prg[3] & 0x3F);
-	setprg8(0xE000,   (~0) & 0x3F);
+	setprg8(0x6000, prg[0]);
+	setprg8(0x8000, prg[1]);
+	setprg8(0xA000, prg[2]);
+	setprg8(0xC000, prg[3]);
+	setprg8(0xE000, ~0);
 }
 
-static DECLFW(M183Write) {
-	switch (A & 0xF800) {
-	case 0x6800:
-		prg[0] = A;
-		VRC24_FixPRG();
-		break;
-	case 0x8800:
-		prg[1] = V;
-		VRC24_FixPRG();
-		break;
-	case 0xA800:
-		prg[2] = V;
-		VRC24_FixPRG();
-		break;
-	case 0xA000:
-		prg[3] = V;
-		VRC24_FixPRG();
-		break;
-	case 0x9800:
-		VRC24_Write(0x9000, V);
-		break;
-	case 0x6000:
-	case 0x7000:
-	case 0x7800:
-	case 0x8000:
-	case 0x9000:
-		return;
-	default:
-		VRC24_Write(A, V);
-		return;
-	}
+static DECLFW(M183Write6800) {
+	prg[0] = A & 0x3F;
+	VRC24_FixPRG();
+}
+
+static DECLFW(M183Write8800) {
+	prg[1] = V & 0x3F;
+	VRC24_FixPRG();
+}
+
+static DECLFW(M183WriteA800) {
+	prg[2] = V & 0x3F;
+	VRC24_FixPRG();
+}
+
+static DECLFW(M183WriteA000) {
+	prg[3] = V & 0x3F;
+	VRC24_FixPRG();
 }
 
 static void M183Power(void) {
+	prg[0] = 0;
+	prg[1] = 0;
+	prg[2] = 1;
+	prg[3] = ~1;
 	VRC24_Power();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0xFFFF, M183Write);
+	SetWriteHandler(0x6800, 0x6FFF, M183Write6800);
+	SetWriteHandler(0x8800, 0x8FFF, M183Write8800);
+	SetWriteHandler(0xA800, 0xAFFF, M183WriteA800);
+	SetWriteHandler(0xA000, 0xA7FF, M183WriteA000);
 }
 
 void Mapper183_Init(CartInfo *info) {
