@@ -35,21 +35,22 @@ static SFORMAT StateRegs[] = {
 };
 
 static void M362PW(uint16 A, uint16 V) {
-	uint16 prgBase = (game == 0) ? ((vrc24.chr[PPUCHRBus] & 0x180) >> 3) : 0x40;
+	uint16 base = (game == 0) ? (vrc24.chr[PPUCHRBus] >> 3) : 0x40;
+	uint16 mask = 0x0F;
 
-	setprg8(A, prgBase | (V & 0x0F));
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void M362CW(uint16 A, uint16 V) {
-	uint16 chrBase = (game == 0) ? (vrc24.chr[PPUCHRBus] & 0x180) : 0x200;
-	uint16 chrMask = (game == 0) ? 0x7F : 0x1FF;
+	uint16 base = (game == 0) ? vrc24.chr[PPUCHRBus] : 0x200;
+	uint16 mask = (game == 0) ? 0x7F : 0x1FF;
 
-	setchr1(A, chrBase | (V & chrMask));
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(M362CHRWrite) {
 	VRC24_Write(A, V);
-	if (A & 0x01) {
+	if ((game == 0) && (A & 0x01)) {
 		/* NOTE: Because the lst higher 2 CHR-ROM bits are repurposed as PRG/CHR outer bank, 
 	 	an extra PRG sync after a CHR write. */
 		VRC24_FixPRG();
@@ -66,7 +67,7 @@ static void M362PPUHook(uint32 A) {
 }
 
 static void M362Reset(void) {
-	if (PRGsize[0] <= (512 * 1024)) {
+	if (ROM.prg.size <= (512 * 1024)) {
         game = 0;
     } else {
         game = (game + 1) & 0x01;
