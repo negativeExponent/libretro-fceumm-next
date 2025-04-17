@@ -39,14 +39,18 @@ static void M447PW(uint16 A, uint16 V) {
     uint16 base = reg << 4;
 
 	if (reg & 0x04) {
-		uint8 A14 = (reg & 0x02) ^ 0x02;
-		setprg8(0x8000, (base & ~mask) | ((vrc24.prg[0] & ~A14) & mask));
-		setprg8(0xA000, (base & ~mask) | ((vrc24.prg[1] & ~A14) & mask));
-		setprg8(0xC000, (base & ~mask) | ((vrc24.prg[0] |  A14) & mask));
-		setprg8(0xE000, (base & ~mask) | ((vrc24.prg[1] |  A14) & mask));
-	} else {
-		setprg8(A, (base & ~mask) | (V & mask));
+		if (!(reg & 0x02)) {
+			V = A >> 13;
+			base = base | (vrc24.prg[V & 0x01] & mask);
+			mask = 0x03;
+		} else {
+			V = A >> 13;
+			base = base | (vrc24.prg[V & 0x01] & mask);
+			mask = 0x01;
+		}
 	}
+
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void M447CW(uint16 A, uint16 V) {

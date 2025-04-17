@@ -27,43 +27,32 @@
 #include "vrc24.h"
 #include "eeprom_93Cx6.h"
 
-static uint8 haveEEPROM;
 static uint8 eeprom_data[256];
 
-static void M529PW(uint16 A, uint16 V) {
+static void M529FixPRG(void) {
 	setprg16(0x8000, vrc24.prg[1]);
 	setprg16(0xC000, ~0);
 }
 
 static DECLFR(M529EEPROMRead) {
-	if (haveEEPROM) {
-		return eeprom_93Cx6_read() ? 0x01 : 0x00;
-	}
-	return 0x01;
+	return eeprom_93Cx6_read() ? 0x01 : 0x00;
 }
 
-static DECLFW(M529Write) {
-	if (A & 0x800) {
-		if (haveEEPROM) {
-			eeprom_93Cx6_write(!!(A & 0x04), !!(A & 0x02), !!(A & 0x01));
-		}
-	} else {
-		VRC24_Write(A, V);
-	}
+static DECLFW(M529EEPROMWrite) {
+	eeprom_93Cx6_write(A & 0x04, A & 0x02, A & 0x01);
 }
 
 static void M529Power(void) {
 	VRC24_Power();
 	SetReadHandler(0x5000, 0x5FFF, M529EEPROMRead);
-	SetWriteHandler(0x8000, 0xFFFF, M529Write);
+	SetWriteHandler(0xF800, 0xFFFF, M529EEPROMWrite);
 }
 
 void Mapper529_Init(CartInfo *info) {
-	haveEEPROM = (info->PRGRamSaveSize & 0x100) != 0;
-	VRC24_Init(info, VRC4, 0x04, 0x08, !haveEEPROM, 1);
-	info->Power = M529Power;
-	VRC24_pwrap = M529PW;
-	if (haveEEPROM) {
+	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
+	VRC24_FixPRG = M529FixPRG;
+	if (info->PRGRamSaveSize) {
+		info->Power = M529Power;
 		eeprom_93Cx6_init(eeprom_data, 256, 16);
 		info->battery = 1;
 		info->SaveGame[0] = eeprom_data;

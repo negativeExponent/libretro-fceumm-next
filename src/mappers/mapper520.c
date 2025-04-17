@@ -50,7 +50,14 @@ static void M520PPUHook(uint32 A) {
 
 static DECLFW(M520WriteCHR) {
 	VRC24_Write(A, V);
-	VRC24_FixPRG();
+	switch (A & 0xF000) {
+	case 0xB000:
+	case 0xC000:
+	case 0xD000:
+	case 0xE000:
+		VRC24_FixPRG();
+		break;
+	}
 }
 
 static void M520Power(void) {

@@ -32,8 +32,16 @@ static void M450CW(uint16 A, uint16 V) {
     setchr1(A, (vrc24.latch << 7) | (V & 0x7F));
 }
 
+static void M450Reset(void) {
+    vrc24.latch = 0;
+    VRC24_FixPRG();
+    VRC24_FixCHR();
+    VRC24_FixMIR();
+}
+
 void Mapper450_Init(CartInfo *info) {
 	VRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
     VRC24_pwrap = M450PW;
     VRC24_cwrap = M450CW;
+    info->Reset = M450Reset;
 }
