@@ -35,11 +35,11 @@ static SFORMAT StateRegs[] = {
 };
 
 static void M559PW(uint16 A, uint16 V) {
-    V &= 0x1F;
     if (A == 0xC000) {
-        V = cpuC;
+        setprg8(A, cpuC & 0x1F);
+    } else {
+        setprg8(A, V & 0x1F);
     }
-    setprg8(A, V);
 }
 
 static void M559CW(uint16 A, uint16 V) {
@@ -47,12 +47,12 @@ static void M559CW(uint16 A, uint16 V) {
 }
 
 static void M559MIRR(void) {
-    setmirrorw(nt[0], nt[1], nt[2], nt[3]);
+	setmirrorw(nt[0] & 0x01, nt[1] & 0x01, nt[2] & 0x01, nt[3] & 0x01);
 }
 
 static DECLFW(M559WriteMisc) {
 	if (A & 0x04) {
-		nt[A & 0x03] = V & 0x01;
+		nt[A & 0x03] = V;
 		VRC24_FixMIR();
 	} else {
 		cpuC = V;
@@ -75,8 +75,6 @@ static void M559Power(void) {
     nt[3] = 1;
     cpuC = ~1;
     VRC24_Power();
-    setprg8(0xC000, cpuC);
-    setmirrorw(nt[0], nt[1], nt[2], nt[3]);
     SetWriteHandler(0xB000, 0xFFFF, M559WriteNibble);
 }
 
