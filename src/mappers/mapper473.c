@@ -19,11 +19,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-/* NES 2.0 Mapper 473 is a variant of mapper 45 where the
- * ASIC's PRG A21/CHR A20 output (set by bit 6 of the third write to $6000)
- * selects between regularly-banked CHR-ROM (=0) and 8 KiB of unbanked CHR-RAM
- * (=1). It is used solely for the Super 8-in-1 - 98格鬥天王＋熱血 (JY-302)
- * multicart.
+/* NES 2.0 Mapper 473 denotes the KJ01A-18 MMC3-compatible multicart PCB, used
+ * by a Coolbaby 600-in-1 multicart.
+ * 114-in-1 (KJ01A18) (Unl)
  */
 
 #include "mapinc.h"
