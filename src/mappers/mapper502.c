@@ -61,8 +61,14 @@ static void M502Power(void) {
     SetWriteHandler(0x6000, 0x6FFF, M502WriteReg);
 }
 
+static void M502Reset(void) {
+	reg[0] = reg[1] = 0;
+	Latch_RegReset();
+}
+
 void Mapper502_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Power = M502Power;
+	info->Reset = M502Reset;
     AddExState(StateRegs, ~0, 0, NULL);
 }

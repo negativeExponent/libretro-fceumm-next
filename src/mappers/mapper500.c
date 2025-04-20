@@ -44,6 +44,11 @@ static DECLFW(M500WriteReg) {
 	}
 }
 
+static void M500Reset(void) {
+	reg[0] = reg[1] = 0;
+	Latch_RegReset();
+}
+
 static void M500Power(void) {
     reg[0] = reg[1] = 0;
 	Latch_Power();
@@ -54,5 +59,6 @@ static void M500Power(void) {
 void Mapper500_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Power = M500Power;
+	info->Reset = M500Reset;
     AddExState(StateRegs, ~0, 0, NULL);
 }
