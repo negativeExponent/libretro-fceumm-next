@@ -22,6 +22,8 @@
 #include "mapinc.h"
 #include "latch.h"
 
+static const uint8 dpswLut[5] = { 0, 0x10, 0x30, 0x70, 0xF0 };
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
@@ -41,7 +43,7 @@ static void Sync(void) {
 }
 
 static DECLFR(M414Read) {
-	if ((A >= 0xC000) && !(latch.addr & 0x100) && (latch.addr & (dipsw << 4))) {
+	if ((A >= 0xC000) && !(latch.addr & 0x100) && (latch.addr & dpswLut[dipsw])) {
 		return cpu.openbus;
 	}
 	return CartBR(A);
@@ -49,11 +51,15 @@ static DECLFR(M414Read) {
 
 static void M414Reset(void) {
 	dipsw++;
-	dipsw &= 0x0F;
+	if (dipsw > 4) {
+		dipsw = 0;
+	}
 	Sync();
+	
 }
 
 void Mapper414_Init(CartInfo *info) {
+	dipsw = 0;
 	Latch_Init(info, Sync, M414Read, FALSE, TRUE);
 	info->Reset = M414Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
