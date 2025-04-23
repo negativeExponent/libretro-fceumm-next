@@ -20,6 +20,7 @@
 
 /* Mapper 394: HSK007 circuit board that can simulate J.Y. ASIC, MMC3, and NROM. */
 /* submapper 0: Super Value HiK 6-in-1 (Top002) */
+/* submapper 1: 6-in-1 (VIP002) (Unl) */
 
 #include "mapinc.h"
 #include "jyasic.h"
@@ -114,13 +115,6 @@ static DECLFW(M394WriteReg) {
 	}
 }
 
-static DECLFW(M394_WriteASIC) {
-	if (reg[1] & 0x10) {
-	} else {
-
-	}
-}
-
 static void M394StateRestore(int version) {
 	int i;
 
@@ -146,8 +140,7 @@ static void M394StateRestore(int version) {
 		JYASIC_FixMIR();
 	} else {
 		SetWriteHandler(0x5000, 0x5FFF, M394WriteReg);
-		SetWriteHandler(0x8000, 0xBFFF, MMC3_CMDWrite);
-		SetWriteHandler(0xC000, 0xFFFF, MMC3_IRQWrite);
+		SetWriteHandler(0x8000, 0xFFFF, MMC3_Write);
 		SetReadHandler(0x8000, 0xFFFF, CartBR);
 		MMC3_FixPRG();
 		MMC3_FixCHR();
@@ -159,6 +152,7 @@ static void M394Power(void) {
 	reg[1] = 0x0F; /* start in MMC3 mode */
 	reg[2] = 0x00;
 	reg[3] = 0x90; /* set default chr/prg mask */
+	JYASIC_RegReset();
 	MMC3_Power();
 	SetWriteHandler(0x5000, 0x5FFF, M394WriteReg);
 }
