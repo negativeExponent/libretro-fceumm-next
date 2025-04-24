@@ -6,7 +6,13 @@ It is a fork of FCEU "mappers modified", an unofficial build of FCEU Ultra by Ca
 
 **What this fork is**
 
-FCEUmm Next purpose is to have faster updates and features. Other than a rewrite for the mapper interface codebase and some code sections that requires it, also tries to have a more seamless integration into the libretro api amongst other changes. These changes and updates are supposed to be pushed into main fork, libretro-fceumm, but when i tried to start moving some sections, some third party confirmation disagrees with the changes, claiming A LOT IS BROKEN. ALL multicarts are broken yada yada yada and yet no descriptions or details of the issue are being posted. They claimed that those things were working before, so regressions are fixable and yet they refuse to give details. So i assumed they dont want codebase to be touched. Hence this fork.
+FCEUmm Next aims to provide faster updates, new features, and better integration with the Libretro API. It includes a complete rewrite of the mapper interface and updates to some code sections that required improvement. The goal is to retain a consistent code-style, enhance the existing framework while ensuring seamless integration with the Libretro ecosystem, among other changes.
+
+These updates were initially intended to be merged into the main fork, libretro-fceumm. However, when I submitted my PRs, they were rejected without clear explanations or meaningful feedback. The concerns raised — particularly about multicart support — were vague, with no actionable details provided.
+
+Since the regressions were likely fixable if the issues had been communicated clearly, and because anything already existing in libretro-fceumm could be moved or added to FCEUmm Next without major difficulty, the lack of concrete information made progress impossible. Despite this, the same changes and concepts I had initially submitted were later submitted and merged, without any explanation as to why my contributions were rejected in the first place.
+
+With no proper communication, or transparency, I decided to create FCEUmm Next to continue pushing forward with the necessary updates and features that were blocked or delayed in the original project.
 
 **Changes/Differences**
 
@@ -14,6 +20,8 @@ FCEUmm Next purpose is to have faster updates and features. Other than a rewrite
 
 * additional mappers support
 * mapper fixes and updates
+* Refactored common mappers (MMC1, MMC3, VRC24 and others) into a modular and reusable interface
+* Refactored common expansion audio (FDS, MMC5, VRC-series and others) into a modular and reusable interface
 * additional input options (SNES Mouse, SNES Gamepad, PowerPad A/B, VirtualBoy Controller etc)
 * variable overscan cropping options, including separate top, bottom, left, right overscan cropping
 * replaced on/off audio options to volume controls
@@ -99,6 +107,9 @@ emu2149 - https://github.com/digital-sound-antiques/emu2149
 
 Changelog:
 ----------
+25.04.24
+- lots of changes to write
+
 24.10.04
 - Add option to disable ppu color emphasis
 - Fix allocation and deallocation of CHR-RAM
