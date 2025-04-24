@@ -1,7 +1,8 @@
 # FCEUmm Next
-FCEUmm Next is a fork of libretro-fceumm which itself is a fork of FCEUmm.
+`FCEUmm Next` is a **modified libretro core** originally based on [libretro/fceumm](https://github.com/libretro/libretro-fceumm), now evolved with significant custom changes and enhancements. It’s designed to be used with RetroArch or any libretro-compatible frontend.
 
 FCEUmm is a Nintendo Entertainment System / Famicom emulator. It currently supports a wide number of carts, including support for Family Computer Disk System and Vs. Unisystem.
+
 It is a fork of FCEU "mappers modified", an unofficial build of FCEU Ultra by CaH4e3, which supports a lot of new mappers including some obscure mappers such as one for unlicensed NES ROM's using the Libretro API.
 
 **What this fork is**
@@ -107,6 +108,9 @@ emu2149 - https://github.com/digital-sound-antiques/emu2149
 
 Changelog:
 ----------
+25.04.25
+- moved to a standalone repo
+
 25.04.24
 - lots of changes to write
 
