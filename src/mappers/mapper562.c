@@ -212,7 +212,7 @@ static const uint8 tgd4800[2048] = {
 
 static uint8 prg[4];
 static uint8 chr1K[8];
-static uint8 chr;
+static uint8 chr8k;
 static uint8 latch;
 
 static uint8 reg1M;
@@ -236,7 +236,7 @@ static SFORMAT StateRegs[] = {
 	{ &reg2M,   1, "REG2" },
 	{ &regtgd,  1, "REGT" },
 	{ &latch,   1, "LATC" },
-	{ &chr,     1, "CREG" },
+	{ &chr8k,   1, "CREG" },
 	{ &lockCHR, 1, "CHRL" },
 	{ chr1K,    8, "CHR1" },
 	{ prg,      4, "PREG" },
@@ -316,7 +316,7 @@ static void Sync(void) {
 		setchr1(0x1800, chr1K[6]);
 		setchr1(0x1C00, chr1K[7]);
 	} else {
-		setchr8(chr);
+		setchr8(chr8k);
 	}
 
 	switch (reg1M & 0x11) {
@@ -378,7 +378,9 @@ static DECLFW(M562WriteReg) {
 	case 0x42FE:
 	case 0x42FF:
 		reg1M = (V & 0xF0) | (A & 0x03);
-		lockCHR = !((reg1M & 0xE0) & 0x80);
+		if (reg1M >= 0x80) {
+			lockCHR = 0;
+		}
 		Sync();
 		break;
 	case 0x43FC:
@@ -386,7 +388,7 @@ static DECLFW(M562WriteReg) {
 	case 0x43FE:
 	case 0x43FF:
 		reg2M = (V & 0xF0) | (A & 0x03);
-		chr = V & 0x03;
+		chr8k = V & 0x03;
 		Sync();
 		break;
 	case 0x4400:
@@ -425,10 +427,10 @@ static DECLFW(M562Write) {
 		case 1:
 		case 4:
 		case 5:
-			chr = latch & 0x03;
+			chr8k = latch & 0x03;
 			break;
 		case 3:
-			chr = (latch >> 4) & 0x03;
+			chr8k = (latch >> 4) & 0x03;
 			break;
 		}
 		prg[(A >> 13) & 0x03] = V >> 2;
@@ -438,9 +440,12 @@ static DECLFW(M562Write) {
 	}
 }
 
-static DECLFW(M562CHRWrite) {
-	if (((reg1M >> 5) >= 5) && (~(reg1M & 0x11) & 0x01)) {
-		lockCHR = !!(reg1M & 0x10);
+extern uint32 RefreshAddr;
+static DECLFW(M562PPUWrite2007) {
+	if (!(RefreshAddr & 0x2000)) {
+		if ((reg1M >= 0xA0) && !(reg1M & 0x01)) {
+			lockCHR = !!(reg1M & 0x10);
+		}
 	}
 	writePPU(A, V);
 }
@@ -459,7 +464,7 @@ static void M562Power(void) {
 	regtgd = 0x03;
 
 	latch = 0;
-	chr = 0;
+	chr8k = 0;
 	lockCHR = FALSE;
 
 	prg[0] = 0x1C;
@@ -480,7 +485,7 @@ static void M562Power(void) {
 	count_target_tgd = 0;
 
 	writePPU = GetWriteHandler(0x2007);
-	SetWriteHandler(0x2007, 0x2007, M562CHRWrite);
+	SetWriteHandler(0x2007, 0x2007, M562PPUWrite2007);
 
 	SetReadHandler(0x4020, 0x4FFF, M562ReadReg);
 	SetWriteHandler(0x4020, 0x4FFF, M562WriteReg);

@@ -44,6 +44,8 @@ static int16 fds_irq_counter;
 
 static uint8 scratch[0x1000];
 
+static writefunc writePPU;
+
 static SFORMAT StateRegs[] = {
 	{ &mode_1m,         1, "MC1M" },
 	{ &mode_2m,         1, "MC2M" },
@@ -274,6 +276,16 @@ static DECLFW(M006WriteLatch) {
 	}
 }
 
+extern uint32 RefreshAddr;
+static DECLFW(M562PPUWrite2007) {
+	if (!(RefreshAddr & 0x2000)) {
+		if ((mode_1m >= 0xA0) && !(mode_1m & 0x01)) {
+			chr_lock = !!(mode_1m & 0x10);
+		}
+	}
+	writePPU(A, V);
+}
+
 static void M006Reset(void) {
 	smc_irq_enabled = FALSE;
 	smc_irq_counter = 0;
@@ -348,6 +360,9 @@ static void M006Power(void) {
 
 	M006Reset();
 
+	writePPU = GetWriteHandler(0x2007);
+	SetWriteHandler(0x2007, 0x2007, M562PPUWrite2007);
+
 	SetReadHandler(0x5000, 0xFFFF, CartBR);
 	SetWriteHandler(0x5000, 0x7FFF, CartBW);
 
@@ -394,13 +409,6 @@ static void M006HBHook(void) {
 
 static void M006PPUHook(uint32 A) {
 	if ((A & 0x3000) != 0x2000) {
-		int needsync = FALSE;
-
-		if ((mode_1m >= 0xA0) && !(mode_1m & 0x01)) {
-			chr_lock = (mode_1m & 0x10) != 0;
-			needsync = TRUE;
-		}
-
 		if ((mode_smc & 0x05) == 0x01) {
 			uint8 value = (A >> 4) & 0x02;
 			uint8 bank  = (A >> 12) & 0x01;
@@ -410,13 +418,10 @@ static void M006PPUHook(uint32 A) {
 			case 0x0FE0:
 				if (chr_mmc4latch[bank] != value) {
 					chr_mmc4latch[bank] = value;
-					needsync = TRUE;
+					Sync();
 				}
 				break;
 			}
-		}
-		if (needsync) {
-			Sync();
 		}
 	}
 }
