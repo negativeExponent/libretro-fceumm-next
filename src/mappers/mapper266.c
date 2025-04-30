@@ -59,9 +59,9 @@ static void M266Power(void) {
 }
 
 void Mapper266_Init(CartInfo *info) {
-	VRC24_Init(info, VRC4, 0x04, 0x08, FALSE, TRUE);
+	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, FALSE, TRUE);
 	info->Power = M266Power;
 	VRC24_pwrap = M266PW;
-	VRC24_miscWrite = M266WriteMisc;
+	VRC24_WriteExtSelect = M266WriteMisc;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

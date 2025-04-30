@@ -36,8 +36,8 @@ enum {
 };
 
 typedef enum __VRC24TYPE {
-	VRC2 = 0,
-	VRC4 = 1
+	VRC24_VRC2 = 0,
+	VRC24_VRC4 = 1
 } VRC24TYPE;
 
 typedef struct __VRC24 {
@@ -45,15 +45,25 @@ typedef struct __VRC24 {
     uint16 chr[8];
     uint8 cmd;
     uint8 mirr;
-	uint8 latch; /* VRC2 $6000-$6FFF */
+	uint8 wire; /* VRC2 $6000-$6FFF microwire interface */
 
-	VRC24TYPE type; /* type */
+	/* not normally added to state */
+	uint8 type;
 	uint16 A0;
 	uint16 A1;
 } VRC24;
 
 extern VRC24 vrc24;
 
+uint16 VRC24_GetPRGBank(int bank);
+uint16 VRC24_GetCHRBank(int bank);
+
+void VRC24_FixPRG_default(void);
+void VRC24_FixCHR_default(void);
+void VRC24_FixMIR_default(void);
+
+DECLFR(VRC24_ReadWRAM);
+DECLFW(VRC24_WriteWRAM);
 DECLFW(VRC24_Write);
 
 void VRC24_IRQCPUHook(int a);
@@ -67,8 +77,14 @@ extern void (*VRC24_FixPRG)(void);
 extern void (*VRC24_FixCHR)(void);
 extern void (*VRC24_FixMIR)(void);
 
+/* VRC2 mircrowire interface when wram is not present $6000-$7FFF*/
+/* callback function on writes */
+extern void (*VRC24_FixWire)(void);
+
 extern void (*VRC24_pwrap)(uint16 A, uint16 V);
 extern void (*VRC24_cwrap)(uint16 A, uint16 V);
-extern void (*VRC24_miscWrite)(uint16 A, uint8 V);
+
+/* VRC4 External Select, e.g. $9000 port 3 */
+extern DECLFW((*VRC24_WriteExtSelect));
 
 #endif /* _VRC24_H */

@@ -25,23 +25,29 @@
 #include "vrc24.h"
 
 static void M450PW(uint16 A, uint16 V) {
-    setprg8(A, (vrc24.latch << 4) | (V & 0x0F));
+    setprg8(A, (vrc24.wire << 4) | (V & 0x0F));
 }
 
 static void M450CW(uint16 A, uint16 V) {
-    setchr1(A, (vrc24.latch << 7) | (V & 0x7F));
+    setchr1(A, (vrc24.wire << 7) | (V & 0x7F));
+}
+
+static void M450FixWire(void) {
+    VRC24_FixPRG();
+    VRC24_FixCHR();
 }
 
 static void M450Reset(void) {
-    vrc24.latch = 0;
+    vrc24.wire = 0;
     VRC24_FixPRG();
     VRC24_FixCHR();
     VRC24_FixMIR();
 }
 
 void Mapper450_Init(CartInfo *info) {
-	VRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
+	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, 0, 1);
     VRC24_pwrap = M450PW;
     VRC24_cwrap = M450CW;
+    VRC24_FixWire = M450FixWire;
     info->Reset = M450Reset;
 }

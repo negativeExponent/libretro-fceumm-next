@@ -79,15 +79,19 @@ static void M252Power(void) {
 }
 
 void Mapper252_Init(CartInfo *info) {
-	VRC24_Init(info, VRC4, 0x04, 0x08, TRUE, TRUE);
+	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, FALSE, TRUE);
 	VRC24_pwrap = M252PW;
 	VRC24_cwrap = M252CW;
 
 	info->Power = M252Power;
 	info->Close = M252Close;
 
-	CHRRAMSIZE = 2048;
+	CHRRAMSIZE = info->iNES2 ? (info->CHRRamSize + info->CHRRamSaveSize) : 2048;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
+}
+
+void Mapper253_Init(CartInfo *info) {
+	Mapper252_Init(info);
 }

@@ -49,7 +49,7 @@ static void M529Power(void) {
 }
 
 void Mapper529_Init(CartInfo *info) {
-	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
+	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 0, 1);
 	VRC24_FixPRG = M529FixPRG;
 	if (info->PRGRamSaveSize) {
 		info->Power = M529Power;

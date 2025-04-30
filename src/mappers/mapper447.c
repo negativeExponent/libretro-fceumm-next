@@ -89,7 +89,7 @@ static void M447Power(void) {
 }
 
 void Mapper447_Init(CartInfo *info) {
-    VRC24_Init(info, VRC4, 0x04, 0x08, 1, 1);
+    VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 1, 1);
 	info->Reset = M447Reset;
 	info->Power = M447Power;
     VRC24_pwrap = M447PW;

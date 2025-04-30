@@ -83,7 +83,7 @@ static void M362Power(void) {
 }
 
 void Mapper362_Init(CartInfo *info) {
-	VRC24_Init(info, VRC4, 0x01, 0x02, 0, 0);
+	VRC24_Init(info, VRC24_VRC4, 0x01, 0x02, 0, 0);
 	info->Reset = M362Reset;
 	info->Power = M362Power;
     PPU_hook = M362PPUHook;

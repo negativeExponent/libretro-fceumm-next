@@ -79,11 +79,11 @@ static void M559Power(void) {
 }
 
 void Mapper559_Init(CartInfo *info) {
-    VRC24_Init(info, VRC4, 0x400, 0x800, 1, 1);
+    VRC24_Init(info, VRC24_VRC4, 0x400, 0x800, 1, 1);
     info->Power = M559Power;
     VRC24_FixMIR = M559MIRR;
     VRC24_pwrap = M559PW;
     VRC24_cwrap = M559CW;
-    VRC24_miscWrite = M559WriteMisc;
+    VRC24_WriteExtSelect = M559WriteMisc;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

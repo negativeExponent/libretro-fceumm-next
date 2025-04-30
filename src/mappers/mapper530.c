@@ -55,6 +55,6 @@ static void M530Power(void) {
 }
 
 void Mapper530_Init(CartInfo *info) {
-	VRC24_Init(info, VRC4, 0x01, 0x02, 0, 1);
+	VRC24_Init(info, VRC24_VRC4, 0x01, 0x02, 0, 1);
 	info->Power = M530Power;
 }

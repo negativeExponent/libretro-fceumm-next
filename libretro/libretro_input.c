@@ -732,8 +732,8 @@ void input_update(retro_input_state_t *_input_cb) {
 					if (input_cb(player, RETRO_DEVICE_JOYPAD, 0, turbomap[i].retro)) {
 						if (!turbo_button_toggle[player][i]) {
 							turbo_pressed_count[player][i] = 2;
-							if (turbo_pressed_count[player][i] <= nes_input.turbo_delay + 1) {
-								turbo_pressed_count[player][i] = nes_input.turbo_delay;
+							if (nes_input.turbo_delay == 1) {
+								turbo_pressed_count[player][i] = 1;
 							}
 						}
 						if (turbo_pressed_count[player][i]) {

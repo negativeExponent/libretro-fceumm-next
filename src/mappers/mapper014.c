@@ -97,7 +97,7 @@ void Mapper014_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
 	MMC3_cwrap = M014MMC3CW;
 
-	VRC24_Init(info, VRC2, 0x01, 0x02, FALSE, TRUE);
+	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, FALSE, TRUE);
 	VRC24_cwrap = M014VRC24CW;
 
 	info->Power = M014Power;

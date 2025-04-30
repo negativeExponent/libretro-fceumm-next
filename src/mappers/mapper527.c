@@ -35,6 +35,6 @@ static void M527CW(uint16 A, uint16 V) {
 }
 
 void Mapper527_Init(CartInfo *info) {
-	VRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
+	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, 0, 1);
 	VRC24_cwrap = M527CW;
 }

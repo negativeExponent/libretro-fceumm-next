@@ -69,7 +69,7 @@ static void M384Power(void) {
 }
 
 void Mapper384_Init(CartInfo *info) {
-	VRC24_Init(info, VRC4, 0x04, 0x08, TRUE, TRUE);
+	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, TRUE, TRUE);
 	info->Power = M384Power;
     info->Reset = M384Reset;
 	VRC24_pwrap = M384PW;

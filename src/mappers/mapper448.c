@@ -54,13 +54,7 @@ static void M448FixMIRR(void) {
 	if (reg & 0x08) { /* AOROM */
 		setmirror(MI_0 + ((vrc24.prg[0] >> 4) & 0x01));
 	} else {
-		uint8 mask = vrc24.type ? 0x03 : 0x01;
-		switch (vrc24.mirr & mask) {
-		case 0: setmirror(MI_V); break;
-		case 1: setmirror(MI_H); break;
-		case 2: setmirror(MI_0); break;
-		case 3: setmirror(MI_1); break;
-		}
+		VRC24_FixMIR_default();
 	}
 }
 
@@ -103,7 +97,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper448_Init(CartInfo *info) {
-	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
+	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 0, 1);
 	VRC24_FixPRG = M448FixPRG;
 	VRC24_FixCHR = M448FixCHR;
 	VRC24_FixMIR = M448FixMIRR;

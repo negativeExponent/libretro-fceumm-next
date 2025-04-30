@@ -74,7 +74,7 @@ static void M183Power(void) {
 }
 
 void Mapper183_Init(CartInfo *info) {
-	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
+	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 0, 1);
 	info->Power = M183Power;
 	VRC24_FixPRG = M183PRG;
 	AddExState(StateRegs, ~0, 0, NULL);

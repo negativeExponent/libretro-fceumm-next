@@ -234,7 +234,7 @@ static void StateRestore(int version) {
 void Mapper351_Init(CartInfo *info) {
 	int CHRRAMSIZE = info->CHRRamSize + info->CHRRamSaveSize;
 
-	VRC24_Init(info, VRC2, 0x04, 0x08, FALSE, TRUE);
+	VRC24_Init(info, VRC24_VRC2, 0x04, 0x08, FALSE, TRUE);
 	VRC24_pwrap = M351VRC24PW;
 	VRC24_cwrap = M351VRC24CW;
 

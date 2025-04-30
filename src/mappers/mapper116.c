@@ -180,7 +180,7 @@ static void M116Power(void) {
 }
 
 void Mapper116_Init(CartInfo *info) {
-	VRC24_Init(info, VRC2, 0x01, 0x02, FALSE, TRUE);
+	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, FALSE, TRUE);
 	VRC24_pwrap = M116VRC24PW;
 	VRC24_cwrap = M116VRC24CW;
 

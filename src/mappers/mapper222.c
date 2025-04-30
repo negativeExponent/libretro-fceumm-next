@@ -102,7 +102,7 @@ static void M222Power(void) {
 }
 
 void Mapper222_Init(CartInfo *info) {
-	VRC24_Init(info, VRC2, 0x01, 0x02, 0, 1);
+	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, 0, 1);
 	info->Power = M222Power;
 	MapIRQHook = M222CPUIRQHook;
 	AddExState(StateRegs, ~0, 0, NULL);

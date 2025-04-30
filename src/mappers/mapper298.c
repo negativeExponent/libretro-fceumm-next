@@ -26,5 +26,5 @@
 #include "vrc24.h"
 
 void Mapper298_Init(CartInfo *info) {
-	VRC24_Init(info, VRC4, 0x02, 0x01, FALSE, FALSE);
+	VRC24_Init(info, VRC24_VRC4, 0x02, 0x01, FALSE, FALSE);
 }

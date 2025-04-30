@@ -62,7 +62,7 @@ static uint32 GetPRGBase(void) {
 }
 
 static uint32 GetPRGMask(void) {
-	return (~reg[3]);
+	return reg[3];
 }
 
 static uint32 GetCHRBase(void) {
@@ -271,19 +271,19 @@ static void apply_mode(void) {
             MMC3_Reset();
 			break;
 		case MAPPER_VRC2_22:
-			vrc24.type = VRC2;
+			vrc24.type = VRC24_VRC2;
 			vrc24.A0 = 0x02;
 			vrc24.A1 = 0x01;
             VRC24_Reset();
 			break;
 		case MAPPER_VRC4_23:
-			vrc24.type = VRC4;
+			vrc24.type = VRC24_VRC4;
 			vrc24.A0 = 0x05;
 			vrc24.A1 = 0x0A;
 			VRC24_Reset();
 			break;
 		case MAPPER_VRC4_25:
-			vrc24.type = VRC4;
+			vrc24.type = VRC24_VRC4;
 			vrc24.A0 = 0x0A;
 			vrc24.A1 = 0x05;
 			VRC24_Reset();
@@ -308,15 +308,24 @@ static DECLFW(M446WriteLatch) {
 }
 
 static DECLFW(M446WriteReg) {
-	if (!(reg[0] & 0x80)) {
-		A &= 0x07;
-		if (!A && !iNESCart.submapper && ((V & 0x1F) == 0x01)) {
-			V = (V & ~0x1F) | MAPPER_SNROM;
-		}
-		reg[A] = V;
-		apply_mode();
-		Sync();
+	uint8 index = A & 0x07;
+	if ((index == 0x03) && (iNESCart.submapper != 2)) {
+		/* The register has an inverted meaning in Submapper 2 vs.
+		 * Submappers 0-1. In Submappers 0-1, an "1" bit means that the
+		 * Outer Bank bit is used. In Submapper 2, an "1" bit means that the
+		 * Inner Bank bit is used. */
+		V = ~V;
 	}
+	if ((index == 0) && (iNESCart.submapper == 0)) {
+		switch (V & 0x1F) {
+		case 0x01: V = (V & ~0x1F) | MAPPER_SNROM; break;
+		}
+	}
+	reg[index] = V;
+	if (reg[0] & 0x80) {
+		apply_mode();
+	}
+	Sync();
 }
 
 static DECLFW(M446Write) {
@@ -436,7 +445,7 @@ void Mapper446_Init(CartInfo *info) {
 	MMC3_pwrap = M446MMC3PW;
 	MMC3_cwrap = M446MMC3CW;
 
-	VRC24_Init(info, VRC4, 0x01, 0x02, FALSE, TRUE);
+	VRC24_Init(info, VRC24_VRC4, 0x01, 0x02, FALSE, TRUE);
 	VRC24_pwrap = M446VRC24PW;
 	VRC24_cwrap = M446VRC24CW;
 
@@ -469,7 +478,6 @@ void Mapper446_Init(CartInfo *info) {
 	/* Allocate memory for flash */
 	flash = (uint8 *)FCEU_gmalloc(PRGsize[0]);
 	SetupCartPRGMapping(FLASH_CHIP, flash, PRGsize[0], 1);
-	AddExState(flash, PRGsize[0], 0, "FLSH");
 	memcpy(flash, PRGptr[0], PRGsize[0]);
 	FlashROM_Init(flash, PRGsize[0], 0x01, 0x7E, 131072, 0xAAA, 0x555);
 }

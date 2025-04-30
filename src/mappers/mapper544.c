@@ -104,12 +104,12 @@ static void M544Close(void) {
 }
 
 void Mapper544_Init(CartInfo *info) {
-    VRC24_Init(info, VRC4, 0x400, 0x800, 1, 1);
+    VRC24_Init(info, VRC24_VRC4, 0x400, 0x800, 1, 1);
 	info->Power = M544Power;
 	info->Close = M544Close;
     VRC24_pwrap = M544PW;
 	VRC24_cwrap = M544CW;
-    VRC24_miscWrite = M544WriteExtra;
+    VRC24_WriteExtSelect = M544WriteExtra;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 2048;

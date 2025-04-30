@@ -151,7 +151,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper556_Init(CartInfo *info) {
-	VRC24_Init(info, VRC4, 0x05, 0x0A, 0, TRUE);
+	VRC24_Init(info, VRC24_VRC4, 0x05, 0x0A, 0, TRUE);
 	VRC24_pwrap = M556VRC4PW;
 	VRC24_cwrap = M556VRC4CW;
 

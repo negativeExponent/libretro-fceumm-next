@@ -226,7 +226,7 @@ DECLFR(OneBus_ReadCPU41XX) {
 		case 0x158: case 0x159: case 0x15A: case 0x15B: case 0x15D: case 0x15E: case 0x15F:
 			if (iNESCart.ConsoleType == CONSOLE_VT369) {
 				/* TODO: VT369 gpio */
-				FCEU_printf("unimplemented read: %04x\n", A);
+				/* FCEU_printf("unimplemented read: %04x\n", A); */
 			}
 			return 0xFF;
 		case 0x15C:
@@ -270,7 +270,7 @@ DECLFW(OneBus_WriteCPU41XX) {
 		case 0x158: case 0x159: case 0x15A: case 0x15B: case 0x15C: case 0x15D: case 0x15E: case 0x15F:
 			if (iNESCart.ConsoleType == CONSOLE_VT369) {
 				/* TODO: VT369 gpio */
-				FCEU_printf("unimplemented write: %04x <- %02x\n", A, V);
+				/* FCEU_printf("unimplemented write: %04x <- %02x\n", A, V); */
 			}
 			break;
 		case 0x160:

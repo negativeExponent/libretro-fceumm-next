@@ -66,7 +66,7 @@ static void M520Power(void) {
 }
 
 void Mapper520_Init(CartInfo *info) {
-	VRC24_Init(info, VRC4, 0x04, 0x08, 0, 1);
+	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 0, 1);
 	info->Power = M520Power;
 	PPU_hook = M520PPUHook;
 	VRC24_pwrap = M520PW;

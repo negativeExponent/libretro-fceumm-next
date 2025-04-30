@@ -31,63 +31,51 @@
 
 static uint8 reg[4];
 
-static void M445PW(uint16 A, uint16 V) {
-    uint8 mask = (reg[2] & 0x01) ? 0x0F : 0x1F;
-	uint8 base = reg[0];
-
-    setprg8(A, (base & ~mask) | (V & mask));
+static uint8 GetPRGBase(void) {
+	return reg[0];
 }
 
-static void M445CW(uint16 A, uint16 V) {
-    uint16 mask = (reg[2] & 0x08) ? 0x7F : 0xFF;
-	uint16 base = reg[1] << 3;
+static uint8 GetPRGMask(void) {
+	return ((0x7F >> (reg[2] & 0x07)) & 0x1F);
+}
+
+static void M445MMC3PW(uint16 A, uint16 V) {
+	uint16 mask = GetPRGMask();
+	uint16 base = GetPRGBase();
+
+	setprg8(A, (base & ~mask) | (V & mask));
+}
+
+static void M445VRC24PW(uint16 A, uint16 V) {
+	uint16 mask = GetPRGMask();
+	uint16 base = GetPRGBase();
+
+	setprg8(A, (base & ~mask) | (V & mask));
+}
+
+static uint8 GetCHRBase(void) {
+	return reg[1];
+}
+
+static uint8 GetCHRMask(void) {
+	return ((0x3FF >> ((reg[2] >> 3) & 0x07)) & 0xFF);
+}
+
+static void M445MMC3CW(uint16 A, uint16 V) {
+	uint16 mask = GetCHRMask();
+	uint16 base = GetCHRBase() << 3;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M445WriteREG) {
-    if (!(reg[3] & 0x20)) {
-        reg[A & 0x03] = V;
-		vrc24.A0 = reg[3] & 0x01 ? 0x0A : 0x05;
-		vrc24.A1 = reg[3] & 0x01 ? 0x05 : 0x0A;
-        MMC3_FixPRG();
-        MMC3_FixCHR();
-    }
+static void M445VRC24CW(uint16 A, uint16 V) {
+	uint16 mask = GetCHRMask();
+	uint16 base = GetCHRBase() << 3;
+
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M445WriteASIC) {
-	switch (reg[3] & 0x10) {
-	case MAPPER_VRC4:
-		VRC24_Write(A, V);
-		break;
-	case MAPPER_MMC3:
-	default:
-		MMC3_Write(A, V);
-		break;
-	}
-}
-
-static void M445Reset(void) {
-	reg[0] = 0x00;
-	reg[1] = 0x00;
-	reg[2] = 0x00;
-    reg[3] = 0x00;
-	VRC24_Reset();
-	MMC3_Reset();
-}
-
-static void M445Power(void) {
-    reg[0] = 0x00;
-	reg[1] = 0x00;
-	reg[2] = 0x00;
-    reg[3] = 0x00;
-	VRC24_Power();
-	MMC3_Power();
-	SetWriteHandler(0x5000, 0x5FFF, M445WriteREG);
-	SetWriteHandler(0x8000, 0xFFFF, M445WriteASIC);
-}
-
-static void StateRestore(int version) {
+static void Sync(void) {
 	switch (reg[3] & 0x10) {
 	case MAPPER_VRC4:
 		VRC24_FixPRG();
@@ -103,18 +91,85 @@ static void StateRestore(int version) {
 	}
 }
 
-void Mapper445_Init(CartInfo *info) {
-	MMC3_Init(info, MMC3B, info->PRGRamSize + info->PRGRamSaveSize, info->battery);
-	MMC3_pwrap = M445PW;
-	MMC3_cwrap = M445CW;
+static DECLFW(M445WriteREG) {
+	if (!(reg[3] & 0x20)) {
+		reg[A & 0x03] = V;
+		Sync();
+	}
+}
 
-	VRC24_Init(info, VRC4, 0x01, 0x02, FALSE, TRUE);
-	VRC24_pwrap = M445PW;
-	VRC24_cwrap = M445CW;
+static DECLFW(M445WriteASIC) {
+	switch (reg[3] & 0x10) {
+	case MAPPER_VRC4:
+		vrc24.A0 = (reg[3] & 0x01) ? 0x0A : 0x05;
+		vrc24.A1 = (reg[3] & 0x01) ? 0x05 : 0x0A;
+		VRC24_Write(A, V);
+		break;
+	case MAPPER_MMC3:
+		MMC3_Write(A, V);
+		break;
+	}
+}
+
+static void M445Reset(void) {
+	reg[0] = 0x00;
+	reg[1] = 0x00;
+	reg[2] = 0x00;
+	reg[3] = 0x00;
+	Sync();
+}
+
+static void M445Power(void) {
+	reg[0] = 0x00;
+	reg[1] = 0x00;
+	reg[2] = 0x00;
+	reg[3] = 0x00;
+	VRC24_Power();
+	MMC3_Power();
+	SetWriteHandler(0x5000, 0x5FFF, M445WriteREG);
+	SetWriteHandler(0x8000, 0xFFFF, M445WriteASIC);
+	Sync();
+}
+
+static void StateRestore(int version) {
+	Sync();
+}
+
+static void CPUIRQHook(int a) {
+	switch (reg[3] & 0x10) {
+	case MAPPER_VRC4:
+		VRC24_IRQCPUHook(a);
+		break;
+	case MAPPER_MMC3:
+		break;
+	}
+}
+
+static void HBIRQHook(void) {
+	switch (reg[3] & 0x10) {
+	case MAPPER_VRC4:
+		break;
+	case MAPPER_MMC3:
+		MMC3_IRQHBHook();
+		break;
+	}
+}
+
+void Mapper445_Init(CartInfo *info) {
+	MMC3_Init(info, MMC3B, FALSE, FALSE);
+	MMC3_pwrap = M445MMC3PW;
+	MMC3_cwrap = M445MMC3CW;
+
+	VRC24_Init(info, VRC24_VRC4, 0x01, 0x02, FALSE, TRUE);
+	VRC24_pwrap = M445VRC24PW;
+	VRC24_cwrap = M445VRC24CW;
 
 	info->Power = M445Power;
 	info->Reset = M445Reset;
 
 	GameStateRestore = StateRestore;
 	AddExState(reg, 4, 0, "EXPR");
+
+	MapIRQHook = CPUIRQHook;
+	GameHBIRQHook = HBIRQHook;
 }
