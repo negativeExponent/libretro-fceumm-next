@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
  * educational computer cartridge with two games on it. It's basically 2x128 KiB of
  * UNROM, switched by an outer bank bit.
  *
- * 小霸王 2合1꞉ 仓库世家 & 动脑筋 (uses Subor Keyboard)
+ * 小霸王 2合1꞉ 仓库世家 & 动脑筋
  */
 
 #include "mapinc.h"
@@ -31,11 +31,11 @@
 
 static void Sync(void) {
 	setprg16(0x8000, ((latch.data >> 4) & ~0x07) | (latch.data & 0x07));
-    setprg16(0xC000, (latch.data >> 4) | 0x07);
-	setchr8(0);
+	setprg16(0xC000, (latch.data >> 4) | 0x07);
+    setchr8(0);
 }
 
 void Mapper481_Init(CartInfo *info) {
-	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-    info->Reset = Latch_RegReset;
+	Latch_Init(info, Sync, NULL, TRUE, FALSE);
+	info->Reset = Latch_RegReset;
 }
