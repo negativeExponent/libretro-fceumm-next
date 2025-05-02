@@ -55,8 +55,8 @@ typedef struct __VRC24 {
 
 extern VRC24 vrc24;
 
-uint16 VRC24_GetPRGBank(int bank);
-uint16 VRC24_GetCHRBank(int bank);
+uint8 VRC24_GetPRGBank(int bank);
+uint8 VRC24_GetCHRBank(int bank);
 
 void VRC24_FixPRG_default(void);
 void VRC24_FixCHR_default(void);

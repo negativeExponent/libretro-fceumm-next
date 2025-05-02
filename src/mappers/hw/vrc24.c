@@ -68,7 +68,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-uint16 VRC24_GetPRGBank(int bank) {
+uint8 VRC24_GetPRGBank(int bank) {
 	if ((vrc24.cmd & 0x02) && (!(bank & 0x01))) {
 		bank ^= 0x02;
 	}
@@ -89,7 +89,7 @@ void VRC24_FixPRG_default(void) {
 	VRC24_pwrap(0xE000, VRC24_GetPRGBank(3));
 }
 
-uint16 VRC24_GetCHRBank(int bank) {
+uint8 VRC24_GetCHRBank(int bank) {
 	return vrc24.chr[bank];
 }
 
@@ -217,10 +217,15 @@ void VRC24_Reset(void) {
 
 	vrc24.cmd = vrc24.mirr = 0;
 
-	lastPRGBank = PRG_BANK_COUNT(8) - 1;
+	if (PRG_BANK_COUNT(16) & 0x01) {
+		lastPRGBank = PRG_BANK_COUNT(8) - 1;
+	} else {
+		lastPRGBank = ~0;
+	}
 
 	VRC24_FixPRG();
 	VRC24_FixCHR();
+	VRC24_FixMIR();
 }
 
 void VRC24_Power(void) {
