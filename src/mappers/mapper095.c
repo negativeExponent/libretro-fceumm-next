@@ -58,31 +58,31 @@ static DECLFW(M095Write) {
 		switch (n118.cmd & 0x07) {
 		case 0:
 			mcache[0] = mcache[1] = (V >> 5) & 0x01;
-            N118_FixCHR();
+            N118_SyncCHR();
 			break;
 		case 1:
 			mcache[2] = mcache[3] = (V >> 5) & 0x01;
-            N118_FixCHR();
+            N118_SyncCHR();
 			break;
 		case 2:
 			mcache[4] = (V >> 5) & 0x01;
-            N118_FixCHR();
+            N118_SyncCHR();
 			break;
 		case 3:
 			mcache[5] = (V >> 5) & 0x01;
-            N118_FixCHR();
+            N118_SyncCHR();
 			break;
 		case 4:
 			mcache[6] = (V >> 5) & 0x01;
-            N118_FixCHR();
+            N118_SyncCHR();
 			break;
 		case 5:
 			mcache[7] = (V >> 5) & 0x01;
-            N118_FixCHR();
+            N118_SyncCHR();
 			break;
         case 6:
         case 7:
-            N118_FixPRG();
+            N118_SyncPRG();
             break;
 		}
         break;
@@ -115,7 +115,7 @@ static void M095Power(void) {
 void Mapper095_Init(CartInfo *info) {
 	N118_Init(info, 0, 0);
     info->Power = M095Power;
-	N118_FixCHR = M095FixCHR;
+	N118_SyncCHR = M095FixCHR;
     PPU_hook = MExMirrPPU;
     AddExState(StateRegs, ~0, 0, NULL);
 }

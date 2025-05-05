@@ -38,8 +38,8 @@ void MMC4_Reset(void);
 void MMC4_Restore(int version);
 void MMC4_Init(CartInfo *info, int wram, int battery);
 
-void MMC4_FixPRG(void);
-void MMC4_FixCHR(void);
+void MMC4_SyncPRG(void);
+void MMC4_SyncCHR(void);
 
 extern void (*MMC4_pwrap)(uint16 A, uint16 V);
 extern void (*MMC4_cwrap)(uint16 A, uint16 V);

@@ -64,8 +64,8 @@ static DECLFW(M451Write) {
         break;
     case 0xE000:
 		reg = A & 0x03;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
         break;
 	}
 }
@@ -90,8 +90,8 @@ void Mapper451_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
 	info->Power = M451Power;
 	info->Close = M451Close;
-    MMC3_FixPRG = M451FixPRG;
-	MMC3_FixCHR = M451FixCHR;
+    MMC3_SyncPRG = M451FixPRG;
+	MMC3_SyncCHR = M451FixCHR;
 	MapIRQHook = FlashROM_CPUCyle;
 	AddExState(StateRegs, ~0, 0, NULL);
 

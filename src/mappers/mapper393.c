@@ -55,13 +55,13 @@ static DECLFW(M393Write) {
 	case 0x8001:
 		mmc3.reg[mmc3.cmd & 0x07] = V;
 		if ((mmc3.cmd & 0x07) < 6) {
-			MMC3_FixCHR();
+			MMC3_SyncCHR();
 		}
-		MMC3_FixPRG();
+		MMC3_SyncPRG();
 		break;
 	default:
 		MMC3_Write(A, V);
-		MMC3_FixPRG();
+		MMC3_SyncPRG();
 		break;
 	}
 }
@@ -69,8 +69,8 @@ static DECLFW(M393Write) {
 static DECLFW(M393WriteReg) {
 	if (MMC3_WramIsWritable()) {
 		reg[0] = A & 0xFF;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

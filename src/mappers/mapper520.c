@@ -44,7 +44,7 @@ static void M520PPUHook(uint32 A) {
 	uint8 bank = (A & 0x1FFF) >> 10;
 	if ((PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
 		PPUCHRBus = bank;
-		VRC24_FixPRG();
+		VRC24_SyncPRG();
 	}
 }
 
@@ -55,7 +55,7 @@ static DECLFW(M520WriteCHR) {
 	case 0xC000:
 	case 0xD000:
 	case 0xE000:
-		VRC24_FixPRG();
+		VRC24_SyncPRG();
 		break;
 	}
 }

@@ -132,13 +132,13 @@ static DECLFW(M215Write5) {
 	switch (A & 0x07) {
 	case 0:
 		reg[0] = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 		break;
 	case 1:
 		reg[1] = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 		break;
 	case 2:
 		reg[2] = V & 0x07;

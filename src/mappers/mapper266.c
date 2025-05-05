@@ -47,7 +47,7 @@ static DECLFW(M266WriteMisc) {
 		pcm(0x4011, (V & 0x0F) << 3);
 	} else {
 		reg = V & 0x0C;
-		VRC24_FixPRG();
+		VRC24_SyncPRG();
 	}
 }
 

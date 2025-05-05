@@ -41,8 +41,8 @@ static DECLFW(M457Write) {
 	if (MMC3_WramIsWritable()) {
 		CartBW(A, V);
 		reg = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

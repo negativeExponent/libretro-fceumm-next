@@ -51,8 +51,8 @@ static void M339PW(uint16 A, uint16 V) {
 static DECLFW(M339Write) {
 	if (MMC3_WramIsWritable()) {
 		reg = A & 0x3F;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

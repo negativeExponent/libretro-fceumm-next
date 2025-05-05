@@ -65,8 +65,8 @@ static DECLFR(M432Read) {
 static DECLFW(M432Write) {
 	if (MMC3_WramIsWritable()) {
 		reg[A & 0x01] = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

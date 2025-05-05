@@ -58,16 +58,16 @@ static DECLFW(M115Write) {
 	case 0:
 	case 1:
 		reg[A & 0x01] = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 		break;
 	}
 }
 
 static void M115Reset(void) {
 	dipsw++;
-	MMC3_FixPRG();
-	MMC3_FixCHR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static void M115Power(void) {

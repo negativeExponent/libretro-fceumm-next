@@ -51,8 +51,8 @@ static void M376PW(uint16 A, uint16 V) {
 
 static DECLFW(M376Write) {
 	reg[A & 0x01] = V;
-	MMC3_FixPRG();
-	MMC3_FixCHR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static void M376Power(void) {

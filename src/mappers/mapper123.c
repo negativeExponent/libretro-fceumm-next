@@ -54,7 +54,7 @@ static DECLFW(M123WriteHi) {
 static DECLFW(M123WriteLo) {
 	if (A & 0x800) {
 		reg = V;
-		MMC3_FixPRG();
+		MMC3_SyncPRG();
 	}
 }
 

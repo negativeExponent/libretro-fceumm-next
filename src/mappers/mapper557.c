@@ -38,6 +38,6 @@ static void M557FixCHR(void) {
 
 void Mapper557_Init(CartInfo *info) {
 	N118_Init(info, 8, 0);
-    N118_FixPRG = M557FixPRG;
-	N118_FixCHR = M557FixCHR;
+    N118_SyncPRG = M557FixPRG;
+	N118_SyncCHR = M557FixCHR;
 }

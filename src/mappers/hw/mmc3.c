@@ -54,9 +54,9 @@ static void GENFIXCHR(void);
 static void GENPWRAP(uint16 A, uint16 V);
 static void GENCWRAP(uint16 A, uint16 V);
 
-void (*MMC3_FixPRG)(void);
-void (*MMC3_FixCHR)(void);
-void (*MMC3_FixMIR)(void);
+void (*MMC3_SyncPRG)(void);
+void (*MMC3_SyncCHR)(void);
+void (*MMC3_SyncMirror)(void);
 
 void (*MMC3_pwrap)(uint16 A, uint16 V);
 void (*MMC3_cwrap)(uint16 A, uint16 V);
@@ -138,9 +138,9 @@ void MMC3_Reset(void) {
 	mmc3.reg[6] = 0;
 	mmc3.reg[7] = 1;
 
-	MMC3_FixPRG();
-	MMC3_FixCHR();
-	MMC3_FixMIR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
+	MMC3_SyncMirror();
 }
 
 static DECLFW(MBWRAMMMC6) {
@@ -185,10 +185,10 @@ DECLFW(MMC3_CMDWrite) {
 	case 0x8000:
 		mmc3.cmd = V;
 		if ((oldcmd & 0x40) != (mmc3.cmd & 0x40)) {
-			MMC3_FixPRG();
+			MMC3_SyncPRG();
 		}
 		if ((oldcmd & 0x80) != (mmc3.cmd & 0x80)) {
-			MMC3_FixCHR();
+			MMC3_SyncCHR();
 		}
 		break;
 	case 0x8001: {
@@ -230,7 +230,7 @@ DECLFW(MMC3_CMDWrite) {
 	}
 	case 0xA000:
 		mmc3.mirr = V;
-		MMC3_FixMIR();
+		MMC3_SyncMirror();
 		break;
 	case 0xA001:
 		mmc3.wram = V;
@@ -304,9 +304,9 @@ static void MMC3_hb_PALStarWarsHack(void) {
 }
 
 static void StateRestore(int version) {
-	MMC3_FixPRG();
-	MMC3_FixCHR();
-	MMC3_FixMIR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
+	MMC3_SyncMirror();
 }
 
 void MMC3_Power(void) {
@@ -341,9 +341,9 @@ void MMC3_Close(void) {
 }
 
 void MMC3_Init(CartInfo *info, MMC3TYPE _type, int wram, int battery) {
-	MMC3_FixPRG = GENFIXPRG;
-	MMC3_FixCHR = GENFIXCHR;
-	MMC3_FixMIR = GENFIXMIR;
+	MMC3_SyncPRG = GENFIXPRG;
+	MMC3_SyncCHR = GENFIXCHR;
+	MMC3_SyncMirror = GENFIXMIR;
 
 	MMC3_pwrap = GENPWRAP;
 	MMC3_cwrap = GENCWRAP;

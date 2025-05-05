@@ -50,16 +50,16 @@ static DECLFW(M384Write) {
     CartBW(A, V);
     if ((A & 0x800) && !(reg & 0x08)) {
         reg = V;
-        VRC24_FixPRG();
-        VRC24_FixCHR();
+        VRC24_SyncPRG();
+        VRC24_SyncCHR();
     }
 }
 
 static void M384Reset(void) {
     reg = 0;
-    VRC24_FixPRG();
-    VRC24_FixCHR();
-    VRC24_FixMIR();
+    VRC24_SyncPRG();
+    VRC24_SyncCHR();
+    VRC24_SyncMirror();
 }
 
 static void M384Power(void) {

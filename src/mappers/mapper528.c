@@ -70,9 +70,9 @@ static DECLFW(M528Write) {
 		break;
 	}
 	reg = (A & 0x4000) >> 10;
-	FME7_FixPRG();
-	FME7_FixCHR();
-	FME7_FixWRAM();
+	FME7_SyncPRG();
+	FME7_SyncCHR();
+	FME7_SyncWRAM();
 }
 
 static void M528Power(void) {
@@ -86,7 +86,7 @@ static void M528Power(void) {
 
 void Mapper528_Init(CartInfo *info) {
 	FME7_Init(info, TRUE, info->battery);
-	FME7_FixWRAM = M528SyncWRAM;
+	FME7_SyncWRAM = M528SyncWRAM;
 	FME7_pwrap = M528PW;
 	FME7_cwrap = M528CW;
 	info->Power = M528Power;

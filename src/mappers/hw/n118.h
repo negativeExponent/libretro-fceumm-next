@@ -35,8 +35,8 @@ void N118_Power(void);
 
 void N118_Init(CartInfo *info, int wsize, int battery);
 
-extern void (*N118_FixPRG)(void);
-extern void (*N118_FixCHR)(void);
+extern void (*N118_SyncPRG)(void);
+extern void (*N118_SyncCHR)(void);
 
 extern void (*N118_pwrap)(uint16 A, uint16 V);
 extern void (*N118_cwrap)(uint16 A, uint16 V);

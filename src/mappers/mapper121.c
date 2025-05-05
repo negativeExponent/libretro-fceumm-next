@@ -77,8 +77,8 @@ static DECLFW(M121WriteLUT) {
 	readIndex = ((A >> 6) & 0x04) | (V & 0x03);
 	if (A & 0x0100) {
 		reg = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 
@@ -102,8 +102,8 @@ static DECLFW(M121Write) {
 			break;
 		}
 		mmc3.reg[mmc3.cmd & 0x07] = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 		break;
 	default:
 		MMC3_CMDWrite(A, V);

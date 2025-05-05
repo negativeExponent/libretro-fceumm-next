@@ -35,8 +35,8 @@ static void M456CW(uint16 A, uint16 V) {
 static DECLFW(M456Write) {
 	if (A & 0x100) {
 		reg = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

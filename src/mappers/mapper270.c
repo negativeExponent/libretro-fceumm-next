@@ -50,15 +50,15 @@ static void Sync(void) {
 		mblock |= (onebus.cpu41xx[0x2C] & 0x01) << 12; /* PRG/CHR A25 */
 		break;
 	}
-	OneBus_FixPRG(0x07FF, mblock);
+	OneBus_SyncPRG(0x07FF, mblock);
 	if (reg4242 & 0x01) {
 		/* CHR-RAM enabled, use 8K unbancked CHR RAM */
 		SetupCartCHRMapping(0, CHRRAM, CHRRAMSIZE, TRUE);
 		setchr8(0);
 	} else {
-		OneBus_FixCHR(0x3FFF, mblock << 3);
+		OneBus_SyncCHR(0x3FFF, mblock << 3);
 	}
-	OneBus_FixMIR();
+	OneBus_SyncMirror();
 }
 
 static DECLFR(M270ReadJumperDetect) {

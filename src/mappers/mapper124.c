@@ -85,15 +85,15 @@ static void Sync(void) {
 		break;
 	case MAPPER_MMC1:
 		setprg16r(0x10, 0x6000, 0);
-		MMC1_FixPRG();
-		MMC1_FixCHR();
-		MMC1_FixMIR();
+		MMC1_SyncPRG();
+		MMC1_SyncCHR();
+		MMC1_SyncMirror();
 		break;
 	case MAPPER_MMC3:
 		setprg16r(0x10, 0x6000, 0);
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-		MMC3_FixMIR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
 		break;
 	}
 	setprg4(0x5000, 0x380 + 0x05);

@@ -89,8 +89,8 @@ static void BMC810131C_SyncMIRR(void) {
 static DECLFW(BMC810131C_Write) {
 	if (((mmc3.wram & 0xC0) == 0x80) && !(reg & 0x07)) {
 		reg = A & 0x3F;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	} else {
 		CartBW(A, V);
 	}
@@ -107,8 +107,8 @@ static DECLFW(BMC810131C_WriteCMD) {
 		case 4:
 		case 5:
 			mmc3.reg[mmc3.cmd & 0x07] = V;
-			MMC3_FixCHR();
-			MMC3_FixMIR();
+			MMC3_SyncCHR();
+			MMC3_SyncMirror();
 			break;
 		default:
 			MMC3_CMDWrite(A, V);
@@ -139,7 +139,7 @@ static void BMC810131C_Close(void) {
 
 void BMC810131C_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_FixMIR = BMC810131C_SyncMIRR;
+	MMC3_SyncMirror = BMC810131C_SyncMIRR;
 	MMC3_pwrap = BMC810131C_PW;
 	MMC3_cwrap = BMC810131C_CW;
 	info->Power = BMC810131C_Power;

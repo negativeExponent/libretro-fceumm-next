@@ -31,14 +31,14 @@ static void M189PW(uint16 A, uint16 V) {
 static DECLFW(M189Write4) {
 	if (A & 0x100) {
 		reg = V;
-		MMC3_FixPRG();
+		MMC3_SyncPRG();
 	}
 }
 
 static DECLFW(M189Write6) {
 	if (MMC3_WramIsWritable()) {
 		reg = V;
-		MMC3_FixPRG();
+		MMC3_SyncPRG();
 	}
 }
 

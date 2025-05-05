@@ -54,8 +54,8 @@ static DECLFR(M443Read) {
 
 static DECLFW(M443Write) {
 	reg = A & 0xFF;
-	MMC3_FixPRG();
-	MMC3_FixCHR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static void M443Reset(void) {

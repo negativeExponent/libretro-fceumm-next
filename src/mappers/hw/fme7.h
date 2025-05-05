@@ -36,10 +36,10 @@ void FME7_Init(CartInfo *info, int wram, int battery);
 void FME7_Power(void);
 void FME7_Reset(void);
 
-extern void (*FME7_FixPRG)(void);
-extern void (*FME7_FixCHR)(void);
-extern void (*FME7_FixMIR)(void);
-extern void (*FME7_FixWRAM)(void);
+extern void (*FME7_SyncPRG)(void);
+extern void (*FME7_SyncCHR)(void);
+extern void (*FME7_SyncMirror)(void);
+extern void (*FME7_SyncWRAM)(void);
 
 extern void (*FME7_pwrap)(uint16 A, uint16 V);
 extern void (*FME7_cwrap)(uint16 A, uint16 V);

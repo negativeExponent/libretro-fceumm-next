@@ -87,9 +87,9 @@ static const uint8 mmc3Mangle[16][8] = {
 };
 
 static void M256Sync(void) {
-	OneBus_FixPRG(0x0FFF, 0);
-	OneBus_FixCHR(0x7FFF, 0);
-	OneBus_FixMIR();
+	OneBus_SyncPRG(0x0FFF, 0);
+	OneBus_SyncCHR(0x7FFF, 0);
+	OneBus_SyncMirror();
 }
 
 static DECLFW(M256WritePPU201X) {

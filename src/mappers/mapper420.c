@@ -45,8 +45,8 @@ static DECLFW(M420Write) {
 	/* writes possible regardless of MMC3 wram state */
 	CartBW(A, V);
 	reg[A & 0x03] = V;
-	MMC3_FixPRG();        
-	MMC3_FixCHR();
+	MMC3_SyncPRG();        
+	MMC3_SyncCHR();
 }
 
 static void M420Reset(void) {

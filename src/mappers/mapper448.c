@@ -54,16 +54,16 @@ static void M448FixMIRR(void) {
 	if (reg & 0x08) { /* AOROM */
 		setmirror(MI_0 + ((vrc24.prg[0] >> 4) & 0x01));
 	} else {
-		VRC24_FixMIR_default();
+		VRC24_SyncMirror_default();
 	}
 }
 
 static DECLFW(M448WriteReg) {
 	if (vrc24.cmd & 0x01) {
 		reg = A & 0xFF;
-		VRC24_FixPRG();
-		VRC24_FixCHR();
-		VRC24_FixMIR();
+		VRC24_SyncPRG();
+		VRC24_SyncCHR();
+		VRC24_SyncMirror();
 	}
 }
 
@@ -91,16 +91,16 @@ static void M448Power(void) {
 }
 
 static void StateRestore(int version) {
-	VRC24_FixPRG();
-	VRC24_FixCHR();
-	VRC24_FixMIR();
+	VRC24_SyncPRG();
+	VRC24_SyncCHR();
+	VRC24_SyncMirror();
 }
 
 void Mapper448_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 0, 1);
-	VRC24_FixPRG = M448FixPRG;
-	VRC24_FixCHR = M448FixCHR;
-	VRC24_FixMIR = M448FixMIRR;
+	VRC24_SyncPRG = M448FixPRG;
+	VRC24_SyncCHR = M448FixCHR;
+	VRC24_SyncMirror = M448FixMIRR;
 	info->Reset = M448Reset;
 	info->Power = M448Power;
 	GameStateRestore = StateRestore;

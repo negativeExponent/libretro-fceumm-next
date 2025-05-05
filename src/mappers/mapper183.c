@@ -42,22 +42,22 @@ static void M183PRG(void) {
 
 static DECLFW(M183Write6800) {
 	prg[0] = A & 0x3F;
-	VRC24_FixPRG();
+	VRC24_SyncPRG();
 }
 
 static DECLFW(M183Write8800) {
 	prg[1] = V & 0x3F;
-	VRC24_FixPRG();
+	VRC24_SyncPRG();
 }
 
 static DECLFW(M183WriteA800) {
 	prg[2] = V & 0x3F;
-	VRC24_FixPRG();
+	VRC24_SyncPRG();
 }
 
 static DECLFW(M183WriteA000) {
 	prg[3] = V & 0x3F;
-	VRC24_FixPRG();
+	VRC24_SyncPRG();
 }
 
 static void M183Power(void) {
@@ -76,6 +76,6 @@ static void M183Power(void) {
 void Mapper183_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 0, 1);
 	info->Power = M183Power;
-	VRC24_FixPRG = M183PRG;
+	VRC24_SyncPRG = M183PRG;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

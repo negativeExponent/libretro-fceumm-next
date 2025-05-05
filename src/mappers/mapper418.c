@@ -35,5 +35,5 @@ static void M418FixCHR(void) {
 
 void Mapper418_Init(CartInfo *info) {
 	N118_Init(info, 0, 0);
-	N118_FixCHR = M418FixCHR;
+	N118_SyncCHR = M418FixCHR;
 }

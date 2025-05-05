@@ -63,8 +63,8 @@ static DECLFW(M391Write) {
 		if (!(reg[0] & 0x80)) {
 			reg[0] = V;
 			reg[1] = ((A >> 8) & 0xFF);
-			MMC3_FixPRG();
-			MMC3_FixCHR();
+			MMC3_SyncPRG();
+			MMC3_SyncCHR();
 		}
 	}
 }

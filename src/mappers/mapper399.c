@@ -53,10 +53,10 @@ static void M399CHR(void) {
 static DECLFW(M399WriteReg) {
     if (A & 0x01) {
         prg[V >> 7] = V;
-		MMC3_FixPRG();
+		MMC3_SyncPRG();
     } else {
         chr[V >> 7] = V;
-		MMC3_FixCHR();
+		MMC3_SyncCHR();
     }
 }
 
@@ -79,8 +79,8 @@ static void M399Power(void) {
 
 void Mapper399_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-    MMC3_FixPRG = M399PRG;
-    MMC3_FixCHR = M399CHR;
+    MMC3_SyncPRG = M399PRG;
+    MMC3_SyncCHR = M399CHR;
 	info->Power = M399Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

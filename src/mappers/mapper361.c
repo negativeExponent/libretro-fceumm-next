@@ -50,8 +50,8 @@ static void M361Reset(void) {
 
 static DECLFW(M361Write) {
 	reg = V;
-	MMC3_FixPRG();
-	MMC3_FixCHR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static void M361Power(void) {

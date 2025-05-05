@@ -39,9 +39,9 @@ void VRC6_IRQCPUHook(int a);
 
 void VRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram);
 
-void VRC6_FixPRG(void);
-void VRC6_FixCHR(void);
-void VRC6_FixMIR(void);
+void VRC6_SyncPRG(void);
+void VRC6_SyncCHR(void);
+void VRC6_SyncMirror(void);
 
 extern void (*VRC6_pwrap)(uint16 A, uint16 V);
 extern void (*VRC6_cwrap)(uint16 A, uint16 V);

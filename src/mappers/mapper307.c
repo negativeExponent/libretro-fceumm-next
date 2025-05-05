@@ -50,6 +50,6 @@ static void M307Power(void) {
 void Mapper307_Init(CartInfo *info) {
 	N118_Init(info, 8, info->battery);
 	info->Power = M307Power;
-	N118_FixPRG = M307FixPRG;
-	N118_FixCHR = M307FixCHR;
+	N118_SyncPRG = M307FixPRG;
+	N118_SyncCHR = M307FixCHR;
 }

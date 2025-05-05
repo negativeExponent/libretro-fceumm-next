@@ -59,8 +59,8 @@ static DECLFW(M543Write) {
 	if (shift == 4) {
 		reg = bits;
 		bits = shift = 0;
-		MMC1_FixPRG();
-		MMC1_FixCHR();
+		MMC1_SyncPRG();
+		MMC1_SyncCHR();
 	}
 }
 

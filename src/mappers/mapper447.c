@@ -68,16 +68,16 @@ static DECLFW(M447WriteReg) {
     CartBW(A, V);
 	if ((vrc24.cmd & 0x01) && !(reg & 0x01)) {
 		reg = A & 0xFF;
-		VRC24_FixPRG();
-        VRC24_FixCHR();
+		VRC24_SyncPRG();
+        VRC24_SyncCHR();
 	}
 }
 
 static void M447Reset(void) {
 	reg = 0;
     dipsw++;
-	VRC24_FixPRG();
-    VRC24_FixCHR();
+	VRC24_SyncPRG();
+    VRC24_SyncCHR();
 }
 
 static void M447Power(void) {

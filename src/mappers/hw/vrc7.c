@@ -61,7 +61,7 @@ static void GENMWRAP(uint8 V) {
 	}
 }
 
-void VRC7_FixPRG(void) {
+void VRC7_SyncPRG(void) {
 	setprg8r(0x10, 0x6000, 0);
 	VRC7_pwrap(0x8000, vrc7.prg[0]);
 	VRC7_pwrap(0xa000, vrc7.prg[1]);
@@ -69,7 +69,7 @@ void VRC7_FixPRG(void) {
 	VRC7_pwrap(0xe000, ~0);
 }
 
-void VRC7_FixCHR(void) {
+void VRC7_SyncCHR(void) {
 	int i;
 	for (i = 0; i < 8; i++) {
 		VRC7_cwrap(i << 10, vrc7.chr[i]);
@@ -91,7 +91,7 @@ DECLFW(VRC7_Write) {
 		case 0x01:
 		case 0x02:
 			vrc7.prg[index] = V;
-			VRC7_FixPRG();
+			VRC7_SyncPRG();
 			break;
 		default:
 			VRC7Sound_Write(A, V);
@@ -105,7 +105,7 @@ DECLFW(VRC7_Write) {
 	case 0xD000:
 		index = ((A - 0xA000) >> 11) | ((A & vrc7_A0) ? 0x01 : 0x00);
 		vrc7.chr[index] = V;
-		VRC7_FixCHR();
+		VRC7_SyncCHR();
 		break;
 
 	case 0xE000:
@@ -137,8 +137,8 @@ void VRC7_Power(void) {
 
 	vrc7.mirr = 0;
 
-	VRC7_FixPRG();
-	VRC7_FixCHR();
+	VRC7_SyncPRG();
+	VRC7_SyncCHR();
 
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
@@ -150,8 +150,8 @@ void VRC7_Close(void) {
 }
 
 static void StateRestore(int version) {
-	VRC7_FixPRG();
-	VRC7_FixCHR();
+	VRC7_SyncPRG();
+	VRC7_SyncCHR();
 }
 
 void VRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {

@@ -51,8 +51,8 @@ static void M550CW(uint16 A, uint16 V) {
 static DECLFW(M550Write7) {
 	if (!(reg & 0x08)) {
 		reg = A & 0x0F;
-		MMC1_FixPRG();
-		MMC1_FixCHR();
+		MMC1_SyncPRG();
+		MMC1_SyncCHR();
 	}
 }
 
@@ -61,8 +61,8 @@ static DECLFW(M550Write8) {
 	if ((reg & 0x06) == 0x06) {
 		MMC1_Write(A, V);
 	}
-	MMC1_FixPRG();
-	MMC1_FixCHR();
+	MMC1_SyncPRG();
+	MMC1_SyncCHR();
 }
 
 static void M550Reset(void) {

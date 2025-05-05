@@ -69,7 +69,7 @@ static void M197CHR(void) {
 static DECLFW(M197WriteReg) {
 	if (MMC3_WramIsWritable()) {
 		reg = V;
-		MMC3_FixPRG();
+		MMC3_SyncPRG();
 	}
 }
 
@@ -84,7 +84,7 @@ static DECLFW(M197Write) {
 		case 4:
 		case 5:
 			mmc3.reg[mmc3.cmd & 0x07] = V;
-			MMC3_FixCHR();
+			MMC3_SyncCHR();
 			break;
 		default:
 			MMC3_CMDWrite(A, V);
@@ -99,9 +99,9 @@ static DECLFW(M197Write) {
 
 static void M197Reset(void) {
 	reg = 0;
-	MMC3_FixCHR();
-	MMC3_FixPRG();
-	MMC3_FixMIR();
+	MMC3_SyncCHR();
+	MMC3_SyncPRG();
+	MMC3_SyncMirror();
 }
 
 static void M197Power(void) {
@@ -115,7 +115,7 @@ void Mapper197_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
 	info->Power = M197Power;
 	info->Reset = M197Reset;
-	MMC3_FixCHR = M197CHR;
+	MMC3_SyncCHR = M197CHR;
 	MMC3_pwrap = M197PW;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

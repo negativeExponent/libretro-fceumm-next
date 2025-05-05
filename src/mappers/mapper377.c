@@ -48,8 +48,8 @@ static void M377PW(uint16 A, uint16 V) {
 static DECLFW(M377Write) {
 	if (!(reg & 0x80)) {
 		reg = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

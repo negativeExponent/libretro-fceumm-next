@@ -71,8 +71,8 @@ static DECLFW(M287WriteReg) {
 	/*	printf("Wr: A:%04x V:%02x\n", A, V); */
 	if (MMC3_WramIsWritable()) {
 		reg = A;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

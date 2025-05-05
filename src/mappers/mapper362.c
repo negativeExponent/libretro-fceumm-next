@@ -53,7 +53,7 @@ static DECLFW(M362CHRWrite) {
 	if ((game == 0) && (A & 0x01)) {
 		/* NOTE: Because the lst higher 2 CHR-ROM bits are repurposed as PRG/CHR outer bank, 
 	 	an extra PRG sync after a CHR write. */
-		VRC24_FixPRG();
+		VRC24_SyncPRG();
 	}
 }
 
@@ -61,8 +61,8 @@ static void M362PPUHook(uint32 A) {
     uint8 bank = (A & 0x1FFF) >> 10;
 	if ((game == 0) && (PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
 		PPUCHRBus = bank;
-		VRC24_FixCHR();
-		VRC24_FixPRG();
+		VRC24_SyncCHR();
+		VRC24_SyncPRG();
 	}
 }
 
@@ -72,8 +72,8 @@ static void M362Reset(void) {
     } else {
         game = (game + 1) & 0x01;
     }
-	VRC24_FixCHR();
-	VRC24_FixPRG();
+	VRC24_SyncCHR();
+	VRC24_SyncPRG();
 }
 
 static void M362Power(void) {	

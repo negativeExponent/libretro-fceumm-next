@@ -68,8 +68,8 @@ static void M208MIR_Sub1(void) {
 
 static DECLFW(M208Write) {
 	reg = V;
-	MMC3_FixPRG();
-	MMC3_FixMIR();
+	MMC3_SyncPRG();
+	MMC3_SyncMirror();
 }
 
 static DECLFW(M208ProtWrite) {
@@ -91,7 +91,7 @@ static DECLFW(M208WriteCMD) {
 		case 6:
 		case 7:
 			mmc3.reg[mmc3.cmd & 0x07] = V;
-			MMC3_FixPRG();
+			MMC3_SyncPRG();
 			break;
 		default:
 			MMC3_CMDWrite(A, V);
@@ -115,16 +115,16 @@ static void M208Power(void) {
 
 	if (iNESCart.submapper == 1) {
 		SetWriteHandler(0x8000, 0x9FFF, M208WriteCMD);
-		MMC3_FixPRG = M208PRG_Sub1;
-		MMC3_FixMIR = M208MIR_Sub1;
+		MMC3_SyncPRG = M208PRG_Sub1;
+		MMC3_SyncMirror = M208MIR_Sub1;
 		MMC3_Reset();
 	}
 }
 
 void Mapper208_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_FixPRG = M208PRG;
-	MMC3_FixMIR = M208MIR;
+	MMC3_SyncPRG = M208PRG;
+	MMC3_SyncMirror = M208MIR;
 	info->Power = M208Power;
 	AddExState(&reg, 1, 0, "EXPR");
 	AddExState(&protIndex, 1, 0, "PRID");

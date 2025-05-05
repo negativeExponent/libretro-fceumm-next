@@ -116,13 +116,13 @@ static DECLFW(M126WriteWRAM) {
 	CartBW(A, V);
 	if (!(reg[3] & 0x80)) {
 		reg[A & 0x03] = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-		MMC3_FixMIR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
 	} else if ((A & 0x03) == 0x02) {
 		const uint8 mask = 0xFF & ~(reg[2] & 0x80 ? 0xF0 : 0x00) & ~((reg[2]) >> 3 & 0x0E);
 		reg[2] = (reg[2] & ~mask) | (V & mask);
-		MMC3_FixCHR();
+		MMC3_SyncCHR();
 	}
 }
 
@@ -163,7 +163,7 @@ static void InitCommon(CartInfo *info) {
 		ws = (info->PRGRamSize + info->PRGRamSaveSize) / 1024;
 	}
 	MMC3_Init(info, MMC3B, ws, info->battery);
-	MMC3_FixMIR = M126MIR;
+	MMC3_SyncMirror = M126MIR;
 	MMC3_cwrap = M126CW;
 	MMC3_pwrap = M126PW;
 	info->Power = M126Power;

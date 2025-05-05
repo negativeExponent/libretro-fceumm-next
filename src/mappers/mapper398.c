@@ -54,8 +54,8 @@ static void M398CW(uint16 A, uint16 V) {
 
 static DECLFW(M398WriteLatch) {
 	reg = A & 0xFF;
-	VRC24_FixPRG();
-	VRC24_FixCHR();
+	VRC24_SyncPRG();
+	VRC24_SyncCHR();
 	VRC24_Write(A, V);
 }
 
@@ -63,15 +63,15 @@ static void M398PPUHook(uint32 A) {
 	uint8 bank = (A & 0x1FFF) >> 10;
 	if ((PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
 		PPUCHRBus = bank;
-		VRC24_FixPRG();
-		VRC24_FixCHR();
+		VRC24_SyncPRG();
+		VRC24_SyncCHR();
 	}
 }
 
 static void M398Reset(void) {
 	reg = 0xC0;
-	VRC24_FixPRG();
-	VRC24_FixCHR();
+	VRC24_SyncPRG();
+	VRC24_SyncCHR();
 }
 
 static void M398Power(void) {

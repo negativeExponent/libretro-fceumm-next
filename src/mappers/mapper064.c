@@ -41,7 +41,7 @@ static uint8 IRQFilter;
 static uint8 IRQDelay;
 static uint8 IRQReload;
 
-static void (*M064_FixMIR)(void);
+static void (*M064_SyncMirror)(void);
 
 static SFORMAT StateRegs[] = {
 	{ prg,            4, "PREG" },
@@ -131,7 +131,7 @@ static void M064HBHook(void) {
 	}
 }
 
-static void M064_FixPRG(void) {
+static void M064_SyncPRG(void) {
 	uint16 pswap = (cmd << 8) & 0x4000;
 
 	setprg8(0x8000 ^ pswap, prg[0]);
@@ -140,7 +140,7 @@ static void M064_FixPRG(void) {
 	setprg8(0xE000,         prg[3]);
 }
 
-static void M064_FixCHR(void) {
+static void M064_SyncCHR(void) {
 	uint16 cswap = (cmd << 5) & 0x1000;
 
 	if (cmd & 0x20) {
@@ -158,11 +158,11 @@ static void M064_FixCHR(void) {
 	setchr1(0x1C00 ^ cswap, chr[5]);
 }
 
-static void m064_FixMIR(void) {
+static void m064_SyncMirror(void) {
 	setmirror((mirr & 1) ^ 1);
 }
 
-static void m158_FixMIR(void) {
+static void m158_SyncMirror(void) {
 	if (cmd & 0x20) {
 		setntamem(NTARAM + ((chr[0] >> 7) << 10), 1, 0);
 		setntamem(NTARAM + ((chr[6] >> 7) << 10), 1, 1);
@@ -201,9 +201,9 @@ static DECLFW(M064Write) {
 	switch (A & 0xE001) {
 	case 0x8000:
 		cmd = V;
-		M064_FixPRG();
-		M064_FixCHR();
-		M064_FixMIR();
+		M064_SyncPRG();
+		M064_SyncCHR();
+		M064_SyncMirror();
 		break;
 	case 0x8001:
 		index = cmd & 0x0F;
@@ -215,29 +215,29 @@ static DECLFW(M064Write) {
 		case 0x04:
 		case 0x05:
 			chr[index] = V;
-			M064_FixCHR();
-			M064_FixMIR();
+			M064_SyncCHR();
+			M064_SyncMirror();
 			break;
 		case 0x06:
 		case 0x07:
 			prg[index & 0x01] = V;
-			M064_FixPRG();
+			M064_SyncPRG();
 			break;
 		case 0x08:
 		case 0x09:
 			chr[index - 2] = V;
-			M064_FixCHR();
-			M064_FixMIR();
+			M064_SyncCHR();
+			M064_SyncMirror();
 			break;
 		case 0x0F:
 			prg[2] = V;
-			M064_FixPRG();
+			M064_SyncPRG();
 			break;
 		}
 		break;
 	case 0xA000:
 		mirr = V;
-		M064_FixMIR();
+		M064_SyncMirror();
 		break;
 	case 0xC000:
 		IRQLatch = V;
@@ -276,9 +276,9 @@ static void M064Power(void) {
 	chr[6] = 6;
 	chr[7] = 7;
 
-	M064_FixPRG();
-	M064_FixCHR();
-	M064_FixMIR();
+	M064_SyncPRG();
+	M064_SyncCHR();
+	M064_SyncMirror();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M064Write);
@@ -286,21 +286,21 @@ static void M064Power(void) {
 
 static void StateRestore(int version) {
 	CheckPPUMode();
-	M064_FixPRG();
-	M064_FixCHR();
-	M064_FixMIR();
+	M064_SyncPRG();
+	M064_SyncCHR();
+	M064_SyncMirror();
 }
 
 void Mapper064_Init(CartInfo *info) {
 	info->Power = M064Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
-	M064_FixMIR = m064_FixMIR;
+	M064_SyncMirror = m064_SyncMirror;
 }
 
 void Mapper158_Init(CartInfo *info) {
 	info->Power = M064Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
-	M064_FixMIR = m158_FixMIR;
+	M064_SyncMirror = m158_SyncMirror;
 }

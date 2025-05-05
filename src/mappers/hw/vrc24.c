@@ -44,10 +44,10 @@
 #define PRGMASK_DEFAULT 0x003F
 #define CHRMASK_DEFAULT 0x01FF
 
-void (*VRC24_FixPRG)(void);
-void (*VRC24_FixCHR)(void);
-void (*VRC24_FixMIR)(void);
-void (*VRC24_FixWire)(void);
+void (*VRC24_SyncPRG)(void);
+void (*VRC24_SyncCHR)(void);
+void (*VRC24_SyncMirror)(void);
+void (*VRC24_SyncWires)(void);
 
 void (*VRC24_pwrap)(uint16 A, uint16 V);
 void (*VRC24_cwrap)(uint16 A, uint16 V);
@@ -82,7 +82,7 @@ void GENPWRAP(uint16 A, uint16 V) {
 	setprg8(A, V & PRGMASK_DEFAULT);
 }
 
-void VRC24_FixPRG_default(void) {
+void VRC24_SyncPRG_default(void) {
 	VRC24_pwrap(0x8000, VRC24_GetPRGBank(0));
 	VRC24_pwrap(0xA000, VRC24_GetPRGBank(1));
 	VRC24_pwrap(0xC000, VRC24_GetPRGBank(2));
@@ -97,7 +97,7 @@ void GENCWRAP(uint16 A, uint16 V) {
 	setchr1(A, V & CHRMASK_DEFAULT);
 }
 
-void VRC24_FixCHR_default(void) {
+void VRC24_SyncCHR_default(void) {
 	VRC24_cwrap(0x0000, VRC24_GetCHRBank(0));
 	VRC24_cwrap(0x0400, VRC24_GetCHRBank(1));
 	VRC24_cwrap(0x0800, VRC24_GetCHRBank(2));
@@ -108,7 +108,7 @@ void VRC24_FixCHR_default(void) {
 	VRC24_cwrap(0x1C00, VRC24_GetCHRBank(7));
 }
 
-void VRC24_FixMIR_default(void) {
+void VRC24_SyncMirror_default(void) {
 	if ((vrc24.type == VRC24_VRC4) && (vrc24.mirr & 0x02)) {
 		setmirror(MI_0 + (vrc24.mirr & 0x01));
 	} else {
@@ -133,8 +133,8 @@ DECLFW(VRC24_WriteWRAM) {
 		CartBW(A, V);
 	} else if (vrc24.type == VRC24_VRC2) {
 		vrc24.wire = V;
-		if (VRC24_FixWire) {
-			VRC24_FixWire();
+		if (VRC24_SyncWires) {
+			VRC24_SyncWires();
 		}
 	}
 }
@@ -146,7 +146,7 @@ DECLFW(VRC24_Write) {
 	case 0x8000:
 	case 0xA000:
 		vrc24.prg[(A >> 13) & 0x01] = V;
-		VRC24_FixPRG();
+		VRC24_SyncPRG();
 		break;
 
 	case 0x9000:
@@ -157,12 +157,12 @@ DECLFW(VRC24_Write) {
 		case 1:
 			if (V != 0xFF) {
 				vrc24.mirr = V;
-				VRC24_FixMIR();
+				VRC24_SyncMirror();
 			}
 			break;
 		case 2:
 			vrc24.cmd = V;
-			VRC24_FixPRG();
+			VRC24_SyncPRG();
 			break;
 		case 3:
 			if (VRC24_WriteExtSelect) {
@@ -183,7 +183,7 @@ DECLFW(VRC24_Write) {
 		} else {
 			vrc24.chr[index] = (vrc24.chr[index] & 0x0FF0) | (V & 0x0F);
 		}
-		VRC24_FixCHR();
+		VRC24_SyncCHR();
 		break;
 
 	case 0xF000:
@@ -223,9 +223,9 @@ void VRC24_Reset(void) {
 		lastPRGBank = ~0;
 	}
 
-	VRC24_FixPRG();
-	VRC24_FixCHR();
-	VRC24_FixMIR();
+	VRC24_SyncPRG();
+	VRC24_SyncCHR();
+	VRC24_SyncMirror();
 }
 
 void VRC24_Power(void) {
@@ -248,19 +248,19 @@ void VRC24_Power(void) {
 }
 
 static void StateRestore(int version) {
-	VRC24_FixPRG();
-	VRC24_FixCHR();
-	VRC24_FixMIR();
+	VRC24_SyncPRG();
+	VRC24_SyncCHR();
+	VRC24_SyncMirror();
 }
 
 void VRC24_Close(void) {
 }
 
 void VRC24_Init(CartInfo *info, VRC24TYPE _vrc4, uint32 _A0, uint32 _A1, int wram, int irqRepeated) {
-	VRC24_FixPRG = VRC24_FixPRG_default;
-	VRC24_FixCHR = VRC24_FixCHR_default;
-	VRC24_FixMIR = VRC24_FixMIR_default;
-	VRC24_FixWire = NULL;
+	VRC24_SyncPRG = VRC24_SyncPRG_default;
+	VRC24_SyncCHR = VRC24_SyncCHR_default;
+	VRC24_SyncMirror = VRC24_SyncMirror_default;
+	VRC24_SyncWires = NULL;
 
 	VRC24_pwrap = GENPWRAP;
 	VRC24_cwrap = GENCWRAP;

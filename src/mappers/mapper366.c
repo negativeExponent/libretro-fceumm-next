@@ -46,8 +46,8 @@ static DECLFW(M366Write) {
 	CartBW(A, V);
 	if (!(reg & 0x80)) {
 		reg = A & 0xF0;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}	
 }
 

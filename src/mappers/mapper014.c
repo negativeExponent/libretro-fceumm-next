@@ -63,9 +63,9 @@ static DECLFW(M014Write) {
 	if (A == 0xA131) {
 		reg = V;
 		if (reg & 0x02) {
-			MMC3_FixCHR();
+			MMC3_SyncCHR();
 		} else {
-			VRC24_FixCHR();
+			VRC24_SyncCHR();
 		}
 	}
 	if (reg & 0x02) {
@@ -77,13 +77,13 @@ static DECLFW(M014Write) {
 
 static void StateRestore(int version) {
 	if (reg & 0x02) {
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-		MMC3_FixMIR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
 	} else {
-		VRC24_FixPRG();
-		VRC24_FixCHR();
-		VRC24_FixMIR();
+		VRC24_SyncPRG();
+		VRC24_SyncCHR();
+		VRC24_SyncMirror();
 	}
 }
 

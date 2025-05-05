@@ -81,13 +81,13 @@ static void M556VRC4CW(uint16 A, uint16 V) {
 
 static void M556Sync(void) {
 	if (reg[2] & 0x80) {
-		VRC24_FixPRG();
-		VRC24_FixCHR();
-		VRC24_FixMIR();
+		VRC24_SyncPRG();
+		VRC24_SyncCHR();
+		VRC24_SyncMirror();
 	} else {
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-		MMC3_FixMIR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
 	}
 }
 

@@ -39,8 +39,8 @@ static DECLFW(M254WriteWRAM) {
 
 static void M254Reset(void) {
 	reg = TRUE;
-	MMC3_FixCHR();
-	MMC3_FixPRG();
+	MMC3_SyncCHR();
+	MMC3_SyncPRG();
 }
 
 static void M254Power(void) {

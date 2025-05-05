@@ -58,9 +58,9 @@ extern VRC24 vrc24;
 uint8 VRC24_GetPRGBank(int bank);
 uint8 VRC24_GetCHRBank(int bank);
 
-void VRC24_FixPRG_default(void);
-void VRC24_FixCHR_default(void);
-void VRC24_FixMIR_default(void);
+void VRC24_SyncPRG_default(void);
+void VRC24_SyncCHR_default(void);
+void VRC24_SyncMirror_default(void);
 
 DECLFR(VRC24_ReadWRAM);
 DECLFW(VRC24_WriteWRAM);
@@ -73,13 +73,13 @@ void VRC24_Close(void);
 
 void VRC24_Init(CartInfo *info, VRC24TYPE vrc4, uint32 A0, uint32 A1, int wram, int irqRepeated);
 
-extern void (*VRC24_FixPRG)(void);
-extern void (*VRC24_FixCHR)(void);
-extern void (*VRC24_FixMIR)(void);
+extern void (*VRC24_SyncPRG)(void);
+extern void (*VRC24_SyncCHR)(void);
+extern void (*VRC24_SyncMirror)(void);
 
 /* VRC2 mircrowire interface when wram is not present $6000-$7FFF*/
 /* callback function on writes */
-extern void (*VRC24_FixWire)(void);
+extern void (*VRC24_SyncWires)(void);
 
 extern void (*VRC24_pwrap)(uint16 A, uint16 V);
 extern void (*VRC24_cwrap)(uint16 A, uint16 V);

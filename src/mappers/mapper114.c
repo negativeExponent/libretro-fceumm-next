@@ -61,8 +61,8 @@ static void M114CW(uint16 A, uint16 V) {
 
 static DECLFW(M114WriteReg) {
 	reg[A & 0x01] = V;
-	MMC3_FixPRG();
-	MMC3_FixCHR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static DECLFW(M114Write) {

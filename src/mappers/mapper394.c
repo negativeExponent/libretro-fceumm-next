@@ -103,13 +103,13 @@ static DECLFW(M394WriteReg) {
 		break;
 	default:
 		if (reg[1] & 0x10) {
-			JYASIC_FixPRG();
-			JYASIC_FixCHR();
-			JYASIC_FixMIR();
+			JYASIC_SyncPRG();
+			JYASIC_SyncCHR();
+			JYASIC_SyncMirror();
 		} else {
-			MMC3_FixPRG();
-			MMC3_FixCHR();
-			MMC3_FixMIR();
+			MMC3_SyncPRG();
+			MMC3_SyncCHR();
+			MMC3_SyncMirror();
 		}
 		break;
 	}
@@ -135,15 +135,15 @@ static void M394StateRestore(int version) {
 		JYASIC_CPUWriteHandlersSet = 1;
 		SetReadHandler(0x5000, 0x5FFF, JYASIC_ReadALU_DIP);
 		SetReadHandler(0x6000, 0xFFFF, CartBR);
-		JYASIC_FixPRG();
-		JYASIC_FixCHR();
-		JYASIC_FixMIR();
+		JYASIC_SyncPRG();
+		JYASIC_SyncCHR();
+		JYASIC_SyncMirror();
 	} else {
 		SetWriteHandler(0x5000, 0x5FFF, M394WriteReg);
 		SetWriteHandler(0x8000, 0xFFFF, MMC3_Write);
 		SetReadHandler(0x8000, 0xFFFF, CartBR);
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

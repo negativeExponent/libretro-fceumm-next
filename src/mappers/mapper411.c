@@ -95,8 +95,8 @@ static DECLFR(M411Read5) {
 static DECLFW(M411Write5) {
 	if ((iNESCart.submapper == 2) || (A & 0x800)) {
 		reg[A & 0x01] = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

@@ -57,8 +57,8 @@ void OneBus_Power(void);
 void OneBus_Reset(void);
 void OneBus_Init(CartInfo *info, void (*proc)(void), int wram, int battery);
 
-void OneBus_FixPRG(uint16 mmask, uint16 mblock);
-void OneBus_FixCHR(uint16 mmask, uint16 mblock);
-void OneBus_FixMIR(void);
+void OneBus_SyncPRG(uint16 mmask, uint16 mblock);
+void OneBus_SyncCHR(uint16 mmask, uint16 mblock);
+void OneBus_SyncMirror(void);
 
 #endif /* _ONEBUS_H */

@@ -57,8 +57,8 @@ static DECLFW(M372Write) {
 	if (!(reg[3] & 0x40)) {
 		reg[cmd] = V;
 		cmd = (cmd + 1) & 0x03;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

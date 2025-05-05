@@ -70,8 +70,8 @@ static DECLFW(M327Write) {
 		CartBW(A, V);
 		if ((reg & 7) == 0) {
 			reg = A & 0x3F;
-			MMC3_FixPRG();
-			MMC3_FixCHR();
+			MMC3_SyncPRG();
+			MMC3_SyncCHR();
 		}
 	}
 }

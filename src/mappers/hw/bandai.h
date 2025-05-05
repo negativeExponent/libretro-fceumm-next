@@ -29,9 +29,9 @@ void BANDAI_Reset(void);
 
 void BANDAI_Init(CartInfo *info, EEPROM_TYPE _eeprom_type, int _isFCG);
 
-void BANDAI_FixPRG(void);
-void BANDAI_FixCHR(void);
-void BANDAI_FixMIR(void);
+void BANDAI_SyncPRG(void);
+void BANDAI_SyncCHR(void);
+void BANDAI_SyncMirror(void);
 
 extern void (*BANDAI_pwrap)(uint16 A, uint16 V);
 extern void (*BANDAI_cwrap)(uint16 A, uint16 V);

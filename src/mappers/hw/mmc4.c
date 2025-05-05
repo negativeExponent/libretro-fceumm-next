@@ -52,12 +52,12 @@ static void GENMWRAP(uint8 V) {
 	setmirror((mmc4.mirr & 1) ^ 1);
 }
 
-void MMC4_FixPRG(void) {
+void MMC4_SyncPRG(void) {
 	MMC4_pwrap(0x8000, mmc4.prg);
 	MMC4_pwrap(0xC000, ~0);
 }
 
-void MMC4_FixCHR(void) {
+void MMC4_SyncCHR(void) {
 	MMC4_cwrap(0x0000, mmc4.chr[mmc4.latch[0] | 0]);
 	MMC4_cwrap(0x1000, mmc4.chr[mmc4.latch[1] | 2]);
 
@@ -70,14 +70,14 @@ DECLFW(MMC4_Write) {
 	switch (A & 0xF000) {
 	case 0xA000:
 		mmc4.prg = V;
-		MMC4_FixPRG();
+		MMC4_SyncPRG();
 		break;
 	case 0xB000:
 	case 0xC000:
 	case 0xD000:
 	case 0xE000:
 		mmc4.chr[(A - 0xB000) >> 12] = V;
-		MMC4_FixCHR();
+		MMC4_SyncCHR();
 		break;
 	case 0xF000:
 		if (MMC4_mwrap) {
@@ -93,14 +93,14 @@ static void MMC4PPUHook(uint32 A) {
 		return;
 	}
 	mmc4.latch[bank] = (A >> 5) & 0x01;
-	MMC4_FixCHR();
+	MMC4_SyncCHR();
 }
 
 void MMC4_Reset(void) {
 	mmc4.prg = mmc4.mirr = 0;
 	mmc4.latch[0] = mmc4.latch[1] = 0;
-	MMC4_FixPRG();
-	MMC4_FixCHR();
+	MMC4_SyncPRG();
+	MMC4_SyncCHR();
 }
 
 void MMC4_Power(void) {
@@ -116,8 +116,8 @@ void MMC4_Power(void) {
 }
 
 void MMC4_Restore(int version) {
-	MMC4_FixPRG();
-	MMC4_FixCHR();
+	MMC4_SyncPRG();
+	MMC4_SyncCHR();
 }
 
 void MMC4_Close(void) {

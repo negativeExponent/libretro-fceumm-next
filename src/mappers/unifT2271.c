@@ -67,8 +67,8 @@ static void BMCT2271PW(uint16 A, uint16 V) {
 static DECLFW(BMCT2271LoWrite) {
 	if (!(reg & 0x80))
 		reg = A & 0xFF;
-	MMC3_FixPRG();
-	MMC3_FixCHR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static DECLFR(BMCT2271HiRead) {

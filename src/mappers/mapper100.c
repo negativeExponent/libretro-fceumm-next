@@ -110,8 +110,8 @@ static DECLFW(M100WriteCMD) {
 			chr[3] = V;
 			break;
 		}
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 		break;
 	}
 }
@@ -159,8 +159,8 @@ static void M100Power(void) {
 
 void Mapper100_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_FixPRG = M100PRG;
-	MMC3_FixCHR = M100CHR;
+	MMC3_SyncPRG = M100PRG;
+	MMC3_SyncCHR = M100CHR;
 	info->Power = M100Power;
 	info->Reset = M100Reset;
 	AddExState(StateRegs, ~0, 0, NULL);

@@ -48,7 +48,7 @@ static void M153CW(uint16 A, uint16 V) {
 static DECLFW(M153Write) {
     if ((A & 0x0F) <= 0x03) {
         outer = V;
-        BANDAI_FixPRG();
+        BANDAI_SyncPRG();
     }
     BANDAI_Write(A, V);
 }

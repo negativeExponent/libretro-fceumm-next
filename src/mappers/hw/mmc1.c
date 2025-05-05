@@ -118,7 +118,7 @@ uint32 MMC1_GetCHRBank(int index) {
 	return ((mmc1.reg[1] & ~1) | index);
 }
 
-void MMC1_FixCHR(void) {
+void MMC1_SyncCHR(void) {
 	if (MMC1_wwrap) {
 		MMC1_wwrap();
 	}
@@ -127,12 +127,12 @@ void MMC1_FixCHR(void) {
 	MMC1_cwrap(0x1000, MMC1_GetCHRBank(1));
 }
 
-void MMC1_FixPRG(void) {
+void MMC1_SyncPRG(void) {
 	MMC1_pwrap(0x8000, MMC1_GetPRGBank(0));
 	MMC1_pwrap(0xC000, MMC1_GetPRGBank(1));
 }
 
-void MMC1_FixMIR(void) {
+void MMC1_SyncMirror(void) {
 	switch (mmc1.reg[0] & 3) {
 	case 2: setmirror(MI_V); break;
 	case 3: setmirror(MI_H); break;
@@ -159,7 +159,7 @@ DECLFW(MMC1_Write) {
 	if (V & 0x80) {
 		mmc1.reg[0] |= 0xC;
 		mmc1.shift = mmc1.buffer = 0;
-		MMC1_FixPRG();
+		MMC1_SyncPRG();
 		lreset = timestampbase + timestamp;
 		return;
 	}
@@ -172,28 +172,28 @@ DECLFW(MMC1_Write) {
 		mmc1.shift = mmc1.buffer = 0;
 		switch (n) {
 		case 0:
-			MMC1_FixMIR();
-			MMC1_FixCHR();
-			MMC1_FixPRG();
+			MMC1_SyncMirror();
+			MMC1_SyncCHR();
+			MMC1_SyncPRG();
 			break;
 		case 1:
-			MMC1_FixCHR();
-			MMC1_FixPRG();
+			MMC1_SyncCHR();
+			MMC1_SyncPRG();
 			break;
 		case 2:
-			MMC1_FixCHR();
+			MMC1_SyncCHR();
 			break;
 		case 3:
-			MMC1_FixPRG();
+			MMC1_SyncPRG();
 			break;
 		}
 	}
 }
 
 void MMC1_Restore(int version) {
-	MMC1_FixMIR();
-	MMC1_FixCHR();
-	MMC1_FixPRG();
+	MMC1_SyncMirror();
+	MMC1_SyncCHR();
+	MMC1_SyncPRG();
 	lreset = 0; /* timestamp(base) is not stored in save states. */
 }
 
@@ -205,9 +205,9 @@ void MMC1_Reset(void) {
 
 	mmc1.buffer = mmc1.shift = 0;
 
-	MMC1_FixPRG();
-	MMC1_FixCHR();
-	MMC1_FixMIR();
+	MMC1_SyncPRG();
+	MMC1_SyncCHR();
+	MMC1_SyncMirror();
 
 	lreset = 0;
 }

@@ -33,21 +33,21 @@ static void M450CW(uint16 A, uint16 V) {
 }
 
 static void M450FixWire(void) {
-    VRC24_FixPRG();
-    VRC24_FixCHR();
+    VRC24_SyncPRG();
+    VRC24_SyncCHR();
 }
 
 static void M450Reset(void) {
     vrc24.wire = 0;
-    VRC24_FixPRG();
-    VRC24_FixCHR();
-    VRC24_FixMIR();
+    VRC24_SyncPRG();
+    VRC24_SyncCHR();
+    VRC24_SyncMirror();
 }
 
 void Mapper450_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, 0, 1);
     VRC24_pwrap = M450PW;
     VRC24_cwrap = M450CW;
-    VRC24_FixWire = M450FixWire;
+    VRC24_SyncWires = M450FixWire;
     info->Reset = M450Reset;
 }

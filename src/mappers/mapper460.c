@@ -74,8 +74,8 @@ static DECLFR(M460Read) {
 static DECLFW(M460Write) {
 	if (MMC3_WramIsWritable()) {
 		reg = A & 0xFF;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

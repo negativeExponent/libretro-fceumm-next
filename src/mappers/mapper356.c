@@ -64,9 +64,9 @@ static DECLFW(M356Write) {
 	if (!(reg[3] & 0x40)) {
 		reg[cmd] = V;
 		cmd = (cmd + 1) & 3;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-		MMC3_FixMIR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
 	}
 }
 
@@ -91,7 +91,7 @@ void Mapper356_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
 	MMC3_cwrap = M356CW;
 	MMC3_pwrap = M356PW;
-	MMC3_FixMIR = M356MIR;
+	MMC3_SyncMirror = M356MIR;
 	info->Reset = M356Reset;
 	info->Power = M356Power;
 	info->Close = M356Close;

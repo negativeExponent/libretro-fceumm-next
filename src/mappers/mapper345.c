@@ -50,9 +50,9 @@ static void M345MIR(void) {
 static DECLFW(M345Write) {
 	if (MMC3_WramIsWritable()) {
 		reg = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-		MMC3_FixMIR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
 	}
 }
 
@@ -69,7 +69,7 @@ static void M345Power(void) {
 void Mapper345_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
 	MMC3_pwrap = M345PW;
-	MMC3_FixMIR = M345MIR;
+	MMC3_SyncMirror = M345MIR;
 	info->Power = M345Power;
 	info->Reset = M345Reset;
 	AddExState(&reg, 1, 0, "EXPR");

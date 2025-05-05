@@ -52,14 +52,14 @@ static void GENMWRAP(uint8 V) {
 	setmirror((mmc2.mirr & 1) ^ 1);
 }
 
-void MMC2_FixPRG(void) {
+void MMC2_SyncPRG(void) {
 	MMC2_pwrap(0x8000, mmc2.prg);
 	MMC2_pwrap(0xA000, ~2);
 	MMC2_pwrap(0xC000, ~1);
 	MMC2_pwrap(0xE000, ~0);
 }
 
-void MMC2_FixCHR(void) {
+void MMC2_SyncCHR(void) {
 	MMC2_cwrap(0x0000, mmc2.chr[mmc2.latch[0] | 0]);
 	MMC2_cwrap(0x1000, mmc2.chr[mmc2.latch[1] | 2]);
 
@@ -72,14 +72,14 @@ DECLFW(MMC2_Write) {
 	switch (A & 0xF000) {
 	case 0xA000:
 		mmc2.prg = V;
-		MMC2_FixPRG();
+		MMC2_SyncPRG();
 		break;
 	case 0xB000:
 	case 0xC000:
 	case 0xD000:
 	case 0xE000:
 		mmc2.chr[(A - 0xB000) >> 12] = V;
-		MMC2_FixCHR();
+		MMC2_SyncCHR();
 		break;
 	case 0xF000:
 		if (MMC2_mwrap) {
@@ -95,14 +95,14 @@ static void MMC2PPUHook(uint32 A) {
 		return;
 	}
 	mmc2.latch[bank] = (A >> 5) & 0x01;
-	MMC2_FixCHR();
+	MMC2_SyncCHR();
 }
 
 void MMC2_Reset(void) {
 	mmc2.prg = mmc2.mirr = 0;
 	mmc2.latch[0] = mmc2.latch[1] = 0;
-	MMC2_FixPRG();
-	MMC2_FixCHR();
+	MMC2_SyncPRG();
+	MMC2_SyncCHR();
 }
 
 void MMC2_Power(void) {
@@ -118,8 +118,8 @@ void MMC2_Power(void) {
 }
 
 void MMC2_Restore(int version) {
-	MMC2_FixPRG();
-	MMC2_FixCHR();
+	MMC2_SyncPRG();
+	MMC2_SyncCHR();
 }
 
 void MMC2_Close(void) {

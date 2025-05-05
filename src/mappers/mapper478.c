@@ -51,8 +51,8 @@ static DECLFW(M478Write) {
         if (reg[1] & 0x60) {
 		    reg[0] = A & 0xFF;
             reg[1] = V;
-		    MMC3_FixPRG();
-		    MMC3_FixCHR();
+		    MMC3_SyncPRG();
+		    MMC3_SyncCHR();
         }
 	}
 }
@@ -68,7 +68,7 @@ static DECLFW(M478WriteMMC3) {
         mmc3.reg[3] = (mmc3.reg[3] & ~0x18) | ((V << 3) & 0x18);
         mmc3.reg[4] = (mmc3.reg[4] & ~0x18) | ((V << 3) & 0x18);
         mmc3.reg[5] = (mmc3.reg[5] & ~0x18) | ((V << 3) & 0x18);
-		MMC3_FixCHR();
+		MMC3_SyncCHR();
     }
 }
 

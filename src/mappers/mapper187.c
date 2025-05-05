@@ -54,7 +54,7 @@ static void M187PW(uint16 A, uint16 V) {
 static DECLFW(M187Write) {
 	if (!(A & 0x01)) {
 		reg = V;
-		MMC3_FixPRG();
+		MMC3_SyncPRG();
 	}
 }
 

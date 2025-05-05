@@ -39,8 +39,8 @@ static void M404CW(uint16 A, uint16 V) {
 static DECLFW(M404Write) {
 	if (!(reg & 0x80)) {
 		reg = V;
-		MMC1_FixPRG();
-		MMC1_FixCHR();
+		MMC1_SyncPRG();
+		MMC1_SyncCHR();
 	}
 }
 

@@ -68,8 +68,8 @@ static void M369Sync(void) {
 	case 0x37: /* MMC3: 128 KiB CHR */
 	case 0xFF: /* MMC3: 256 KiB CHR */
 		setprg8r(0x10, 0x6000, 0);
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

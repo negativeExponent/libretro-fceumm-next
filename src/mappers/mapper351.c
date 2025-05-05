@@ -112,9 +112,9 @@ static void SyncPRG(void) {
 	} else {
 		switch (reg[0] & 0x03) {
 		default:
-		case 1: MMC3_FixPRG(); break;
-		case 2: MMC1_FixPRG(); break;
-		case 3: VRC24_FixPRG(); break;
+		case 1: MMC3_SyncPRG(); break;
+		case 2: MMC1_SyncPRG(); break;
+		case 3: VRC24_SyncPRG(); break;
 		}
 	}
 }
@@ -127,9 +127,9 @@ static void SyncCHR(void) {
 	} else {
 		switch (reg[0] & 0x03) {
 		default:
-		case 1: MMC3_FixCHR(); break;
-		case 2: MMC1_FixCHR(); break;
-		case 3: VRC24_FixCHR(); break;
+		case 1: MMC3_SyncCHR(); break;
+		case 2: MMC1_SyncCHR(); break;
+		case 3: VRC24_SyncCHR(); break;
 		}
 	}
 }
@@ -137,9 +137,9 @@ static void SyncCHR(void) {
 static void SyncMIR(void) {
 	switch (reg[0] & 0x03) {
 	default:
-	case 1: MMC3_FixMIR(); break;
-	case 2: MMC1_FixMIR(); break;
-	case 3: VRC24_FixMIR(); break;
+	case 1: MMC3_SyncMirror(); break;
+	case 2: MMC1_SyncMirror(); break;
+	case 3: VRC24_SyncMirror(); break;
 	}
 }
 

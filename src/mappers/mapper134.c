@@ -78,11 +78,11 @@ static DECLFW(M134Write) {
 		CartBW(A, V);
 		if (!(reg[0] & 0x80)) {
 			reg[A & 0x03] = V;
-			MMC3_FixPRG();
-			MMC3_FixCHR();
+			MMC3_SyncPRG();
+			MMC3_SyncCHR();
 		} else if ((A & 0x03) == 2) {
 			reg[2] = (reg[2] & ~0x03) | (V & 0x03);
-			MMC3_FixCHR();
+			MMC3_SyncCHR();
 		}
 	}
 }

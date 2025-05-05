@@ -32,10 +32,10 @@ FME7 fme7;
 void (*FME7_pwrap)(uint16 A, uint16 V);
 void (*FME7_cwrap)(uint16 A, uint16 V);
 
-void (*FME7_FixWRAM)(void);
-void (*FME7_FixPRG)(void);
-void (*FME7_FixCHR)(void);
-void (*FME7_FixMIR)(void);
+void (*FME7_SyncWRAM)(void);
+void (*FME7_SyncPRG)(void);
+void (*FME7_SyncCHR)(void);
+void (*FME7_SyncMirror)(void);
 
 static SFORMAT StateRegs[] = {
 	{ fme7.prg, 4, "PREG" },
@@ -113,16 +113,16 @@ DECLFW(FME7_WriteReg) {
 	case 0x00: case 0x01: case 0x02: case 0x03:
 	case 0x04: case 0x05: case 0x06: case 0x07:
 		fme7.chr[fme7.cmd] = V;
-		FME7_FixCHR();
+		FME7_SyncCHR();
 		break;
 	case 0x08: case 0x09: case 0x0A: case 0x0B:
 		fme7.prg[fme7.cmd & 0x03] = V;
-		FME7_FixPRG();
-		FME7_FixWRAM();
+		FME7_SyncPRG();
+		FME7_SyncWRAM();
 		break;
 	case 0x0C:
 		fme7.mirr = V;
-		FME7_FixMIR();
+		FME7_SyncMirror();
 		break;
 	case 0x0D:
 		IRQa = V;
@@ -154,10 +154,10 @@ void FME7_Reset(void) {
 	IRQCount = ~0;
 	IRQa = 0;
 
-	FME7_FixPRG();
-	FME7_FixCHR();
-	FME7_FixMIR();
-	FME7_FixWRAM();
+	FME7_SyncPRG();
+	FME7_SyncCHR();
+	FME7_SyncMirror();
+	FME7_SyncWRAM();
 }
 
 void FME7_Power(void) {
@@ -194,17 +194,17 @@ static void FME7_IRQHook(int a) {
 }
 
 static void StateRestore(int version) {
-	FME7_FixWRAM();
-	FME7_FixPRG();
-	FME7_FixCHR();
-	FME7_FixMIR();
+	FME7_SyncWRAM();
+	FME7_SyncPRG();
+	FME7_SyncCHR();
+	FME7_SyncMirror();
 }
 
 void FME7_Init(CartInfo *info, int wram, int battery) {
-	FME7_FixPRG = GENFIXPRG;
-	FME7_FixCHR = GENFIXCHR;
-	FME7_FixMIR = GENFIXMIR;
-	FME7_FixWRAM = GENFIXWRAM;
+	FME7_SyncPRG = GENFIXPRG;
+	FME7_SyncCHR = GENFIXCHR;
+	FME7_SyncMirror = GENFIXMIR;
+	FME7_SyncWRAM = GENFIXWRAM;
 
 	FME7_pwrap = GENPWRAP;
 	FME7_cwrap = GENCWRAP;

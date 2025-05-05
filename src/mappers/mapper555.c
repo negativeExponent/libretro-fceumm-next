@@ -67,8 +67,8 @@ static DECLFR(M555Read5) {
 static DECLFW(M555Write5) {
 	if (A & 0x800) {
 		reg[(A >> 10) & 0x01] = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	} else {
 		WRAM[0x2000 | (A & 0xFFF)] = V;
 	}

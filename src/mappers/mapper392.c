@@ -60,8 +60,8 @@ static DECLFW(M392Write) {
         CartBW(A, V);
 		if (!(reg & 0x10)) {
 			reg = V;
-			MMC3_FixPRG();
-			MMC3_FixCHR();
+			MMC3_SyncPRG();
+			MMC3_SyncCHR();
 		}
 	}
 }

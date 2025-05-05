@@ -46,8 +46,8 @@ static void M473PW(uint16 A, uint16 V) {
 
 static DECLFW(M473Write) {
 	reg[A & 0x03] = V;
-	MMC3_FixPRG();
-	MMC3_FixCHR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static DECLFW(M473WriteMMC3) {

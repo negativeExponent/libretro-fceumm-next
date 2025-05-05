@@ -51,7 +51,7 @@ static void M292CW(uint16 A, uint16 V) {
 
 static DECLFW(M292ProtWrite) {
 	reg[0] = V;
-	MMC3_FixPRG();
+	MMC3_SyncPRG();
 }
 
 static DECLFR(M292ProtRead) {
@@ -60,7 +60,7 @@ static DECLFR(M292ProtRead) {
 	} else {
 		reg[2] = ARead[0xFF](0xFF);
 	}
-	MMC3_FixCHR();
+	MMC3_SyncCHR();
 	return cpu.openbus;
 }
 

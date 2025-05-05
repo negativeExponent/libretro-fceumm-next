@@ -36,8 +36,8 @@ void VRC7_Close(void);
 
 void VRC7_Init(CartInfo *info, uint32 A0, uint32 A1);
 
-void VRC7_FixPRG(void);
-void VRC7_FixCHR(void);
+void VRC7_SyncPRG(void);
+void VRC7_SyncCHR(void);
 
 extern void (*VRC7_pwrap)(uint16 A, uint16 V);
 extern void (*VRC7_cwrap)(uint16 A, uint16 V);

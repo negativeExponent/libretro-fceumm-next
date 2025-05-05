@@ -78,15 +78,15 @@ static void M445VRC24CW(uint16 A, uint16 V) {
 static void Sync(void) {
 	switch (reg[3] & 0x10) {
 	case MAPPER_VRC4:
-		VRC24_FixPRG();
-		VRC24_FixCHR();
-		VRC24_FixMIR();
+		VRC24_SyncPRG();
+		VRC24_SyncCHR();
+		VRC24_SyncMirror();
 		break;
 	case MAPPER_MMC3:
 	default:
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-		MMC3_FixMIR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
 		break;
 	}
 }

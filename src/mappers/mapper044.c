@@ -39,8 +39,8 @@ static DECLFW (M044WriteA000) {
     MMC3_CMDWrite(A, V);
     switch (A & 0xE001) {
     case 0xA001:
-        MMC3_FixPRG();
-        MMC3_FixCHR();
+        MMC3_SyncPRG();
+        MMC3_SyncCHR();
         break;
     }
 }

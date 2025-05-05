@@ -61,7 +61,7 @@ static DECLFW(M544WriteExtra) {
 		setmirrorw(nt[0], nt[1], nt[2], nt[3]);
 	} else {
 		cpuC = V;
-		VRC24_FixPRG();
+		VRC24_SyncPRG();
 	}
 }
 
@@ -81,7 +81,7 @@ static DECLFW(M544PPUWrite) {
                 chrRamMask = (chrBank & 0x40) ? 0xFE : 0xFC;
                 chrRamCompare = compareMasks[((chrBank >> 1) & 0x01) | ((chrBank >> 2) & 0x02) | ((chrBank >> 4) & 0x04)];
             }
-			VRC24_FixCHR();
+			VRC24_SyncCHR();
 		}
 	}
 	writePPU(A, V);

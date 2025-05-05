@@ -184,22 +184,22 @@ static void Sync(void) {
 		case MAPPER_SLROM:
 		case MAPPER_SNROM:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            MMC1_FixPRG();
-            MMC1_FixCHR();
-            MMC1_FixMIR();
+            MMC1_SyncPRG();
+            MMC1_SyncCHR();
+            MMC1_SyncMirror();
 			break;
 
 		case MAPPER_MMC3:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            MMC3_FixPRG();
-            MMC3_FixCHR();
-            MMC3_FixMIR();
+            MMC3_SyncPRG();
+            MMC3_SyncCHR();
+            MMC3_SyncMirror();
 			break;
 
 		case MAPPER_TLSROM:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            MMC3_FixPRG();
-            MMC3_FixCHR();
+            MMC3_SyncPRG();
+            MMC3_SyncCHR();
 			if (mmc3.cmd & 0x80) {
 				setntamem(NTARAM + 0x400 * ((mmc3.reg[2] >> 7) & 0x01), 1, 0);
 				setntamem(NTARAM + 0x400 * ((mmc3.reg[3] >> 7) & 0x01), 1, 1);
@@ -215,30 +215,30 @@ static void Sync(void) {
 
 		case MAPPER_189:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            MMC3_FixPRG();
-            MMC3_FixCHR();
-            MMC3_FixMIR();
+            MMC3_SyncPRG();
+            MMC3_SyncCHR();
+            MMC3_SyncMirror();
 			break;
 
 		case MAPPER_VRC2_22:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            VRC24_FixPRG();
-            VRC24_FixCHR();
-            VRC24_FixMIR();
+            VRC24_SyncPRG();
+            VRC24_SyncCHR();
+            VRC24_SyncMirror();
 			break;
 
 		case MAPPER_VRC4_23:
 		case MAPPER_VRC4_25:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            VRC24_FixPRG();
-            VRC24_FixCHR();
-            VRC24_FixMIR();
+            VRC24_SyncPRG();
+            VRC24_SyncCHR();
+            VRC24_SyncMirror();
 			break;
 
 		case MAPPER_VRC6:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            VRC6_FixPRG();
-            VRC6_FixCHR();
+            VRC6_SyncPRG();
+            VRC6_SyncCHR();
 			break;
 		}
 	} else {

@@ -42,8 +42,8 @@ static DECLFW(M245Write) {
     } else {
         mmc3.cmd = V;
     }
-    MMC3_FixPRG();
-    MMC3_FixCHR();
+    MMC3_SyncPRG();
+    MMC3_SyncCHR();
 }
 
 static void M245Power(void) {

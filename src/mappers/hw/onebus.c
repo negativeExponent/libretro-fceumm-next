@@ -53,7 +53,7 @@ static SFORMAT StateRegs[] =
 	{ 0 }
 };
 
-void OneBus_FixPRG(uint16 mmask, uint16 mblock) {
+void OneBus_SyncPRG(uint16 mmask, uint16 mblock) {
 	uint8 mode = onebus.cpu41xx[0x0B] & 0x07;
 	uint16 mask = (mode == 7) ? 0xFF : (0x3F >> mode);
 	uint16 block = (((onebus.cpu41xx[0] & 0xF0) << 4) | onebus.cpu41xx[0x0A]) & ~mask;
@@ -71,7 +71,7 @@ void OneBus_FixPRG(uint16 mmask, uint16 mblock) {
 	}
 }
 
-void OneBus_FixPRG16(uint16 bank0, uint16 bank1, uint16 mmask, uint16 mblock) {
+void OneBus_SyncPRG16(uint16 bank0, uint16 bank1, uint16 mmask, uint16 mblock) {
 	uint8 mode = onebus.cpu41xx[0x0B] & 0x07;
 	uint16 mask = (mode == 7) ? 0xFF : (0x3F >> mode);
 	uint16 block = (((onebus.cpu41xx[0] & 0xF0) << 4) | onebus.cpu41xx[0x0A]) & ~mask;
@@ -133,7 +133,7 @@ void OneBus_SetCHR(uint8 **banks, uint8_t *base, uint8 bit4pp, uint8 extended, u
 }
 
 extern uint8 **VPageR;
-void OneBus_FixCHR(uint16 mmask, uint16 mblock) {
+void OneBus_SyncCHR(uint16 mmask, uint16 mblock) {
 	#define BK16EN  (onebus.ppu20xx[0x10] & 0x02)
 	#define SP16EN  (onebus.ppu20xx[0x10] & 0x04)
 	#define SPEXTEN (onebus.ppu20xx[0x10] & 0x08)
@@ -152,7 +152,7 @@ void OneBus_FixCHR(uint16 mmask, uint16 mblock) {
 #endif
 }
 
-void OneBus_FixMIR(void) {
+void OneBus_SyncMirror(void) {
 	setmirror((onebus.cpu41xx[0x06] & 1) ^ 1);
 }
 

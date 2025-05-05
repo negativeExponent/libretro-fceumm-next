@@ -48,8 +48,8 @@ static DECLFW(M219WriteOuter) {
 		reg = (reg & ~0x02) | ((V >> 4) & 0x02);
 		break;
 	}
-	MMC3_FixPRG();
-	MMC3_FixCHR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static DECLFW(M219WriteASIC) {
@@ -58,10 +58,10 @@ static DECLFW(M219WriteASIC) {
 	if (!(A & 0x01)) { /* Register index */
 		mmc3.cmd = V;
 		if ((oldcmd & 0x40) != ((V & 0x40))) {
-			MMC3_FixPRG();
+			MMC3_SyncPRG();
 		}
 		if ((oldcmd & 0x80) != ((V & 0x80))) {
-			MMC3_FixPRG();
+			MMC3_SyncPRG();
 		}
 		if (A & 0x02) {
 			extMode = (V & 0x20) != 0;
@@ -79,11 +79,11 @@ static DECLFW(M219WriteASIC) {
 					mmc3.reg[index] &= ~0xF0;
 					mmc3.reg[index] |= ((V << 4) & 0xF0);
 				}
-				MMC3_FixCHR();
+				MMC3_SyncCHR();
 			} else if ((mmc3.cmd >= 0x25) && (mmc3.cmd <= 0x26)) { /* Scrambled PRG register */
 				V = ((V << 1) & 0x08) | ((V >> 1) & 0x04) | ((V >> 3) & 0x02) | ((V >> 5) & 0x01);
 				mmc3.reg[6 | (mmc3.cmd & 0x01)] = V;
-				MMC3_FixPRG();
+				MMC3_SyncPRG();
 			}
 		}
 	}

@@ -85,7 +85,7 @@ static void GENMWRAP(uint16 A, uint32 V) {
 	setntamem(CHRptr[0] + 0x400 * (V & CHRmask1[0]), 0, A & 3);
 }
 
-void JYASIC_FixPRG(void) {
+void JYASIC_SyncPRG(void) {
 	uint8 prgLast = (jyasic.mode[0] & 0x04) ? jyasic.prg[3] : 0xFF;
 	uint8 prg6000 = 0;
 
@@ -126,7 +126,7 @@ void JYASIC_FixPRG(void) {
 	}
 }
 
-void JYASIC_FixCHR(void) {
+void JYASIC_SyncCHR(void) {
 	/* MMC4 jyasic.mode[0] with 4 KiB CHR jyasic.mode[0] */
 	if (jyasic.mode[3] & 0x80 && (jyasic.mode[0] & 0x18) == 0x08) {
 		JYASIC_cwrap(0x0000, (jyasic.chr[(jyasic.latch[0] & 2) | 0] << 2) | 0);
@@ -185,7 +185,7 @@ void JYASIC_FixCHR(void) {
 	PPUCHRRAM = (jyasic.mode[2] & 0x40) ? 0xFF : 0x00; /* Write-protect or write-enable CHR-RAM */
 }
 
-void JYASIC_FixMIR(void) {
+void JYASIC_SyncMirror(void) {
 	if (jyasic.mode[0] & 0x20 || jyasic.mode[1] & 0x08) {
 		/* ROM nametables or extended mirroring */
 		/* First, set normal CIRAM pages using extended registers ... */
@@ -276,7 +276,7 @@ static void trapPPUAddressChange(uint32 A) {
 		/* If MMC4 jyasic.mode[0] is enabled, and CHR jyasic.mode[0] is 4 KiB, and tile FD or FE is being fetched ... */
 		jyasic.latch[(A >> 12) & 1] = ((A >> 10) & 4) | ((A >> 4) & 2); /* switch the left or right pattern table's latch to 0 (FD) or 2 (FE),
 																  * being used as an offset for the CHR register index. */
-		JYASIC_FixCHR();
+		JYASIC_SyncCHR();
 	}
 	lastPPUAddress = A;
 }
@@ -329,17 +329,17 @@ DECLFW(JYASIC_WriteALU) {
 
 DECLFW(JYASIC_WritePRG) {
 	jyasic.prg[A & 3] = V;
-	JYASIC_FixPRG();
+	JYASIC_SyncPRG();
 }
 
 DECLFW(JYASIC_WriteCHRLow) {
 	jyasic.chr[A & 7] = (jyasic.chr[A & 7] & 0xFF00) | V;
-	JYASIC_FixCHR();
+	JYASIC_SyncCHR();
 }
 
 DECLFW(JYASIC_WriteCHRHigh) {
 	jyasic.chr[A & 7] = (jyasic.chr[A & 7] & 0x00FF) | V << 8;
-	JYASIC_FixCHR();
+	JYASIC_SyncCHR();
 }
 
 DECLFW(JYASIC_WriteNT) {
@@ -348,7 +348,7 @@ DECLFW(JYASIC_WriteNT) {
 	} else {
 		jyasic.nt[A & 3] = (jyasic.nt[A & 3] & 0x00FF) | V << 8;
 	}
-	JYASIC_FixMIR();
+	JYASIC_SyncMirror();
 }
 
 DECLFW(JYASIC_WriteIRQ) {
@@ -404,9 +404,9 @@ DECLFW(JYASIC_WriteMode) {
 		jyasic.mode[3] = V;
 		break;
 	}
-	JYASIC_FixPRG();
-	JYASIC_FixCHR();
-	JYASIC_FixMIR();
+	JYASIC_SyncPRG();
+	JYASIC_SyncCHR();
+	JYASIC_SyncMirror();
 }
 
 void JYASIC_restoreWriteHandlers(void) {
@@ -434,9 +434,9 @@ void JYASIC_RegReset(void) {
 	jyasic.latch[0] = 0;
 	jyasic.latch[1] = 4;
 
-	JYASIC_FixPRG();
-	JYASIC_FixCHR();
-	JYASIC_FixMIR();
+	JYASIC_SyncPRG();
+	JYASIC_SyncCHR();
+	JYASIC_SyncMirror();
 }
 
 void JYASIC_Power(void) {
@@ -466,18 +466,18 @@ void JYASIC_Power(void) {
 
 void JYASIC_Reset(void) {
 	dipSwitch = (dipSwitch + 0x40) & 0xC0;
-	JYASIC_FixPRG();
-	JYASIC_FixCHR();
-	JYASIC_FixMIR();
+	JYASIC_SyncPRG();
+	JYASIC_SyncCHR();
+	JYASIC_SyncMirror();
 }
 
 void JYASIC_Close(void) {
 }
 
 static void StateRestore(int version) {
-	JYASIC_FixPRG();
-	JYASIC_FixCHR();
-	JYASIC_FixMIR();
+	JYASIC_SyncPRG();
+	JYASIC_SyncCHR();
+	JYASIC_SyncMirror();
 }
 
 void JYASIC_Init(CartInfo *info, int extended_mirr) {

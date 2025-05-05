@@ -21,8 +21,8 @@
 #include "mapinc.h"
 #include "n118.h"
 
-void (*N118_FixPRG)(void);
-void (*N118_FixCHR)(void);
+void (*N118_SyncPRG)(void);
+void (*N118_SyncCHR)(void);
 
 void (*N118_pwrap)(uint16 A, uint16 V);
 void (*N118_cwrap)(uint16 A, uint16 V);
@@ -67,8 +67,8 @@ DECLFW(N118_Write) {
     } else {
 		n118.cmd = V;
 	}
-    N118_FixPRG();
-    N118_FixCHR();
+    N118_SyncPRG();
+    N118_SyncCHR();
 }
 
 void N118_Power(void) {
@@ -82,8 +82,8 @@ void N118_Power(void) {
 	n118.reg[7] = 1;
 	n118.cmd = 0;
 
-    N118_FixPRG();
-    N118_FixCHR();
+    N118_SyncPRG();
+    N118_SyncCHR();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0x9FFF, N118_Write);
@@ -96,13 +96,13 @@ void N118_Power(void) {
 }
 
 static void StateRestore(int version) {
-	N118_FixPRG();
-    N118_FixCHR();
+	N118_SyncPRG();
+    N118_SyncCHR();
 }
 
 void N118_Init(CartInfo *info, int wsize, int battery) {
-    N118_FixPRG = GENFIXPRG;
-    N118_FixCHR = GENFIXCHR;
+    N118_SyncPRG = GENFIXPRG;
+    N118_SyncCHR = GENFIXCHR;
 
     N118_pwrap = GENPWRAP;
     N118_cwrap = GENCWRAP;

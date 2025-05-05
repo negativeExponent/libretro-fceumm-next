@@ -47,7 +47,7 @@ static void M262CW(uint16 A, uint16 V) {
 static DECLFW(M262Write) {
 	if (A & 0x100) {
 		reg = V;
-		MMC3_FixCHR();
+		MMC3_SyncCHR();
 	}
 }
 

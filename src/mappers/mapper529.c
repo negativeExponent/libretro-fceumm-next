@@ -50,7 +50,7 @@ static void M529Power(void) {
 
 void Mapper529_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 0, 1);
-	VRC24_FixPRG = M529FixPRG;
+	VRC24_SyncPRG = M529FixPRG;
 	if (info->PRGRamSaveSize) {
 		info->Power = M529Power;
 		eeprom_93Cx6_init(eeprom_data, 256, 16);

@@ -40,8 +40,8 @@ static DECLFW(M516Write) {
 /*    FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, reg); */
 	if (A & 0x10) {
 		reg = A & 0x0F;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 	MMC3_Write(A, V);
 }

@@ -82,9 +82,9 @@ static void M353MIR(void) {
 static DECLFW(M353Write) {
 	if (A & 0x80) {
 		reg = (A >> 13) & 0x03;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-		MMC3_FixMIR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
 	} else {
 		uint8 oldcmd = mmc3.cmd;
 
@@ -92,32 +92,32 @@ static DECLFW(M353Write) {
 		case 0x8000:
 			mmc3.cmd = V;
 			if ((oldcmd & 0x40) != (mmc3.cmd & 0x40)) {
-				MMC3_FixPRG();
+				MMC3_SyncPRG();
 			}
 			if ((oldcmd & 0x80) != (mmc3.cmd & 80)) {
-				MMC3_FixCHR();
-				MMC3_FixMIR();
+				MMC3_SyncCHR();
+				MMC3_SyncMirror();
 			}
 			break;
 		case 0x8001:
 			mmc3.reg[mmc3.cmd & 0x07] = V;
 			switch (mmc3.cmd & 0x07) {
 			case 0:
-				MMC3_FixPRG();
-				MMC3_FixCHR();
-				MMC3_FixMIR();
+				MMC3_SyncPRG();
+				MMC3_SyncCHR();
+				MMC3_SyncMirror();
 				break;
 			case 1:
 			case 2:
 			case 3:
 			case 4:
 			case 5:
-				MMC3_FixCHR();
-				MMC3_FixMIR();
+				MMC3_SyncCHR();
+				MMC3_SyncMirror();
 				break;
 			case 6:
 			case 7:
-				MMC3_FixPRG();
+				MMC3_SyncPRG();
 				break;
 			}
 			break;
@@ -150,7 +150,7 @@ void Mapper353_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, info->battery);
 	MMC3_cwrap = M353CW;
 	MMC3_pwrap = M353PW;
-	MMC3_FixMIR = M353MIR;
+	MMC3_SyncMirror = M353MIR;
 	info->Power = M353Power;
 	info->Close = M353Close;
 	info->Reset = M353Reset;

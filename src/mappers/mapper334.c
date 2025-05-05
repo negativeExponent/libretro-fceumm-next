@@ -39,7 +39,7 @@ static void M334PW(uint16 A, uint16 V) {
 static DECLFW(M334Write) {
 	if (!(A & 0x01) && MMC3_WramIsWritable()) {
 		reg = V;
-		MMC3_FixPRG();
+		MMC3_SyncPRG();
 	}
 }
 

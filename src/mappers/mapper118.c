@@ -46,8 +46,8 @@ static DECLFW(M118Write) {
 		case 4:
 		case 5:
 			mmc3.reg[mmc3.cmd & 0x07] = V;
-			MMC3_FixCHR();
-			MMC3_FixMIR();
+			MMC3_SyncCHR();
+			MMC3_SyncMirror();
 			break;
 		default:
 			MMC3_CMDWrite(A, V);
@@ -71,5 +71,5 @@ void Mapper118_Init(CartInfo *info) {
 	uint8 ws = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8;
 	MMC3_Init(info, MMC3B, ws, info->battery);
 	info->Power = M118Power;
-	MMC3_FixMIR = M118MIR;
+	MMC3_SyncMirror = M118MIR;
 }

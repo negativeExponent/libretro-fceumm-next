@@ -62,8 +62,8 @@ static DECLFR(M444Read) {
 
 static DECLFW(M444Write) {
 	reg = A & 0xFF;
-	MMC3_FixPRG();
-	MMC3_FixCHR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static void M444Reset(void) {

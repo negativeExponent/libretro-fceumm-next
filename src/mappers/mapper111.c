@@ -56,9 +56,9 @@ static void M111MMC1CW(uint16 A, uint16 V) {
 
 static DECLFW(M111Write_mmc1) {
 	mmc1.reg[(A >> 13) & 0x03] =  V;
-	MMC1_FixPRG();
-	MMC1_FixCHR();
-	MMC1_FixMIR();
+	MMC1_SyncPRG();
+	MMC1_SyncCHR();
+	MMC1_SyncMirror();
 }
 
 static void M111Power_mmc1(void) {
@@ -134,9 +134,9 @@ static void M111Close(void) {
 
 static void StateRestore(int version) {
 	if (m111_mmc1) {
-		MMC1_FixPRG();
-		MMC1_FixCHR();
-		MMC1_FixMIR();
+		MMC1_SyncPRG();
+		MMC1_SyncCHR();
+		MMC1_SyncMirror();
 		return;
 	}
 

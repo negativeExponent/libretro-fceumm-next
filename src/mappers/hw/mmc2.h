@@ -38,8 +38,8 @@ void MMC2_Reset(void);
 void MMC2_Restore(int version);
 void MMC2_Init(CartInfo *info, int wram, int battery);
 
-void MMC2_FixPRG(void);
-void MMC2_FixCHR(void);
+void MMC2_SyncPRG(void);
+void MMC2_SyncCHR(void);
 
 extern void (*MMC2_pwrap)(uint16 A, uint16 V);
 extern void (*MMC2_cwrap)(uint16 A, uint16 V);

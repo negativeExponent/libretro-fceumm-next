@@ -357,7 +357,7 @@ static void MMC5CHRB(void) {
 	}
 }
 
-static void MMC5_FixCHR(void) {
+static void MMC5_SyncCHR(void) {
 	if (mmc5.chrLast < 8) {
 		MMC5CHRB();
 		MMC5CHRA();
@@ -372,7 +372,7 @@ static void MMC5PWRAP(uint16 A, uint16 V) {
 	setprg8r(chip, A, V);
 }
 
-static void MMC5_FixPRG(void) {
+static void MMC5_SyncPRG(void) {
 	int x;
 	setprg8r(0x10, 0x6000, mmc5.prg[0]);
 	switch (mmc5.prgMode) {
@@ -399,7 +399,7 @@ static void MMC5_FixPRG(void) {
 	}
 }
 
-static void MMC5_FixMIR(void) {
+static void MMC5_SyncMirror(void) {
 	int x;
 	for (x = 0; x < 4; x++) {
 		switch ((mmc5.nmt >> (x << 1)) & 0x03) {
@@ -415,11 +415,11 @@ DECLFW(Mapper5_write) {
 	switch (A) {
 	case 0x5100:
 		mmc5.prgMode = V & 0x03;
-		MMC5_FixPRG();
+		MMC5_SyncPRG();
 		break;
 	case 0x5101:
 		mmc5.chrMode = V & 0x03;
-		MMC5_FixCHR();
+		MMC5_SyncCHR();
 		break;
 	case 0x5102:
 		mmc5.wramProtect[0] = V & 0x03;
@@ -429,11 +429,11 @@ DECLFW(Mapper5_write) {
 		break;
 	case 0x5104:
 		MMC5HackCHRMode = mmc5.extMode = V & 0x03;
-		MMC5_FixCHR();
+		MMC5_SyncCHR();
 		break;
 	case 0x5105:
 		mmc5.nmt = V;
-		MMC5_FixMIR();
+		MMC5_SyncMirror();
 		break;
 	case 0x5106:
 		if (V != mmc5.fillTile) {
@@ -454,7 +454,7 @@ DECLFW(Mapper5_write) {
 	case 0x5116:
 	case 0x5117:
 		mmc5.prg[A - 0x5113] = V;
-		MMC5_FixPRG();
+		MMC5_SyncPRG();
 		break;
 	case 0x5120:
 	case 0x5121:
@@ -470,14 +470,14 @@ DECLFW(Mapper5_write) {
 	case 0x512b:
 		mmc5.chrLast = (A - 0x5120);
 		mmc5.chr[mmc5.chrLast] = V | ((MMC50x5130 & 0x03) << 8);
-		MMC5_FixCHR();
+		MMC5_SyncCHR();
 		break;
 	case 0x5130:
 		MMC50x5130 = V;
 		break;
 	case 0x5200:
 		MMC5HackSPMode = V;
-		MMC5_FixCHR();
+		MMC5_SyncCHR();
 		break;
 	case 0x5201:
 		MMC5HackSPScroll = (V >> 3) & 0x1F;
@@ -545,9 +545,9 @@ static DECLFR(MMC5_read) {
 static void Sync(void) {
 	uint8 moop;
 
-	MMC5_FixPRG();
-	MMC5_FixCHR();
-	MMC5_FixMIR();
+	MMC5_SyncPRG();
+	MMC5_SyncCHR();
+	MMC5_SyncMirror();
 
 	/* in case the fill register changed, we need to overwrite the fill buffer */
 	FCEU_dwmemset32(mmc5.fillTable, mmc5.fillTile | (mmc5.fillTile << 8) | (mmc5.fillTile << 16) | (mmc5.fillTile << 24), 0x03C0);

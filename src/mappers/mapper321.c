@@ -47,8 +47,8 @@ static DECLFW(M321Write) {
     if (MMC3_WramIsWritable()) {
         CartBW(A, V);
 	    reg = V & 0xFF;
-	    MMC3_FixPRG();
-	    MMC3_FixCHR();
+	    MMC3_SyncPRG();
+	    MMC3_SyncCHR();
     }
 }
 

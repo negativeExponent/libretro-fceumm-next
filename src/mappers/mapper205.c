@@ -52,8 +52,8 @@ static DECLFW(M205Write) {
 	if ((V & 0x01) && dipsw) {
 		reg |= 0x02;
 	}
-	MMC3_FixPRG();
-	MMC3_FixCHR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static void M205Reset(void) {

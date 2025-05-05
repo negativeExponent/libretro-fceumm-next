@@ -43,8 +43,8 @@ static void M291PW(uint16 A, uint16 V) {
 static DECLFW(M291Write) {
 	/* The Outer Bank Register responds even when the MMC3 clone's WRAM bit is clear. */
 	reg = V;
-	MMC3_FixPRG();
-	MMC3_FixCHR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static void M291Reset(void) {

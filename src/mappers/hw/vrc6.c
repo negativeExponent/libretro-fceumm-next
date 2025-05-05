@@ -51,7 +51,7 @@ static void GENCWRAP(uint16 A, uint16 V) {
 	setchr1(A, V & 0xFF);
 }
 
-void VRC6_FixMIR(void) {
+void VRC6_SyncMirror(void) {
 	switch (vrc6.mirr & 3) {
 	case 0: setmirror(MI_V); break;
 	case 1: setmirror(MI_H); break;
@@ -60,14 +60,14 @@ void VRC6_FixMIR(void) {
 	}
 }
 
-void VRC6_FixPRG(void) {
+void VRC6_SyncPRG(void) {
 	VRC6_pwrap(0x8000, (vrc6.prg[0] << 1) | 0x00);
 	VRC6_pwrap(0xa000, (vrc6.prg[0] << 1) | 0x01);
 	VRC6_pwrap(0xc000, vrc6.prg[1]);
 	VRC6_pwrap(0xe000, ~0);
 }
 
-void VRC6_FixCHR(void) {
+void VRC6_SyncCHR(void) {
 	int i;
 
 	for (i = 0; i < 8; i++) {
@@ -95,7 +95,7 @@ DECLFW(VRC6_Write) {
 		VRC6Sound_Write(A, V);
 		if ((A & 0x03) == 0x03) {
 			vrc6.mirr = (V >> 2) & 3;
-			VRC6_FixMIR();
+			VRC6_SyncMirror();
 		}
 		break;
 	case 0xC000:
@@ -137,9 +137,9 @@ void VRC6_Reset(void) {
 
 	vrc6.mirr = 0;
 
-	VRC6_FixPRG();
-	VRC6_FixCHR();
-	VRC6_FixMIR();
+	VRC6_SyncPRG();
+	VRC6_SyncCHR();
+	VRC6_SyncMirror();
 }
 
 void VRC6_Power(void) {
@@ -160,9 +160,9 @@ void VRC6_Close(void) {
 }
 
 void VRC6_Restore(int version) {
-	VRC6_FixPRG();
-	VRC6_FixCHR();
-	VRC6_FixMIR();
+	VRC6_SyncPRG();
+	VRC6_SyncCHR();
+	VRC6_SyncMirror();
 }
 
 void VRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram) {

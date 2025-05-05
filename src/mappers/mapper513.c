@@ -42,8 +42,8 @@ static DECLFW(M513Write) {
 	switch (A & 0xE001) {
 	case 0x8000:
 		mmc3.cmd = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 		break;
 	case 0x8001:
 		mmc3.reg[mmc3.cmd & 0x07] = V;
@@ -55,11 +55,11 @@ static DECLFW(M513Write) {
 		case 4:
 		case 5:
 			reg = V;
-			MMC3_FixPRG();
-			MMC3_FixCHR();
+			MMC3_SyncPRG();
+			MMC3_SyncCHR();
 			break;
 		default:
-			MMC3_FixPRG();
+			MMC3_SyncPRG();
 			break;
 		}
 	default:

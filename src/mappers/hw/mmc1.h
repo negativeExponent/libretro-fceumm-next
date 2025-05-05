@@ -46,9 +46,9 @@ void MMC1_Reset(void);
 
 void MMC1_Init(CartInfo *info, MMC1TYPE _type, int wram, int saveram);
 
-void MMC1_FixPRG(void);
-void MMC1_FixCHR(void);
-void MMC1_FixMIR(void);
+void MMC1_SyncPRG(void);
+void MMC1_SyncCHR(void);
+void MMC1_SyncMirror(void);
 
 extern void (*MMC1_pwrap)(uint16 A, uint16 V);
 extern void (*MMC1_cwrap)(uint16 A, uint16 V);

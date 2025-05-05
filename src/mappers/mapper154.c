@@ -59,15 +59,15 @@ static void M154Power(void) {
 }
 
 static void StateRestore(int version) {
-    N118_FixPRG();
-    N118_FixCHR();
+    N118_SyncPRG();
+    N118_SyncCHR();
     M154Mirroring();
 }
 
 void Mapper154_Init(CartInfo *info) {
 	N118_Init(info, 0, 0);
     info->Power = M154Power;
-	N118_FixCHR = M154FixCHR;
+	N118_SyncCHR = M154FixCHR;
     GameStateRestore = StateRestore;
     AddExState(StateRegs, ~0, 0, NULL);
 }

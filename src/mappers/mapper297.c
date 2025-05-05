@@ -43,9 +43,9 @@ static void M297CHR(uint16 A, uint16 V) {
 static void Sync(void) {
 	if (mode & 0x01) {
 		/* MMC1 */
-		MMC1_FixPRG();
-		MMC1_FixCHR();
-		MMC1_FixMIR();
+		MMC1_SyncPRG();
+		MMC1_SyncCHR();
+		MMC1_SyncMirror();
 	} else {
 		/* Mapper 70 */
 		setprg16(0x8000, ((mode & 0x02) << 1) | ((latch >> 4) & 0x03));

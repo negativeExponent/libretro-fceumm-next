@@ -51,8 +51,8 @@ static DECLFW(M455Write) {
 	if (A & 0x100) {
 		reg[0] = V;
 		reg[1] = A & 0xFF;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

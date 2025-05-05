@@ -52,7 +52,7 @@ static void M259PW(uint16 A, uint16 V) {
 static DECLFW(M259Write) {
 	if (MMC3_WramIsWritable()) {
 		reg = V;
-		MMC3_FixPRG();
+		MMC3_SyncPRG();
 	}
 }
 

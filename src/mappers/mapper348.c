@@ -51,8 +51,8 @@ static void M348PW(uint16 A, uint16 V) {
 static DECLFW(M348Write) {
 	if (MMC3_WramIsWritable()) {
 		reg = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

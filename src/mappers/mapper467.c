@@ -59,9 +59,9 @@ static DECLFW(M467Write) {
 	switch (A & 0xF000) {
 	case 0x9000:
 		reg = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-		MMC3_FixMIR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
 		break;
 	default:
 		switch (A & 0xE001) {
@@ -70,8 +70,8 @@ static DECLFW(M467Write) {
 			break;
 		case 0x8001:
 			mmc3.reg[mmc3.cmd & 0x07] = V;
-			if (mmc3.cmd < 6) MMC3_FixCHR();
-			else MMC3_FixPRG();
+			if (mmc3.cmd < 6) MMC3_SyncCHR();
+			else MMC3_SyncPRG();
 			break;
 		case 0xA000:
 			break;
@@ -93,8 +93,8 @@ static void M467Power(void) {
 
 void Mapper467_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_FixCHR = M467CHR;
-	MMC3_FixMIR = M467MIR;
+	MMC3_SyncCHR = M467CHR;
+	MMC3_SyncMirror = M467MIR;
 	MMC3_pwrap = M467PW;
 	info->Power = M467Power;
 	info->Reset = M467Reset;

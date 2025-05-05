@@ -69,8 +69,8 @@ static DECLFW(M412Write) {
 		CartBW(A, V);
 		if (!(reg[1] & 0x01)) {
 			reg[A & 0x03] = V;
-			MMC3_FixPRG();
-			MMC3_FixCHR();
+			MMC3_SyncPRG();
+			MMC3_SyncCHR();
 		}
 	}
 }

@@ -72,12 +72,12 @@ static void GENCWRAP(uint16 A, uint16 V) {
 	setchr1(A, V);
 }
 
-void BANDAI_FixPRG(void) {
+void BANDAI_SyncPRG(void) {
 	BANDAI_pwrap(0x8000, prg);
 	BANDAI_pwrap(0xC000, ~0);
 }
 
-void BANDAI_FixCHR(void) {
+void BANDAI_SyncCHR(void) {
 	BANDAI_cwrap(0x0000, chr[0]);
 	BANDAI_cwrap(0x0400, chr[1]);
 	BANDAI_cwrap(0x0800, chr[2]);
@@ -88,7 +88,7 @@ void BANDAI_FixCHR(void) {
 	BANDAI_cwrap(0x1C00, chr[7]);
 }
 
-void BANDAI_FixMIR(void) {
+void BANDAI_SyncMirror(void) {
 	switch (mirr & 0x03) {
 	case 0: setmirror(MI_V); break;
 	case 1: setmirror(MI_H); break;
@@ -115,15 +115,15 @@ DECLFW(BANDAI_Write) {
 	case 0x06:
 	case 0x07:
 		chr[A & 0x07] = V;
-		BANDAI_FixCHR();
+		BANDAI_SyncCHR();
 		break;
 	case 0x08:
 		prg = V;
-		BANDAI_FixPRG();
+		BANDAI_SyncPRG();
 		break;
 	case 0x09:
 		mirr = V;
-		BANDAI_FixMIR();
+		BANDAI_SyncMirror();
 		break;
 	case 0x0A:
 		IRQa = V & 1;
@@ -172,15 +172,15 @@ void BANDAI_Reset(void) {
 	IRQLatch = 0;
 	IRQa = FALSE;
 
-	BANDAI_FixPRG();
-	BANDAI_FixCHR();
-	BANDAI_FixMIR();
+	BANDAI_SyncPRG();
+	BANDAI_SyncCHR();
+	BANDAI_SyncMirror();
 }
 
 static void StateRestore(int version) {
-	BANDAI_FixPRG();
-	BANDAI_FixCHR();
-	BANDAI_FixMIR();
+	BANDAI_SyncPRG();
+	BANDAI_SyncCHR();
+	BANDAI_SyncMirror();
 }
 
 void BANDAI_Power(void) {

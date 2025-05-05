@@ -61,9 +61,9 @@ void JYASIC_Close(void);
 void JYASIC_Power(void);
 void JYASIC_Init(CartInfo * info, int extended_mirr);
 
-void JYASIC_FixPRG(void);
-void JYASIC_FixCHR(void);
-void JYASIC_FixMIR(void);
+void JYASIC_SyncPRG(void);
+void JYASIC_SyncCHR(void);
+void JYASIC_SyncMirror(void);
 
 extern void (*JYASIC_pwrap)(uint16 A, uint32 V);
 extern void (*JYASIC_wwrap)(uint16 A, uint32 V);

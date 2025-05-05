@@ -42,8 +42,8 @@ static DECLFW(M267Write) {
 	if (MMC3_WramIsWritable()) {
 		if (!(reg & 0x80)) {
 			reg = V;
-			MMC3_FixPRG();
-			MMC3_FixCHR();
+			MMC3_SyncPRG();
+			MMC3_SyncCHR();
 		}
 	}
 }

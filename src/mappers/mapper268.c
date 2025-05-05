@@ -135,9 +135,9 @@ static DECLFW(M268Write) {
 			V &= 0xF1 | ((~reg[2] >> 3) & 0x0E);
 		}
 		reg[index] = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-		MMC3_FixMIR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
 	}
 }
 
@@ -168,7 +168,7 @@ static void Common_Init(CartInfo *info) {
 	int ws = info->PRGRamSize + info->PRGRamSaveSize;
 
 	MMC3_Init(info, MMC3B, ws / 1024, info->battery);
-	MMC3_FixMIR = M268MIR;
+	MMC3_SyncMirror = M268MIR;
 	MMC3_pwrap = M268PW;
 	MMC3_cwrap = M268CW;
 

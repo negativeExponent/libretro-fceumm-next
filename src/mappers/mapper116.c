@@ -103,17 +103,17 @@ static void M116MMC1CW(uint16 A, uint16 V) {
 
 static void Sync(void) {
 	if (MODE_MMC1) {
-		MMC1_FixPRG();
-		MMC1_FixCHR();
-		MMC1_FixMIR();
+		MMC1_SyncPRG();
+		MMC1_SyncCHR();
+		MMC1_SyncMirror();
 	} else if (MODE_MMC3) {
-		MMC3_FixPRG();
-		MMC3_FixCHR();
-		MMC3_FixMIR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
 	} else {
-		VRC24_FixPRG();
-		VRC24_FixCHR();
-		VRC24_FixMIR();
+		VRC24_SyncPRG();
+		VRC24_SyncCHR();
+		VRC24_SyncMirror();
 	}
 }
 

@@ -52,8 +52,8 @@ static void M395PW(uint16 A, uint16 V) {
 static DECLFW(M395Write) {
 	if (!(reg[1] & 0x80)) {
 		reg[(A >> 4) & 0x01] = V;
-		MMC3_FixPRG();
-		MMC3_FixCHR();
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 

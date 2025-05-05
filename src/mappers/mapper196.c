@@ -50,7 +50,7 @@ static DECLFW(M196Write) {
 static DECLFW(M196WriteNROM) {
 	reg[0] = 1;
 	reg[1] = V | (V >> 4);
-	MMC3_FixPRG();
+	MMC3_SyncPRG();
 }
 
 static void M196Power(void) {

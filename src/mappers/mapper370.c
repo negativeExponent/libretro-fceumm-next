@@ -66,9 +66,9 @@ static DECLFR(M370Read) {
 
 static DECLFW(M370Write) {
 	reg = (A & 0xFF);
-	MMC3_FixPRG();
-	MMC3_FixCHR();
-	MMC3_FixMIR();
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
+	MMC3_SyncMirror();
 }
 
 static DECLFW(M370WriteCMD) {
@@ -78,11 +78,11 @@ static DECLFW(M370WriteCMD) {
 	case 0x8000:
 		mmc3.cmd = V;
 		if ((oldcmd & 0x40) != (mmc3.cmd & 0x40)) {
-			MMC3_FixPRG();
+			MMC3_SyncPRG();
 		}
 		if ((oldcmd & 0x80) != (mmc3.cmd & 0x80)) {
-			MMC3_FixCHR();
-			MMC3_FixMIR();
+			MMC3_SyncCHR();
+			MMC3_SyncMirror();
 		}
 		break;
 	case 0x8001:
@@ -94,8 +94,8 @@ static DECLFW(M370WriteCMD) {
 		case 4:
 		case 5:
 			mmc3.reg[mmc3.cmd & 0x07] = V;
-			MMC3_FixCHR();
-			MMC3_FixMIR();
+			MMC3_SyncCHR();
+			MMC3_SyncMirror();
 			break;
 		default:
 			MMC3_CMDWrite(A, V);
@@ -126,7 +126,7 @@ static void M370Power(void) {
 
 void Mapper370_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_FixMIR = M370MIR;
+	MMC3_SyncMirror = M370MIR;
 	MMC3_cwrap = M370CW;
 	MMC3_pwrap = M370PW;
 	info->Power = M370Power;
