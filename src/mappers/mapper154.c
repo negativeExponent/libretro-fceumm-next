@@ -24,15 +24,15 @@
 #include "mapinc.h"
 #include "n118.h"
 
-static uint8 reg;
+static uint8 mirror;
 
 static SFORMAT StateRegs[] = {
-    { &reg, 1, "REGS" },
+    { &mirror, 1, "MIRR" },
     { 0 }
 };
 
 static void M154Mirroring(void) {
-    setmirror(MI_0 + ((reg >> 6) & 0x01));
+    setmirror(MI_0 + ((mirror >> 6) & 0x01));
 }
 
 static void M154SyncCHR(void) {
@@ -45,15 +45,18 @@ static void M154SyncCHR(void) {
 }
 
 static DECLFW(M154Write) {
-    if (A < 0xA000) {
+    if (A <= 0x9FFF) {
         N118_Write(A, V);
     }
-    reg = V; /* mirroring latch */
-    M154Mirroring();
+    if ((mirror & 0x40) != (V & 0x40)) {
+        /* mirroring bit is present over the entire 32KB reange */
+        mirror = V;
+        M154Mirroring();
+    }
 }
 
 static void M154Power(void) {
-    reg = 0;
+    mirror = 0;
     N118_Power();
     SetWriteHandler(0x8000, 0xFFFF, M154Write);
 }
