@@ -35,14 +35,14 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void M451FixPRG(void) {
+static void M451SyncPRG(void) {
 	setprg8r(0x10, 0x8000, 0);
 	setprg8r(0x10, 0xA000, 0x10 | ((reg << 2) & 0x08) | (reg & 0x01));
 	setprg8r(0x10, 0xC000, 0x20 | ((reg << 2) & 0x08) | (reg & 0x01));
 	setprg8r(0x10, 0xE000, 0x30);
 }
 
-static void M451FixCHR(void) {
+static void M451SyncCHR(void) {
 	setchr8(reg & 0x01);
 }
 
@@ -90,8 +90,8 @@ void Mapper451_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
 	info->Power = M451Power;
 	info->Close = M451Close;
-    MMC3_SyncPRG = M451FixPRG;
-	MMC3_SyncCHR = M451FixCHR;
+    MMC3_SyncPRG = M451SyncPRG;
+	MMC3_SyncCHR = M451SyncCHR;
 	MapIRQHook = FlashROM_CPUCyle;
 	AddExState(StateRegs, ~0, 0, NULL);
 

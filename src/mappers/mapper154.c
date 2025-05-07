@@ -35,7 +35,7 @@ static void M154Mirroring(void) {
     setmirror(MI_0 + ((reg >> 6) & 0x01));
 }
 
-static void M154FixCHR(void) {
+static void M154SyncCHR(void) {
 	setchr2(0x0000, (n118.reg[0] & 0x3F) >> 1);
 	setchr2(0x0800, (n118.reg[1] & 0x3F) >> 1);
 	setchr1(0x1000, 0x40 | (n118.reg[2] & 0x3F));
@@ -67,7 +67,7 @@ static void StateRestore(int version) {
 void Mapper154_Init(CartInfo *info) {
 	N118_Init(info, 0, 0);
     info->Power = M154Power;
-	N118_SyncCHR = M154FixCHR;
+	N118_SyncCHR = M154SyncCHR;
     GameStateRestore = StateRestore;
     AddExState(StateRegs, ~0, 0, NULL);
 }

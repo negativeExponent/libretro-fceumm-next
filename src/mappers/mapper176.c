@@ -260,7 +260,7 @@ static void SyncWRAM(void) {
 	}
 }
 
-static void FixMir(void) {
+static void SyncMir(void) {
 	switch (mmc3_mirr & (iNESCart.submapper == 2 ? 0x03 : 0x01)) {
 	case 0: setmirror(MI_V); break;
 	case 1: setmirror(MI_H); break;
@@ -490,7 +490,7 @@ static void StateRestore(int version) {
 static void Init(CartInfo *info) {
 	/* Setup default function wrappers */
 	FK23_cwrap = CHRWRAP;
-	SyncMIRR = FixMir;
+	SyncMIRR = SyncMir;
 
 	/* Initialization for iNES and UNIF. iNESCart.submapper and dipsw_enable must have been set. */
 	info->Power = M176Power;
@@ -626,6 +626,7 @@ static void M523CW(uint16 A, uint16 V) {
 
 static void M523MIR(void) {
 	/* Jncota board has hard-wired mirroring */
+	setmirror(iNESCart.mirror);
 }
 
 /* Jncota board with unusual wiring that turns 1 KiB CHR banks into 2 KiB banks, and has hard-wired nametable mirroring. */

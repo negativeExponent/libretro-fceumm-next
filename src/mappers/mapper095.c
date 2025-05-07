@@ -41,7 +41,7 @@ static SFORMAT StateRegs[] = {
     { 0 }
 };
 
-static void M095FixCHR(void) {
+static void M095SyncCHR(void) {
     setchr2(0x0000, n118.reg[0] >> 1);
 	setchr2(0x0800, n118.reg[1] >> 1);
 	setchr1(0x1000, n118.reg[2]);
@@ -115,7 +115,7 @@ static void M095Power(void) {
 void Mapper095_Init(CartInfo *info) {
 	N118_Init(info, 0, 0);
     info->Power = M095Power;
-	N118_SyncCHR = M095FixCHR;
+	N118_SyncCHR = M095SyncCHR;
     PPU_hook = MExMirrPPU;
     AddExState(StateRegs, ~0, 0, NULL);
 }

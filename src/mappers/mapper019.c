@@ -61,7 +61,7 @@ static void DoCHRRAMROM(int x, uint8 V) {
 	}
 }
 
-static void FixCRR(void) {
+static void SyncCHR(void) {
 	int x;
 	for (x = 0; x < 8; x++) {
 		DoCHRRAMROM(x, chr[x]);
@@ -78,7 +78,7 @@ static void DoNTARAMROM(int w, uint8 V) {
 	}
 }
 
-static void FixNTAR(void) {
+static void SyncNT(void) {
 	int x;
 	for (x = 0; x < 4; x++) {
 		DoNTARAMROM(x, nt[x]);
@@ -161,7 +161,7 @@ static DECLFW(M019Write) {
 	case 0xE800:
 		prg[1] = V;
 		SyncPRG();
-		FixCRR();
+		SyncCHR();
 		break;
 	case 0xF000:
 		prg[2] = V;
@@ -176,8 +176,8 @@ static DECLFW(M019Write) {
 
 static void StateRestore(int version) {
 	SyncPRG();
-	FixNTAR();
-	FixCRR();
+	SyncCHR();
+	SyncNT();
 }
 
 static void N163_Power(void) {
@@ -203,8 +203,8 @@ static void N163_Power(void) {
 	wram_protect = 0xFF;
 
 	SyncPRG();
-	FixCRR();
-	FixNTAR();
+	SyncCHR();
+	SyncNT();
 
 	SetReadHandler(0x4800, 0x5FFF, M019Read);
 	SetWriteHandler(0x4800, 0x5FFF, M019Write);

@@ -32,7 +32,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 },
 };
 
-static void M448FixPRG(void) {
+static void M448SyncPRG(void) {
 	if (reg & 0x08) { /* AOROM */
 		setprg32(0x8000, ((reg << 2) & ~0x07) | (vrc24.prg[0] & 0x07));
 	} else {
@@ -46,11 +46,11 @@ static void M448FixPRG(void) {
 	}
 }
 
-static void M448FixCHR(void) {
+static void M448SyncCHR(void) {
 	setchr8(0);
 }
 
-static void M448FixMIRR(void) {
+static void M448SyncMIRR(void) {
 	if (reg & 0x08) { /* AOROM */
 		setmirror(MI_0 + ((vrc24.prg[0] >> 4) & 0x01));
 	} else {
@@ -70,7 +70,7 @@ static DECLFW(M448WriteReg) {
 static DECLFW(M448WriteASIC) {
 	if (reg & 0x08) {
 		VRC24_Write(0x8000, V);
-		M448FixMIRR();
+		M448SyncMIRR();
 	} else {
 		VRC24_Write(A, V);
 	}
@@ -98,9 +98,9 @@ static void StateRestore(int version) {
 
 void Mapper448_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 0, 1);
-	VRC24_SyncPRG = M448FixPRG;
-	VRC24_SyncCHR = M448FixCHR;
-	VRC24_SyncMirror = M448FixMIRR;
+	VRC24_SyncPRG = M448SyncPRG;
+	VRC24_SyncCHR = M448SyncCHR;
+	VRC24_SyncMirror = M448SyncMIRR;
 	info->Reset = M448Reset;
 	info->Power = M448Power;
 	GameStateRestore = StateRestore;
