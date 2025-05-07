@@ -51,60 +51,61 @@ typedef struct N163Channel {
 } N163Channel;
 
 static N163Channel N163Snd[8];
-static uint8 IRAM[128];
 static uint8 ramPos;
 static uint8 autoInc;
 static int32 CVBC;
+static uint8 *internalRAM; /* 128 bytes internal ram, to be provided externally on init */
 
 #define VOLADJ (576716)
 #define TOINDEX (16 + 1)
+#define INTERNAL_RAM_SIZE 128
 
 static uint32 GetFrequency(int P) {
 	uint8 base = 0x40 + P * 0x08;
-	return ((IRAM[base + FREQ_H] & 0x03) << 16) |
-	       (IRAM[base + FREQ_M] << 8) |
-	       IRAM[base + FREQ_L];
+	return ((internalRAM[base + FREQ_H] & 0x03) << 16) |
+	       (internalRAM[base + FREQ_M] << 8) |
+	       internalRAM[base + FREQ_L];
 }
 
 static uint32 GetPhase(int P) {
 	uint8 base = 0x40 + P * 0x08;
-	return (IRAM[base + PHASE_H] << 16) |
-	       (IRAM[base + PHASE_M] << 8) |
-	       IRAM[base + PHASE_L];
+	return (internalRAM[base + PHASE_H] << 16) |
+	       (internalRAM[base + PHASE_M] << 8) |
+	       internalRAM[base + PHASE_L];
 }
 
 static void SetPhase(int P, uint32 phase) {
 	uint8 base = 0x40 + P * 0x08;
-	IRAM[base + PHASE_H] = (phase >> 16) & 0xFF;
-	IRAM[base + PHASE_M] = (phase >> 8) & 0xFF;
-	IRAM[base + PHASE_L] = phase & 0xFF;
+	internalRAM[base + PHASE_H] = (phase >> 16) & 0xFF;
+	internalRAM[base + PHASE_M] = (phase >> 8) & 0xFF;
+	internalRAM[base + PHASE_L] = phase & 0xFF;
 }
 
 static uint8 GetWaveAddress(int P) {
 	uint8 base = 0x40 + P * 0x08;
-	return IRAM[base + WAVEADDR];
+	return internalRAM[base + WAVEADDR];
 }
 
 static uint8 GetWaveLength(int P) {
 	uint8 base = 0x40 + P * 0x08;
-	return 256 - (IRAM[base + WAVELEN] & 0xFC);
+	return 256 - (internalRAM[base + WAVELEN] & 0xFC);
 }
 
 static uint32 GetVolume(int P) {
 	uint8 base = 0x40 + P * 0x08;
-	return (IRAM[base + VOLUME] & 0x0F) * VOLADJ;
+	return (internalRAM[base + VOLUME] & 0x0F) * VOLADJ;
 }
 
 static uint8 GetNumberOfChannels() {
-	return (IRAM[0x7F] >> 4) & 0x07;
+	return (internalRAM[0x7F] >> 4) & 0x07;
 }
 
 static int16 GetSample(uint8 pos, int volume, int outshift) {
 	int8 sample;
 	if (pos & 0x01) {
-		sample = IRAM[pos >> 1] >> 4;
+		sample = internalRAM[pos >> 1] >> 4;
 	} else {
-		sample = IRAM[pos >> 1] & 0x0F;
+		sample = internalRAM[pos >> 1] & 0x0F;
 	}
 	return ((sample * volume) >> outshift);
 }
@@ -122,7 +123,7 @@ static void DoN163SoundHQ(void) {
 		N163Channel *channel = &N163Snd[P];
 		int channelOffset = 0x40 + (P * 8);
 
-		if ((IRAM[FREQ_H + channelOffset] & 0xE0) && (IRAM[VOLUME + channelOffset] & 0xF)) {
+		if ((internalRAM[FREQ_H + channelOffset] & 0xE0) && (internalRAM[VOLUME + channelOffset] & 0xF)) {
 			int32 vco = channel->vcount;
 			
 			uint32 phase = GetPhase(P);
@@ -156,7 +157,7 @@ static void DoN163Sound(int32 *Wave, int Count) {
 		N163Channel *channel = &N163Snd[P];
 		int channelOffset = 0x40 + (P * 8);
 
-		if ((IRAM[FREQ_H + channelOffset] & 0xE0) && (IRAM[VOLUME + channelOffset] & 0xF)) {
+		if ((internalRAM[FREQ_H + channelOffset] & 0xE0) && (internalRAM[VOLUME + channelOffset] & 0xF)) {
 			int32 vco = channel->vcount;
 
 			uint32 phase = GetPhase(P);
@@ -228,7 +229,7 @@ static void N163SoundHack(void) {
 }
 
 DECLFR(N163Sound_Read) {
-	uint8 ret = IRAM[ramPos];
+	uint8 ret = internalRAM[ramPos];
 /* Maybe I should call N163SoundHack() here? */
 #ifdef FCEUDEF_DEBUGGER
 	if (!fceuindbg)
@@ -248,7 +249,7 @@ DECLFW(N163Sound_Write) {
 				GameExpSound[SND_N163 - 6].HiSync = SyncHQ;
 			}
 		}
-		IRAM[ramPos] = V;
+		internalRAM[ramPos] = V;
 		ramPos = (ramPos + autoInc) & 0x7F;
 		break;
 	case 0xF800:
@@ -256,14 +257,6 @@ DECLFW(N163Sound_Write) {
 		autoInc = (V & 0x80) >> 7;
 		break;
 	}
-}
-
-uint8 *GetIRAM_ptr(void) {
-	return IRAM;
-}
-
-uint32 GetIRAM_size(void) {
-	return sizeof(IRAM);
 }
 
 static void N163SC(void) {
@@ -278,19 +271,15 @@ static void N163SC(void) {
 	}
 }
 
-void N163Sound_ESI(void) {
+void N163Sound_ESI(uint8 *ptr) {
+	internalRAM = ptr;
 	GameExpSound[SND_N163 - 6].RChange = N163SC;
 	N163SC();
-
-	if (iNESCart.battery) {
-		memset(IRAM, 0, sizeof(IRAM));
-	} else {
-		FCEU_MemoryRand(IRAM, sizeof(IRAM));
-	}
+	memset(internalRAM, 0, INTERNAL_RAM_SIZE);
 }
 
 void N163Sound_AddStateInfo(void) {
-	AddExState(IRAM,  0x80, 0, "IRAM");
+	AddExState(internalRAM,  0x80, 0, "internalRAM");
 	AddExState(&CVBC,    4, 0, "BC00");
 	AddExState(&ramPos,  1, 0, "INDX");
 	AddExState(&autoInc, 1, 0, "INCR");
@@ -330,13 +319,13 @@ void N163Sound_AddStateInfo(void) {
 
 #else /* OLD N163 SOUND CODE */
 static uint8 ramPos = 0;
-static uint8 IRAM[128];
+static uint8 *internalRAM;
 
 static uint32 FreqCache[8];
 static uint32 EnvCache[8];
 static uint32 LengthCache[8];
 
-static void FixCache(int a, int V) {
+static void SyncCache(int a, int V) {
 	int w = (a >> 3) & 0x7;
 	switch (a & 0x07) {
 	case 0x00: FreqCache[w] &= ~0x000000FF; FreqCache[w] |= V; break;
@@ -398,8 +387,8 @@ static void SyncHQ(int32 ts) {
 
 static INLINE uint32 FetchDuff(uint32 P, uint32 envelope) {
 	uint32 duff;
-	duff = IRAM[((IRAM[0x46 + (P << 3)] + (PlayIndex[P] >> TOINDEX)) & 0xFF) >> 1];
-	if ((IRAM[0x46 + (P << 3)] + (PlayIndex[P] >> TOINDEX)) & 1)
+	duff = internalRAM[((internalRAM[0x46 + (P << 3)] + (PlayIndex[P] >> TOINDEX)) & 0xFF) >> 1];
+	if ((internalRAM[0x46 + (P << 3)] + (PlayIndex[P] >> TOINDEX)) & 1)
 		duff >>= 4;
 	duff &= 0xF;
 	duff = (duff * envelope) >> 16;
@@ -408,10 +397,10 @@ static INLINE uint32 FetchDuff(uint32 P, uint32 envelope) {
 
 static void DoNamcoSoundHQ(void) {
 	int32 P, V;
-	int32 cyclesuck = (((IRAM[0x7F] >> 4) & 7) + 1) * 15;
+	int32 cyclesuck = (((internalRAM[0x7F] >> 4) & 7) + 1) * 15;
 
-	for (P = 7; P >= (7 - ((IRAM[0x7F] >> 4) & 7)); P--) {
-		if ((IRAM[0x44 + (P << 3)] & 0xE0) && (IRAM[0x47 + (P << 3)] & 0xF)) {
+	for (P = 7; P >= (7 - ((internalRAM[0x7F] >> 4) & 7)); P--) {
+		if ((internalRAM[0x44 + (P << 3)] & 0xE0) && (internalRAM[0x47 + (P << 3)] & 0xF)) {
 			uint32 freq;
 			int32 vco;
 			uint32 duff2, lengo, envelope;
@@ -441,8 +430,8 @@ static void DoNamcoSoundHQ(void) {
 
 static void DoNamcoSound(int32 *Wave, int Count) {
 	int P, V;
-	for (P = 7; P >= 7 - ((IRAM[0x7F] >> 4) & 7); P--) {
-		if ((IRAM[0x44 + (P << 3)] & 0xE0) && (IRAM[0x47 + (P << 3)] & 0xF)) {
+	for (P = 7; P >= 7 - ((internalRAM[0x7F] >> 4) & 7); P--) {
+		if ((internalRAM[0x44 + (P << 3)] & 0xE0) && (internalRAM[0x47 + (P << 3)] & 0xF)) {
 			int32 inc;
 			uint32 freq;
 			int32 vco;
@@ -458,12 +447,12 @@ static void DoNamcoSound(int32 *Wave, int Count) {
 			}
 
 			{
-				int c = ((IRAM[0x7F] >> 4) & 7) + 1;
+				int c = ((internalRAM[0x7F] >> 4) & 7) + 1;
 				inc = (long double)(FSettings.SndRate << 15) / ((long double)freq * 21477272 / ((long double)0x400000 * c * 45));
 			}
 
-			duff = IRAM[(((IRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
-			if ((IRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
+			duff = internalRAM[(((internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
+			if ((internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
 				duff >>= 4;
 			duff &= 0xF;
 			duff2 = (duff * envelope) >> 19;
@@ -473,8 +462,8 @@ static void DoNamcoSound(int32 *Wave, int Count) {
 					if (PlayIndex[P] >= lengo)
 						PlayIndex[P] = 0;
 					vco -= inc;
-					duff = IRAM[(((IRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
-					if ((IRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
+					duff = internalRAM[(((internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
+					if ((internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
 						duff >>= 4;
 					duff &= 0xF;
 					duff2 = (duff * envelope) >> 19;
@@ -489,7 +478,7 @@ static void DoNamcoSound(int32 *Wave, int Count) {
 
 DECLFR(N163Sound_Read)
 {
-	uint8 ret=IRAM[ramPos&0x7f];
+	uint8 ret=internalRAM[ramPos&0x7f];
 
 	/* Maybe I should call DoNamcoSound() here? */
 	if(!fceuindbg)
@@ -509,9 +498,9 @@ DECLFW(N163Sound_Write) {
 				GameExpSound[SND_N163 - 6].HiFill = DoNamcoSoundHQ;
 				GameExpSound[SND_N163 - 6].HiSync = SyncHQ;
 			}
-			FixCache(ramPos, V);
+			SyncCache(ramPos, V);
 		}
-		IRAM[ramPos & 0x7f] = V;
+		internalRAM[ramPos & 0x7f] = V;
 		if (ramPos & 0x80)
 			ramPos = (ramPos & 0x80) | ((ramPos + 1) & 0x7f);
 		break;
@@ -521,24 +510,18 @@ DECLFW(N163Sound_Write) {
 	}
 }
 
-uint8 *GetIRAM_ptr(void) {
-	return IRAM;
-}
-
-uint32 GetIRAM_size(void) {
-	return sizeof(IRAM);
-}
-
 static void M19SC(void) {
-	if (FSettings.SndRate)
-		N163Sound_ESI();
+	if (FSettings.SndRate) {
+		memset(vcount, 0, sizeof(vcount));
+		memset(PlayIndex, 0, sizeof(PlayIndex));
+		CVBC = 0;
+	}
 }
 
-void N163Sound_ESI(void) {
+void N163Sound_ESI(uint8 *ptr) {
+	internalRAM = ptr;
 	GameExpSound[SND_N163 - 6].RChange = M19SC;
-	memset(vcount, 0, sizeof(vcount));
-	memset(PlayIndex, 0, sizeof(PlayIndex));
-	CVBC = 0;
+	M19SC();
 }
 
 void N163Sound_AddStateInfo(void) {

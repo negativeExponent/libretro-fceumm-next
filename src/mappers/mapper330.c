@@ -29,6 +29,7 @@ static uint8 IRQa;
 static uint16 IRQCount;
 
 static uint8 prg[4], chr[8], nt[4];
+static uint8 internalRAM[128];
 
 static SFORMAT StateRegs[] = {
 	{ prg, 4, "PREG" },
@@ -131,5 +132,5 @@ void Mapper330_Init(CartInfo *info) {
 	SetupCartPRGMapping(0x10, WRAM, 8192, 1);
 	AddExState(WRAM, 8192, 0, "WRAM");
 
-	N163Sound_ESI();
+	N163Sound_ESI(internalRAM);
 }

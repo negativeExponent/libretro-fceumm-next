@@ -22,6 +22,10 @@
 #include "mapinc.h"
 #include "n163sound.h"
 
+/* libretro saveram workaround, since there is no easy way to save more than 1 save index, so */
+/* packed both wram (if enabled) and internal ram into 1 memory block */
+static uint8 libretro_save_ram[8192 + 128]; /* wram 8k + 128 bytes internal ram */
+
 static uint8 prg[4];
 static uint8 chr[8];
 static uint8 nt[4];
@@ -29,6 +33,8 @@ static uint8 wram_protect;
 
 static uint16 IRQCount;
 static uint8 IRQa;
+
+static uint8 *internalRAM = NULL;
 
 static SFORMAT N163_StateRegs[] = {
 	{ prg, 4, "PREG" },
@@ -174,8 +180,6 @@ static void StateRestore(int version) {
 	FixCRR();
 }
 
-static int battery = 0;
-
 static void N163_Power(void) {
 	prg[0] = ~3;
 	prg[1] = ~2;
@@ -214,15 +218,20 @@ static void N163_Power(void) {
 		FCEU_CheatAddRAM(8, 0x6000, WRAM);
 	}
 
-	if (!battery) {
+	if (iNESCart.battery) {
 		FCEU_MemoryRand(WRAM, sizeof(WRAM));
-		FCEU_MemoryRand(GetIRAM_ptr(), GetIRAM_size());
+		FCEU_MemoryRand(internalRAM, 128);
 	}
 }
 
+static void N163_Close(void) {
+	internalRAM = NULL;
+	WRAM = NULL;
+}
+
 void Mapper019_Init(CartInfo *info) {
-	battery = info->battery;
 	info->Power = N163_Power;
+	info->Close = N163_Close;
 
 	MapIRQHook = NamcoIRQHook;
 	GameStateRestore = StateRestore;
@@ -234,19 +243,24 @@ void Mapper019_Init(CartInfo *info) {
 		WRAMSIZE = 8192;
 	}
 
+	/* internal RAM always enable */
+	internalRAM = &libretro_save_ram[0];
+
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = &libretro_save_ram[128];
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}
 
 	if (info->battery) {
-		info->SaveGame[0] = WRAM;
-		info->SaveGameLen[0] = 8192;
-		info->SaveGame[1] = GetIRAM_ptr();
-		info->SaveGameLen[1] = GetIRAM_size();
+		info->SaveGame[0] = libretro_save_ram;
+		if (WRAMSIZE) {
+			info->SaveGameLen[0] = 8192 + 128;
+		} else {
+			info->SaveGameLen[0] = 128;
+		}
 	}
 
-	N163Sound_ESI();
+	N163Sound_ESI(internalRAM);
 	N163Sound_AddStateInfo();
 }

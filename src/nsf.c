@@ -99,6 +99,8 @@ static uint8 SongReload;
 static uint8 *mmc5_exram;
 static uint8 mmc5_mul[2];
 
+static uint8 namco163RAM[128];
+
 NSFINFO *NSFInfo;
 
 static SFORMAT StateRegs[] = {
@@ -456,7 +458,7 @@ void NSF_init(void) {
 		mmc5_exram = (uint8 *)FCEU_malloc(1024);
 	}
 	if (NSFInfo->SoundChip & NSFSOUND_N163) {
-		N163Sound_ESI();
+		N163Sound_ESI(namco163RAM);
 		SetReadHandler(0x4800, 0x4FFF, NSF_read);
 		SetWriteHandler(0x4800, 0x4FFF, NSF_write);
 		SetWriteHandler(0xF800, 0xFFFF, NSF_write);

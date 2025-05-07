@@ -21,12 +21,12 @@
 #ifndef _N163_SOUND_H
 #define _N163_SOUND_H
 
-void N163Sound_ESI(void);
+/* @prt is a pointer with 128 bytes size for use as internalRAM */
+void N163Sound_ESI(uint8 *ptr);
+
 DECLFR(N163Sound_Read);
 DECLFW(N163Sound_Write);
-void N163Sound_AddStateInfo(void);
 
-uint8 *GetIRAM_ptr(void); /* pointer to internal RAM */
-uint32 GetIRAM_size(void);
+void N163Sound_AddStateInfo(void);
 
 #endif /*  _N163_SOUND_H */
