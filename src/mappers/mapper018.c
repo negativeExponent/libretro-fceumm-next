@@ -19,6 +19,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* iNES Mapper 018 represents the Jaleco SS 88006 mapper used for Magic John
+   (Japanese version of Totally Rad) and about a dozen other games. */
+
 #include "mapinc.h"
 
 static uint8 prg[4], chr[8];
@@ -35,14 +38,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void Sync(void) {
+static void SyncPRG(void) {
 	setprg8r(0x10, 0x6000, 0);
 
 	setprg8(0x8000, prg[0]);
 	setprg8(0xA000, prg[1]);
 	setprg8(0xC000, prg[2]);
 	setprg8(0xE000, ~0);
+}
 
+static void SyncCHR(void) {
 	setchr1(0x0000, chr[0]);
 	setchr1(0x0400, chr[1]);
 	setchr1(0x0800, chr[2]);
@@ -51,42 +56,27 @@ static void Sync(void) {
 	setchr1(0x1400, chr[5]);
 	setchr1(0x1800, chr[6]);
 	setchr1(0x1C00, chr[7]);
-
-	if (mirr & 2)
-		setmirror(MI_0);
-	else
-		setmirror(mirr & 0x01);
 }
 
-static DECLFW(M018WriteIRQ) {
-	switch (A & 0xF003) {
-	case 0xE000:
-		IRQLatch &= 0xFFF0;
-		IRQLatch |= (V & 0x0F) << 0x00;
-		break;
-	case 0xE001:
-		IRQLatch &= 0xFF0F;
-		IRQLatch |= (V & 0x0F) << 0x04;
-		break;
-	case 0xE002:
-		IRQLatch &= 0xF0FF;
-		IRQLatch |= (V & 0x0F) << 0x08;
-		break;
-	case 0xE003:
-		IRQLatch &= 0x0FFF;
-		IRQLatch |= (V & 0x0F) << 0x0C;
-		break;
-	case 0xF000:
-		IRQCount = IRQLatch;
-		break;
-	case 0xF001:
-		IRQa = V & 0x01;
-		X6502_IRQEnd(FCEU_IQEXT);
-		break;
-	case 0xF002:
-		mirr = V & 0x03;
-		Sync();
-		break;
+static void SyncMirror(void) {
+	switch (mirr & 0x03) {
+	case 0: setmirror(MI_H); break;
+	case 1: setmirror(MI_V); break;
+	case 2: setmirror(MI_0); break;
+	case 3: setmirror(MI_1); break;
+	}
+}
+
+static DECLFR(M018ReadWRAM) {
+	if (prg[3] & 0x01) {
+		return CartBR(A);
+	}
+	return cpu.openbus;
+}
+
+static DECLFW(M018WriteWRAM) {
+	if ((prg[3] & 0x01) && (prg[3] & 0x02)) {
+		CartBW(A, V);
 	}
 }
 
@@ -98,7 +88,7 @@ static DECLFW(M018WritePrg) {
 	} else {
 		prg[i] = (prg[i] & 0xF0) | (V & 0x0F);
 	}
-	Sync();
+	SyncPRG();
 }
 
 static DECLFW(M018WriteChr) {
@@ -109,7 +99,43 @@ static DECLFW(M018WriteChr) {
 	} else {
 		chr[i] = (chr[i] & 0xF0) | (V & 0x0F);
 	}
-	Sync();
+	SyncCHR();
+}
+
+static DECLFW(M018WriteLatch) {
+	switch (A & 0x03) {
+	case 0:
+		IRQLatch = (IRQLatch & 0xFFF0) | ((V & 0x0F) << 0);
+		break;
+	case 1:
+		IRQLatch = (IRQLatch & 0xFF0F) | ((V & 0x0F) << 4);
+		break;
+	case 2:
+		IRQLatch = (IRQLatch & 0xF0FF) | ((V & 0x0F) << 8);
+		break;
+	case 3:
+		IRQLatch = (IRQLatch & 0x0FFF) | ((V & 0x0F) << 12);
+		break;
+	}
+}
+
+static DECLFW(M018WriteMisc) {
+	switch (A & 0xF003) {
+	case 0xF000:
+		IRQCount = IRQLatch;
+		X6502_IRQEnd(FCEU_IQEXT);
+		break;
+	case 0xF001:
+		IRQa = V;
+		X6502_IRQEnd(FCEU_IQEXT);
+		break;
+	case 0xF002:
+		mirr = V;
+		SyncMirror();
+		break;
+	case 0xF003:
+		break;
+	}
 }
 
 static void M018Power(void) {
@@ -117,23 +143,36 @@ static void M018Power(void) {
 	prg[0] = 0;
 	prg[1] = 1;
 	prg[2] = ~1;
-	prg[3] = ~0;
-	Sync();
-	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x7FFF, CartBW);
+	prg[3] = 0;
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+	SetReadHandler(0x6000, 0x7FFF, M018ReadWRAM);
+	SetWriteHandler(0x6000, 0x7FFF, M018WriteWRAM);
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0x9FFF, M018WritePrg);
 	SetWriteHandler(0xA000, 0xDFFF, M018WriteChr);
-	SetWriteHandler(0xE000, 0xFFFF, M018WriteIRQ);
+	SetWriteHandler(0xE000, 0xEFFF, M018WriteLatch);
+	SetWriteHandler(0xF000, 0xFFFF, M018WriteMisc);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
 static void M018IRQHook(int a) {
-	if (IRQa && IRQCount) {
-		IRQCount -= a;
-		if (IRQCount <= 0) {
-			X6502_IRQBegin(FCEU_IQEXT);
-			IRQCount = 0;
-			IRQa = 0;
+	if (IRQa & 0x01) {
+		uint16 mask = 0xFFFF;
+
+		if (IRQa & 0x08) {
+			mask = 0x000F;
+		} else if (IRQa & 0x04) {
+			mask = 0x00FF;
+		} else if (IRQa & 0x02) {
+			mask = 0x0FFF;
+		}
+
+		while (a--) {
+			if ((IRQCount & mask) && !(--IRQCount & mask)) {
+				X6502_IRQBegin(FCEU_IQEXT);
+			}
 		}
 	}
 }
@@ -142,7 +181,9 @@ static void M018Close(void) {
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper018_Init(CartInfo *info) {
