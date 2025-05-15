@@ -2142,8 +2142,7 @@ void Mapper342_Init(CartInfo *info) {
 
 	WRAMSIZE = (info->PRGRamSize + info->PRGRamSaveSize) ? (info->PRGRamSize + info->PRGRamSaveSize) : (32 * 1024);
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
-		memset(WRAM, 0, WRAMSIZE);
+		WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
 		SetupCartPRGMapping(WRAM_CHIP, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (info->battery) {
@@ -2153,13 +2152,13 @@ void Mapper342_Init(CartInfo *info) {
 	}
 
 	if (info->battery) {
-		SAVE_FLASH = (uint8 *)FCEU_gmalloc(SAVE_FLASH_SIZE);
+		SAVE_FLASH = (uint8 *)FCEU_malloc(SAVE_FLASH_SIZE);
 		SetupCartPRGMapping(FLASH_CHIP, SAVE_FLASH, SAVE_FLASH_SIZE, 1);
 		info->SaveGame[1] = SAVE_FLASH;
 		info->SaveGameLen[1] = SAVE_FLASH_SIZE;
 	}
 
-	CFI = (uint8 *)FCEU_gmalloc(sizeof(cfi_data) * 2);
+	CFI = (uint8 *)FCEU_malloc(sizeof(cfi_data) * 2);
 	for (i = 0; i < (int)sizeof(cfi_data); i++) {
 		CFI[i * 2] = CFI[i * 2 + 1] = cfi_data[i];
 	}
