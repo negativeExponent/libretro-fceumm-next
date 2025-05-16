@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2024 negativeExponent
+ *  Copyright (C) 2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,11 +25,12 @@
 static void Sync(void) {
 	setchr8(0);
 	setprg32(0x8000, latch.data);
-	if (latch.data & 0x20) {
-        setmirror(MI_0 + ((latch.data >> 4) & 1));
-	} else if (latch.data & 0x10) {
-		setmirror(((latch.data >> 4) & 1) ^ 1);
-    }
+	switch ((latch.data >> 4) & 3) {
+	case 0: setmirror(MI_V); break;
+	case 1: setmirror(MI_H); break;
+	case 2: setmirror(MI_0); break;
+	case 3: setmirror(MI_1); break;
+	}
 }
 
 static DECLFW(M564Write) {
