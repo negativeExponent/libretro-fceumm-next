@@ -26,10 +26,18 @@ static void Sync(void) {
 	setchr8(0);
 	setprg32(0x8000, latch.data);
 	switch ((latch.data >> 4) & 3) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+	case 0:
+		setmirror(MI_V);
+		break;
+	case 1:
+		setmirror(MI_H);
+		break;
+	case 2:
+		setmirror(MI_0);
+		break;
+	case 3:
+		setmirror(MI_1);
+		break;
 	}
 }
 
@@ -37,12 +45,12 @@ static DECLFW(M564Write) {
 	if (latch.data & 0x20) {
 		if (latch.data & 0x08) {
 			latch.data = (latch.data & ~0x17) | (V & 0x17);
-        } else {
+		} else {
 			latch.data = (latch.data & ~0x13) | (V & 0x13);
-        }
+		}
 	} else {
 		latch.data = V;
-    }
+	}
 	Sync();
 }
 
@@ -53,6 +61,6 @@ static void M564Power(void) {
 
 void Mapper564_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-    info->Power = M564Power;
+	info->Power = M564Power;
 	info->Reset = Latch_RegReset;
 }

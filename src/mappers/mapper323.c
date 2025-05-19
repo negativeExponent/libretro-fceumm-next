@@ -32,14 +32,14 @@ static SFORMAT StateRegs[] = {
 
 static void M323PW(uint16 A, uint16 V) {
 	uint8 mask = 0x07;
-    uint8 base = reg >> 1;
+	uint8 base = reg >> 1;
 
 	setprg16(A, (base & ~mask) | (V & mask));
 }
 
 static void M323CW(uint16 A, uint16 V) {
 	uint16 mask = 0x1F;
-    uint16 base = reg << 1;
+	uint16 base = reg << 1;
 
 	setchr4(A, (base & ~mask) | (V & mask));
 }
@@ -49,7 +49,7 @@ static DECLFW(M323Write) {
 		reg = V;
 		MMC1_SyncCHR();
 		MMC1_SyncPRG();
-        MMC1_SyncMirror();
+		MMC1_SyncMirror();
 	}
 }
 
@@ -60,7 +60,7 @@ static void M323Power(void) {
 }
 
 static void M323Reset(void) {
-    reg = 0;
+	reg = 0;
 	MMC1_Reset();
 }
 

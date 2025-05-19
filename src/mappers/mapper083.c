@@ -46,7 +46,7 @@
  * NES 2.0 264 - UNL-Yoko
  * - Mortal Kombat II/V Pro
  * - Master Fighter VI'
-*/
+ */
 
 #include "mapinc.h"
 
@@ -59,8 +59,7 @@ static uint8 prgMask;
 static uint8 chrMode;
 static uint16 dipMask;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ prg, 4, "PREG" },
 	{ chr, 8, "CREG" },
 	{ &mode, 1, "MODE" },
@@ -125,10 +124,18 @@ static void M083Sync(void) {
 		break;
 	}
 	switch (mirr) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+	case 0:
+		setmirror(MI_V);
+		break;
+	case 1:
+		setmirror(MI_H);
+		break;
+	case 2:
+		setmirror(MI_0);
+		break;
+	case 3:
+		setmirror(MI_1);
+		break;
 	}
 }
 
@@ -190,7 +197,6 @@ static void M083Power(void) {
 	if (WRAMSIZE) {
 		SetWriteHandler(0x6000, 0x7fff, CartBW);
 		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
-
 	}
 }
 

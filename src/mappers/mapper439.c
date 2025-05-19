@@ -28,8 +28,8 @@
 static uint8 reg[2];
 
 static void Sync(void) {
-    uint8 mask = ((~reg[1] >> 1) & 0x38) | 0x07;
-    uint8 base = reg[0] >> 1;
+	uint8 mask = ((~reg[1] >> 1) & 0x38) | 0x07;
+	uint8 base = reg[0] >> 1;
 	setprg16(0x8000, (base & ~mask) | (latch.data & mask));
 	setprg16(0xC000, (base & ~mask) | (0x3F & mask));
 	setchr8(0);
@@ -37,30 +37,30 @@ static void Sync(void) {
 }
 
 static DECLFW(M439WriteReg) {
-    reg[A & 0x01] = V;
-    Sync();
+	reg[A & 0x01] = V;
+	Sync();
 }
 
 static DECLFW(M439WriteLatch) {
-    uint8 mask = (reg[1] & 0x80) | ((reg[1] >> 1) & 0x38);
-    Latch_Write(A, (V & ~mask) | (latch.data & mask));
+	uint8 mask = (reg[1] & 0x80) | ((reg[1] >> 1) & 0x38);
+	Latch_Write(A, (V & ~mask) | (latch.data & mask));
 }
 
 static void M439Reset(void) {
-    reg[0] = reg[1] = 0;
-    Latch_RegReset();
+	reg[0] = reg[1] = 0;
+	Latch_RegReset();
 }
 
 static void M439Power(void) {
-    reg[0] = reg[1] = 0;
-    Latch_Power();
-    SetWriteHandler(0x6000, 0x7FFF, M439WriteReg);
-    SetWriteHandler(0x8000, 0xFFFF, M439WriteLatch);
+	reg[0] = reg[1] = 0;
+	Latch_Power();
+	SetWriteHandler(0x6000, 0x7FFF, M439WriteReg);
+	SetWriteHandler(0x8000, 0xFFFF, M439WriteLatch);
 }
 
 void Mapper439_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-    info->Power = M439Power;
+	info->Power = M439Power;
 	info->Reset = M439Reset;
-    AddExState(reg, 2, 0, "REGS");
+	AddExState(reg, 2, 0, "REGS");
 }

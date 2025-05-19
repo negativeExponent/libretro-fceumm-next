@@ -52,9 +52,15 @@ static void Sync(void) {
 	setchr1(0x1C00, chr[7]);
 
 	switch (mirr) {
-	case 0:  setmirror(MI_V); break;
-	case 1:  setmirror(MI_H); break;
-	default: setmirror(MI_0); break;
+	case 0:
+		setmirror(MI_V);
+		break;
+	case 1:
+		setmirror(MI_H);
+		break;
+	default:
+		setmirror(MI_0);
+		break;
 	}
 }
 

@@ -37,10 +37,10 @@ static void M460PW(uint16 A, uint16 V) {
 	if (reg & 0x20) {
 		/* Menu selection by selectively connecting CPU D7 to reg or not */
 		if (reg & 0x10) {
-			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & ~0x02) & mask));
-			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & ~0x02) & mask));
-			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] |  0x02) & mask));
-			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  0x02) & mask));
+			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & 0xFD) & mask));
+			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & 0xFD) & mask));
+			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] | 0x02) & mask));
+			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] | 0x02) & mask));
 		} else {
 			setprg8(0x8000, (base & ~mask) | (mmc3.reg[6] & mask));
 			setprg8(0xA000, (base & ~mask) | (mmc3.reg[7] & mask));

@@ -90,7 +90,6 @@ void Mapper052_Init(CartInfo *info) {
 	info->Close = M052Close;
 	AddExState(&reg, 1, 0, "EXPR");
 
-	
 	if (info->CRC32 == 0xA874E216 && info->submapper != 13) {
 		info->submapper = 13; /* (YH-430) 97-98 Four-in-One */
 		iNESCart.CHRRamSize = 8192;

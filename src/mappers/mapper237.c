@@ -40,7 +40,7 @@ static SFORMAT StateRegs[] = {
 static void Sync(void) {
 	uint8 bank = (latch.data & 0x07);
 	uint8 base = ((latch.addr << 3) & 0x20) | (latch.data & 0x18);
-	uint8 A14  = (latch.data >> 6) & 0x01;
+	uint8 A14 = (latch.data >> 6) & 0x01;
 
 	setprg16(0x8000, base | (bank & ~A14));
 	if (latch.data & 0x80) {

@@ -19,7 +19,8 @@
  *
  */
 
-/* NES 2.0 Mapper 433 denotes the NC-20MB PCB, used for the 20-in-1 (CA-006) multicart. It is almost identical to INES Mapper 433, except that mirroring is selected just by single bit 6 (1=Horizontal).
+/* NES 2.0 Mapper 433 denotes the NC-20MB PCB, used for the 20-in-1 (CA-006) multicart. It is almost identical to INES Mapper 433, except that mirroring is selected just by single bit 6
+ * (1=Horizontal).
  */
 
 #include "mapinc.h"

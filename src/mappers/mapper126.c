@@ -43,18 +43,30 @@ static void M126PW(uint16 A, uint16 V) {
 	uint16 base = (((reg0 << 4) & 0x70) | ((reg0 << 3) & 0x180)) & ~mask;
 
 	switch (iNESCart.submapper) {
-	case 1: base |= ((base & 0x100) >> 1); break;
-	case 2: base |= ((reg[1] & 0x02) << 5); break;
+	case 1:
+		base |= ((base & 0x100) >> 1);
+		break;
+	case 2:
+		base |= ((reg[1] & 0x02) << 5);
+		break;
 	}
 
 	if (reg[3] & 0x08) {
 		uint8 b = (A >> 13) & 0x03;
 		V = MMC3_GetPRGBank(b & (((reg[3] & 0x0D) == 0x0D) ? 0x02 : ((reg[3] & 0x01) ? 0 : 0x03)));
 		switch (reg[3] & 0x03) {
-		case 0: V = ((V << 1) & ~0x03) | (V & 0x03); break;
-		case 1: V = ((V << 1) & ~0x01) | (b & 0x03); break;
-		case 2: V = ((V << 2) & ~0x03) | (V & 0x03); break;
-		case 3: V = ((V << 2) & ~0x03) | (b & 0x03); break;
+		case 0:
+			V = ((V << 1) & ~0x03) | (V & 0x03);
+			break;
+		case 1:
+			V = ((V << 1) & ~0x01) | (b & 0x03);
+			break;
+		case 2:
+			V = ((V << 2) & ~0x03) | (V & 0x03);
+			break;
+		case 3:
+			V = ((V << 2) & ~0x03) | (b & 0x03);
+			break;
 		}
 	} else {
 		switch (reg[3] & 0x03) {
@@ -95,10 +107,18 @@ static void M126MIR(void) {
 		setmirror(MI_0 + ((mmc3.reg[6] & 0x10) >> 4));
 	} else if (reg[1] & 0x02) {
 		switch (mmc3.mirr & 0x03) {
-		case 0: setmirror(MI_V); break;
-		case 1: setmirror(MI_H); break;
-		case 2: setmirror(MI_0); break;
-		case 3: setmirror(MI_1); break;
+		case 0:
+			setmirror(MI_V);
+			break;
+		case 1:
+			setmirror(MI_H);
+			break;
+		case 2:
+			setmirror(MI_0);
+			break;
+		case 3:
+			setmirror(MI_1);
+			break;
 		}
 	} else {
 		setmirror((mmc3.mirr & 0x01) ^ 0x01);

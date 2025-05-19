@@ -36,11 +36,11 @@ static void M412CW(uint16 A, uint16 V) {
 	uint16 base = ((reg[1] << 5) & 0x100) | (reg[1] & 0x80);
 	uint16 bank = reg[0] >> 2;
 
-    if (reg[2] & 0x02) {
-        setchr8(bank);
-    } else {
-        setchr1(A, (base & ~mask) | (V & mask));
-    }
+	if (reg[2] & 0x02) {
+		setchr8(bank);
+	} else {
+		setchr1(A, (base & ~mask) | (V & mask));
+	}
 }
 
 static void M412PW(uint16 A, uint16 V) {
@@ -48,14 +48,14 @@ static void M412PW(uint16 A, uint16 V) {
 	uint16 base = ((reg[1] << 3) & 0x20) | ((reg[1] >> 2) & 0x10);
 	uint16 bank = reg[2] >> 3;
 
-    if (reg[2] & 0x02) {
-        if (reg[2] & 0x04) {
-            setprg32(0x8000, bank >> 1);
-        } else {
-            setprg16(0x8000, bank);
-            setprg16(0xC000, bank);
-        }
-    } else {
+	if (reg[2] & 0x02) {
+		if (reg[2] & 0x04) {
+			setprg32(0x8000, bank >> 1);
+		} else {
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
+		}
+	} else {
 		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
@@ -84,7 +84,7 @@ static void M412Reset(void) {
 
 static void M412Power(void) {
 	dipsw = 0;
-    reg[0] = reg[1] = reg[2] = reg[3] = 0;
+	reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	MMC3_Power();
 	mmc3.wram = 0x80;
 	SetReadHandler(0x5000, 0x5FFF, M412Read5);

@@ -165,7 +165,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper042_Init(CartInfo *info) {
-	if (info->submapper == 0 || info-> submapper > 3) {
+	if (info->submapper == 0 || info->submapper > 3) {
 		if (ROM.chr.size) {
 			/* Ai Senshi Nicol, only cart with CHR-ROM, all others use CHR-RAM */
 			info->submapper = 1;

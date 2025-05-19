@@ -56,12 +56,12 @@ static void Sync(void) {
 
 static DECLFW(M538Write) {
 	switch (A & 0xF000) {
-    case 0xC000:
-    case 0xD000:
-        latch.data = V;
-        Sync();
-        break;
-    }
+	case 0xC000:
+	case 0xD000:
+		latch.data = V;
+		Sync();
+		break;
+	}
 }
 
 static void M538Power(void) {

@@ -30,13 +30,13 @@ static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &reg, 1, "REGS" },
-    { &dipsw, 1, "DPSW" },
-	{ 0 },
+	{ &dipsw, 1, "DPSW" },
+	{ 0 }
 };
 
 static void M447PW(uint16 A, uint16 V) {
-    uint16 mask = 0x0F;
-    uint16 base = reg << 4;
+	uint16 mask = 0x0F;
+	uint16 base = reg << 4;
 
 	if (reg & 0x04) {
 		if (!(reg & 0x02)) {
@@ -54,45 +54,45 @@ static void M447PW(uint16 A, uint16 V) {
 }
 
 static void M447CW(uint16 A, uint16 V) {
-    setchr1(A, (reg << 7) | (V & 0x7F));
+	setchr1(A, (reg << 7) | (V & 0x7F));
 }
 
 static DECLFR(M447Read) {
-    if ((A & 0x8000) && (reg & 0x08)) {
-        return CartBR((A & ~0x03) | (dipsw & 0x03));
-    }
-    return CartBR(A);
+	if ((A & 0x8000) && (reg & 0x08)) {
+		return CartBR((A & ~0x03) | (dipsw & 0x03));
+	}
+	return CartBR(A);
 }
 
 static DECLFW(M447WriteReg) {
-    CartBW(A, V);
+	CartBW(A, V);
 	if ((vrc24.cmd & 0x01) && !(reg & 0x01)) {
 		reg = A & 0xFF;
 		VRC24_SyncPRG();
-        VRC24_SyncCHR();
+		VRC24_SyncCHR();
 	}
 }
 
 static void M447Reset(void) {
 	reg = 0;
-    dipsw++;
+	dipsw++;
 	VRC24_SyncPRG();
-    VRC24_SyncCHR();
+	VRC24_SyncCHR();
 }
 
 static void M447Power(void) {
 	reg = 0;
-    dipsw = 0;
+	dipsw = 0;
 	VRC24_Power();
-    SetReadHandler(0x8000, 0xFFFF, M447Read);
+	SetReadHandler(0x8000, 0xFFFF, M447Read);
 	SetWriteHandler(0x6000, 0x7FFF, M447WriteReg);
 }
 
 void Mapper447_Init(CartInfo *info) {
-    VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 1, 1);
+	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 1, 1);
 	info->Reset = M447Reset;
 	info->Power = M447Power;
-    VRC24_pwrap = M447PW;
-    VRC24_cwrap = M447CW;
+	VRC24_pwrap = M447PW;
+	VRC24_cwrap = M447CW;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -26,7 +26,7 @@
 static uint8 mode;
 
 static SFORMAT StateRegs[] = {
-	{ &mode,   1, "UROM" },
+	{ &mode, 1, "UROM" },
 	{ 0 }
 };
 

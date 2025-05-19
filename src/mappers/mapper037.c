@@ -31,18 +31,18 @@ static void M037PW(uint16 A, uint16 V) {
 }
 
 static void M037CW(uint16 A, uint16 V) {
-    uint16 mask = 0x7F;
+	uint16 mask = 0x7F;
 	uint16 base = (reg << 5) & 0x80;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(M037Write) {
-    if (MMC3_WramIsWritable()) {
-	    reg = V;
-	    MMC3_SyncPRG();
-	    MMC3_SyncCHR();
-    }
+	if (MMC3_WramIsWritable()) {
+		reg = V;
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+	}
 }
 
 static void M037Reset(void) {

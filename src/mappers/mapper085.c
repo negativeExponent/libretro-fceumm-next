@@ -24,19 +24,25 @@
 #include "vrc7.h"
 
 static void M085PW(uint16 A, uint16 V) {
-    setprg8(A, V & 0x3F);
+	setprg8(A, V & 0x3F);
 }
 
 static void M085CW(uint16 A, uint16 V) {
-    setchr1(A, V & 0xFF);
+	setchr1(A, V & 0xFF);
 }
 
 void Mapper085_Init(CartInfo *info) {
 	switch (info->submapper) {
-	case 0x01: VRC7_Init(info, 0x08, 0x20); break;
-	case 0x02: VRC7_Init(info, 0x10, 0x20); break;
-	default: VRC7_Init(info, 0x18, 0x20); break;
+	case 0x01:
+		VRC7_Init(info, 0x08, 0x20);
+		break;
+	case 0x02:
+		VRC7_Init(info, 0x10, 0x20);
+		break;
+	default:
+		VRC7_Init(info, 0x18, 0x20);
+		break;
 	}
-    VRC7_pwrap = M085PW;
-    VRC7_cwrap = M085CW;
+	VRC7_pwrap = M085PW;
+	VRC7_cwrap = M085CW;
 }

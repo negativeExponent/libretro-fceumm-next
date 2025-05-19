@@ -44,22 +44,22 @@ static void M197PW(uint16 A, uint16 V) {
 static void M197CHR(void) {
 	switch (iNESCart.submapper) {
 	case 1:
-		setchr2(0x0000, mmc3.reg[1] & ~0x01);
-		setchr2(0x0800, mmc3.reg[1] |  0x01);
+		setchr2(0x0000, mmc3.reg[1] & 0xFE);
+		setchr2(0x0800, mmc3.reg[1] | 0x01);
 		setchr2(0x1000, mmc3.reg[4]);
 		setchr2(0x1800, mmc3.reg[5]);
 		break;
 	case 2:
-		setchr2(0x0000, mmc3.reg[0] & ~0x01);
-		setchr2(0x0800, mmc3.reg[1] |  0x01);
+		setchr2(0x0000, mmc3.reg[0] & 0xFE);
+		setchr2(0x0800, mmc3.reg[1] | 0x01);
 		setchr2(0x1000, mmc3.reg[2]);
 		setchr2(0x1800, mmc3.reg[5]);
 		break;
 	case 0:
 	case 3:
 	default:
-		setchr2(0x0000, mmc3.reg[0] & ~0x01);
-		setchr2(0x0800, mmc3.reg[0] |  0x01);
+		setchr2(0x0000, mmc3.reg[0] & 0xFE);
+		setchr2(0x0800, mmc3.reg[0] | 0x01);
 		setchr2(0x1000, mmc3.reg[2]);
 		setchr2(0x1800, mmc3.reg[3]);
 		break;

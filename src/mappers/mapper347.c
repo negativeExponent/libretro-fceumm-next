@@ -188,6 +188,6 @@ void Mapper347_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

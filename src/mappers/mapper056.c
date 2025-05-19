@@ -25,14 +25,14 @@
  * - fix IRQ counter, noticeable in status bars of both SMB2J(KS7032) and SMB3J(KS202)
  */
 
- #include "mapinc.h"
- #include "ks202.h"
+#include "mapinc.h"
+#include "ks202.h"
 
 static uint8 prg[4];
 static uint8 chr[8];
 static uint8 mirr;
 
-static SFORMAT M056StateRegs[] = {
+static SFORMAT StateRegs[] = {
 	{ prg, 8, "PREG" },
 	{ chr, 8, "CREG" },
 	{ &mirr, 1, "MIRR" },
@@ -45,7 +45,7 @@ static void Sync(void) {
 	setprg8(0x8000, (prg[0] & 0x10) | (ks202.reg[1] & 0x0F));
 	setprg8(0xA000, (prg[1] & 0x10) | (ks202.reg[2] & 0x0F));
 	setprg8(0xC000, (prg[2] & 0x10) | (ks202.reg[3] & 0x0F));
-	setprg8(0xE000, (prg[3] & 0x10) | (          ~0 & 0x0F));
+	setprg8(0xE000, (prg[3] & 0x10) | (~0 & 0x0F));
 
 	setchr1(0x0000, chr[0]);
 	setchr1(0x0400, chr[1]);
@@ -60,10 +60,16 @@ static void Sync(void) {
 }
 
 static DECLFW(M056Write) {
-	switch (A & 0xC00) {
-	case 0x000: prg[A & 0x03] = V; break;
-	case 0x800: mirr = V; break;
-	case 0xC00: chr[A & 0x07] = V; break;
+	switch (A & 0x0F00) {
+	case 0x000:
+		prg[A & 0x03] = V;
+		break;
+	case 0x800:
+		mirr = V;
+		break;
+	case 0xC00:
+		chr[A & 0x07] = V;
+		break;
 	}
 	ks202.reg[ks202.cmd & 0x07] = V;
 	Sync();
@@ -90,5 +96,5 @@ void Mapper056_Init(CartInfo *info) {
 	KS202_Init(info, Sync, 1, 0);
 	info->Power = M056Power;
 	info->Reset = M056Reset;
-	AddExState(&M056StateRegs, ~0, 0, 0);
+	AddExState(&StateRegs, ~0, 0, 0);
 }

@@ -32,7 +32,7 @@ static SFORMAT StateRegs[] = {
 static void Sync(void) {
 	if (reg & 0x40) {
 		setprg32(0x8000, ((reg >> 3) & ~0x07) | (latch.data & 0x07));
-        setmirror(MI_0 + ((latch.data >> 4) & 0x01));
+		setmirror(MI_0 + ((latch.data >> 4) & 0x01));
 	} else {
 		setprg16(0x8000, ((reg >> 2) & ~0x07) | (latch.data & 0x07));
 		setprg16(0xC000, ((reg >> 2) & ~0x07) | 0x07);
@@ -42,24 +42,24 @@ static void Sync(void) {
 }
 
 static DECLFW(M462Write) {
-    reg = V;
-    Sync();
+	reg = V;
+	Sync();
 }
 
 static void M462Reset(void) {
-    reg = 0;
-    Latch_RegReset();
+	reg = 0;
+	Latch_RegReset();
 }
 
 static void M462Power(void) {
-    reg = 0;
-    Latch_Power();
-    SetWriteHandler(0xA000, 0xBFFF, M462Write);
+	reg = 0;
+	Latch_Power();
+	SetWriteHandler(0xA000, 0xBFFF, M462Write);
 }
 
 void Mapper462_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, TRUE, FALSE);
 	info->Reset = M462Reset;
-    info->Power = M462Power;
-    AddExState(StateRegs, ~0, 0, NULL);
+	info->Power = M462Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -73,7 +73,6 @@ static void M466Reset(void) {
 	Sync();
 }
 
-
 static void M466Close(void) {
 }
 

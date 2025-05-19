@@ -25,8 +25,8 @@
 static uint8 reg[2];
 
 static SFORMAT StateRegs[] = {
-    { reg, 2, "REGS" },
-    { 0 }
+	{ reg, 2, "REGS" },
+	{ 0 }
 };
 
 static void Sync(void) {
@@ -50,15 +50,15 @@ static void M500Reset(void) {
 }
 
 static void M500Power(void) {
-    reg[0] = reg[1] = 0;
+	reg[0] = reg[1] = 0;
 	Latch_Power();
 	SetReadHandler(0x7000, 0x7FFF, CartBR);
-    SetWriteHandler(0x6000, 0x6FFF, M500WriteReg);
+	SetWriteHandler(0x6000, 0x6FFF, M500WriteReg);
 }
 
 void Mapper500_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Power = M500Power;
 	info->Reset = M500Reset;
-    AddExState(StateRegs, ~0, 0, NULL);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

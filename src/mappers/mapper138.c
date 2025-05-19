@@ -38,10 +38,18 @@ static void Sync(void) {
 	setchr2(0x1000, ((reg[4] << 3) | (reg[(reg[7] & 0x01) ? 0 : 2] & 0x07)));
 	setchr2(0x1800, ((reg[4] << 3) | (reg[(reg[7] & 0x01) ? 0 : 3] & 0x07)));
 	switch (reg[7] & 0x07) {
-	case 0:  setmirrorw(0, 0, 0, 1); break;
-	case 2:  setmirror(MI_H); break;
-    default: setmirror(MI_V); break;
-	case 6:  setmirror(MI_0); break;
+	case 0:
+		setmirrorw(0, 0, 0, 1);
+		break;
+	case 2:
+		setmirror(MI_H);
+		break;
+	default:
+		setmirror(MI_V);
+		break;
+	case 6:
+		setmirror(MI_0);
+		break;
 	}
 }
 

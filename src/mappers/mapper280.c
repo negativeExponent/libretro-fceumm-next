@@ -25,7 +25,7 @@ static uint8 unrom;
 
 static void Sync(void) {
 	uint8 nrom = (latch.addr & 0x80) != 0;
-	uint8 A14  = (latch.addr & 0x01) != 0;
+	uint8 A14 = (latch.addr & 0x01) != 0;
 	uint16 prg = (latch.addr >> 2) & 0x1F;
 
 	if (!unrom && nrom)

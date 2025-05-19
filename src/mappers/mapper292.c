@@ -73,8 +73,8 @@ static void M292Power(void) {
 
 void Mapper292_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap  = M292PW;
-	MMC3_cwrap  = M292CW;
+	MMC3_pwrap = M292PW;
+	MMC3_cwrap = M292CW;
 	info->Power = M292Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

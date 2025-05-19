@@ -49,8 +49,14 @@ static void Sync(void) {
 
 static DECLFW(M309Write) {
 	switch (A & 0xF000) {
-	case 0x8000: reg = V; Sync(); break;
-	case 0xF000: mirr = V; Sync(); break;
+	case 0x8000:
+		reg = V;
+		Sync();
+		break;
+	case 0xF000:
+		mirr = V;
+		Sync();
+		break;
 	}
 }
 
@@ -77,7 +83,7 @@ void Mapper309_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

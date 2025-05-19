@@ -60,8 +60,14 @@ static DECLFW(M117Write) {
 		break;
 	case 0xA000:
 		switch (A & 0x0F) {
-		case 0: case 1: case 2: case 3:
-		case 4: case 5: case 6: case 7:
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
 			chr[A & 0x07] = V;
 			Sync();
 			break;

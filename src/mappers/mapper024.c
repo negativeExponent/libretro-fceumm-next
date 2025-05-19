@@ -24,21 +24,21 @@
 #include "vrc6.h"
 
 static void M024PW(uint16 A, uint16 V) {
-    setprg8(A, V & 0x3F);
+	setprg8(A, V & 0x3F);
 }
 
 static void M024CW(uint16 A, uint16 V) {
-    setchr1(A, V & 0xFF);
+	setchr1(A, V & 0xFF);
 }
 
 void Mapper024_Init(CartInfo *info) {
-    int wram = 0;
-    if (info->iNES2 && (info->PRGRamSize || info->PRGRamSaveSize)) {
-        wram = 1;
-    } else if (info->battery) {
-        wram = 1;
-    }
+	int wram = 0;
+	if (info->iNES2 && (info->PRGRamSize || info->PRGRamSaveSize)) {
+		wram = 1;
+	} else if (info->battery) {
+		wram = 1;
+	}
 	VRC6_Init(info, 0x01, 0x02, wram);
-    VRC6_pwrap = M024PW;
-    VRC6_cwrap = M024CW;
+	VRC6_pwrap = M024PW;
+	VRC6_cwrap = M024CW;
 }

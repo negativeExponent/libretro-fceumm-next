@@ -32,7 +32,7 @@
  *    Nix: The Paradox Relic (512 PRG, 8K CHR RAM, Vertical Mirroring, Flash enabled)
  * Although Xmas 2013 uses a different board, where LEDs can be controlled (with writes to the $8000-BFFF space),
  * it otherwise functions identically.
-  */
+ */
 
 #include "mapinc.h"
 #include "latch.h"
@@ -53,7 +53,7 @@ static void M030Sync(void) {
 	switch (iNESCart.submapper) {
 	case 1:
 		/* Mega Man II (30th Anniversary Edition) */
-		setmirror((latch.data >> 7) & 0x01);	
+		setmirror((latch.data >> 7) & 0x01);
 		break;
 	default:
 		setmirror(MI_0 + ((latch.data >> 7) & 0x01));

@@ -30,12 +30,12 @@ static void M074CW(uint16 A, uint16 V) {
 }
 
 static void M074Close(void) {
-    MMC3_Close();
+	MMC3_Close();
 }
 
 void Mapper074_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, info->battery);
-    info->Close = M074Close;
+	info->Close = M074Close;
 	MMC3_cwrap = M074CW;
 
 	CHRRAMSIZE = 2048;

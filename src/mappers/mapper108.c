@@ -42,7 +42,7 @@ static SFORMAT StateRegs[] = {
 
 static void Sync(void) {
 	if (iNESCart.submapper == 4) {
-		setprg8(0x6000, ~0);	
+		setprg8(0x6000, ~0);
 	} else {
 		setprg8(0x6000, reg);
 	}
@@ -64,9 +64,15 @@ static void M108Power(void) {
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	switch (iNESCart.submapper) {
-	case 1:  SetWriteHandler(0xF000, 0xFFFF, M108Write); break;
-	case 2:  SetWriteHandler(0xE000, 0xFFFF, M108Write); break;
-	default: SetWriteHandler(0x8000, 0xFFFF, M108Write); break;
+	case 1:
+		SetWriteHandler(0xF000, 0xFFFF, M108Write);
+		break;
+	case 2:
+		SetWriteHandler(0xE000, 0xFFFF, M108Write);
+		break;
+	default:
+		SetWriteHandler(0x8000, 0xFFFF, M108Write);
+		break;
 	}
 	FDSSound_Power();
 }

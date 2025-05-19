@@ -28,7 +28,7 @@
 static void Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
 	setprg32(0x8000, latch.data);
-    setchr8(0);
+	setchr8(0);
 }
 
 void Mapper241_Init(CartInfo *info) {

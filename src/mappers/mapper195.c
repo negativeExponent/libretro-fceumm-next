@@ -30,9 +30,9 @@ extern uint32 RefreshAddr;
 static void M195CW(uint16 A, uint16 V) {
 	if ((V & chrRamMask) == chrRamBankSelect) {
 		setchr1r(0x10, A, V);
-    } else {
+	} else {
 		setchr1(A, V);
-    }
+	}
 }
 
 static const uint8 chrRamLut[8] = {
@@ -42,30 +42,30 @@ static const uint8 chrRamLut[8] = {
 static DECLFW(M195PPUWrite) {
 	if (RefreshAddr < 0x2000) {
 		uint8 reg, chrBank;
-        uint32 addr = RefreshAddr;
+		uint32 addr = RefreshAddr;
 
 		if (mmc3.cmd & 0x80) {
 			addr ^= 0x1000;
-        }
+		}
 		if (addr & 0x1000) {
 			reg = (addr >> 10) - 2;
-        } else {
+		} else {
 			reg = addr >> 11;
-        }
+		}
 
 		chrBank = mmc3.reg[reg];
 		if (chrBank & 0x80) {
 			if (chrBank & 0x10) {
-                /* CHR-RAM disable */
+				/* CHR-RAM disable */
 				chrRamMask = 0x00;
 				chrRamBankSelect = 0xFF;
 			} else {
-                uint8 index = ((chrBank >> 4) & 0x04) | ((chrBank >> 2) & 0x02) | ((chrBank >> 1) & 0x01);
+				uint8 index = ((chrBank >> 4) & 0x04) | ((chrBank >> 2) & 0x02) | ((chrBank >> 1) & 0x01);
 
 				chrRamMask = (chrBank & 0x40) ? 0xFE : 0xFC;
 				chrRamBankSelect = chrRamLut[index];
 			}
-            MMC3_SyncCHR();
+			MMC3_SyncCHR();
 		}
 	}
 	writePPU(A, V);

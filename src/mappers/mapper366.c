@@ -22,7 +22,7 @@
  * Mapper 366 (GN-45):
  *  K-3131GS
  *  K-3131SS
-*/	
+ */
 
 #include "mapinc.h"
 #include "mmc3.h"
@@ -48,7 +48,7 @@ static DECLFW(M366Write) {
 		reg = A & 0xF0;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
-	}	
+	}
 }
 
 static void M366Power(void) {

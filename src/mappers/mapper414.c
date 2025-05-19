@@ -55,7 +55,6 @@ static void M414Reset(void) {
 		dipsw = 0;
 	}
 	Sync();
-	
 }
 
 void Mapper414_Init(CartInfo *info) {

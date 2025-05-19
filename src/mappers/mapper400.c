@@ -36,18 +36,18 @@ static void Sync(void) {
 	setprg16(0x8000, (reg & ~0x07) | (latch.data & 0x07));
 	setprg16(0xC000, (reg & ~0x07) | 0x07);
 	setchr8(0);
-    if (reg != 0x80) {
-        setmirror(((reg >> 5) & 0x01) ^ 0x01);
-    }
+	if (reg != 0x80) {
+		setmirror(((reg >> 5) & 0x01) ^ 0x01);
+	}
 }
 
 static DECLFW(M400WriteReg) {
-    reg = V;
-    Sync();
+	reg = V;
+	Sync();
 }
 
 static DECLFW(M400WriteLED) {
-    led = V;
+	led = V;
 }
 
 static void M400Reset(void) {
@@ -56,15 +56,15 @@ static void M400Reset(void) {
 }
 
 static void M400Power(void) {
-    reg = 0x80;
-    Latch_Power();
-    SetWriteHandler(0x7800, 0x7FFF, M400WriteReg);
-    SetWriteHandler(0x8000, 0xBFFF, M400WriteLED);
+	reg = 0x80;
+	Latch_Power();
+	SetWriteHandler(0x7800, 0x7FFF, M400WriteReg);
+	SetWriteHandler(0x8000, 0xBFFF, M400WriteLED);
 }
 
 void Mapper400_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
 	info->Power = M400Power;
-    info->Reset = M400Reset;
+	info->Reset = M400Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -48,7 +48,7 @@ static void M281MW(uint16 A, uint32 V) {
 void Mapper281_Init(CartInfo *info) {
 	/* Multicart */
 	JYASIC_Init(info, TRUE);
-    JYASIC_pwrap = M281PW;
+	JYASIC_pwrap = M281PW;
 	JYASIC_cwrap = M281CW;
 	JYASIC_wwrap = M281WW;
 	JYASIC_mwrap = M281MW;

@@ -47,10 +47,18 @@ static void Sync(void) {
 	}
 	setchr8(0);
 	switch ((latch.data >> 6) & 0x03) {
-	case 0: setmirror(MI_0); break;
-	case 1: setmirror(MI_V); break;
-	case 2: setmirror(MI_H); break;
-	case 3: setmirror(MI_1); break;
+	case 0:
+		setmirror(MI_0);
+		break;
+	case 1:
+		setmirror(MI_V);
+		break;
+	case 2:
+		setmirror(MI_H);
+		break;
+	case 3:
+		setmirror(MI_1);
+		break;
 	}
 }
 

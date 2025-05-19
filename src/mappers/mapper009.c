@@ -23,16 +23,16 @@
 #include "mmc2.h"
 
 static void M009PW(uint16 A, uint16 V) {
-    setprg8(A, V & 0x0F);
+	setprg8(A, V & 0x0F);
 }
 
 static void M009CW(uint16 A, uint16 V) {
-    setchr4(A, V & 0x1F);
+	setchr4(A, V & 0x1F);
 }
 
 void Mapper009_Init(CartInfo *info) {
 	int ws = info->iNES2 ? ((info->PRGRamSize + info->PRGRamSaveSize) / 1024) : (info->battery ? 8 : 0);
 	MMC2_Init(info, ws, info->battery);
-    MMC2_pwrap = M009PW;
-    MMC2_cwrap = M009CW;
+	MMC2_pwrap = M009PW;
+	MMC2_cwrap = M009CW;
 }

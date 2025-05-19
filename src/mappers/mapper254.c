@@ -27,7 +27,7 @@ static DECLFR(M254ReadWRAM) {
 	if (reg == TRUE) {
 		return cpu.openbus ^ (reg * 0x80);
 	}
-    return CartBR(A);
+	return CartBR(A);
 }
 
 static DECLFW(M254WriteWRAM) {
@@ -44,10 +44,10 @@ static void M254Reset(void) {
 }
 
 static void M254Power(void) {
-    reg = 0x80;
+	reg = 0x80;
 	MMC3_Power();
 	SetReadHandler(0x6000, 0x7FFF, M254ReadWRAM);
-    SetWriteHandler(0x6000, 0x7FFF, M254WriteWRAM);
+	SetWriteHandler(0x6000, 0x7FFF, M254WriteWRAM);
 }
 
 void Mapper254_Init(CartInfo *info) {

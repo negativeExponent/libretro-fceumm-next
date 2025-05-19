@@ -30,13 +30,11 @@ static uint8 *eprom = NULL;
 
 static uint8_t pci16c5x_read(int port) {
 	if (port == 0) {
-		return (1 |
-			(address & 0x0040 ? 0x02 : 0) | /*  A6 -> RA1 */
+		return (1 | (address & 0x0040 ? 0x02 : 0) | /*  A6 -> RA1 */
 			(address & 0x0020 ? 0x04 : 0) | /*  A5 -> RA2 */
 			(address & 0x0010 ? 0x08 : 0)); /*  A4 -> RA3 */
 	} else if (port == 1) {
-		return (
-			(address & 0x1000 ? 0x01 : 0) | /* A12 -> RB0 */
+		return ((address & 0x1000 ? 0x01 : 0) | /* A12 -> RB0 */
 			(address & 0x0080 ? 0x02 : 0) | /*  A7 -> RB1 */
 			(address & 0x0400 ? 0x04 : 0) | /* A10 -> RB2 */
 			(address & 0x0800 ? 0x08 : 0) | /* A11 -> RB3 */
@@ -117,7 +115,7 @@ void Mapper355_Init(CartInfo *info) {
 		if (info->CRC32 == 0x86DBA660) { /* 3D Block (Hwang Shinwei) [!].nes */
 			eprom = &eprom_3d_block[0];
 		} else if ((info->CRC32 == 0x3C43939D) || /* Block Force.nes */
-		           (info->CRC32 == 0xB655C53A)) { /* Block Force (Hwang Shinwei).nes */
+			(info->CRC32 == 0xB655C53A)) { /* Block Force (Hwang Shinwei).nes */
 			eprom = &eprom_block_force[0];
 		}
 	}

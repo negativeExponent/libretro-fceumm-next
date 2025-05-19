@@ -43,55 +43,52 @@
 
 #include "mapinc.h"
 
-static uint8 fk23_regs[8]     = { 0 }; /* JX9003B has eight registers, all others have four */
-static uint8 mmc3_regs[16]    = { 0 }; /* only 12 registers are used here */
-static uint8 mmc3_ctrl        = 0;
-static uint8 mmc3_mirr        = 0;
-static uint8 mmc3_wram        = 0;
-static uint8 reg4800          = 0;
+static uint8 fk23_regs[8] = { 0 };  /* JX9003B has eight registers, all others have four */
+static uint8 mmc3_regs[16] = { 0 }; /* only 12 registers are used here */
+static uint8 mmc3_ctrl = 0;
+static uint8 mmc3_mirr = 0;
+static uint8 mmc3_wram = 0;
+static uint8 reg4800 = 0;
 
-static uint8 irq_count        = 0;
-static uint8 irq_latch        = 0;
-static uint8 irq_enabled      = FALSE;
-static uint8 irq_reload       = FALSE;
-static uint8 latch            = 0; /* CNROM/UNROM latch @ $8xxx writes */
-static uint8 dipswitch        = 0;
-static uint8 dipsw_enable     = 0; /* Change the address mask on every reset? */
-static uint8 after_power      = 0; /* Used for detecting whether a DIP switch is used or not (see above) */
+static uint8 irq_count = 0;
+static uint8 irq_latch = 0;
+static uint8 irq_enabled = FALSE;
+static uint8 irq_reload = FALSE;
+static uint8 latch = 0; /* CNROM/UNROM latch @ $8xxx writes */
+static uint8 dipswitch = 0;
+static uint8 dipsw_enable = 0; /* Change the address mask on every reset? */
+static uint8 after_power = 0;  /* Used for detecting whether a DIP switch is used or not (see above) */
 
 static void (*FK23_cwrap)(uint16 A, uint16 V);
 static void (*SyncMIRR)(void);
 
 static SFORMAT StateRegs[] = {
-   { fk23_regs,               8, "EXPR" },
-   { mmc3_regs,              16, "M3RG" },
-   { &latch,                  1, "LATC" },
-   { &dipswitch,              1, "DPSW" },
-   { &mmc3_ctrl,              1, "M3CT" },
-   { &mmc3_mirr,              1, "M3MR" },
-   { &mmc3_wram,              1, "M3WR" },
-   { &reg4800,                1, "REG4" },
-   { &irq_reload,             1, "IRQR" },
-   { &irq_count,              1, "IRQC" },
-   { &irq_latch,              1, "IRQL" },
-   { &irq_enabled,            1, "IRQA" },
-   { 0 }
+	{ fk23_regs, 8, "EXPR" },
+	{ mmc3_regs, 16, "M3RG" },
+	{ &latch, 1, "LATC" },
+	{ &dipswitch, 1, "DPSW" },
+	{ &mmc3_ctrl, 1, "M3CT" },
+	{ &mmc3_mirr, 1, "M3MR" },
+	{ &mmc3_wram, 1, "M3WR" },
+	{ &reg4800, 1, "REG4" },
+	{ &irq_reload, 1, "IRQR" },
+	{ &irq_count, 1, "IRQC" },
+	{ &irq_latch, 1, "IRQL" },
+	{ &irq_enabled, 1, "IRQA" },
+	{ 0 }
 };
 
-#define INVERT_PRG          !!(mmc3_ctrl & 0x40)
-#define INVERT_CHR          !!(mmc3_ctrl & 0x80)
-
-#define PRG_MODE              ( fk23_regs[0] & 0x07)
-
-#define WRAM_ENABLED        !!(mmc3_wram & 0x80)
-#define WRAM_EXTENDED      (!!(mmc3_wram & 0x20) && (iNESCart.submapper == 2))    /* Extended A001 register. Only available on FS005 PCB. */
-#define FK23_ENABLED       (!!(mmc3_wram & 0x40) || !WRAM_EXTENDED)  /* Enable or disable registers in the $5xxx range. Only available on FS005 PCB. */
-#define MMC3_EXTENDED       !!( fk23_regs[3] & 0x02)                 /* Extended MMC3 mode, adding extra registers for switching the normally-fixed PRG banks C and E and for eight independent 1 KiB CHR banks. Only available on FK- and FS005 PCBs. */
-
-#define CHR_8K_MODE         !!( fk23_regs[0] & 0x40)                 /* MMC3 CHR registers are ignored, apply outer bank only, and CNROM latch if it exists */
-#define CHR_CNROM_MODE        ((~fk23_regs[0] & 0x20) && ((iNESCart.submapper == 1) || (iNESCart.submapper == 5))) /* Only subtypes 1 and 5 have a CNROM latch, which can be disabled */
-#define CHR_OUTER_BANK_SIZE !!( fk23_regs[0] & 0x10)                 /* Switch between 256 and 128 KiB CHR, or 32 and 16 KiB CHR in CNROM mode */
-#define CHR_MIXED           !!(WRAM_EXTENDED && (mmc3_wram & 0x04))     /* First 8 KiB of CHR address space are RAM, then ROM */
+#define INVERT_PRG          (mmc3_ctrl & 0x40)
+#define INVERT_CHR          (mmc3_ctrl & 0x80)
+#define PRG_MODE            (fk23_regs[0] & 0x07)
+#define WRAM_ENABLED        (mmc3_wram & 0x80)
+#define WRAM_EXTENDED       ((mmc3_wram & 0x20) && (iNESCart.submapper == 2))                                    /* Extended A001 register. Only available on FS005 PCB. */
+#define FK23_ENABLED        ((mmc3_wram & 0x40) || !WRAM_EXTENDED)                                               /* Enable or disable registers in the $5xxx range. Only available on FS005 PCB. */
+#define MMC3_EXTENDED       (fk23_regs[3] & 0x02)                                                                /* Extended MMC3 mode, adding extra registers for switching the normally-fixed PRG banks C and E and for eight independent 1 KiB CHR banks. Only available on FK- and FS005 PCBs. */
+#define CHR_8K_MODE         (fk23_regs[0] & 0x40)                                                                /* MMC3 CHR registers are ignored, apply outer bank only, and CNROM latch if it exists */
+#define CHR_CNROM_MODE      (!(fk23_regs[0] & 0x20) && ((iNESCart.submapper == 1) || (iNESCart.submapper == 5))) /* Only subtypes 1 and 5 have a CNROM latch, which can be disabled */
+#define CHR_OUTER_BANK_SIZE (fk23_regs[0] & 0x10)                                                                /* Switch between 256 and 128 KiB CHR, or 32 and 16 KiB CHR in CNROM mode */
+#define CHR_MIXED           (WRAM_EXTENDED && (mmc3_wram & 0x04))                                                /* First 8 KiB of CHR address space are RAM, then ROM */
 
 static void CHRWRAP(uint16 A, uint16 V) {
 	uint8 bank = 0;
@@ -262,10 +259,18 @@ static void SyncWRAM(void) {
 
 static void SyncMir(void) {
 	switch (mmc3_mirr & (iNESCart.submapper == 2 ? 0x03 : 0x01)) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+	case 0:
+		setmirror(MI_V);
+		break;
+	case 1:
+		setmirror(MI_H);
+		break;
+	case 2:
+		setmirror(MI_0);
+		break;
+	case 3:
+		setmirror(MI_1);
+		break;
 	}
 }
 
@@ -324,9 +329,9 @@ static DECLFW(Write8000) {
 		   9FFF, are ignored. Needed for Dr. Mario on some of the "bouncing
 		   ball" multis. */
 		if (A & 0x02) {
-			break; 
+			break;
 		}
-		
+
 		if (A & 0x01) {
 			ctrl_mask = MMC3_EXTENDED ? 0x0F : 0x07;
 			mmc3_regs[mmc3_ctrl & ctrl_mask] = V;
@@ -353,7 +358,7 @@ static DECLFW(Write8000) {
 		} else {
 			old_ctrl = mmc3_ctrl;
 			/* Subtype 2, 8192 or more KiB PRG-ROM, no CHR-ROM: Like Subtype 0,
-		 	* but MMC3 registers $46 and $47 swapped. */
+			 * but MMC3 registers $46 and $47 swapped. */
 			if ((iNESCart.submapper == 2) && ((V == 0x46) || (V == 0x47))) {
 				V ^= 0x01;
 			}
@@ -402,8 +407,12 @@ static DECLFW(Write8000) {
 		break;
 	}
 
-	if (updatePRG) SyncPRG();
-	if (updateCHR) SyncCHR();
+	if (updatePRG) {
+		SyncPRG();
+	}
+	if (updateCHR) {
+		SyncCHR();
+	}
 }
 
 static void M176HBIRQHook(void) {
@@ -419,18 +428,18 @@ static void M176HBIRQHook(void) {
 }
 
 static void RegReset(void) {
-	fk23_regs[0]  = fk23_regs[1] = fk23_regs[2] = fk23_regs[3] = 0;
-	fk23_regs[4]  = fk23_regs[5] = fk23_regs[6] = fk23_regs[7] = 0;
-	mmc3_regs[0]  = 0;
-	mmc3_regs[1]  = 2;
-	mmc3_regs[2]  = 4;
-	mmc3_regs[3]  = 5;
-	mmc3_regs[4]  = 6;
-	mmc3_regs[5]  = 7;
-	mmc3_regs[6]  = 0;
-	mmc3_regs[7]  = 1;
-	mmc3_regs[8]  = ~1;
-	mmc3_regs[9]  = ~0;
+	fk23_regs[0] = fk23_regs[1] = fk23_regs[2] = fk23_regs[3] = 0;
+	fk23_regs[4] = fk23_regs[5] = fk23_regs[6] = fk23_regs[7] = 0;
+	mmc3_regs[0] = 0;
+	mmc3_regs[1] = 2;
+	mmc3_regs[2] = 4;
+	mmc3_regs[3] = 5;
+	mmc3_regs[4] = 6;
+	mmc3_regs[5] = 7;
+	mmc3_regs[6] = 0;
+	mmc3_regs[7] = 1;
+	mmc3_regs[8] = ~1;
+	mmc3_regs[9] = ~0;
 	mmc3_regs[10] = ~0;
 	mmc3_regs[11] = ~0;
 	mmc3_ctrl = mmc3_mirr = irq_count = irq_latch = irq_enabled = 0;
@@ -585,7 +594,7 @@ void BMCFK23C_Init(CartInfo *info) {
 	Init(info);
 }
 
- /* UNIF FK23CA. Also includes mislabelled WAIXING-FS005, recognizable by their PRG-ROM size. */
+/* UNIF FK23CA. Also includes mislabelled WAIXING-FS005, recognizable by their PRG-ROM size. */
 void BMCFK23CA_Init(CartInfo *info) {
 	WRAMSIZE = 8 * 1024;
 

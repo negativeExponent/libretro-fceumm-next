@@ -47,7 +47,6 @@ static void Sync(void) {
 	}
 	setchr8(reg);
 	setmirror(((reg & 0x10) >> 4) ^ 1);
-
 }
 
 static DECLFW(M360Write4) {
@@ -59,7 +58,7 @@ static void M360Power(void) {
 	reg = 0;
 	Sync();
 	if (iNESCart.submapper == 1) {
-		SetWriteHandler(0x4100, 0x4FFF, M360Write4);	
+		SetWriteHandler(0x4100, 0x4FFF, M360Write4);
 	}
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0XFFFF, CartBW);

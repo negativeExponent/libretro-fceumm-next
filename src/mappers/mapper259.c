@@ -46,7 +46,7 @@ static void M259PW(uint16 A, uint16 V) {
 	uint8 mode = (reg & 0x08) >> 3;
 
 	setprg16(0x8000, ((reg & 0x0F) & ~mode));
-	setprg16(0xC000, ((reg & 0x0F) |  mode));
+	setprg16(0xC000, ((reg & 0x0F) | mode));
 }
 
 static DECLFW(M259Write) {

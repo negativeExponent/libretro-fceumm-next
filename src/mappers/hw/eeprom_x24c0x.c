@@ -67,7 +67,7 @@ SFORMAT x24c02_StateRegs[] = {
 	{ &x24c02.scl, 1, "SCL" },
 	{ &x24c02.out, 1, "OUT" },
 	{ &x24c02.state, 1, "STAT" },
-	{ 0 },
+	{ 0 }
 };
 
 void x24c01_init(uint8 *data) {

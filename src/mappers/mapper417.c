@@ -30,10 +30,10 @@ static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ prg, 4, "PREG" },
-    { chr, 8, "CREG" },
-    { nt, 4, "NREG" },
-    { &IRQa, 1, "IRQA" },
-    { &IRQCount, 2, "IRQC" },
+	{ chr, 8, "CREG" },
+	{ nt, 4, "NREG" },
+	{ &IRQa, 1, "IRQA" },
+	{ &IRQCount, 2, "IRQC" },
 	{ 0 }
 };
 
@@ -63,7 +63,9 @@ static DECLFW(M417Write) {
 		break;
 	case 1:
 		chr[0 | (A & 0x03)] = V;
-		if (iNESCart.submapper == 1) nt[A & 0x03] = V >> 7;
+		if (iNESCart.submapper == 1) {
+			nt[A & 0x03] = V >> 7;
+		}
 		Sync();
 		break;
 	case 2:
@@ -80,7 +82,9 @@ static DECLFW(M417Write) {
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	case 5:
-		if (iNESCart.submapper == 0) nt[A & 0x03] = V & 0x01;
+		if (iNESCart.submapper == 0) {
+			nt[A & 0x03] = V & 0x01;
+		}
 		Sync();
 		break;
 	}

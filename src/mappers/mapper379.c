@@ -27,5 +27,5 @@ static void Sync(void) {
 }
 
 void Mapper379_Init(CartInfo *info) {
-    Latch_Init(info, Sync, NULL, 8, FALSE);
+	Latch_Init(info, Sync, NULL, 8, FALSE);
 }

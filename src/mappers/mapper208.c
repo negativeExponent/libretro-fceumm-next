@@ -18,11 +18,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
- 
- /* 2022-2-14
-  * - add support for iNESCart.submapper 1, Mortal Kombat (JJ-01) (Ch) [!]
-  * - add mirroring
-  */
+
+/* 2022-2-14
+ * - add support for iNESCart.submapper 1, Mortal Kombat (JJ-01) (Ch) [!]
+ * - add mirroring
+ */
 
 #include "mapinc.h"
 #include "mmc3.h"

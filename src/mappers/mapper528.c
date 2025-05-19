@@ -50,7 +50,7 @@ static void M528PW(uint16 A, uint16 V) {
 static void M528SyncWRAM(void) {
 	uint16 base = reg;
 	uint16 mask = base | 0x0F;
-	
+
 	if (fme7.prg[0] == 1) {
 		setprg8r(0x10, 0x6000, 0);
 	} else {
@@ -60,10 +60,17 @@ static void M528SyncWRAM(void) {
 
 static DECLFW(M528Write) {
 	switch (A & 0x0F) {
-	case 0x0B: break;
-	case 0x0D: VRCIRQ_Control(V); break;
-	case 0x0E: VRCIRQ_Acknowledge(); break;
-	case 0x0F: VRCIRQ_Latch(V); break;
+	case 0x0B:
+		break;
+	case 0x0D:
+		VRCIRQ_Control(V);
+		break;
+	case 0x0E:
+		VRCIRQ_Acknowledge();
+		break;
+	case 0x0F:
+		VRCIRQ_Latch(V);
+		break;
 	default:
 		FME7_WriteIndex(0x8000, A & 0x0F);
 		FME7_WriteReg(0xA000, V);

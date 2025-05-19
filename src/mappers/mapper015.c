@@ -24,7 +24,7 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 prg   = latch.data & 0x3F;
+	uint8 prg = latch.data & 0x3F;
 
 	setprg8r(0x10, 0x6000, 0);
 	switch (latch.addr & 0x03) {

@@ -27,8 +27,8 @@
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-   { &dipsw, 1, "DPSW" },
-   { 0 }
+	{ &dipsw, 1, "DPSW" },
+	{ 0 }
 };
 
 static void Sync(void) {

@@ -39,6 +39,6 @@ static void M381Reset(void) {
 
 void Mapper381_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-    info->Reset = M381Reset;
+	info->Reset = M381Reset;
 	AddExState(&reset, 1, 0, "RST0");
 }

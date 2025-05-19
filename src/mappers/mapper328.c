@@ -21,7 +21,7 @@
  * A simple board with 16K PRG ROM + 2K CHR ROM with no mapper, hardwired mirroring
  * PRG EPROM has copy protected areas with "weak bits", which is tested at some
  * points of the program. Trying to simalate "weak bits" behaviour
- * 
+ *
  */
 
 /* NES 2.0 Mapper 328 - UNL-RT-01 */
@@ -39,10 +39,10 @@ static DECLFR(M328Read) {
 static void M328Power(void) {
 	setprg16(0x8000, 0);
 	setprg16(0xC000, 0);
-	setchr2(0x0000,0);
-	setchr2(0x0800,0);
-	setchr2(0x1000,0);
-	setchr2(0x1800,0);
+	setchr2(0x0000, 0);
+	setchr2(0x0800, 0);
+	setchr2(0x1000, 0);
+	setchr2(0x1800, 0);
 	SetReadHandler(0x8000, 0xFFFF, M328Read);
 }
 

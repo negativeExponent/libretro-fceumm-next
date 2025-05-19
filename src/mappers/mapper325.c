@@ -34,8 +34,8 @@ static void M325CW(uint16 A, uint16 V) {
 }
 
 static DECLFW(M325Write) {
-    A = (A & 0xFFFE) | ((A >> 3) & 1);
-    MMC3_Write(A, V);
+	A = (A & 0xFFFE) | ((A >> 3) & 1);
+	MMC3_Write(A, V);
 }
 
 static void M325Power(void) {

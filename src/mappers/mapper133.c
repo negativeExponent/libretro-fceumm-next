@@ -25,7 +25,7 @@
 static uint8 reg = 0;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1,  "REGS" },
+	{ &reg, 1, "REGS" },
 	{ 0 }
 };
 

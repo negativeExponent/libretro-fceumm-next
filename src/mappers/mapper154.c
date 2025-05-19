@@ -27,12 +27,12 @@
 static uint8 mirror;
 
 static SFORMAT StateRegs[] = {
-    { &mirror, 1, "MIRR" },
-    { 0 }
+	{ &mirror, 1, "MIRR" },
+	{ 0 }
 };
 
 static void M154Mirroring(void) {
-    setmirror(MI_0 + ((mirror >> 6) & 0x01));
+	setmirror(MI_0 + ((mirror >> 6) & 0x01));
 }
 
 static void M154SyncCHR(void) {
@@ -45,32 +45,32 @@ static void M154SyncCHR(void) {
 }
 
 static DECLFW(M154Write) {
-    if (A <= 0x9FFF) {
-        N118_Write(A, V);
-    }
-    if ((mirror & 0x40) != (V & 0x40)) {
-        /* mirroring bit is present over the entire 32KB reange */
-        mirror = V;
-        M154Mirroring();
-    }
+	if (A <= 0x9FFF) {
+		N118_Write(A, V);
+	}
+	if ((mirror & 0x40) != (V & 0x40)) {
+		/* mirroring bit is present over the entire 32KB reange */
+		mirror = V;
+		M154Mirroring();
+	}
 }
 
 static void M154Power(void) {
-    mirror = 0;
-    N118_Power();
-    SetWriteHandler(0x8000, 0xFFFF, M154Write);
+	mirror = 0;
+	N118_Power();
+	SetWriteHandler(0x8000, 0xFFFF, M154Write);
 }
 
 static void StateRestore(int version) {
-    N118_SyncPRG();
-    N118_SyncCHR();
-    M154Mirroring();
+	N118_SyncPRG();
+	N118_SyncCHR();
+	M154Mirroring();
 }
 
 void Mapper154_Init(CartInfo *info) {
 	N118_Init(info, 0, 0);
-    info->Power = M154Power;
+	info->Power = M154Power;
 	N118_SyncCHR = M154SyncCHR;
-    GameStateRestore = StateRestore;
-    AddExState(StateRegs, ~0, 0, NULL);
+	GameStateRestore = StateRestore;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

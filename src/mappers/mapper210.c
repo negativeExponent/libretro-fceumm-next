@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* NES 2.0 Mapper 210 - simplified version of Mapper 19 
+/* NES 2.0 Mapper 210 - simplified version of Mapper 19
  * Namco 175 - submapper 1 - optional wram, hard-wired mirroring
  * Namco 340 - submapper 2 - selectable H/V/0 mirroring
  */
@@ -33,7 +33,7 @@ static uint8 wram_enable;
 static SFORMAT StateRegs[] = {
 	{ prg, 3, "PRG" },
 	{ chr, 8, "CHR" },
-    { &wram_enable, 1, "WREN" },
+	{ &wram_enable, 1, "WREN" },
 	{ 0 }
 };
 
@@ -53,25 +53,33 @@ static void Sync(void) {
 	setchr1(0x1C00, chr[7]);
 
 	if (iNESCart.submapper != 1) {
-		switch((prg[0] >> 6) & 0x03) {
-		case 0: setmirror(MI_0); break;
-		case 1: setmirror(MI_V); break;
-		case 2: setmirror(MI_H); break;
-		case 3: setmirror(MI_0); break;
+		switch ((prg[0] >> 6) & 0x03) {
+		case 0:
+			setmirror(MI_0);
+			break;
+		case 1:
+			setmirror(MI_V);
+			break;
+		case 2:
+			setmirror(MI_H);
+			break;
+		case 3:
+			setmirror(MI_0);
+			break;
 		}
 	}
 }
 
 static DECLFR(AWRAM) {
-    A = ((A - 0x6000) & (WRAMSIZE -1));
+	A = ((A - 0x6000) & (WRAMSIZE - 1));
 	return WRAM[A];
 }
 
 static DECLFW(BWRAM) {
-    if (wram_enable) {
-        A = ((A - 0x6000) & (WRAMSIZE -1));
-	    WRAM[A] = V;
-    }
+	if (wram_enable) {
+		A = ((A - 0x6000) & (WRAMSIZE - 1));
+		WRAM[A] = V;
+	}
 }
 
 static DECLFW(M210Write) {
@@ -101,9 +109,15 @@ static DECLFW(M210Write) {
 
 static void M210Power(void) {
 	int i;
-	for (i = 0; i < 4; i++) prg[i] = 0xFC | i;
-	for (i = 0; i < 4; i++) chr[0 | i] = 0 | i;
-	for (i = 0; i < 4; i++) chr[4 | i] = 4 | i;
+	for (i = 0; i < 4; i++) {
+		prg[i] = 0xFC | i;
+	}
+	for (i = 0; i < 4; i++) {
+		chr[0 | i] = 0 | i;
+	}
+	for (i = 0; i < 4; i++) {
+		chr[4 | i] = 4 | i;
+	}
 	wram_enable = 0;
 	Sync();
 
@@ -111,10 +125,10 @@ static void M210Power(void) {
 	SetWriteHandler(0x8000, 0xffff, M210Write);
 
 	if (WRAM) {
-        SetReadHandler(0x6000, 0x7FFF, AWRAM);
-	    SetWriteHandler(0x6000, 0x7FFF, BWRAM);
-	    FCEU_CheatAddRAM(8, 0x6000, WRAM);
-    }
+		SetReadHandler(0x6000, 0x7FFF, AWRAM);
+		SetWriteHandler(0x6000, 0x7FFF, BWRAM);
+		FCEU_CheatAddRAM(8, 0x6000, WRAM);
+	}
 
 	if (WRAM && !iNESCart.battery) {
 		FCEU_MemoryRand(WRAM, sizeof(WRAM));
@@ -128,19 +142,19 @@ static void StateRestore(int version) {
 void Mapper210_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	info->Power = M210Power;
-    AddExState(StateRegs, ~0, 0, NULL);
+	AddExState(StateRegs, ~0, 0, NULL);
 
-    WRAMSIZE = 8192;
-    if (info->iNES2) {
-        WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
-    }
+	WRAMSIZE = 8192;
+	if (info->iNES2) {
+		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
+	}
 
-    if (WRAMSIZE) {
-        WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
-	    AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-        if (info->battery) {
-            info->SaveGame[0] = WRAM;
-            info->SaveGameLen[0] = WRAMSIZE;
-        }
-    }
+	if (WRAMSIZE) {
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+		if (info->battery) {
+			info->SaveGame[0] = WRAM;
+			info->SaveGameLen[0] = WRAMSIZE;
+		}
+	}
 }

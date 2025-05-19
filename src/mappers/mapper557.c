@@ -24,20 +24,20 @@
 #include "n118.h"
 
 static void M557SyncPRG(void) {
-    setprg8r(0x10, 0x6000, 0);
-    setprg8(0x8000, n118.reg[6] & 0x0F);
-    setprg8(0xA000, n118.reg[7] & 0x0F);
-    setprg8(0xC000, ~1);
-    setprg8(0xE000, ~0);
+	setprg8r(0x10, 0x6000, 0);
+	setprg8(0x8000, n118.reg[6] & 0x0F);
+	setprg8(0xA000, n118.reg[7] & 0x0F);
+	setprg8(0xC000, ~1);
+	setprg8(0xE000, ~0);
 }
 
 static void M557SyncCHR(void) {
 	setchr8(0);
-    setmirror(((n118.reg[5] >> 5) & 0x01) ^ 0x01);
+	setmirror(((n118.reg[5] >> 5) & 0x01) ^ 0x01);
 }
 
 void Mapper557_Init(CartInfo *info) {
 	N118_Init(info, 8, 0);
-    N118_SyncPRG = M557SyncPRG;
+	N118_SyncPRG = M557SyncPRG;
 	N118_SyncCHR = M557SyncCHR;
 }

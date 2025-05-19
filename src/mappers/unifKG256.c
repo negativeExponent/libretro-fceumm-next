@@ -25,38 +25,33 @@
 
 static uint8 regs[4];
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ regs, 4, "REGS" },
 	{ 0 }
 };
 
-static void Sync(void)
-{
-   uint8 mirr;
+static void Sync(void) {
+	uint8 mirr;
 	int r = 0;
 
 	if ((regs[1]) & 0x20)
 		r = 1;
-	if ((regs[1] >> 4) & 0x01)
-	{
+	if ((regs[1] >> 4) & 0x01) {
 		setprg16(0x8000, (regs[1] & 0x07) | (r << 3));
 		setprg16(0xC000, (regs[1] & 0x07) | (r << 3));
 		setchr8((regs[0] & 0x07) | (r << 3));
-	}
-	else
-	{
+	} else {
 		setprg32(0x8000, ((regs[1] >> 1) & 0x03) | (r << 2));
 		setchr8((regs[2] & 0x01) | (r << 3));
 	}
 
 	mirr = (((regs[0] >> 4) & 0x1));
 
-	if (mirr)
+	if (mirr) {
 		setmirror(0);
-	else
+	} else {
 		setmirror(1);
-
+	}
 }
 
 static DECLFW(KG256WriteHi) {
@@ -81,7 +76,6 @@ static void KG256Power(void) {
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 
 	Sync();
-
 }
 
 static void StateRestore(int version) {
@@ -89,7 +83,6 @@ static void StateRestore(int version) {
 }
 
 static void KG256Reset(void) {
-	
 	regs[0] = 0;
 	regs[1] = 0;
 	regs[2] = 0;
@@ -106,6 +99,3 @@ void KG256_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 	GameStateRestore = StateRestore;
 }
-
-
-

@@ -53,7 +53,7 @@ static DECLFW(M262Write) {
 
 static DECLFR(M262Read) {
 	if (A & 0x100) {
-		return(dipsw);
+		return (dipsw);
 	}
 	return cpu.openbus;
 }
@@ -83,7 +83,7 @@ void Mapper262_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

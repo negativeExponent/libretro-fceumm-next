@@ -33,10 +33,10 @@ static void M430PW(uint16 A, uint16 V) {
 	uint8 base = (reg << 4) & 0x30;
 
 	if (reg & 0x08) {
-		setprg8(0x8000, (base | ((mmc3.reg[6] & ~0x02) & mask)));
-		setprg8(0xA000, (base | ((mmc3.reg[7] & ~0x02) & mask)));
-		setprg8(0xC000, (base | ((mmc3.reg[6] |  0x02) & mask)));
-		setprg8(0xE000, (base | ((mmc3.reg[7] |  0x02) & mask)));
+		setprg8(0x8000, (base | ((mmc3.reg[6] & 0xFD) & mask)));
+		setprg8(0xA000, (base | ((mmc3.reg[7] & 0xFD) & mask)));
+		setprg8(0xC000, (base | ((mmc3.reg[6] | 0x02) & mask)));
+		setprg8(0xE000, (base | ((mmc3.reg[7] | 0x02) & mask)));
 	} else {
 		setprg8(A, (base | (V & mask)));
 	}
@@ -50,10 +50,10 @@ static void M430CW(uint16 A, uint16 V) {
 
 static DECLFW(M430Write) {
 	if (MMC3_WramIsWritable()) {
-	    reg = A & 0xFF;
-	    MMC3_SyncPRG();        
-	    MMC3_SyncCHR();
-    }
+		reg = A & 0xFF;
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+	}
 }
 
 static void M430Reset(void) {

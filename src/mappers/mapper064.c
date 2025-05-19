@@ -21,7 +21,7 @@
 
 /* Mapper 64 - 	Tengen 800032 Rambo-1
  * Mapper 158 -	Tengen 800037 (Alien Syndrome Unl)
-*/
+ */
 
 #include "mapinc.h"
 
@@ -44,22 +44,22 @@ static uint8 IRQReload;
 static void (*M064_SyncMirror)(void);
 
 static SFORMAT StateRegs[] = {
-	{ prg,            4, "PREG" },
-	{ chr,            8, "CREG" },
-	{ &cmd,           1, "CMDR" },
-	{ &mirr,          1, "MIRR" },
+	{ prg, 4, "PREG" },
+	{ chr, 8, "CREG" },
+	{ &cmd, 1, "CMDR" },
+	{ &mirr, 1, "MIRR" },
 
-	{ &IRQa,          1, "IRQA" },
-	{ &IRQPrescaler,  1, "IQPR" },
-	{ &IRQCount,      1, "IRQC" },
-	{ &IRQLatch,      1, "IRQL" },
+	{ &IRQa, 1, "IRQA" },
+	{ &IRQPrescaler, 1, "IQPR" },
+	{ &IRQCount, 1, "IRQC" },
+	{ &IRQLatch, 1, "IRQL" },
 	{ &IRQLatchExtra, 1, "IQLE" },
-	{ &IRQReload,     1, "IRQR" },
-	{ &IRQMode,       1, "IRQM" },
-	{ &IRQA12,        1, "IQ12" },
-	{ &IRQFilter,     1, "IRQF" },
-	{ &IRQDelay,      1, "IRQD" },
-	
+	{ &IRQReload, 1, "IRQR" },
+	{ &IRQMode, 1, "IRQM" },
+	{ &IRQA12, 1, "IQ12" },
+	{ &IRQFilter, 1, "IRQF" },
+	{ &IRQDelay, 1, "IRQD" },
+
 	{ 0 }
 };
 

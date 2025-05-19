@@ -25,8 +25,8 @@
 static uint8 reg[2];
 
 static SFORMAT StateRegs[] = {
-    { reg, 2, "REGS" },
-    { 0 }
+	{ reg, 2, "REGS" },
+	{ 0 }
 };
 
 static void Sync(void) {
@@ -40,11 +40,11 @@ static void Sync(void) {
 		setprg16(0xC000, (reg[0] << 3) + mask);
 	}
 	setchr8(0);
-    if (reg[1] & 0x02) {
-        setmirror(MI_0 + ((latch.data >> 4) & 0x01));
-    } else {
-	    setmirror(reg[1] & 0x01);
-    }
+	if (reg[1] & 0x02) {
+		setmirror(MI_0 + ((latch.data >> 4) & 0x01));
+	} else {
+		setmirror(reg[1] & 0x01);
+	}
 }
 
 static DECLFW(M502WriteReg) {
@@ -55,10 +55,10 @@ static DECLFW(M502WriteReg) {
 }
 
 static void M502Power(void) {
-    reg[0] = reg[1] = 0;
+	reg[0] = reg[1] = 0;
 	Latch_Power();
 	SetReadHandler(0x7000, 0x7FFF, CartBR);
-    SetWriteHandler(0x6000, 0x6FFF, M502WriteReg);
+	SetWriteHandler(0x6000, 0x6FFF, M502WriteReg);
 }
 
 static void M502Reset(void) {
@@ -70,5 +70,5 @@ void Mapper502_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Power = M502Power;
 	info->Reset = M502Reset;
-    AddExState(StateRegs, ~0, 0, NULL);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

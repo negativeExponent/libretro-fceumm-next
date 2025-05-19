@@ -30,20 +30,20 @@ static uint8 cpuC;
 
 static SFORMAT StateRegs[] = {
 	{ &cpuC, 1, "CPUC" },
-    { nt, 4, "NTBL" },
-	{ 0 },
+	{ nt, 4, "NTBL" },
+	{ 0 }
 };
 
 static void M559PW(uint16 A, uint16 V) {
-    if (A == 0xC000) {
-        setprg8(A, cpuC & 0x1F);
-    } else {
-        setprg8(A, V & 0x1F);
-    }
+	if (A == 0xC000) {
+		setprg8(A, cpuC & 0x1F);
+	} else {
+		setprg8(A, V & 0x1F);
+	}
 }
 
 static void M559CW(uint16 A, uint16 V) {
-    setchr1(A, V & 0x1FF);
+	setchr1(A, V & 0x1FF);
 }
 
 static void M559MIRR(void) {
@@ -61,29 +61,29 @@ static DECLFW(M559WriteMisc) {
 }
 
 static DECLFW(M559WriteNibble) {
-    /* nibblize address */
-    if (A & 0x400) {
-        V >>= 4;
-    }
-    VRC24_Write(A, V);
+	/* nibblize address */
+	if (A & 0x400) {
+		V >>= 4;
+	}
+	VRC24_Write(A, V);
 }
 
 static void M559Power(void) {
-    nt[0] = 0;
-    nt[1] = 0;
-    nt[2] = 1;
-    nt[3] = 1;
-    cpuC = ~1;
-    VRC24_Power();
-    SetWriteHandler(0xB000, 0xFFFF, M559WriteNibble);
+	nt[0] = 0;
+	nt[1] = 0;
+	nt[2] = 1;
+	nt[3] = 1;
+	cpuC = ~1;
+	VRC24_Power();
+	SetWriteHandler(0xB000, 0xFFFF, M559WriteNibble);
 }
 
 void Mapper559_Init(CartInfo *info) {
-    VRC24_Init(info, VRC24_VRC4, 0x400, 0x800, 1, 1);
-    info->Power = M559Power;
-    VRC24_SyncMirror = M559MIRR;
-    VRC24_pwrap = M559PW;
-    VRC24_cwrap = M559CW;
-    VRC24_WriteExtSelect = M559WriteMisc;
+	VRC24_Init(info, VRC24_VRC4, 0x400, 0x800, 1, 1);
+	info->Power = M559Power;
+	VRC24_SyncMirror = M559MIRR;
+	VRC24_pwrap = M559PW;
+	VRC24_cwrap = M559CW;
+	VRC24_WriteExtSelect = M559WriteMisc;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

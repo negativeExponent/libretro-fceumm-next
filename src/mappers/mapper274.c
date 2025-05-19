@@ -1,6 +1,6 @@
 /* FCEUmm - NES/Famicom Emulator
  *
- * Copyright notice for this file: 
+ * Copyright notice for this file:
  *  Copyright (C) 2019 Libretro Team
  *  Copyright (C) 2023-2024 negativeExponent
  *
@@ -23,7 +23,7 @@
  * Its UNIF board name is BMC-80013-B.
  * https://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_274 */
 
- /* 2020-03-22 - Update support for Cave Story II, FIXME: Arabian does not work for some reasons... */
+/* 2020-03-22 - Update support for Cave Story II, FIXME: Arabian does not work for some reasons... */
 
 #include "mapinc.h"
 

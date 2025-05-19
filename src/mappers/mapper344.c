@@ -30,7 +30,7 @@ static uint8 reg;
 
 static uint8 prg_bank_order[2][4] = {
 	{ 0, 1, 2, 3 }, /* normal bank order */
-	{ 0, 3, 1, 2 }  /* wrong bank order, added for compatibility */
+	{ 0, 3, 1, 2 } /* wrong bank order, added for compatibility */
 };
 
 static void M344CW(uint16 A, uint16 V) {

@@ -77,7 +77,7 @@ static DECLFW(M040Write) {
 }
 
 static void M040Power(void) {
-	reg[0] =  reg[1] = 0;
+	reg[0] = reg[1] = 0;
 	IRQCount = IRQa = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);

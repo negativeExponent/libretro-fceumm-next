@@ -22,14 +22,14 @@
 #include "latch.h"
 
 static void Sync(void) {
-    if (latch.addr & 0x80) {
-        setprg32(0x8000, (latch.addr >> 5) & 0x03);
-    } else {
-        setprg16(0x8000, (latch.addr >> 4) & 0x07);
-        setprg16(0xC000, (latch.addr >> 4) & 0x07);
-    }
+	if (latch.addr & 0x80) {
+		setprg32(0x8000, (latch.addr >> 5) & 0x03);
+	} else {
+		setprg16(0x8000, (latch.addr >> 4) & 0x07);
+		setprg16(0xC000, (latch.addr >> 4) & 0x07);
+	}
 	setchr8((latch.addr >> 1) & 0x07);
-    setmirror((latch.addr & 0x01) ^ 0x01);
+	setmirror((latch.addr & 0x01) ^ 0x01);
 }
 
 void Mapper174_Init(CartInfo *info) {

@@ -29,7 +29,7 @@ static uint8 reg;
 
 static SFORMAT StateRegs[] = {
 	{ &reg, 1, "REGS" },
-	{ 0 },
+	{ 0 }
 };
 
 static void M448SyncPRG(void) {

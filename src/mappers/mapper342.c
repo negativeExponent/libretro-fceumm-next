@@ -1,144 +1,144 @@
 /* FCEUmm - NES/Famicom Emulator
-*
-* Copyright notice for this file:
-*  Copyright (C) 2022 Cluster
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
-*
-* Very complicated homebrew multicart mapper with.
-* The code is so obscured and weird because it's ported from Verilog CPLD source code:
-* https://github.com/ClusterM/coolgirl-famicom-multicart/blob/master/CoolGirl_mappers.vh
-*
-* Range: $5000-$5FFF
-*
-* Mask: $5007
-*
-* All registers are $00 on power-on and reset.
-*
-* $5xx0
-* 7  bit  0
-* ---- ----
-* PPPP PPPP
-* |||| ||||
-* ++++-++++-- PRG base offset (A29-A22)
-*
-* $5xx1
-* 7  bit  0
-* ---- ----
-* PPPP PPPP
-* |||| ||||
-* ++++-++++-- PRG base offset (A21-A14)
-*
-* $5xx2
-* 7  bit  0
-* ---- ----
-* AMMM MMMM
-* |||| ||||
-* |+++-++++-- PRG mask (A20-A14, inverted+anded with PRG address)
-* +---------- CHR mask (A18, inverted+anded with CHR address)
-*
-* $5xx3
-* 7  bit  0
-* ---- ----
-* BBBC CCCC
-* |||| ||||
-* |||+-++++-- CHR bank A (bits 7-3)
-* +++-------- PRG banking mode (see below)
-*
-* $5xx4
-* 7  bit  0
-* ---- ----
-* DDDE EEEE
-* |||| ||||
-* |||+-++++-- CHR mask (A17-A13, inverted+anded with CHR address)
-* +++-------- CHR banking mode (see below)
-*
-* $5xx5
-* 7  bit  0
-* ---- ----
-* CDDE EEWW
-* |||| ||||
-* |||| ||++-- 8KiB WRAM page at $6000-$7FFF
-* |+++-++---- PRG bank A (bits 5-1)
-* +---------- CHR bank A (bit 8)
-*
-* $5xx6
-* 7  bit  0
-* ---- ----
-* FFFM MMMM
-* |||| ||||
-* |||+ ++++-- Mapper code (bits 4-0, see below)
-* +++-------- Flags 2-0, functionality depends on selected mapper
-*
-* $5xx7
-* 7  bit  0
-* ---- ----
-* LMTR RSNO
-* |||| |||+-- Enable WRAM (read and write) at $6000-$7FFF
-* |||| ||+--- Allow writes to CHR RAM
-* |||| |+---- Allow writes to flash chip
-* |||+-+----- Mirroring (00=vertical, 01=horizontal, 10=1Sa, 11=1Sb)
-* ||+-------- Enable four-screen mode
-* |+-- ------ Mapper code (bit 5, see below)
-* +---------- Lockout bit (prevent further writes to all registers)
-*
-*/
+ *
+ * Copyright notice for this file:
+ *  Copyright (C) 2022 Cluster
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ * Very complicated homebrew multicart mapper with.
+ * The code is so obscured and weird because it's ported from Verilog CPLD source code:
+ * https://github.com/ClusterM/coolgirl-famicom-multicart/blob/master/CoolGirl_mappers.vh
+ *
+ * Range: $5000-$5FFF
+ *
+ * Mask: $5007
+ *
+ * All registers are $00 on power-on and reset.
+ *
+ * $5xx0
+ * 7  bit  0
+ * ---- ----
+ * PPPP PPPP
+ * |||| ||||
+ * ++++-++++-- PRG base offset (A29-A22)
+ *
+ * $5xx1
+ * 7  bit  0
+ * ---- ----
+ * PPPP PPPP
+ * |||| ||||
+ * ++++-++++-- PRG base offset (A21-A14)
+ *
+ * $5xx2
+ * 7  bit  0
+ * ---- ----
+ * AMMM MMMM
+ * |||| ||||
+ * |+++-++++-- PRG mask (A20-A14, inverted+anded with PRG address)
+ * +---------- CHR mask (A18, inverted+anded with CHR address)
+ *
+ * $5xx3
+ * 7  bit  0
+ * ---- ----
+ * BBBC CCCC
+ * |||| ||||
+ * |||+-++++-- CHR bank A (bits 7-3)
+ * +++-------- PRG banking mode (see below)
+ *
+ * $5xx4
+ * 7  bit  0
+ * ---- ----
+ * DDDE EEEE
+ * |||| ||||
+ * |||+-++++-- CHR mask (A17-A13, inverted+anded with CHR address)
+ * +++-------- CHR banking mode (see below)
+ *
+ * $5xx5
+ * 7  bit  0
+ * ---- ----
+ * CDDE EEWW
+ * |||| ||||
+ * |||| ||++-- 8KiB WRAM page at $6000-$7FFF
+ * |+++-++---- PRG bank A (bits 5-1)
+ * +---------- CHR bank A (bit 8)
+ *
+ * $5xx6
+ * 7  bit  0
+ * ---- ----
+ * FFFM MMMM
+ * |||| ||||
+ * |||+ ++++-- Mapper code (bits 4-0, see below)
+ * +++-------- Flags 2-0, functionality depends on selected mapper
+ *
+ * $5xx7
+ * 7  bit  0
+ * ---- ----
+ * LMTR RSNO
+ * |||| |||+-- Enable WRAM (read and write) at $6000-$7FFF
+ * |||| ||+--- Allow writes to CHR RAM
+ * |||| |+---- Allow writes to flash chip
+ * |||+-+----- Mirroring (00=vertical, 01=horizontal, 10=1Sa, 11=1Sb)
+ * ||+-------- Enable four-screen mode
+ * |+-- ------ Mapper code (bit 5, see below)
+ * +---------- Lockout bit (prevent further writes to all registers)
+ *
+ */
 
 #include "mapinc.h"
 
-#define SAVE_FLASH_SIZE   (1024 * 1024 * 8)
+#define SAVE_FLASH_SIZE	  (1024 * 1024 * 8)
 #define FLASH_SECTOR_SIZE (128 * 1024)
-#define ROM_CHIP          0x00
-#define WRAM_CHIP         0x10
-#define FLASH_CHIP        0x11
-#define CFI_CHIP          0x13
+#define ROM_CHIP		  0x00
+#define WRAM_CHIP		  0x10
+#define FLASH_CHIP		  0x11
+#define CFI_CHIP		  0x13
 
 static uint32 CHR_SIZE = 0;
 static uint8 *SAVE_FLASH = NULL;
 static uint8 *CFI = NULL;
 
 static uint8 sram_enabled = 0;
-static uint8 sram_page = 0;						/* [1:0] */
+static uint8 sram_page = 0; /* [1:0] */
 static uint8 can_write_chr = 0;
 static uint8 map_rom_on_6000 = 0;
-static uint8 flags = 0;							/* [2:0] */
-static uint8 mapper = 0;						/* [5:0] */
+static uint8 flags = 0;  /* [2:0] */
+static uint8 mapper = 0; /* [5:0] */
 static uint8 can_write_flash = 0;
-static uint8 mirroring = 0;						/* [1:0] */
+static uint8 mirroring = 0; /* [1:0] */
 static uint8 four_screen = 0;
 static uint8 lockout = 0;
 
-static uint32 prg_base = 0;						/* [26:14] */
-static uint32 prg_mask = 0xF8;  				/* 11111000, 128KB	 */	/* [20:14] */
-static uint8 prg_mode = 0;						/* [2:0] */
-static uint8 prg_bank_6000 = 0;					/* [7:0] */
-static uint8 prg_bank_a = 0;					/* [7:0] */
-static uint8 prg_bank_b = 1;					/* [7:0] */
-static uint8 prg_bank_c = ~1;					/* [7:0] */
-static uint8 prg_bank_d = ~0;					/* [7:0] */
+static uint32 prg_base = 0;     /* [26:14] */
+static uint32 prg_mask = 0xF8;  /* [20:14] */
+static uint8 prg_mode = 0;      /* [2:0] */
+static uint8 prg_bank_6000 = 0; /* [7:0] */
+static uint8 prg_bank_a = 0;    /* [7:0] */
+static uint8 prg_bank_b = 1;    /* [7:0] */
+static uint8 prg_bank_c = ~1;   /* [7:0] */
+static uint8 prg_bank_d = ~0;   /* [7:0] */
 
-static uint32 chr_mask = 0;						/* [18:13] */
-static uint8 chr_mode = 0;						/* [2:0] */
-static uint16 chr_bank_a = 0;					/* [8:0] */
-static uint16 chr_bank_b = 1;					/* [8:0] */
-static uint16 chr_bank_c = 2;					/* [8:0] */
-static uint16 chr_bank_d = 3;					/* [8:0] */
-static uint16 chr_bank_e = 4;					/* [8:0] */
-static uint16 chr_bank_f = 5;					/* [8:0] */
-static uint16 chr_bank_g = 6;					/* [8:0] */
-static uint16 chr_bank_h = 7;					/* [8:0] */
+static uint32 chr_mask = 0;   /* [18:13] */
+static uint8 chr_mode = 0;    /* [2:0] */
+static uint16 chr_bank_a = 0; /* [8:0] */
+static uint16 chr_bank_b = 1; /* [8:0] */
+static uint16 chr_bank_c = 2; /* [8:0] */
+static uint16 chr_bank_d = 3; /* [8:0] */
+static uint16 chr_bank_e = 4; /* [8:0] */
+static uint16 chr_bank_f = 5; /* [8:0] */
+static uint16 chr_bank_g = 6; /* [8:0] */
+static uint16 chr_bank_h = 7; /* [8:0] */
 
 static uint8 TKSMIR[8];
 
@@ -153,61 +153,61 @@ static uint8 ppu_latch0 = 0;
 static uint8 ppu_latch1 = 0;
 /* for MMC1 */
 static uint64 lreset = 0;
-static uint8 mmc1_load_register = 0;			/* [5:0] */
+static uint8 mmc1_load_register = 0; /* [5:0] */
 /* for MMC3 */
-static uint8 mmc3_internal = 0;					/* [2:0] */
+static uint8 mmc3_internal = 0; /* [2:0] */
 /* for mapper #69 */
-static uint8 mapper69_internal = 0;				/* [3:0] */
+static uint8 mapper69_internal = 0; /* [3:0] */
 /* for mapper #112 */
-static uint8 mapper112_internal = 0;			/* [2:0] */
+static uint8 mapper112_internal = 0; /* [2:0] */
 /* for mapper #163 */
 static uint8 mapper163_latch = 0;
-static uint8 mapper163_r0 = 0;					/* [7:0] */
-static uint8 mapper163_r1 = 0;					/* [7:0] */
-static uint8 mapper163_r2 = 0;					/* [7:0] */
-static uint8 mapper163_r3 = 0;					/* [7:0] */
-static uint8 mapper163_r4 = 0;					/* [7:0] */
-static uint8 mapper163_r5 = 0;					/* [7:0] */
+static uint8 mapper163_r0 = 0; /* [7:0] */
+static uint8 mapper163_r1 = 0; /* [7:0] */
+static uint8 mapper163_r2 = 0; /* [7:0] */
+static uint8 mapper163_r3 = 0; /* [7:0] */
+static uint8 mapper163_r4 = 0; /* [7:0] */
+static uint8 mapper163_r5 = 0; /* [7:0] */
 
 /* For mapper #90 */
 static uint8 mul1 = 0;
 static uint8 mul2 = 0;
 
 /* for MMC3 scanline-based interrupts, counts A12 rises after long A12 falls */
-static uint8 mmc3_irq_enabled = 0;				/* register to enable/disable counter */
-static uint8 mmc3_irq_latch = 0;				/* [7:0], stores counter reload latch value */
-static uint8 mmc3_irq_counter = 0;				/* [7:0], counter itself (downcounting) */
-static uint8 mmc3_irq_reload = 0;				/* flag to reload counter from latch */
+static uint8 mmc3_irq_enabled = 0; /* register to enable/disable counter */
+static uint8 mmc3_irq_latch = 0;   /* [7:0], stores counter reload latch value */
+static uint8 mmc3_irq_counter = 0; /* [7:0], counter itself (downcounting) */
+static uint8 mmc3_irq_reload = 0;  /* flag to reload counter from latch */
 /* for MMC5 scanline-based interrupts, counts dummy PPU reads */
-static uint8 mmc5_irq_enabled = 0;				/* register to enable/disable counter */
-static uint8 mmc5_irq_line = 0;					/* [7:0], scanline on which IRQ will be triggered */
-static uint8 mmc5_irq_out = 0;					/* stores 1 when IRQ is triggered */
+static uint8 mmc5_irq_enabled = 0; /* register to enable/disable counter */
+static uint8 mmc5_irq_line = 0;    /* [7:0], scanline on which IRQ will be triggered */
+static uint8 mmc5_irq_out = 0;     /* stores 1 when IRQ is triggered */
 /* for mapper #18 */
-static uint16 mapper18_irq_value = 0;			/* [15:0], counter itself (downcounting) */
-static uint8 mapper18_irq_control = 0;			/* [3:0], IRQ settings */
-static uint16 mapper18_irq_latch = 0;			/* [15:0], stores counter reload latch value */
+static uint16 mapper18_irq_value = 0;  /* [15:0], counter itself (downcounting) */
+static uint8 mapper18_irq_control = 0; /* [3:0], IRQ settings */
+static uint16 mapper18_irq_latch = 0;  /* [15:0], stores counter reload latch value */
 /* for mapper #65 */
-static uint8 mapper65_irq_enabled = 0;			/* register to enable/disable IRQ */
-static uint16 mapper65_irq_value = 0;			/* [15:0], counter itself (downcounting) */
-static uint16 mapper65_irq_latch = 0;			/* [15:0], stores counter reload latch value  */
+static uint8 mapper65_irq_enabled = 0; /* register to enable/disable IRQ */
+static uint16 mapper65_irq_value = 0;  /* [15:0], counter itself (downcounting) */
+static uint16 mapper65_irq_latch = 0;  /* [15:0], stores counter reload latch value  */
 /* reg mapper65_irq_out = 0; */
 /* for Sunsoft FME-7 */
-static uint8 mapper69_irq_enabled = 0;			/* register to enable/disable IRQ */
-static uint8 mapper69_counter_enabled = 0;		/* register to enable/disable counter */
-static uint16 mapper69_irq_value = 0;			/* counter itself (downcounting) */
+static uint8 mapper69_irq_enabled = 0;     /* register to enable/disable IRQ */
+static uint8 mapper69_counter_enabled = 0; /* register to enable/disable counter */
+static uint16 mapper69_irq_value = 0;      /* counter itself (downcounting) */
 /* for VRC4 CPU-based interrupts */
-static uint8 vrc4_irq_value = 0;				/* [7:0], counter itself (upcounting) */
-static uint8 vrc4_irq_control = 0;				/* [2:0]� IRQ settings */
-static uint8 vrc4_irq_latch = 0;				/* [7:0], stores counter reload latch value */
-static uint8 vrc4_irq_prescaler = 0;			/* [6:0], prescaler counter for VRC4 */
-static uint8 vrc4_irq_prescaler_counter = 0;	/* prescaler cicles counter for VRC4 */
+static uint8 vrc4_irq_value = 0;             /* [7:0], counter itself (upcounting) */
+static uint8 vrc4_irq_control = 0;           /* [2:0]� IRQ settings */
+static uint8 vrc4_irq_latch = 0;             /* [7:0], stores counter reload latch value */
+static uint8 vrc4_irq_prescaler = 0;         /* [6:0], prescaler counter for VRC4 */
+static uint8 vrc4_irq_prescaler_counter = 0; /* prescaler cicles counter for VRC4 */
 /* for VRC3 CPU-based interrupts */
-static uint16 vrc3_irq_value = 0;				/* [15:0], counter itself (upcounting) */
-static uint8 vrc3_irq_control = 0;				/* [3:0], IRQ settings */
-static uint16 vrc3_irq_latch = 0;				/* [15:0], stores counter reload latch value */
+static uint16 vrc3_irq_value = 0;  /* [15:0], counter itself (upcounting) */
+static uint8 vrc3_irq_control = 0; /* [3:0], IRQ settings */
+static uint16 vrc3_irq_latch = 0;  /* [15:0], stores counter reload latch value */
 /* for mapper #42 (only Baby Mario) */
-static uint8 mapper42_irq_enabled = 0;			/* register to enable/disable counter */
-static uint16 mapper42_irq_value = 0;			/* [14:0], counter itself (upcounting) */
+static uint8 mapper42_irq_enabled = 0; /* register to enable/disable counter */
+static uint16 mapper42_irq_value = 0;  /* [14:0], counter itself (upcounting) */
 /* for mapper #83 */
 static uint8 mapper83_irq_enabled_latch = 0;
 static uint8 mapper83_irq_enabled = 0;
@@ -1031,7 +1031,7 @@ static DECLFW(M342Write) {
 			case 29: /* $B005 */
 				chr_bank_f = V;
 				break;
-			case 30:/* $B006 */
+			case 30: /* $B006 */
 				chr_bank_g = V;
 				break;
 			case 31: /* $B007 */
@@ -1055,15 +1055,14 @@ static DECLFW(M342Write) {
 				prg_mode = 0;
 				prg_bank_c = (prg_bank_c & 0xE0) | 0x1E;
 			} else {
-				mmc1_load_register = (mmc1_load_register & 0xC0) | ((V & 0x01) << 5) |
-					((mmc1_load_register & 0x3E) >> 1);
+				mmc1_load_register = (mmc1_load_register & 0xC0) | ((V & 0x01) << 5) | ((mmc1_load_register & 0x3E) >> 1);
 				if (mmc1_load_register & 0x01) {
 					switch (A & 0xE000) {
 					case 0x8000:
 						if ((mmc1_load_register & 0x18) == 0x18) {
 							prg_mode = 0;
 							prg_bank_c = (prg_bank_c & 0xE1) | 0x1E;
-						} else if ((mmc1_load_register & 0x18) == 0x10)	{
+						} else if ((mmc1_load_register & 0x18) == 0x10) {
 							prg_mode = 1;
 							prg_bank_c = (prg_bank_c & 0xE1);
 						} else {
@@ -1103,7 +1102,7 @@ static DECLFW(M342Write) {
 		/* flag0 - 0=MMC2, 1=MMC4 */
 		if (mapper == 17) {
 			switch ((A >> 12) & 0x07) {
-			case 2:  /* $A000-$AFFF */
+			case 2: /* $A000-$AFFF */
 				if (!(flags & 0x01)) {
 					/* MMC2 */
 					prg_bank_a = (prg_bank_a & 0xF0) | (V & 0x0F);
@@ -1259,7 +1258,7 @@ static DECLFW(M342Write) {
 				mapper112_internal = (mapper112_internal & 0xF8) | (V & 0x07);
 				break;
 			case 0xA000:
-				switch (mapper112_internal & 0x07)	{
+				switch (mapper112_internal & 0x07) {
 				case 0:
 					prg_bank_a = (prg_bank_a & 0xC0) | (V & 0x3F);
 					break;
@@ -1348,7 +1347,7 @@ static DECLFW(M342Write) {
 
 		/* Mapper #42 */
 		if (mapper == 23) {
-			switch (((A & 0x4000) >> 12) | (A & 3))	{
+			switch (((A & 0x4000) >> 12) | (A & 3)) {
 			case 0: /* $8000, CHR Reg (8k @ $8000) */
 				chr_bank_a = (chr_bank_a & 0xE0) | ((V & 0x1F) << 3);
 				break;
@@ -1393,15 +1392,15 @@ static DECLFW(M342Write) {
 					vrc_2b_low = (((A >> 6) & 0x01) | ((A >> 1) & 0x01)); /* mapper #21 */
 					break;
 				case 1:
-					vrc_2b_hi =	(A & 0x01); /* mapper #22 */
+					vrc_2b_hi = (A & 0x01); /* mapper #22 */
 					vrc_2b_low = ((A >> 1) & 0x01); /* mapper #22 */
 					break;
 				case 4:
-					vrc_2b_hi =	(((A >> 5) & 0x01) | ((A >> 3) & 0x01) | ((A >> 1) & 0x01)); /* mapper #23 */
+					vrc_2b_hi = (((A >> 5) & 0x01) | ((A >> 3) & 0x01) | ((A >> 1) & 0x01)); /* mapper #23 */
 					vrc_2b_low = (((A >> 4) & 0x01) | ((A >> 2) & 0x01) | (A & 0x01)); /* mapper #23 */
 					break;
 				default:
-					vrc_2b_hi =	(((A >> 2) & 0x01) | (A & 0x01)); /* mapper #25 */
+					vrc_2b_hi = (((A >> 2) & 0x01) | (A & 0x01)); /* mapper #25 */
 					vrc_2b_low = (((A >> 3) & 0x01) | ((A >> 1) & 0x01)); /* mapper #25 */
 					break;
 				}
@@ -1427,7 +1426,7 @@ static DECLFW(M342Write) {
 			case 7:
 				prg_mode = (prg_mode & 0xFE) | ((V >> 1) & 0x01);
 				break;
-			case 8:	/* $A000-$A003, PRG1 */
+			case 8: /* $A000-$A003, PRG1 */
 			case 9:
 			case 10:
 			case 11:
@@ -1483,7 +1482,7 @@ static DECLFW(M342Write) {
 				break;
 			}
 			if ((A & 0x7000) == 0x7000) {
-				switch (vrc_2b_addr)	{
+				switch (vrc_2b_addr) {
 				case 0: /* IRQ latch low */
 					vrc4_irq_latch = (vrc4_irq_latch & 0xF0) | (V & 0x0F);
 					break;
@@ -1564,7 +1563,7 @@ static DECLFW(M342Write) {
 				case 14: /* IRQ low */
 					mapper69_irq_value = (mapper69_irq_value & 0xFF00) | V;
 					break;
-				case 15:  /* IRQ high */
+				case 15: /* IRQ high */
 					mapper69_irq_value = (mapper69_irq_value & 0x00FF) | (V << 8);
 					break;
 				}
@@ -1832,7 +1831,7 @@ static DECLFR(M342Read) {
 	}
 
 	/* Mapper #36 is assigned to TXC's PCB 01-22000-400 */
-	if ((mapper == 29) && ((A & 0xE100) == 0x4100))	{
+	if ((mapper == 29) && ((A & 0xE100) == 0x4100)) {
 		return (prg_bank_a & 0x0C) << 2;
 	}
 
@@ -2182,7 +2181,7 @@ void Mapper342_Init(CartInfo *info) {
 	case 0x7B85868B: /* (Yhc-4006-00) Super Konami 80-in-1.nes */
 	case 0x2F0D22CD: /* (Yhc-BS-8165-01) Super Plane Game 11-in-1.nes */
 	case 0x242B9218: /* (Yhc-CK-124-07) Super Konami 3-in-1.nes */
-		case 0x94D8A822: /* MMK-034-01 */
+	case 0x94D8A822: /* MMK-034-01 */
 	case 0xFF50D601: /* MMK-02A-03 */
 	case 0xD12DF3B3: /* MMK-02A-04 */
 	case 0xACB76337: /* 101-in-1 */

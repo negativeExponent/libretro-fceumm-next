@@ -23,7 +23,7 @@
  * (A0/A1, VRC4f) with the PRG and CHR address lines scrambled: PRG A14 is
  * swapped with PRG A16, and CHR A15 is swapped with CHR A16. Its UNIF board
  * name is UNL-AX5705.
- * 
+ *
  * Super Bros. Pocker Mali (VRC4 mapper)
  */
 

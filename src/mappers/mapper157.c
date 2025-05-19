@@ -61,14 +61,21 @@ int FCEUI_DatachSet(uint8 *rcode) {
 	int len;
 
 	for (i = len = 0; i < 13; i++) {
-		if (!rcode[i]) break;
-		if ((code[i] = rcode[i] - '0') > 9)
-			return(0);
+		if (!rcode[i]) {
+			break;
+		}
+		if ((code[i] = rcode[i] - '0') > 9) {
+			return (0);
+		}
 		len++;
 	}
-	if (len != 13 && len != 12 && len != 8 && len != 7) return(0);
+	if (len != 13 && len != 12 && len != 8 && len != 7) {
+		return (0);
+	}
 
-	#define BS(x) BarcodeData[tmp_p] = x; tmp_p++
+#define BS(x)                                                                                                                                                                                          \
+	BarcodeData[tmp_p] = x;                                                                                                                                                                            \
+	tmp_p++
 
 	for (j = 0; j < 32; j++) { /* delay before sending a code */
 		BS(0x00);
@@ -137,7 +144,7 @@ int FCEUI_DatachSet(uint8 *rcode) {
 				csum += code[i] * ((i & 1) ? 3 : 1);
 			}
 			csum = (10 - (csum % 10)) % 10;
-			rcode[12] = csum + 0x30;	/* update check code to the input string as well */
+			rcode[12] = csum + 0x30; /* update check code to the input string as well */
 			rcode[13] = 0;
 			code[12] = csum;
 		}
@@ -164,7 +171,7 @@ int FCEUI_DatachSet(uint8 *rcode) {
 			csum += (i & 1) ? code[i] : (code[i] * 3);
 		}
 		csum = (10 - (csum % 10)) % 10;
-		rcode[7] = csum + 0x30;	/* update check code to the input string as well */
+		rcode[7] = csum + 0x30; /* update check code to the input string as well */
 		rcode[8] = 0;
 		for (j = 0; j < 7; j++) {
 			BS(data_right[csum][j]);
@@ -181,12 +188,12 @@ int FCEUI_DatachSet(uint8 *rcode) {
 
 	BS(0xFF);
 
-	#undef BS
+#undef BS
 
 	BarcodeReadPos = 0;
 	BarcodeOut = 0x8;
 	BarcodeCycleCount = 0;
-	return(1);
+	return (1);
 }
 
 static uint8 latch;

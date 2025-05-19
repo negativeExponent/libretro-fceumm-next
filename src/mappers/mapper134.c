@@ -45,10 +45,10 @@ static void M134PW(uint16 A, uint16 V) {
 			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 0);
 			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 1);
 		} else { /* NROM-256 mode */
-			setprg8(0x8000, (base & ~mask) | (((mmc3.reg[6] & ~0x02) & mask) & ~1) | 0);
-			setprg8(0xA000, (base & ~mask) | (((mmc3.reg[6] & ~0x02) & mask) & ~1) | 1);
-			setprg8(0xC000, (base & ~mask) | (((mmc3.reg[6] |  0x02) & mask) & ~1) | 0);
-			setprg8(0xE000, (base & ~mask) | (((mmc3.reg[6] |  0x02) & mask) & ~1) | 1);
+			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~3) | 0);
+			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~3) | 1);
+			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~3) | 2);
+			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~3) | 3);
 		}
 	} else { /* MMC3 */
 		setprg8(A, (base & ~mask) | (V & mask));

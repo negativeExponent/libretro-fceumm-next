@@ -28,21 +28,15 @@
  *
  * 620-in-1 (Mini Games Anniversary Edition) (Unl)
  */
- 
+
 #include "mapinc.h"
 #include "onebus.h"
 
 static uint8 reg;
 
 static void Sync(void) {
-	OneBus_SyncPRG(0xF3FF, 
-		((onebus.cpu41xx[0x0F] << 5) & 0x0400) | 
-		((onebus.cpu41xx[0x00] << 5) & 0x0800)
-	);
-	OneBus_SyncCHR(0x9FFF, 
-		((onebus.cpu41xx[0x0F] << 8) & 0x2000) | 
-		((onebus.cpu41xx[0x00] << 12) & 0x4000)
-	);
+	OneBus_SyncPRG(0xF3FF, ((onebus.cpu41xx[0x0F] << 5) & 0x0400) | ((onebus.cpu41xx[0x00] << 5) & 0x0800));
+	OneBus_SyncCHR(0x9FFF, ((onebus.cpu41xx[0x0F] << 8) & 0x2000) | ((onebus.cpu41xx[0x00] << 12) & 0x4000));
 	OneBus_SyncMirror();
 }
 

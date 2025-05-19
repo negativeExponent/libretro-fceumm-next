@@ -42,14 +42,30 @@ static void M260CW(uint16 A, uint16 V) {
 	uint16 base = reg[2] & 0x7F;
 
 	switch (reg[0] & 0x07) {
-	case 0: setchr1(A, ((base << 3) & ~0xFF) | (V & 0xFF)); break;
-	case 1: setchr1(A, ((base << 3) & ~0x7F) | (V & 0x7F)); break;
-	case 2: setchr1(A, ((base << 3) & ~0xFF) | (V & 0xFF)); break;	
-	case 3: setchr1(A, ((base << 3) & ~0x7F) | (V & 0x7F)); break;
-	case 4: setchr8(base); break;
-	case 5: setchr8(base); break;
-	case 6: setchr8((base & ~0x01) | (reg[3] & 0x01)); break;
-	case 7: setchr8((base & ~0x03) | (reg[3] & 0x03)); break;
+	case 0:
+		setchr1(A, ((base << 3) & ~0xFF) | (V & 0xFF));
+		break;
+	case 1:
+		setchr1(A, ((base << 3) & ~0x7F) | (V & 0x7F));
+		break;
+	case 2:
+		setchr1(A, ((base << 3) & ~0xFF) | (V & 0xFF));
+		break;
+	case 3:
+		setchr1(A, ((base << 3) & ~0x7F) | (V & 0x7F));
+		break;
+	case 4:
+		setchr8(base);
+		break;
+	case 5:
+		setchr8(base);
+		break;
+	case 6:
+		setchr8((base & ~0x01) | (reg[3] & 0x01));
+		break;
+	case 7:
+		setchr8((base & ~0x03) | (reg[3] & 0x03));
+		break;
 	}
 }
 
@@ -57,17 +73,31 @@ static void M260PW(uint16 A, uint16 V) {
 	uint8 base = reg[1] & 0x3F;
 
 	switch (reg[0] & 0x07) {
-	case 0: setprg8(A, ((base << 1) & ~0x1F) | (V & 0x1F)); break;
-	case 1: setprg8(A, ((base << 1) & ~0x1F) | (V & 0x1F)); break;
-	case 2: setprg8(A, ((base << 1) & ~0x0F) | (V & 0x0F)); break;
-	case 3: setprg8(A, ((base << 1) & ~0x0F) | (V & 0x0F)); break;
+	case 0:
+		setprg8(A, ((base << 1) & ~0x1F) | (V & 0x1F));
+		break;
+	case 1:
+		setprg8(A, ((base << 1) & ~0x1F) | (V & 0x1F));
+		break;
+	case 2:
+		setprg8(A, ((base << 1) & ~0x0F) | (V & 0x0F));
+		break;
+	case 3:
+		setprg8(A, ((base << 1) & ~0x0F) | (V & 0x0F));
+		break;
 	case 4:
 		setprg16(0x8000, base);
 		setprg16(0xC000, base);
 		break;
-	case 5: setprg32(0x8000, base >> 1); break;
-	case 6: setprg32(0x8000, base >> 1); break;
-	case 7: setprg32(0x8000, base >> 1); break;
+	case 5:
+		setprg32(0x8000, base >> 1);
+		break;
+	case 6:
+		setprg32(0x8000, base >> 1);
+		break;
+	case 7:
+		setprg32(0x8000, base >> 1);
+		break;
 	}
 }
 
@@ -93,7 +123,7 @@ static DECLFW(M260WriteReg) {
 }
 
 static DECLFW(M260WriteLatch) {
-	if(reg[0] & 0x04) {
+	if (reg[0] & 0x04) {
 		reg[3] = V;
 		MMC3_SyncCHR();
 		MMC3_SyncMirror();

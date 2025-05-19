@@ -30,7 +30,7 @@
 static void Sync(void) {
 	setchr8(0);
 	setprg16(0x8000, ((latch.data & 0x70) >> 1) | (latch.data & 0x07));
-	setprg16(0xC000, ((latch.data & 0x70) >> 1) | 0x07 );
+	setprg16(0xC000, ((latch.data & 0x70) >> 1) | 0x07);
 }
 
 static DECLFW(M324Write) {

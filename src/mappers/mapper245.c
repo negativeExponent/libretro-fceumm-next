@@ -24,8 +24,8 @@
 static uint8 reg;
 
 static SFORMAT StateRegs[] = {
-    { &reg, 1, "REGS" },
-    { 0 }
+	{ &reg, 1, "REGS" },
+	{ 0 }
 };
 
 static void M245PW(uint16 A, uint16 V) {
@@ -33,17 +33,17 @@ static void M245PW(uint16 A, uint16 V) {
 }
 
 static void M245CW(uint16 A, uint16 V) {
-    setchr8(0);
+	setchr8(0);
 }
 
 static DECLFW(M245Write) {
-    if (A & 0x01) {
-        mmc3.reg[mmc3.cmd & 0x07] = V;
-    } else {
-        mmc3.cmd = V;
-    }
-    MMC3_SyncPRG();
-    MMC3_SyncCHR();
+	if (A & 0x01) {
+		mmc3.reg[mmc3.cmd & 0x07] = V;
+	} else {
+		mmc3.cmd = V;
+	}
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static void M245Power(void) {

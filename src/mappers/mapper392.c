@@ -48,16 +48,16 @@ static void M392CW(uint16 A, uint16 V) {
 	uint16 mask = 0x7F;
 	uint16 base = reg << 7;
 
-    if (reg & 0x10) {
-	    setchr1(A, (base & ~mask) | (V & mask));
-    } else {
-        setchr8r(0x10, 0);
-    }
+	if (reg & 0x10) {
+		setchr1(A, (base & ~mask) | (V & mask));
+	} else {
+		setchr8r(0x10, 0);
+	}
 }
 
 static DECLFW(M392Write) {
 	if (MMC3_WramIsWritable()) {
-        CartBW(A, V);
+		CartBW(A, V);
 		if (!(reg & 0x10)) {
 			reg = V;
 			MMC3_SyncPRG();
@@ -93,8 +93,8 @@ void Mapper392_Init(CartInfo *info) {
 	info->Reset = M392Reset;
 	AddExState(&reg, 1, 0, "EXPR");
 
-    CHRRAMSIZE = 8 * 1024;
+	CHRRAMSIZE = 8 * 1024;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
-    AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRM");
+	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRM");
 }

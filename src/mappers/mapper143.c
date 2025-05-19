@@ -25,7 +25,7 @@
 static DECLFR(M143Read) {
 	if ((A & 0x100) == 0x100) {
 		return (cpu.openbus & 0xC0) | ((~A) & 0x3F);
-    }
+	}
 	return cpu.openbus;
 }
 

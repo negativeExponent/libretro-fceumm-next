@@ -22,8 +22,8 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 prg  = latch.addr >> 7;
-	uint8 chr  = latch.addr & 0x1F;
+	uint8 prg = latch.addr >> 7;
+	uint8 chr = latch.addr & 0x1F;
 	uint8 mirr = ((latch.addr >> 5) & 0x01) ^ 0x01;
 
 	if (latch.addr & 0x40) {
@@ -38,5 +38,5 @@ static void Sync(void) {
 
 void Mapper464_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-    info->Reset = Latch_RegReset;
+	info->Reset = Latch_RegReset;
 }

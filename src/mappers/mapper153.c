@@ -33,52 +33,52 @@ static uint8 outer;
  */
 
 static SFORMAT StateRegs[] = {
-    { &outer, 1, "OUTB" },
-    { 0 }
+	{ &outer, 1, "OUTB" },
+	{ 0 }
 };
 
 static void M153PW(uint16 A, uint16 V) {
-    setprg16(A, ((outer << 4) & 0x10) | (V & 0x0F));
+	setprg16(A, ((outer << 4) & 0x10) | (V & 0x0F));
 }
 
 static void M153CW(uint16 A, uint16 V) {
-    setchr8(0);
+	setchr8(0);
 }
 
 static DECLFW(M153Write) {
-    if ((A & 0x0F) <= 0x03) {
-        outer = V;
-        BANDAI_SyncPRG();
-    }
-    BANDAI_Write(A, V);
+	if ((A & 0x0F) <= 0x03) {
+		outer = V;
+		BANDAI_SyncPRG();
+	}
+	BANDAI_Write(A, V);
 }
 
 static void M153Power(void) {
 	BANDAI_Power();
-    SetWriteHandler(0x8000, 0xFFFF, M153Write);
-    if (WRAMSIZE) {
-	    setprg8r(0x10, 0x6000, 0);
-	    SetReadHandler(0x6000, 0x7FFF, CartBR);
-	    SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	    FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
-    }
+	SetWriteHandler(0x8000, 0xFFFF, M153Write);
+	if (WRAMSIZE) {
+		setprg8r(0x10, 0x6000, 0);
+		SetReadHandler(0x6000, 0x7FFF, CartBR);
+		SetWriteHandler(0x6000, 0x7FFF, CartBW);
+		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+	}
 }
 
 static void M153Close(void) {
 }
 
 void Mapper153_Init(CartInfo *info) {
-    BANDAI_Init(info, EEPROM_NONE, FALSE);
+	BANDAI_Init(info, EEPROM_NONE, FALSE);
 	info->Power = M153Power;
 	info->Close = M153Close;
-    BANDAI_pwrap = M153PW;
-    BANDAI_cwrap = M153CW;
-    AddExState(StateRegs, ~0, 0, NULL);
+	BANDAI_pwrap = M153PW;
+	BANDAI_cwrap = M153CW;
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-    if (info->iNES2) {
-        WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
-    }
+	if (info->iNES2) {
+		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
+	}
 	if (WRAMSIZE) {
 		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);

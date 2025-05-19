@@ -24,9 +24,9 @@
 static void M194CW(uint16 A, uint16 V) {
 	if ((V & ~0x01) == 0x00) { /* Dai-2-Ji - Super Robot Taisen (As).nes */
 		setchr1r(0x10, A, V & 0x01);
-    } else {
+	} else {
 		setchr1(A, V);
-    }
+	}
 }
 
 static void M194Close(void) {

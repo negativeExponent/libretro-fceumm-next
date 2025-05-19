@@ -25,8 +25,8 @@
 static uint8 reg[2];
 
 static SFORMAT StateRegs[] = {
-    { reg, 2, "REGS" },
-    { 0 }
+	{ reg, 2, "REGS" },
+	{ 0 }
 };
 
 static void Sync(void) {
@@ -44,10 +44,10 @@ static DECLFW(M501WriteReg) {
 }
 
 static void M501Power(void) {
-    reg[0] = reg[1] = 0;
+	reg[0] = reg[1] = 0;
 	Latch_Power();
 	SetReadHandler(0x7000, 0x7FFF, CartBR);
-    SetWriteHandler(0x6000, 0x6FFF, M501WriteReg);
+	SetWriteHandler(0x6000, 0x6FFF, M501WriteReg);
 }
 
 static void M501Reset(void) {
@@ -59,5 +59,5 @@ void Mapper501_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Power = M501Power;
 	info->Reset = M501Reset;
-    AddExState(StateRegs, ~0, 0, NULL);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

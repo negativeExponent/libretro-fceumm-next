@@ -39,10 +39,10 @@ static void M348PW(uint16 A, uint16 V) {
 	uint8 base = (reg << 2) & 0x30;
 
 	if ((reg & 0x0C) == 0x0C) {
-		setprg8(0x8000, base | ((mmc3.reg[6] & ~0x02) & mask));
-		setprg8(0xA000, base | ((mmc3.reg[7] & ~0x02) & mask));
-		setprg8(0xC000, base | ((mmc3.reg[6] |  0x02) & mask));
-		setprg8(0xE000, base | ((mmc3.reg[7] |  0x02) & mask));
+		setprg8(0x8000, base | ((mmc3.reg[6] & 0xFD) & mask));
+		setprg8(0xA000, base | ((mmc3.reg[7] & 0xFD) & mask));
+		setprg8(0xC000, base | ((mmc3.reg[6] | 0x02) & mask));
+		setprg8(0xE000, base | ((mmc3.reg[7] | 0x02) & mask));
 	} else {
 		setprg8(A, base | (V & mask));
 	}

@@ -28,32 +28,32 @@
 
 static void Sync(void) {
 	if (latch.data & 0x40) {
-		setprg32(0x8000, ((latch.data >> 3) & 0x18) |  (latch.data & 0x07));
+		setprg32(0x8000, ((latch.data >> 3) & 0x18) | (latch.data & 0x07));
 		setmirror(MI_0 + (((latch.data >> 4) & 0x01) ^ 0x01));
 	} else {
 		setprg16(0x8000, ((latch.data >> 2) & 0x38) | (latch.data & 0x07));
 		setprg16(0xC000, (latch.data >> 2 & 0x38) | 0x07);
 		setmirror(((latch.data >> 4) & 0x01) ^ 0x01);
 	}
-    setchr8(0);
+	setchr8(0);
 }
 
 static DECLFW(M453Write) {
 	if (latch.data & 0xE0) {
 		latch.data = (latch.data & 0xE0) | (V & ~0xE0);
-    } else {
+	} else {
 		latch.data = V;
-    }
+	}
 	Sync();
 }
 
 static void M453Power(void) {
-    Latch_Power();
-    SetWriteHandler(0x8000, 0xFFFF, M453Write);
+	Latch_Power();
+	SetWriteHandler(0x8000, 0xFFFF, M453Write);
 }
 
 void Mapper453_Init(CartInfo *info) {
-    Latch_Init(info, Sync, NULL, FALSE, FALSE);
+	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Power = M453Power;
 	info->Reset = Latch_RegReset;
 }

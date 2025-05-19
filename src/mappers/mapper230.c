@@ -34,7 +34,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	if (mode) {  /* Contra mode */
+	if (mode) { /* Contra mode */
 		setprg16(0x8000, latch.data & 0x07);
 		setprg16(0xC000, 0x07);
 		setmirror(MI_V);

@@ -28,8 +28,8 @@
 
 #define MAPPER_UNROM 0
 #define MAPPER_AMROM 1
-#define MAPPER_MMC1  2
-#define MAPPER_MMC3  3
+#define MAPPER_MMC1	 2
+#define MAPPER_MMC3	 3
 
 static uint8 reg[2];
 static uint8 mapper;

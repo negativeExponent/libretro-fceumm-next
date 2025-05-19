@@ -74,16 +74,36 @@ static DECLFW(M303Write) {
 		FDSWaveWrite(A, V);
 	}
 	switch (A) {
-	case 0x4080: FDSSReg0Write(A, V); break;
-	case 0x4082: FDSSReg1Write(A, V); break;
-	case 0x4083: FDSSReg2Write(A, V); break;
-	case 0x4084: FDSSReg3Write(A, V); break;
-	case 0x4085: FDSSReg4Write(A, V); break;
-	case 0x4086: FDSSReg5Write(A, V); break;
-	case 0x4087: FDSSReg6Write(A, V); break;
-	case 0x4088: FDSSReg7Write(A, V); break;
-	case 0x4089: FDSSReg8Write(A, V); break;
-	case 0x408A: FDSSReg9Write(A, V); break;
+	case 0x4080:
+		FDSSReg0Write(A, V);
+		break;
+	case 0x4082:
+		FDSSReg1Write(A, V);
+		break;
+	case 0x4083:
+		FDSSReg2Write(A, V);
+		break;
+	case 0x4084:
+		FDSSReg3Write(A, V);
+		break;
+	case 0x4085:
+		FDSSReg4Write(A, V);
+		break;
+	case 0x4086:
+		FDSSReg5Write(A, V);
+		break;
+	case 0x4087:
+		FDSSReg6Write(A, V);
+		break;
+	case 0x4088:
+		FDSSReg7Write(A, V);
+		break;
+	case 0x4089:
+		FDSSReg8Write(A, V);
+		break;
+	case 0x408A:
+		FDSSReg9Write(A, V);
+		break;
 	}
 }
 
@@ -138,7 +158,7 @@ void Mapper303_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

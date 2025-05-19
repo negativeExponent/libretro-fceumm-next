@@ -33,8 +33,7 @@ static void (*WSync)(void);
 
 KS202 ks202 = { 0 };
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &ks202.cmd, 1, "CMD" },
 	{ ks202.reg, 8, "REGS" },
 	{ &IRQa, 1, "IRQA" },

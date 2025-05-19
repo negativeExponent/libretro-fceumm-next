@@ -37,15 +37,23 @@ static SFORMAT StateRegs[] = {
 static void Sync(void) {
 	setprg32(0x8000, (reg[2] & 0x01) | reg[5]);
 	if (iNESCart.mapper == 243) {
-        setchr8((reg[2] & 0x01) | ((reg[4] << 1) & 0x02) | (reg[6] << 2));
-    } else {
-        setchr8((reg[6] & 0x03) | ((reg[4] << 2) & 0x04) | (reg[2] << 3));
-    }
+		setchr8((reg[2] & 0x01) | ((reg[4] << 1) & 0x02) | (reg[6] << 2));
+	} else {
+		setchr8((reg[6] & 0x03) | ((reg[4] << 2) & 0x04) | (reg[2] << 3));
+	}
 	switch ((reg[7] >> 1) & 0x03) {
-	case 0: setmirrorw(0, 1, 1, 1); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_V); break;
-	case 3: setmirror(MI_0); break;
+	case 0:
+		setmirrorw(0, 1, 1, 1);
+		break;
+	case 1:
+		setmirror(MI_H);
+		break;
+	case 2:
+		setmirror(MI_V);
+		break;
+	case 3:
+		setmirror(MI_0);
+		break;
 	}
 }
 
@@ -90,7 +98,7 @@ static void M150Power(void) {
 	reg[4] = reg[5] = reg[6] = reg[7] = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-    SetReadHandler(0x4100, 0x5FFF, M150Read);
+	SetReadHandler(0x4100, 0x5FFF, M150Read);
 	SetWriteHandler(0x4100, 0x5FFF, M150Write);
 }
 

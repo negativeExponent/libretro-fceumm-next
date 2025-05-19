@@ -26,8 +26,8 @@
 static uint8 regs[3];
 
 static SFORMAT StateRegs[] = {
-   { &regs, 3, "REGS" },
-   { 0 }
+	{ &regs, 3, "REGS" },
+	{ 0 }
 };
 
 static void Sync(void) {

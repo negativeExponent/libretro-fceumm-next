@@ -36,13 +36,13 @@ static uint8 mcache[8];
 static uint32 lastppu;
 
 static SFORMAT StateRegs[] = {
-    { mcache, 8, "MCCH" },
+	{ mcache, 8, "MCCH" },
 	{ &lastppu, 4, "LPPU" },
-    { 0 }
+	{ 0 }
 };
 
 static void M095SyncCHR(void) {
-    setchr2(0x0000, n118.reg[0] >> 1);
+	setchr2(0x0000, n118.reg[0] >> 1);
 	setchr2(0x0800, n118.reg[1] >> 1);
 	setchr1(0x1000, n118.reg[2]);
 	setchr1(0x1400, n118.reg[3]);
@@ -54,41 +54,41 @@ static void M095SyncCHR(void) {
 static DECLFW(M095Write) {
 	switch (A & 0xE001) {
 	case 0x8001:
-        n118.reg[n118.cmd & 0x07] = V & 0x1F;
+		n118.reg[n118.cmd & 0x07] = V & 0x1F;
 		switch (n118.cmd & 0x07) {
 		case 0:
 			mcache[0] = mcache[1] = (V >> 5) & 0x01;
-            N118_SyncCHR();
+			N118_SyncCHR();
 			break;
 		case 1:
 			mcache[2] = mcache[3] = (V >> 5) & 0x01;
-            N118_SyncCHR();
+			N118_SyncCHR();
 			break;
 		case 2:
 			mcache[4] = (V >> 5) & 0x01;
-            N118_SyncCHR();
+			N118_SyncCHR();
 			break;
 		case 3:
 			mcache[5] = (V >> 5) & 0x01;
-            N118_SyncCHR();
+			N118_SyncCHR();
 			break;
 		case 4:
 			mcache[6] = (V >> 5) & 0x01;
-            N118_SyncCHR();
+			N118_SyncCHR();
 			break;
 		case 5:
 			mcache[7] = (V >> 5) & 0x01;
-            N118_SyncCHR();
+			N118_SyncCHR();
 			break;
-        case 6:
-        case 7:
-            N118_SyncPRG();
-            break;
+		case 6:
+		case 7:
+			N118_SyncPRG();
+			break;
 		}
-        break;
-    default:
-        N118_Write(A, V);
-        break;
+		break;
+	default:
+		N118_Write(A, V);
+		break;
 	}
 }
 
@@ -105,17 +105,17 @@ static void MExMirrPPU(uint32 A) {
 }
 
 static void M095Power(void) {
-    lastppu = 0;
-    memset(mcache, 0, sizeof(mcache));
-    
-    N118_Power();
-    SetWriteHandler(0x8000, 0x9FFF, M095Write);
+	lastppu = 0;
+	memset(mcache, 0, sizeof(mcache));
+
+	N118_Power();
+	SetWriteHandler(0x8000, 0x9FFF, M095Write);
 }
 
 void Mapper095_Init(CartInfo *info) {
 	N118_Init(info, 0, 0);
-    info->Power = M095Power;
+	info->Power = M095Power;
 	N118_SyncCHR = M095SyncCHR;
-    PPU_hook = MExMirrPPU;
-    AddExState(StateRegs, ~0, 0, NULL);
+	PPU_hook = MExMirrPPU;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

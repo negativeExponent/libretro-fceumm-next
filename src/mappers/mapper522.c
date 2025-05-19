@@ -27,8 +27,7 @@
 
 static uint8 reg[8], cmd;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &cmd, 1, "CMD" },
 	{ reg, 8, "REGS" },
 	{ 0 }
@@ -77,7 +76,7 @@ void Mapper522_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

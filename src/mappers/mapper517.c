@@ -28,16 +28,16 @@ static int32 adc_low;
 static uint8 adc_state;
 
 static SFORMAT StateRegs[] = {
-	{ &adc_data,  sizeof(adc_data),  "DATA" },
-	{ &adc_high,  sizeof(adc_high),  "DTHI" },
-	{ &adc_low,   sizeof(adc_low),   "DTLO" },
+	{ &adc_data, sizeof(adc_data), "DATA" },
+	{ &adc_high, sizeof(adc_high), "DTHI" },
+	{ &adc_low, sizeof(adc_low), "DTLO" },
 	{ &adc_state, sizeof(adc_state), "STAT" },
-	{ 0 },
+	{ 0 }
 };
 
 static void Sync(void) {
 	setprg16(0x8000, latch.data);
-    setprg16(0xC000, ~0);
+	setprg16(0xC000, ~0);
 	setchr8(0);
 }
 
@@ -47,11 +47,11 @@ static DECLFR(M517Read) {
 		switch (adc_state) {
 		case 0:
 			adc_state = 1;
-			result    = 0;
+			result = 0;
 			break;
 		case 1:
 			adc_state = 2;
-			result    = 1;
+			result = 1;
 			break;
 		case 2:
 			if (adc_low > 0) {
@@ -59,7 +59,7 @@ static DECLFR(M517Read) {
 				result = 1;
 			} else {
 				adc_state = 0;
-				result    = 0;
+				result = 0;
 			}
 			break;
 		}
@@ -72,11 +72,11 @@ static DECLFR(M517Read) {
 static DECLFW(M517Write) {
 	/* TODO: implement mic input from frontend */
 	/* adc_data = MIC * 63.0; */
-	adc_data   = 0.0 * 63.0;
-	adc_high   = adc_data >> 2;
-	adc_low    = 0x40 - adc_high - ((adc_data & 0x03) << 2);
-	adc_state  = 0;
-	Latch_Write(A,V);
+	adc_data = 0.0 * 63.0;
+	adc_high = adc_data >> 2;
+	adc_low = 0x40 - adc_high - ((adc_data & 0x03) << 2);
+	adc_state = 0;
+	Latch_Write(A, V);
 }
 
 static void M517Reset(void) {

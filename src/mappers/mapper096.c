@@ -34,8 +34,7 @@
 static uint8 ppulatch;
 static uint16 lastAddr;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &ppulatch, 1, "PPUL" },
 	{ &lastAddr, 2, "LADR" },
 	{ 0 }

@@ -23,7 +23,7 @@
  *  JY-018
  *  JY-019
  *  OK-411
-*/		
+ */
 
 #include "mapinc.h"
 #include "mmc3.h"

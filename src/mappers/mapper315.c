@@ -43,10 +43,10 @@ static void M315CPW(uint16 A, uint16 V) {
 	uint16 base = reg << 3;
 
 	if ((reg & 0x06) == 0x06) { /* GNROM-like */
-		setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & ~0x02) & mask));
-		setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & ~0x02) & mask));
-		setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] |  0x02) & mask));
-		setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  0x02) & mask));
+		setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & 0xFD) & mask));
+		setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & 0xFD) & mask));
+		setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] | 0x02) & mask));
+		setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] | 0x02) & mask));
 	} else {
 		setprg8(A, (base & ~mask) | (V & mask));
 	}

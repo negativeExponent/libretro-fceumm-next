@@ -36,15 +36,22 @@ static SFORMAT IRQStateRegs[] = {
 	{ &IRQCount, 2, "IRQC" },
 	{ &IRQLatch, 1, "IRQL" },
 	{ &IRQa, 1, "IRQA" },
-
 	{ 0 }
 };
 
 static DECLFW(M308Write) {
 	switch (A & 0xF003) {
-	case 0xF000: X6502_IRQEnd(FCEU_IQEXT); IRQa = 0; IRQCount = 0; break;
-	case 0xF001: IRQa = 1; break;
-	case 0xF003: IRQLatch = (V & 0xF0) >> 4; break;
+	case 0xF000:
+		X6502_IRQEnd(FCEU_IQEXT);
+		IRQa = 0;
+		IRQCount = 0;
+		break;
+	case 0xF001:
+		IRQa = 1;
+		break;
+	case 0xF003:
+		IRQLatch = (V & 0xF0) >> 4;
+		break;
 	}
 }
 

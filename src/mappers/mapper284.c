@@ -20,7 +20,7 @@
 
 /* FIXME:
  * The extender nametable mirroring only works in NEWPPU.
-*/
+ */
 
 #include "mapinc.h"
 #include "dripsound.h"
@@ -38,11 +38,11 @@ static uint16 lastAddr;
 static uint8 DRIPHack = FALSE;
 
 static SFORMAT StateRegs[] = {
-	{ &jumper,   1, "JUMP" },
-	{ &control,  1, "CTRL" },
-	{ &prg,      1, "PREG" },
-	{ chr,       4, "CREG" },
-	{ &IRQa,     1, "IRQA" },
+	{ &jumper, 1, "JUMP" },
+	{ &control, 1, "CTRL" },
+	{ &prg, 1, "PREG" },
+	{ chr, 4, "CREG" },
+	{ &IRQa, 1, "IRQA" },
 	{ &IRQLatch, 1, "IRQL" },
 	{ &IRQCount, 2, "IRQC" },
 	{ &lastAddr, 2, "LADD" },
@@ -63,10 +63,18 @@ static uint8 Sync(void) {
 	setchr2(0x1800, chr[3]);
 
 	switch (control & 0x03) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+	case 0:
+		setmirror(MI_V);
+		break;
+	case 1:
+		setmirror(MI_H);
+		break;
+	case 2:
+		setmirror(MI_0);
+		break;
+	case 3:
+		setmirror(MI_1);
+		break;
 	}
 }
 
@@ -141,10 +149,18 @@ uint8 M284PPURead(uint32 A) {
 
 				switch (iNESCart.mirror) {
 				default:
-				case MI_0: bank = 0; break;
-				case MI_1: bank = 1; break;
-				case MI_V: bank = (A & 0x800) ? 1 : 0; break;
-				case MI_H: bank = (A & 0x400) ? 1 : 0; break;
+				case MI_0:
+					bank = 0;
+					break;
+				case MI_1:
+					bank = 1;
+					break;
+				case MI_V:
+					bank = (A & 0x800) ? 1 : 0;
+					break;
+				case MI_H:
+					bank = (A & 0x400) ? 1 : 0;
+					break;
 				}
 				return (ext_attrib[(extattrib[bank][lastAddr & 0x3FF]) & 0x03]);
 			}

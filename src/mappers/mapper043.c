@@ -44,10 +44,10 @@ static void Sync(void) {
 	setprg8(0xA000, 0);
 	setprg8(0xC000, transo[reg & 0x07]);
 	setprg8(0xE000, swap ? 8 : 9); /* hard dump for mr.Mary is 128K,
-	                                * bank 9 is the last 2K ok bank 8 repeated 4 times, then till the end of 128K
-	                                * instead used bank A, containing some CHR data, ines rom have unused banks removed,
-	                                * and bank A moved to the bank 9 place for compatibility with other crappy dumps
-	                                */
+									* bank 9 is the last 2K ok bank 8 repeated 4 times, then till the end of 128K
+									* instead used bank A, containing some CHR data, ines rom have unused banks removed,
+									* and bank A moved to the bank 9 place for compatibility with other crappy dumps
+									*/
 	setchr8(0);
 }
 

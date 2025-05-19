@@ -43,7 +43,7 @@ static void Sync(void) {
 }
 
 static DECLFW(M548Write4800) {
-	latch =  ((A >> 3) & 0x04) | ((A >> 2) & 0x03);
+	latch = ((A >> 3) & 0x04) | ((A >> 2) & 0x03);
 	IRQa = (A & 0x04) != 0x04;
 	if (!IRQa) {
 		IRQCount = 0;
@@ -55,7 +55,6 @@ static DECLFW(M548Write5000) {
 	reg = latch ^ 0x05;
 	Sync();
 }
-	
 
 static void M548IRQ(int a) {
 	int count = a;
@@ -101,7 +100,7 @@ void Mapper548_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

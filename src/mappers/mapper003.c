@@ -24,8 +24,8 @@
 
 static void Sync(void) {
 	setprg8r(0x10, 0x6000, 0); /* Hayauchy IGO uses 2Kb or RAM */
-    setprg32(0x8000, 0);
-    setchr8(latch.data);
+	setprg32(0x8000, 0);
+	setchr8(latch.data);
 }
 
 void Mapper003_Init(CartInfo *info) {

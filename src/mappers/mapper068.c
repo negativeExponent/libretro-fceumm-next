@@ -49,10 +49,18 @@ static void Sync(void) {
 	setchr2(0x1800, chr[3]);
 
 	switch (mirr & 0x03) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+	case 0:
+		setmirror(MI_V);
+		break;
+	case 1:
+		setmirror(MI_H);
+		break;
+	case 2:
+		setmirror(MI_0);
+		break;
+	case 3:
+		setmirror(MI_1);
+		break;
 	}
 
 	if (mirr & 0x10) {
@@ -60,10 +68,18 @@ static void Sync(void) {
 		PPUNTARAM = 0;
 		for (i = 0; i < 4; i++) {
 			switch (mirr & 0x03) {
-			case 0: vnapage[i] = CHRptr[0] + (((nt[i & 0x01]           | 0x80) & CHRmask1[0]) << 10); break;
-			case 1: vnapage[i] = CHRptr[0] + (((nt[(i >> 0x01) & 0x01] | 0x80) & CHRmask1[0]) << 10); break;
-			case 2: vnapage[i] = CHRptr[0] + (((nt[0]                  | 0x80) & CHRmask1[0]) << 10); break;
-			case 3: vnapage[i] = CHRptr[0] + (((nt[1]                  | 0x80) & CHRmask1[0]) << 10); break;
+			case 0:
+				vnapage[i] = CHRptr[0] + (((nt[i & 0x01] | 0x80) & CHRmask1[0]) << 10);
+				break;
+			case 1:
+				vnapage[i] = CHRptr[0] + (((nt[(i >> 0x01) & 0x01] | 0x80) & CHRmask1[0]) << 10);
+				break;
+			case 2:
+				vnapage[i] = CHRptr[0] + (((nt[0] | 0x80) & CHRmask1[0]) << 10);
+				break;
+			case 3:
+				vnapage[i] = CHRptr[0] + (((nt[1] | 0x80) & CHRmask1[0]) << 10);
+				break;
 			}
 		}
 	}

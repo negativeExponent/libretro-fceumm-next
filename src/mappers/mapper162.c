@@ -26,20 +26,19 @@
 
 static uint8 reg[4];
 
-static SFORMAT StateRegs[] =
-{
-    { reg, 4, "REGS" },
-    { 0 }
+static SFORMAT StateRegs[] = {
+	{ reg, 4, "REGS" },
+	{ 0 }
 };
 
 static void Sync(void) {
 	setprg32(0x8000,
-	         (reg[2] << 4) | (reg[0] & 0x0C)                                   /* PRG A17-A20 always normal from $5000 and $5200 */
-	             | ((reg[3] & 0x04) ? 0x00 : 0x02)                               /* PRG A16 is 1       if $5300.2=0                */
-	             | ((reg[3] & 0x04) ? (reg[0] & 0x02) : 0x00)                    /* PRG A16 is $5000.1 if %5300.2=1                */
-	             | ((reg[3] & 0x01) ? 0x00 : reg[1] >> 1 & 0x01)                 /* PRG A15 is $5100.1 if               $5300.0=0  */
-	             | ((~reg[3] & 0x04) && (reg[3] & 0x01) ? 0x01 : 0x00)             /* PRG A15 is 1       if $5300.2=0 and $5300.0=1  */
-	             | ((reg[3] & 0x04) && (reg[3] & 0x01) ? (reg[0] & 0x01) : 0x00)   /* PRG A15 is $5000.0 if $5300.2=1 and $5300.0=1  */
+		(reg[2] << 4) | (reg[0] & 0x0C)										/* PRG A17-A20 always normal from $5000 and $5200 */
+			| ((reg[3] & 0x04) ? 0x00 : 0x02)								/* PRG A16 is 1       if $5300.2=0                */
+			| ((reg[3] & 0x04) ? (reg[0] & 0x02) : 0x00)					/* PRG A16 is $5000.1 if %5300.2=1                */
+			| ((reg[3] & 0x01) ? 0x00 : reg[1] >> 1 & 0x01)					/* PRG A15 is $5100.1 if               $5300.0=0  */
+			| ((~reg[3] & 0x04) && (reg[3] & 0x01) ? 0x01 : 0x00)			/* PRG A15 is 1       if $5300.2=0 and $5300.0=1  */
+			| ((reg[3] & 0x04) && (reg[3] & 0x01) ? (reg[0] & 0x01) : 0x00) /* PRG A15 is $5000.0 if $5300.2=1 and $5300.0=1  */
 	);
 	setprg8r(0x10, 0x6000, 0);
 	if (~reg[0] & 0x80)
@@ -47,9 +46,8 @@ static void Sync(void) {
 }
 
 static void M162HBIRQHook(void) {
-	if ((reg[0] & 0x80) &&
-	    scanline < 239) { /* Actual hardware cannot look at the current scanline number, but instead latches PA09 on
-		                     PA13 rises. This does not seem possible with the current PPU emulation however. */
+	if ((reg[0] & 0x80) && scanline < 239) { /* Actual hardware cannot look at the current scanline number, but instead latches PA09 on
+												PA13 rises. This does not seem possible with the current PPU emulation however. */
 		setchr4(0x0000, (scanline >= 127) ? 1 : 0);
 		setchr4(0x1000, (scanline >= 127) ? 1 : 0);
 	} else

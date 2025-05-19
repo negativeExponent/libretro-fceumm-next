@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022 NewRisingSun
+ *  Copyright (C) 2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,73 +22,75 @@
 
 #include "mapinc.h"
 
-static uint8 regData[2];
-static uint8 regAddr;
+static uint8 reg[3];
 
-static SFORMAT K1053_state[] =
-{
-	{ regData, 2, "REGD" },
-	{ &regAddr, 1, "REGA" },
+static SFORMAT StateRegs[] = {
+	{ reg, 4, "REGS" },
 	{ 0 }
 };
 
-static void K1053_sync(void) {
-	int prg = (regData[0] & 0x3F) | ((regAddr << 4) & ~0x3F);
-	int chrWritable;
-	switch (regAddr & 3) {
-		case 0:
-			setprg32(0x8000, prg >> 1);
-			chrWritable = 0;
-			break;
-		case 1:
-			setprg16(0x8000, prg);
-			setprg16(0xC000, prg | 7);
-			chrWritable = 1;
-			break;
-		case 2:
-			prg = prg << 1 | regData[0] >> 7;
-			setprg8(0x8000, prg);
-			setprg8(0xA000, prg);
-			setprg8(0xC000, prg);
-			setprg8(0xE000, prg);
-			chrWritable = 1;
-			break;
-		case 3:
-			setprg16(0x8000, prg);
-			setprg16(0xC000, prg);
-			chrWritable = 0;
-			break;
+static void Sync(void) {
+	uint16 prg = (reg[0] & 0x3F) | ((reg[1] << 4) & ~0x3F);
+	uint8 chrProtect = FALSE;
+
+	switch (reg[1] & 3) {
+	case 0:
+		setprg32(0x8000, prg >> 1);
+		chrProtect = TRUE;
+		break;
+	case 1:
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg | 7);
+		break;
+	case 2:
+		prg = prg << 1 | reg[0] >> 7;
+		setprg8(0x8000, prg);
+		setprg8(0xA000, prg);
+		setprg8(0xC000, prg);
+		setprg8(0xE000, prg);
+		break;
+	case 3:
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg);
+		chrProtect = TRUE;
+		break;
 	}
-	SetupCartCHRMapping(0, CHRptr[0], 0x8000, chrWritable);
-	setchr8(regData[1]);
-	setmirror((regData[0] & 0x40) ? MI_H : MI_V);
+	SetupCartCHRMapping(0, CHRptr[0], 0x8000, !chrProtect);
+	setchr8(reg[2]);
+	setmirror((reg[0] & 0x40) ? MI_H : MI_V);
 }
 
-static void K1053_restore(int version) {
-	K1053_sync();
+static DECLFW(M310WriteReg0) {
+	reg[0] = V;
+	Sync();
 }
 
-static DECLFW(K1053_write) {
-	regData[(A >> 14) & 1] = V;
-	if (A & 0x4000)
-		regAddr = A & 0xFF;
-	K1053_sync();
+static DECLFW(M310WriteReg1) {
+	reg[1] = A & 0xFF;
+	reg[2] = V;
+	Sync();
 }
 
-static void K1053_reset(void) {
-	regData[0] = regData[1] = regAddr = 0;
-	K1053_sync();
+static void M310Reset(void) {
+	reg[0] = reg[1] = reg[2] = 0;
+	Sync();
 }
 
-static void K1053_power(void) {
-	K1053_reset();
+static void M310Power(void) {
+	reg[0] = reg[1] = reg[2] = 0;
+	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, K1053_write);
+	SetWriteHandler(0x8000, 0xBFFF, M310WriteReg0);
+	SetWriteHandler(0xC000, 0xFFFF, M310WriteReg1);
+}
+
+static void StateRestore(int version) {
+	Sync();
 }
 
 void Mapper310_Init(CartInfo *info) {
-	info->Power = K1053_power;
-	info->Reset = K1053_reset;
-	GameStateRestore = K1053_restore;
-	AddExState(&K1053_state, ~0, 0, 0);
+	info->Power = M310Power;
+	info->Reset = M310Reset;
+	GameStateRestore = StateRestore;
+	AddExState(&StateRegs, ~0, 0, 0);
 }

@@ -30,12 +30,20 @@ static void Sync(void) {
 		setprg16(0xC000, latch.addr & 0x1E);
 	}
 	setchr8(0);
-    switch ((latch.addr >> 6) & 0x03) {
-    case 0: setmirror(MI_0); break;
-    case 1: setmirror(MI_V); break;
-    case 2: setmirror(MI_H); break;
-    case 3: setmirrorw(0, 1, 1, 1); break;
-    }
+	switch ((latch.addr >> 6) & 0x03) {
+	case 0:
+		setmirror(MI_0);
+		break;
+	case 1:
+		setmirror(MI_V);
+		break;
+	case 2:
+		setmirror(MI_H);
+		break;
+	case 3:
+		setmirrorw(0, 1, 1, 1);
+		break;
+	}
 }
 
 void Mapper231_Init(CartInfo *info) {

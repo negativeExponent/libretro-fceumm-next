@@ -24,38 +24,38 @@
 static uint16 reg = 0;
 
 static SFORMAT StateRegs[] = {
-    { &reg, 1, "REGS" },
-    { 0 }
+	{ &reg, 1, "REGS" },
+	{ 0 }
 };
 
 static void Sync(void) {
 	setprg16(0x8000, (reg >> 2) | (latch.data & 0x07));
-    setprg16(0xC000, (reg >> 2) | 0x07);
+	setprg16(0xC000, (reg >> 2) | 0x07);
 	setchr8(0);
-    setmirror(((reg >> 1) & 0x01) ^ 0x01);
+	setmirror(((reg >> 1) & 0x01) ^ 0x01);
 }
 
 static DECLFW(M128Write) {
-    if (reg < 0xF000) {
-        reg = A & 0xFFFF;
-    }
-    Latch_Write(A, V);
+	if (reg < 0xF000) {
+		reg = A & 0xFFFF;
+	}
+	Latch_Write(A, V);
 }
 
 static void M128Reset(void) {
-    reg = 0;
-    Latch_RegReset();
+	reg = 0;
+	Latch_RegReset();
 }
 
 static void M128Power(void) {
-    reg = 0;
-    Latch_Power();
-    SetWriteHandler(0x8000, 0xFFFF, M128Write);
+	reg = 0;
+	Latch_Power();
+	SetWriteHandler(0x8000, 0xFFFF, M128Write);
 }
 
 void Mapper128_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-    info->Power = M128Power;
-    info->Reset = M128Reset;
-    AddExState(StateRegs, ~0, 0, NULL);
+	info->Power = M128Power;
+	info->Reset = M128Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

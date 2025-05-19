@@ -31,22 +31,22 @@ static void Sync(void) {
 }
 
 static DECLFW(M471Write) {
-    X6502_IRQEnd(FCEU_IQEXT);
-    Latch_Write(A, V);
+	X6502_IRQEnd(FCEU_IQEXT);
+	Latch_Write(A, V);
 }
 
 static void M471HBHook(void) {
-    X6502_IRQBegin(FCEU_IQEXT);
+	X6502_IRQBegin(FCEU_IQEXT);
 }
 
 static void M471Power(void) {
-    Latch_Power();
-    SetWriteHandler(0x8000, 0xFFFF, M471Write);
+	Latch_Power();
+	SetWriteHandler(0x8000, 0xFFFF, M471Write);
 }
 
 void Mapper471_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-    info->Power = M471Power;
+	info->Power = M471Power;
 	info->Reset = Latch_RegReset;
-    GameHBIRQHook = M471HBHook;
+	GameHBIRQHook = M471HBHook;
 }

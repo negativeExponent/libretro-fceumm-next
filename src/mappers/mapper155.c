@@ -28,5 +28,5 @@ static void M155PW(uint16 A, uint16 V) {
 /* Same as mapper 1, without respect for WRAM enable bit. */
 void Mapper155_Init(CartInfo *info) {
 	MMC1_Init(info, MMC1A, 8, info->battery ? 8 : 0);
-    MMC1_pwrap = M155PW;
+	MMC1_pwrap = M155PW;
 }

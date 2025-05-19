@@ -32,7 +32,7 @@
 #include "latch.h"
 
 #define M034_NINA001  1
-#define M034_BNROM    2
+#define M034_BNROM	  2
 #define M034_NESTICLE 3
 
 static uint8 reg[3];

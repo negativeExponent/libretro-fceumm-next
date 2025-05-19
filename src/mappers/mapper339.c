@@ -20,7 +20,7 @@
  */
 
 /* NES 2.0 mapper 339 is used for a 21-in-1 multicart.
- * Its UNIF board name is BMC-K-3006. 
+ * Its UNIF board name is BMC-K-3006.
  * http://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_339
  */
 

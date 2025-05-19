@@ -32,7 +32,7 @@ static void Sync(void) {
 	uint8 base = (reg[0] >> 1) & 0x0C;
 
 	if (iNESCart.submapper == 1) {
-		base =  ((base << 1) & 0x08) | ((base >> 1) & 0x04);
+		base = ((base << 1) & 0x08) | ((base >> 1) & 0x04);
 	}
 	setprg16(0x8000, base | (reg[1] & 0x03));
 	setprg16(0xC000, base | 0x03);

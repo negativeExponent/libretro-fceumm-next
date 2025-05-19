@@ -21,22 +21,22 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA	02110-1301	USA
  */
- 
+
 /*
-    NES 2.0 mapper 327 is used for a 6-in-1 multicart. Its UNIF board name is BMC-10-24-C-A1.
+	NES 2.0 mapper 327 is used for a 6-in-1 multicart. Its UNIF board name is BMC-10-24-C-A1.
 
 	MMC3-based multicart mapper with CHR RAM, CHR ROM and PRG RAM
-	
+
 	$6000-7FFF:	A~[011xxxxx xxMRSBBB]	Multicart reg
 		This register can only be written to if PRG-RAM is enabled and writable (see $A001)
 		and BBB = 000 (power on state)
-	
+
 	BBB = CHR+PRG block select bits (A19, A18, A17 for both PRG and CHR)
 	S = PRG block size (0=256k	 1=128k)
 	R = CHR mode (0=CHR ROM	 1=CHR RAM)
 	M = CHR block size (0=256k	 1=128k)
 		ignored when S is 0 for some reason
-		
+
  Example Game:
  --------------------------
  6 in 1 multicart (SMB3, TMNT2, Contra, Ninja Cat, Ninja Crusaders, Rainbow Islands 2)
@@ -60,7 +60,7 @@ static void M327CW(uint16 A, uint16 V) {
 	} else {
 		uint16 base = (reg << 7) & 0x380;
 		uint16 mask = (reg & 0x20) ? 0xFF : 0x7F;
-		
+
 		setchr1(A, base | (V & mask));
 	}
 }
@@ -102,7 +102,7 @@ void Mapper327_Init(CartInfo *info) {
 	AddExState(&reg, 1, 0, "EXPR");
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

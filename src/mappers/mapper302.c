@@ -26,8 +26,8 @@
 #include "vrc24.h"
 
 static void M302PW(uint16 A, uint16 V) {
-	setprg8( 0x8000, 0x00);
-	setprg8( 0xA000, 0x0D);
+	setprg8(0x8000, 0x00);
+	setprg8(0xA000, 0x0D);
 	setprg16(0xC000, 0x07);
 }
 
@@ -50,5 +50,5 @@ void Mapper302_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, FALSE, TRUE);
 	info->Power = M302Power;
 	VRC24_pwrap = M302PW;
-	VRC24_cwrap = M302CW;;
+	VRC24_cwrap = M302CW;
 }

@@ -32,37 +32,37 @@ static uint32 IRQCount;
 
 static SFORMAT StateRegs[] = {
 	{ QTAINTRAM, 0x800, "IRAM" },
-	{ reg,       6, "REGS" },
+	{ reg, 6, "REGS" },
 	{ &IRQCount, 4, "IRQC" },
 	{ &IRQLatch, 4, "IRQL" },
-	{ &IRQa,     1, "IRQA" },
-	{ &IRQr,     1, "IRQR" },
+	{ &IRQa, 1, "IRQA" },
+	{ &IRQr, 1, "IRQR" },
 	{ &qtaintramreg, 1, "IREG" },
 	{ 0 }
 };
 
 static void SyncWRAM(void) {
-/*  
-D~7654 3210
-  ---------
-  .... C..B
-       |  +- PRG A12
-       +---- Chip select
-             0: External cartridge's 8 KiB (battery-backed)
-             1: Internal 8 KiB (not battery-backed) */
+	/*
+	D~7654 3210
+	  ---------
+	  .... C..B
+		   |  +- PRG A12
+		   +---- Chip select
+				 0: External cartridge's 8 KiB (battery-backed)
+				 1: Internal 8 KiB (not battery-backed) */
 	setprg4r(0x10, 0x6000, ((reg[0] & 0x08) >> 2) | (reg[0] & 0x01));
 	setprg4r(0x10, 0x7000, ((reg[1] & 0x08) >> 2) | (reg[1] & 0x01));
 }
 
 static void SyncPRG(void) {
-/*
-D~7654 3210
-  ---------
-  .CBB BBBB
-   |++-++++- PRG A13-A18
-   +-------- Chip select
-             0: Internal PRG-ROM (128 KiB)
-             1: External PRG-ROM (512 KiB) */
+	/*
+	D~7654 3210
+	  ---------
+	  .CBB BBBB
+	   |++-++++- PRG A13-A18
+	   +-------- Chip select
+				 0: Internal PRG-ROM (128 KiB)
+				 1: External PRG-ROM (512 KiB) */
 	setprg8(0x8000, (reg[2] & 0x40) ? (0x10 + (reg[2] & 0x3F)) : (reg[2] & 0x0F));
 	setprg8(0xA000, (reg[3] & 0x40) ? (0x10 + (reg[3] & 0x3F)) : (reg[3] & 0x0F));
 	setprg8(0xC000, (reg[4] & 0x40) ? (0x10 + (reg[4] & 0x3F)) : (reg[4] & 0x0F));
@@ -143,12 +143,12 @@ static DECLFR(M547Read) {
 
 	if ((row < 0x60) && (col < 0x60)) {
 		/* "row" and "col" are the first and second 7-bit JIS X 0208 code byte, respectively, each minus the $21 offset. */
-		uint16 code = (col % 32) +              /* First, go through 32 columns of a column-third. */
-		              (row % 16) * 32 +         /* Then, through 16 rows of a row-third. */
-		              (col / 32) * 32 * 16 +    /* Then, through three column-thirds. */
-		              (row / 16) * 32 * 16 * 3; /* Finally, through three row-thirds. */
+		uint16 code = (col % 32) +    /* First, go through 32 columns of a column-third. */
+		    (row % 16) * 32 +         /* Then, through 16 rows of a row-third. */
+		    (col / 32) * 32 * 16 +    /* Then, through three column-thirds. */
+		    (row / 16) * 32 * 16 * 3; /* Finally, through three row-thirds. */
 		uint16 glyph = (code & 0xFF) | (pageTable[code >> 8] << 8);
-		uint32 tile  = glyph * 4; /* four tiles per glyph */
+		uint32 tile = glyph * 4; /* four tiles per glyph */
 
 		if (A == 0xDC00) {
 			/* tile number */
@@ -203,8 +203,12 @@ void Mapper547_Init(CartInfo *info) {
 		CHRRAMSIZE = info->CHRRamSize + info->CHRRamSaveSize;
 	}
 
-	if (!CHRRAMSIZE) CHRRAMSIZE = 8192;
-	if (!WRAMSIZE) WRAMSIZE = 8192 + 8192; /* 8K external + 8K internal RAM */
+	if (!CHRRAMSIZE) {
+		CHRRAMSIZE = 8192;
+	}
+	if (!WRAMSIZE) {
+		WRAMSIZE = 8192 + 8192; /* 8K external + 8K internal RAM */
+	}
 
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
@@ -214,7 +218,7 @@ void Mapper547_Init(CartInfo *info) {
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
-	info->battery           = TRUE;
-	iNESCart.SaveGame[0]    = WRAM;
+	info->battery = TRUE;
+	iNESCart.SaveGame[0] = WRAM;
 	iNESCart.SaveGameLen[0] = 8192; /* only bank 0, the external cartridge RAM is battery-backed */
 }

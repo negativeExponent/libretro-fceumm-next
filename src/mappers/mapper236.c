@@ -25,7 +25,7 @@ static uint8 reg[2];
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ reg,  2, "REGS" },
+	{ reg, 2, "REGS" },
 	{ &dipsw, 1, "DPSW " },
 	{ 0 }
 };

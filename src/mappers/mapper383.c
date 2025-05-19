@@ -19,8 +19,8 @@
  */
 
 /*	晶太 YY840708C PCB
-    Solely used for the "1995 Soccer 6-in-1 足球小将專輯 (JY-014)" multicart.
-    MMC3+PAL16L8 combination, resulting in a bizarre mapper that switches banks in part upon *reads*.
+	Solely used for the "1995 Soccer 6-in-1 足球小将專輯 (JY-014)" multicart.
+	MMC3+PAL16L8 combination, resulting in a bizarre mapper that switches banks in part upon *reads*.
 */
 
 #include "mapinc.h"
@@ -29,9 +29,9 @@
 static uint8 pal_A15, pal_A16, pal_A1718;
 
 static SFORMAT StateRegs[] = {
-	{ &pal_A15, 1, "A15_"},
-	{ &pal_A16, 1, "A16_"},
-	{ &pal_A1718, 1, "A178"},
+	{ &pal_A15, 1, "A15_" },
+	{ &pal_A16, 1, "A16_" },
+	{ &pal_A1718, 1, "A178" },
 	{ 0 }
 };
 

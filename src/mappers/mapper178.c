@@ -20,7 +20,7 @@
  *
  * DSOUNDV1/FL-TR8MA boards (32K WRAM, 8/16M), 178 mapper boards (8K WRAM, 4/8M)
  * Various Education Cartridges
- * 
+ *
  * mapper 551
  * Compared to INES Mapper 178, mirroring is hard-wired, and the chipset's internal CHR-RAM is not used in favor of CHR-ROM.
  *
@@ -62,7 +62,7 @@ static void Sync(void) {
 
 static DECLFW(M178Write) {
 	reg[A & 3] = V;
-/*	FCEU_printf("cmd %04x:%02x\n", A, V); */
+	/*	FCEU_printf("cmd %04x:%02x\n", A, V); */
 	Sync();
 }
 

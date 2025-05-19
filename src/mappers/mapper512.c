@@ -79,7 +79,7 @@ void Mapper512_Init(CartInfo *info) {
 	AddExState(&reg, 1, 0, "EXPR");
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 }

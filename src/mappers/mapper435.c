@@ -37,11 +37,11 @@ static void Sync(void) {
 		setprg16(0xC000, prg | 0x07);
 	}
 
-    if (latch.addr & 0x800) {
+	if (latch.addr & 0x800) {
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
-    } else {
+	} else {
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
-    }
+	}
 
 	setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
 	setchr8(0);

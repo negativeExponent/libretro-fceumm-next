@@ -41,25 +41,34 @@ static void Sync(void) {
 	setprg8(0xE000, (prg[3] & 0x0F) | 0x10);
 
 	setchr1(0x0000, chr[0] & ~1);
-	setchr1(0x0400, chr[1] |  1);
+	setchr1(0x0400, chr[1] | 1);
 	setchr1(0x0800, chr[2] & ~1);
-	setchr1(0x0c00, chr[3] |  1);
+	setchr1(0x0c00, chr[3] | 1);
 	setchr1(0x1000, chr[4]);
 	setchr1(0x1400, chr[5]);
 	setchr1(0x1800, chr[6]);
 	setchr1(0x1C00, chr[7]);
-	
+
 	setmirror((mirr & 0x01) ^ 0x01);
 }
 
 static DECLFW(M106Write) {
 	switch (A & 0x0F) {
-	case 0x00: case 0x01: case 0x02: case 0x03:
-	case 0x04: case 0x05: case 0x06: case 0x07:
+	case 0x00:
+	case 0x01:
+	case 0x02:
+	case 0x03:
+	case 0x04:
+	case 0x05:
+	case 0x06:
+	case 0x07:
 		chr[A & 0x07] = V;
 		Sync();
 		break;
-	case 0x08: case 0x09: case 0x0A: case 0x0B:
+	case 0x08:
+	case 0x09:
+	case 0x0A:
+	case 0x0B:
 		prg[A & 0x03] = V;
 		Sync();
 		break;
@@ -90,7 +99,8 @@ static void M106Power(void) {
 	SetWriteHandler(0x8000, 0xFFFF, M106Write);
 }
 
-static void M106Reset(void) { }
+static void M106Reset(void) {
+}
 
 static void M106Close(void) {
 }

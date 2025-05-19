@@ -33,7 +33,7 @@ static void Sync(void) {
 }
 
 static DECLFR(ExtDev) {
-	return(3);
+	return (3);
 }
 
 static void M118Power(void) {

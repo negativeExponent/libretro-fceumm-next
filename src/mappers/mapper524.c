@@ -34,7 +34,6 @@ static uint8 IRQa;
 static SFORMAT IRQStateRegs[] = {
 	{ &IRQCount, 2, "IRQC" },
 	{ &IRQa, 1, "IRQA" },
-
 	{ 0 }
 };
 

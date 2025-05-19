@@ -53,20 +53,20 @@ static DECLFR(M451Read) {
 static DECLFW(M451Write) {
 	FlashROM_Write(A, V);
 	switch (A & 0xE000) {
-    case 0xA000:
-        MMC3_CMDWrite(0xA000, A & 0x01);
-        break;
-    case 0xC000:
-        A &= 0xFF;
-	    MMC3_IRQWrite(0xC000, A - 1);
-	    MMC3_IRQWrite(0xC001, 0);
-	    MMC3_IRQWrite(0xE000 + ((A == 0xFF) ? 0x00 : 0x01), 0x00);
-        break;
-    case 0xE000:
+	case 0xA000:
+		MMC3_CMDWrite(0xA000, A & 0x01);
+		break;
+	case 0xC000:
+		A &= 0xFF;
+		MMC3_IRQWrite(0xC000, A - 1);
+		MMC3_IRQWrite(0xC001, 0);
+		MMC3_IRQWrite(0xE000 + ((A == 0xFF) ? 0x00 : 0x01), 0x00);
+		break;
+	case 0xE000:
 		reg = A & 0x03;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
-        break;
+		break;
 	}
 }
 
@@ -77,7 +77,7 @@ static void M451Power(void) {
 }
 
 static void M451Close(void) {
-    MMC3_Close();
+	MMC3_Close();
 	if (FLASHROM) {
 		FCEU_free(FLASHROM);
 	}
@@ -90,7 +90,7 @@ void Mapper451_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
 	info->Power = M451Power;
 	info->Close = M451Close;
-    MMC3_SyncPRG = M451SyncPRG;
+	MMC3_SyncPRG = M451SyncPRG;
 	MMC3_SyncCHR = M451SyncCHR;
 	MapIRQHook = FlashROM_CPUCyle;
 	AddExState(StateRegs, ~0, 0, NULL);
@@ -98,7 +98,7 @@ void Mapper451_Init(CartInfo *info) {
 	info->battery = 1;
 	FLASHROM_size = PRGsize[0];
 	FLASHROM = (uint8 *)FCEU_gmalloc(FLASHROM_size);
-	info->SaveGame[0]    = FLASHROM;
+	info->SaveGame[0] = FLASHROM;
 	info->SaveGameLen[0] = FLASHROM_size;
 	AddExState(FLASHROM, FLASHROM_size, 0, "FLAS");
 	/* copy PRG ROM into FLASHROM, use it instead of PRG ROM */

@@ -22,11 +22,11 @@
 #include "jyasic.h"
 
 static uint32 GetPRGBank(uint32 V) {
-    if (jyasic.mode[3] & 0x04) {
-	    return (((jyasic.mode[3] << 4) & ~0x3F) | (V & 0x3F));
-    } else {
-        return (((jyasic.mode[3] << 4) & ~0x1F) | (V & 0x1F));
-    }
+	if (jyasic.mode[3] & 0x04) {
+		return (((jyasic.mode[3] << 4) & ~0x3F) | (V & 0x3F));
+	} else {
+		return (((jyasic.mode[3] << 4) & ~0x1F) | (V & 0x1F));
+	}
 }
 
 static uint32 GetCHRBank(uint32 V) {

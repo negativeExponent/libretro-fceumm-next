@@ -27,17 +27,17 @@
 static uint8 reg;
 
 static void M516CW(uint16 A, uint16 V) {
-/*    FCEU_printf("CHR: A:%04x V:%02x R0:%02x\n", A, V, reg); */
+	/* FCEU_printf("CHR: A:%04x V:%02x R0:%02x\n", A, V, reg); */
 	setchr1(A, ((reg << 5) & 0x180) | (V & 0x7F));
 }
 
 static void M516PW(uint16 A, uint16 V) {
-/*    FCEU_printf("PRG: A:%04x V:%02x R0:%02x\n", A, V, reg); */
+	/* FCEU_printf("PRG: A:%04x V:%02x R0:%02x\n", A, V, reg); */
 	setprg8(A, ((reg << 4) & 0x30) | (V & 0x0F));
 }
 
 static DECLFW(M516Write) {
-/*    FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, reg); */
+	/* FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, reg); */
 	if (A & 0x10) {
 		reg = A & 0x0F;
 		MMC3_SyncPRG();

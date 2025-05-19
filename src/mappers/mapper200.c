@@ -26,11 +26,11 @@ static void Sync(void) {
 	setprg16(0x8000, latch.addr & 0x07);
 	setprg16(0xC000, latch.addr & 0x07);
 	setchr8(latch.addr & 0x07);
-    if (iNESCart.submapper == 1) {
-        setmirror(((latch.addr >> 2) & 0x01) ^ 0x01);
-    } else {
-        setmirror(((latch.addr >> 3) & 0x01) ^ 0x01);
-    }
+	if (iNESCart.submapper == 1) {
+		setmirror(((latch.addr >> 2) & 0x01) ^ 0x01);
+	} else {
+		setmirror(((latch.addr >> 3) & 0x01) ^ 0x01);
+	}
 }
 
 void Mapper200_Init(CartInfo *info) {

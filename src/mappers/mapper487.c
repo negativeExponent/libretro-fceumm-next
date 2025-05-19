@@ -49,7 +49,7 @@ static void Sync(void) {
 }
 
 static DECLFW(M487WriteNINA) {
-/*	FCEU_printf("wr %04x %02x\n", A, V); */
+	/*	FCEU_printf("wr %04x %02x\n", A, V); */
 	switch (A & 0x4180) {
 	case 0x4100:
 		if (!(reg[1] & 0x20)) {
@@ -94,7 +94,7 @@ void Mapper487_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 
-    ROM.prg.data = realloc(ROM.prg.data, 2048 * 1024);
+	ROM.prg.data = realloc(ROM.prg.data, 2048 * 1024);
 	memmove(ROM.prg.data + (1024 * 1024), ROM.prg.data + (512 * 1024), 1024 * 1024);
 	memcpy(ROM.prg.data + (512 * 1024), ROM.prg.data, 512 * 1024);
 	SetupCartPRGMapping(0, ROM.prg.data, 2048 * 1024, 0);

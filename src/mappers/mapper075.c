@@ -88,4 +88,3 @@ void Mapper151_Init(CartInfo *info) {
 	info->mirror = MI_4;
 	setmirror(MI_4);
 }
-

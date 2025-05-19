@@ -20,10 +20,10 @@
 
 /* Mapper 142 - UNL KS7032 */
 
- #include "mapinc.h"
- #include "ks202.h"
+#include "mapinc.h"
+#include "ks202.h"
 
- static void Sync(void) {
+static void Sync(void) {
 	setprg8(0x6000, ks202.reg[4] & 0x0F);
 	setprg8(0x8000, ks202.reg[1] & 0x0F);
 	setprg8(0xA000, ks202.reg[2] & 0x0F);

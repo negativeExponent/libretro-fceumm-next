@@ -34,15 +34,15 @@ static SFORMAT StateRegs[] = {
 	{ &reg1M, 1, "REG1" },
 	{ &reg4M, 1, "REG4" },
 	{ &latch, 1, "LATC" },
-	{ &chr,   1, "CREG" },
-	{ prg,    4, "PREG" },
+	{ &chr, 1, "CREG" },
+	{ prg, 4, "PREG" },
 
-	{ &IRQa_fds,     1, "IRQA" },
+	{ &IRQa_fds, 1, "IRQA" },
 	{ &IRQCount_fds, 2, "FDSC" },
 
 	{ &IRQCount_sgd, 2, "SGDC" },
 
-	{ 0 },
+	{ 0 }
 };
 
 static void Sync(void) {
@@ -96,10 +96,18 @@ static void Sync(void) {
 	setchr8(chr);
 
 	switch (reg1M & 0x11) {
-	case 0x00: setmirror(MI_0); break;
-	case 0x01: setmirror(MI_V); break;
-	case 0x10: setmirror(MI_1); break;
-	case 0x11: setmirror(MI_H); break;
+	case 0x00:
+		setmirror(MI_0);
+		break;
+	case 0x01:
+		setmirror(MI_V);
+		break;
+	case 0x10:
+		setmirror(MI_1);
+		break;
+	case 0x11:
+		setmirror(MI_H);
+		break;
 	}
 }
 
@@ -191,7 +199,7 @@ static void M561Power(void) {
 	SetWriteHandler(0x8000, 0xFFFF, M561Write);
 
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
-    SetWriteHandler(0x6000, 0x7FFF, CartBW);
+	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 
 	Sync();
@@ -265,7 +273,7 @@ void Mapper561_Init(CartInfo *info) {
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}
 
-		if ((info->submapper == 3) && (ROM.prg.size < (256 * 1024))) {
+	if ((info->submapper == 3) && (ROM.prg.size < (256 * 1024))) {
 		uint8 *tmp = (uint8 *)FCEU_malloc(ROM.prg.size);
 		int i;
 

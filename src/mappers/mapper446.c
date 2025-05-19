@@ -53,8 +53,8 @@ static uint8 *flash = NULL;
 static uint8_t reg[9];
 
 static SFORMAT StateRegs[] = {
-    { reg, 9, "REGS" },
-    { 0 }
+	{ reg, 9, "REGS" },
+	{ 0 }
 };
 
 static uint32 GetPRGBase(void) {
@@ -70,70 +70,70 @@ static uint32 GetCHRBase(void) {
 }
 
 static void M446MMC1PW(uint16 A, uint16 V) {
-    setprg16r(FLASH_CHIP, A, (GetPRGBase() >> 1) | (V & (GetPRGMask() >> 1)));
+	setprg16r(FLASH_CHIP, A, (GetPRGBase() >> 1) | (V & (GetPRGMask() >> 1)));
 }
 static void M446MMC1CW(uint16 A, uint16 V) {
-    setchr4(A, (GetCHRBase() >> 2) | (V & 0x1F));
+	setchr4(A, (GetCHRBase() >> 2) | (V & 0x1F));
 }
 
 static void M446MMC3PW(uint16 A, uint16 V) {
-    switch (reg[0] & 0x1F) {
-    case MAPPER_MMC3:
-    case MAPPER_TLSROM:
-        setprg8r(FLASH_CHIP, A, GetPRGBase() | (V & GetPRGMask()));
-        break;
+	switch (reg[0] & 0x1F) {
+	case MAPPER_MMC3:
+	case MAPPER_TLSROM:
+		setprg8r(FLASH_CHIP, A, GetPRGBase() | (V & GetPRGMask()));
+		break;
 
-    case MAPPER_189:
-        setprg32r(FLASH_CHIP, 0x8000, (GetPRGBase() >> 2) | (reg[8] & 0x03));
-        break;
-    }
+	case MAPPER_189:
+		setprg32r(FLASH_CHIP, 0x8000, (GetPRGBase() >> 2) | (reg[8] & 0x03));
+		break;
+	}
 }
 static void M446MMC3CW(uint16 A, uint16 V) {
-    switch (reg[0] & 0x1F) {
-    case MAPPER_TLSROM:
-        setchr1(A, GetCHRBase() | (V & 0x7F));
-        break;
+	switch (reg[0] & 0x1F) {
+	case MAPPER_TLSROM:
+		setchr1(A, GetCHRBase() | (V & 0x7F));
+		break;
 
 	case MAPPER_MMC3:
-    case MAPPER_189:
-        setchr1(A, GetCHRBase() | (V & 0xFF));
-        break;
-    }
+	case MAPPER_189:
+		setchr1(A, GetCHRBase() | (V & 0xFF));
+		break;
+	}
 }
 
 static void M446VRC24PW(uint16 A, uint16 V) {
-    switch (reg[0] & 0x1F) {
-    case MAPPER_VRC2_22:
-    case MAPPER_VRC4_23:
+	switch (reg[0] & 0x1F) {
+	case MAPPER_VRC2_22:
+	case MAPPER_VRC4_23:
 	case MAPPER_VRC4_25:
-        setprg8r(FLASH_CHIP, A, GetPRGBase() | (V & GetPRGMask()));
-        break;
-    }
+		setprg8r(FLASH_CHIP, A, GetPRGBase() | (V & GetPRGMask()));
+		break;
+	}
 }
 static void M446VRC24CW(uint16 A, uint16 V) {
-    switch (reg[0] & 0x1F) {
-    case MAPPER_VRC2_22:
-        setchr1(A, V >> 1);
-        break;
+	switch (reg[0] & 0x1F) {
+	case MAPPER_VRC2_22:
+		setchr1(A, V >> 1);
+		break;
 
-    case MAPPER_VRC4_23:
+	case MAPPER_VRC4_23:
 	case MAPPER_VRC4_25:
-        setchr1(A, V & 0xFF);
-        break;
-    }
+		setchr1(A, V & 0xFF);
+		break;
+	}
 }
 
 static void M446VRC6PW(uint16 A, uint16 V) {
-    setprg8r(FLASH_CHIP, A, GetPRGBase() | (V & GetPRGMask()));
+	setprg8r(FLASH_CHIP, A, GetPRGBase() | (V & GetPRGMask()));
 }
 
 static void M446VRC6CW(uint16 A, uint16 V) {
-    setchr1(A, V & 0xFF);
+	setchr1(A, V & 0xFF);
 }
 
 static void Sync(void) {
-   /* CHR-RAM Protect */
-    SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], (reg[5] & 0x04) ? 0 : 1);
+	/* CHR-RAM Protect */
+	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], (reg[5] & 0x04) ? 0 : 1);
 
 	if (reg[0] & 0x80) {
 		switch (reg[0] & 0x1F) {
@@ -143,7 +143,7 @@ static void Sync(void) {
 			setprg8r(FLASH_CHIP, 0xC000, GetPRGBase() | (0x02 & GetPRGMask()));
 			setprg8r(FLASH_CHIP, 0xE000, GetPRGBase() | (0x03 & GetPRGMask()));
 			setchr8(GetCHRBase());
-            setmirror(reg[4] & 0x01);
+			setmirror(reg[4] & 0x01);
 			break;
 
 		case MAPPER_CNROM:
@@ -172,7 +172,7 @@ static void Sync(void) {
 		case MAPPER_ANROM:
 			setprg32r(FLASH_CHIP, 0x8000, (GetPRGBase() >> 2) | (latch.data & (GetPRGMask() >> 2)));
 			setchr8(GetCHRBase());
-            setmirror(MI_0 + ((latch.data & 0x10) >> 4));
+			setmirror(MI_0 + ((latch.data & 0x10) >> 4));
 			break;
 
 		case MAPPER_GNROM:
@@ -184,22 +184,22 @@ static void Sync(void) {
 		case MAPPER_SLROM:
 		case MAPPER_SNROM:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            MMC1_SyncPRG();
-            MMC1_SyncCHR();
-            MMC1_SyncMirror();
+			MMC1_SyncPRG();
+			MMC1_SyncCHR();
+			MMC1_SyncMirror();
 			break;
 
 		case MAPPER_MMC3:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            MMC3_SyncPRG();
-            MMC3_SyncCHR();
-            MMC3_SyncMirror();
+			MMC3_SyncPRG();
+			MMC3_SyncCHR();
+			MMC3_SyncMirror();
 			break;
 
 		case MAPPER_TLSROM:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            MMC3_SyncPRG();
-            MMC3_SyncCHR();
+			MMC3_SyncPRG();
+			MMC3_SyncCHR();
 			if (mmc3.cmd & 0x80) {
 				setntamem(NTARAM + 0x400 * ((mmc3.reg[2] >> 7) & 0x01), 1, 0);
 				setntamem(NTARAM + 0x400 * ((mmc3.reg[3] >> 7) & 0x01), 1, 1);
@@ -215,30 +215,30 @@ static void Sync(void) {
 
 		case MAPPER_189:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            MMC3_SyncPRG();
-            MMC3_SyncCHR();
-            MMC3_SyncMirror();
+			MMC3_SyncPRG();
+			MMC3_SyncCHR();
+			MMC3_SyncMirror();
 			break;
 
 		case MAPPER_VRC2_22:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            VRC24_SyncPRG();
-            VRC24_SyncCHR();
-            VRC24_SyncMirror();
+			VRC24_SyncPRG();
+			VRC24_SyncCHR();
+			VRC24_SyncMirror();
 			break;
 
 		case MAPPER_VRC4_23:
 		case MAPPER_VRC4_25:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            VRC24_SyncPRG();
-            VRC24_SyncCHR();
-            VRC24_SyncMirror();
+			VRC24_SyncPRG();
+			VRC24_SyncCHR();
+			VRC24_SyncMirror();
 			break;
 
 		case MAPPER_VRC6:
 			setprg8r(WRAM_CHIP, 0x6000, 0);
-            VRC6_SyncPRG();
-            VRC6_SyncCHR();
+			VRC6_SyncPRG();
+			VRC6_SyncCHR();
 			break;
 		}
 	} else {
@@ -247,7 +247,7 @@ static void Sync(void) {
 		setprg8r(FLASH_CHIP, 0xC000, 0x3E);
 		setprg8r(FLASH_CHIP, 0xE000, 0x3F);
 		setchr8(GetCHRBase());
-        setmirror(reg[4] & 0x01);
+		setmirror(reg[4] & 0x01);
 	}
 }
 
@@ -263,18 +263,18 @@ static void apply_mode(void) {
 			break;
 		case MAPPER_SLROM:
 		case MAPPER_SNROM:
-            MMC1_Reset();
+			MMC1_Reset();
 			break;
 		case MAPPER_189:
 		case MAPPER_MMC3:
 		case MAPPER_TLSROM:
-            MMC3_Reset();
+			MMC3_Reset();
 			break;
 		case MAPPER_VRC2_22:
 			vrc24.type = VRC24_VRC2;
 			vrc24.A0 = 0x02;
 			vrc24.A1 = 0x01;
-            VRC24_Reset();
+			VRC24_Reset();
 			break;
 		case MAPPER_VRC4_23:
 			vrc24.type = VRC24_VRC4;
@@ -318,7 +318,9 @@ static DECLFW(M446WriteReg) {
 	}
 	if ((index == 0) && (iNESCart.submapper == 0)) {
 		switch (V & 0x1F) {
-		case 0x01: V = (V & ~0x1F) | MAPPER_SNROM; break;
+		case 0x01:
+			V = (V & ~0x1F) | MAPPER_SNROM;
+			break;
 		}
 	}
 	reg[index] = V;
@@ -341,17 +343,17 @@ static DECLFW(M446Write) {
 
 		case MAPPER_SLROM:
 		case MAPPER_SNROM:
-            MMC1_Write(A, V);
+			MMC1_Write(A, V);
 			break;
 
 		case MAPPER_189:
 		case MAPPER_MMC3:
 		case MAPPER_TLSROM:
-            MMC3_Write(A, V);
+			MMC3_Write(A, V);
 			break;
 
 		case MAPPER_VRC2_22:
-            VRC24_Write(A, V);
+			VRC24_Write(A, V);
 			break;
 
 		case MAPPER_VRC4_23:

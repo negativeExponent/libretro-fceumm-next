@@ -25,8 +25,8 @@
 #include "mapinc.h"
 
 static uint8 prg;
-static uint8 IRQx;	/* autoenable */
-static uint8 IRQm;	/* mode */
+static uint8 IRQx; /* autoenable */
+static uint8 IRQm; /* mode */
 static uint8 IRQa;
 static uint16 IRQLatch, IRQCount;
 

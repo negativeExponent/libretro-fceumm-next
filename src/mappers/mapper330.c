@@ -44,9 +44,15 @@ static void Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
 	setprg8(0xE000, ~0);
 
-	for (i = 0; i < 3; i++) setprg8(0x8000 + (i << 13), prg[i]);
-	for (i = 0; i < 8; i++) setchr1(i << 10, chr[i]);
-	for (i = 0; i < 3; i++) setntamem(NTARAM + 0x400 * (nt[i] & 0x01), 1, i);
+	for (i = 0; i < 3; i++) {
+		setprg8(0x8000 + (i << 13), prg[i]);
+	}
+	for (i = 0; i < 8; i++) {
+		setchr1(i << 10, chr[i]);
+	}
+	for (i = 0; i < 3; i++) {
+		setntamem(NTARAM + 0x400 * (nt[i] & 0x01), 1, i);
+	}
 }
 
 static DECLFW(M330WriteCHR) {
@@ -61,8 +67,7 @@ static DECLFW(M330WriteCHR) {
 			IRQCount |= V;
 		}
 	} else {
-		int index = (A >> 11) & 0x07;
-		chr[index] = V;
+		chr[(A >> 11) & 0x07] = V;
 		Sync();
 	}
 }
@@ -79,18 +84,23 @@ static DECLFW(M330WritePRG) {
 	if ((A >= 0xF000) && (A & 0x800)) {
 		N163Sound_Write(A, V);
 	} else if (!(A & 0x400)) {
-		int index = (A >> 11) & 0x03;
-		prg[index] = V;
+		prg[(A >> 11) & 0x03] = V;
 		Sync();
 	}
 }
 
 static void M330Power(void) {
 	int i;
-	
-	for (i = 0; i < 4; i++) prg[i] = i;
-	for (i = 0; i < 8; i++) chr[i] = i;
-	for (i = 0; i < 4; i++) nt[i] = (i >> 1) & 0x01;
+
+	for (i = 0; i < 4; i++) {
+		prg[i] = i;
+	}
+	for (i = 0; i < 8; i++) {
+		chr[i] = i;
+	}
+	for (i = 0; i < 4; i++) {
+		nt[i] = (i >> 1) & 0x01;
+	}
 
 	IRQa = IRQCount = 0;
 

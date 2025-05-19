@@ -46,7 +46,7 @@ static void Sync(void) {
 	setchr1(0x1C00, chr[5]);
 
 	if (iNESCart.mapper == 207) {
-		setmirrorw(chr[0] >>7, chr[0] >>7, chr[1] >>7, chr[1] >>7);
+		setmirrorw(chr[0] >> 7, chr[0] >> 7, chr[1] >> 7, chr[1] >> 7);
 	} else {
 		setmirror(mirr & 0x01);
 	}

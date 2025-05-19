@@ -25,10 +25,10 @@
 
 static uint8 reg[4], dipsw;
 
-static SFORMAT stateRegs[] = {
+static SFORMAT StateRegs[] = {
 	{ reg, 4, "REGS" },
 	{ &dipsw, 1, "DIPS" },
-	{ 0 },
+	{ 0 }
 };
 
 static uint32 GetPRGMask(void) {
@@ -112,9 +112,15 @@ static void SyncPRG(void) {
 	} else {
 		switch (reg[0] & 0x03) {
 		default:
-		case 1: MMC3_SyncPRG(); break;
-		case 2: MMC1_SyncPRG(); break;
-		case 3: VRC24_SyncPRG(); break;
+		case 1:
+			MMC3_SyncPRG();
+			break;
+		case 2:
+			MMC1_SyncPRG();
+			break;
+		case 3:
+			VRC24_SyncPRG();
+			break;
 		}
 	}
 }
@@ -127,9 +133,15 @@ static void SyncCHR(void) {
 	} else {
 		switch (reg[0] & 0x03) {
 		default:
-		case 1: MMC3_SyncCHR(); break;
-		case 2: MMC1_SyncCHR(); break;
-		case 3: VRC24_SyncCHR(); break;
+		case 1:
+			MMC3_SyncCHR();
+			break;
+		case 2:
+			MMC1_SyncCHR();
+			break;
+		case 3:
+			VRC24_SyncCHR();
+			break;
 		}
 	}
 }
@@ -137,9 +149,15 @@ static void SyncCHR(void) {
 static void SyncMIR(void) {
 	switch (reg[0] & 0x03) {
 	default:
-	case 1: MMC3_SyncMirror(); break;
-	case 2: MMC1_SyncMirror(); break;
-	case 3: VRC24_SyncMirror(); break;
+	case 1:
+		MMC3_SyncMirror();
+		break;
+	case 2:
+		MMC1_SyncMirror();
+		break;
+	case 3:
+		VRC24_SyncMirror();
+		break;
 	}
 }
 
@@ -254,7 +272,7 @@ void Mapper351_Init(CartInfo *info) {
 	GameHBIRQHook = M351HBHook;
 
 	GameStateRestore = StateRestore;
-	AddExState(stateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, 0);
 
 	if (ROM.chr.size) {
 		uint32 old_prg_size = ROM.prg.size;
@@ -269,6 +287,6 @@ void Mapper351_Init(CartInfo *info) {
 	if (CHRRAMSIZE) {
 		CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 		SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
-		AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");		
+		AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 	}
 }

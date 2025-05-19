@@ -32,7 +32,7 @@ static uint8 reg[4];
 static SFORMAT StateRegs[] = {
 	{ reg, 5, "REGS" },
 	{ &cmd, 1, "CMD0" },
-	{ 0 },
+	{ 0 }
 };
 
 static uint32 M556PRGMask(void) {
@@ -95,7 +95,7 @@ static DECLFW(M556WriteREG) {
 	if (!(reg[3] & 0x80)) {
 		reg[cmd] = V;
 		cmd = (cmd + 1) & 0x03;
-		M556Sync();		
+		M556Sync();
 	}
 }
 

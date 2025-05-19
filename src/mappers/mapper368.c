@@ -24,7 +24,6 @@
  * the other three games are UNROM games.
  */
 
-
 #include "mapinc.h"
 
 static uint8 reg[2];

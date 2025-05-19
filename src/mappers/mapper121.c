@@ -48,7 +48,7 @@ static void M121CW(uint16 A, uint16 V) {
 	if (ROM.prg.size > (256 * 1024)) {
 		setchr1(A, ((reg & 0x80) << 1) | V);
 	} else {
-		if ((A & 0x1000) == (uint32)((mmc3.cmd & 0x80) << 5)){
+		if ((A & 0x1000) == (uint32)((mmc3.cmd & 0x80) << 5)) {
 			setchr1(A, 0x100 | V);
 		} else {
 			setchr1(A, V);

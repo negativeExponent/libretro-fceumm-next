@@ -29,7 +29,7 @@ static uint8 PPUCHRBus = 0;
 
 static SFORMAT StateRegs[] = {
 	{ &PPUCHRBus, 1, "PPUC" },
-	{ 0 },
+	{ 0 }
 };
 
 static void M520PW(uint16 A, uint16 V) {

@@ -67,8 +67,14 @@ static void M269Power(void) {
 }
 
 static uint8 unscrambleCHR(uint8 data) {
-	return ((data & 0x01) << 6) | ((data & 0x02) << 3) | ((data & 0x04) << 0) | ((data & 0x08) >> 3) |
-	    ((data & 0x10) >> 3) | ((data & 0x20) >> 2) | ((data & 0x40) >> 1) | ((data & 0x80) << 0);
+	return (((data & 0x01) << 6)
+		| ((data & 0x02) << 3)
+		| ((data & 0x04) << 0)
+		| ((data & 0x08) >> 3)
+		| ((data & 0x10) >> 3)
+		| ((data & 0x20) >> 2)
+		| ((data & 0x40) >> 1)
+		| ((data & 0x80) << 0));
 }
 
 void Mapper269_Init(CartInfo *info) {
@@ -85,7 +91,7 @@ void Mapper269_Init(CartInfo *info) {
 		if (CHRRAM) {
 			free(CHRRAM);
 		}
-		CHRRAM = (uint8*)FCEU_malloc(PRGsize[0]);
+		CHRRAM = (uint8 *)FCEU_malloc(PRGsize[0]);
 		ROM.chr.data = CHRRAM;
 		SetupCartCHRMapping(0, ROM.chr.data, PRGsize[0], 0);
 		/* unscramble CHR data from PRG */

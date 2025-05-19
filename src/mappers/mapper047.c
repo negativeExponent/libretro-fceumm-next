@@ -37,11 +37,11 @@ static void M047CW(uint16 A, uint16 V) {
 }
 
 static DECLFW(M047Write) {
-    if (MMC3_WramIsWritable()) {
-	    reg = V;
-	    MMC3_SyncPRG();
-	    MMC3_SyncCHR();
-    }
+	if (MMC3_WramIsWritable()) {
+		reg = V;
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+	}
 }
 
 static void M047Reset(void) {

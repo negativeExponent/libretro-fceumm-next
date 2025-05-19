@@ -22,36 +22,36 @@
 #include "mmc3.h"
 
 static void M044PW(uint16 A, uint16 V) {
-    uint8 base = (mmc3.wram << 4) & 0x70;
-    uint8 mask = ((mmc3.wram & 0x06) == 0x06) ? 0x1F : 0x0F;
+	uint8 base = (mmc3.wram << 4) & 0x70;
+	uint8 mask = ((mmc3.wram & 0x06) == 0x06) ? 0x1F : 0x0F;
 
-    setprg8(A, (base & ~mask) | (V & mask));
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void M044CW(uint16 A, uint16 V) {
-    uint16 base = (mmc3.wram << 7) & 0x380;
-    uint16 mask = ((mmc3.wram & 0x06) == 0x06) ? 0xFF : 0x7F;
+	uint16 base = (mmc3.wram << 7) & 0x380;
+	uint16 mask = ((mmc3.wram & 0x06) == 0x06) ? 0xFF : 0x7F;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW (M044WriteA000) {
-    MMC3_CMDWrite(A, V);
-    switch (A & 0xE001) {
-    case 0xA001:
-        MMC3_SyncPRG();
-        MMC3_SyncCHR();
-        break;
-    }
+static DECLFW(M044WriteA000) {
+	MMC3_CMDWrite(A, V);
+	switch (A & 0xE001) {
+	case 0xA001:
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		break;
+	}
 }
 
 static void M044Reset(void) {
-    MMC3_Reset();
+	MMC3_Reset();
 }
 
 static void M044Power(void) {
 	MMC3_Power();
-    SetWriteHandler(0xA000, 0xBFFF, M044WriteA000);
+	SetWriteHandler(0xA000, 0xBFFF, M044WriteA000);
 }
 
 void Mapper044_Init(CartInfo *info) {
@@ -59,5 +59,5 @@ void Mapper044_Init(CartInfo *info) {
 	MMC3_cwrap = M044CW;
 	MMC3_pwrap = M044PW;
 	info->Power = M044Power;
-    info->Reset = M044Reset;
+	info->Reset = M044Reset;
 }

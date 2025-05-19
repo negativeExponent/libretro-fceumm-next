@@ -26,7 +26,7 @@ static uint8 reg[8];
 static void M268CW(uint16 A, uint16 V) {
 	uint16 base = ((reg[0] << 4) & 0x380) | ((reg[2] << 3) & 0x078);
 	uint16 mask = (reg[0] & 0x80) ? 0x7F : 0xFF;
-	uint8  vram = CHRRAM && (reg[4] & 0x01) && ((V & 0xFE) == (reg[4] & 0xFE));
+	uint8 vram = CHRRAM && (reg[4] & 0x01) && ((V & 0xFE) == (reg[4] & 0xFE));
 
 	/* CHR-RAM write protect on submapper 8/9) */
 	if ((iNESCart.submapper & ~1) == 8) {
@@ -47,28 +47,40 @@ static void M268CW(uint16 A, uint16 V) {
 
 static void M268PW(uint16 A, uint16 V) {
 	uint16 base;
-	uint16 mask = 0x0F				/* PRG A13-A16 */
-	    | ((~reg[0] >> 2) & 0x10)	/* PRG A17     */
-	    | ((~reg[1] >> 2) & 0x20)	/* PRG A18     */
-	    | ((reg[1] >> 0) & 0x40)	/* PRG A19     */
-	    | ((reg[1] << 2) & 0x80)	/* PRG A20     */
+	uint16 mask = 0x0F            /* PRG A13-A16 */
+	    | ((~reg[0] >> 2) & 0x10) /* PRG A17     */
+	    | ((~reg[1] >> 2) & 0x20) /* PRG A18     */
+	    | ((reg[1] >> 0) & 0x40)  /* PRG A19     */
+	    | ((reg[1] << 2) & 0x80)  /* PRG A20     */
 	    ;
 
 	switch (iNESCart.submapper & ~1) {
 	default: /* Original implementation */
-		base = (reg[3] & 0x0E) | ((reg[0] << 4) & 0x70) | ((reg[1] << 3) & 0x80) |
-		    ((reg[1] << 6) & 0x300) | ((reg[0] << 6) & 0xC00);
+		base = (reg[3] & 0x0E)
+		    | ((reg[0] << 4) & 0x70)
+		    | ((reg[1] << 3) & 0x80)
+		    | ((reg[1] << 6) & 0x300)
+		    | ((reg[0] << 6) & 0xC00);
 		break;
 	case 2: /* Later revision with different arrangement of register 1 */
-		base = (reg[3] & 0x0E) | ((reg[0] << 4) & 0x70) | ((reg[1] << 4) & 0x80) |
-		    ((reg[1] << 6) & 0x100) | ((reg[1] << 8) & 0x200) | ((reg[0] << 6) & 0xC00);
+		base = (reg[3] & 0x0E)
+		    | ((reg[0] << 4) & 0x70)
+		    | ((reg[1] << 4) & 0x80)
+		    | ((reg[1] << 6) & 0x100)
+		    | ((reg[1] << 8) & 0x200)
+		    | ((reg[0] << 6) & 0xC00);
 		break;
 	case 4: /* LD622D: PRG A20-21 moved to register 0 */
-		base = (reg[3] & 0x0E) | ((reg[0] << 4) & 0x70) | ((reg[0] << 3) & 0x180);
+		base = (reg[3] & 0x0E)
+		    | ((reg[0] << 4) & 0x70)
+		    | ((reg[0] << 3) & 0x180);
 		break;
 	case 6: /* J-852C: CHR A17 selects between two PRG chips */
-		base = (reg[3] & 0x0E) | ((reg[0] << 4) & 0x70) | ((reg[1] << 3) & 0x80) |
-		    ((reg[1] << 6) & 0x300) | ((reg[0] << 6) & 0xC00);
+		base = (reg[3] & 0x0E)
+		    | ((reg[0] << 4) & 0x70)
+		    | ((reg[1] << 3) & 0x80)
+		    | ((reg[1] << 6) & 0x300)
+		    | ((reg[0] << 6) & 0xC00);
 		base &= PRG_BANK_COUNT(16) - 1;
 		if ((reg[0] & 0x80) ? !!(reg[0] & 0x08) : !!(mmc3.reg[0] & 0x80)) {
 			base |= PRG_BANK_COUNT(16);
@@ -78,11 +90,16 @@ static void M268PW(uint16 A, uint16 V) {
 	if (reg[3] & 0x10) {
 		/* GNROM */
 		switch (iNESCart.submapper & ~1) {
-		default: mask = (reg[1] & 0x02) ? 0x03 : 0x01; break;
-		case 2: mask = (reg[1] & 0x10) ? 0x01 : 0x03; break;
+		default:
+			mask = (reg[1] & 0x02) ? 0x03 : 0x01;
+			break;
+		case 2:
+			mask = (reg[1] & 0x10) ? 0x01 : 0x03;
+			break;
 		}
 		V = A >> 13;
 	}
+
 	setprg8(A, (base & ~mask) | (V & mask));
 
 	if (mmc3.wram & 0x20) {

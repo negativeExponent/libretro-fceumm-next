@@ -35,7 +35,7 @@ static uint8 reg;
 
 static SFORMAT StateRegs[] = {
 	{ &reg, 1, "REGS" },
-	{ 0 },
+	{ 0 }
 };
 
 static void M384PW(uint16 A, uint16 V) {
@@ -47,23 +47,23 @@ static void M384CW(uint16 A, uint16 V) {
 }
 
 static DECLFW(M384Write) {
-    CartBW(A, V);
-    if ((A & 0x800) && !(reg & 0x08)) {
-        reg = V;
-        VRC24_SyncPRG();
-        VRC24_SyncCHR();
-    }
+	CartBW(A, V);
+	if ((A & 0x800) && !(reg & 0x08)) {
+		reg = V;
+		VRC24_SyncPRG();
+		VRC24_SyncCHR();
+	}
 }
 
 static void M384Reset(void) {
-    reg = 0;
-    VRC24_SyncPRG();
-    VRC24_SyncCHR();
-    VRC24_SyncMirror();
+	reg = 0;
+	VRC24_SyncPRG();
+	VRC24_SyncCHR();
+	VRC24_SyncMirror();
 }
 
 static void M384Power(void) {
-    reg = 0;
+	reg = 0;
 	VRC24_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M384Write);
 }
@@ -71,7 +71,7 @@ static void M384Power(void) {
 void Mapper384_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, TRUE, TRUE);
 	info->Power = M384Power;
-    info->Reset = M384Reset;
+	info->Reset = M384Reset;
 	VRC24_pwrap = M384PW;
 	VRC24_cwrap = M384CW;
 	AddExState(StateRegs, ~0, 0, NULL);

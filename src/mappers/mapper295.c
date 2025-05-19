@@ -27,7 +27,7 @@ static uint32 GetPRGBank(uint32 V) {
 }
 
 static uint32 GetCHRBank(uint32 V) {
-    return ((jyasic.mode[3] << 7) | (V & 0x7F));
+	return ((jyasic.mode[3] << 7) | (V & 0x7F));
 }
 
 static void M295Power(void) {

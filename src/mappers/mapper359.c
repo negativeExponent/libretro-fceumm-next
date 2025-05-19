@@ -57,17 +57,25 @@ static void Sync(void) {
 	uint16 prgBase = (reg[0] & 0x38) << 1;
 
 	switch (reg[1] & 0x03) {
-	case 0: prgMask = 0x3F; break;
-	case 1: prgMask = 0x1F; break;
-	case 2: prgMask = 0x2F; break;
-	case 3: prgMask = 0x0F; break;
+	case 0:
+		prgMask = 0x3F;
+		break;
+	case 1:
+		prgMask = 0x1F;
+		break;
+	case 2:
+		prgMask = 0x2F;
+		break;
+	case 3:
+		prgMask = 0x0F;
+		break;
 	}
 
 	setprg8(0x6000, prgBase | (prg[3] & prgMask));
 	setprg8(0x8000, prgBase | (prg[0] & prgMask));
 	setprg8(0xA000, prgBase | (prg[1] & prgMask));
 	setprg8(0xC000, prgBase | (prg[2] & prgMask));
-	setprg8(0xE000, prgBase | (    ~0 & prgMask));
+	setprg8(0xE000, prgBase | (~0 & prgMask));
 
 	if (!ROM.chr.size) {
 		setchr8(0);
@@ -93,10 +101,18 @@ static void Sync(void) {
 	}
 
 	switch (reg[2] & 0x03) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+	case 0:
+		setmirror(MI_V);
+		break;
+	case 1:
+		setmirror(MI_H);
+		break;
+	case 2:
+		setmirror(MI_0);
+		break;
+	case 3:
+		setmirror(MI_1);
+		break;
 	}
 }
 

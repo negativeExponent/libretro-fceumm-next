@@ -52,7 +52,7 @@ static void TransformerIRQHook(int a) {
 				else
 					TransformerChar = i | 0x80;
 				X6502_IRQBegin(FCEU_IQEXT);
-				memcpy((void*)&oldkeys[0], (void*)TransformerKeys, sizeof(oldkeys));
+				memcpy((void *)&oldkeys[0], (void *)TransformerKeys, sizeof(oldkeys));
 				break;
 			}
 		}
@@ -62,10 +62,17 @@ static void TransformerIRQHook(int a) {
 static DECLFR(TransformerRead) {
 	uint8 ret = 0;
 	switch (A & 3) {
-	case 0: ret = TransformerChar & 15; break;
-	case 1: ret = (TransformerChar >> 4); break;
-	case 2: X6502_IRQEnd(FCEU_IQEXT); break;
-	case 4: break;
+	case 0:
+		ret = TransformerChar & 15;
+		break;
+	case 1:
+		ret = (TransformerChar >> 4);
+		break;
+	case 2:
+		X6502_IRQEnd(FCEU_IQEXT);
+		break;
+	case 4:
+		break;
 	}
 	return ret;
 }
@@ -93,7 +100,7 @@ void Transformer_Init(CartInfo *info) {
 	info->Close = TransformerClose;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	if (info->battery) {
 		info->SaveGame[0] = WRAM;

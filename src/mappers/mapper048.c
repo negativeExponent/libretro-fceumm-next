@@ -117,4 +117,3 @@ void Mapper048_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 	GameHBIRQHook = IRQHook;
 }
-

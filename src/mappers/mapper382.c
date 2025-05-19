@@ -29,7 +29,7 @@
 static uint8 base;
 
 static SFORMAT StateRegs[] = {
-	{ &base, 1, "BASE"},
+	{ &base, 1, "BASE" },
 	{ 0 }
 };
 

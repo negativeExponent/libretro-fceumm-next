@@ -48,9 +48,9 @@ static void Sync(void) {
 	setchr8(0);
 	if (latch.data & 0x80) {
 		setmirror(MI_0 + (((latch.data >> 5) & 0x01)));
-    } else {
+	} else {
 		setmirror(((latch.data >> 3) & 0x01) ^ 0x01);
-    }
+	}
 }
 
 void Mapper285_Init(CartInfo *info) {

@@ -46,8 +46,8 @@ static uint8 mode = 0;
 static uint8 game = 0;
 
 static SFORMAT StateRegs[] = {
-	{ &mode, 1, "MODE"},
-	{ &game, 1, "GAME"},
+	{ &mode, 1, "MODE" },
+	{ &game, 1, "GAME" },
 	{ 0 }
 };
 

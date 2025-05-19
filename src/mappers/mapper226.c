@@ -37,7 +37,7 @@ static SFORMAT StateRegs[] = {
 
 static void Sync(void) {
 	uint8 base = (reg[0] >> 7) | ((reg[1] & 0x01) << 1);
-	uint8 prg  = reg[0] & 0x1F;
+	uint8 prg = reg[0] & 0x1F;
 
 	/* 1536KiB PRG roms have different bank order */
 	if ((ROM.prg.size == (1536 * 1024)) && (base > 0)) {

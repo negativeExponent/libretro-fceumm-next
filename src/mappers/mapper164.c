@@ -45,7 +45,7 @@ static void Sync(void) {
 	uint8 mode = ((reg[0] >> 5) & 0x02) | ((reg[0] >> 4) & 0x01);
 	uint8 mirr = ((reg[0] & 0x10) && !(reg[3] & 0x80)) ? MI_H : MI_V;
 
-    switch (mode) {
+	switch (mode) {
 	case 0: /* UNROM-512 */
 		setprg16(0x8000, prgHigh | prgLow);
 		setprg16(0xC000, prgHigh | 0x1F);

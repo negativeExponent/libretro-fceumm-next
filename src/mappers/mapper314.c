@@ -32,28 +32,25 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 prg = regs[1] & 0x3F;
+	uint8 prg = ((regs[1] << 1) & 0x7E)  | ((regs[1] >> 6) & 0x01);
 
 	if (regs[0] & 0x80) { /* NROM mode */
 		if (regs[1] & 0x80) {
-			setprg32(0x8000, prg);
+			setprg32(0x8000, prg >> 1);
 		} else {
-			setprg16(0x8000, (prg << 1) | ((regs[1] >> 6) & 0x01));
-			setprg16(0xC000, (prg << 1) | ((regs[1] >> 6) & 0x01));
+			setprg16(0x8000, prg);
+			setprg16(0xC000, prg);
 		}
 	} else { /* UNROM mode */
-		setprg16(0x8000, (prg << 1) | (latch.data & 0x07));
-		setprg16(0xC000, (prg << 1) | 0x07);
+		setprg16(0x8000, (prg & ~0x07) | (latch.data & 0x07));
+		setprg16(0xC000, prg | 0x07);
 	}
 	setchr8((regs[2] << 2) | ((regs[0] >> 1) & 0x03));
 	setmirror(((regs[0] >> 5) & 0x01) ^ 0x01);
-	
 }
 
 static DECLFW(M314Write) {
-	A &= 0x03;
-	if (A == 0x03) A = 0x01; /* K-42001's "Aladdin III" */
-	regs[A] = V;
+	regs[A & (ROM.chr.size ? 3 : 1)] = V;
 	Sync();
 }
 

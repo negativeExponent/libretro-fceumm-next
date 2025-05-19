@@ -38,7 +38,7 @@ static void Sync(void) {
 
 	if (reg[2] & 8) {
 		setprg16(0x8000, base | ((reg[PPUCHRBus] & 0x06) & ~0x01)); /* actually, both 0 and 1 registers used, but they will switch each PA12 transition */
-		setprg16(0xc000, base | ((reg[PPUCHRBus] & 0x06) |  0x01)); /* if bits are different for both registers, so they must be programmed strongly the same! */
+		setprg16(0xc000, base | ((reg[PPUCHRBus] & 0x06) | 0x01)); /* if bits are different for both registers, so they must be programmed strongly the same! */
 	} else {
 		setprg16(0x8000, base | (reg[PPUCHRBus] & 0x07));
 		setprg16(0xc000, base | 0x07);
@@ -50,9 +50,18 @@ static void Sync(void) {
 
 static DECLFW(M331Write) {
 	switch (A & 0xE000) {
-	case 0xA000: reg[0] = V; Sync(); break;
-	case 0xC000: reg[1] = V; Sync(); break;
-	case 0xE000: reg[2] = V; Sync(); break;
+	case 0xA000:
+		reg[0] = V;
+		Sync();
+		break;
+	case 0xC000:
+		reg[1] = V;
+		Sync();
+		break;
+	case 0xE000:
+		reg[2] = V;
+		Sync();
+		break;
 	}
 }
 

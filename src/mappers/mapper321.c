@@ -44,12 +44,12 @@ static void M321CW(uint16 A, uint16 V) {
 }
 
 static DECLFW(M321Write) {
-    if (MMC3_WramIsWritable()) {
-        CartBW(A, V);
-	    reg = V & 0xFF;
-	    MMC3_SyncPRG();
-	    MMC3_SyncCHR();
-    }
+	if (MMC3_WramIsWritable()) {
+		CartBW(A, V);
+		reg = V & 0xFF;
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+	}
 }
 
 static void M321Reset(void) {
@@ -69,5 +69,5 @@ void Mapper321_Init(CartInfo *info) {
 	MMC3_pwrap = M321PW;
 	info->Power = M321Power;
 	info->Reset = M321Reset;
-    AddExState(StateRegs, ~0, 0, NULL);
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -40,5 +40,5 @@ static void M144Power(void) {
 
 void Mapper144_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
-    info->Power = M144Power;
+	info->Power = M144Power;
 }

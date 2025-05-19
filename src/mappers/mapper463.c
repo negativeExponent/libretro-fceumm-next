@@ -30,8 +30,8 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 prg  = regs[1];
-	uint8 chr  = regs[2];
+	uint8 prg = regs[1];
+	uint8 chr = regs[2];
 	uint8 mirr = (regs[0] & 0x01) ^ 0x01;
 
 	if (regs[0] & 0x04) {

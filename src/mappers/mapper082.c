@@ -93,14 +93,30 @@ static DECLFW(M082Write) {
 	case 0x02:
 	case 0x03:
 	case 0x04:
-	case 0x05: chr[A & 7] = V; break;
-	case 0x06: ctrl = V & 3; break;
-	case 0x07: protect[0] = V; break;
-	case 0x08: protect[1] = V; break;
-	case 0x09: protect[2] = V; break;
-	case 0x0A: prg[0] = V; break;
-	case 0x0B: prg[1] = V; break;
-	case 0x0C: prg[2] = V; break;
+	case 0x05:
+		chr[A & 7] = V;
+		break;
+	case 0x06:
+		ctrl = V;
+		break;
+	case 0x07:
+		protect[0] = V;
+		break;
+	case 0x08:
+		protect[1] = V;
+		break;
+	case 0x09:
+		protect[2] = V;
+		break;
+	case 0x0A:
+		prg[0] = V;
+		break;
+	case 0x0B:
+		prg[1] = V;
+		break;
+	case 0x0C:
+		prg[2] = V;
+		break;
 	default:
 		/* IRQ emulation ignored since no commercial games uses it */
 		return;

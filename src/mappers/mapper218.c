@@ -21,12 +21,12 @@
 #include "mapinc.h"
 
 extern uint8 **VPageR;
-static const uint8 mirrorings[]  = { MI_V, MI_H, MI_0, MI_1 };
+static const uint8 mirrorings[] = { MI_V, MI_H, MI_0, MI_1 };
 static const uint8 mapping[4][8] = {
 	{ 0, 1, 0, 1, 0, 1, 0, 1 }, /* MI_V */
 	{ 0, 0, 1, 1, 0, 0, 1, 1 }, /* MI_H */
 	{ 0, 0, 0, 0, 1, 1, 1, 1 }, /* MI_0 */
-	{ 0, 0, 0, 0, 0, 0, 0, 0 }  /* MI_1 */
+	{ 0, 0, 0, 0, 0, 0, 0, 0 } /* MI_1 */
 };
 
 static void M218Power(void) {

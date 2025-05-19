@@ -22,8 +22,7 @@
 
 static uint8 regs[8];
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ regs, 8, "REGS" },
 	{ 0 }
 };
@@ -53,19 +52,24 @@ static DECLFW(SSSNROMWrite) {
 }
 
 static DECLFR(SSSNROMRead) {
-/*	FCEU_printf("read %04x\n",A); */
+	/*	FCEU_printf("read %04x\n",A); */
 	switch (A & 7) {
-	case 0: return regs[0] = 0xff; /* clear all exceptions */
-	case 2: return 0xc0;	/* DIP selftest + freeplay */
-	case 3: return 0x00;	/* 0, 1 - attract 
-							 * 2
-							 * 4    - menu
-							 * 8    - self check and game casette check
-							 * 10   - lock?
-							 * 20   - game title & count display
-							 */
-	case 7: return 0x22;	/* TV type, key not turned, relay B */
-	default: return 0;
+	case 0:
+		return regs[0] = 0xff; /* clear all exceptions */
+	case 2:
+		return 0xc0; /* DIP selftest + freeplay */
+	case 3:
+		return 0x00; /* 0, 1 - attract
+		              * 2
+		              * 4    - menu
+		              * 8    - self check and game casette check
+		              * 10   - lock?
+		              * 20   - game title & count display
+		              */
+	case 7:
+		return 0x22; /* TV type, key not turned, relay B */
+	default:
+		return 0;
 	}
 }
 
@@ -74,7 +78,7 @@ static void SSSNROMPower(void) {
 	regs[7] = 0xff;
 	Sync();
 	FCEU_MemoryRand(WRAM, WRAMSIZE);
-/*	SetWriteHandler(0x0000,0x1FFF,SSSNROMRamWrite); */
+	/*	SetWriteHandler(0x0000,0x1FFF,SSSNROMRamWrite); */
 	SetReadHandler(0x0800, 0x1FFF, CartBR);
 	SetWriteHandler(0x0800, 0x1FFF, CartBW);
 	SetReadHandler(0x5000, 0x5FFF, SSSNROMRead);
@@ -93,7 +97,7 @@ static void SSSNROMClose(void) {
 }
 
 static void SSSNROMIRQHook(void) {
-/*	X6502_IRQBegin(FCEU_IQEXT); */
+	/*	X6502_IRQBegin(FCEU_IQEXT); */
 }
 
 static void StateRestore(int version) {
@@ -108,7 +112,7 @@ void SSSNROM_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 16384;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	AddExState(StateRegs, ~0, 0, NULL);

@@ -28,7 +28,7 @@
 #include "mapinc.h"
 #include "onebus.h"
 
-static uint8 reg4242;   /* $4242 */
+static uint8 reg4242; /* $4242 */
 static uint8 dipsw; /* jumper */
 
 static void Sync(void) {

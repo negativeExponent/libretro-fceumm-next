@@ -32,20 +32,38 @@ static uint8 reg;
 
 static void M313CW(uint16 A, uint16 V) {
 	switch (iNESCart.submapper) {
-	default: setchr1(A, (reg << 7) | (V & 0x7F)); break;
-	case 1:  setchr1(A, (reg << 7) | (V & 0x7F)); break;
-	case 2:  setchr1(A, (reg << 8) | (V & 0xFF)); break;
-	case 3:  setchr1(A, (reg << 8) | (V & 0xFF)); break;
-	case 4:  setchr1(A, (reg << 7) | (V & 0x7F)); break;
+	default:
+		setchr1(A, (reg << 7) | (V & 0x7F));
+		break;
+	case 1:
+		setchr1(A, (reg << 7) | (V & 0x7F));
+		break;
+	case 2:
+		setchr1(A, (reg << 8) | (V & 0xFF));
+		break;
+	case 3:
+		setchr1(A, (reg << 8) | (V & 0xFF));
+		break;
+	case 4:
+		setchr1(A, (reg << 7) | (V & 0x7F));
+		break;
 	}
 }
 
 static void M313PW(uint16 A, uint16 V) {
 	switch (iNESCart.submapper) {
-	default: setprg8(A, (reg << 4) | (V & 0x0F)); break;
-	case 1:  setprg8(A, (reg << 5) | (V & 0x1F)); break;
-	case 2:  setprg8(A, (reg << 4) | (V & 0x0F)); break;
-	case 3:  setprg8(A, (reg << 5) | (V & 0x1F)); break;
+	default:
+		setprg8(A, (reg << 4) | (V & 0x0F));
+		break;
+	case 1:
+		setprg8(A, (reg << 5) | (V & 0x1F));
+		break;
+	case 2:
+		setprg8(A, (reg << 4) | (V & 0x0F));
+		break;
+	case 3:
+		setprg8(A, (reg << 5) | (V & 0x1F));
+		break;
 	case 4:
 		if (reg == 0) {
 			setprg8(A, (reg << 5) | (V & 0x1F));

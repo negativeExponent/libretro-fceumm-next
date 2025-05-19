@@ -23,7 +23,7 @@
 
 static void Sync(void) {
 	setprg16(0x8000, (latch.addr >> 2) & 3);
-    setprg16(0xC000, ~0);
+	setprg16(0xC000, ~0);
 	setchr8(latch.data & 3);
 }
 

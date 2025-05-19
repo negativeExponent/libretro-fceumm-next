@@ -27,8 +27,8 @@ static uint8 chr[8];
 
 static SFORMAT StateRegs[] = {
 	{ &cmd, 1, "CMD0" },
-	{ prg,  4, "PREG" },
-	{ chr,  8, "CREG" },
+	{ prg, 4, "PREG" },
+	{ chr, 8, "CREG" },
 	{ 0 }
 };
 

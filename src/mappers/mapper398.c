@@ -31,12 +31,12 @@ static uint8 PPUCHRBus;
 static SFORMAT StateRegs[] = {
 	{ &reg, 1, "REGS" },
 	{ &PPUCHRBus, 1, "PPUC" },
-	{ 0 },
+	{ 0 }
 };
 
 static void M398PW(uint16 A, uint16 V) {
 	if (reg & 0x80) {
-        /* GNROM-like */
+		/* GNROM-like */
 		setprg32(0x8000, ((reg >> 5) & 0x06) | ((vrc24.chr[PPUCHRBus] >> 2) & 0x01));
 	} else {
 		setprg8(A, V & 0x0F);
@@ -45,7 +45,7 @@ static void M398PW(uint16 A, uint16 V) {
 
 static void M398CW(uint16 A, uint16 V) {
 	if (reg & 0x80) {
-        /* GNROM-like */
+		/* GNROM-like */
 		setchr8(0x40 | ((reg >> 3) & 0x08) | (vrc24.chr[PPUCHRBus] & 0x07));
 	} else {
 		setchr1(A, V & 0x1FF);
@@ -76,7 +76,7 @@ static void M398Reset(void) {
 
 static void M398Power(void) {
 	PPUCHRBus = 0;
-    reg = 0xC0;
+	reg = 0xC0;
 	VRC24_Power();
 	SetWriteHandler(0x8000, 0xFFFF, M398WriteLatch);
 }

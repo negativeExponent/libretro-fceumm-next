@@ -37,13 +37,13 @@ static uint32 CHRBase(void) {
 }
 
 static uint32 M394_PRGBank_JY(uint32 V) {
-    uint8 base = PRGBase();
+	uint8 base = PRGBase();
 
 	return (base | (V & 0x1F));
 }
 
 static uint32 M394_CHRBank_JY(uint32 V) {
-    uint16 base = CHRBase();
+	uint16 base = CHRBase();
 
 	return (base | (V & 0x0FF));
 }
@@ -76,7 +76,7 @@ static void M394MMC3PW(uint16 A, uint16 V) {
 }
 
 static void M394MMC3CW(uint16 A, uint16 V) {
-	uint16 mask  = (reg[3] & 0x80) ? 0xFF : 0x7F;
+	uint16 mask = (reg[3] & 0x80) ? 0xFF : 0x7F;
 	uint16 base = CHRBase();
 
 	if (iNESCart.submapper != 1) {
@@ -130,7 +130,7 @@ static void M394StateRestore(int version) {
 		SetWriteHandler(0xD000, 0xD7FF, JYASIC_WriteMode); /* D800-DFFF ignored */
 		for (i = 0; i < 0x10000; i++) {
 			JYASIC_cpuWrite[i] = GetWriteHandler(i);
-        }
+		}
 		SetWriteHandler(0x0000, 0xFFFF, JYASIC_trapCPUWrite); /* Trap all CPU writes for IRQ clocking purposes */
 		JYASIC_CPUWriteHandlersSet = 1;
 		SetReadHandler(0x5000, 0x5FFF, JYASIC_ReadALU_DIP);
@@ -165,8 +165,8 @@ void Mapper394_Init(CartInfo *info) {
 	JYASIC_wwrap = M394JYWW;
 	JYASIC_mwrap = M394JYMW;
 
-    MMC3_Init(info, MMC3B, 0, 0);
-    MMC3_pwrap = M394MMC3PW;
+	MMC3_Init(info, MMC3B, 0, 0);
+	MMC3_pwrap = M394MMC3PW;
 	MMC3_cwrap = M394MMC3CW;
 
 	info->Reset = M394Power;

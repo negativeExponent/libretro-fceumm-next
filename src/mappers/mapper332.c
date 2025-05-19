@@ -69,7 +69,7 @@ static void M332Reset(void) {
 		dipsw = 0; /* Only 00b, 01b and 10b settings are valid */
 	}
 	/* Always reset to menu */
-	reg[0] =  reg[1] = 0;
+	reg[0] = reg[1] = 0;
 	Latch_RegReset();
 }
 

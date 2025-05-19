@@ -1,25 +1,25 @@
 /* FCE Ultra - NES/Famicom Emulator
-*
-* Copyright notice for this file:
-*	Copyright (C) 2016 Cluster
-*	http://clusterrr.com
-*	clusterrr@clusterrr.com
-*   Copyright (C) 2023
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License as published by
-* the Free Software Foundation; either version 2 of the License, or
-* (at your option) any later version.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License
-* along with this program; if not, write to the Free Software
-* Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA	02110-1301	USA
-*/
+ *
+ * Copyright notice for this file:
+ *	Copyright (C) 2016 Cluster
+ *	http://clusterrr.com
+ *	clusterrr@clusterrr.com
+ *   Copyright (C) 2023
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.	See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA	02110-1301	USA
+ */
 
 /*
 MMC3-based multicart mapper with CHR RAM, CHR ROM and PRG RAM
@@ -42,7 +42,7 @@ Example Game:
 /* NOTE:
  * Appears similar to Mapper 327 but with mirroring similar to Mapper 118?
  * Cannot find a cart to confirm this though
-*/
+ */
 
 #include "mapinc.h"
 #include "mmc3.h"
@@ -148,7 +148,7 @@ void BMC810131C_Init(CartInfo *info) {
 	AddExState(&reg, 1, 0, "EXPR");
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8*)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

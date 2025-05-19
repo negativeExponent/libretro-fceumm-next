@@ -27,7 +27,7 @@ static uint8 dipsw;
 
 static void M432CW(uint16 A, uint16 V) {
 	uint16 mask = (reg[1] & 0x04) ? 0x7F : 0xFF;
-	uint16 base  = ((reg[1] << 7) & 0x080) | ((reg[1] << 5) & 0x100) | ((reg[1] << 4) & 0x200);
+	uint16 base = ((reg[1] << 7) & 0x080) | ((reg[1] << 5) & 0x100) | ((reg[1] << 4) & 0x200);
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
@@ -35,14 +35,14 @@ static void M432CW(uint16 A, uint16 V) {
 static void M432PW(uint16 A, uint16 V) {
 	uint16 mask = (reg[1] & 0x02) ? 0x0F : 0x1F;
 	uint16 base = ((reg[1] << 4) & 0x10) | ((reg[1] << 1) & 0x60);
-	uint8 nrom256 = (iNESCart.submapper == 2) ? ((reg[1] &0x20) != 0) : ((reg[1] &0x80) != 0);
+	uint8 nrom256 = (iNESCart.submapper == 2) ? ((reg[1] & 0x20) != 0) : ((reg[1] & 0x80) != 0);
 
 	if (reg[1] & 0x40) { /* NROM */
 		if (nrom256) { /* NROM-256 */
-			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & ~0x02) & mask));
-			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & ~0x02) & mask));
-			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] |  0x02) & mask));
-			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  0x02) & mask));
+			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & 0xFD) & mask));
+			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & 0xFD) & mask));
+			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] | 0x02) & mask));
+			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] | 0x02) & mask));
 		} else { /* NROM-128 */
 			setprg8(0x8000, (base & ~mask) | (mmc3.reg[6] & mask));
 			setprg8(0xA000, (base & ~mask) | (mmc3.reg[7] & mask));
@@ -55,8 +55,7 @@ static void M432PW(uint16 A, uint16 V) {
 }
 
 static DECLFR(M432Read) {
-	if ((iNESCart.submapper == 1) ?
-		((reg[1] & 0x20) != 0) : ((reg[0] & 0x01) != 0)) {
+	if ((iNESCart.submapper == 1) ? ((reg[1] & 0x20) != 0) : ((reg[0] & 0x01) != 0)) {
 		return dipsw;
 	}
 	return CartBR(A);

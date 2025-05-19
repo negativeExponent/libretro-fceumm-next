@@ -47,24 +47,24 @@ static uint8 scratch[0x1000];
 static writefunc writePPU;
 
 static SFORMAT StateRegs[] = {
-	{ &mode_1m,         1, "MC1M" },
-	{ &mode_2m,         1, "MC2M" },
-	{ &mode_smc,        1, "SMCM" },
+	{ &mode_1m, 1, "MC1M" },
+	{ &mode_2m, 1, "MC2M" },
+	{ &mode_smc, 1, "SMCM" },
 
-	{ prg,              4, "PREG" },
-	{ chr,              8, "CREG" },
-	{ nt,               4, "NTAR" },
-	{ chr_mmc4latch,    2, "MMC4" },
-	{ &latch,           1, "LATC" },
-	{ &chr_lock,        1, "CHRL" },
+	{ prg, 4, "PREG" },
+	{ chr, 8, "CREG" },
+	{ nt, 4, "NTAR" },
+	{ chr_mmc4latch, 2, "MMC4" },
+	{ &latch, 1, "LATC" },
+	{ &chr_lock, 1, "CHRL" },
 
 	{ &smc_irq_enabled, 1, "IRQA" },
 	{ &smc_irq_enabled, 4, "IRQC" },
 
-	{ &fds_control,     1, "FDSI" },
+	{ &fds_control, 1, "FDSI" },
 	{ &fds_irq_counter, 4, "FDSC" },
 
-	{ 0 },
+	{ 0 }
 };
 
 static void SyncPRG(void) {
@@ -153,10 +153,18 @@ static void SyncCHR(void) {
 static void SyncMIR(void) {
 	if (mode_smc & 0x02) {
 		switch (mode_1m & 0x11) {
-		case 0x00: setmirror(MI_0); break;
-		case 0x10: setmirror(MI_1); break;
-		case 0x01: setmirror(MI_V); break;
-		case 0x11: setmirror(MI_H); break;
+		case 0x00:
+			setmirror(MI_0);
+			break;
+		case 0x10:
+			setmirror(MI_1);
+			break;
+		case 0x01:
+			setmirror(MI_V);
+			break;
+		case 0x11:
+			setmirror(MI_H);
+			break;
 		}
 	} else {
 		setntamem(CHRptr[0] + 0x400 * (nt[0] & CHRmask1[0]), 1, 0);
@@ -298,8 +306,8 @@ static uint32 prg_size_8K = 0;
 static void SetTrainer(void) {
 	int nmiHandler;
 
-	#define PRGPAGE_DMR(a)    Page[(a) >> 11][(a)]
-	#define PRGPAGE_DMW(a, d) Page[(a) >> 11][(a)] = (d)
+#define PRGPAGE_DMR(a)	  Page[(a) >> 11][(a)]
+#define PRGPAGE_DMW(a, d) Page[(a) >> 11][(a)] = (d)
 
 	nmiHandler = PRGPAGE_DMR(0xFFFA) | (PRGPAGE_DMR(0xFFFB) << 8);
 	if (nmiHandler == 0x5032) {
@@ -329,8 +337,8 @@ static void SetTrainer(void) {
 	}
 	(GetWriteHandler(0x4017))(0x4017, 0x40);
 
-	#undef PRGPAGE_DMR
-	#undef PRGPAGE_DMW
+#undef PRGPAGE_DMR
+#undef PRGPAGE_DMW
 }
 
 static void M006Power(void) {
@@ -342,7 +350,7 @@ static void M006Power(void) {
 	mode_2m = ((iNESCart.mapper == 12) ||
 		(iNESCart.mapper == 17)) ? 0x00 : 0x03;
 	mode_smc = (iNESCart.mapper == 17) ? 0x47 : 0x42;
-	latch    = 0;
+	latch = 0;
 
 	prg[0] = prg_size_8K - 4;
 	prg[1] = prg_size_8K - 3;
@@ -366,7 +374,7 @@ static void M006Power(void) {
 	SetReadHandler(0x5000, 0xFFFF, CartBR);
 	SetWriteHandler(0x5000, 0x7FFF, CartBW);
 
-	SetReadHandler (0x4500, 0x4500, M006ReadREG);
+	SetReadHandler(0x4500, 0x4500, M006ReadREG);
 	SetWriteHandler(0x4024, 0x451B, M006WriteREG);
 	SetWriteHandler(0x8000, 0xFFFF, M006WriteLatch);
 
@@ -376,7 +384,7 @@ static void M006Power(void) {
 static void ClockSMCCounter(void) {
 	if (smc_irq_enabled) {
 		smc_irq_counter++;
-		if (smc_irq_counter >= 0x10000 ) {
+		if (smc_irq_counter >= 0x10000) {
 			smc_irq_counter = 0;
 			smc_irq_enabled = FALSE;
 			X6502_IRQBegin(FCEU_IQEXT);
@@ -411,7 +419,7 @@ static void M006PPUHook(uint32 A) {
 	if ((A & 0x3000) != 0x2000) {
 		if ((mode_smc & 0x05) == 0x01) {
 			uint8 value = (A >> 4) & 0x02;
-			uint8 bank  = (A >> 12) & 0x01;
+			uint8 bank = (A >> 12) & 0x01;
 
 			switch (A & 0x0FF0) {
 			case 0x0FD0:

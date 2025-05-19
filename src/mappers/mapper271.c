@@ -24,7 +24,7 @@
 
 static void Sync(void) {
 	setprg32(0x8000, latch.data >> 4);
-    setchr8(latch.data & 0x0F);
+	setchr8(latch.data & 0x0F);
 	setmirror((latch.data >> 5) & 0x01);
 }
 

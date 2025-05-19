@@ -28,43 +28,43 @@ static uint8 reg;
 static uint8 dipsw;
 
 static void M472CW(uint16 A, uint16 V) {
-    uint16 mask = (reg & 0x20) ? 0x7F : 0xFF;
-    uint16 base = reg << 3;
+	uint16 mask = (reg & 0x20) ? 0x7F : 0xFF;
+	uint16 base = reg << 3;
 
-/*    FCEU_printf("CHR: A:%04x V:%02x R0:%02x\n", A, V, reg); */
+	/* FCEU_printf("CHR: A:%04x V:%02x R0:%02x\n", A, V, reg); */
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static void M472PW(uint16 A, uint16 V) {
-    uint16 mask = 0x0F;
-    uint16 base = reg & 0xF0;
+	uint16 mask = 0x0F;
+	uint16 base = reg & 0xF0;
 
-/*    FCEU_printf("PRG: A:%04x V:%02x R0:%02x\n", A, V, reg); */
+	/* FCEU_printf("PRG: A:%04x V:%02x R0:%02x\n", A, V, reg); */
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(M472Write) {
-/*    FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, reg); */
-    if (MMC3_WramIsWritable()) {
-	    reg = V;
-	    MMC3_SyncPRG();
-	    MMC3_SyncCHR();
-    }
+	/* FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, reg); */
+	if (MMC3_WramIsWritable()) {
+		reg = V;
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+	}
 }
 
 static DECLFR(M472Read) {
-/*    FCEU_printf("Rd: A:%04x DIP:%02x\n", A, dipsw); */
+	/* FCEU_printf("Rd: A:%04x DIP:%02x\n", A, dipsw); */
 	return dipsw;
 }
 
 static void M472Reset(void) {
-    reg = 0;
+	reg = 0;
 	dipsw ^= 0x80; /* any other variants? */
 	MMC3_Reset();
 }
 
 static void M472Power(void) {
-    reg = 0;
+	reg = 0;
 	dipsw = 0x80; /* start with 4-in-1 menu */
 	MMC3_Power();
 	SetReadHandler(0x6000, 0x7FFF, M472Read);
@@ -76,6 +76,6 @@ void Mapper472_Init(CartInfo *info) {
 	MMC3_cwrap = M472CW;
 	MMC3_pwrap = M472PW;
 	info->Power = M472Power;
-    info->Reset = M472Reset;
+	info->Reset = M472Reset;
 	AddExState(&reg, 1, 0, "EXPR");
 }

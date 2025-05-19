@@ -29,8 +29,7 @@
 static uint8 reg, IRQa;
 static int32 IRQCount;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &reg, 1, "REG" },
 	{ &IRQa, 1, "IRQA" },
 	{ &IRQCount, 4, "IRQC" },
@@ -93,7 +92,7 @@ void Mapper535_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

@@ -48,14 +48,14 @@ static uint8 br_tbl[16] = {
 static void Sync(void) {
 	setchr8(0);
 	setprg8r(0x10, 0x6000, 0);
-	if(PRGsize[0] == 512 * 1024) {
-		if(reg[0] & 0x010) {
+	if (PRGsize[0] == 512 * 1024) {
+		if (reg[0] & 0x010) {
 			setprg32(0x8000, reg[0] & 7);
 		} else {
-			if(reg[0] & 0x40)
+			if (reg[0] & 0x40)
 				setprg8(0x8000, (reg[0] & 0x0F) | 0x20 | ((reg[0] & 0x20) >> 1));
 		}
-		if((reg[0] & 0x18) == 0x18)
+		if ((reg[0] & 0x18) == 0x18)
 			setmirror(MI_H);
 		else
 			setmirror(MI_V);
@@ -69,31 +69,31 @@ static void Sync(void) {
 static DECLFW(M257Write) {
 	reg[(A & 0x700) >> 8] = V;
 	PEC586Hack = (reg[0] & 0x80) ? TRUE : FALSE;
-/*	FCEU_printf("bs %04x %02x\n", A, V); */
+	/*	FCEU_printf("bs %04x %02x\n", A, V); */
 	Sync();
 }
 
 static DECLFR(M257Read) {
-/*	FCEU_printf("read %04x\n", A); */
+	/*	FCEU_printf("read %04x\n", A); */
 	return (cpu.openbus & 0xD8) | br_tbl[reg[4] >> 4];
 }
 
 static DECLFR(M257ReadHi) {
-	if((reg[0] & 0x10) || ((reg[0] & 0x40) && (A < 0xA000)))
+	if ((reg[0] & 0x10) || ((reg[0] & 0x40) && (A < 0xA000)))
 		return CartBR(A);
 	else
 		return PRGptr[0][((0x0107 | ((A >> 7) & 0x0F8)) << 10) | (A & 0x3FF)];
 }
 
 static void M257Power(void) {
-	if(PRGsize[0] == 512 * 1024)
+	if (PRGsize[0] == 512 * 1024)
 		reg[0] = 0x00;
 	else
 		reg[0] = 0x0E;
 	Sync();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	if(PRGsize[0] == 512 * 1024)
+	if (PRGsize[0] == 512 * 1024)
 		SetReadHandler(0x8000, 0xFFFF, M257ReadHi);
 	else
 		SetReadHandler(0x8000, 0xFFFF, CartBR);
@@ -115,7 +115,7 @@ void Mapper257_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

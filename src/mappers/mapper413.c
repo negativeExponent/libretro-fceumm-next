@@ -29,10 +29,10 @@ static uint8 serialControl;
 static uint32 serialAddress;
 
 static SFORMAT StateRegs[] = {
-	{ reg,            4, "REGS" },
-	{ &IRQCount,      1, "IRQC" },
-	{ &IRQReload,     1, "IRQR" },
-	{ &IRQa,          1, "IRQA" },
+	{ reg, 4, "REGS" },
+	{ &IRQCount, 1, "IRQC" },
+	{ &IRQReload, 1, "IRQR" },
+	{ &IRQa, 1, "IRQA" },
 	{ &serialAddress, 4, "ADDR" },
 	{ &serialControl, 1, "CTRL" },
 	{ 0 }
@@ -51,20 +51,19 @@ static void Sync(void) {
 	setchr4(0x1000, ~0x02);
 }
 
-static uint64 lreset;
-static uint32 laddr;
+static uint64 lreset = 0;
+
 static DECLFR(M413ReadPCM) {
-	uint8 ret = cpu.openbus;
-	if ((A == laddr) && ((timestampbase + timestamp) < (lreset + 4))) {
+	uint8 ret = ROM.misc.data[serialAddress & (ROM.misc.size - 1)];
+	uint64 ts = timestampbase + timestamp;
+
+	if ((ts >= lreset) && (ts < (lreset + 6))) {
 		return ret;
 	}
 	if (serialControl & 0x02) {
-		ret = ROM.misc.data[serialAddress++ & (ROM.misc.size - 1)];
-	} else {
-		ret = ROM.misc.data[serialAddress & (ROM.misc.size - 1)];
+		serialAddress++;
 	}
-	laddr = A;
-	lreset = timestampbase + timestamp;
+	lreset = ts;
 	return ret;
 }
 
@@ -92,29 +91,28 @@ static DECLFW(M413Write) {
 	case 0xE000:
 	case 0xF000:
 		reg[V >> 6] = V & 0x3F;
-        Sync();
+		Sync();
 		break;
 	}
 }
 
 static void M413Power(void) {
-    serialAddress = 0;
-    serialControl = 0;
+	serialAddress = 0;
+	serialControl = 0;
 
-    IRQCount = 0;
-    IRQReload = 0;
-    IRQa = 0;
+	IRQCount = 0;
+	IRQReload = 0;
+	IRQa = 0;
 
-    reg[0] = 0;
+	reg[0] = 0;
 	reg[1] = 0;
 	reg[2] = 0;
 	reg[3] = 0;
 
-	laddr = 0;
 	lreset = 0;
 
 	Sync();
-	
+
 	SetReadHandler(0x4800, 0x4FFF, M413ReadPCM);
 	SetReadHandler(0xC000, 0xCFFF, M413ReadPCM);
 	SetReadHandler(0x5000, 0x7FFF, CartBR);
@@ -140,8 +138,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper413_Init(CartInfo *info) {
-	info->Power      = M413Power;
-	GameHBIRQHook    = M413IRQHook;
+	info->Power = M413Power;
+	GameHBIRQHook = M413IRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

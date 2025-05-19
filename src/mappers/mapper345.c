@@ -31,7 +31,7 @@ static uint8 reg;
 
 static void M345PW(uint16 A, uint16 V) {
 	uint8 base = reg >> 6;
-	
+
 	if (reg & 0x0C) {
 		setprg8(A, (base << 4) | (V & 0x0F));
 	} else {

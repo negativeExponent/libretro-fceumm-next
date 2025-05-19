@@ -75,7 +75,7 @@ static void M165Power(void) {
 
 void Mapper165_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, info->battery);
-    info->Close = M165Close;
+	info->Close = M165Close;
 	MMC3_cwrap = M165CWM;
 	PPU_hook = M165PPU;
 	info->Power = M165Power;

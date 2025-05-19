@@ -36,7 +36,7 @@ static uint8 IRQa;
 
 static uint8 *internalRAM = NULL;
 
-static SFORMAT N163_StateRegs[] = {
+static SFORMAT StateRegs[] = {
 	{ prg, 4, "PREG" },
 	{ chr, 8, "CREG" },
 	{ nt, 4, "NMTA" },
@@ -235,7 +235,7 @@ void Mapper019_Init(CartInfo *info) {
 
 	MapIRQHook = NamcoIRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(N163_StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, 0);
 
 	if (info->iNES2) {
 		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;

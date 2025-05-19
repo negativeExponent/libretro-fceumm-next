@@ -27,8 +27,8 @@
 static uint8 reg[4];
 
 static SFORMAT StateRegs[] = {
-    { reg, 4, "REGS" },
-    { 0 }
+	{ reg, 4, "REGS" },
+	{ 0 }
 };
 
 static void Sync(void) {
@@ -39,9 +39,8 @@ static void Sync(void) {
 }
 
 static void M163HBIRQHook(void) {
-	if ((reg[0] & 0x80) &&
-	    (scanline < 239)) { /* Actual hardware cannot look at the current scanline number, but instead latches PA09 on
-		                     PA13 rises. This does not seem possible with the current PPU emulation however. */
+	if ((reg[0] & 0x80) && (scanline < 239)) { /* Actual hardware cannot look at the current scanline number, but instead latches PA09 on
+												PA13 rises. This does not seem possible with the current PPU emulation however. */
 		setchr4(0x0000, (scanline >= 127) ? 1 : 0);
 		setchr4(0x1000, (scanline >= 127) ? 1 : 0);
 	} else {
@@ -63,8 +62,8 @@ static DECLFW(writeReg) {
 
 	if (A & 0x01) {
 		if ((reg[1] & 0x01) && (~V & 0x01)) {
-			reg[1] ^= 0x04;   /* If A0=1, flip feedback bit on falling edges of D0 */
-		}                       /* If A0=0, write to register */
+			reg[1] ^= 0x04; /* If A0=1, flip feedback bit on falling edges of D0 */
+		} /* If A0=0, write to register */
 	} else {
 		reg[index] = V;
 		Sync();

@@ -52,7 +52,7 @@ static void M045PW(uint16 A, uint16 V) {
 }
 
 static DECLFR(M045ReadCart) {
-    /* Some multicarts select between five different menus by connecting one of the higher address lines to PRG /CE.
+	/* Some multicarts select between five different menus by connecting one of the higher address lines to PRG /CE.
 	The menu code selects between menus by checking which of the higher address lines disables PRG-ROM when set. */
 	if (((PRGsize[0] < 0x200000) && (dipsw == 1) && (reg[1] & 0x80)) ||
 	    ((PRGsize[0] < 0x200000) && (dipsw == 2) && (reg[2] & 0x40)) ||
@@ -93,7 +93,7 @@ static void M045Power(void) {
 	reg[0] = reg[1] = reg[3] = cmd = dipsw = 0;
 	reg[2] = 0x0F;
 	MMC3_Power();
-    SetReadHandler(0x8000, 0xFFFF, M045ReadCart);
+	SetReadHandler(0x8000, 0xFFFF, M045ReadCart);
 	SetWriteHandler(0x6000, 0x7FFF, M045WriteReg);
 	SetReadHandler(0x5000, 0x5FFF, M045ReadDIP);
 }

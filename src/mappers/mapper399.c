@@ -26,7 +26,7 @@ static uint8 chr[2];
 
 static SFORMAT StateRegs[] = {
 	{ prg, 2, "PREG" },
-    { chr, 2, "CREG" },
+	{ chr, 2, "CREG" },
 	{ 0 }
 };
 
@@ -51,13 +51,13 @@ static void M399CHR(void) {
 }
 
 static DECLFW(M399WriteReg) {
-    if (A & 0x01) {
-        prg[V >> 7] = V;
+	if (A & 0x01) {
+		prg[V >> 7] = V;
 		MMC3_SyncPRG();
-    } else {
-        chr[V >> 7] = V;
+	} else {
+		chr[V >> 7] = V;
 		MMC3_SyncCHR();
-    }
+	}
 }
 
 static DECLFW(M399Write1) {
@@ -66,21 +66,21 @@ static DECLFW(M399Write1) {
 
 static void M399Power(void) {
 	prg[0] = chr[0] = 0;
-    prg[1] = chr[1] = 1;
+	prg[1] = chr[1] = 1;
 	MMC3_Power();
-    if (iNESCart.submapper == 1) {
+	if (iNESCart.submapper == 1) {
 		SetReadHandler(0x6000, 0x7FFF, CartBR);
-	    SetWriteHandler(0x8000, 0xDFFF, M399Write1);
+		SetWriteHandler(0x8000, 0xDFFF, M399Write1);
 		SetWriteHandler(0xE000, 0xFFFF, M399WriteReg);
-    } else {
-        SetWriteHandler(0x8000, 0x9FFF, M399WriteReg);
-    }
+	} else {
+		SetWriteHandler(0x8000, 0x9FFF, M399WriteReg);
+	}
 }
 
 void Mapper399_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-    MMC3_SyncPRG = M399PRG;
-    MMC3_SyncCHR = M399CHR;
+	MMC3_SyncPRG = M399PRG;
+	MMC3_SyncCHR = M399CHR;
 	info->Power = M399Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -37,9 +37,9 @@ static SFORMAT StateRegs[] = {
 static void M196PW(uint16 A, uint16 V) {
 	if (reg[0]) {
 		setprg32(0x8000, reg[1]);
-    } else {
+	} else {
 		setprg8(A, V);
-    }
+	}
 }
 
 static DECLFW(M196Write) {

@@ -42,7 +42,7 @@ static void Sync(void) {
 		setprg16(0xC000, bank | 0x07);
 	} else {
 		setprg16(0x8000, bank & ~(reg[0] & 0x01));
-		setprg16(0xC000, bank |  (reg[0] & 0x01));
+		setprg16(0xC000, bank | (reg[0] & 0x01));
 	}
 	/* CHR-RAM write-protect */
 	SetupCartCHRMapping(0, CHRptr[0], 0x2000, ((reg[0] >> 2) & 0x01) ^ 0x01);

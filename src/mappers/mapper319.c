@@ -26,8 +26,7 @@
 static uint8 reg[2];
 static uint8 dipsw;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ reg, 2, "REG" },
 	{ &dipsw, 1, "DPSW" },
 	{ 0 }
@@ -46,13 +45,13 @@ static void M319Sync(void) {
 		mask = (reg[1] >> 4) & 4;
 
 		setprg16(0x8000, bank & ~mask);
-		setprg16(0xC000, bank |  mask);
+		setprg16(0xC000, bank | mask);
 	} else {
 		bank = ((reg[1] >> 2) & 0x06) | ((reg[1] >> 5) & 0x01);
 		mask = (reg[1] >> 6) & 0x01;
 
 		setprg16(0x8000, (bank & ~mask));
-		setprg16(0xC000, (bank |  mask));
+		setprg16(0xC000, (bank | mask));
 	}
 
 	bank = reg[0] >> 4;

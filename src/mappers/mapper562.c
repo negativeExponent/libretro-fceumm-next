@@ -232,24 +232,24 @@ static uint32 lastAddr;
 static writefunc writePPU;
 
 static SFORMAT StateRegs[] = {
-	{ &reg1M,   1, "REG1" },
-	{ &reg2M,   1, "REG2" },
-	{ &regtgd,  1, "REGT" },
-	{ &latch,   1, "LATC" },
-	{ &chr8k,   1, "CREG" },
+	{ &reg1M, 1, "REG1" },
+	{ &reg2M, 1, "REG2" },
+	{ &regtgd, 1, "REGT" },
+	{ &latch, 1, "LATC" },
+	{ &chr8k, 1, "CREG" },
 	{ &lockCHR, 1, "CHRL" },
-	{ chr1K,    8, "CHR1" },
-	{ prg,      4, "PREG" },
+	{ chr1K, 8, "CHR1" },
+	{ prg, 4, "PREG" },
 
-	{ &IRQa_fds,         1, "IRQa" },
-	{ &IRQCount_fds,     2, "FDSC" },
+	{ &IRQa_fds, 1, "IRQa" },
+	{ &IRQCount_fds, 2, "FDSC" },
 
-	{ &IRQCount_tgd,     2, "TGDC" },
+	{ &IRQCount_tgd, 2, "TGDC" },
 	{ &count_target_tgd, 2, "TGDT" },
 
 	{ &lastAddr, 1, "LADR" },
 
-	{ 0 },
+	{ 0 }
 };
 
 static void Sync(void) {
@@ -304,7 +304,7 @@ static void Sync(void) {
 	}
 
 	/* CHR RAN can be write-protected */
-	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0],  !(((reg1M & 0xE0) & 0x80) || lockCHR));
+	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], !(((reg1M & 0xE0) & 0x80) || lockCHR));
 
 	if (regtgd & 0x40) {
 		setchr1(0x0000, chr1K[0]);
@@ -320,10 +320,18 @@ static void Sync(void) {
 	}
 
 	switch (reg1M & 0x11) {
-	case 0x00: setmirror(MI_0); break;
-	case 0x01: setmirror(MI_V); break;
-	case 0x10: setmirror(MI_1); break;
-	case 0x11: setmirror(MI_H); break;
+	case 0x00:
+		setmirror(MI_0);
+		break;
+	case 0x01:
+		setmirror(MI_V);
+		break;
+	case 0x10:
+		setmirror(MI_1);
+		break;
+	case 0x11:
+		setmirror(MI_H);
+		break;
 	}
 }
 

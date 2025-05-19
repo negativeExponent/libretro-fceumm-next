@@ -27,10 +27,9 @@ void Mapper004_Init(CartInfo *info) {
 	if (!info->iNES2) {
 		ws = 8; /* set wram to 8K for iNES 1.0 roms aside for Low G Man */
 		if ((info->CRC32 == 0x93991433) || (info->CRC32 == 0xaf65aa84)) {
-			FCEU_printf(
-			    "Low-G-Man can not work normally in the iNES format.\nThis game has been recognized by its CRC32 "
-			    "value, and the appropriate changes will be made so it will run.\nIf you wish to hack this game, "
-			    "you should use the UNIF format for your hack.\n\n");
+			FCEU_printf("Low-G-Man can not work normally in the iNES format.\nThis game has been recognized by its CRC32 "
+						"value, and the appropriate changes will be made so it will run.\nIf you wish to hack this game, "
+						"you should use the UNIF format for your hack.\n\n");
 			ws = 0;
 		}
 		if (info->CRC32 == 0x97b6cb19) {
@@ -42,9 +41,17 @@ void Mapper004_Init(CartInfo *info) {
 
 	switch (info->submapper) {
 	default:
-	case 0: MMC3_Init(info, MMC3B, ws, info->battery); break;
-	case 1: MMC3_Init(info, MMC6B, ws, info->battery); break;
-	case 4: MMC3_Init(info, MMC3A, ws, info->battery); break;
-	case 5: Mapper249_Init(info); break;
+	case 0:
+		MMC3_Init(info, MMC3B, ws, info->battery);
+		break;
+	case 1:
+		MMC3_Init(info, MMC6B, ws, info->battery);
+		break;
+	case 4:
+		MMC3_Init(info, MMC3A, ws, info->battery);
+		break;
+	case 5:
+		Mapper249_Init(info);
+		break;
 	}
 }

@@ -42,7 +42,7 @@ static void M105IRQHook(int a) {
 }
 
 static void M105CW(uint16 A, uint16 V) {
-    setchr8r(0, 0);
+	setchr8r(0, 0);
 }
 
 static void M105PW(uint16 A, uint16 V) {
@@ -54,7 +54,7 @@ static void M105PW(uint16 A, uint16 V) {
 }
 
 static void M105Power(void) {
-    count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
+	count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
 	MMC1_Power();
 }
 
@@ -70,5 +70,5 @@ void Mapper105_Init(CartInfo *info) {
 	MapIRQHook = M105IRQHook;
 	info->Power = M105Power;
 	info->Reset = M105Reset;
-    AddExState(&count, 4, 0, "IRQC");
+	AddExState(&count, 4, 0, "IRQC");
 }

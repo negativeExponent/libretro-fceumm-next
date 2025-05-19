@@ -46,14 +46,14 @@ static DECLFW(M186Write) {
 
 static DECLFR(M186Read) {
 	switch (A) {
-		case 0x4200:
-			return 0x00;
-		case 0x4201:
-			return 0x00;
-		case 0x4202:
-			return 0x40;
-		case 0x4203:
-			return 0x00;
+	case 0x4200:
+		return 0x00;
+	case 0x4201:
+		return 0x00;
+	case 0x4202:
+		return 0x40;
+	case 0x4203:
+		return 0x00;
 	}
 	return 0xFF;
 }

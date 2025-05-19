@@ -47,7 +47,7 @@ static void M543WW(void) {
 	uint32 wramBank;
 
 	if (reg & 0x02) {
-		wramBank = 0x04 | ((reg >> 1) & 0x02) | (reg & 0x01) ;
+		wramBank = 0x04 | ((reg >> 1) & 0x02) | (reg & 0x01);
 	} else {
 		wramBank = ((reg << 1) & 0x02) | ((MMC1_GetCHRBank(0) >> 3) & 0x01);
 	}

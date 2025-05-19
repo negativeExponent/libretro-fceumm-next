@@ -23,29 +23,29 @@
 #include "bandai.h"
 
 static void M016PW(uint16 A, uint16 V) {
-    setprg16(A, V & 0x0F);
+	setprg16(A, V & 0x0F);
 }
 
 static void M016CW(uint16 A, uint16 V) {
-    setchr1(A, V);
+	setchr1(A, V);
 }
 
 void Mapper016_Init(CartInfo *info) {
-    switch (info->submapper) {
-    case 4:
-        BANDAI_Init(info, EEPROM_NONE, TRUE);
-        break;
-    case 5:
-        if (info->battery || ((info->PRGRamSaveSize > 0) && (info->PRGRamSaveSize <= 256))) {
-           BANDAI_Init(info, EEPROM_X24C02, FALSE); break;
-        } else {
-            BANDAI_Init(info, EEPROM_NONE, FALSE); break;
-        }
-        break;
-    default:
-        BANDAI_Init(info, EEPROM_NONE, TRUE);
-        break;
-    }
-    BANDAI_pwrap = M016PW;
-    BANDAI_cwrap = M016CW;
+	switch (info->submapper) {
+	case 4:
+		BANDAI_Init(info, EEPROM_NONE, TRUE);
+		break;
+	case 5:
+		if (info->battery || ((info->PRGRamSaveSize > 0) && (info->PRGRamSaveSize <= 256))) {
+			BANDAI_Init(info, EEPROM_X24C02, FALSE);
+		} else {
+			BANDAI_Init(info, EEPROM_NONE, FALSE);
+		}
+		break;
+	default:
+		BANDAI_Init(info, EEPROM_NONE, TRUE);
+		break;
+	}
+	BANDAI_pwrap = M016PW;
+	BANDAI_cwrap = M016CW;
 }

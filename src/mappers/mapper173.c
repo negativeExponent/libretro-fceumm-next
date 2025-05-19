@@ -26,9 +26,9 @@ static void M173Sync(void) {
 	setprg32(0x8000, 0);
 	if (ROM.chr.size >= (16 * 1024)) {
 		setchr8(((txc.output & 0x01) | (txc.Y ? 0x02 : 0x00) | ((txc.output & 2) << 0x01)));
-    } else {
+	} else {
 		setchr8(0);
-    }
+	}
 }
 
 static DECLFW(M173Write) {

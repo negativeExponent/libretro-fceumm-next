@@ -24,8 +24,8 @@
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-    { &dipsw,  1, "DPSW" },
-    { 0 }
+	{ &dipsw, 1, "DPSW" },
+	{ 0 }
 };
 
 static void Sync(void) {
@@ -37,7 +37,7 @@ static void Sync(void) {
 	setprg16(0xC000, prg | (cpuA14 * nrom) | (0x07 * !nrom));
 
 	setchr8(latch.data);
-    setmirror((((latch.addr >> 1) & 0x01) ^ 0x01));
+	setmirror((((latch.addr >> 1) & 0x01) ^ 0x01));
 }
 
 static DECLFR(M449Read) {
@@ -48,7 +48,7 @@ static DECLFR(M449Read) {
 }
 
 static void M449Reset(void) {
-	dipsw  = (dipsw + 1) & 0xF;
+	dipsw = (dipsw + 1) & 0xF;
 	Latch_RegReset();
 }
 

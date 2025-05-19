@@ -49,9 +49,10 @@ static void BMCT2271PW(uint16 A, uint16 V) {
 		va |= (reg & 0x18) << 1;
 	}
 	switch (reg & 3) {
-	case 0x00: setprg8(A, va); break;
-	case 0x02:
-	{
+	case 0x00:
+		setprg8(A, va);
+		break;
+	case 0x02: {
 		va = (va & 0xFD) | ((reg & 4) >> 1);
 		if (A < 0xC000) {
 			setprg16(0x8000, va >> 1);
@@ -60,7 +61,11 @@ static void BMCT2271PW(uint16 A, uint16 V) {
 		break;
 	}
 	case 0x01:
-	case 0x03: if (A < 0xC000) setprg32(0x8000, va >> 2); break;
+	case 0x03:
+		if (A < 0xC000) {
+			setprg32(0x8000, va >> 2);
+		}
+		break;
 	}
 }
 
@@ -73,7 +78,9 @@ static DECLFW(BMCT2271LoWrite) {
 
 static DECLFR(BMCT2271HiRead) {
 	uint32 av = A;
-	if (reg & 0x40) av = (av & 0xFFF0) | reset_flag;
+	if (reg & 0x40) {
+		av = (av & 0xFFF0) | reset_flag;
+	}
 	return CartBR(av);
 }
 

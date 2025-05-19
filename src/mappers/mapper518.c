@@ -27,8 +27,7 @@
 static uint8 prg, mode;
 static uint32 lastnt = 0;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &prg, 1, "REGS" },
 	{ &mode, 1, "MODE" },
 	{ &lastnt, 4, "LSNT" },
@@ -50,8 +49,15 @@ static void Sync(void) {
 
 static DECLFW(M518Write) {
 	switch (A) {
-	case 0x5000: prg = V; Sync(); break;
-	case 0x5200: mode = V; if (mode & 4) Sync(); break;
+	case 0x5000:
+		prg = V;
+		Sync();
+		break;
+	case 0x5200:
+		mode = V;
+		if (mode & 4)
+			Sync();
+		break;
 	}
 }
 
@@ -101,7 +107,7 @@ void Mapper518_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

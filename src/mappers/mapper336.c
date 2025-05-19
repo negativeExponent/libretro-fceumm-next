@@ -41,28 +41,28 @@ static void Sync(void) {
 	setprg16(0x8000, latch.data);
 	setprg16(0xC000, latch.data | 0x07);
 	setchr8(0);
-    if (iNESCart.submapper == 2) {
-        setmirror(((latch.data >> 3) & 0x01) ^ 0x01);
-    } else {
-        setmirror(((latch.data >> 5) & 0x01) ^ 0x01);
-    }
+	if (iNESCart.submapper == 2) {
+		setmirror(((latch.data >> 3) & 0x01) ^ 0x01);
+	} else {
+		setmirror(((latch.data >> 5) & 0x01) ^ 0x01);
+	}
 }
 
 static DECLFW(M336Write) {
-    if (iNESCart.submapper == 1) {
-        uint8 ret = CartBR(A);
-        V = ((V & ret) & ~0x08) | (ret & 0x08);
-    }
-    Latch_Write(A, V);
+	if (iNESCart.submapper == 1) {
+		uint8 ret = CartBR(A);
+		V = ((V & ret) & ~0x08) | (ret & 0x08);
+	}
+	Latch_Write(A, V);
 }
 
 static void M336Power(void) {
-    Latch_Power();
-    SetWriteHandler(0x8000, 0xFFFF, M336Write);
+	Latch_Power();
+	SetWriteHandler(0x8000, 0xFFFF, M336Write);
 }
 
 void Mapper336_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-    info->Power = M336Power;
+	info->Power = M336Power;
 	info->Reset = Latch_RegReset;
 }

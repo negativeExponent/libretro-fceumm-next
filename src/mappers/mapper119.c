@@ -22,20 +22,20 @@
 #include "mmc3.h"
 
 static void M119CW(uint16 A, uint16 V) {
-    if (V & 0x40) {
-        setchr1r(0x10, A, V & 0x07);
-    } else {
-	    setchr1(A, V);
-    }
+	if (V & 0x40) {
+		setchr1r(0x10, A, V & 0x07);
+	} else {
+		setchr1(A, V);
+	}
 }
 
 static void M119Close(void) {
-    MMC3_Close();
+	MMC3_Close();
 }
 
 void Mapper119_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-    info->Close = M119Close;
+	info->Close = M119Close;
 	MMC3_cwrap = M119CW;
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

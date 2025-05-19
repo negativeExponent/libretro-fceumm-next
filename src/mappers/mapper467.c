@@ -27,7 +27,7 @@ static void M467PW(uint16 A, uint16 V) {
 	if (reg & 0x20) {
 		uint8 mask = (reg & 0x40) ? 0x0F : 0x03;
 		uint8 base = reg << 1;
-		
+
 		setprg8(A, (base & ~mask) | (V & mask));
 	} else {
 		setprg16(0x8000, reg & 0x1F);
@@ -40,7 +40,7 @@ static void M467CHR(void) {
 
 	if (reg & 0x40) {
 		setchr2(0x0000, base | (mmc3.reg[0] & ~0x01));
-		setchr2(0x0800, base | (mmc3.reg[0] |  0x01));
+		setchr2(0x0800, base | (mmc3.reg[0] | 0x01));
 		setchr2(0x1000, base | mmc3.reg[2]);
 		setchr2(0x1800, base | mmc3.reg[3]);
 	} else {
@@ -70,15 +70,16 @@ static DECLFW(M467Write) {
 			break;
 		case 0x8001:
 			mmc3.reg[mmc3.cmd & 0x07] = V;
-			if (mmc3.cmd < 6) MMC3_SyncCHR();
-			else MMC3_SyncPRG();
+			if (mmc3.cmd < 6)
+				MMC3_SyncCHR();
+			else
+				MMC3_SyncPRG();
 			break;
 		case 0xA000:
 			break;
 		}
 	}
 }
-
 
 static void M467Reset(void) {
 	reg = 0;

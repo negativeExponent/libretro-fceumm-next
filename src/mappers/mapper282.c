@@ -26,11 +26,11 @@ static uint32 GetPRGBank(uint32 V) {
 }
 
 static uint32 GetCHRBank(uint32 V) {
-    if (jyasic.mode[3] & 0x20) {
-	    return (((jyasic.mode[3] << 6) & 0x600) | (V & 0x1FF));
-    } else {
-        return (((jyasic.mode[3] << 6) & 0x600) | ((jyasic.mode[3] << 8) & 0x100) | (V & 0xFF));
-    }
+	if (jyasic.mode[3] & 0x20) {
+		return (((jyasic.mode[3] << 6) & 0x600) | (V & 0x1FF));
+	} else {
+		return (((jyasic.mode[3] << 6) & 0x600) | ((jyasic.mode[3] << 8) & 0x100) | (V & 0xFF));
+	}
 }
 
 static void M282PW(uint16 A, uint32 V) {
@@ -52,7 +52,7 @@ static void M282MW(uint16 A, uint32 V) {
 void Mapper282_Init(CartInfo *info) {
 	/* Multicart */
 	JYASIC_Init(info, TRUE);
-    JYASIC_pwrap = M282PW;
+	JYASIC_pwrap = M282PW;
 	JYASIC_cwrap = M282CW;
 	JYASIC_wwrap = M282WW;
 	JYASIC_mwrap = M282MW;

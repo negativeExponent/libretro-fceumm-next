@@ -55,7 +55,7 @@ static void M111MMC1CW(uint16 A, uint16 V) {
 }
 
 static DECLFW(M111Write_mmc1) {
-	mmc1.reg[(A >> 13) & 0x03] =  V;
+	mmc1.reg[(A >> 13) & 0x03] = V;
 	MMC1_SyncPRG();
 	MMC1_SyncCHR();
 	MMC1_SyncMirror();
@@ -78,7 +78,7 @@ static void Sync(void) {
 	 * ||+------- Select 8 KB nametable for PPU $2000-$3EFF
 	 * |+-------- Red LED - 0=On; 1=Off
 	 * +--------- Green LED - 0=On; 1=Off */
-	int nt  = (reg & 0x20) >> 5;
+	int nt = (reg & 0x20) >> 5;
 
 	setprg32r(FLASHROM ? 0x10 : 0, 0x8000, reg & 0x0F);
 	setchr8((reg & 0x10) >> 4);

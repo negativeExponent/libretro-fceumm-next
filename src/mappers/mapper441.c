@@ -27,13 +27,13 @@ static uint8 reg;
 
 static void M441PW(uint16 A, uint16 V) {
 	uint8 mask = (reg & 0x08) ? 0x0F : 0x1F;
-	uint8 base  = (reg << 4) & 0x30;
+	uint8 base = (reg << 4) & 0x30;
 
 	if (reg & 0x04) {
-		setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & ~0x02) & mask));
-		setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & ~0x02) & mask));
-		setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] |  0x02) & mask));
-		setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] |  0x02) & mask));
+		setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & 0xFD) & mask));
+		setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & 0xFD) & mask));
+		setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] | 0x02) & mask));
+		setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] | 0x02) & mask));
 	} else {
 		setprg8(A, (base & ~mask) | (V & mask));
 	}
@@ -41,7 +41,7 @@ static void M441PW(uint16 A, uint16 V) {
 
 static void M441CW(uint16 A, uint16 V) {
 	uint16 mask = (reg & 0x40) ? 0x7F : 0xFF;
-	uint16 base  = (reg << 3) & 0x180;
+	uint16 base = (reg << 3) & 0x180;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

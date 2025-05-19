@@ -59,7 +59,7 @@ static void UNL22211StateRestore(int version) {
 }
 
 static void UNL22211_Init(CartInfo *info) {
-	info->Power      = UNL22211Power;
+	info->Power = UNL22211Power;
 	GameStateRestore = UNL22211StateRestore;
 	AddExState(&UNL22211StateRegs, ~0, 0, 0);
 }
@@ -87,12 +87,12 @@ static void M132Power(void) {
 }
 
 void Mapper132_Init(CartInfo *info) {
-	if ((info->CRC32) == 0x2A5F4C5A) {
+	if (info->CRC32 == 0x2A5F4C5A) {
 		/* Jin Gwok Sei Chuen Saang (Ch) [U][!] */
 		FCEU_printf(" WARNING: Using alternate mapper implementation.\n");
 		UNL22211_Init(info);
-        return;
+	} else {
+		TXC_Init(info, M132Sync);
+		info->Power = M132Power;
 	}
-	TXC_Init(info, M132Sync);
-	info->Power = M132Power;
 }

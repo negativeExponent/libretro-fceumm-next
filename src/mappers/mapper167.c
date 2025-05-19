@@ -60,7 +60,7 @@ static void M167Power(void) {
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	SetWriteHandler(0x8000, 0xFFFF, M167Write);
 	if (WRAMSIZE) {
-	    setprg8r(0x10, 0x6000, 0);
+		setprg8r(0x10, 0x6000, 0);
 		SetReadHandler(0x6000, 0x7FFF, CartBR);
 		SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	}

@@ -72,7 +72,7 @@ void Mapper406_Init(CartInfo *info) {
 	info->battery = 1;
 	FLASHROM_size = PRGsize[0];
 	FLASHROM_data = (uint8 *)FCEU_gmalloc(FLASHROM_size);
-	info->SaveGame[0]    = FLASHROM_data;
+	info->SaveGame[0] = FLASHROM_data;
 	info->SaveGameLen[0] = FLASHROM_size;
 	AddExState(FLASHROM_data, FLASHROM_size, 0, "FROM");
 	/* copy PRG ROM into FLASHROM_data, use it instead of PRG ROM */

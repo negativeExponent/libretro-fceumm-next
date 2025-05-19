@@ -57,8 +57,12 @@ static DECLFW(M072Write) {
 	V &= CartBR(A); /* bus conflict */
 
 	reg = (reg ^ V) & V;
-	if (reg & 0x80) prg = V;
-	if (reg & 0x40) chr = V;
+	if (reg & 0x80) {
+		prg = V;
+	}
+	if (reg & 0x40) {
+		chr = V;
+	}
 
 	Sync();
 }

@@ -30,7 +30,7 @@ static void M418SyncCHR(void) {
 	setchr1(0x1400, n118.reg[3] & 0x3F);
 	setchr1(0x1800, n118.reg[4] & 0x3F);
 	setchr1(0x1C00, n118.reg[5] & 0x3F);
-    setmirror((n118.reg[5] & 0x01) ^ 0x01);
+	setmirror((n118.reg[5] & 0x01) ^ 0x01);
 }
 
 void Mapper418_Init(CartInfo *info) {
