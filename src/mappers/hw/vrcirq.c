@@ -60,7 +60,9 @@ void VRCIRQ_CPUHook(int a) {
 			if (IRQPrescaler >= IRQScanLut[IRQScanPos]) {
 				VRCIRQ_Clock();
 				IRQScanPos++;
-				if (IRQScanPos >= 3) IRQScanPos = 0;
+				if (IRQScanPos >= 3) {
+					IRQScanPos = 0;
+				}
 				IRQPrescaler = 0;
 			} else {
 				IRQPrescaler++;

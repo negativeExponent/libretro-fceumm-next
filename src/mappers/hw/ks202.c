@@ -42,7 +42,7 @@ static SFORMAT StateRegs[] = {
 };
 
 DECLFW(KS202_Write) {
-/*	FCEU_printf("bs %04x %02x\n",A,V); */
+	/* FCEU_printf("bs %04x %02x\n",A,V); */
 	switch (A & 0xF000) {
 	case 0x8000:
 		IRQLatch = (IRQLatch & 0xFFF0) | (V & 0x0F);

@@ -36,8 +36,7 @@ static readfunc defapuread[64];
 
 ONEBUS onebus;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ onebus.cpu41xx, 0x100, "REGC" },
 	{ onebus.ppu20xx, 0x100, "REGS" },
 	{ onebus.apu40xx, 0x40, "REGA" },
@@ -134,15 +133,15 @@ void OneBus_SetCHR(uint8 **banks, uint8_t *base, uint8 bit4pp, uint8 extended, u
 
 extern uint8 **VPageR;
 void OneBus_SyncCHR(uint16 mmask, uint16 mblock) {
-	#define BK16EN  (onebus.ppu20xx[0x10] & 0x02)
-	#define SP16EN  (onebus.ppu20xx[0x10] & 0x04)
-	#define SPEXTEN (onebus.ppu20xx[0x10] & 0x08)
-	#define BKEXTEN (onebus.ppu20xx[0x10] & 0x10)
-	#define V16BEN  ((onebus.ppu20xx[0x10] & 0x40) && (iNESCart.submapper != 6) || (iNESCart.submapper == 7))
-	#define VRWB    (onebus.ppu20xx[0x18] & 0x07)
-	#define BKPAGE  (onebus.ppu20xx[0x18] & 0x08)
+#define BK16EN  (onebus.ppu20xx[0x10] & 0x02)
+#define SP16EN  (onebus.ppu20xx[0x10] & 0x04)
+#define SPEXTEN (onebus.ppu20xx[0x10] & 0x08)
+#define BKEXTEN (onebus.ppu20xx[0x10] & 0x10)
+#define V16BEN  ((onebus.ppu20xx[0x10] & 0x40) && (iNESCart.submapper != 6) || (iNESCart.submapper == 7))
+#define VRWB    (onebus.ppu20xx[0x18] & 0x07)
+#define BKPAGE  (onebus.ppu20xx[0x18] & 0x08)
 
-	OneBus_SetCHR(VPageR, V16BEN ? onebus.chr.low16 : onebus.chr.low, BK16EN || SP16EN, BKEXTEN || SPEXTEN, VRWB, mmask, mblock);	  /* 0000-1FFF: 2007 CHR Low */
+	OneBus_SetCHR(VPageR, V16BEN ? onebus.chr.low16 : onebus.chr.low, BK16EN || SP16EN, BKEXTEN || SPEXTEN, VRWB, mmask, mblock); /* 0000-1FFF: 2007 CHR Low */
 #if 0
 	OneBus_SetCHR(0x10, V16BEN ? onebus.chr.high16 : onebus.chr.high, BK16EN || SP16EN, BKEXTEN || SPEXTEN, VRWB, mmask, mblock);/* 4000-5FFF: 2007 CHR High */
 	OneBus_SetCHR(0x20, V16BEN ? onebus.chr.low16 : onebus.chr.low, BK16EN, BKEXTEN, BKPAGE ? 4 : 0, mmask, mblock);			  /* 8000-9FFF: BG   CHR Low */
@@ -171,7 +170,7 @@ DECLFW(OneBus_WritePPU20XX) {
 /* read $4000 - $403F */
 DECLFR(OneBus_ReadAPU40XX) {
 	uint8 result = defapuread[A & 0x003F](A);
-/*	FCEU_printf("read %04x, %02x\n",A,result); */
+	/*	FCEU_printf("read %04x, %02x\n",A,result); */
 	switch (A & 0x3F) {
 	case 0x15:
 		if (onebus.apu40xx[0x30] & 0x10) {
@@ -292,7 +291,9 @@ DECLFW(OneBus_WriteMMC3) {
 		CartBW(A, V);
 	} else {
 		switch (A & 0xE001) {
-		case 0x8000: OneBus_WriteCPU41XX(0x4105, V & ~0x20); break;
+		case 0x8000:
+			OneBus_WriteCPU41XX(0x4105, V & ~0x20);
+			break;
 		case 0x8001: {
 			uint8 reg = onebus.cpu41xx[0x05] & 7;
 			switch (reg) {
@@ -313,11 +314,21 @@ DECLFW(OneBus_WriteMMC3) {
 			}
 			break;
 		}
-		case 0xA000: OneBus_WriteCPU41XX(0x4106, V); break;
-		case 0xC000: OneBus_WriteCPU41XX(0x4101, V); break;
-		case 0xC001: OneBus_WriteCPU41XX(0x4102, V); break;
-		case 0xE000: OneBus_WriteCPU41XX(0x4103, V); break;
-		case 0xE001: OneBus_WriteCPU41XX(0x4104, V); break;
+		case 0xA000:
+			OneBus_WriteCPU41XX(0x4106, V);
+			break;
+		case 0xC000:
+			OneBus_WriteCPU41XX(0x4101, V);
+			break;
+		case 0xC001:
+			OneBus_WriteCPU41XX(0x4102, V);
+			break;
+		case 0xE000:
+			OneBus_WriteCPU41XX(0x4103, V);
+			break;
+		case 0xE001:
+			OneBus_WriteCPU41XX(0x4104, V);
+			break;
 		}
 	}
 }
@@ -371,10 +382,10 @@ void OneBus_Power(void) {
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	SetWriteHandler(0x2010, 0x2FFF, OneBus_WritePPU20XX);
-	
+
 	SetReadHandler(0x4100, 0x4FFF, OneBus_ReadCPU41XX);
 	SetWriteHandler(0x4100, 0x41FF, OneBus_WriteCPU41XX);
-	
+
 	SetWriteHandler(0x8000, 0xFFFF, OneBus_WriteMMC3);
 
 	if (iNESCart.ConsoleType == CONSOLE_VT369) {
@@ -386,7 +397,7 @@ void OneBus_Power(void) {
 	if (WRAM) {
 		FCEU_CheatAddRAM(8, 0x6000, WRAM);
 	}
-	
+
 	memset(onebus.cpu41xx, 0, sizeof(onebus.cpu41xx));
 	memset(onebus.ppu20xx, 0, sizeof(onebus.ppu20xx));
 	memset(onebus.apu40xx, 0, sizeof(onebus.apu40xx));
@@ -403,7 +414,7 @@ void OneBus_Reset(void) {
 
 	onebus.IRQReload = onebus.IRQCount = onebus.IRQa = 0;
 
-	onebus.relative_8k   = 0x00;
+	onebus.relative_8k = 0x00;
 	onebus.ppu20xx[0x10] = 0x00;
 	onebus.ppu20xx[0x12] = 0x04;
 	onebus.ppu20xx[0x13] = 0x05;
@@ -502,7 +513,7 @@ void OneBus_Init(CartInfo *info, void (*proc)(void), int wram, int battery) {
 
 	if (wram) {
 		WRAMSIZE = wram * 1024;
-		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (battery) {

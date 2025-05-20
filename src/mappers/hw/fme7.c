@@ -83,10 +83,18 @@ static void GENFIXCHR(void) {
 
 static void GENFIXMIR(void) {
 	switch (fme7.mirr & 0x03) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+	case 0:
+		setmirror(MI_V);
+		break;
+	case 1:
+		setmirror(MI_H);
+		break;
+	case 2:
+		setmirror(MI_0);
+		break;
+	case 3:
+		setmirror(MI_1);
+		break;
 	}
 }
 
@@ -101,7 +109,6 @@ static DECLFR(FME7_WRAMRead) {
 		return cpu.openbus;
 	}
 	return CartBR(A);
-	
 }
 
 DECLFW(FME7_WriteIndex) {
@@ -110,12 +117,21 @@ DECLFW(FME7_WriteIndex) {
 
 DECLFW(FME7_WriteReg) {
 	switch (fme7.cmd & 0x0F) {
-	case 0x00: case 0x01: case 0x02: case 0x03:
-	case 0x04: case 0x05: case 0x06: case 0x07:
+	case 0x00:
+	case 0x01:
+	case 0x02:
+	case 0x03:
+	case 0x04:
+	case 0x05:
+	case 0x06:
+	case 0x07:
 		fme7.chr[fme7.cmd] = V;
 		FME7_SyncCHR();
 		break;
-	case 0x08: case 0x09: case 0x0A: case 0x0B:
+	case 0x08:
+	case 0x09:
+	case 0x0A:
+	case 0x0B:
 		fme7.prg[fme7.cmd & 0x03] = V;
 		FME7_SyncPRG();
 		FME7_SyncWRAM();

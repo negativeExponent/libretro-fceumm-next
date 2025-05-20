@@ -23,9 +23,9 @@
 #include "mapinc.h"
 #include "mmc1.h"
 
- /* size of non-battery-backed portion of WRAM */
- /* serves as starting offset for actual save ram from total wram size */
- /* returns 0 if entire work ram is battery backed ram */
+/* size of non-battery-backed portion of WRAM */
+/* serves as starting offset for actual save ram from total wram size */
+/* returns 0 if entire work ram is battery backed ram */
 static uint32 NONSaveRAMSIZE = 0;
 
 static MMC1TYPE type = MMC1B;
@@ -134,10 +134,18 @@ void MMC1_SyncPRG(void) {
 
 void MMC1_SyncMirror(void) {
 	switch (mmc1.reg[0] & 3) {
-	case 2: setmirror(MI_V); break;
-	case 3: setmirror(MI_H); break;
-	case 0: setmirror(MI_0); break;
-	case 1: setmirror(MI_1); break;
+	case 2:
+		setmirror(MI_V);
+		break;
+	case 3:
+		setmirror(MI_H);
+		break;
+	case 0:
+		setmirror(MI_0);
+		break;
+	case 1:
+		setmirror(MI_1);
+		break;
 	}
 }
 
@@ -147,9 +155,9 @@ DECLFW(MMC1_Write) {
 
 	/* The MMC1 is busy so ignore the write. */
 	/* As of version FCE Ultra 0.81, the timestamp is only
-		increased before each instruction is executed(in other words
-		precision isn't that great), but this should still work to
-		deal with 2 writes in a row from a single RMW instruction.
+	    increased before each instruction is executed(in other words
+	    precision isn't that great), but this should still work to
+	    deal with 2 writes in a row from a single RMW instruction.
 	*/
 	if ((timestampbase + timestamp) < (lreset + 2)) {
 		return;
@@ -247,7 +255,7 @@ void MMC1_Init(CartInfo *info, MMC1TYPE _type, int wram, int saveram) {
 	type = _type;
 
 	if (WRAMSIZE) {
-		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (saveram) {

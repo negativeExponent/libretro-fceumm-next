@@ -34,8 +34,7 @@ static uint8 IRQCount, IRQLatch, IRQa;
 static uint8 IRQReload;
 static MMC3TYPE type;
 
-static SFORMAT MMC3_StateRegs[] =
-{
+static SFORMAT MMC3_StateRegs[] = {
 	{ mmc3.reg, 8, "REGS" },
 	{ &mmc3.cmd, 1, "CMD" },
 	{ &mmc3.mirr, 1, "A000" },
@@ -152,10 +151,14 @@ static DECLFW(MBWRAMMMC6) {
 	A &= 0x3FF;
 	if (!(A & 0x200)) {
 		/* 1st bank writes are disabled */
-		if ((mmc3.wram & 0x30) == 0x30) WRAM[A] = V;
+		if ((mmc3.wram & 0x30) == 0x30) {
+			WRAM[A] = V;
+		}
 	} else {
 		/* 2nd bank writes are disabled */
-		if ((mmc3.wram & 0xC0) == 0xC0) WRAM[A] = V;
+		if ((mmc3.wram & 0xC0) == 0xC0) {
+			WRAM[A] = V;
+		}
 	}
 }
 
@@ -168,12 +171,20 @@ static DECLFR(MAWRAMMMC6) {
 	A &= 0x3FF;
 	if (!(A & 0x200)) {
 		/* 1st bank */
-		if (mmc3.wram & 0x20) return WRAM[A];
-		if (mmc3.wram & 0x80) return 0x00;
+		if (mmc3.wram & 0x20) {
+			return WRAM[A];
+		}
+		if (mmc3.wram & 0x80) {
+			return 0x00;
+		}
 	} else {
 		/* 2nd bank */
-		if (mmc3.wram & 0x80) return WRAM[A];
-		if (mmc3.wram & 0x20) return 0x00;
+		if (mmc3.wram & 0x80) {
+			return WRAM[A];
+		}
+		if (mmc3.wram & 0x20) {
+			return 0x00;
+		}
 	}
 	return cpu.openbus;
 }

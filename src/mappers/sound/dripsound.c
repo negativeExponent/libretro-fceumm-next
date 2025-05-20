@@ -67,7 +67,7 @@ static void ChannelWrite(DRIPSOUND *ds, uint16 A, uint8 V) {
 	case 1:
 		if (ds->readPos == ds->writePos) {
 			ds->bufferEmpty = FALSE;
- 			ds->out = V * ds->volume;
+			ds->out = V * ds->volume;
 			ds->timer = ds->freq << TIMER_SHIFT;
 		}
 
@@ -147,7 +147,6 @@ static void DoDRIPSoundHQ(void) {
 
 		out += GenerateWaveHQ(&drip[0]);
 		out += GenerateWaveHQ(&drip[1]);
-		if (out & 0xFFFF0000) FCEU_printf("V = %08x\n", WaveHi[V]);
 
 		WaveHi[V] += out;
 	}
@@ -221,25 +220,25 @@ void DRIPSound_ESI(void) {
 }
 
 void DRIPSound_AddStateInfo(void) {
-	AddExState(drip[0].buffer,     256, 0, "FF00");
-	AddExState(&drip[0].readPos,     1, 0, "RDP0");
-	AddExState(&drip[0].writePos,    1, 0, "WRP0");
-	AddExState(&drip[0].bufferFull,  1, 0, "FUL0");
+	AddExState(drip[0].buffer, 256, 0, "FF00");
+	AddExState(&drip[0].readPos, 1, 0, "RDP0");
+	AddExState(&drip[0].writePos, 1, 0, "WRP0");
+	AddExState(&drip[0].bufferFull, 1, 0, "FUL0");
 	AddExState(&drip[0].bufferEmpty, 1, 0, "EMT0");
-	AddExState(&drip[0].freq,        2, 0, "FRQ0");
-	AddExState(&drip[0].volume,      1, 0, "VOL0");
-	AddExState(&drip[0].timer,       4, 0, "TIM0");
-	AddExState(&drip[0].out,         2, 0, "POS0");
+	AddExState(&drip[0].freq, 2, 0, "FRQ0");
+	AddExState(&drip[0].volume, 1, 0, "VOL0");
+	AddExState(&drip[0].timer, 4, 0, "TIM0");
+	AddExState(&drip[0].out, 2, 0, "POS0");
 
-	AddExState(drip[1].buffer,     256, 0, "FF01");
-	AddExState(&drip[1].readPos,     1, 0, "RDP1");
-	AddExState(&drip[1].writePos,    1, 0, "WRP1");
-	AddExState(&drip[1].bufferFull,  1, 0, "FUL1");
+	AddExState(drip[1].buffer, 256, 0, "FF01");
+	AddExState(&drip[1].readPos, 1, 0, "RDP1");
+	AddExState(&drip[1].writePos, 1, 0, "WRP1");
+	AddExState(&drip[1].bufferFull, 1, 0, "FUL1");
 	AddExState(&drip[1].bufferEmpty, 1, 0, "EMT1");
-	AddExState(&drip[1].freq,        2, 0, "FRQ1");
-	AddExState(&drip[1].volume,      1, 0, "VOL1");
-	AddExState(&drip[1].timer,       4, 0, "TIM1");
-	AddExState(&drip[1].out,         2, 0, "POS1");
+	AddExState(&drip[1].freq, 2, 0, "FRQ1");
+	AddExState(&drip[1].volume, 1, 0, "VOL1");
+	AddExState(&drip[1].timer, 4, 0, "TIM1");
+	AddExState(&drip[1].out, 2, 0, "POS1");
 
-	AddExState(&cvbc,                   4, 0, "CVBC");
+	AddExState(&cvbc, 4, 0, "CVBC");
 }

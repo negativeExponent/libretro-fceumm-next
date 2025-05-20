@@ -22,10 +22,10 @@
 #define _MMC4_H
 
 typedef struct __MMC4 {
-    uint8 prg;
-    uint8 chr[4];
-    uint8 latch[2];
-    uint8 mirr;
+	uint8 prg;
+	uint8 chr[4];
+	uint8 latch[2];
+	uint8 mirr;
 } MMC4;
 
 extern MMC4 mmc4;

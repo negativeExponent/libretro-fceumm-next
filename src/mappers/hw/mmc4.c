@@ -30,11 +30,10 @@ void (*MMC4_mwrap)(uint8 V);
 
 MMC4 mmc4;
 
-static SFORMAT StateRegs[] =
-{
-	{ mmc4.chr,   4, "CREG" },
+static SFORMAT StateRegs[] = {
+	{ mmc4.chr, 4, "CREG" },
 	{ mmc4.latch, 2, "PPUL" },
-	{ &mmc4.prg,  1, "PREG" },
+	{ &mmc4.prg, 1, "PREG" },
 	{ &mmc4.mirr, 1, "MIRR" },
 	{ 0 }
 };
@@ -137,7 +136,7 @@ void MMC4_Init(CartInfo *info, int wram, int battery) {
 
 	if (wram) {
 		WRAMSIZE = wram * 1024;
-		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (battery) {

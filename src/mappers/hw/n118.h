@@ -22,8 +22,8 @@
 #define _N118_H
 
 typedef struct __N118 {
-    uint8 reg[8];
-    uint8 cmd;
+	uint8 reg[8];
+	uint8 cmd;
 } N118;
 
 extern N118 n118;

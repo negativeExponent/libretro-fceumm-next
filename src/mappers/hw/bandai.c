@@ -53,14 +53,13 @@ static uint8 eeprom[256];
 void (*BANDAI_pwrap)(uint16 A, uint16 V);
 void (*BANDAI_cwrap)(uint16 A, uint16 V);
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ chr, 8, "CRGS" },
 	{ &prg, 1, "PREG" },
 	{ &mirr, 1, "MIRR" },
 	{ &IRQa, 1, "IRQA" },
 	{ &IRQCount, 2, "IRQC" },
-	{ &IRQLatch, 2, "IRQL" },	/* need for Famicom Jump II - Saikyou no 7 Nin (J) [!] */
+	{ &IRQLatch, 2, "IRQL" }, /* need for Famicom Jump II - Saikyou no 7 Nin (J) [!] */
 	{ 0 }
 };
 
@@ -90,10 +89,18 @@ void BANDAI_SyncCHR(void) {
 
 void BANDAI_SyncMirror(void) {
 	switch (mirr & 0x03) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+	case 0:
+		setmirror(MI_V);
+		break;
+	case 1:
+		setmirror(MI_H);
+		break;
+	case 2:
+		setmirror(MI_0);
+		break;
+	case 3:
+		setmirror(MI_1);
+		break;
 	}
 }
 

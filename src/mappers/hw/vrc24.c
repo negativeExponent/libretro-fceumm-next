@@ -189,10 +189,18 @@ DECLFW(VRC24_Write) {
 	case 0xF000:
 		index = ((A & vrc24.A1) ? 0x02 : 0x00) | ((A & vrc24.A0) ? 0x01 : 0x00);
 		switch (index) {
-		case 0x00: VRCIRQ_LatchNibble(V, 0); break;
-		case 0x01: VRCIRQ_LatchNibble(V, 1); break;
-		case 0x02: VRCIRQ_Control(V); break;
-		case 0x03: VRCIRQ_Acknowledge(); break;
+		case 0x00:
+			VRCIRQ_LatchNibble(V, 0);
+			break;
+		case 0x01:
+			VRCIRQ_LatchNibble(V, 1);
+			break;
+		case 0x02:
+			VRCIRQ_Control(V);
+			break;
+		case 0x03:
+			VRCIRQ_Acknowledge();
+			break;
 		}
 		break;
 	}

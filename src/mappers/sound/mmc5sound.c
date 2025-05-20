@@ -162,7 +162,7 @@ static void MMC5RunSoundHQ(void) {
 static void MMC5HiSync(int32 ts) {
 	MMC5Sound.square[0].cvbc = ts;
 	MMC5Sound.square[1].cvbc = ts;
-	MMC5Sound.pcm.cvbc       = ts;
+	MMC5Sound.pcm.cvbc = ts;
 }
 
 static void MMC5RunSound(int Count) {
@@ -171,7 +171,7 @@ static void MMC5RunSound(int Count) {
 	Do5PCM();
 	MMC5Sound.square[0].cvbc = Count;
 	MMC5Sound.square[1].cvbc = Count;
-	MMC5Sound.pcm.cvbc       = Count;
+	MMC5Sound.pcm.cvbc = Count;
 }
 
 static void MMC5Square_Write(MMC5SQUARE *channel, uint8 reg, uint8 V) {
@@ -180,7 +180,7 @@ static void MMC5Square_Write(MMC5SQUARE *channel, uint8 reg, uint8 V) {
 		channel->volume = V & 0x0F;
 		channel->duty = (V & 0xC0) >> 6;
 		break;
-	
+
 	case 1:
 		break;
 
@@ -199,7 +199,7 @@ static void MMC5Square_Write(MMC5SQUARE *channel, uint8 reg, uint8 V) {
 }
 
 DECLFW(MMC5Sound_Write) {
-	GameExpSound[SND_MMC5 - 6].Fill   = MMC5RunSound;
+	GameExpSound[SND_MMC5 - 6].Fill = MMC5RunSound;
 	GameExpSound[SND_MMC5 - 6].HiFill = MMC5RunSoundHQ;
 
 	switch (A) {
@@ -216,7 +216,7 @@ DECLFW(MMC5Sound_Write) {
 		}
 		MMC5Sound.pcm.rawdata = V;
 		break;
-	
+
 	case 0x5000:
 	case 0x5001:
 	case 0x5002:
@@ -226,7 +226,7 @@ DECLFW(MMC5Sound_Write) {
 		}
 		MMC5Square_Write(&MMC5Sound.square[0], A & 0x03, V);
 		break;
-	
+
 	case 0x5004:
 	case 0x5005:
 	case 0x5006:
@@ -280,22 +280,22 @@ void MMC5Sound_ESI(void) {
 
 void MMC5Sound_AddStateInfo(void) {
 	AddExState(&MMC5Sound.square[0].enabled, 1, 0, "S0EN");
-	AddExState(&MMC5Sound.square[0].volume,  1, 0, "S0VL");
-	AddExState(&MMC5Sound.square[0].freq,    2, 0, "S0FQ");
-	AddExState(&MMC5Sound.square[0].duty,    1, 0, "S0DT");
-	AddExState(&MMC5Sound.square[0].dcount,  1, 0, "S0DC");
-	AddExState(&MMC5Sound.square[0].vcount,  4, 0, "S0VC");
-	AddExState(&MMC5Sound.square[0].cvbc,    4, 0, "S0BC");
+	AddExState(&MMC5Sound.square[0].volume, 1, 0, "S0VL");
+	AddExState(&MMC5Sound.square[0].freq, 2, 0, "S0FQ");
+	AddExState(&MMC5Sound.square[0].duty, 1, 0, "S0DT");
+	AddExState(&MMC5Sound.square[0].dcount, 1, 0, "S0DC");
+	AddExState(&MMC5Sound.square[0].vcount, 4, 0, "S0VC");
+	AddExState(&MMC5Sound.square[0].cvbc, 4, 0, "S0BC");
 
 	AddExState(&MMC5Sound.square[1].enabled, 1, 0, "S1EN");
-	AddExState(&MMC5Sound.square[1].volume,  1, 0, "S1VL");
-	AddExState(&MMC5Sound.square[1].freq,    2, 0, "S1FQ");
-	AddExState(&MMC5Sound.square[1].duty,    1, 0, "S1DT");
-	AddExState(&MMC5Sound.square[1].dcount,  1, 0, "S1DC");
-	AddExState(&MMC5Sound.square[1].vcount,  4, 0, "S1VC");
-	AddExState(&MMC5Sound.square[1].cvbc,    4, 0, "S1BC");
+	AddExState(&MMC5Sound.square[1].volume, 1, 0, "S1VL");
+	AddExState(&MMC5Sound.square[1].freq, 2, 0, "S1FQ");
+	AddExState(&MMC5Sound.square[1].duty, 1, 0, "S1DT");
+	AddExState(&MMC5Sound.square[1].dcount, 1, 0, "S1DC");
+	AddExState(&MMC5Sound.square[1].vcount, 4, 0, "S1VC");
+	AddExState(&MMC5Sound.square[1].cvbc, 4, 0, "S1BC");
 
-	AddExState(&MMC5Sound.pcm.control,       1, 0, "PCTL");
-	AddExState(&MMC5Sound.pcm.rawdata,       1, 0, "PRAW");
-	AddExState(&MMC5Sound.pcm.cvbc,          4, 0, "PCVB");
+	AddExState(&MMC5Sound.pcm.control, 1, 0, "PCTL");
+	AddExState(&MMC5Sound.pcm.rawdata, 1, 0, "PRAW");
+	AddExState(&MMC5Sound.pcm.cvbc, 4, 0, "PCVB");
 }

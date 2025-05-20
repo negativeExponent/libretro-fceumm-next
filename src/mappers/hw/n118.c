@@ -31,44 +31,44 @@ N118 n118;
 
 static SFORMAT StateRegs[] = {
 	{ n118.reg, 8, "REGS" },
-    { &n118.cmd, 1, "CMD0" },
+	{ &n118.cmd, 1, "CMD0" },
 	{ 0 }
 };
 
 static void GENCWRAP(uint16 A, uint16 V) {
-    setchr1(A, V & 0x3F);
+	setchr1(A, V & 0x3F);
 }
 
 static void GENPWRAP(uint16 A, uint16 V) {
-    setprg8(A, V & 0x0F);
+	setprg8(A, V & 0x0F);
 }
 
 static void GENFIXCHR(void) {
-    N118_cwrap(0x0000, n118.reg[0] & (~1));
-    N118_cwrap(0x0400, n118.reg[0] |  1);
-    N118_cwrap(0x0800, n118.reg[1] & (~1));
-    N118_cwrap(0x0C00, n118.reg[1] |  1);
-    N118_cwrap(0x1000, n118.reg[2]);
-    N118_cwrap(0x1400, n118.reg[3]);
-    N118_cwrap(0x1800, n118.reg[4]);
-    N118_cwrap(0x1C00, n118.reg[5]);
+	N118_cwrap(0x0000, n118.reg[0] & (~1));
+	N118_cwrap(0x0400, n118.reg[0] | 1);
+	N118_cwrap(0x0800, n118.reg[1] & (~1));
+	N118_cwrap(0x0C00, n118.reg[1] | 1);
+	N118_cwrap(0x1000, n118.reg[2]);
+	N118_cwrap(0x1400, n118.reg[3]);
+	N118_cwrap(0x1800, n118.reg[4]);
+	N118_cwrap(0x1C00, n118.reg[5]);
 }
 
 static void GENFIXPRG(void) {
-    N118_pwrap(0x8000, n118.reg[6]);
-    N118_pwrap(0xA000, n118.reg[7]);
-    N118_pwrap(0xC000, ~1);
-    N118_pwrap(0xE000, ~0);
+	N118_pwrap(0x8000, n118.reg[6]);
+	N118_pwrap(0xA000, n118.reg[7]);
+	N118_pwrap(0xC000, ~1);
+	N118_pwrap(0xE000, ~0);
 }
 
 DECLFW(N118_Write) {
 	if (A & 0x01) {
-        n118.reg[n118.cmd & 0x07] = V;
-    } else {
+		n118.reg[n118.cmd & 0x07] = V;
+	} else {
 		n118.cmd = V;
 	}
-    N118_SyncPRG();
-    N118_SyncCHR();
+	N118_SyncPRG();
+	N118_SyncCHR();
 }
 
 void N118_Power(void) {
@@ -82,43 +82,43 @@ void N118_Power(void) {
 	n118.reg[7] = 1;
 	n118.cmd = 0;
 
-    N118_SyncPRG();
-    N118_SyncCHR();
+	N118_SyncPRG();
+	N118_SyncCHR();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0x9FFF, N118_Write);
 
-    if (WRAM) {
-        SetReadHandler(0x6000, 0x7FFF, CartBR);
-	    SetWriteHandler(0x6000, 0x7FFF, CartBW);
-        FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
-    }
+	if (WRAM) {
+		SetReadHandler(0x6000, 0x7FFF, CartBR);
+		SetWriteHandler(0x6000, 0x7FFF, CartBW);
+		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+	}
 }
 
 static void StateRestore(int version) {
 	N118_SyncPRG();
-    N118_SyncCHR();
+	N118_SyncCHR();
 }
 
 void N118_Init(CartInfo *info, int wsize, int battery) {
-    N118_SyncPRG = GENFIXPRG;
-    N118_SyncCHR = GENFIXCHR;
+	N118_SyncPRG = GENFIXPRG;
+	N118_SyncCHR = GENFIXCHR;
 
-    N118_pwrap = GENPWRAP;
-    N118_cwrap = GENCWRAP;
+	N118_pwrap = GENPWRAP;
+	N118_cwrap = GENCWRAP;
 
-    WRAMSIZE = wsize * 1024;
+	WRAMSIZE = wsize * 1024;
 
-    if (WRAMSIZE) {
-        WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
-        SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
-        AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+	if (WRAMSIZE) {
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
+		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
-        if (battery) {
-            info->SaveGame[0] = WRAM;
-            info->SaveGameLen[0] = WRAMSIZE;
-        }
-    }
+		if (battery) {
+			info->SaveGame[0] = WRAM;
+			info->SaveGameLen[0] = WRAMSIZE;
+		}
+	}
 
 	info->Power = N118_Power;
 

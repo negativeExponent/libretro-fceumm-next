@@ -22,31 +22,31 @@
 #define _ONEBUS_H
 
 typedef struct __ONEBUS {
-    /* General Purpose Registers */
-    uint8 cpu41xx[0x0100], ppu20xx[0x100], apu40xx[0x40];
-    uint32 relative_8k;
+	/* General Purpose Registers */
+	uint8 cpu41xx[0x0100], ppu20xx[0x100], apu40xx[0x40];
+	uint32 relative_8k;
 
-    /* IRQ Registers */
-    uint8 IRQCount, IRQa, IRQReload;
+	/* IRQ Registers */
+	uint8 IRQCount, IRQa, IRQReload;
 
-    /* APU Registers */
-    uint8 pcm_enable, pcm_irq;
-    int16 pcm_addr, pcm_size, pcm_latch, pcm_clock;
+	/* APU Registers */
+	uint8 pcm_enable, pcm_irq;
+	int16 pcm_addr, pcm_size, pcm_latch, pcm_clock;
 
-    struct {
-        uint32 size;
-        uint8 *data;
-        uint8 *low;
-        uint8 *high;
-        uint8 *low16;
-        uint8 *high16;
-    } chr;
+	struct {
+		uint32 size;
+		uint8 *data;
+		uint8 *low;
+		uint8 *high;
+		uint8 *low16;
+		uint8 *high16;
+	} chr;
 } ONEBUS;
 
 extern ONEBUS onebus;
 
-DECLFR(OneBus_ReadAPU40XX);  /* APU Read  $4000 - $403F */
-DECLFR(OneBus_ReadCPU41XX);  /* CPU Read $4100 - $4FFF */
+DECLFR(OneBus_ReadAPU40XX); /* APU Read  $4000 - $403F */
+DECLFR(OneBus_ReadCPU41XX); /* CPU Read $4100 - $4FFF */
 
 DECLFW(OneBus_WritePPU20XX); /* PPU Write $2010 - $20FF */
 DECLFW(OneBus_WriteAPU40XX); /* APU Write $4000 - $403F */

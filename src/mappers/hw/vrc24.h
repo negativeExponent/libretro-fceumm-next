@@ -22,15 +22,15 @@
 #define _VRC24_H
 
 enum {
-	VRC2a = 1,	/* Mapper 22 */
-	VRC2b,		/* Mapper 23 */
-	VRC2c,		/* Mapper 25 */
-	VRC4a,		/* Mapper 21 */
-	VRC4b,		/* Mapper 25 */
-	VRC4c,		/* Mapper 21 */
-	VRC4d,		/* Mapper 25 */
-	VRC4e,		/* Mapper 23 */
-	VRC4f,		/* Mapper 23 */
+	VRC2a = 1, /* Mapper 22 */
+	VRC2b,     /* Mapper 23 */
+	VRC2c,     /* Mapper 25 */
+	VRC4a,     /* Mapper 21 */
+	VRC4b,     /* Mapper 25 */
+	VRC4c,     /* Mapper 21 */
+	VRC4d,     /* Mapper 25 */
+	VRC4e,     /* Mapper 23 */
+	VRC4f,     /* Mapper 23 */
 	VRC4_544,
 	VRC4_559
 };
@@ -41,10 +41,10 @@ typedef enum __VRC24TYPE {
 } VRC24TYPE;
 
 typedef struct __VRC24 {
-    uint8 prg[2];
-    uint16 chr[8];
-    uint8 cmd;
-    uint8 mirr;
+	uint8 prg[2];
+	uint16 chr[8];
+	uint8 cmd;
+	uint8 mirr;
 	uint8 wire; /* VRC2 $6000-$6FFF microwire interface */
 
 	/* not normally added to state */

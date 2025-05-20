@@ -24,26 +24,26 @@
 static uint8 *flash_data;
 static uint32 flash_size;
 
-static uint8  flash_id[2];
-static uint8  flash_state;
+static uint8 flash_id[2];
+static uint8 flash_state;
 static uint32 flash_addr1;
 static uint32 flash_addr2;
 static uint32 flash_sect_size;
-static int32  time_out;
+static int32 time_out;
 
 static SFORMAT FlashStateRegs[] = {
-    { &flash_state, 1, "STAT" },
-    { &time_out,    4, "TIME" },
-    { 0 }
+	{ &flash_state, 1, "STAT" },
+	{ &time_out, 4, "TIME" },
+	{ 0 }
 };
 
 #define PRG_OFFSET(A) (&Page[(A) >> 11][(A)] - flash_data)
 
 DECLFR(FlashROM_Read) {
 	if (flash_state == 0x90) {
-        /* 0: manufacturer id */
-        /* 1: model id */
-        return flash_id[A & 1];
+		/* 0: manufacturer id */
+		/* 1: model id */
+		return flash_id[A & 1];
 	} else if (time_out > 0) {
 		return ((flash_data[PRG_OFFSET(A)] ^ ((time_out & 1) << 6)) & 0x77);
 	}
@@ -123,12 +123,12 @@ void FlashROM_CPUCyle(int a) {
 }
 
 void FlashROM_Init(uint8 *data, uint32 size, uint8 manufacter_id, uint8 model_id, uint32 sector_size, uint32 adr1, uint32 adr2) {
-	flash_data      = data;
-	flash_size      = size;
-	flash_id[0]     = manufacter_id;
-	flash_id[1]     = model_id;
-	flash_addr1     = adr1;
-	flash_addr2     = adr2;
+	flash_data = data;
+	flash_size = size;
+	flash_id[0] = manufacter_id;
+	flash_id[1] = model_id;
+	flash_addr1 = adr1;
+	flash_addr2 = adr2;
 	flash_sect_size = sector_size;
 
 	AddExState(FlashStateRegs, ~0, 0, NULL);

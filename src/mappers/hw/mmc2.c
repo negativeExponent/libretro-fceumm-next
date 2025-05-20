@@ -30,11 +30,10 @@ void (*MMC2_mwrap)(uint8 V);
 
 MMC2 mmc2;
 
-static SFORMAT StateRegs[] =
-{
-	{ mmc2.chr,   4, "CREG" },
+static SFORMAT StateRegs[] = {
+	{ mmc2.chr, 4, "CREG" },
 	{ mmc2.latch, 2, "PPUL" },
-	{ &mmc2.prg,  1, "PREG" },
+	{ &mmc2.prg, 1, "PREG" },
 	{ &mmc2.mirr, 1, "MIRR" },
 	{ 0 }
 };
@@ -139,7 +138,7 @@ void MMC2_Init(CartInfo *info, int wram, int battery) {
 
 	if (wram) {
 		WRAMSIZE = wram * 1024;
-		WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (battery) {

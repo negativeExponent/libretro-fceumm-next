@@ -86,24 +86,24 @@ enum { MODE0, MODE1, MODE2, MODE3 };
 MMC5 mmc5;
 
 static SFORMAT MMC5_StateRegs[] = {
-	{  mmc5.prg,                 5, "PREG" },
-	{  mmc5.chr,                24, "CREG" },
-	{  mmc5.wramProtect,         2, "WRMK" },
-	{  mmc5.mul,                 2, "MUL0" },
+	{ mmc5.prg, 5, "PREG" },
+	{ mmc5.chr, 24, "CREG" },
+	{ mmc5.wramProtect, 2, "WRMK" },
+	{ mmc5.mul, 2, "MUL0" },
 
-	{ &mmc5.prgMode,             1, "PRGM" },
-	{ &mmc5.chrMode,             1, "CHRM" },
-	{ &mmc5.chrLast,             1, "CHRL" },
-	{ &mmc5.extMode,             1, "EXTM" },
-	{ &mmc5.nmt,                 1, "NTAM" },
+	{ &mmc5.prgMode, 1, "PRGM" },
+	{ &mmc5.chrMode, 1, "CHRM" },
+	{ &mmc5.chrLast, 1, "CHRL" },
+	{ &mmc5.extMode, 1, "EXTM" },
+	{ &mmc5.nmt, 1, "NTAM" },
 
-	{ &mmc5.fillTile,            1, "NTFL" },
-	{ &mmc5.fillColor,           1, "ATFL" },
-	{ &mmc5.irq.inFrame,         1, "IFRM" },
-	
-	{ &mmc5.irq.enabled,         1, "IRQE" },
-	{ &mmc5.irq.pending,         1, "IRQP" },
-	{ &mmc5.irq.scanlineTarget,  1, "IRQS" },
+	{ &mmc5.fillTile, 1, "NTFL" },
+	{ &mmc5.fillColor, 1, "ATFL" },
+	{ &mmc5.irq.inFrame, 1, "IFRM" },
+
+	{ &mmc5.irq.enabled, 1, "IRQE" },
+	{ &mmc5.irq.pending, 1, "IRQP" },
+	{ &mmc5.irq.scanlineTarget, 1, "IRQS" },
 	{ &mmc5.irq.scanlineCounter, 1, "LCTR" },
 
 	{ 0 }
@@ -235,7 +235,7 @@ static uint8 mmc5_PPURead(uint32 A) {
 	} else {
 		if (split) {
 			static const int kHack = -1; /* dunno if theres science to this or if it just fixes SDF
-					   (cant be bothered to think about it) */
+			           (cant be bothered to think about it) */
 			int linetile = (newppu_get_scanline() + kHack) / 8 + MMC5HackSPScroll;
 
 			/* REF NT: return 0x2000 | (v << 0x0B) | (h << 0xA) | (vt << 5) | ht;
@@ -248,8 +248,8 @@ static uint8 mmc5_PPURead(uint32 A) {
 				return mmc5.exRam[A & 0x03FF];
 			} else {
 				A &= ~((0x1F << 5) | (1 << 0x0B)); /* mask off VT and V */
-				A |= (linetile & 31) << 5; /* mask on adjusted VT (V doesnt make */
-										   /* any sense, I think) */
+				A |= (linetile & 31) << 5;         /* mask on adjusted VT (V doesnt make */
+				                                   /* any sense, I think) */
 				return mmc5.exRam[A & 0x03FF];
 			}
 		}
@@ -403,10 +403,18 @@ static void MMC5_SyncMirror(void) {
 	int x;
 	for (x = 0; x < 4; x++) {
 		switch ((mmc5.nmt >> (x << 1)) & 0x03) {
-		case 0: setntamem(NTARAM + 0x000,  TRUE, x); break;
-		case 1: setntamem(NTARAM + 0x400,  TRUE, x); break;
-		case 2: setntamem( mmc5.exRam   ,  TRUE, x); break;
-		case 3: setntamem( mmc5.fillTable, FALSE, x); break;
+		case 0:
+			setntamem(NTARAM + 0x000, TRUE, x);
+			break;
+		case 1:
+			setntamem(NTARAM + 0x400, TRUE, x);
+			break;
+		case 2:
+			setntamem(mmc5.exRam, TRUE, x);
+			break;
+		case 3:
+			setntamem(mmc5.fillTable, FALSE, x);
+			break;
 		}
 	}
 }
@@ -559,7 +567,7 @@ static void Sync(void) {
 	/* zero 17-apr-2013 - why the heck should this happen here? anything in a `synco` should be depending on the state.
 	 * im going to leave it commented out to see what happens
 	 */
-	 /* X6502_IRQEnd(FCEU_IQEXT); */
+	/* X6502_IRQEnd(FCEU_IQEXT); */
 }
 
 void MMC5_hb(int cur_scanline) {
@@ -603,10 +611,18 @@ static void MMC5_Reset(void) {
 	uint8 nval;
 	uint8 aval;
 
-	for (x = 0; x < 5; x++) mmc5.prg[x] = ((~4) + x);
-	for (x = 0; x < 12; x++) mmc5.chr[x] = x;
-	for (x = 0; x < 2; x++) mmc5.wramProtect[x] = 0;
-	for (x = 0; x < 2; x++) mmc5.mul[x] = ~0;
+	for (x = 0; x < 5; x++) {
+		mmc5.prg[x] = ((~4) + x);
+	}
+	for (x = 0; x < 12; x++) {
+		mmc5.chr[x] = x;
+	}
+	for (x = 0; x < 2; x++) {
+		mmc5.wramProtect[x] = 0;
+	}
+	for (x = 0; x < 2; x++) {
+		mmc5.mul[x] = ~0;
+	}
 
 	mmc5.extMode = MODE0;
 	mmc5.prgMode = MODE3;
@@ -624,7 +640,8 @@ static void MMC5_Reset(void) {
 
 	/* mmc5.fillTable is and 8-bit tile index, and a 2-bit attribute implented as a mirrored nametable */
 	nval = mmc5.fillTable[0x000];
-	aval = mmc5.fillTable[0x3C0] & 0x03; aval = aval | (aval << 2) | (aval << 4) | (aval << 6);
+	aval = mmc5.fillTable[0x3C0] & 0x03;
+	aval = aval | (aval << 2) | (aval << 4) | (aval << 6);
 	FCEU_dwmemset32(mmc5.fillTable + 0x000, nval | (nval << 8) | (nval << 16) | (nval << 24), 0x3C0);
 	FCEU_dwmemset32(mmc5.fillTable + 0x3C0, aval | (aval << 8) | (aval << 16) | (aval << 24), 0x040);
 
@@ -661,8 +678,8 @@ static void MMC5_Power(void) {
 	SetWriteHandler(0x5205, 0x5206, Mapper5_write);
 	SetReadHandler(0x5205, 0x5206, MMC5_read);
 
-/*	GameHBIRQHook=MMC5_hb; */
-/*	FCEU_CheatAddRAM(8, 0x6000, WRAM); */
+	/*	GameHBIRQHook=MMC5_hb; */
+	/*	FCEU_CheatAddRAM(8, 0x6000, WRAM); */
 	FCEU_CheatAddRAM(1, 0x5C00, mmc5.exRam);
 
 	MMC5_Reset();
@@ -694,9 +711,13 @@ void MMC5_Init(CartInfo *info, int wsize, int battery) {
 		if (info->iNES2) {
 			saveramsize = info->PRGRamSaveSize;
 		} else {
-			if (wsize <= 16) saveramsize = 8 * 1024;
-			else if (wsize >= 64) saveramsize = 64 * 1024;
-			else saveramsize = 32 * 1024;
+			if (wsize <= 16) {
+				saveramsize = 8 * 1024;
+			} else if (wsize >= 64) {
+				saveramsize = 64 * 1024;
+			} else {
+				saveramsize = 32 * 1024;
+			}
 		}
 		info->SaveGame[0] = WRAM;
 		info->SaveGameLen[0] = saveramsize;

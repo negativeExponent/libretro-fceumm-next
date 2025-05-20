@@ -32,8 +32,8 @@ DECLFW(Latch_Write) {
 	if (bus_conflict) {
 		V &= CartBR(A);
 	}
-    latch.addr = A;
-    latch.data = V;
+	latch.addr = A;
+	latch.data = V;
 	WSync();
 }
 
@@ -65,10 +65,9 @@ static void StateRestore(int version) {
 	WSync();
 }
 
-void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func,
-    uint8 wram, uint8 busc) {
+void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint8 wram, uint8 busc) {
 	bus_conflict = busc;
-	WSync        = proc;
+	WSync = proc;
 	if (func != NULL)
 		defread = func;
 	else
@@ -79,10 +78,10 @@ void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func,
 	GameStateRestore = StateRestore;
 	if (wram) {
 		WRAMSIZE = 8192;
-		WRAM     = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		if (info->battery) {
-			info->SaveGame[0]    = WRAM;
+			info->SaveGame[0] = WRAM;
 			info->SaveGameLen[0] = WRAMSIZE;
 		}
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");

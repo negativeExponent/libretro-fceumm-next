@@ -33,33 +33,33 @@ static FDSSOUND fdso = { 0 };
 static int32 FBC = 0;
 
 void FDSSound_AddStateInfo(void) {
-	AddExState(&fdso.EnvUnits[EVOL].speed,    1, 0, "SPD0");
-	AddExState(&fdso.EnvUnits[EVOL].control,  1, 0, "CTL0");
-	AddExState(&fdso.EnvUnits[EVOL].volume,   1, 0, "VOL0");
-	AddExState(&fdso.EnvUnits[EVOL].counter,  1, 0, "CNT0");
+	AddExState(&fdso.EnvUnits[EVOL].speed, 1, 0, "SPD0");
+	AddExState(&fdso.EnvUnits[EVOL].control, 1, 0, "CTL0");
+	AddExState(&fdso.EnvUnits[EVOL].volume, 1, 0, "VOL0");
+	AddExState(&fdso.EnvUnits[EVOL].counter, 1, 0, "CNT0");
 
-	AddExState(&fdso.EnvUnits[EMOD].speed,    1, 0, "SPD1");
-	AddExState(&fdso.EnvUnits[EMOD].control,  1, 0, "CTL1");
-	AddExState(&fdso.EnvUnits[EMOD].volume,   1, 0, "VOL1");
-	AddExState(&fdso.EnvUnits[EMOD].counter,  1, 0, "CNT1");
+	AddExState(&fdso.EnvUnits[EMOD].speed, 1, 0, "SPD1");
+	AddExState(&fdso.EnvUnits[EMOD].control, 1, 0, "CTL1");
+	AddExState(&fdso.EnvUnits[EMOD].volume, 1, 0, "VOL1");
+	AddExState(&fdso.EnvUnits[EMOD].counter, 1, 0, "CNT1");
 
-	AddExState(fdso.cwave,                   64, 0, "WAVE");
-	AddExState(fdso.mwave,                   32, 0, "MWAV");
+	AddExState(fdso.cwave, 64, 0, "WAVE");
+	AddExState(fdso.mwave, 32, 0, "MWAV");
 
-	AddExState(&fdso.cwave_freq,              2, 0, "WFRQ");
-	AddExState(&fdso.cwave_pos,               4, 0, "WPOS");
-	AddExState(&fdso.cwave_control,           1, 0, "WCTL");
+	AddExState(&fdso.cwave_freq, 2, 0, "WFRQ");
+	AddExState(&fdso.cwave_pos, 4, 0, "WPOS");
+	AddExState(&fdso.cwave_control, 1, 0, "WCTL");
 
-	AddExState(&fdso.mod_freq,                2, 0, "MFRQ");
-	AddExState(&fdso.mod_pos,                 4, 0, "MPOS");
-	AddExState(&fdso.mod_control,             1, 0, "MCTL");
+	AddExState(&fdso.mod_freq, 2, 0, "MFRQ");
+	AddExState(&fdso.mod_pos, 4, 0, "MPOS");
+	AddExState(&fdso.mod_control, 1, 0, "MCTL");
 
-	AddExState(&fdso.sweep_bias,              4, 0, "SWBS");
+	AddExState(&fdso.sweep_bias, 4, 0, "SWBS");
 
-	AddExState(&fdso.master_control,          1, 0, "MCTL");
-	AddExState(&fdso.master_env_speed,        1, 0, "MSPD");
+	AddExState(&fdso.master_control, 1, 0, "MCTL");
+	AddExState(&fdso.master_env_speed, 1, 0, "MSPD");
 
-	AddExState(&fdso.envcount,                2, 0, "EDIV");
+	AddExState(&fdso.envcount, 2, 0, "EDIV");
 }
 
 static void FDSSoundUpdate(void) {
@@ -203,7 +203,7 @@ static INLINE int32 FDSDoSound(void) {
 
 	fdso.count += fdso.cycles;
 	if (fdso.count >= ((int64)1 << 40)) {
-dogk:
+	dogk:
 		fdso.count -= (int64)1 << 40;
 
 		if (!(fdso.cwave_control & ENVELOPES_DISABLE) && fdso.master_env_speed) {
@@ -325,7 +325,7 @@ static void RenderSound(void) {
 			uint32 t = FDSDoSound();
 			t += t >> 1;
 			t >>= 4;
-			Wave[x >> 4] += t;	/* (t>>2)-(t>>3); */ /* >>3; */
+			Wave[x >> 4] += t; /* (t>>2)-(t>>3); */ /* >>3; */
 		}
 	}
 }
@@ -337,7 +337,7 @@ static void RenderSoundHQ(void) {
 		for (x = FBC; x < SOUNDTS; x++) {
 			uint32 t = FDSDoSound();
 			t += t >> 1;
-			WaveHi[x] += t;	/* (t<<2)-(t<<1); */
+			WaveHi[x] += t; /* (t<<2)-(t<<1); */
 		}
 	}
 	FBC = SOUNDTS;
@@ -397,7 +397,7 @@ void FDSSoundRegReset(void) {
 
 void FDSSound_Power(void) {
 	FDSSoundRegReset();
-	FDSSound_SC();	
+	FDSSound_SC();
 
 	SetReadHandler(0x4040, 0x407F, FDSWaveRead);
 	SetReadHandler(0x4090, 0x4090, FDSEnvVolumeRead);

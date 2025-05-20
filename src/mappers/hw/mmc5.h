@@ -18,10 +18,10 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
- #ifndef _MMC5_H
- #define _MMC5_H
+#ifndef _MMC5_H
+#define _MMC5_H
 
- typedef struct __MMC5 {
+typedef struct __MMC5 {
 	uint8 prgMode;
 	uint8 chrMode;
 	uint8 extMode;

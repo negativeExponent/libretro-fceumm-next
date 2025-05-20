@@ -25,7 +25,7 @@
 #include "s5bsound.h"
 
 #if 0 /* remove comment to use old S5B emulation */
-#define USE_OLD_SB5 
+#define USE_OLD_SB5
 #endif
 
 #ifndef USE_OLD_SB5
@@ -56,7 +56,7 @@ static void UpdatePSG(int Count) {
 	a = z - dwave;
 	if (a) {
 		PSG_fillbuf(psg_chip, &Wave[dwave], a, 1);
-    }
+	}
 	dwave = 0;
 }
 
@@ -291,7 +291,7 @@ DECLFW(S5BSound_Write) {
 }
 
 static void S5BSound_SC(void) {
-    memset(dcount, 0, sizeof(dcount));
+	memset(dcount, 0, sizeof(dcount));
 	memset(vcount, 0, sizeof(vcount));
 	memset(CAYBC, 0, sizeof(CAYBC));
 	if (FSettings.SndRate) {
@@ -306,8 +306,8 @@ static void S5BSound_SC(void) {
 		}
 	} else {
 		memset(sfun, 0, sizeof(sfun));
-    }
-} 
+	}
+}
 
 void S5BSound_ESI(void) {
 	GameExpSound[SND_S5B - 6].RChange = S5BSound_SC;

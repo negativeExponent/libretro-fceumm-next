@@ -22,9 +22,9 @@
 #define _VRC7_H
 
 typedef struct __VRC7 {
-    uint8 prg[4];
-    uint8 chr[8];
-    uint8 mirr;
+	uint8 prg[4];
+	uint8 chr[8];
+	uint8 mirr;
 } VRC7;
 
 extern VRC7 vrc7;

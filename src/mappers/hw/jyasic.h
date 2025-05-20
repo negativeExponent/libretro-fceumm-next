@@ -41,7 +41,7 @@ typedef struct __JYASIC {
 
 extern JYASIC jyasic;
 
-extern uint8     JYASIC_CPUWriteHandlersSet;
+extern uint8 JYASIC_CPUWriteHandlersSet;
 extern writefunc JYASIC_cpuWrite[0x10000];
 
 DECLFR(JYASIC_ReadALU_DIP);
@@ -59,7 +59,7 @@ void JYASIC_RegReset(void);
 void JYASIC_Reset(void);
 void JYASIC_Close(void);
 void JYASIC_Power(void);
-void JYASIC_Init(CartInfo * info, int extended_mirr);
+void JYASIC_Init(CartInfo *info, int extended_mirr);
 
 void JYASIC_SyncPRG(void);
 void JYASIC_SyncCHR(void);

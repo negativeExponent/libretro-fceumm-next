@@ -39,35 +39,32 @@ void (*JYASIC_cwrap)(uint16 A, uint32 V);
 void (*JYASIC_mwrap)(uint16 A, uint32 V);
 
 static SFORMAT JYASIC_StateRegs[] = {
-	{ jyasic.mode,           4,  "TKCO" },
-	{ jyasic.prg,            4,  "PRGB" },
-	{ jyasic.mul,            2,  "MUL"  },
-	{ jyasic.latch,          2,  "CLTC" },
-	{ jyasic.chr,            16, "CHRB" },
-	{ jyasic.nt,             8,  "NMS0" },
-	{ &jyasic.adder,         1,  "ADDE" },
-	{ &jyasic.test,          1,  "REGI" },
-	{ &jyasic.irq.control,   1,  "IRQM" },
-	{ &jyasic.irq.prescaler, 1,  "IRQP" },
-	{ &jyasic.irq.counter,   1,  "IRQC" },
-	{ &jyasic.irq.xor,       1,  "IRQX" },
-	{ &jyasic.irq.enable,    1,  "IRQA" },
+	{ jyasic.mode, 4, "TKCO" },
+	{ jyasic.prg, 4, "PRGB" },
+	{ jyasic.mul, 2, "MUL" },
+	{ jyasic.latch, 2, "CLTC" },
+	{ jyasic.chr, 16, "CHRB" },
+	{ jyasic.nt, 8, "NMS0" },
+	{ &jyasic.adder, 1, "ADDE" },
+	{ &jyasic.test, 1, "REGI" },
+	{ &jyasic.irq.control, 1, "IRQM" },
+	{ &jyasic.irq.prescaler, 1, "IRQP" },
+	{ &jyasic.irq.counter, 1, "IRQC" },
+	{ &jyasic.irq.xor, 1, "IRQX" },
+	{ &jyasic.irq.enable, 1, "IRQA" },
 	{ 0 }
 };
 
 static uint8 rev(uint8 val) {
-	return (
-		((val << 6) & 0x40) |
-		((val << 4) & 0x20) |
-		((val << 2) & 0x10) |
-		((val << 0) & 0x08) |
-		((val >> 2) & 0x04) |
-		((val >> 4) & 0x02) |
-		((val >> 6) & 0x01));
+	return (((val << 6) & 0x40) | ((val << 4) & 0x20) | ((val << 2) & 0x10) | ((val << 0) & 0x08) | ((val >> 2) & 0x04) | ((val >> 4) & 0x02) | ((val >> 6) & 0x01));
 }
 
-static uint32 GENPRGBANK(uint32 V) { return 0; }
-static uint32 GENCHRBANK(uint32 V) { return 0; }
+static uint32 GENPRGBANK(uint32 V) {
+	return 0;
+}
+static uint32 GENCHRBANK(uint32 V) {
+	return 0;
+}
 
 static void GENPWRAP(uint16 A, uint32 V) {
 	setprg8(A, V);
@@ -95,14 +92,14 @@ void JYASIC_SyncPRG(void) {
 		JYASIC_pwrap(0xA000, (prgLast << 2) | 1);
 		JYASIC_pwrap(0xC000, (prgLast << 2) | 2);
 		JYASIC_pwrap(0xE000, (prgLast << 2) | 3);
-		prg6000 =      (jyasic.prg[3] << 2) | 3;
+		prg6000 = (jyasic.prg[3] << 2) | 3;
 		break;
 	case 1:
 		JYASIC_pwrap(0x8000, (jyasic.prg[1] << 1) | 0);
 		JYASIC_pwrap(0xA000, (jyasic.prg[1] << 1) | 1);
-		JYASIC_pwrap(0xC000,       (prgLast << 1) | 0);
-		JYASIC_pwrap(0xE000,       (prgLast << 1) | 1);
-		prg6000 =            (jyasic.prg[3] << 1) | 1;
+		JYASIC_pwrap(0xC000, (prgLast << 1) | 0);
+		JYASIC_pwrap(0xE000, (prgLast << 1) | 1);
+		prg6000 = (jyasic.prg[3] << 1) | 1;
 		break;
 	case 2:
 		JYASIC_pwrap(0x8000, jyasic.prg[0]);
@@ -205,17 +202,25 @@ void JYASIC_SyncMirror(void) {
 	} else {
 		switch (jyasic.mode[1] & 0x03) {
 		/* Regularly mirrored CIRAM */
-		case 0: setmirror(MI_V); break;
-		case 1: setmirror(MI_H); break;
-		case 2: setmirror(MI_0); break;
-		case 3: setmirror(MI_1); break;
+		case 0:
+			setmirror(MI_V);
+			break;
+		case 1:
+			setmirror(MI_H);
+			break;
+		case 2:
+			setmirror(MI_0);
+			break;
+		case 3:
+			setmirror(MI_1);
+			break;
 		}
 	}
 }
 
 static void clockIRQ(void) {
-	uint8 mask            = jyasic.irq.control & 0x04 ? 0x07 : 0xFF;
-	uint8 prescaler       = jyasic.irq.prescaler & mask;
+	uint8 mask = jyasic.irq.control & 0x04 ? 0x07 : 0xFF;
+	uint8 prescaler = jyasic.irq.prescaler & mask;
 	uint8 clockIrqCounter = FALSE;
 
 	if (jyasic.irq.enable) {
@@ -275,7 +280,7 @@ static void trapPPUAddressChange(uint32 A) {
 	if ((jyasic.mode[3] & 0x80) && ((jyasic.mode[0] & 0x18) == 0x08) && (((A & 0x2FF0) == 0xFD0) || ((A & 0x2FF0) == 0xFE0))) {
 		/* If MMC4 jyasic.mode[0] is enabled, and CHR jyasic.mode[0] is 4 KiB, and tile FD or FE is being fetched ... */
 		jyasic.latch[(A >> 12) & 1] = ((A >> 10) & 4) | ((A >> 4) & 2); /* switch the left or right pattern table's latch to 0 (FD) or 2 (FE),
-																  * being used as an offset for the CHR register index. */
+		                                                                 * being used as an offset for the CHR register index. */
 		JYASIC_SyncCHR();
 	}
 	lastPPUAddress = A;
@@ -286,7 +291,7 @@ static void ppuScanline(void) {
 		int i;
 		for (i = 0; i < 8; i++) {
 			clockIRQ(); /* Clock IRQ counter on A12 rises (eight per scanline). This should be done in
-						   trapPPUAddressChange, but would require more accurate PPU emulation for that. */
+			               trapPPUAddressChange, but would require more accurate PPU emulation for that. */
 		}
 	}
 }
@@ -300,18 +305,21 @@ static void cpuCycle(int a) {
 }
 
 DECLFR(JYASIC_ReadALU_DIP) {
-	if ((A & 0x3FF) == 0 &&
-		A != 0x5800) { /* 5000, 5400, 5C00: read solder pad setting */
+	if ((A & 0x3FF) == 0 && A != 0x5800) { /* 5000, 5400, 5C00: read solder pad setting */
 		return dipSwitch | (cpu.openbus & 0x3F);
 	}
 
 	if (A & 0x800) {
 		switch (A & 3) {
 		/* 5800-5FFF: read ALU */
-		case 0: return (jyasic.mul[0] * jyasic.mul[1]) & 0xFF;
-		case 1: return (jyasic.mul[0] * jyasic.mul[1]) >> 8;
-		case 2: return jyasic.adder;
-		case 3: return jyasic.test;
+		case 0:
+			return (jyasic.mul[0] * jyasic.mul[1]) & 0xFF;
+		case 1:
+			return (jyasic.mul[0] * jyasic.mul[1]) >> 8;
+		case 2:
+			return jyasic.adder;
+		case 3:
+			return jyasic.test;
 		}
 	}
 	/* all others */
@@ -320,10 +328,19 @@ DECLFR(JYASIC_ReadALU_DIP) {
 
 DECLFW(JYASIC_WriteALU) {
 	switch (A & 3) {
-	case 0: jyasic.mul[0] = V; break;
-	case 1: jyasic.mul[1] = V; break;
-	case 2: jyasic.adder += V; break;
-	case 3: jyasic.test   = V; jyasic.adder = 0; break;
+	case 0:
+		jyasic.mul[0] = V;
+		break;
+	case 1:
+		jyasic.mul[1] = V;
+		break;
+	case 2:
+		jyasic.adder += V;
+		break;
+	case 3:
+		jyasic.test = V;
+		jyasic.adder = 0;
+		break;
 	}
 }
 
@@ -364,7 +381,7 @@ DECLFW(JYASIC_WriteIRQ) {
 		jyasic.irq.control = V;
 		break;
 	case 2:
-		jyasic.irq.enable   = 0;
+		jyasic.irq.enable = 0;
 		jyasic.irq.prescaler = 0;
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
@@ -372,10 +389,10 @@ DECLFW(JYASIC_WriteIRQ) {
 		jyasic.irq.enable = 1;
 		break;
 	case 4:
-		jyasic.irq.prescaler = V ^ jyasic.irq.xor;
+		jyasic.irq.prescaler = V ^ jyasic.irq.xor ;
 		break;
 	case 5:
-		jyasic.irq.counter = V ^ jyasic.irq.xor;
+		jyasic.irq.counter = V ^ jyasic.irq.xor ;
 		break;
 	case 6:
 		jyasic.irq.xor = V;
@@ -444,10 +461,10 @@ void JYASIC_Power(void) {
 
 	SetWriteHandler(0x5000, 0x5FFF, JYASIC_WriteALU);
 	SetWriteHandler(0x6000, 0x7fff, CartBW);
-	SetWriteHandler(0x8000, 0x87FF, JYASIC_WritePRG); /* 8800-8FFF ignored */
-	SetWriteHandler(0x9000, 0x97FF, JYASIC_WriteCHRLow); /* 9800-9FFF ignored */
+	SetWriteHandler(0x8000, 0x87FF, JYASIC_WritePRG);     /* 8800-8FFF ignored */
+	SetWriteHandler(0x9000, 0x97FF, JYASIC_WriteCHRLow);  /* 9800-9FFF ignored */
 	SetWriteHandler(0xA000, 0xA7FF, JYASIC_WriteCHRHigh); /* A800-AFFF ignored */
-	SetWriteHandler(0xB000, 0xB7FF, JYASIC_WriteNT); /* B800-BFFF ignored */
+	SetWriteHandler(0xB000, 0xB7FF, JYASIC_WriteNT);      /* B800-BFFF ignored */
 	SetWriteHandler(0xC000, 0xCFFF, JYASIC_WriteIRQ);
 	SetWriteHandler(0xD000, 0xD7FF, JYASIC_WriteMode); /* D800-DFFF ignored */
 

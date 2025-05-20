@@ -23,7 +23,7 @@
 
 typedef struct __LATCH {
 	uint16 addr;
-    uint8 data;
+	uint8 data;
 } LATCH;
 
 extern LATCH latch;

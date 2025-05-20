@@ -34,8 +34,7 @@ VRC6 vrc6;
 void (*VRC6_pwrap)(uint16 A, uint16 V);
 void (*VRC6_cwrap)(uint16 A, uint16 V);
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ vrc6.prg, 2, "PRG" },
 	{ vrc6.chr, 8, "CHR" },
 	{ &vrc6.mirr, 1, "MIRR" },
@@ -53,10 +52,18 @@ static void GENCWRAP(uint16 A, uint16 V) {
 
 void VRC6_SyncMirror(void) {
 	switch (vrc6.mirr & 3) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+	case 0:
+		setmirror(MI_V);
+		break;
+	case 1:
+		setmirror(MI_H);
+		break;
+	case 2:
+		setmirror(MI_0);
+		break;
+	case 3:
+		setmirror(MI_1);
+		break;
 	}
 }
 
@@ -111,9 +118,15 @@ DECLFW(VRC6_Write) {
 	case 0xF000:
 		index = A & 0x03;
 		switch (index) {
-		case 0x00: VRCIRQ_Latch(V); break;
-		case 0x01: VRCIRQ_Control(V); break;
-		case 0x02: VRCIRQ_Acknowledge(); break;
+		case 0x00:
+			VRCIRQ_Latch(V);
+			break;
+		case 0x01:
+			VRCIRQ_Control(V);
+			break;
+		case 0x02:
+			VRCIRQ_Acknowledge();
+			break;
 		}
 	}
 }

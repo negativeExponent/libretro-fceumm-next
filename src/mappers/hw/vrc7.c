@@ -33,8 +33,7 @@ void (*VRC7_pwrap)(uint16 A, uint16 V);
 void (*VRC7_cwrap)(uint16 A, uint16 V);
 void (*VRC7_mwrap)(uint8 V);
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ vrc7.prg, 3, "PREG" },
 	{ vrc7.chr, 8, "CREG" },
 	{ &vrc7.mirr, 1, "MIRR" },
@@ -54,10 +53,18 @@ static void GENMWRAP(uint8 V) {
 	vrc7.mirr = V;
 
 	switch (vrc7.mirr & 3) {
-	case 0: setmirror(MI_V); break;
-	case 1: setmirror(MI_H); break;
-	case 2: setmirror(MI_0); break;
-	case 3: setmirror(MI_1); break;
+	case 0:
+		setmirror(MI_V);
+		break;
+	case 1:
+		setmirror(MI_H);
+		break;
+	case 2:
+		setmirror(MI_0);
+		break;
+	case 3:
+		setmirror(MI_1);
+		break;
 	}
 }
 
@@ -112,10 +119,19 @@ DECLFW(VRC7_Write) {
 	case 0xF000:
 		index = ((A >> 11) & 0x02) | ((A & vrc7_A0) ? 0x01 : 0x00);
 		switch (index) {
-		case 0x00: if (VRC7_mwrap) VRC7_mwrap(V); break;
-		case 0x01: VRCIRQ_Latch(V); break;
-		case 0x02: VRCIRQ_Control(V); break;
-		case 0x03: VRCIRQ_Acknowledge(); break;
+		case 0x00:
+			if (VRC7_mwrap)
+				VRC7_mwrap(V);
+			break;
+		case 0x01:
+			VRCIRQ_Latch(V);
+			break;
+		case 0x02:
+			VRCIRQ_Control(V);
+			break;
+		case 0x03:
+			VRCIRQ_Acknowledge();
+			break;
 		}
 		break;
 	}
@@ -163,7 +179,7 @@ void VRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {
 	vrc7_A1 = A1;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8*)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

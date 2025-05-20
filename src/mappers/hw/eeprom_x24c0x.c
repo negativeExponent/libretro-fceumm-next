@@ -193,7 +193,7 @@ void x24c02_write(uint8 V) {
 					}
 				} else { /* invalid device address */
 					x24c02.state = X24C0X_STANDBY;
-					x24c02.out   = 1;
+					x24c02.out = 1;
 				}
 			}
 			x24c02.bitcount++;

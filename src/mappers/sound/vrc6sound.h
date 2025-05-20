@@ -25,4 +25,4 @@ void VRC6Sound_ESI(void);
 DECLFW(VRC6Sound_Write);
 void VRC6Sound_AddStateInfo(void);
 
-#endif /* _VRC6_SOUND_H */ 
+#endif /* _VRC6_SOUND_H */

@@ -59,10 +59,10 @@ DECLFW(VRC7Sound_Write) {
 		return;
 	}
 
-    switch (A & 0xF030) {
-    case 0x9010:
+	switch (A & 0xF030) {
+	case 0x9010:
 		OPLL_writeIO(chip, 0, V);
-        break;
+		break;
 	case 0x9030:
 		GameExpSound[SND_VRC7 - 6].Fill = UpdateOPL;
 		GameExpSound[SND_VRC7 - 6].NeoFill = UpdateOPLNEO;
@@ -83,11 +83,9 @@ DECLFW(VRC7Sound_WriteIO) {
 
 static int opll_type = 0;
 
-static void SetType(int type)
-{
+static void SetType(int type) {
 	int t;
-	switch (type)
-	{
+	switch (type) {
 	case TONE_2413:
 		t = OPLL_2413_TONE;
 		break;
@@ -169,17 +167,17 @@ void VRC7Sound_AddStateInfo(void) {
 
 	/* VRC7 only uses 12 slots */
 	AddExState(&chip->slot[0], sizeof(chip->slot[0]), 0, "SL00");
-    AddExState(&chip->slot[1], sizeof(chip->slot[1]), 0, "SL01");
-    AddExState(&chip->slot[2], sizeof(chip->slot[2]), 0, "SL02");
-    AddExState(&chip->slot[3], sizeof(chip->slot[3]), 0, "SL03");
-    AddExState(&chip->slot[4], sizeof(chip->slot[4]), 0, "SL04");
-    AddExState(&chip->slot[5], sizeof(chip->slot[5]), 0, "SL05");
-    AddExState(&chip->slot[6], sizeof(chip->slot[6]), 0, "SL06");
-    AddExState(&chip->slot[7], sizeof(chip->slot[7]), 0, "SL07");
-    AddExState(&chip->slot[8], sizeof(chip->slot[8]), 0, "SL08");
-    AddExState(&chip->slot[9], sizeof(chip->slot[9]), 0, "SL09");
-    AddExState(&chip->slot[10], sizeof(chip->slot[10]), 0, "SL10");
-    AddExState(&chip->slot[11], sizeof(chip->slot[11]), 0, "SL11");
+	AddExState(&chip->slot[1], sizeof(chip->slot[1]), 0, "SL01");
+	AddExState(&chip->slot[2], sizeof(chip->slot[2]), 0, "SL02");
+	AddExState(&chip->slot[3], sizeof(chip->slot[3]), 0, "SL03");
+	AddExState(&chip->slot[4], sizeof(chip->slot[4]), 0, "SL04");
+	AddExState(&chip->slot[5], sizeof(chip->slot[5]), 0, "SL05");
+	AddExState(&chip->slot[6], sizeof(chip->slot[6]), 0, "SL06");
+	AddExState(&chip->slot[7], sizeof(chip->slot[7]), 0, "SL07");
+	AddExState(&chip->slot[8], sizeof(chip->slot[8]), 0, "SL08");
+	AddExState(&chip->slot[9], sizeof(chip->slot[9]), 0, "SL09");
+	AddExState(&chip->slot[10], sizeof(chip->slot[10]), 0, "SL10");
+	AddExState(&chip->slot[11], sizeof(chip->slot[11]), 0, "SL11");
 
 	/* extra slot if not running in VRC7 */
 	AddExState(&chip->slot[12], sizeof(chip->slot[12]), 0, "SL12");

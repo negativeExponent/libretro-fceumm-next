@@ -25,14 +25,14 @@ struct EEPROM_93Cx6 {
 #define OPCODE_ERASEALL     12
 #define OPCODE_WRITEENABLE  13
 
-#define STATE_STANDBY       0
-#define STATE_STARTBIT      1
-#define STATE_OPCODE        3
-#define STATE_ADDRESS8      12
-#define STATE_DATA8         20
-#define STATE_ADDRESS16     11
-#define STATE_DATA16        27
-#define STATE_FINISHED      99
+#define STATE_STANDBY   0
+#define STATE_STARTBIT  1
+#define STATE_OPCODE    3
+#define STATE_ADDRESS8  12
+#define STATE_DATA8     20
+#define STATE_ADDRESS16 11
+#define STATE_DATA16    27
+#define STATE_FINISHED  99
 
 static struct EEPROM_93Cx6 eeprom_93Cx6 = { 0 };
 

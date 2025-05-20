@@ -54,18 +54,18 @@
 
 JV001 jv001;
 
-static void Dummyfunc(void) { }
+static void Dummyfunc(void) {
+}
 static void (*WSync)(void) = Dummyfunc;
 
-static SFORMAT StateRegs[] =
-{
+static SFORMAT StateRegs[] = {
 	{ &jv001.accumulator, 1, "ACC0" },
-	{ &jv001.inverter,    1, "INVR" },
-	{ &jv001.staging,     1, "STG0" },
-	{ &jv001.output,      1, "OUT0" },
-	{ &jv001.increase,    1, "INC0" },
-	{ &jv001.X,           1, "XFLG" },
-	{ &jv001.invert,      1, "INVT" },
+	{ &jv001.inverter, 1, "INVR" },
+	{ &jv001.staging, 1, "STG0" },
+	{ &jv001.output, 1, "OUT0" },
+	{ &jv001.increase, 1, "INC0" },
+	{ &jv001.X, 1, "XFLG" },
+	{ &jv001.invert, 1, "INVT" },
 	{ 0 }
 };
 
@@ -94,7 +94,7 @@ DECLFW(JV001_Write) {
 			jv001.invert = (V & 0x01) ? 0xFF : 0x00;
 			break;
 		case 0x102:
-			jv001.staging  = V & 0x0F;
+			jv001.staging = V & 0x0F;
 			jv001.inverter = V & ~0x0F;
 			break;
 		case 0x103:
@@ -102,7 +102,7 @@ DECLFW(JV001_Write) {
 			break;
 		}
 	}
-    jv001.X = jv001.invert ? jv001.A : jv001.B;
+	jv001.X = jv001.invert ? jv001.A : jv001.B;
 	WSync();
 }
 
@@ -111,15 +111,15 @@ void JV001_Reset(void) {
 }
 
 void JV001_Power(void) {
-	jv001.output      = 0;
+	jv001.output = 0;
 	jv001.accumulator = 0;
-	jv001.inverter    = 0;
-	jv001.staging     = 0;
-	jv001.increase    = 0;
-    jv001.invert      = 0xFF;
-	jv001.X           = 0;
-	jv001.A           = 0;
-	jv001.B           = 1;
+	jv001.inverter = 0;
+	jv001.staging = 0;
+	jv001.increase = 0;
+	jv001.invert = 0xFF;
+	jv001.X = 0;
+	jv001.A = 0;
+	jv001.B = 1;
 	JV001_Reset();
 }
 
@@ -128,7 +128,7 @@ static void StateRestore(int version) {
 }
 
 void JV001_Init(CartInfo *info, void (*proc)(void)) {
-	WSync            = proc;
+	WSync = proc;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }
