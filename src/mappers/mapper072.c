@@ -76,6 +76,7 @@ static DECLFW(WriteReg) {
 }
 
 static void Power(void) {
+	memset(&m072, 0, sizeof(m072));
 	SyncPRG();
 	SyncCHR();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);

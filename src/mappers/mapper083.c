@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -50,80 +50,97 @@
 
 #include "mapinc.h"
 
-static uint8 prg[4], chr[8], low[4];
-static uint8 mode, bank, dip;
-static uint8 IRQa;
-static int32 IRQCount;
+static struct {
+	uint8 prg[4];
+	uint8 chr[8];
+	uint8 low[4];
+	uint8 mode;
+	uint8 outer;
+	uint8 IRQa;
+	int32 IRQCount;
 
-static uint8 prgMask;
-static uint8 chrMode;
-static uint16 dipMask;
+	uint8 prgMask;
+	uint8 chrMode;
+	uint16 dipMask;
+
+	uint8 dipsw;
+} m083;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 4, "PREG" },
-	{ chr, 8, "CREG" },
-	{ &mode, 1, "MODE" },
-	{ &bank, 1, "BANK" },
-	{ &IRQCount, 4, "IRQC" },
-	{ &IRQa, 1, "IRQA" },
-	{ low, 4, "LOWR" },
+	{ m083.prg, 4, "PREG" },
+	{ m083.chr, 8, "CREG" },
+	{ &m083.mode, 1, "MODE" },
+	{ &m083.outer, 1, "OUTB" },
+	{ &m083.IRQCount, 4, "IRQC" },
+	{ &m083.IRQa, 1, "IRQA" },
+	{ m083.low, 4, "LOWR" },
 	{ 0 }
 };
 
-static void M083Sync(void) {
-	uint8 prgMode = (mode >> 3) & 0x03;
-	uint8 mirr = mode & 0x03;
-
+static void SyncWRAM(void) {
 	if (WRAMSIZE) {
-		setprg8r(0x10, 0x6000, (bank >> 6));
-	} else if (mode & 0x20) {
-		setprg8(0x6000, prg[3]);
+		setprg8r(0x10, 0x6000, (m083.outer >> 6));
+	} else if (m083.mode & 0x20) {
+		setprg8(0x6000, m083.prg[3]);
 	}
-	switch (prgMode) {
+}
+
+static void SyncPRG(void) {
+	switch ((m083.mode >> 3) & 0x03) {
 	case 0:
-		setprg16(0x8000, bank);
-		setprg16(0xC000, bank | (prgMask >> 1));
+		setprg16(0x8000, m083.outer);
+		setprg16(0xC000, m083.outer | (m083.prgMask >> 1));
 		break;
 	case 1:
-		setprg32(0x8000, bank >> 1);
+		setprg32(0x8000, m083.outer >> 1);
 		break;
 	case 2:
-	case 3:
-		setprg8(0x8000, ((bank << 1) & ~prgMask) | (prg[0] & prgMask));
-		setprg8(0xA000, ((bank << 1) & ~prgMask) | (prg[1] & prgMask));
-		setprg8(0xC000, ((bank << 1) & ~prgMask) | (prg[2] & prgMask));
-		setprg8(0xE000, ((bank << 1) & ~prgMask) | (~0 & prgMask));
+	case 3: {
+		uint16 base = (m083.outer << 1) & ~m083.prgMask;
+		setprg8(0x8000, base | (m083.prg[0] & m083.prgMask));
+		setprg8(0xA000, base | (m083.prg[1] & m083.prgMask));
+		setprg8(0xC000, base | (m083.prg[2] & m083.prgMask));
+		setprg8(0xE000, base | (~0 & m083.prgMask));
 		break;
 	}
-	switch (chrMode) {
+	}
+}
+
+static void SyncCHR(void) {
+	switch (m083.chrMode) {
 	case 0:
-		setchr1(0x0000, chr[0]);
-		setchr1(0x0400, chr[1]);
-		setchr1(0x0800, chr[2]);
-		setchr1(0x0C00, chr[3]);
-		setchr1(0x1000, chr[4]);
-		setchr1(0x1400, chr[5]);
-		setchr1(0x1800, chr[6]);
-		setchr1(0x1C00, chr[7]);
+		setchr1(0x0000, m083.chr[0]);
+		setchr1(0x0400, m083.chr[1]);
+		setchr1(0x0800, m083.chr[2]);
+		setchr1(0x0C00, m083.chr[3]);
+		setchr1(0x1000, m083.chr[4]);
+		setchr1(0x1400, m083.chr[5]);
+		setchr1(0x1800, m083.chr[6]);
+		setchr1(0x1C00, m083.chr[7]);
 		break;
 	case 1:
-		setchr2(0x0000, chr[0]);
-		setchr2(0x0800, chr[1]);
-		setchr2(0x1000, chr[6]);
-		setchr2(0x1800, chr[7]);
+		setchr2(0x0000, m083.chr[0]);
+		setchr2(0x0800, m083.chr[1]);
+		setchr2(0x1000, m083.chr[6]);
+		setchr2(0x1800, m083.chr[7]);
 		break;
-	case 2:
-		setchr1(0x0000, ((bank << 4) & 0x300) | chr[0]);
-		setchr1(0x0400, ((bank << 4) & 0x300) | chr[1]);
-		setchr1(0x0800, ((bank << 4) & 0x300) | chr[2]);
-		setchr1(0x0C00, ((bank << 4) & 0x300) | chr[3]);
-		setchr1(0x1000, ((bank << 4) & 0x300) | chr[4]);
-		setchr1(0x1400, ((bank << 4) & 0x300) | chr[5]);
-		setchr1(0x1800, ((bank << 4) & 0x300) | chr[6]);
-		setchr1(0x1C00, ((bank << 4) & 0x300) | chr[7]);
+	case 2: {
+		uint16 base = (m083.outer << 4) & 0x300;
+		setchr1(0x0000, base | m083.chr[0]);
+		setchr1(0x0400, base | m083.chr[1]);
+		setchr1(0x0800, base | m083.chr[2]);
+		setchr1(0x0C00, base | m083.chr[3]);
+		setchr1(0x1000, base | m083.chr[4]);
+		setchr1(0x1400, base | m083.chr[5]);
+		setchr1(0x1800, base | m083.chr[6]);
+		setchr1(0x1C00, base | m083.chr[7]);
 		break;
 	}
-	switch (mirr) {
+	}
+}
+
+static void SyncMirror(void) {
+	switch (m083.mode & 0x03) {
 	case 0:
 		setmirror(MI_V);
 		break;
@@ -139,136 +156,167 @@ static void M083Sync(void) {
 	}
 }
 
-static DECLFW(M083Write) {
+static DECLFW(WriteReg) {
 	if (iNESCart.mapper == 264) {
 		A = ((A >> 2) & 0x3C0) | (A & 0x3F);
 	}
 	switch (A & 0x300) {
 	case 0x000:
-		bank = V;
+		m083.outer = V;
+		SyncPRG();
+		SyncWRAM();
 		break;
 	case 0x100:
-		mode = V;
+		m083.mode = V;
+		SyncPRG();
+		SyncWRAM();
+		SyncMirror();
 		break;
 	case 0x200:
 		if (A & 0x01) {
-			IRQa = mode & 0x80;
-			IRQCount &= 0xFF;
-			IRQCount |= V << 8;
+			m083.IRQa = m083.mode & 0x80;
+			m083.IRQCount &= 0xFF;
+			m083.IRQCount |= V << 8;
 		} else {
-			IRQCount &= 0xFF00;
-			IRQCount |= V;
+			m083.IRQCount &= 0xFF00;
+			m083.IRQCount |= V;
 			X6502_IRQEnd(FCEU_IQEXT);
 		}
 		break;
 	case 0x300:
 		A &= 0x1F;
 		if (A < 0x10) {
-			prg[A & 0x03] = V;
+			m083.prg[A & 0x03] = V;
+			SyncPRG();
+			SyncWRAM();
 		} else if (A < 0x18) {
-			chr[A & 0x07] = V;
+			m083.chr[A & 0x07] = V;
+			SyncCHR();
 		}
 		break;
 	}
-	M083Sync();
 }
 
-static DECLFR(M083ReadLow) {
-	if (A & dipMask) {
-		return low[A & 3];
+static DECLFR(ReadLow) {
+	if (A & m083.dipMask) {
+		return m083.low[A & 0x03];
 	}
-	return dip;
+	return m083.dipsw;
 }
 
-static DECLFW(M083WriteLow) {
-	low[A & 3] = V;
+static DECLFW(WriteLow) {
+	m083.low[A & 0x03] = V;
 }
 
-static void M083Power(void) {
-	mode = 0x10;
-	bank = 0;
-	dip = (iNESCart.mapper == 264) ? 0x01 : 0x00;
-	M083Sync();
-	SetReadHandler(0x5000, 0x5FFF, M083ReadLow);
-	SetWriteHandler(0x5000, 0x5FFF, M083WriteLow);
-	SetReadHandler(0x6000, 0x7fff, CartBR);
-	SetReadHandler(0x8000, 0xffff, CartBR);
-	SetWriteHandler(0x8000, 0xffff, M083Write);
+static void Power(void) {
+	memset(&m083, 0, sizeof(m083));
+
+	m083.prg[0] = ~0x03;
+	m083.prg[1] = ~0x02;
+	m083.prg[2] = ~0x01;
+	m083.prg[3] = ~0x00;
+
+	m083.chr[0] = 0;
+	m083.chr[1] = 1;
+	m083.chr[2] = 2;
+	m083.chr[3] = 3;
+	m083.chr[4] = 4;
+	m083.chr[5] = 5;
+	m083.chr[6] = 6;
+	m083.chr[7] = 7;
+
+	m083.mode = 0x10;
+
+	if (iNESCart.mapper == 83) {
+		m083.chrMode = iNESCart.submapper;
+		m083.prgMask = 0x1F;
+		m083.dipMask = 0x100;
+		m083.dipsw = 0;
+	} else if (iNESCart.mapper == 264) {
+		m083.chrMode = 1;
+		m083.prgMask = 0x0F;
+		m083.dipMask = 0x400;
+		m083.dipsw = 0x01;
+	}
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+	SyncWRAM();
+
+	SetReadHandler(0x5000, 0x5FFF, ReadLow);
+	SetWriteHandler(0x5000, 0x5FFF, WriteLow);
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
+
 	if (WRAMSIZE) {
-		SetWriteHandler(0x6000, 0x7fff, CartBW);
+		SetWriteHandler(0x6000, 0x7FFF, CartBW);
 		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 	}
 }
 
-static void M083Reset(void) {
-	dip++;
+static void Reset(void) {
+	m083.mode = m083.outer = 0;
+
 	if (iNESCart.mapper == 264) {
-		dip &= 3;
+		m083.dipsw = (m083.dipsw + 1 ) & 0x03;
 	} else {
-		dip &= 1;
+		m083.dipsw = (m083.dipsw + 1 ) & 0x01;
 	}
-	mode = bank = 0;
-	M083Sync();
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+	SyncWRAM();
 }
 
-static void M083Close(void) {
+static void Close(void) {
 }
 
-static void M083IRQHook(int a) {
-	if (IRQa && (IRQCount > 0)) {
-		if (mode & 0x40) {
-			IRQCount -= a;
+static void CPUCycle(int a) {
+	if (m083.IRQa && (m083.IRQCount > 0)) {
+		if (m083.mode & 0x40) {
+			m083.IRQCount -= a;
 		} else {
-			IRQCount += a;
+			m083.IRQCount += a;
 		}
-		if (IRQCount <= 0) {
+		if (m083.IRQCount <= 0) {
 			X6502_IRQBegin(FCEU_IQEXT);
-			IRQa = 0;
+			m083.IRQa = 0;
 		}
 	}
 }
 
-static void M083StateRestore(int version) {
-	M083Sync();
+static void StateRestore(int version) {
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+	SyncWRAM();
 }
 
 void Mapper083_Init(CartInfo *info) {
-	info->Power = M083Power;
-	info->Reset = M083Reset;
-	info->Close = M083Close;
-	MapIRQHook = M083IRQHook;
-	GameStateRestore = M083StateRestore;
+	info->Power = Power;
+	info->Reset = Reset;
+	info->Close = Close;
+	MapIRQHook = CPUCycle;
+	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 
-	if (!info->iNES2) {
-		if (ROM.chr.size >= (1024 * 1024)) {
-			info->submapper = 2;
-		} else if (ROM.chr.size >= (512 * 1024)) {
-			info->submapper = 1;
+	if (info->mapper == 83) {
+		if (!info->iNES2) {
+			if (ROM.chr.size >= (1024 * 1024)) {
+				info->submapper = 2;
+			} else if (ROM.chr.size >= (512 * 1024)) {
+				info->submapper = 1;
+			}
+		}
+
+		WRAMSIZE = (info->submapper == 2) ? 32768 : 0;
+		if (WRAMSIZE) {
+			WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+			SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
+			AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		}
 	}
-
-	chrMode = info->submapper;
-	prgMask = 0x1F;
-	dipMask = 0x100;
-
-	WRAMSIZE = (info->submapper == 2) ? 32768 : 0;
-	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
-		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
-		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-	}
-}
-
-void Mapper264_Init(CartInfo *info) {
-	info->Power = M083Power;
-	info->Reset = M083Reset;
-	info->Close = M083Close;
-	MapIRQHook = M083IRQHook;
-	GameStateRestore = M083StateRestore;
-	AddExState(StateRegs, ~0, 0, NULL);
-
-	chrMode = 1;
-	prgMask = 0x0F;
-	dipMask = 0x400;
 }

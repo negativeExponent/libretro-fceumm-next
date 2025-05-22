@@ -573,7 +573,7 @@ static BMAPPING bmap[] = {
 	{ "810544-C-A1",                261, 0, Mapper261_Init, 0 },
 	{ "SHERO",                      262, 0, Mapper262_Init, BMCFLAG_FORCE4 },
 	{ "KOF97",                      263, 0, Mapper263_Init, 0 },
-	{ "YOKO",                       264, 0, Mapper264_Init, 0 },
+	{ "YOKO",                       264, 0, Mapper083_Init, 0 },
 	{ "T-262",                      265, 0, Mapper265_Init, 0 },
 	{ "CITYFIGHT",                  266, 0, Mapper266_Init, 0 },
 	{ "COOLBOY",                    268, 0, COOLBOY_Init,   BMCFLAG_256KCHRR },
