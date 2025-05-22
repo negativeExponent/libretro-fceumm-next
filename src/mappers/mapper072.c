@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,57 +28,67 @@
  * Original code provided by LULU
  * Additionally, PCB contains DSP extra sound chip, used for voice samples (unemulated)
  * This mapper is identical to mapper 072 except for the different PRG Setup.
+ *
+ * TODO: Speech support
  */
 
 #include "mapinc.h"
 
-static uint8 prg, chr, reg;
+static struct {
+	uint8 prg;
+	uint8 chr;
+	uint8 reg;
+} m072;
 
 static SFORMAT StateRegs[] = {
-	{ &prg, 1, "PREG" },
-	{ &chr, 1, "CREG" },
-	{ &reg, 1, "REGS" },
+	{ &m072.prg, 1, "PREG" },
+	{ &m072.chr, 1, "CREG" },
+	{ &m072.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void Sync(void) {
+static void SyncPRG(void) {
 	if (iNESCart.mapper == 92) {
 		setprg16(0x8000, 0);
-		setprg16(0xC000, prg);
-		setchr8(chr);
+		setprg16(0xC000, m072.prg);
 	} else {
-		setprg16(0x8000, prg);
+		setprg16(0x8000, m072.prg);
 		setprg16(0xC000, ~0);
-		setchr8(chr);
 	}
 }
 
-static DECLFW(M072Write) {
+static void SyncCHR(void) {
+	setchr8(m072.chr);
+}
+
+static DECLFW(WriteReg) {
 	V &= CartBR(A); /* bus conflict */
 
-	reg = (reg ^ V) & V;
-	if (reg & 0x80) {
-		prg = V;
+	m072.reg = (m072.reg ^ V) & V;
+	if (m072.reg & 0x80) {
+		m072.prg = V;
+		SyncPRG();
 	}
-	if (reg & 0x40) {
-		chr = V;
+	if (m072.reg & 0x40) {
+		m072.chr = V;
+		SyncCHR();
 	}
-
-	Sync();
 }
 
-static void M072Power(void) {
-	Sync();
+static void Power(void) {
+	SyncPRG();
+	SyncCHR();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M072Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
 }
 
 void Mapper072_Init(CartInfo *info) {
-	info->Power = M072Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }
