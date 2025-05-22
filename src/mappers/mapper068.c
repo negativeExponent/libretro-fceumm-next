@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,139 +19,203 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* iNES Mapper 068 denotes PCBs using the Sunsoft-4 mapper IC. In the US it was
+ * only used in the game After Burner. It has the unusual ability to map CHR ROM
+ * into the part of the PPU's address space used for nametables.
+ *
+ * Example games:
+ *
+ * After Burner
+ * Maharaja (J)
+ * Nantettatte!! Baseball (J)
+ */
+
 #include "mapinc.h"
 
-/* FIXME: needs updating, submapper 1 support etc */
-
-static uint8 chr[4];
-static uint8 nt[2];
-static uint8 kogame, prg, mirr;
-static uint32 count;
+static struct {
+	uint8 chr[4];
+	uint8 nt[2];
+	uint8 mirror;
+	uint8 prg;
+	uint8 access;
+	int32 timer;
+} m068;
 
 static SFORMAT StateRegs[] = {
-	{ &mirr, 1, "MIRR" },
-	{ &prg, 1, "PRG" },
-	{ &kogame, 1, "KGME" },
-	{ &count, 4, "CNT" },
-	{ chr, 4, "CHR" },
-	{ nt, 2, "NTAR" },
+	{ m068.chr, 4, "CREG" },
+	{ m068.nt, 2, "NTAR" },
+	{ &m068.mirror, 1, "MIRR" },
+	{ &m068.prg, 1, "PREG" },
+	{ &m068.access, 1, "ACCS" },
+	{ &m068.timer, 4, "TIMR" },
 	{ 0 }
 };
 
-static void Sync(void) {
+static void SyncPRG(void) {
 	setprg8r(0x10, 0x6000, 0);
-	setprg16r((PRGptr[1]) ? kogame : 0, 0x8000, prg);
-	setprg16(0xC000, 0x07);
-
-	setchr2(0x0000, chr[0]);
-	setchr2(0x0800, chr[1]);
-	setchr2(0x1000, chr[2]);
-	setchr2(0x1800, chr[3]);
-
-	switch (mirr & 0x03) {
-	case 0:
-		setmirror(MI_V);
-		break;
-	case 1:
-		setmirror(MI_H);
-		break;
-	case 2:
-		setmirror(MI_0);
-		break;
-	case 3:
-		setmirror(MI_1);
-		break;
+	if (iNESCart.submapper == 1) {
+		if (!(m068.prg & 0x08)) { /* map external ROM, which can be disabled */
+			setprg16(0x8000, 0x08);
+		} else { /* else internal 128K ROM */
+			setprg16(0x8000, m068.prg & 0x07);
+		}
+		setprg16(0xC000, 0x07);
+	} else {
+		setprg16(0x8000, m068.prg);
+		setprg16(0xC000, 0xFF);
 	}
+}
 
-	if (mirr & 0x10) {
-		int i;
-		PPUNTARAM = 0;
-		for (i = 0; i < 4; i++) {
-			switch (mirr & 0x03) {
-			case 0:
-				vnapage[i] = CHRptr[0] + (((nt[i & 0x01] | 0x80) & CHRmask1[0]) << 10);
-				break;
-			case 1:
-				vnapage[i] = CHRptr[0] + (((nt[(i >> 0x01) & 0x01] | 0x80) & CHRmask1[0]) << 10);
-				break;
-			case 2:
-				vnapage[i] = CHRptr[0] + (((nt[0] | 0x80) & CHRmask1[0]) << 10);
-				break;
-			case 3:
-				vnapage[i] = CHRptr[0] + (((nt[1] | 0x80) & CHRmask1[0]) << 10);
-				break;
-			}
+static void SyncCHR(void) {
+	setchr2(0x0000, m068.chr[0]);
+	setchr2(0x0800, m068.chr[1]);
+	setchr2(0x1000, m068.chr[2]);
+	setchr2(0x1800, m068.chr[3]);
+}
+
+static void SyncMirror(void) {
+	if (m068.mirror & 0x10) {
+		size_t bank0 = 0x0400 * ((0x80 | m068.nt[0]) & CHRmask1[0]);
+		size_t bank1 = 0x0400 * ((0x80 | m068.nt[1]) & CHRmask1[0]);
+
+		switch (m068.mirror & 0x03) {
+		case 0:
+			setntamem(CHRptr[0] + bank0, FALSE, 0);
+			setntamem(CHRptr[0] + bank1, FALSE, 1);
+			setntamem(CHRptr[0] + bank0, FALSE, 2);
+			setntamem(CHRptr[0] + bank1, FALSE, 3);
+			break;
+		case 1:
+			setntamem(CHRptr[0] + bank0, FALSE, 0);
+			setntamem(CHRptr[0] + bank0, FALSE, 1);
+			setntamem(CHRptr[0] + bank1, FALSE, 2);
+			setntamem(CHRptr[0] + bank1, FALSE, 3);
+			break;
+		case 2:
+			setntamem(CHRptr[0] + bank0, FALSE, 0);
+			setntamem(CHRptr[0] + bank0, FALSE, 1);
+			setntamem(CHRptr[0] + bank0, FALSE, 2);
+			setntamem(CHRptr[0] + bank0, FALSE, 3);
+			break;
+		case 3:
+			setntamem(CHRptr[0] + bank1, FALSE, 0);
+			setntamem(CHRptr[0] + bank1, FALSE, 1);
+			setntamem(CHRptr[0] + bank1, FALSE, 2);
+			setntamem(CHRptr[0] + bank1, FALSE, 3);
+			break;
+		}
+	} else {
+		switch (m068.mirror & 0x03) {
+		case 0:
+			setmirror(MI_V);
+			break;
+		case 1:
+			setmirror(MI_H);
+			break;
+		case 2:
+			setmirror(MI_0);
+			break;
+		case 3:
+			setmirror(MI_1);
+			break;
 		}
 	}
 }
 
-static DECLFR(M68Read) {
-	if (!(kogame & 0x08)) {
-		count++;
-		if (count == 1784) {
-			setprg16r(0, 0x8000, prg);
-		}
+static DECLFR(ReadWRAM) {
+	if (m068.prg & 0x10) {
+		return CartBR(A);
+	}
+	return cpu.openbus;
+}
+
+static DECLFW(WriteWRAM) {
+	if (m068.prg & 0x10) {
+		CartBW(A, V);
+	} else if (iNESCart.submapper == 1) {
+		m068.access = TRUE;
+		m068.timer = 107520;
+		SyncPRG();
+	}
+}
+
+static DECLFR(ReadExternalROM) {
+	if (!(m068.prg & 0x08) && !m068.access) {
+		return cpu.openbus;
 	}
 	return CartBR(A);
 }
 
-static DECLFW(M68WriteLo) {
-	if (!V) {
-		count = 0;
-		setprg16r((PRGptr[1]) ? kogame : 0, 0x8000, prg);
-	}
-	CartBW(A, V);
+static DECLFW(WriteCHR) {
+	m068.chr[(A >> 12) & 0x03] = V;
+	SyncCHR();
 }
 
-static DECLFW(M068Write) {
-	switch (A & 0xF000) {
-	case 0x8000:
-	case 0x9000:
-	case 0xA000:
-	case 0xB000:
-		chr[(A >> 12) & 0x03] = V;
-		Sync();
-		break;
-	case 0xC000:
-	case 0xD000:
-		nt[(A >> 12) & 0x01] = V;
-		Sync();
-		break;
-	case 0xE000:
-		mirr = V;
-		Sync();
-		break;
-	case 0xF000:
-		prg = V & 0x07;
-		kogame = ((V >> 3) & 0x01) ^ 0x01;
-		Sync();
-		break;
+static DECLFW(WriteNT) {
+	m068.nt[(A >> 12) & 0x01] = V;
+	SyncMirror();
+}
+
+static DECLFW(WriteMirrorControl) {
+	m068.mirror = V;
+	SyncMirror();
+}
+
+static DECLFW(WritePRG) {
+	m068.prg = V;
+	SyncPRG();
+}
+
+static INLINE void CPUCycle(int a) {
+	if (m068.timer > 0) {
+		m068.timer -= a;
+		if (m068.timer <= 0) {
+			m068.access = FALSE;
+			SyncPRG();
+		}
 	}
 }
 
-static void M68Power(void) {
-	prg = 0;
-	kogame = 0;
-	Sync();
-	SetReadHandler(0x6000, 0x7FFF, CartBR);
-	SetReadHandler(0x8000, 0xBFFF, M68Read);
-	SetReadHandler(0xC000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M068Write);
-	SetWriteHandler(0x6000, 0x6000, M68WriteLo);
-	SetWriteHandler(0x6001, 0x7FFF, CartBW);
+static void Power(void) {
+	memset(&m068, 0, sizeof(m068));
+
+	m068.chr[0] = 0;
+	m068.chr[1] = 1;
+	m068.chr[2] = 2;
+	m068.chr[3] = 3;
+
+	m068.nt[0] = 0;
+	m068.nt[1] = 1;
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+
+	SetReadHandler(0x6000, 0x7FFF, ReadWRAM);
+	SetWriteHandler(0x6000, 0x7FFF, WriteWRAM);
+
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	if (iNESCart.submapper == 1) {
+		SetReadHandler(0x8000, 0xBFFF, ReadExternalROM);
+	}
+
+	SetWriteHandler(0x8000, 0xBFFF, WriteCHR);
+	SetWriteHandler(0xC000, 0xDFFF, WriteNT);
+	SetWriteHandler(0xE000, 0xEFFF, WriteMirrorControl);
+	SetWriteHandler(0xF000, 0xFFFF, WritePRG);
+
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M68Close(void) {
-}
-
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper068_Init(CartInfo *info) {
-	info->Power = M68Power;
-	info->Close = M68Close;
+	info->Power = Power;
+	MapIRQHook = CPUCycle;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

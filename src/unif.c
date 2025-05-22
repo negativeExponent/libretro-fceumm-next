@@ -514,7 +514,7 @@ static BMAPPING bmap[] = {
 	{ "D1038",                       59, 0, Mapper059_Init, 0 },
 	{ "T3H53",                       59, 0, Mapper059_Init, 0 },
 	{ "MHROM",                       66, 0, Mapper066_Init, 0 },
-	{ "NTBROM",                      68, 0, Mapper068_Init, 0 },
+	{ "NTBROM",                      68, 1, Mapper068_Init, 0 },
 	{ "SA-016-1M",                   79, 0, Mapper079_Init, 0 },
 	{ "VRC7",                        85, 0, Mapper085_Init, 0 },
 	{ "TEK90",                       90, 0, Mapper209_Init, 0 },
