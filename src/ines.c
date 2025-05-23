@@ -716,7 +716,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                         165, Mapper165_Init         )
 	INES_BOARD( "SUBOR Rev. A",             166, Mapper166_Init         )
 	INES_BOARD( "SUBOR Rev. B",             167, Mapper167_Init         )
-	INES_BOARD( "",                         168, Mapper168_Init         )
+	INES_BOARD( "Racermate Challenge 2",    168, Mapper168_Init         )
 /*    INES_BOARD( "",                            169, Mapper169_Init ) */
 	INES_BOARD( "",                         170, Mapper170_Init         )
 	INES_BOARD( "Kaiser 7058",              171, Mapper171_Init         )

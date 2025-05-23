@@ -1,7 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2009 CaH4e3
+ *  Copyright (C) 2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,38 +24,68 @@
 
 #include "mapinc.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+	uint8 protect;
+	uint8 IRQa;
+	uint16 IRQCount;
+} m168;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m168.reg, 1, "REGS" },
+	{ &m168.protect, 1, "CHRP" },
+	{ &m168.IRQa, 1, "IRQA" },
+	{ &m168.IRQCount, 2, "IRQC" },
 	{ 0 }
 };
 
 static void Sync(void) {
+	/* TODO: CHR Protect */
 	setchr4r(0x10, 0x0000, 0);
-	setchr4r(0x10, 0x1000, reg & 0x0f);
-	setprg16(0x8000, reg >> 6);
+	setchr4r(0x10, 0x1000, m168.reg & 0x0f);
+	setprg16(0x8000, m168.reg >> 6);
 	setprg16(0xc000, ~0);
 }
 
-static DECLFW(M168Write) {
-	reg = V;
+static DECLFW(WriteReg) {
+	m168.reg = V;
 	Sync();
 }
 
-static DECLFW(M168Dummy) { }
+static DECLFW(WriteIRQ) {
+	if (m168.IRQa && !(A & 0x80)) {
+		m168.protect = FALSE;
+		Sync();
+	}
+	m168.IRQa = (A & 0x80) == 0;
+	if (!m168.IRQa) {
+		X6502_IRQEnd(FCEU_IQEXT);
+		m168.IRQCount = 0;
+	}
+}
 
-static void M168Power(void) {
-	reg = 0;
+static void CPUCycle(int a) {
+	if (m168.IRQa) {
+		m168.IRQCount += a;
+		if (m168.IRQCount >= 1024) {
+			m168.IRQCount -= 1024;
+			X6502_IRQBegin(FCEU_IQEXT);
+		}
+	}
+}
+
+static void Power(void) {
+	memset(&m168, 0, sizeof(m168));
+
+	m168.protect = TRUE;
 	Sync();
-	SetWriteHandler(0x4020, 0x7fff, M168Dummy);
-	SetWriteHandler(0xB000, 0xB000, M168Write);
-	SetWriteHandler(0xF000, 0xF000, M168Dummy);
-	SetWriteHandler(0xF080, 0xF080, M168Dummy);
+	
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xBFFF, WriteReg);
+	SetWriteHandler(0xC000, 0xFFFF, WriteIRQ);
 }
 
-static void M168Close(void) {
+static void Close(void) {
 }
 
 static void StateRestore(int version) {
@@ -62,12 +93,13 @@ static void StateRestore(int version) {
 }
 
 void Mapper168_Init(CartInfo *info) {
-	info->Power = M168Power;
-	info->Close = M168Close;
+	info->Power = Power;
+	info->Close = Close;
+	MapIRQHook = CPUCycle;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 
-	CHRRAMSIZE = 8192 * 8;
+	CHRRAMSIZE = 8 * 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
