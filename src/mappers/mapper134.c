@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,88 +25,97 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[4];
-static uint8 dipsw;
+static struct {
+	uint8 reg[4];
+	uint8 dipsw;
+} m134;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
-	{ &dipsw, 1, "DPSW" },
+	{ m134.reg, 4, "REGS" },
 	{ 0 }
 };
 
-static void M134PW(uint16 A, uint16 V) {
-	uint16 mask = (reg[1] & 0x04) ? 0x0F : 0x1F;
-	uint16 base = ((reg[1] << 4) & 0x30) | ((reg[0] << 2) & 0x40);
+static void SetPRGBank(uint16 A, uint16 V) {
+	uint16 mask = (m134.reg[1] & 0x04) ? 0x0F : 0x1F;
+	uint16 base = ((m134.reg[1] << 4) & 0x30) | ((m134.reg[0] << 2) & 0x40);
 
-	if (reg[1] & 0x80) { /* NROM mode */
-		if (reg[1] & 0x08) { /* NROM-128 mode */
-			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 0);
-			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 1);
-			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 0);
-			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~1) | 1);
-		} else { /* NROM-256 mode */
-			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~3) | 0);
-			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~3) | 1);
-			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~3) | 2);
-			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[6] & mask) & ~3) | 3);
-		}
-	} else { /* MMC3 */
-		setprg8(A, (base & ~mask) | (V & mask));
+	if (m134.reg[1] & 0x80) { /* NROM mode */
+		uint8 nrom_mask = (m134.reg[1] & 0x08) ? 0x01 : 0x03;
+		V = MMC3_GetPRGBank(0) & ~nrom_mask;
+		V |= (A >> 13) & nrom_mask;
 	}
+
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M134CW(uint16 A, uint16 V) {
-	uint16 mask = (reg[1] & 0x40) ? 0x7F : 0xFF;
-	uint16 base = ((reg[1] << 3) & 0x180) | ((reg[0] << 4) & 0x200);
+static void SetCHRBank(uint16 A, uint16 V) {
+	uint16 mask = (m134.reg[1] & 0x40) ? 0x7F : 0xFF;
+	uint16 base = ((m134.reg[1] << 3) & 0x180) | ((m134.reg[0] << 4) & 0x200);
 
-	if (reg[0] & 0x08) { /* In CNROM mode, outer bank register 2 replaces the MMC3's CHR registers, and CHR A10-A12 are PPU A10-A12. */
-		setchr8(((base & ~mask) >> 3) | (reg[2] & (mask >> 3)));
-	} else {
-		setchr1(A, (base & ~mask) | (V & mask));
+	if (m134.reg[0] & 0x08) { /* In CNROM mode, outer bank register 2 replaces the MMC3's CHR registers, and CHR A10-A12 are PPU A10-A12. */
+		V = ((m134.reg[2] & mask) << 3) | ((A >> 10) & 0x07);
 	}
+
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFR(M134Read) {
-	if (reg[0] & 0x40) {
-		return dipsw;
+static DECLFR(ReadDIP) {
+	if (m134.reg[0] & 0x40) {
+		return m134.dipsw;
 	}
+
 	return CartBR(A);
 }
 
-static DECLFW(M134Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
 		CartBW(A, V);
-		if (!(reg[0] & 0x80)) {
-			reg[A & 0x03] = V;
+		if (!(m134.reg[0] & 0x80)) {
+			m134.reg[A & 0x03] = V;
 			MMC3_SyncPRG();
 			MMC3_SyncCHR();
 		} else if ((A & 0x03) == 2) {
-			reg[2] = (reg[2] & ~0x03) | (V & 0x03);
+			m134.reg[2] = (m134.reg[2] & ~0x03) | (V & 0x03);
 			MMC3_SyncCHR();
 		}
 	}
 }
 
-static void M134Reset(void) {
-	dipsw++;
-	dipsw &= 15;
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
+static DECLFW(WriteMMC3) {
+	MMC3_Write(A, V);
+	switch (A & 0xE001) {
+	case 0x8001:
+		switch (mmc3.cmd & 0x07) {
+		case 0x06:
+			if (m134.reg[1] & 0x80) {
+				MMC3_SyncPRG();
+			}
+			break;
+		}
+		break;
+	}
+}
+
+static void Reset(void) {
+	memset(m134.reg, 0, sizeof(m134.reg));
+	m134.dipsw++;
+	m134.dipsw &= 15;
 	MMC3_Reset();
 }
 
-static void M134Power(void) {
-	dipsw = 0;
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
+static void Power(void) {
+	memset(&m134, 0, sizeof(m134));
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M134Write);
-	SetReadHandler(0x8000, 0xFFFF, M134Read);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
+	SetReadHandler(0x8000, 0xFFFF, ReadDIP);
+	SetWriteHandler(0x8000, 0x9FFF, WriteMMC3);
 }
 
 void Mapper134_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8, info->battery);
-	MMC3_cwrap = M134CW;
-	MMC3_pwrap = M134PW;
-	info->Power = M134Power;
-	info->Reset = M134Reset;
+	MMC3_cwrap = SetCHRBank;
+	MMC3_pwrap = SetPRGBank;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }
