@@ -29,62 +29,31 @@
  * the games on the regular FK23C boards couldn't run on this mapper and vice versa...
  */
 
-static uint8 reg[4];
-static uint8 dipsw;
+static struct {
+	uint8 reg[4];
+} m260;
+
+static uint32 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
-	{ &dipsw, 1, "DPSW" },
+	{ m260.reg, 4, "REGS" },
 	{ 0 }
 };
 
-static void M260CW(uint16 A, uint16 V) {
-	uint16 base = reg[2] & 0x7F;
+static void SetPRGBank(uint16 A, uint16 V) {
+	uint8 base = m260.reg[1] & 0x3F;
 
-	switch (reg[0] & 0x07) {
+	switch (m260.reg[0] & 0x07) {
 	case 0:
-		setchr1(A, ((base << 3) & ~0xFF) | (V & 0xFF));
-		break;
 	case 1:
-		setchr1(A, ((base << 3) & ~0x7F) | (V & 0x7F));
-		break;
 	case 2:
-		setchr1(A, ((base << 3) & ~0xFF) | (V & 0xFF));
-		break;
-	case 3:
-		setchr1(A, ((base << 3) & ~0x7F) | (V & 0x7F));
-		break;
-	case 4:
-		setchr8(base);
-		break;
-	case 5:
-		setchr8(base);
-		break;
-	case 6:
-		setchr8((base & ~0x01) | (reg[3] & 0x01));
-		break;
-	case 7:
-		setchr8((base & ~0x03) | (reg[3] & 0x03));
+	case 3: {
+		uint8 mask = 0x1F >> ((m260.reg[0] >> 1) & 0x01);
+
+		base <<= 1;
+		setprg8(A, (base & ~mask) | (V & mask));
 		break;
 	}
-}
-
-static void M260PW(uint16 A, uint16 V) {
-	uint8 base = reg[1] & 0x3F;
-
-	switch (reg[0] & 0x07) {
-	case 0:
-		setprg8(A, ((base << 1) & ~0x1F) | (V & 0x1F));
-		break;
-	case 1:
-		setprg8(A, ((base << 1) & ~0x1F) | (V & 0x1F));
-		break;
-	case 2:
-		setprg8(A, ((base << 1) & ~0x0F) | (V & 0x0F));
-		break;
-	case 3:
-		setprg8(A, ((base << 1) & ~0x0F) | (V & 0x0F));
-		break;
 	case 4:
 		setprg16(0x8000, base);
 		setprg16(0xC000, base);
@@ -101,30 +70,59 @@ static void M260PW(uint16 A, uint16 V) {
 	}
 }
 
-static void M260MIR(void) {
-	if (reg[0] & 0x04) {
-		setmirror(((reg[3] >> 2) & 0x01) ^ 0x01);
+static void SetCHRBank(uint16 A, uint16 V) {
+	uint16 base = m260.reg[2] & 0x7F;
+	uint8 mode = m260.reg[0] & 0x07;
+
+	switch (m260.reg[0] & 0x07) {
+	case 0:
+	case 1:
+	case 2:
+	case 3: {
+		uint16 mask = 0xFF >> (m260.reg[0] & 0x01);
+
+		base <<= 3;
+		setchr1(A, (base & ~mask) | (V & mask));
+		break;
+	}
+	case 4:
+	case 5:
+		setchr8(base);
+		break;
+	case 6:
+	case 7: {
+		uint16 mask = (m260.reg[0] & 0x01) ? 0x03 : 0x01;
+
+		setchr8((base & ~mask) | (m260.reg[3] & mask));
+		break;
+	}
+	}
+}
+
+static void SyncMirror(void) {
+	if (m260.reg[0] & 0x04) {
+		setmirror(((m260.reg[3] >> 2) & 0x01) ^ 0x01);
 	} else {
 		setmirror((mmc3.mirr & 0x01) ^ 0x01);
 	}
 }
 
-static DECLFR(M260Read) {
+static DECLFR(ReadDIP) {
 	return ((cpu.openbus & ~0x03) | (dipsw & 0x03));
 }
 
-static DECLFW(M260WriteReg) {
-	if (!(reg[0] & 0x80)) {
-		reg[A & 0x03] = V;
+static DECLFW(WriteReg) {
+	if (!(m260.reg[0] & 0x80)) {
+		m260.reg[A & 0x03] = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 		MMC3_SyncMirror();
 	}
 }
 
-static DECLFW(M260WriteLatch) {
-	if (reg[0] & 0x04) {
-		reg[3] = V;
+static DECLFW(WriteLatch) {
+	if (m260.reg[0] & 0x04) {
+		m260.reg[3] = V;
 		MMC3_SyncCHR();
 		MMC3_SyncMirror();
 	} else {
@@ -132,29 +130,29 @@ static DECLFW(M260WriteLatch) {
 	}
 }
 
-static void M260Reset(void) {
+static void Reset(void) {
+	memset(&m260, 0, sizeof(m260));
 	dipsw++;
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	MMC3_Reset();
 	MMC3_SyncPRG();
 	MMC3_SyncCHR();
 }
 
-static void M260Power(void) {
+static void Power(void) {
+	memset(&m260, 0, sizeof(m260));
 	dipsw = 0;
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	MMC3_Power();
-	SetReadHandler(0x5000, 0x5FFF, M260Read);
-	SetWriteHandler(0x5000, 0x5FFF, M260WriteReg);
-	SetWriteHandler(0x8000, 0xFFFF, M260WriteLatch);
+	SetReadHandler(0x5000, 0x5FFF, ReadDIP);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper260_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M260CW;
-	MMC3_pwrap = M260PW;
-	MMC3_SyncMirror = M260MIR;
-	info->Power = M260Power;
-	info->Reset = M260Reset;
+	MMC3_cwrap = SetCHRBank;
+	MMC3_pwrap = SetPRGBank;
+	MMC3_SyncMirror = SyncMirror;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }
