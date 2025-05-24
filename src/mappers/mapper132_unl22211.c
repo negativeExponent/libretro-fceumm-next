@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,36 +20,48 @@
  */
 
 #include "mapinc.h"
-#include "txc.h"
+
+/**** LEGACY MAPPER IMPLEMENTATION for Mapper 132 (UNL-22211) ****/
+
+static struct {
+	uint8 reg[4];
+} UNL22211;
+
+static SFORMAT StateRegs[] = {
+	{ UNL22211.reg, 4, "REGS" },
+	{ 0 }
+};
 
 static void Sync(void) {
-	setprg32(0x8000, (txc.output >> 2) & 0x01);
-	setchr8(txc.output & 0x03);
+	setprg32(0x8000, (UNL22211.reg[2] >> 2) & 0x01);
+	setchr8(UNL22211.reg[2] & 3);
 }
 
-static DECLFR(ReadTXC) {
-	return ((cpu.openbus & 0xF0) | (TXC_Read(A) & 0x0F));
+static DECLFR(ReadReg) {
+	return ((UNL22211.reg[1] ^ UNL22211.reg[2]) | 0x40);
 }
 
-static DECLFW(WriteTXC) {
-	TXC_Write(A, V & 0x0F);
+static DECLFW(WriteReg) {
+	if (A & 0x100) {
+		UNL22211.reg[A & 0x03] = V;
+		Sync();
+	}
 }
 
 static void Power(void) {
-	TXC_Power();
+	memset(&UNL22211, 0, sizeof(UNL22211));
+	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetReadHandler(0x4100, 0x5FFF, ReadTXC);
-	SetWriteHandler(0x4100, 0xFFFF, WriteTXC);
+	SetReadHandler(0x4100, 0x4100, ReadReg);
+	SetWriteHandler(0x4100, 0x4FFF, WriteReg);
 }
 
-extern void UNL22211_Init(CartInfo *info);
-void Mapper132_Init(CartInfo *info) {
-	if (info->CRC32 == 0x2A5F4C5A) {
-		/* Jin Gwok Sei Chuen Saang (Ch) [U][!] */
-		FCEU_printf(" WARNING: Using alternate mapper implementation.\n");
-		UNL22211_Init(info);
-	} else {
-		TXC_Init(info, Sync);
-		info->Power = Power;
-	}
+static void StateRestore(int version) {
+	Sync();
+}
+
+void UNL22211_Init(CartInfo *info) {
+	info->Power = Power;
+	GameStateRestore = StateRestore;
+	AddExState(&StateRegs, ~0, 0, 0);
 }
