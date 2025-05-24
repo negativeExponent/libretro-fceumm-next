@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,64 +24,79 @@
 
 #include "mapinc.h"
 
-static uint8 reg, swap;
-static uint32 IRQCount, IRQa;
+static struct {
+	uint8 reg;
+	uint8 IRQa;
+	uint16 IRQCount;
+} m043;
+
+static int prgBankOrder[8] = { 4, 3, 4, 4, 4, 7, 5, 6 };
+static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ &IRQCount, 4, "IRQC" },
-	{ &IRQa, 4, "IRQA" },
-	{ &reg, 1, "REGS" },
-	{ &swap, 1, "SWAP" },
+	{ &m043.IRQCount, 2, "IRQC" },
+	{ &m043.IRQa, 1, "IRQA" },
+	{ &m043.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	int transo[8] = { 4, 3, 4, 4, 4, 7, 5, 6 };
+	int bank = (0x10000 | (0x800 * dipsw)) / 2048;
 
-	setprg4(0x5000, 8 << 1); /* Only YS-612 advanced version */
-	setprg8(0x6000, swap ? 0 : 2);
-	setprg8(0x8000, 1);
-	setprg8(0xA000, 0);
-	setprg8(0xC000, transo[reg & 0x07]);
-	setprg8(0xE000, swap ? 8 : 9); /* hard dump for mr.Mary is 128K,
-									* bank 9 is the last 2K ok bank 8 repeated 4 times, then till the end of 128K
-									* instead used bank A, containing some CHR data, ines rom have unused banks removed,
-									* and bank A moved to the bank 9 place for compatibility with other crappy dumps
-									*/
+	setprg2(0x5000, bank); /* Only YS-612 advanced version, 2 KiB PRG-ROM bank, repeated once, from 2 KiB PRG-ROM chip */
+	setprg2(0x5800, bank);
+
+	setprg8(0x6000, 0x02);
+
+	setprg8(0x8000, 0x01);
+	setprg8(0xA000, 0x00);
+	setprg8(0xC000, prgBankOrder[m043.reg & 0x07]);
+	setprg8(0xE000, 0x09);
+
 	setchr8(0);
+
+	UpdatePRGBank3(m043.reg);
 }
 
 static DECLFW(M043Write) {
 	switch (A & 0xF1FF) {
 	case 0x4022:
-		reg = V;
-		Sync();
+		m043.reg = V;
+		setprg8(0xC000, prgBankOrder[V & 0x07]);
 		break;
-	case 0x4120:
-		swap = V & 0x01;
-		Sync();
-		break;
-	case 0x8122: /* hacked version */
-	case 0x4122: /* original version */
-		IRQa = V & 0x01;
-		IRQCount = 0;
-		X6502_IRQEnd(FCEU_IQEXT);
+	case 0x8122: /* 0x8122 - hacked version */
+	case 0x4122: /* 0x4122 - original version */
+		m043.IRQa = V;
+		if (V & 0x02) {
+			m043.IRQCount = 0;
+		}
+		if (!(m043.IRQa & 0x01)) {
+			X6502_IRQEnd(FCEU_IQEXT);
+		}
 		break;
 	}
 }
 
-static void M043Power(void) {
-	reg = swap = 0;
+static void Reset(void) {
+	dipsw = (dipsw + 1) & 0x03;
+	Sync();
+	FCEU_printf("dipswitch = %d\n", dipsw);
+}
+
+static void Power(void) {
+	memset(&m043, 0, sizeof(m043));
+	dipsw = 1;
 	Sync();
 	SetReadHandler(0x5000, 0xFFFF, CartBR);
 	SetWriteHandler(0x4020, 0x8FFF, M043Write);
 }
 
 static void M043IRQHook(int a) {
-	IRQCount += a;
-	if (IRQa && (IRQCount >= 4096)) {
-		IRQa = 0;
-		X6502_IRQBegin(FCEU_IQEXT);
+	m043.IRQCount += a;
+	if (m043.IRQCount >= 4096) {
+		if (m043.IRQa & 0x01) {
+			X6502_IRQBegin(FCEU_IQEXT);
+		}
 	}
 }
 
@@ -90,7 +105,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper043_Init(CartInfo *info) {
-	info->Power = M043Power;
+	info->Power = Power;
+	info->Reset = Reset;
 	MapIRQHook = M043IRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
