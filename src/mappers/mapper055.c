@@ -41,7 +41,7 @@ void Mapper055_Init(CartInfo *info) {
 	info->Power = M055Power;
 	if (info->iNES2) {
 		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
-	} else if (info->battery) {
+	} else {
 		WRAMSIZE = 2048;
 	}
 	if (WRAMSIZE) {

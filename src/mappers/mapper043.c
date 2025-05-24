@@ -54,8 +54,6 @@ static void Sync(void) {
 	setprg8(0xE000, 0x09);
 
 	setchr8(0);
-
-	UpdatePRGBank3(m043.reg);
 }
 
 static DECLFW(M043Write) {
