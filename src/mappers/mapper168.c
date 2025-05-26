@@ -79,7 +79,7 @@ static void Power(void) {
 
 	m168.protect = TRUE;
 	Sync();
-	
+
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xBFFF, WriteReg);
 	SetWriteHandler(0xC000, 0xFFFF, WriteIRQ);

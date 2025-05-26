@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2002 Xodnizel
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 
 #include "mapinc.h"
 
-static void M055Power(void) {
+static void Power(void) {
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetReadHandler(0x6000, 0x67FF, CartBR);
 	SetReadHandler(0x7000, 0x77FF, CartBR);
@@ -38,7 +38,7 @@ static void M055Power(void) {
 }
 
 void Mapper055_Init(CartInfo *info) {
-	info->Power = M055Power;
+	info->Power = Power;
 	if (info->iNES2) {
 		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
 	} else {

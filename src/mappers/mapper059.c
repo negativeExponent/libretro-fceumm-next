@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,24 +27,25 @@
 static uint8 dipsw;
 
 static void Sync(void) {
-	if (latch.addr & 0x80) {
-		setprg16(0x8000, (latch.addr & 0x70) >> 4);
-		setprg16(0xC000, (latch.addr & 0x70) >> 4);
-	} else {
-		setprg32(0x8000, (latch.addr & 0x60) >> 5);
-	}
-	setchr8(latch.addr & 0x07);
-	setmirror(((latch.addr & 0x08) >> 3) ^ 0x01);
+	uint8 prg = (latch.addr & 0x70) >> 4;
+	uint8 chr = latch.addr & 0x07;
+	uint8 mirrorV = ((latch.addr & 0x08) >> 3) ^ 0x01;
+	uint8 A14 = (latch.addr & 0x80) == 0;
+
+	setprg16(0x8000, prg & ~A14);
+	setprg16(0xC000, prg | A14);
+	setchr8(chr);
+	setmirror(mirrorV);
 }
 
-static DECLFR(M059Read) {
+static DECLFR(ReadDIP) {
 	if (latch.addr & 0x100) {
 		return (cpu.openbus & ~0x03) | (dipsw & 0x03);
 	}
 	return CartBR(A);
 }
 
-static DECLFW(M059Write) {
+static DECLFW(WriteLatch) {
 	/* Only recognize the latch write if the lock bit has not been set. */
 	/* Needed for NT-234 "Road Fighter" */
 	if (!(latch.addr & 0x200)) {
@@ -52,22 +53,22 @@ static DECLFW(M059Write) {
 	}
 }
 
-static void M059Reset(void) {
+static void Reset(void) {
 	dipsw++;
 	/* Always reset to menu */
 	latch.addr = 0;
 	Sync();
 }
 
-static void M059Power(void) {
+static void Power(void) {
 	Latch_Power();
 	/* Trap latch writes to enforce the "Lock" bit */
-	SetWriteHandler(0x8000, 0xFFFF, M059Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper059_Init(CartInfo *info) {
-	Latch_Init(info, Sync, M059Read, FALSE, FALSE);
-	info->Reset = M059Reset;
-	info->Power = M059Power;
+	Latch_Init(info, Sync, ReadDIP, FALSE, FALSE);
+	info->Reset = Reset;
+	info->Power = Power;
 	AddExState(&dipsw, 1, 0, "DIPSW");
 }

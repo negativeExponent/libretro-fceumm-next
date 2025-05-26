@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,25 +28,25 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 prg_mask = (iNESCart.submapper == 0) ? 0xFF : 0x7F;
-	uint8 prg_bank = (latch.addr >> 2) & prg_mask;
-	uint8 chr_protect = (latch.addr & ((iNESCart.submapper == 0) ? 0x400 : 0x200)) == 0;
+	uint8 mask = (iNESCart.submapper == 0) ? 0xFF : 0x7F;
+	uint8 prg = (latch.addr >> 2) & mask;
+	uint8 chr = 0;
+	uint8 mirrorV = (latch.addr & 0x01) ^ 1;
+	uint8 A14 = (latch.addr >> 1) & 0x01;
+	uint8 protected = (latch.addr & ((iNESCart.submapper == 0) ? 0x400 : 0x200)) != 0;
 
-	/* return openbus for unpopulated rom banks */
-	SetReadHandler(0x8000, 0xFFFF, prg_bank >= PRG_BANK_COUNT(16) ? 0 : CartBROB);
-
-	if (latch.addr & 2) {
-		setprg32(0x8000, prg_bank >> 1);
-	} else {
-		setprg16(0x8000, prg_bank);
-		setprg16(0xC000, prg_bank);
-	}
-
-	setchr8(0);
-	setmirror((latch.addr & 1) ^ 1);
+	/* FCEU_printf("%04x prg = %02x chr = %02x mirV = %d A14 = %d chrprot = %d\n", latch.addr, prg, chr, mirrorV, A14, protected); */
 
 	/* chr-ram protect */
-	SetupCartCHRMapping(0, CHRptr[0], 0x2000, chr_protect);
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, !protected);
+
+	/* return openbus for unpopulated rom banks */
+	SetReadHandler(0x8000, 0xFFFF, (prg >= PRG_BANK_COUNT(16)) ? 0 : CartBR);
+
+	setprg16(0x8000, prg & ~A14);
+	setprg16(0xC000, prg | A14);
+	setchr8(chr);
+	setmirror(mirrorV);
 }
 
 void Mapper063_Init(CartInfo *info) {

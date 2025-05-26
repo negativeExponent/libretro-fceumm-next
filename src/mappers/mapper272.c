@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,58 +28,66 @@
 
 #include "mapinc.h"
 
-static uint8 prg[2];
-static uint8 chr[8];
-static uint8 mirr;
-static uint8 pal_mirr;
-static uint8 IRQCount;
-static uint8 IRQa;
+static struct {
+	uint8 prg[2];
+	uint8 chr[8];
+	uint8 mirrorHV;
+	uint8 mirrorOneScreen;
+	uint8 IRQCount;
+	uint8 IRQa;
+} m272;
 
 static uint16 lastAddr;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 2, "PREG" },
-	{ chr, 8, "CREG" },
-	{ &mirr, 1, "MIRR" },
-	{ &pal_mirr, 1, "PALM" },
-	{ &IRQCount, 1, "CNTR" },
-	{ &IRQa, 1, "CCLK" },
-	{ &lastAddr, 2, "LADR" },
+	{ m272.prg, 2, "PREG" },
+	{ m272.chr, 8, "CREG" },
+	{ &m272.mirrorHV, 1, "MIRR" },
+	{ &m272.mirrorOneScreen, 1, "PALM" },
+	{ &m272.IRQCount, 1, "IRQC" },
+	{ &m272.IRQa, 1, "IRQa" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg8(0x8000, prg[0]);
-	setprg8(0xA000, prg[1]);
+static void SyncPRG(void) {
+	setprg8(0x8000, m272.prg[0]);
+	setprg8(0xA000, m272.prg[1]);
 	setprg16(0xC000, ~0);
+}
 
-	setchr1(0x0000, chr[0]);
-	setchr1(0x0400, chr[1]);
-	setchr1(0x0800, chr[2]);
-	setchr1(0x0C00, chr[3]);
-	setchr1(0x1000, chr[4]);
-	setchr1(0x1400, chr[5]);
-	setchr1(0x1800, chr[6]);
-	setchr1(0x1C00, chr[7]);
+static void SyncCHR(void) {
+	setchr1(0x0000, m272.chr[0]);
+	setchr1(0x0400, m272.chr[1]);
+	setchr1(0x0800, m272.chr[2]);
+	setchr1(0x0C00, m272.chr[3]);
+	setchr1(0x1000, m272.chr[4]);
+	setchr1(0x1400, m272.chr[5]);
+	setchr1(0x1800, m272.chr[6]);
+	setchr1(0x1C00, m272.chr[7]);
+}
 
-	if (pal_mirr & 0x02) {
-		setmirror(MI_0 + (pal_mirr & 0x01));
+static void SyncMirror(void) {
+	if (m272.mirrorOneScreen & 0x02) {
+		setmirror(MI_0 + (m272.mirrorOneScreen & 0x01));
 	} else {
-		setmirror((mirr & 0x01) ^ 0x01);
+		setmirror((m272.mirrorHV & 0x01) ^ 0x01);
 	}
 }
 
-static DECLFW(M272Write) {
+static DECLFW(Write) {
 	/* writes to VRC chip */
 	switch (A & 0xF000) {
 	case 0x8000:
-		prg[0] = V;
+		m272.prg[0] = V;
+		SyncPRG();
 		break;
 	case 0x9000:
-		mirr = V;
+		m272.mirrorHV = V;
+		SyncMirror();
 		break;
 	case 0xA000:
-		prg[1] = V;
+		m272.prg[1] = V;
+		SyncPRG();
 		break;
 	case 0xB000:
 	case 0xC000:
@@ -87,10 +95,11 @@ static DECLFW(M272Write) {
 	case 0xE000: {
 		int bank = (((A - 0xB000) >> 11) & 0x06) | ((A >> 1) & 0x01);
 		if (A & 0x01) {
-			chr[bank] = (chr[bank] & ~0xF0) | (V << 4);
+			m272.chr[bank] = (m272.chr[bank] & ~0xF0) | (V << 4);
 		} else {
-			chr[bank] = (chr[bank] & ~0x0F) | (V & 0x0F);
+			m272.chr[bank] = (m272.chr[bank] & ~0x0F) | (V & 0x0F);
 		}
+		SyncCHR();
 		break;
 	}
 	}
@@ -98,50 +107,32 @@ static DECLFW(M272Write) {
 	/* writes to PAL chip */
 	switch (A & 0xC00C) {
 	case 0x8004:
-		pal_mirr = V;
+		m272.mirrorOneScreen = V;
+		SyncMirror();
 		break;
-	case 0x800c:
+	case 0x800C:
 		X6502_IRQBegin(FCEU_IQEXT);
 		break;
-	case 0xc004:
+	case 0xC004:
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
-	case 0xc008:
-		IRQa = 1;
+	case 0xC008:
+		m272.IRQa = 1;
 		break;
-	case 0xc00c:
-		IRQa = 0;
-		IRQCount = 0;
+	case 0xC00C:
+		m272.IRQa = 0;
+		m272.IRQCount = 0;
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	}
-
-	Sync();
 }
 
-static void M272Reset(void) {
-	prg[0] = prg[1] = 0;
-	chr[0] = chr[1] = chr[2] = chr[3] = 0;
-	chr[4] = chr[5] = chr[6] = chr[7] = 0;
-	mirr = pal_mirr = 0;
-	lastAddr = 0;
-	IRQCount = 0;
-	IRQa = 0;
-	Sync();
-}
-
-static void M272Power(void) {
-	M272Reset();
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M272Write);
-}
-
-static void M272Hook(uint32 A) {
+static void PPUHook(uint32 A) {
 	if ((lastAddr & 0x2000) && !(A & 0x2000)) {
-		if (IRQa) {
-			IRQCount++;
-			if (IRQCount == 84) {
-				IRQCount = 0;
+		if (m272.IRQa) {
+			m272.IRQCount++;
+			if (m272.IRQCount == 84) {
+				m272.IRQCount = 0;
 				X6502_IRQBegin(FCEU_IQEXT);
 			}
 		}
@@ -149,14 +140,32 @@ static void M272Hook(uint32 A) {
 	lastAddr = A;
 }
 
+static void Reset(void) {
+	memset(&m272, 0, sizeof(m272));
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+}
+
+static void Power(void) {
+	memset(&m272, 0, sizeof(m272));
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, Write);
+}
+
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper272_Init(CartInfo *info) {
-	info->Power = M272Power;
-	info->Reset = M272Reset;
-	PPU_hook = M272Hook;
+	info->Power = Power;
+	info->Reset = Reset;
+	PPU_hook = PPUHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

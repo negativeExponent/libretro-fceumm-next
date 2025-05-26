@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,34 +22,36 @@
 #include "mapinc.h"
 #include "txc.h"
 
-static uint8 chr = 0;
+static struct {
+	uint8 chr;
+} m036;
 
-static void M036Sync(void) {
+static void Sync(void) {
 	setprg32(0x8000, txc.output & 0x03);
-	setchr8(chr & 0x0F);
+	setchr8(m036.chr);
 }
 
-static DECLFW(M036Write) {
+static DECLFW(WriteTXC) {
 	if ((A & 0xF200) == 0x4200) {
-		chr = V;
+		m036.chr = V;
 	}
 	TXC_Write(A, (V >> 4) & 0x03);
 }
 
-static DECLFR(M036Read) {
+static DECLFR(ReadTXC) {
 	return (cpu.openbus & ~0x30) | ((TXC_Read(A) << 4) & 0x30);
 }
 
-static void M036Power(void) {
-	chr = 0;
+static void Power(void) {
+	m036.chr = 0;
 	TXC_Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetReadHandler(0x4100, 0x5FFF, M036Read);
-	SetWriteHandler(0x4100, 0xFFFF, M036Write);
+	SetReadHandler(0x4100, 0x5FFF, ReadTXC);
+	SetWriteHandler(0x4100, 0xFFFF, WriteTXC);
 }
 
 void Mapper036_Init(CartInfo *info) {
-	TXC_Init(info, M036Sync);
-	info->Power = M036Power;
-	AddExState(&chr, 1, 0, "CREG");
+	TXC_Init(info, Sync);
+	info->Power = Power;
+	AddExState(&m036.chr, 1, 0, "CREG");
 }

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,23 +21,25 @@
 
 #include "mapinc.h"
 
-static uint8 reg[4];
+static struct {
+	uint8 reg[4];
+} m167;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "DREG" },
+	{ m167.reg, 4, "DREG" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint16 base = ((reg[0] ^ reg[1]) & 0x10) << 1;
-	uint16 bank = (reg[2] ^ reg[3]) & 0x1f;
+	uint16 base = ((m167.reg[0] ^ m167.reg[1]) & 0x10) << 1;
+	uint16 bank = (m167.reg[2] ^ m167.reg[3]) & 0x1f;
 
-	if (reg[1] & 0x08) {
+	if (m167.reg[1] & 0x08) {
 		bank &= 0xFE;
 		setprg16(0x8000, base + bank + 1);
 		setprg16(0xC000, base + bank + 0);
 	} else {
-		if (reg[1] & 0x04) {
+		if (m167.reg[1] & 0x04) {
 			setprg16(0x8000, 0x1F);
 			setprg16(0xC000, base + bank);
 		} else {
@@ -48,17 +50,17 @@ static void Sync(void) {
 	setchr8(0);
 }
 
-static DECLFW(M167Write) {
-	reg[(A >> 13) & 0x03] = V;
+static DECLFW(WriteReg) {
+	m167.reg[(A >> 13) & 0x03] = V;
 	Sync();
 }
 
-static void M167Power(void) {
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
+static void Power(void) {
+	memset(&m167, 0, sizeof(m167));
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetWriteHandler(0x8000, 0xFFFF, M167Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 	if (WRAMSIZE) {
 		setprg8r(0x10, 0x6000, 0);
 		SetReadHandler(0x6000, 0x7FFF, CartBR);
@@ -71,7 +73,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper167_Init(CartInfo *info) {
-	info->Power = M167Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,29 +20,33 @@
 
 #include "mapinc.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m240;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m240.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg32(0x8000, reg >> 4);
-	setchr8(reg & 0x0F);
+	setprg32(0x8000, m240.reg >> 4);
+	setchr8(m240.reg & 0x0F);
 	setprg8r(0x10, 0x6000, 0);
 }
 
-static DECLFW(M240Write) {
-	reg = V;
-	Sync();
+static DECLFW(WriteReg) {
+	if (A & 0x900) {
+		m240.reg = V;
+		Sync();
+	}
 }
 
-static void M240Power(void) {
-	reg = 0;
+static void Power(void) {
+	m240.reg = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4020, 0x4FFF, M240Write);
+	SetWriteHandler(0x4100, 0x5FFF, WriteReg);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
@@ -51,7 +55,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper240_Init(CartInfo *info) {
-	info->Power = M240Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

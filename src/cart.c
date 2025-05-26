@@ -125,7 +125,11 @@ void SetupCartCHRMapping(int chip, uint8 *p, uint32 size, uint8 ram) {
 }
 
 DECLFR(CartBR) {
-	return Page[A >> 11][A];
+	if (!Page[A >> 11]) {
+		return(cpu.openbus);
+	} else {
+		return Page[A >> 11][A];
+	}
 }
 
 DECLFW(CartBW) {
@@ -210,6 +214,97 @@ void setprg32r(int r, uint16 A, uint16 V) {
 
 void setprg32(uint16 A, uint16 V) {
 	setprg32r(0, A, V);
+}
+
+void setprg2r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
+	V &= PRGmask2[r];
+	setpageptr(2, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 11]) : 0, (rd && wr) ? PRGram[r] : 0);
+}
+
+void setprg2_rw(uint16 A, uint16 V, uint8 rd, uint8 wr) {
+	setprg2r_rw(0, A, V, rd, wr);
+}
+
+void setprg4r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
+	V &= PRGmask4[r];
+	setpageptr(4, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 12]) : 0, (rd && wr) ? PRGram[r] : 0);
+}
+
+void setprg4_rw(uint16 A, uint16 V, uint8 rd, uint8 wr) {
+	setprg4r_rw(0, A, V, rd, wr);
+}
+
+void setprg8r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
+	if (PRGsize[r] >= 8192) {
+		V &= PRGmask8[r];
+		setpageptr(8, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 13]) : 0, (rd && wr) ? PRGram[r] : 0);
+	} else {
+		uint32 VA = V << 2;
+		int x;
+		for (x = 0; x < 4; x++) {
+			setpageptr(2, A + (x << 11), (rd && PRGptr[r]) ? (&PRGptr[r][((VA + x) & PRGmask2[r]) << 11]) : 0, (rd && wr) ? PRGram[r] : 0);
+		}
+	}
+}
+
+void setprg8_rw(uint16 A, uint16 V, uint8 rd, uint8 wr) {
+	setprg8r_rw(0, A, V, rd, wr);
+}
+
+void setprg16r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
+	if (PRGsize[r] >= 16384) {
+		V &= PRGmask16[r];
+		setpageptr(16, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 14]) : 0, (rd && wr) ? PRGram[r] : 0);
+	} else {
+		uint32 VA = V << 3;
+		int x;
+
+		for (x = 0; x < 8; x++) {
+			setpageptr(2, A + (x << 11), (rd && PRGptr[r]) ? (&PRGptr[r][((VA + x) & PRGmask2[r]) << 11]) : 0, (rd && wr) ? PRGram[r] : 0);
+		}
+	}
+}
+
+void setprg16_rw(uint16 A, uint16 V, uint8 rd, uint8 wr) {
+	setprg16r_rw(0, A, V, rd, wr);
+}
+
+void setprg32r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
+		if (PRGsize[r] >= 32768) {
+		V &= PRGmask16[r];
+		setpageptr(32, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 15]) : 0, (rd && wr) ? PRGram[r] : 0);
+	} else {
+		uint32 VA = V << 4;
+		int x;
+
+		for (x = 0; x < 8; x++) {
+			setpageptr(2, A + (x << 11), (rd && PRGptr[r]) ? (&PRGptr[r][((VA + x) & PRGmask2[r]) << 11]) : 0, (rd && wr) ? PRGram[r] : 0);
+		}
+	}
+}
+
+void setprg32_rw(uint16 A, uint16 V, uint8 rd, uint8 wr) {
+	setprg32r_rw(0, A, V, rd, wr);
+}
+
+void unsetcpu2(uint16 A) {
+	setpageptr(2, A, NULL, TRUE);
+}
+
+void unsetcpu4(uint16 A) {
+	setpageptr(4, A, NULL, TRUE);
+}
+
+void unsetcpu8(uint16 A) {
+	setpageptr(8, A, NULL, TRUE);
+}
+
+void unsetcpu16(uint16 A) {
+	setpageptr(16, A, NULL, TRUE);
+}
+
+void unsetcpu32(uint16 A) {
+	setpageptr(32, A, NULL, TRUE);
 }
 
 void setchr1r(int r, uint16 A, uint16 V) {

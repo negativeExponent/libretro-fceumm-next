@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,21 +21,23 @@
 
 #include "mapinc.h"
 
-static uint8 game = 0;
+static struct {
+	uint8 reg;
+} m060;
 
 static void Sync(void) {
-	setchr8(game);
-	setprg16(0x8000, game);
-	setprg16(0xC000, game);
+	setchr8(m060.reg);
+	setprg16(0x8000, m060.reg);
+	setprg16(0xC000, m060.reg);
 }
 
-static void M060Reset(void) {
-	game++;
+static void Reset(void) {
+	m060.reg++;
 	Sync();
 }
 
-static void M060Power(void) {
-	game = 0;
+static void Power(void) {
+	m060.reg = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
@@ -45,8 +47,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper060_Init(CartInfo *info) {
-	info->Power = M060Power;
-	info->Reset = M060Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
-	AddExState(&game, 1, 0, "GAME");
+	AddExState(&m060.reg, 1, 0, "REG0");
 }

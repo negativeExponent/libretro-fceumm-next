@@ -110,6 +110,24 @@ void setprg8r(int r, uint16 A, uint16 V);
 void setprg16r(int r, uint16 A, uint16 V);
 void setprg32r(int r, uint16 A, uint16 V);
 
+void setprg2_rw(uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg4_rw(uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg8_rw(uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg16_rw(uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg32_rw(uint16 A, uint16 V, uint8 rd, uint8 wr);
+
+void setprg2r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg4r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg8r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg16r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg32r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr);
+
+void unsetcpu2(uint16 A);
+void unsetcpu4(uint16 A);
+void unsetcpu8(uint16 A);
+void unsetcpu16(uint16 A);
+void unsetcpu32(uint16 A);
+
 void setchr1r(int r, uint16 A, uint16 V);
 void setchr2r(int r, uint16 A, uint16 V);
 void setchr4r(int r, uint16 A, uint16 V);

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,45 +20,51 @@
 
 #include "mapinc.h"
 
-static uint8 prg[4], chr[8], nt[4];
-static uint8 IRQCount, IRQa;
+static struct {
+	uint8 prg[4], chr[8], nt[4];
+	uint16 IRQCount, IRQa;
+} m127;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 4, "PREG" },
-	{ chr, 8, "CREG" },
-	{ nt, 4, "NTAM" },
-	{ &IRQa, 1, "IRQA" },
-	{ &IRQCount, 1, "IRQC" },
+	{ m127.prg, 4, "PREG" },
+	{ m127.chr, 8, "CREG" },
+	{ m127.nt, 4, "NTAM" },
+	{ &m127.IRQa, 1, "IRQA" },
+	{ &m127.IRQCount, 1, "IRQC" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	prg[3] |= 0x0C;
-	setprg8(0x8000, prg[0] & 0x0F);
-	setprg8(0xA000, prg[1] & 0x0F);
-	setprg8(0xC000, prg[2] & 0x0F);
-	setprg8(0xE000, prg[3] & 0x0F);
-
-	setchr1(0x0000, chr[0] & 0x7F);
-	setchr1(0x0400, chr[1] & 0x7F);
-	setchr1(0x0800, chr[2] & 0x7F);
-	setchr1(0x0C00, chr[3] & 0x7F);
-	setchr1(0x1000, chr[4] & 0x7F);
-	setchr1(0x1400, chr[5] & 0x7F);
-	setchr1(0x1800, chr[6] & 0x7F);
-	setchr1(0x1C00, chr[7] & 0x7F);
-
-	setmirrorw(nt[0] & 0x01, nt[1] & 0x01, nt[2] & 0x01, nt[3] & 0x01);
+static void SyncPRG(void) {
+	m127.prg[3] |= 0x0C;
+	setprg8(0x8000, m127.prg[0] & 0x0F);
+	setprg8(0xA000, m127.prg[1] & 0x0F);
+	setprg8(0xC000, m127.prg[2] & 0x0F);
+	setprg8(0xE000, m127.prg[3] & 0x0F);
 }
 
-static DECLFW(M127Write) {
+static void SyncCHR(void) {
+	setchr1(0x0000, m127.chr[0] & 0x7F);
+	setchr1(0x0400, m127.chr[1] & 0x7F);
+	setchr1(0x0800, m127.chr[2] & 0x7F);
+	setchr1(0x0C00, m127.chr[3] & 0x7F);
+	setchr1(0x1000, m127.chr[4] & 0x7F);
+	setchr1(0x1400, m127.chr[5] & 0x7F);
+	setchr1(0x1800, m127.chr[6] & 0x7F);
+	setchr1(0x1C00, m127.chr[7] & 0x7F);
+}
+
+static void SyncMirror(void) {
+	setmirrorw(m127.nt[0] & 0x01, m127.nt[1] & 0x01, m127.nt[2] & 0x01, m127.nt[3] & 0x01);
+}
+
+static DECLFW(WriteReg) {
 	switch (A & 0x73) {
 	case 0x00:
 	case 0x01:
 	case 0x02:
 	case 0x03:
-		prg[A & 3] = V;
-		Sync();
+		m127.prg[A & 3] = V;
+		SyncPRG();
 		break;
 
 	case 0x10:
@@ -69,23 +75,23 @@ static DECLFW(M127Write) {
 	case 0x21:
 	case 0x22:
 	case 0x23:
-		chr[((A >> 3) & 4) | (A & 3)] = V;
-		Sync();
+		m127.chr[((A >> 3) & 4) | (A & 3)] = V;
+		SyncCHR();
 		break;
 
 	case 0x30:
 	case 0x31:
 	case 0x32:
 	case 0x33:
-		IRQa = 1;
+		m127.IRQa = TRUE;
 		break;
 
 	case 0x40:
 	case 0x41:
 	case 0x42:
 	case 0x43:
-		IRQa = 0;
-		IRQCount = 0;
+		m127.IRQa = FALSE;
+		m127.IRQCount = 0;
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 
@@ -93,42 +99,46 @@ static DECLFW(M127Write) {
 	case 0x51:
 	case 0x52:
 	case 0x53:
-		nt[A & 3] = V;
-		Sync();
+		m127.nt[A & 3] = V;
+		SyncMirror();
 		break;
 	}
 }
 
-static void M127Power(void) {
-	prg[0] = prg[1] = prg[2] = prg[3] = ~0;
-	chr[0] = chr[1] = chr[2] = chr[3] = 0;
-	chr[4] = chr[5] = chr[6] = chr[7] = 0;
-	nt[0] = nt[1] = nt[2] = nt[3] = 0;
-	IRQa = IRQCount = 0;
-	Sync();
+static void Power(void) {
+	memset(&m127, 0, sizeof(m127));
+
+	m127.prg[0] = 0x0F;
+	m127.prg[1] = 0x0F;
+	m127.prg[2] = 0x0F;
+	m127.prg[3] = 0x0F;
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M127Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
-static void M127IRQHook(int a) {
-	int count = a;
-	while (count--) {
-		if (IRQa) {
-			IRQCount--;
-			if (!IRQCount) {
-				X6502_IRQBegin(FCEU_IQEXT);
-			}
+static void CPUIRQHook(int a) {
+	if (m127.IRQa) {
+		m127.IRQCount += a;
+		if (m127.IRQCount & 0x100) {
+			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper127_Init(CartInfo *info) {
-	info->Power = M127Power;
-	MapIRQHook = M127IRQHook;
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

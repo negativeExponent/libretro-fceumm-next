@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,27 +22,27 @@
 #include "mapinc.h"
 #include "jv001.h"
 
-static void M136Sync(void) {
+static void Sync(void) {
 	setprg32(0x8000, (jv001.output >> 4) & 0x01);
 	setchr8(jv001.output & 0x07);
 }
 
-static DECLFW(M136Write) {
+static DECLFW(WriteReg) {
 	JV001_Write(A, V & 0x3F);
 }
 
-static DECLFR(M136Read) {
+static DECLFR(ReadReg) {
 	return ((cpu.openbus & 0xC0) | (JV001_Read(A) & 0x3F));
 }
 
-static void M136Power(void) {
+static void Power(void) {
 	JV001_Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetReadHandler(0x4100, 0x5FFF, M136Read);
-	SetWriteHandler(0x4100, 0xFFFF, M136Write);
+	SetReadHandler(0x4100, 0x5FFF, ReadReg);
+	SetWriteHandler(0x4100, 0xFFFF, WriteReg);
 }
 
 void Mapper136_Init(CartInfo *info) {
-	JV001_Init(info, M136Sync);
-	info->Power = M136Power;
+	JV001_Init(info, Sync);
+	info->Power = Power;
 }

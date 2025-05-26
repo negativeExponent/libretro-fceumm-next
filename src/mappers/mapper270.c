@@ -61,24 +61,24 @@ static void Sync(void) {
 	OneBus_SyncMirror();
 }
 
-static DECLFR(M270ReadJumperDetect) {
+static DECLFR(ReadDIP) {
 	return dipsw << 3;
 }
 
-static DECLFW(M270WriteCHRRAMEnable) {
+static DECLFW(WriteCHREnable) {
 	reg4242 = V;
 	Sync();
 }
 
-static void M270Power(void) {
+static void Power(void) {
 	dipsw = 0;
 	reg4242 = 0;
 	OneBus_Power();
-	SetReadHandler(0x412C, 0x412C, M270ReadJumperDetect);
-	SetWriteHandler(0x4242, 0x4242, M270WriteCHRRAMEnable);
+	SetReadHandler(0x412C, 0x412C, ReadDIP);
+	SetWriteHandler(0x4242, 0x4242, WriteCHREnable);
 }
 
-static void M270Reset(void) {
+static void Reset(void) {
 	dipsw = !dipsw; /* toggle jumper */
 	reg4242 = 0;
 	onebus.cpu41xx[0x2C] = 0;
@@ -93,8 +93,8 @@ void Mapper270_Init(CartInfo *info) {
 	}
 
 	OneBus_Init(info, Sync, ws, info->battery);
-	info->Power = M270Power;
-	info->Reset = M270Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 
 	AddExState(&reg4242, 1, 0, "CHRM");
 	AddExState(&dipsw, 1, 0, "DPSW");

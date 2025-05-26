@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2015 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
  * CHR - MMC3 stock regs
  * PRG - MMC3 regs disabled, area 6000-7FFF used instead
  *		 011xxxxxxxxxxxxx addr mask,
- *       ----APPp reg bits mask
+ *       ----APPp m259.reg bits mask
  *       A - higher 128K PRG bank select/32K bank mode override
  *       PP - bank number in 32K mode
  *       PPp - bank number in 16K mode
@@ -35,36 +35,40 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m259;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m259.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M259PW(uint16 A, uint16 V) {
-	uint8 mode = (reg & 0x08) >> 3;
-
-	setprg16(0x8000, ((reg & 0x0F) & ~mode));
-	setprg16(0xC000, ((reg & 0x0F) | mode));
+static void SyncPRG_mmc3(void) {
+	if (m259.reg & 0x08) {
+		setprg32(0x8000, m259.reg >> 1);
+	} else {
+		setprg16(0x8000, m259.reg & 0x0F);
+		setprg16(0xC000, m259.reg & 0x0F);
+	}
 }
 
-static DECLFW(M259Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		reg = V;
+		m259.reg = V;
 		MMC3_SyncPRG();
 	}
 }
 
-static void M259Power(void) {
-	reg = 0;
+static void Power(void) {
+	m259.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M259Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper259_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M259PW;
-	info->Power = M259Power;
+	MMC3_SyncPRG = SyncPRG_mmc3;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -22,9 +22,9 @@
 #include "latch.h"
 
 static void Sync(void) {
-	setprg16(0x8000, (latch.addr >> 2) & 3);
+	setprg16(0x8000, (latch.addr >> 2) & 0x03);
 	setprg16(0xC000, ~0);
-	setchr8(latch.data & 3);
+	setchr8(latch.data & 0x03);
 }
 
 void Mapper081_Init(CartInfo *info) {

@@ -11,7 +11,7 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR reg[0] PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR m221.reg[0] PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
@@ -25,66 +25,66 @@
 
 #include "mapinc.h"
 
-static uint16 reg[2];
+static struct {
+	uint16 reg[2];
+} m221;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
+	{ m221.reg, 4, "REGS" },
 	{ 0 }
 };
 
-static uint16 GetPRGBank(void) {
+static uint16 GetPRGBase(void) {
 	uint32 rshift = (iNESCart.submapper == 1) ? 2 : 3;
-	return (((reg[0] >> rshift) & 0x40) | ((reg[0] >> 2) & 0x38) | (reg[1] & 0x07));
+	return (((m221.reg[0] >> rshift) & 0x40) | ((m221.reg[0] >> 2) & 0x38));
 }
 
 static void Sync(void) {
-	uint16 prg = GetPRGBank();
+	uint16 prg = GetPRGBase() | (m221.reg[1] & 0x07);
 	uint16 unrom_mask = (iNESCart.submapper == 1) ? 0x200 : 0x100;
-	uint8 prot = (iNESCart.submapper == 1) ? (reg[0] & 0x0400) : (reg[1] & 0x0008);
+	uint8 prot = (iNESCart.submapper == 1) ? (m221.reg[0] & 0x0400) : (m221.reg[1] & 0x0008);
 
-	if (reg[0] & unrom_mask) { /* UNROM */
+	if (m221.reg[0] & unrom_mask) { /* UNROM */
 		setprg16(0x8000, prg);
-		setprg16(0xC000, prg | 7);
-	} else if (reg[0] & 0x0002) { /* NROM-256 */
-		setprg32(0x8000, prg >> 1);
-	} else { /* NROM-128 */
-		setprg16(0x8000, prg);
-		setprg16(0xC000, prg);
-	}
-
-	if (prot) {
-		SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], 0);
+		setprg16(0xC000, prg | 0x07);
 	} else {
-		SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], 1);
+		if (m221.reg[0] & 0x02) { /* NROM-256 */
+			setprg32(0x8000, prg >> 1);
+		} else { /* NROM-128 */
+			setprg16(0x8000, prg);
+			setprg16(0xC000, prg);
+		}
 	}
+
+	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], !prot);
 
 	setchr8(0);
-	setmirror((reg[0] & 0x01) ^ 0x01);
+	setmirror((m221.reg[0] & 0x01) ^ 0x01);
 }
 
-static DECLFR(M221Read) {
-	if (GetPRGBank() >= PRG_BANK_COUNT(16)) {
+static DECLFR(ReadProtect) {
+	if (GetPRGBase() >= PRG_BANK_COUNT(16)) {
 		/* Selecting unpopulated banks results in open bus */
 		return cpu.openbus;
 	}
 	return CartBR(A);
 }
 
-static DECLFW(M221Write) {
-	reg[(A >> 14) & 0x01] = A;
+static DECLFW(WriteReg) {
+	m221.reg[(A >> 14) & 0x01] = A;
 	Sync();
 }
 
-static void M221Reset(void) {
-	reg[0] = reg[1] = 0;
+static void Reset(void) {
+	m221.reg[0] = m221.reg[1] = 0;
 	Sync();
 }
 
-static void M221Power(void) {
-	reg[0] = reg[1] = 0;
+static void Power(void) {
+	m221.reg[0] = m221.reg[1] = 0;
 	Sync();
-	SetReadHandler(0x8000, 0xFFFF, M221Read);
-	SetWriteHandler(0x8000, 0xFFFF, M221Write);
+	SetReadHandler(0x8000, 0xFFFF, ReadProtect);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
@@ -92,8 +92,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper221_Init(CartInfo *info) {
-	info->Power = M221Power;
-	info->Reset = M221Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

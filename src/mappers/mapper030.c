@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2014 CaitSith2, 2022 Cluster
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 static uint8 flash_save;
 static uint8 *flash_data;
 
-static void M030Sync(void) {
+static void Sync(void) {
 	int chip = flash_save ? FLASH_CHIP : ROM_CHIP;
 
 	setprg16r(chip, 0x8000, latch.data);
@@ -61,32 +61,27 @@ static void M030Sync(void) {
 	}
 }
 
-static void M030CPUHook(int a) {
+static void CPUCycle(int a) {
 	FlashROM_CPUCyle(a);
 }
 
-static DECLFR(M030Read) {
-	if ((A < 0xC000) && flash_save) {
-		return FlashROM_Read(A);
-	}
-	return CartBR(A);
+static DECLFR(ReadFlash) {
+	return FlashROM_Read(A);
 }
 
-static DECLFW(M030Write) {
-	if ((A < 0xC000) && flash_save) {
-		FlashROM_Write(A, V);
-	} else {
-		Latch_Write(A, V);
-	}
+static DECLFW(WriteFlash) {
+	FlashROM_Write(A, V);
 }
 
-static void M030Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetReadHandler(0x8000, 0xFFFF, M030Read);
-	SetWriteHandler(0x8000, 0xBFFF, M030Write);
+	if (flash_save) {
+		SetReadHandler(0x8000, 0xBFFF, ReadFlash);
+		SetWriteHandler(0x8000, 0xBFFF, WriteFlash);
+	}
 }
 
-static void M030Close(void) {
+static void Close(void) {
 	Latch_Close();
 	if (flash_data) {
 		FCEU_gfree(flash_data);
@@ -95,14 +90,11 @@ static void M030Close(void) {
 }
 
 void Mapper030_Init(CartInfo *info) {
-	flash_save = info->battery;
-	Latch_Init(info, M030Sync, NULL, 0, !flash_save);
-
 	if (!info->submapper && (info->PRGCRC32 == 0x891C14BC)) {
 		info->submapper = 0x01;
 	}
 
-	if (!(info->submapper & 1)) {
+	if (!(info->submapper & 0x01)) {
 		switch (info->mirror2bits) {
 		case 0: /* hard horizontal, internal */
 			SetupCartMirroring(MI_H, 1, NULL);
@@ -119,8 +111,10 @@ void Mapper030_Init(CartInfo *info) {
 		}
 	}
 
-	info->Power = M030Power;
-	info->Close = M030Close;
+	flash_save = info->battery;
+	Latch_Init(info, Sync, NULL, 0, !flash_save);
+	info->Power = Power;
+	info->Close = Close;
 
 	if (flash_save) {
 		uint32 i, ssize;
@@ -137,6 +131,6 @@ void Mapper030_Init(CartInfo *info) {
 		info->SaveGameLen[0] = ssize;
 
 		FlashROM_Init(flash_data, ssize, 0xBF, 0xB7, 4096, 0x5555, 0x2AAA);
-		MapIRQHook = M030CPUHook;
+		MapIRQHook = CPUCycle;
 	}
 }

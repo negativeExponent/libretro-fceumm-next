@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ static void Sync(void) {
 	setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
 }
 
-static DECLFR(M227Read) {
+static DECLFR(ReadLatch) {
 	if ((latch.addr & 0x400) && (iNESCart.submapper == 1)) {
 		/* Support DIP switch/solder pad only with submapper 1 multicarts */
 		A |= dipsw;
@@ -54,19 +54,19 @@ static DECLFR(M227Read) {
 	return CartBROB(A);
 }
 
-static void M227Power(void) {
+static void Power(void) {
 	dipsw = 0;
 	Latch_Power();
 }
 
-static void M227Reset(void) {
+static void Reset(void) {
 	dipsw = (dipsw + 1) & 0x1F;
 	Latch_RegReset();
 }
 
 void Mapper227_Init(CartInfo *info) {
-	Latch_Init(info, Sync, M227Read, TRUE, FALSE);
-	info->Power = M227Power;
-	info->Reset = M227Reset;
+	Latch_Init(info, Sync, ReadLatch, TRUE, FALSE);
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(&dipsw, 1, 0, "PADS");
 }

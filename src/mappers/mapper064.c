@@ -28,151 +28,151 @@
 #define IRQ_MODE_A12 0
 #define IRQ_MODE_CPU 1
 
-static uint8 prg[4], chr[8];
-static uint8 cmd, mirr;
-static uint8 IRQa;
-static uint8 IRQPrescaler;
-static uint8 IRQCount;
-static uint8 IRQLatch;
-static uint8 IRQLatchExtra;
-static uint8 IRQMode;
-static uint8 IRQA12;
-static uint8 IRQFilter;
-static uint8 IRQDelay;
-static uint8 IRQReload;
-
-static void (*M064_SyncMirror)(void);
+static struct {
+	uint8 prg[4], chr[8];
+	uint8 cmd, mirror;
+	uint8 IRQa;
+	uint8 IRQPrescaler;
+	uint8 IRQCount;
+	uint8 IRQLatch;
+	uint8 IRQLatchExtra;
+	uint8 IRQMode;
+	uint8 IRQA12;
+	uint8 IRQFilter;
+	uint8 IRQDelay;
+	uint8 IRQReload;
+} m064;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 4, "PREG" },
-	{ chr, 8, "CREG" },
-	{ &cmd, 1, "CMDR" },
-	{ &mirr, 1, "MIRR" },
+	{ m064.prg, 4, "PREG" },
+	{ m064.chr, 8, "CREG" },
+	{ &m064.cmd, 1, "CMDR" },
+	{ &m064.mirror, 1, "MIRR" },
 
-	{ &IRQa, 1, "IRQA" },
-	{ &IRQPrescaler, 1, "IQPR" },
-	{ &IRQCount, 1, "IRQC" },
-	{ &IRQLatch, 1, "IRQL" },
-	{ &IRQLatchExtra, 1, "IQLE" },
-	{ &IRQReload, 1, "IRQR" },
-	{ &IRQMode, 1, "IRQM" },
-	{ &IRQA12, 1, "IQ12" },
-	{ &IRQFilter, 1, "IRQF" },
-	{ &IRQDelay, 1, "IRQD" },
+	{ &m064.IRQa, 1, "IRQA" },
+	{ &m064.IRQPrescaler, 1, "IQPR" },
+	{ &m064.IRQCount, 1, "IRQC" },
+	{ &m064.IRQLatch, 1, "IRQL" },
+	{ &m064.IRQLatchExtra, 1, "IQLE" },
+	{ &m064.IRQReload, 1, "IRQR" },
+	{ &m064.IRQMode, 1, "IRQM" },
+	{ &m064.IRQA12, 1, "IQ12" },
+	{ &m064.IRQFilter, 1, "IRQF" },
+	{ &m064.IRQDelay, 1, "IRQD" },
 
 	{ 0 }
 };
 
 static void IRQClockCounter(void) {
-	if (IRQCount == 0) {
-		IRQCount = IRQLatch + (IRQReload ? IRQLatchExtra : 0);
-		if ((IRQCount == 0) && IRQReload && IRQa) {
-			IRQDelay = 1;
+	if (m064.IRQCount == 0) {
+		m064.IRQCount = m064.IRQLatch + (m064.IRQReload ? m064.IRQLatchExtra : 0);
+		if ((m064.IRQCount == 0) && m064.IRQReload && m064.IRQa) {
+			m064.IRQDelay = 1;
 		}
 	} else {
-		IRQCount--;
-		if ((IRQCount == 0) && IRQa) {
-			IRQDelay = 1;
+		m064.IRQCount--;
+		if ((m064.IRQCount == 0) && m064.IRQa) {
+			m064.IRQDelay = 1;
 		}
 	}
-	IRQReload = FALSE;
+	m064.IRQReload = FALSE;
 }
 
 /* NEWPPU Only irq timing */
 
-static void newppu_CPUHook(int a) {
+static void newppu_CPUIRQHook(int a) {
 	while (a--) {
-		if (IRQDelay) {
-			IRQDelay--;
-			if (IRQDelay == 0) {
+		if (m064.IRQDelay) {
+			m064.IRQDelay--;
+			if (m064.IRQDelay == 0) {
 				X6502_IRQBegin(FCEU_IQEXT);
 			}
 		}
-		IRQPrescaler++;
-		if (!(IRQPrescaler & 0x03) && (IRQMode == IRQ_MODE_CPU)) {
+		m064.IRQPrescaler++;
+		if (!(m064.IRQPrescaler & 0x03) && (m064.IRQMode == IRQ_MODE_CPU)) {
 			IRQClockCounter();
 		}
 
-		if (IRQA12) {
-			if (!IRQFilter && (IRQMode == IRQ_MODE_A12)) {
+		if (m064.IRQA12) {
+			if (!m064.IRQFilter && (m064.IRQMode == IRQ_MODE_A12)) {
 				IRQClockCounter();
 			}
-			IRQFilter = 16;
-		} else if (IRQFilter) {
-			IRQFilter--;
+			m064.IRQFilter = 16;
+		} else if (m064.IRQFilter) {
+			m064.IRQFilter--;
 		}
 	}
 }
 
 static void newppu_PPUHook(uint32 A) {
-	IRQA12 = (A & 0x1000) >> 12;
+	m064.IRQA12 = (A & 0x1000) >> 12;
 }
 
 /******************/
 
-static void M064IRQHook(int a) {
+static void CPUIRQHook(int a) {
 	while (a--) {
-		if (IRQDelay) {
-			IRQDelay--;
-			if (IRQDelay == 0) {
+		if (m064.IRQDelay) {
+			m064.IRQDelay--;
+			if (m064.IRQDelay == 0) {
 				X6502_IRQBegin(FCEU_IQEXT);
 			}
 		}
-		IRQPrescaler++;
-		if (!(IRQPrescaler & 0x03) && (IRQMode == IRQ_MODE_CPU)) {
+		m064.IRQPrescaler++;
+		if (!(m064.IRQPrescaler & 0x03) && (m064.IRQMode == IRQ_MODE_CPU)) {
 			IRQClockCounter();
 		}
 	}
 }
 
-static void M064HBHook(void) {
-	if (((IRQMode == IRQ_MODE_A12) && (scanline != 240)) /*&& (scanline != 240)*/) {
+static void HBIRQHook(void) {
+	if (((m064.IRQMode == IRQ_MODE_A12) && (scanline != 240)) /*&& (scanline != 240)*/) {
 		IRQClockCounter();
 	}
 }
 
-static void M064_SyncPRG(void) {
-	uint16 pswap = (cmd << 8) & 0x4000;
+static void SyncPRG(void) {
+	uint16 pswap = (m064.cmd << 8) & 0x4000;
 
-	setprg8(0x8000 ^ pswap, prg[0]);
-	setprg8(0xA000,         prg[1]);
-	setprg8(0xC000 ^ pswap, prg[2]);
-	setprg8(0xE000,         prg[3]);
+	setprg8(0x8000 ^ pswap, m064.prg[0]);
+	setprg8(0xA000,         m064.prg[1]);
+	setprg8(0xC000 ^ pswap, m064.prg[2]);
+	setprg8(0xE000,         m064.prg[3]);
 }
 
-static void M064_SyncCHR(void) {
-	uint16 cswap = (cmd << 5) & 0x1000;
+static void SyncCHR(void) {
+	uint16 cswap = (m064.cmd << 5) & 0x1000;
 
-	if (cmd & 0x20) {
-		setchr1(0x0000 ^ cswap, chr[0]);
-		setchr1(0x0400 ^ cswap, chr[6]);
-		setchr1(0x0800 ^ cswap, chr[1]);
-		setchr1(0x0C00 ^ cswap, chr[7]);
+	if (m064.cmd & 0x20) {
+		setchr1(0x0000 ^ cswap, m064.chr[0]);
+		setchr1(0x0400 ^ cswap, m064.chr[6]);
+		setchr1(0x0800 ^ cswap, m064.chr[1]);
+		setchr1(0x0C00 ^ cswap, m064.chr[7]);
 	} else {
-		setchr2(0x0000 ^ cswap, (chr[0] >> 1));
-		setchr2(0x0800 ^ cswap, (chr[1] >> 1));
+		setchr2(0x0000 ^ cswap, (m064.chr[0] >> 1));
+		setchr2(0x0800 ^ cswap, (m064.chr[1] >> 1));
 	}
-	setchr1(0x1000 ^ cswap, chr[2]);
-	setchr1(0x1400 ^ cswap, chr[3]);
-	setchr1(0x1800 ^ cswap, chr[4]);
-	setchr1(0x1C00 ^ cswap, chr[5]);
+	setchr1(0x1000 ^ cswap, m064.chr[2]);
+	setchr1(0x1400 ^ cswap, m064.chr[3]);
+	setchr1(0x1800 ^ cswap, m064.chr[4]);
+	setchr1(0x1C00 ^ cswap, m064.chr[5]);
 }
 
-static void m064_SyncMirror(void) {
-	setmirror((mirr & 1) ^ 1);
-}
-
-static void m158_SyncMirror(void) {
-	if (cmd & 0x20) {
-		setntamem(NTARAM + ((chr[0] >> 7) << 10), 1, 0);
-		setntamem(NTARAM + ((chr[6] >> 7) << 10), 1, 1);
-		setntamem(NTARAM + ((chr[1] >> 7) << 10), 1, 2);
-		setntamem(NTARAM + ((chr[7] >> 7) << 10), 1, 3);
-	} else {
-		setntamem(NTARAM + ((chr[0] >> 7) << 10), 1, 0);
-		setntamem(NTARAM + ((chr[0] >> 7) << 10), 1, 1);
-		setntamem(NTARAM + ((chr[1] >> 7) << 10), 1, 2);
-		setntamem(NTARAM + ((chr[1] >> 7) << 10), 1, 3);
+static void SyncMirror(void) {
+	if (iNESCart.mapper == 64) {
+		setmirror((m064.mirror & 1) ^ 1);
+	} else if (iNESCart.mapper == 158) {
+		if (m064.cmd & 0x20) {
+			setntamem(NTARAM + ((m064.chr[0] >> 7) << 10), TRUE, 0);
+			setntamem(NTARAM + ((m064.chr[6] >> 7) << 10), TRUE, 1);
+			setntamem(NTARAM + ((m064.chr[1] >> 7) << 10), TRUE, 2);
+			setntamem(NTARAM + ((m064.chr[7] >> 7) << 10), TRUE, 3);
+		} else {
+			setntamem(NTARAM + ((m064.chr[0] >> 7) << 10), TRUE, 0);
+			setntamem(NTARAM + ((m064.chr[0] >> 7) << 10), TRUE, 1);
+			setntamem(NTARAM + ((m064.chr[1] >> 7) << 10), TRUE, 2);
+			setntamem(NTARAM + ((m064.chr[1] >> 7) << 10), TRUE, 3);
+		}
 	}
 }
 
@@ -181,32 +181,32 @@ static int ppumode = -1;
 static void CheckPPUMode(void) {
 	if (ppumode != newppu) {
 		if (newppu) {
-			MapIRQHook = newppu_CPUHook;
+			MapIRQHook = newppu_CPUIRQHook;
 			PPU_hook = newppu_PPUHook;
 			GameHBIRQHook = NULL;
 		} else {
-			MapIRQHook = M064IRQHook;
+			MapIRQHook = CPUIRQHook;
 			PPU_hook = NULL;
-			GameHBIRQHook = M064HBHook;
+			GameHBIRQHook = HBIRQHook;
 		}
 		ppumode = newppu;
 	}
 }
 
-static DECLFW(M064Write) {
+static DECLFW(WriteReg) {
 	uint8 index;
 
 	CheckPPUMode();
 
 	switch (A & 0xE001) {
 	case 0x8000:
-		cmd = V;
-		M064_SyncPRG();
-		M064_SyncCHR();
-		M064_SyncMirror();
+		m064.cmd = V;
+		SyncPRG();
+		SyncCHR();
+		SyncMirror();
 		break;
 	case 0x8001:
-		index = cmd & 0x0F;
+		index = m064.cmd & 0x0F;
 		switch (index) {
 		case 0x00:
 		case 0x01:
@@ -214,93 +214,86 @@ static DECLFW(M064Write) {
 		case 0x03:
 		case 0x04:
 		case 0x05:
-			chr[index] = V;
-			M064_SyncCHR();
-			M064_SyncMirror();
+			m064.chr[index] = V;
+			SyncCHR();
+			SyncMirror();
 			break;
 		case 0x06:
 		case 0x07:
-			prg[index & 0x01] = V;
-			M064_SyncPRG();
+			m064.prg[index & 0x01] = V;
+			SyncPRG();
 			break;
 		case 0x08:
 		case 0x09:
-			chr[index - 2] = V;
-			M064_SyncCHR();
-			M064_SyncMirror();
+			m064.chr[index - 2] = V;
+			SyncCHR();
+			SyncMirror();
 			break;
 		case 0x0F:
-			prg[2] = V;
-			M064_SyncPRG();
+			m064.prg[2] = V;
+			SyncPRG();
 			break;
 		}
 		break;
 	case 0xA000:
-		mirr = V;
-		M064_SyncMirror();
+		m064.mirror = V;
+		SyncMirror();
 		break;
 	case 0xC000:
-		IRQLatch = V;
+		m064.IRQLatch = V;
 		break;
 	case 0xC001:
-		IRQMode = (V & 1) ? IRQ_MODE_CPU : IRQ_MODE_A12;
-		IRQPrescaler = 0;
-		IRQCount = 0;
-		IRQReload = TRUE;
-		IRQLatchExtra = IRQFilter ? 0 : 1;
+		m064.IRQMode = (V & 0x01) ? IRQ_MODE_CPU : IRQ_MODE_A12;
+		m064.IRQPrescaler = 0;
+		m064.IRQCount = 0;
+		m064.IRQReload = TRUE;
+		m064.IRQLatchExtra = m064.IRQFilter ? 0 : 1;
 		break;
 	case 0xE000:
-		IRQa = FALSE;
+		m064.IRQa = FALSE;
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	case 0xE001:
-		IRQa = TRUE;
+		m064.IRQa = TRUE;
 		break;
 	}
 }
 
-static void M064Power(void) {
-	cmd = mirr = 0;
+static void Power(void) {
+	memset(&m064, 0, sizeof(m064));
 
-	prg[0] = 0;
-	prg[1] = 1;
-	prg[2] = ~1;
-	prg[3] = ~0;
+	m064.prg[0] = 0;
+	m064.prg[1] = 1;
+	m064.prg[2] = ~1;
+	m064.prg[3] = ~0;
 
-	chr[0] = 0;
-	chr[1] = 1;
-	chr[2] = 2;
-	chr[3] = 3;
-	chr[4] = 4;
-	chr[5] = 5;
-	chr[6] = 6;
-	chr[7] = 7;
+	m064.chr[0] = 0;
+	m064.chr[1] = 1;
+	m064.chr[2] = 2;
+	m064.chr[3] = 3;
+	m064.chr[4] = 4;
+	m064.chr[5] = 5;
+	m064.chr[6] = 6;
+	m064.chr[7] = 7;
 
-	M064_SyncPRG();
-	M064_SyncCHR();
-	M064_SyncMirror();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M064Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
 	CheckPPUMode();
-	M064_SyncPRG();
-	M064_SyncCHR();
-	M064_SyncMirror();
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper064_Init(CartInfo *info) {
-	info->Power = M064Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
-	M064_SyncMirror = m064_SyncMirror;
-}
-
-void Mapper158_Init(CartInfo *info) {
-	info->Power = M064Power;
-	GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, NULL);
-	M064_SyncMirror = m158_SyncMirror;
 }

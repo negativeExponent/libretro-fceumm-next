@@ -28,21 +28,23 @@
 
 #include "mapinc.h"
 
-static uint8 reg[4];
+static struct {
+	uint8 reg[4];
+} m178;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
+	{ m178.reg, 4, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint16 base = (reg[1] & 0x07) | (reg[2] << 3);
+	uint16 base = (m178.reg[1] & 0x07) | (m178.reg[2] << 3);
 
-	if ((reg[0] & 0x02)) {
+	if ((m178.reg[0] & 0x02)) {
 		setprg16(0x8000, base);
-		setprg16(0xC000, base | ((reg[0] & 0x04) ? 0x06 : 0x07));
+		setprg16(0xC000, base | ((m178.reg[0] & 0x04) ? 0x06 : 0x07));
 	} else {
-		if (reg[0] & 0x04) {
+		if (m178.reg[0] & 0x04) {
 			setprg16(0x8000, base);
 			setprg16(0xC000, base);
 		} else {
@@ -52,37 +54,37 @@ static void Sync(void) {
 
 	if (iNESCart.mapper == 551) {
 		setprg8r(0x10, 0x6000, 0);
-		setchr8(reg[3]);
+		setchr8(m178.reg[3]);
 	} else {
 		setchr8(0);
-		setprg8r(0x10, 0x6000, reg[3] & 3);
-		setmirror((reg[0] & 1) ^ 1);
+		setprg8r(0x10, 0x6000, m178.reg[3] & 3);
+		setmirror((m178.reg[0] & 1) ^ 1);
 	}
 }
 
-static DECLFW(M178Write) {
-	reg[A & 3] = V;
+static DECLFW(WriteReg) {
+	m178.reg[A & 3] = V;
 	/*	FCEU_printf("cmd %04x:%02x\n", A, V); */
 	Sync();
 }
 
-static void M178Power(void) {
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
+static void Power(void) {
+	memset(&m178, 0, sizeof(m178));
 	Sync();
-	SetWriteHandler(0x4800, 0x4FFF, M178Write);
+	SetWriteHandler(0x4800, 0x4FFF, WriteReg);
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M178Reset(void) {
+static void Reset(void) {
 	/* Always reset to menu */
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
+	memset(&m178, 0, sizeof(m178));
 	Sync();
 }
 
-static void M178Close(void) {
+static void Close(void) {
 }
 
 static void StateRestore(int version) {
@@ -90,9 +92,9 @@ static void StateRestore(int version) {
 }
 
 void Mapper178_Init(CartInfo *info) {
-	info->Power = M178Power;
-	info->Reset = M178Reset;
-	info->Close = M178Close;
+	info->Power = Power;
+	info->Reset = Reset;
+	info->Close = Close;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

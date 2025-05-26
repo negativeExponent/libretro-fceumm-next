@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,12 +21,14 @@
 
 #include "mapinc.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m236;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
-	{ &dipsw, 1, "DPSW " },
+	{ m236.reg, 2, "REGS" },
 	{ 0 }
 };
 
@@ -35,13 +37,13 @@ static void Sync(void) {
 	uint8 chr;
 
 	if (ROM.chr.size) {
-		prg = reg[1] & 0x0F;
-		chr = reg[0] & 0x0F;
+		prg = m236.reg[1] & 0x0F;
+		chr = m236.reg[0] & 0x0F;
 	} else {
-		prg = (reg[1] & 0x07) | (reg[0] << 3);
+		prg = (m236.reg[1] & 0x07) | (m236.reg[0] << 3);
 		chr = 0;
 	}
-	switch (reg[1] >> 4 & 3) {
+	switch (m236.reg[1] >> 4 & 3) {
 	case 0:
 	case 1:
 		setprg16(0x8000, prg);
@@ -56,37 +58,32 @@ static void Sync(void) {
 		break;
 	}
 	setchr8(chr);
-	setmirror(((reg[0] >> 5) & 0x01) ^ 0x01);
+	setmirror(((m236.reg[0] >> 5) & 0x01) ^ 0x01);
 }
 
-static DECLFR(M236Read) {
-	uint8 ret = CartBR(A);
-
-	if (((reg[1] >> 4) & 0x03) == 1) {
-		return ((ret & ~0x0F) | (dipsw & 0x0F));
+static DECLFR(ReadDIP) {
+	if (((m236.reg[1] >> 4) & 0x03) == 1) {
+		return CartBR((A & 0xFFF0) | (dipsw & 0x0F));
 	}
 	return CartBR(A);
 }
 
-static DECLFW(M236WriteReg) {
-	reg[(A >> 14) & 0x01] = A & 0xFF;
+static DECLFW(WriteReg) {
+	m236.reg[(A >> 14) & 0x01] = A & 0xFF;
 	Sync();
 }
 
-static void M236Power(void) {
+static void Power(void) {
+	memset(&m236, 0, sizeof(m236));
 	dipsw = 0;
-	reg[0] = 0;
-	reg[1] = 0;
 	Sync();
-	SetWriteHandler(0x8000, 0xFFFF, M236WriteReg);
-	SetReadHandler(0x8000, 0xFFFF, M236Read);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
+	SetReadHandler(0x8000, 0xFFFF, ReadDIP);
 }
 
-static void M236Reset(void) {
+static void Reset(void) {
+	memset(&m236, 0, sizeof(m236));
 	++dipsw;
-	/* Soft-reset returns to menu */
-	reg[0] = 0;
-	reg[1] = 0;
 	Sync();
 }
 
@@ -95,8 +92,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper236_Init(CartInfo *info) {
-	info->Power = M236Power;
-	info->Reset = M236Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

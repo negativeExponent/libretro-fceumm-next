@@ -4,7 +4,7 @@
  *  Copyright (C) 2002 Xodnizel
  *  Copyright (C) 2005 CaH4e3
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,92 +29,101 @@
 #include "mapinc.h"
 #include "eeprom_93Cx6.h"
 
-static uint8 reg[4];
+static struct {
+	uint8 reg[4];
+} m164;
+
 static uint8 eeprom_data[512];
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
-	{ eeprom_data, 512, "EEPR" },
+	{ m164.reg, 4, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 prgLow = (reg[0] & 0x0F) | ((reg[0] >> 1) & 0x10);
-	uint8 prgHigh = reg[1] << 5;
+	/* D~7654 3210
+	 * ---------
+	 * CSQM PPPp
+	 * ||+|-++++- PRG A18..A14 if M=0
+	 * || | ++++- PRG A18..A15 if M=1
+	 * || +------ PRG banking mode
+	 * ||          0: PRG A14..A18=QPPPp when CPU A14=0 (UxROM, 16 KiB switchable bank)
+	 * ||             PRG A14..A18=11111 when CPU A14=1 and S=0 (fixed bank=1F)
+	 * ||             PRG A14..A18=111p0 when CPU A14=1 and S=1 (fixed bank=1C or 1E)
+	 * ||          1: PRG A14=CPU A14, PRG A15..A18=PPPp (BxROM, 32 KiB switchable bank)
+	 * ||         Also selects nametable mirroring:
+	 * ||          0: Forced vertical mirroring
+	 * ||          1: Mirroring selected by $5300
+	 * |+-------- See 'M' bit description
+	 * +--------- 1 bpp video mode: when PPU A13=0 (pattern table) ...
+	 *             0: CHR A3=PPU A3, CHR A12=PPU A12 (disable 1 bpp mode)
+	 *             1: CHR A3=PPU A0, CHR A12=PPU A9, both latched on
+	 *               last rise of PPU A13 (enable 1 bpp mode)
+	 */
+	uint8 prgHigh = m164.reg[1] << 5;
+ 	uint8 prgLow = ((m164.reg[0] >> 1) & 0x10) | (m164.reg[0] & 0x0F);
+	uint8 mirrorH = ((m164.reg[0] & 0x10) && !(m164.reg[3] & 0x80)) ? MI_H : MI_V;
 
-	uint8 mode = ((reg[0] >> 5) & 0x02) | ((reg[0] >> 4) & 0x01);
-	uint8 mirr = ((reg[0] & 0x10) && !(reg[3] & 0x80)) ? MI_H : MI_V;
-
-	switch (mode) {
-	case 0: /* UNROM-512 */
-		setprg16(0x8000, prgHigh | prgLow);
-		setprg16(0xC000, prgHigh | 0x1F);
-		break;
-	case 1: /* Open Bus on Yancheng cy2000-3 PCB, expansion cartridge on the Dongda PEC-9588 */
-		break;
-	case 2: /* UNROM-448+64. Very strange mode, used for the LOGO program on the Dongda PEC-9588 */
-		setprg16(0x8000, prgHigh | prgLow);
-		setprg16(0xC000, prgHigh | ((prgLow >= 0x1C) ? 0x1C : 0x1E));
-		break;
-	case 3: /* UNROM-128 or BNROM */
-		if (prgLow & 0x10) {
+	if (m164.reg[0] & 0x10) {
+		if (m164.reg[0] & 0x20) {
 			setprg16(0x8000, prgHigh | ((prgLow << 1) & 0x10) | (prgLow & 0x0F));
 			setprg16(0xC000, prgHigh | ((prgLow << 1) & 0x10) | 0x0F);
 		} else {
 			setprg32(0x8000, (prgHigh >> 1) | prgLow);
 		}
-		break;
+	} else {
+		setprg16(0x8000, prgHigh | prgLow);
+		setprg16(0xC000, prgHigh | (!(m164.reg[0] & 0x40)) ? 0x1F : ((prgLow >= 0x1C) ? 0x1C : 0x1E));
 	}
 
-	setprg8r(0x10, 0x6000, 0);
-
-	setchr8(0);
-	PEC586Hack = (reg[0] & 0x80) ? TRUE : FALSE;
-
-	setmirror(mirr);
+	setmirror(mirrorH);
 }
 
-static DECLFR(readReg) {
+static DECLFR(ReadReg) {
 	return eeprom_93Cx6_read() ? 0x00 : 0x04;
 }
 
-static DECLFW(writeReg) {
+static DECLFW(WriteReg) {
 	switch (A & 0xFF00) {
 	case 0x5000:
-		reg[0] = V;
+		m164.reg[0] = V;
+		PEC586Hack = (m164.reg[0] & 0x80) ? TRUE : FALSE;
 		Sync();
 		break;
 	case 0x5100:
-		reg[1] = V;
+		m164.reg[1] = V;
 		Sync();
 		break;
 	case 0x5200:
-		reg[2] = V;
-		eeprom_93Cx6_write((reg[2] & 0x10), (reg[2] & 0x04), (reg[2] & 0x01));
+		m164.reg[2] = V;
+		eeprom_93Cx6_write((m164.reg[2] & 0x10), (m164.reg[2] & 0x04), (m164.reg[2] & 0x01));
 		break;
 	case 0x5300:
-		reg[3] = V;
+		m164.reg[3] = V;
 		Sync();
 		break;
 	}
 }
 
-static void M164Power(void) {
-	memset(reg, 0, sizeof(reg));
+static void Power(void) {
+	memset(&m164, 0, sizeof(m164));
 	Sync();
-	SetReadHandler(0x5400, 0x57FF, readReg);
-	SetWriteHandler(0x5000, 0x57FF, writeReg);
+	SetReadHandler(0x5400, 0x57FF, ReadReg);
+	SetWriteHandler(0x5000, 0x57FF, WriteReg);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+
+	setprg8r(0x10, 0x6000, 0);
+	setchr8(0);
 }
 
-static void M164Reset(void) {
-	memset(reg, 0, sizeof(reg));
+static void Reset(void) {
+	memset(&m164, 0, sizeof(m164));
 	Sync();
 }
 
-static void M164Close(void) {
+static void Close(void) {
 }
 
 static void StateRestore(int version) {
@@ -122,12 +131,18 @@ static void StateRestore(int version) {
 }
 
 void Mapper164_Init(CartInfo *info) {
-	info->Power = M164Power;
-	info->Reset = M164Reset;
-	info->Close = M164Close;
+	info->Power = Power;
+	info->Reset = Reset;
+	info->Close = Close;
 
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
+
+	eeprom_93Cx6_init(eeprom_data, 512, 8);
+	info->battery = 1;
+	info->SaveGame[0] = eeprom_data;
+	info->SaveGameLen[0] = 512;
+	AddExState(eeprom_data, sizeof(eeprom_data), 0, "EPRM");
 
 	WRAMSIZE = 8192;
 	if (info->iNES2) {
@@ -138,9 +153,4 @@ void Mapper164_Init(CartInfo *info) {
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}
-
-	eeprom_93Cx6_init(eeprom_data, 512, 8);
-	info->battery = 1;
-	info->SaveGame[0] = eeprom_data;
-	info->SaveGameLen[0] = 512;
 }

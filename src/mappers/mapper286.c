@@ -16,83 +16,99 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
 #include "mapinc.h"
 
-static uint8 prg[4];
-static uint8 chr[4];
-static uint8 mirr;
+static struct {
+	uint8 prg[4];
+	uint8 chr[4];
+	uint8 mirror;
+} m286;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 4, "PREG" },
-	{ chr, 4, "CREG" },
-	{ &mirr, 1, "MIRR" },
-	{ &dipsw, 1, "DPSW" },
+	{ m286.prg, 4, "PREG" },
+	{ m286.chr, 4, "CREG" },
+	{ &m286.mirror, 1, "MIRR" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg8(0x8000, prg[0]);
-	setprg8(0xa000, prg[1]);
-	setprg8(0xc000, prg[2]);
-	setprg8(0xe000, prg[3]);
-
-	setchr2(0x0000, chr[0]);
-	setchr2(0x0800, chr[1]);
-	setchr2(0x1000, chr[2]);
-	setchr2(0x1800, chr[3]);
-
-	setmirror((mirr & 0x01) ^ 0x01);
+static void SyncPRG(void) {
+	setprg8(0x8000, m286.prg[0]);
+	setprg8(0xA000, m286.prg[1]);
+	setprg8(0xC000, m286.prg[2]);
+	setprg8(0xE000, m286.prg[3]);
 }
 
-static DECLFW(M286Write) {
-	switch (A & 0xF000) {
-	case 0x8000:
-	case 0x9000:
-		chr[(A & 0xC00) >> 10] = A & 0x1F;
-		Sync();
-		break;
-	case 0xA000:
-	case 0xB000:
-		if (A & (1 << (dipsw + 4))) {
-			prg[(A & 0xC00) >> 10] = A & 0x0F;
-			Sync();
-		}
-		break;
-	case 0xC000:
-		mirr = V;
-		Sync();
-		break;
+static void SyncCHR(void) {
+	setchr2(0x0000, m286.chr[0]);
+	setchr2(0x0800, m286.chr[1]);
+	setchr2(0x1000, m286.chr[2]);
+	setchr2(0x1800, m286.chr[3]);
+}
+
+static void SyncMirror(void) {
+	setmirror((m286.mirror & 0x01) ^ 0x01);
+}
+
+static DECLFW(WriteCHR) {
+	m286.chr[(A & 0xC00) >> 10] = A & 0x1F;
+	SyncCHR();
+}
+
+static DECLFW(WritePRG) {
+	if (A & (1 << (dipsw + 4))) {
+		m286.prg[(A & 0xC00) >> 10] = A & 0x0F;
+		SyncPRG();
 	}
 }
 
-static void M286Reset(void) {
-	dipsw++;
-	dipsw &= 3;
-	prg[0] = prg[1] = prg[2] = prg[3] = ~0;
-	mirr = 0;
-	Sync();
+static DECLFW(WriteMirror) {
+	m286.mirror = V;
+	SyncMirror();
 }
 
-static void M286Power(void) {
+static void Reset(void) {
+	memset(&m286, 0, sizeof(m286));
+	m286.prg[0] = 0x0C;
+	m286.prg[1] = 0x0D;
+	m286.prg[2] = 0x0E;
+	m286.prg[3] = 0x0F;
+	dipsw++;
+	dipsw &= 3;
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+}
+
+static void Power(void) {
+	memset(&m286, 0, sizeof(m286));
+	m286.prg[0] = 0x0C;
+	m286.prg[1] = 0x0D;
+	m286.prg[2] = 0x0E;
+	m286.prg[3] = 0x0F;
 	dipsw = 0;
-	prg[0] = prg[1] = prg[2] = prg[3] = ~0;
-	mirr = 0;
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M286Write);
+	SetWriteHandler(0x8000, 0x9FFF, WriteCHR);
+	SetWriteHandler(0xA000, 0xBFFF, WritePRG);
+	SetWriteHandler(0xC000, 0xCFFF, WriteMirror);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper286_Init(CartInfo *info) {
-	info->Power = M286Power;
-	info->Reset = M286Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

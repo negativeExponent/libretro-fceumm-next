@@ -4,7 +4,7 @@
  *  Copyright (C) 2005 CaH4e3
  *  Copyright (C) 2009 qeed
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,21 +23,23 @@
  */
 
 /* Updated 2019-07-12
- * Mapper 233 - UNIF 42in1ResetSwitch - reset-based switching
+ * Mapper 233 - UNIF 42in1ResetSwitch - m233.reg-based switching
  */
 
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reset;
+static struct {
+	uint8 reg;
+} m233;
 
 static SFORMAT StateRegs[] = {
-	{ &reset, 1, "RST0" },
+	{ &m233.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 bank = (latch.data & 0x1F) | (reset << 5);
+	uint8 bank = (m233.reg << 5) | (latch.data & 0x1F);
 
 	if (latch.data & 0x20) {
 		setprg16(0x8000, bank);
@@ -62,19 +64,19 @@ static void Sync(void) {
 	}
 }
 
-static void M233Power(void) {
-	reset = 0;
+static void Power(void) {
+	m233.reg = 0;
 	Latch_Power();
 }
 
-static void M233Reset(void) {
-	reset ^= 1;
+static void Reset(void) {
+	m233.reg ^= 1;
 	Sync();
 }
 
 void Mapper233_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M233Power;
-	info->Reset = M233Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

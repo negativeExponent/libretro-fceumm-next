@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,29 +22,31 @@
 
 #include "mapinc.h"
 
-static uint8 chr[2];
+static struct {
+	uint8 chr[2];
+} m171;
 
 static SFORMAT StateRegs[] = {
-	{ chr, 2, "CREG" },
+	{ m171.chr, 2, "CREG" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	setprg32(0x8000, 0);
-	setchr4(0x0000, chr[0]);
-	setchr4(0x1000, chr[1]);
+	setchr4(0x0000, m171.chr[0]);
+	setchr4(0x1000, m171.chr[1]);
 }
 
-static DECLFW(M171Write) {
-	chr[A & 0x01] = V;
+static DECLFW(WriteReg) {
+	m171.chr[A & 0x01] = V;
 	Sync();
 }
 
-static void M171Power(void) {
-	chr[0] = chr[1] = 0;
+static void Power(void) {
+	m171.chr[0] = m171.chr[1] = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M171Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
@@ -52,7 +54,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper171_Init(CartInfo *info) {
-	info->Power = M171Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

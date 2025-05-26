@@ -108,6 +108,16 @@ emu2149 - https://github.com/digital-sound-antiques/emu2149
 
 Changelog:
 ----------
+25.05.2x
+- Mapper rebuilds (start using structs, new naming scheme, etc)
+- Fixed mapper 48
+- Fixed mapper 19
+- Fixed mapper 56 incorrect sprite image caused by
+  wrong address mask on register writes (regression).
+- Fixed bug in vrc24 module that caused incorrect chr bank data (regression)
+- Add helpers to easily set or remove read/write access to cpu pages
+- Revert opcode update that broke a few games (opcode 0xAB, 0x9C, 0x9E)
+
 25.04.25
 - moved to a standalone repo
 
@@ -147,4 +157,3 @@ Changelog:
 24.02.25
 - Fix mapper 156
 - Fix support for Ys Definitive Edition (romhack)
- 

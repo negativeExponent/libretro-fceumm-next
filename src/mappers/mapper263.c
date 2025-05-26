@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,24 +24,19 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint32 unscrambleAddr(uint32 A) {
-	return ((A & 0xE000) | ((A >> 12) & 0x01));
+static DECLFW(WriteMMC3) {
+	A = ((A & 0xE000) | ((A >> 12) & 0x01));
+	V = ((V & 0xD8) | (((V & 0x04) << 3) & 0x20) | (((V & 0x01) << 2) & 0x04)) | (((V & 0x20) >> 4) & 0x02) | (((V & 0x02) >> 1) & 0x01);
+
+	MMC3_Write(A, V);
 }
 
-static uint8 unscrambleData(uint8 V) {
-	return ((V & 0xD8) | ((V & 0x20) >> 4) | ((V & 0x04) << 3) | ((V & 0x02) >> 1) | ((V & 0x01) << 2));
-}
-
-static DECLFW(M263Write) {
-	MMC3_Write(unscrambleAddr(A), unscrambleData(V));
-}
-
-static void M263Power(void) {
+static void Power(void) {
 	MMC3_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M263Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteMMC3);
 }
 
 void Mapper263_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	info->Power = M263Power;
+	info->Power = Power;
 }

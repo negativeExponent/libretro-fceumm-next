@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,31 +24,33 @@
 
 #include "mapinc.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m120;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REG" },
+	{ &m120.reg, 1, "REG" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg8(0x6000, reg);
+	setprg8(0x6000, m120.reg);
 	setprg32(0x8000, 2);
 	setchr8(0);
 }
 
-static DECLFW(M120Write) {
-	if ((A & 0xE100) == 0x4100) {
-		reg = V & 0x07;
+static DECLFW(WriteReg) {
+	if ((A & 0xE1FF) == 0x41FF) {
+		m120.reg = V;
 		Sync();
 	}
 }
 
-static void M120Power(void) {
-	reg = 0;
+static void Power(void) {
+	m120.reg = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4100, 0x5FFF, M120Write);
+	SetWriteHandler(0x4100, 0x5FFF, WriteReg);
 }
 
 static void StateRestore(int version) {
@@ -56,7 +58,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper120_Init(CartInfo *info) {
-	info->Power = M120Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

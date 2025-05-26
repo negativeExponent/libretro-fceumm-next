@@ -42,7 +42,7 @@ static void Sync(void) {
 	setchr8r(chrEnable, 0);
 }
 
-static void M185Close(void) {
+static void Close(void) {
 	Latch_Close();
 	if (DummyCHR) {
 		FCEU_gfree(DummyCHR);
@@ -53,7 +53,7 @@ static void M185Close(void) {
 void Mapper185_Init(CartInfo *info) {
 	int x;
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Close = M185Close;
+	info->Close = Close;
 
 	DummyCHR = (uint8 *)FCEU_gmalloc(8192);
 	SetupCartCHRMapping(0x10, DummyCHR, 8192, 0);

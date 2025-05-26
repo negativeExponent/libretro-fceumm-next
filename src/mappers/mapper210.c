@@ -26,34 +26,42 @@
 
 #include "mapinc.h"
 
-static uint8 prg[4];
-static uint8 chr[8];
-static uint8 wram_enable;
+static struct {
+	uint8 prg[4];
+	uint8 chr[8];
+	uint8 wram_enable;
+} m210;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 3, "PRG" },
-	{ chr, 8, "CHR" },
-	{ &wram_enable, 1, "WREN" },
+	{ m210.prg, 3, "PRG" },
+	{ m210.chr, 8, "CHR" },
+	{ &m210.wram_enable, 1, "WREN" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg8(0x8000, prg[0] & 0x3F);
-	setprg8(0xA000, prg[1] & 0x3F);
-	setprg8(0xC000, prg[2] & 0x3F);
-	setprg8(0xE000, prg[3] & 0x3F);
+static void SyncPRG(void) {
+	setprg8(0x8000, m210.prg[0] & 0x3F);
+	setprg8(0xA000, m210.prg[1] & 0x3F);
+	setprg8(0xC000, m210.prg[2] & 0x3F);
+	setprg8(0xE000, m210.prg[3] & 0x3F);
+}
 
-	setchr1(0x0000, chr[0]);
-	setchr1(0x0400, chr[1]);
-	setchr1(0x0800, chr[2]);
-	setchr1(0x0C00, chr[3]);
-	setchr1(0x1000, chr[4]);
-	setchr1(0x1400, chr[5]);
-	setchr1(0x1800, chr[6]);
-	setchr1(0x1C00, chr[7]);
+static void SyncCHR(void) {
+	setchr1(0x0000, m210.chr[0]);
+	setchr1(0x0400, m210.chr[1]);
+	setchr1(0x0800, m210.chr[2]);
+	setchr1(0x0C00, m210.chr[3]);
+	setchr1(0x1000, m210.chr[4]);
+	setchr1(0x1400, m210.chr[5]);
+	setchr1(0x1800, m210.chr[6]);
+	setchr1(0x1C00, m210.chr[7]);
+}
 
-	if (iNESCart.submapper != 1) {
-		switch ((prg[0] >> 6) & 0x03) {
+static void SyncMirror(void) {
+	if (iNESCart.submapper == 1) {
+		setmirror(iNESCart.mirror);
+	} else {
+		switch ((m210.prg[0] >> 6) & 0x03) {
 		case 0:
 			setmirror(MI_0);
 			break;
@@ -70,63 +78,55 @@ static void Sync(void) {
 	}
 }
 
-static DECLFR(AWRAM) {
+static DECLFR(ReadWRAM) {
 	A = ((A - 0x6000) & (WRAMSIZE - 1));
 	return WRAM[A];
 }
 
-static DECLFW(BWRAM) {
-	if (wram_enable) {
+static DECLFW(WriteWRAM) {
+	if (m210.wram_enable) {
 		A = ((A - 0x6000) & (WRAMSIZE - 1));
 		WRAM[A] = V;
 	}
 }
 
-static DECLFW(M210Write) {
-	switch (A & 0xF800) {
-	case 0x8000:
-	case 0x8800:
-	case 0x9000:
-	case 0x9800:
-	case 0xA000:
-	case 0xA800:
-	case 0xB000:
-	case 0xB800:
-		chr[(A - 0x8000) >> 11] = V;
-		Sync();
-		break;
-	case 0xC000:
-		wram_enable = V & 0x01;
-		break;
-	case 0xE000:
-	case 0xE800:
-	case 0xF000:
-		prg[(A - 0xE000) >> 11] = V;
-		Sync();
-		break;
-	}
+static DECLFW(WriteCHR) {
+	m210.chr[(A - 0x8000) >> 11] = V;
+	SyncCHR();
 }
 
-static void M210Power(void) {
+static DECLFW(WriteWRAMEnable) {
+	m210.wram_enable = V & 0x01;
+}
+
+static DECLFW(WritePRG) {
+	m210.prg[(A - 0xE000) >> 11] = V;
+	SyncPRG();
+	SyncMirror();
+}
+
+static void Power(void) {
 	int i;
 	for (i = 0; i < 4; i++) {
-		prg[i] = 0xFC | i;
+		m210.prg[i] = 0xFC | i;
 	}
-	for (i = 0; i < 4; i++) {
-		chr[0 | i] = 0 | i;
+	for (i = 0; i < 8; i++) {
+		m210.chr[i] = i;
 	}
-	for (i = 0; i < 4; i++) {
-		chr[4 | i] = 4 | i;
-	}
-	wram_enable = 0;
-	Sync();
+	m210.wram_enable = 0;
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xffff, M210Write);
+	SetWriteHandler(0x8000, 0xBFFF, WriteCHR);
+	SetWriteHandler(0xC000, 0xDFFF, WriteWRAMEnable);
+	SetWriteHandler(0xE000, 0xF7FF, WritePRG);
 
 	if (WRAM) {
-		SetReadHandler(0x6000, 0x7FFF, AWRAM);
-		SetWriteHandler(0x6000, 0x7FFF, BWRAM);
+		SetReadHandler(0x6000, 0x7FFF, ReadWRAM);
+		SetWriteHandler(0x6000, 0x7FFF, WriteWRAM);
 		FCEU_CheatAddRAM(8, 0x6000, WRAM);
 	}
 
@@ -136,12 +136,14 @@ static void M210Power(void) {
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper210_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
-	info->Power = M210Power;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;

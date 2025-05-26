@@ -22,17 +22,17 @@
 #include "mapinc.h"
 #include "mmc4.h"
 
-static void M010PW(uint16 A, uint16 V) {
+static void SetPRGBank_mmc4(uint16 A, uint16 V) {
 	setprg16(A, V & 0x0F);
 }
 
-static void M010CW(uint16 A, uint16 V) {
+static void SetCHRBank_mmc4(uint16 A, uint16 V) {
 	setchr4(A, V & 0x1F);
 }
 
 void Mapper010_Init(CartInfo *info) {
 	int ws = info->iNES2 ? ((info->PRGRamSize + info->PRGRamSaveSize) / 1024) : (info->battery ? 8 : 0);
 	MMC4_Init(info, ws, info->battery);
-	MMC4_pwrap = M010PW;
-	MMC4_cwrap = M010CW;
+	MMC4_pwrap = SetPRGBank_mmc4;
+	MMC4_cwrap = SetCHRBank_mmc4;
 }

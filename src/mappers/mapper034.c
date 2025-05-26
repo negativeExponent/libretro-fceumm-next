@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,17 +31,19 @@
 #include "mapinc.h"
 #include "latch.h"
 
-#define M034_NINA001  1
-#define M034_BNROM	  2
-#define M034_NESTICLE 3
+#define MAPPER_NINA001  1
+#define MAPPER_BNROM    2
+#define MAPPER_NESTICLE 3
 
-static uint8 reg[3];
+static struct {
+	uint8 reg[3];
+} m034;
 
-static uint8 type;
+static int type;
 static void (*WSync)(void);
 
 static SFORMAT StateRegs[] = {
-	{ reg, 3, "REGS" },
+	{ m034.reg, 3, "REGS" },
 	{ 0 }
 };
 
@@ -49,26 +51,26 @@ static SFORMAT StateRegs[] = {
 
 static void Sync_NINA001(void) {
 	setprg8r(0x10, 0x6000, 0);
-	setprg32(0x8000, reg[0]);
-	setchr4(0x0000, reg[1]);
-	setchr4(0x1000, reg[2]);
+	setprg32(0x8000, m034.reg[0]);
+	setchr4(0x0000, m034.reg[1]);
+	setchr4(0x1000, m034.reg[2]);
 }
 
-static DECLFW(M034Write_NINA001) {
+static DECLFW(WriteNina001) {
 	CartBW(A, V);
 	if (A >= 0x7FFD) {
-		reg[A - 0x7FFD] = V;
+		m034.reg[A - 0x7FFD] = V;
 		WSync();
 	}
 }
 
-static void M034Power_NINA001(void) {
-	reg[0] = reg[1] = 0;
-	reg[2] = 1;
+static void Power_Nina001(void) {
+	m034.reg[0] = m034.reg[1] = 0;
+	m034.reg[2] = 1;
 	WSync();
 
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x7FFF, M034Write_NINA001);
+	SetWriteHandler(0x6000, 0x7FFF, WriteNina001);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
@@ -83,35 +85,35 @@ static void Sync_BNROM(void) {
 
 static void Sync_Nesticle(void) {
 	setprg8r(0x10, 0x6000, 0);
-	setprg32(0x8000, reg[0]);
-	setchr4(0x0000, reg[1]);
-	setchr4(0x1000, reg[2]);
+	setprg32(0x8000, m034.reg[0]);
+	setchr4(0x0000, m034.reg[1]);
+	setchr4(0x1000, m034.reg[2]);
 }
 
-static DECLFW(M034Write_Nesticle) {
+static DECLFW(WriteNesticle) {
 	if (A >= 0x8000) {
-		reg[0] = V;
+		m034.reg[0] = V;
 		WSync();
 	} else {
 		CartBW(A, V);
 		if (A >= 0x7FFD) {
-			reg[A - 0x7FFD] = V;
+			m034.reg[A - 0x7FFD] = V;
 			WSync();
 		}
 	}
 }
 
-static void M034Power_Nesticle(void) {
-	reg[0] = reg[1] = 0;
-	reg[2] = 1;
+static void Power_Nesticle(void) {
+	m034.reg[0] = m034.reg[1] = 0;
+	m034.reg[2] = 1;
 	WSync();
 
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0xFFFF, M034Write_Nesticle);
+	SetWriteHandler(0x6000, 0xFFFF, WriteNesticle);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M034Close(void) {
+static void Close(void) {
 }
 
 static void StateRestore(int version) {
@@ -120,23 +122,23 @@ static void StateRestore(int version) {
 
 void Mapper034_Init(CartInfo *info) {
 	if (info->trainer) {
-		type = M034_NESTICLE;
+		type = MAPPER_NESTICLE;
 		WSync = Sync_Nesticle;
-		info->Power = M034Power_Nesticle;
+		info->Power = Power_Nesticle;
 	} else if ((info->submapper == 1) || ((info->submapper != 2) && ROM.chr.size)) {
-		type = M034_NINA001;
+		type = MAPPER_NINA001;
 		WSync = Sync_NINA001;
-		info->Power = M034Power_NINA001;
+		info->Power = Power_Nina001;
 	} else if ((info->submapper == 2) || ((info->submapper != 1) && !ROM.chr.size)) {
-		type = M034_BNROM;
+		type = MAPPER_BNROM;
 		Latch_Init(info, Sync_BNROM, NULL, FALSE, TRUE);
 		info->Reset = Latch_RegReset;
 	}
 
 	switch (type) {
-	case M034_NESTICLE:
-	case M034_NINA001:
-		info->Close = M034Close;
+	case MAPPER_NESTICLE:
+	case MAPPER_NINA001:
+		info->Close = Close;
 		GameStateRestore = StateRestore;
 		AddExState(StateRegs, ~0, 0, NULL);
 

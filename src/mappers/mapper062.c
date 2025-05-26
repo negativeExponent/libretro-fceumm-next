@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,15 +24,16 @@
 
 static void Sync(void) {
 	uint8 prg = (latch.addr & 0x40) | ((latch.addr >> 8) & 0x3F);
+	uint8 chr = ((latch.addr & 0x1F) << 2) | (latch.data & 0x03);
+	uint8 mirrorV = ((latch.addr >> 7) & 1) ^ 1;
+	uint8 A14 = (latch.addr & 0x20) == 0;
 
-	if (latch.addr & 0x20) {
-		setprg16(0x8000, prg);
-		setprg16(0xC000, prg);
-	} else {
-		setprg32(0x8000, prg >> 1);
-	}
-	setchr8(((latch.addr & 0x1F) << 2) | (latch.data & 0x03));
-	setmirror(((latch.addr >> 7) & 1) ^ 1);
+	/* FCEU_printf("%04x prg = %02x chr = %02x mirV = %d A14 = %d\n", latch.addr, prg, chr, mirrorV, A14); */
+
+	setprg16(0x8000, prg & ~A14);
+	setprg16(0xC000, prg | A14);
+	setchr8(chr);
+	setmirror(mirrorV);
 }
 
 void Mapper062_Init(CartInfo *info) {

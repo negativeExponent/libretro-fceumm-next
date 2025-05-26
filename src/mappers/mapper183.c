@@ -25,57 +25,57 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 prg[4];
+static struct {
+	uint8 prg[4];
+} m183;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 4, "PRG" },
+	{ m183.prg, 4, "PRG" },
 	{ 0 }
 };
 
-static void M183PRG(void) {
-	setprg8(0x6000, prg[0]);
-	setprg8(0x8000, prg[1]);
-	setprg8(0xA000, prg[2]);
-	setprg8(0xC000, prg[3]);
+static void SyncPRG(void) {
+	setprg8(0x6000, m183.prg[0]);
+	setprg8(0x8000, m183.prg[1]);
+	setprg8(0xA000, m183.prg[2]);
+	setprg8(0xC000, m183.prg[3]);
 	setprg8(0xE000, ~0);
 }
 
-static DECLFW(M183Write6800) {
-	prg[0] = A & 0x3F;
+static DECLFW(Write6800) {
+	m183.prg[0] = A & 0x3F;
 	VRC24_SyncPRG();
 }
 
-static DECLFW(M183Write8800) {
-	prg[1] = V & 0x3F;
+static DECLFW(Write8800) {
+	m183.prg[1] = V & 0x3F;
 	VRC24_SyncPRG();
 }
 
-static DECLFW(M183WriteA800) {
-	prg[2] = V & 0x3F;
+static DECLFW(WriteA800) {
+	m183.prg[2] = V & 0x3F;
 	VRC24_SyncPRG();
 }
 
-static DECLFW(M183WriteA000) {
-	prg[3] = V & 0x3F;
+static DECLFW(WriteA000) {
+	m183.prg[3] = V & 0x3F;
 	VRC24_SyncPRG();
 }
 
-static void M183Power(void) {
-	prg[0] = 0;
-	prg[1] = 0;
-	prg[2] = 1;
-	prg[3] = ~1;
+static void Power(void) {
+	memset(&m183, 0, sizeof(m183));
+	m183.prg[3] = ~1;
 	VRC24_Power();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6800, 0x6FFF, M183Write6800);
-	SetWriteHandler(0x8800, 0x8FFF, M183Write8800);
-	SetWriteHandler(0xA800, 0xAFFF, M183WriteA800);
-	SetWriteHandler(0xA000, 0xA7FF, M183WriteA000);
+	SetWriteHandler(0x6800, 0x6FFF, Write6800);
+	SetWriteHandler(0x8800, 0x8FFF, Write8800);
+	SetWriteHandler(0xA800, 0xAFFF, WriteA800);
+	SetWriteHandler(0xA000, 0xA7FF, WriteA000);
 }
 
 void Mapper183_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 0, 1);
-	info->Power = M183Power;
-	VRC24_SyncPRG = M183PRG;
+	info->Power = Power;
+	VRC24_SyncPRG = SyncPRG;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

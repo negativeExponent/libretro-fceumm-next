@@ -30,80 +30,92 @@
 
 enum { IRQ_LOAD_MODE = 0, IRQ_CLOCK_MODE };
 
-static uint8 IRQPrescaler;
-static uint8 IRQMode;
-static uint8 IRQCount[2];
-static uint8 IRQPending;
+static struct {
+	uint8 IRQPrescaler;
+	uint8 IRQMode;
+	uint8 IRQCount[2];
+	uint8 IRQPending;
+} m222;
 
 static SFORMAT StateRegs[] = {
-	{ &IRQPrescaler, 1, "IRQP" },
-	{ &IRQMode, 1, "IRQM" },
-	{ &IRQCount[0], 1, "IQC0" },
-	{ &IRQCount[1], 1, "IQC1" },
-	{ &IRQPending, 1, "IQPN" },
+	{ &m222.IRQPrescaler, 1, "IRQP" },
+	{ &m222.IRQMode, 1, "IRQM" },
+	{ &m222.IRQCount[0], 1, "IQC0" },
+	{ &m222.IRQCount[1], 1, "IQC1" },
+	{ &m222.IRQPending, 1, "IQPN" },
 	{ 0 }
 };
 
-static DECLFW(M222WriteCHR) {
+static void SetPRGBank(uint16 A, uint16 V) {
+	setprg8(A, V & 0x1F);
+}
+
+static void SetCHRBank(uint16 A, uint16 V) {
+	setchr1(A, V & 0xFFF);
+}
+
+static DECLFW(WriteCHR) {
 	if (!(A & 0x0001)) {
 		VRC24_Write(A, V);
 		VRC24_Write(A | 0x0001, V >> 4);
 	}
 }
 
-static DECLFW(M222WriteIRQ) {
+static DECLFW(WriteIRQ) {
 	switch (A & 0xF003) {
 	case 0xF000:
-		IRQMode = IRQ_LOAD_MODE;
+		m222.IRQMode = IRQ_LOAD_MODE;
 		break;
 	case 0xF001:
 		X6502_IRQEnd(FCEU_IQEXT);
-		IRQPending = FALSE;
-		if (IRQMode == IRQ_LOAD_MODE) {
-			IRQCount[0] = V & 0x0F;
-			IRQCount[1] = V >> 4;
+		m222.IRQPending = FALSE;
+		if (m222.IRQMode == IRQ_LOAD_MODE) {
+			m222.IRQCount[0] = V & 0x0F;
+			m222.IRQCount[1] = V >> 4;
 		}
 		break;
 	case 0xF002:
-		IRQMode = IRQ_CLOCK_MODE;
+		m222.IRQMode = IRQ_CLOCK_MODE;
 		break;
 	}
 }
 
-static void M222CPUIRQHook(int a) {
+static void CPUIRQHook(int a) {
 	while (a--) {
-		uint8 prevPrescaler = IRQPrescaler;
-		if (IRQPending) {
-			IRQPrescaler = 0;
+		uint8 prevPrescaler = m222.IRQPrescaler;
+		if (m222.IRQPending) {
+			m222.IRQPrescaler = 0;
 		} else {
-			IRQPrescaler++;
+			m222.IRQPrescaler++;
 		}
-		if ((IRQMode == IRQ_CLOCK_MODE) && !(prevPrescaler & 0x40) && (IRQPrescaler & 0x40)) {
-			IRQCount[0]++;
-			if (IRQCount[0] == 0x0F) {
-				IRQCount[1]++;
-				if (IRQCount[1] == 0x0F) {
+		if ((m222.IRQMode == IRQ_CLOCK_MODE) && !(prevPrescaler & 0x40) && (m222.IRQPrescaler & 0x40)) {
+			m222.IRQCount[0]++;
+			if (m222.IRQCount[0] == 0x0F) {
+				m222.IRQCount[1]++;
+				if (m222.IRQCount[1] == 0x0F) {
 					X6502_IRQBegin(FCEU_IQEXT);
-					IRQPending = TRUE;
+					m222.IRQPending = TRUE;
 				}
 			}
-			IRQCount[0] &= 0x0F;
-			IRQCount[1] &= 0x0F;
+			m222.IRQCount[0] &= 0x0F;
+			m222.IRQCount[1] &= 0x0F;
 		}
 	}
 }
 
-static void M222Power(void) {
-	IRQMode = IRQ_LOAD_MODE;
-	IRQPending = IRQCount[0] = IRQCount[1] = IRQPrescaler = 0;
+static void Power(void) {
+	memset(&m222, 0, sizeof(m222));
+	m222.IRQMode = IRQ_LOAD_MODE;
 	VRC24_Power();
-	SetWriteHandler(0xB000, 0xEFFF, M222WriteCHR);
-	SetWriteHandler(0xF000, 0xFFFF, M222WriteIRQ);
+	SetWriteHandler(0xB000, 0xEFFF, WriteCHR);
+	SetWriteHandler(0xF000, 0xFFFF, WriteIRQ);
 }
 
 void Mapper222_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, 0, 1);
-	info->Power = M222Power;
-	MapIRQHook = M222CPUIRQHook;
+	VRC24_pwrap = SetPRGBank;
+	VRC24_cwrap = SetCHRBank;
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

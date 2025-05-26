@@ -50,7 +50,7 @@ static int DetectMMC1WRAMSize(CartInfo *info, int *saveRAM) {
 	return workRAM;
 }
 
-static void M001PW(uint16 A, uint16 V) {
+static void SetPRGBank_mmc1(uint16 A, uint16 V) {
 	if (iNESCart.submapper == 5) {
 		setprg32(0x8000, 0);
 	} else {
@@ -66,5 +66,5 @@ void Mapper001_Init(CartInfo *info) {
 	} else {
 		MMC1_Init(info, MMC1B, ws, bs);
 	}
-	MMC1_pwrap = M001PW;
+	MMC1_pwrap = SetPRGBank_mmc1;
 }

@@ -54,26 +54,26 @@ static void Sync(void) {
 	}
 }
 
-static DECLFR(M242Read) {
+static DECLFR(ReadDIP) {
 	if ((latch.addr & 0x100) && ((latch.addr & 0x00FF) == 0)) {
 		A |= dipsw;
 	}
-	return CartBROB(A);
+	return CartBR(A);
 }
 
-static void M242Power(void) {
+static void Power(void) {
 	dipsw = 0;
 	Latch_Power();
 }
 
-static void M242Reset(void) {
+static void Reset(void) {
 	dipsw = (dipsw + 1) & 0x1F;
 	Latch_RegReset();
 }
 
 void Mapper242_Init(CartInfo *info) {
-	Latch_Init(info, Sync, M242Read, TRUE, FALSE);
-	info->Power = M242Power;
-	info->Reset = M242Reset;
+	Latch_Init(info, Sync, ReadDIP, TRUE, FALSE);
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(&dipsw, 1, 0, "PADS");
 }

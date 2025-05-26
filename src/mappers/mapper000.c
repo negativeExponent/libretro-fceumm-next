@@ -21,10 +21,10 @@
 
 #include "mapinc.h"
 
-static void NROMClose(void) {
+static void Close(void) {
 }
 
-static void NROMPower(void) {
+static void Power(void) {
 	if (ROM.prg.size == (48 * 1024)) { /* NROM-368 */
 		setprg16(0x4000, 0);
 		setprg16(0x8000, 1);
@@ -46,8 +46,8 @@ static void NROMPower(void) {
 }
 
 void Mapper000_Init(CartInfo *info) {
-	info->Power = NROMPower;
-	info->Close = NROMClose;
+	info->Power = Power;
+	info->Close = Close;
 
 	WRAMSIZE = 8192;
 

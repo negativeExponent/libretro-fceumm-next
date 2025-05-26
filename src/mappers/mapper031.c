@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,42 +25,44 @@
 
 #include "mapinc.h"
 
-static uint8 prg[8];
+static struct {
+	uint8 prg[8];
+} m031;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 8, "PREG" },
+	{ m031.prg, 8, "PREG" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg4(0x8000, prg[0]);
-	setprg4(0x9000, prg[1]);
-	setprg4(0xA000, prg[2]);
-	setprg4(0xB000, prg[3]);
-	setprg4(0xC000, prg[4]);
-	setprg4(0xD000, prg[5]);
-	setprg4(0xE000, prg[6]);
-	setprg4(0xF000, prg[7]);
+	setprg4(0x8000, m031.prg[0]);
+	setprg4(0x9000, m031.prg[1]);
+	setprg4(0xA000, m031.prg[2]);
+	setprg4(0xB000, m031.prg[3]);
+	setprg4(0xC000, m031.prg[4]);
+	setprg4(0xD000, m031.prg[5]);
+	setprg4(0xE000, m031.prg[6]);
+	setprg4(0xF000, m031.prg[7]);
 	setchr8(0);
 }
 
-static DECLFW(M031Write) {
-	prg[A & 0x07] = V;
+static DECLFW(WritePRG) {
+	m031.prg[A & 0x07] = V;
 	Sync();
 }
 
-static void M031Power(void) {
-	prg[0] = ~7;
-	prg[1] = ~6;
-	prg[2] = ~5;
-	prg[3] = ~4;
-	prg[4] = ~3;
-	prg[5] = ~2;
-	prg[6] = ~1;
-	prg[7] = ~0;
+static void Power(void) {
+	m031.prg[0] = ~7;
+	m031.prg[1] = ~6;
+	m031.prg[2] = ~5;
+	m031.prg[3] = ~4;
+	m031.prg[4] = ~3;
+	m031.prg[5] = ~2;
+	m031.prg[6] = ~1;
+	m031.prg[7] = ~0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x5000, 0x5FFF, M031Write);
+	SetWriteHandler(0x5000, 0x5FFF, WritePRG);
 }
 
 static void StateRestore(int version) {
@@ -68,7 +70,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper031_Init(CartInfo *info) {
-	info->Power = M031Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

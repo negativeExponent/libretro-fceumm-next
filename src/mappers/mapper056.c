@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,73 +28,88 @@
 #include "mapinc.h"
 #include "ks202.h"
 
-static uint8 prg[4];
-static uint8 chr[8];
-static uint8 mirr;
+static struct {
+	uint8 prg[4];
+	uint8 chr[8];
+	uint8 mirror;
+} m056;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 8, "PREG" },
-	{ chr, 8, "CREG" },
-	{ &mirr, 1, "MIRR" },
+	{ m056.prg, 4, "PREG" },
+	{ m056.chr, 8, "CREG" },
+	{ &m056.mirror, 1, "MIRR" },
 	{ 0 }
 };
+
+static void SyncPRG(void) {
+	setprg8(0x8000, (m056.prg[0] & 0x10) | (ks202.reg[1] & 0x0F));
+	setprg8(0xA000, (m056.prg[1] & 0x10) | (ks202.reg[2] & 0x0F));
+	setprg8(0xC000, (m056.prg[2] & 0x10) | (ks202.reg[3] & 0x0F));
+	setprg8(0xE000, (m056.prg[3] & 0x10) | (~0 & 0x0F));
+}
+
+static void SyncCHR(void) {
+	setchr1(0x0000, m056.chr[0]);
+	setchr1(0x0400, m056.chr[1]);
+	setchr1(0x0800, m056.chr[2]);
+	setchr1(0x0C00, m056.chr[3]);
+	setchr1(0x1000, m056.chr[4]);
+	setchr1(0x1400, m056.chr[5]);
+	setchr1(0x1800, m056.chr[6]);
+	setchr1(0x1C00, m056.chr[7]);
+}
+
+static void SyncMirror(void) {
+	setmirror(m056.mirror & 0x01);
+}
 
 static void Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
 
-	setprg8(0x8000, (prg[0] & 0x10) | (ks202.reg[1] & 0x0F));
-	setprg8(0xA000, (prg[1] & 0x10) | (ks202.reg[2] & 0x0F));
-	setprg8(0xC000, (prg[2] & 0x10) | (ks202.reg[3] & 0x0F));
-	setprg8(0xE000, (prg[3] & 0x10) | (~0 & 0x0F));
-
-	setchr1(0x0000, chr[0]);
-	setchr1(0x0400, chr[1]);
-	setchr1(0x0800, chr[2]);
-	setchr1(0x0C00, chr[3]);
-	setchr1(0x1000, chr[4]);
-	setchr1(0x1400, chr[5]);
-	setchr1(0x1800, chr[6]);
-	setchr1(0x1C00, chr[7]);
-
-	setmirror(mirr & 1);
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
-static DECLFW(M056Write) {
-	switch (A & 0x0F00) {
+static DECLFW(WriteReg) {
+	static int tmp = 0;
+	switch (A & 0x0C00) {
 	case 0x000:
-		prg[A & 0x03] = V;
+		m056.prg[A & 0x03] = V;
 		break;
 	case 0x800:
-		mirr = V;
+		m056.mirror = V;
 		break;
 	case 0xC00:
-		chr[A & 0x07] = V;
+		m056.chr[A & 0x07] = V;
 		break;
 	}
 	ks202.reg[ks202.cmd & 0x07] = V;
 	Sync();
 }
 
-static void M056Reset(void) {
-	prg[0] = prg[1] = prg[2] = prg[3] = 0x10;
-	chr[0] = chr[1] = chr[2] = chr[3] = 0;
-	chr[4] = chr[5] = chr[6] = chr[7] = 0;
-	mirr = 0;
+static void Reset(void) {
+	memset(&m056, 0, sizeof(m056));
+	m056.prg[0] = 0x10;
+	m056.prg[1] = 0x10;
+	m056.prg[2] = 0x10;
+	m056.prg[3] = 0x10;
 	Sync();
 }
 
-static void M056Power(void) {
-	prg[0] = prg[1] = prg[2] = prg[3] = 0x10;
-	chr[0] = chr[1] = chr[2] = chr[3] = 0;
-	chr[4] = chr[5] = chr[6] = chr[7] = 0;
-	mirr = 0;
+static void Power(void) {
+	memset(&m056, 0, sizeof(m056));
+	m056.prg[0] = 0x10;
+	m056.prg[1] = 0x10;
+	m056.prg[2] = 0x10;
+	m056.prg[3] = 0x10;
 	KS202_Power();
-	SetWriteHandler(0xF000, 0xFFFF, M056Write);
+	SetWriteHandler(0xF000, 0xFFFF, WriteReg);
 }
 
 void Mapper056_Init(CartInfo *info) {
 	KS202_Init(info, Sync, 1, 0);
-	info->Power = M056Power;
-	info->Reset = M056Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

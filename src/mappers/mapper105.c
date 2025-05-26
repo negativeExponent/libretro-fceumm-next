@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 static uint32 count;
 static uint32 count_target = 0x28000000;
 
-static void M105IRQHook(int a) {
+static void CPUIRQHook(int a) {
 	while (a--) {
 		if (mmc1.reg[1] & 0x10) {
 			count = 0;
@@ -41,11 +41,11 @@ static void M105IRQHook(int a) {
 	}
 }
 
-static void M105CW(uint16 A, uint16 V) {
+static void SetCHRBank_mmc1(uint16 A, uint16 V) {
 	setchr8r(0, 0);
 }
 
-static void M105PW(uint16 A, uint16 V) {
+static void SetPRGBank_mmc1(uint16 A, uint16 V) {
 	if (mmc1.reg[1] & 0x08) {
 		setprg16(A, 8 | (V & 0x7));
 	} else {
@@ -53,22 +53,22 @@ static void M105PW(uint16 A, uint16 V) {
 	}
 }
 
-static void M105Power(void) {
+static void Power(void) {
 	count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
 	MMC1_Power();
 }
 
-static void M105Reset(void) {
+static void Reset(void) {
 	count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
 	MMC1_Reset();
 }
 
 void Mapper105_Init(CartInfo *info) {
 	MMC1_Init(info, MMC1B, 8, 0);
-	MMC1_cwrap = M105CW;
-	MMC1_pwrap = M105PW;
-	MapIRQHook = M105IRQHook;
-	info->Power = M105Power;
-	info->Reset = M105Reset;
+	MMC1_cwrap = SetCHRBank_mmc1;
+	MMC1_pwrap = SetPRGBank_mmc1;
+	MapIRQHook = CPUIRQHook;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(&count, 4, 0, "IRQC");
 }

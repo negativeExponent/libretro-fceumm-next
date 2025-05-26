@@ -39,7 +39,7 @@ static struct {
 	uint8 reg[8];
 } m268;
 
-static void SetPRGBank(uint16 A, uint16 V) {
+static void SetPRGBank_mmc3(uint16 A, uint16 V) {
 	uint8 chip = 0;
 	uint8 maskGnrom = 0;
 	uint8 gnromMode = (m268.reg[3] & 0x10) != 0;
@@ -111,9 +111,9 @@ static void SetPRGBank(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHRBank(uint16 A, uint16 V) {
-	uint8 gnromMode = (m268.reg[3] & 0x10) != 0;
+static void SetCHRBank_mmc3(uint16 A, uint16 V) {
 	uint16 base = ((m268.reg[0] << 4) & 0x380) | ((m268.reg[2] << 3) & 0x078);
+	uint8 gnromMode = (m268.reg[3] & 0x10) != 0;
 	uint8 maskMmc3 = (gnromMode ? 0x00 : ((m268.reg[0] & 0x80) ? 0x7F : 0xFF));
 	uint8 maskGnrom = (gnromMode ? 0x07 : 0x00);
 
@@ -218,8 +218,8 @@ static void Common_Init(CartInfo *info) {
 
 	MMC3_Init(info, MMC3B, ws / 1024, info->battery);
 	MMC3_SyncMirror = SyncMirror;
-	MMC3_pwrap = SetPRGBank;
-	MMC3_cwrap = SetCHRBank;
+	MMC3_pwrap = SetPRGBank_mmc3;
+	MMC3_cwrap = SetCHRBank_mmc3;
 
 	info->Power = Power;
 	info->Reset = Reset;

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2011 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,32 +21,34 @@
 
 #include "mapinc.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m170;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m170.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static DECLFW(M170ProtW) {
-	reg = ((V << 1) & 0x80);
+static DECLFW(Write) {
+	m170.reg = ((V << 1) & 0x80);
 }
 
-static DECLFR(M170ProtR) {
-	return (reg | (cpu.openbus & 0x7F));
+static DECLFR(Read) {
+	return (m170.reg | (cpu.openbus & 0x7F));
 }
 
-static void M170Power(void) {
+static void Power(void) {
 	setprg32(0x8000, 0);
 	setchr8(0);
-	SetReadHandler(0x7001, 0x7001, M170ProtR);
-	SetReadHandler(0x7777, 0x7777, M170ProtR);
+	SetReadHandler(0x7001, 0x7001, Read);
+	SetReadHandler(0x7777, 0x7777, Read);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6502, 0x6502, M170ProtW);
-	SetWriteHandler(0x7000, 0x7000, M170ProtW);
+	SetWriteHandler(0x6502, 0x6502, Write);
+	SetWriteHandler(0x7000, 0x7000, Write);
 }
 
 void Mapper170_Init(CartInfo *info) {
-	info->Power = M170Power;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

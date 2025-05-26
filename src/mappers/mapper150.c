@@ -23,25 +23,36 @@
 
 #include "mapinc.h"
 
+static struct {
+	uint8 cmd;
+	uint8 reg[8];
+} m150;
+
 static uint8 dipsw;
-static uint8 cmd;
-static uint8 reg[8];
+static uint8 compat_mode;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 8, "REGS" },
-	{ &dipsw, 1, "DPSW" },
-	{ &cmd, 1, "CMD0" },
+	{ m150.reg, 8, "REGS" },
+	{ &m150.cmd, 1, "CMD0" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg32(0x8000, (reg[2] & 0x01) | reg[5]);
-	if (iNESCart.mapper == 243) {
-		setchr8((reg[2] & 0x01) | ((reg[4] << 1) & 0x02) | (reg[6] << 2));
-	} else {
-		setchr8((reg[6] & 0x03) | ((reg[4] << 2) & 0x04) | (reg[2] << 3));
+static void SyncPRG(void) {
+	setprg32(0x8000, (m150.reg[2] & 0x01) | m150.reg[5]);
+}
+
+static void SyncCHR(void) {
+	if (compat_mode) { /* old dumps of m150/m243 with wrong bank order */
+		setchr8((m150.reg[2] << 3) | ((m150.reg[6] & 0x03) << 1) | (m150.reg[4] & 0x01));
+	} else if (iNESCart.mapper == 243) {
+		setchr8((m150.reg[2] & 0x01) | ((m150.reg[4] << 1) & 0x02) | (m150.reg[6] << 2));
+	} else { /* standard Mapper 150 */
+		setchr8((m150.reg[6] & 0x03) | ((m150.reg[4] << 2) & 0x04) | (m150.reg[2] << 3));
 	}
-	switch ((reg[7] >> 1) & 0x03) {
+}
+
+static void SyncMirror(void) {
+	switch ((m150.reg[7] >> 1) & 0x03) {
 	case 0:
 		setmirrorw(0, 1, 1, 1);
 		break;
@@ -57,54 +68,70 @@ static void Sync(void) {
 	}
 }
 
-static DECLFR(M150Read) {
+static DECLFR(Read) {
 	if ((A & 0x101) == 0x101) {
 		if (dipsw & 1)
-			return (reg[cmd] & 0x03) | (cpu.openbus & 0xFC);
+			return (m150.reg[m150.cmd] & 0x03) | (cpu.openbus & 0xFC);
 		else
-			return (reg[cmd] & 0x07) | (cpu.openbus & 0xF8);
+			return (m150.reg[m150.cmd] & 0x07) | (cpu.openbus & 0xF8);
 	}
 	return cpu.openbus;
 }
 
-static DECLFW(M150Write) {
+static DECLFW(Write) {
 	if (dipsw & 0x01)
 		V |= 0x04;
 	switch (A & 0x101) {
 	case 0x100:
-		cmd = V & 0x07;
+		m150.cmd = V & 0x07;
 		break;
 	case 0x101:
-		reg[cmd] = V & 0x07;
-		Sync();
+		m150.reg[m150.cmd] = V & 0x07;
+		SyncPRG();
+		SyncCHR();
+		SyncMirror();
 		break;
 	}
 }
 
-static void M150Restore(int version) {
-	Sync();
+static void StateRestore(int version) {
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
-static void M150Reset(void) {
+static void Reset(void) {
+	memset(&m150, 0, sizeof(m150));
 	dipsw ^= 0x01;
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
-	reg[4] = reg[5] = reg[6] = reg[7] = 0;
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
-static void M150Power(void) {
+static void Power(void) {
+	memset(&m150, 0, sizeof(m150));
 	dipsw = 0;
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
-	reg[4] = reg[5] = reg[6] = reg[7] = 0;
-	Sync();
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetReadHandler(0x4100, 0x5FFF, M150Read);
-	SetWriteHandler(0x4100, 0x5FFF, M150Write);
+	SetReadHandler(0x4100, 0x5FFF, Read);
+	SetWriteHandler(0x4100, 0x5FFF, Write);
 }
 
 void Mapper150_Init(CartInfo *info) {
-	info->Power = M150Power;
-	info->Reset = M150Reset;
-	GameStateRestore = M150Restore;
+	info->Power = Power;
+	info->Reset = Reset;
+	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
+
+	compat_mode = FALSE;
+	if ((info->CRC32 == 0x19C1ED51) || /* Poker III (Sachen) [!].nes */
+		(info->CRC32 == 0xF56D6D46) || /* Poker III (Sachen) [a1].nes */
+		(info->CRC32 == 0x695CC180)) {    /* Honey Peach [with wrong CHR bank order] */
+		compat_mode = TRUE;
+		FCEU_printf(" Running in compatibility mode\n");
+	}
 }

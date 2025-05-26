@@ -68,7 +68,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-uint8 VRC24_GetPRGBank(int bank) {
+uint16 VRC24_GetPRGBank(int bank) {
 	if ((vrc24.cmd & 0x02) && (!(bank & 0x01))) {
 		bank ^= 0x02;
 	}
@@ -89,7 +89,7 @@ void VRC24_SyncPRG_default(void) {
 	VRC24_pwrap(0xE000, VRC24_GetPRGBank(3));
 }
 
-uint8 VRC24_GetCHRBank(int bank) {
+uint16 VRC24_GetCHRBank(int bank) {
 	return vrc24.chr[bank];
 }
 

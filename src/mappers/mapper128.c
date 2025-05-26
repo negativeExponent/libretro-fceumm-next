@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,41 +21,43 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint16 reg = 0;
+static struct {
+	uint16 reg;
+} m128;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m128.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg16(0x8000, (reg >> 2) | (latch.data & 0x07));
-	setprg16(0xC000, (reg >> 2) | 0x07);
+	setprg16(0x8000, (m128.reg >> 2) | (latch.data & 0x07));
+	setprg16(0xC000, (m128.reg >> 2) | 0x07);
 	setchr8(0);
-	setmirror(((reg >> 1) & 0x01) ^ 0x01);
+	setmirror(((m128.reg >> 1) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M128Write) {
-	if (reg < 0xF000) {
-		reg = A & 0xFFFF;
+static DECLFW(WriteLatch) {
+	if (m128.reg < 0xF000) {
+		m128.reg = A & 0xFFFF;
 	}
 	Latch_Write(A, V);
 }
 
-static void M128Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m128.reg = 0;
 	Latch_RegReset();
 }
 
-static void M128Power(void) {
-	reg = 0;
+static void Power(void) {
+	m128.reg = 0;
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M128Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper128_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M128Power;
-	info->Reset = M128Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -4,7 +4,7 @@
  *  Copyright (C) 2011 CaH4e3
  *  Copyright (C) 2019 Libretro Team
  *  Copyright (C) 2020
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,10 +32,12 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 extraRAM[4];
+static struct {
+	uint8 scratch[4];
+} m225;
 
 static SFORMAT StateRegs[] = {
-	{ extraRAM, 4, "PROT" },
+	{ m225.scratch, 4, "IRAM" },
 	{ 0 }
 };
 
@@ -43,7 +45,7 @@ static void Sync(void) {
 	uint8 base = (latch.addr >> 8) & 0x40;
 	uint8 prg = (latch.addr >> 6) & 0x3F;
 	uint8 chr = latch.addr & 0x3F;
-	uint8 mirr = ((latch.addr >> 13) & 1) ^ 1;
+	uint8 mirror = ((latch.addr >> 13) & 1) ^ 1;
 
 	if (latch.addr & 0x1000) {
 		setprg16(0x8000, base | prg);
@@ -52,32 +54,27 @@ static void Sync(void) {
 		setprg32(0x8000, (base | prg) >> 1);
 	}
 	setchr8(base | chr);
-	setmirror(mirr);
+	setmirror(mirror);
 }
 
-static DECLFW(M225LoWrite) {
+static DECLFR(Read5800) {
+	return m225.scratch[A & 0x03];
+}
+
+static DECLFW(Write5800) {
 	/* e.g. 115-in-1 [p1][!] CRC32 0xb39d30b4 */
-	if (A & 0x800) {
-		extraRAM[A & 3] = V & 0x0F;
-	}
+	m225.scratch[A & 0x03] = V & 0x0F;
 }
 
-static DECLFR(M225LoRead) {
-	if (A & 0x800) {
-		return extraRAM[A & 3];
-	}
-	return cpu.openbus;
-}
-
-static void M225Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetReadHandler(0x5000, 0x5fff, M225LoRead);
-	SetWriteHandler(0x5000, 0x5fff, M225LoWrite);
+	SetReadHandler(0x5800, 0x5FFF, Read5800);
+	SetWriteHandler(0x5800, 0x5FFF, Write5800);
 }
 
 void Mapper225_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M225Power;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }
 

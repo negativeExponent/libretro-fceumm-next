@@ -40,7 +40,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRGBank(uint16 A, uint16 V) {
+static void SetPRGBank_mmc3(uint16 A, uint16 V) {
 	uint8 base = m260.reg[1] & 0x3F;
 
 	switch (m260.reg[0] & 0x07) {
@@ -70,7 +70,7 @@ static void SetPRGBank(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHRBank(uint16 A, uint16 V) {
+static void SetCHRBank_mmc3(uint16 A, uint16 V) {
 	uint16 base = m260.reg[2] & 0x7F;
 	uint8 mode = m260.reg[0] & 0x07;
 
@@ -149,8 +149,8 @@ static void Power(void) {
 
 void Mapper260_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = SetCHRBank;
-	MMC3_pwrap = SetPRGBank;
+	MMC3_cwrap = SetCHRBank_mmc3;
+	MMC3_pwrap = SetPRGBank_mmc3;
 	MMC3_SyncMirror = SyncMirror;
 	info->Power = Power;
 	info->Reset = Reset;

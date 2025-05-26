@@ -86,52 +86,52 @@ static const uint8 mmc3Mangle[16][8] = {
 	{ 0, 1, 2, 3, 4, 5, 6, 7 } /* Submapper F: Jungletac (CPU opcode encryption only) */
 };
 
-static void M256Sync(void) {
+static void Sync(void) {
 	OneBus_SyncPRG(0x0FFF, 0);
 	OneBus_SyncCHR(0x7FFF, 0);
 	OneBus_SyncMirror();
 }
 
-static DECLFW(M256WritePPU201X) {
+static DECLFW(WritePPU201X) {
 	A = 0x2012 + ppuMangle[iNESCart.submapper][A - 0x2012];
 	OneBus_WritePPU20XX(A, V);
 }
 
-static DECLFW(M256WriteCPU410X) {
+static DECLFW(WriteCPU410X) {
 	A = 0x4107 + cpuMangle[iNESCart.submapper][A - 0x4107];
 	OneBus_WriteCPU41XX(A, V);
 }
 
-static DECLFW(M256WriteMMC3) {
+static DECLFW(WriteMMC3) {
 	if (!(A & 0x01)) {
 		V = (V & 0xF8) | mmc3Mangle[iNESCart.submapper][V & 0x07];
 	}
 	OneBus_WriteMMC3(A, V);
 }
 
-static uint8 M256OpcodeCallback(uint8 opcode) {
+static uint8 OpcodeCallback(uint8 opcode) {
 	if (iNESCart.submapper == 14 && onebus.cpu41xx[0x1C] & 0x40) {
 		return (((opcode << 1) & 0x80) | ((opcode >> 1) & 0x40) | (opcode & 0x3F));
 	}
 	return opcode;
 }
 
-static void M256Power(void) {
+static void Power(void) {
 	OneBus_Power();
-	SetWriteHandler(0x2012, 0x2017, M256WritePPU201X);
-	SetWriteHandler(0x4107, 0x410A, M256WriteCPU410X);
-	SetWriteHandler(0x8000, 0x9FFF, M256WriteMMC3);
+	SetWriteHandler(0x2012, 0x2017, WritePPU201X);
+	SetWriteHandler(0x4107, 0x410A, WriteCPU410X);
+	SetWriteHandler(0x8000, 0x9FFF, WriteMMC3);
 	if (iNESCart.submapper == 14) {
 		onebus.cpu41xx[0x1C] = 0x40;
-		X6502_SetOpcodeEncryptCB(&M256OpcodeCallback);
+		X6502_SetOpcodeEncryptCB(&OpcodeCallback);
 	}
 }
 
-static void M256Reset(void) {
+static void Reset(void) {
 	OneBus_Reset();
 	if (iNESCart.submapper == 14) {
 		onebus.cpu41xx[0x1C] = 0x40;
-		X6502_SetOpcodeEncryptCB(&M256OpcodeCallback);
+		X6502_SetOpcodeEncryptCB(&OpcodeCallback);
 	}
 }
 
@@ -146,7 +146,7 @@ void Mapper256_Init(CartInfo *info) {
 		iNESCart.submapper = (((*(uint32 *)&(info->MD5)) == 0x305fcdc3) || ((*(uint32 *)&(info->MD5)) == 0x6abfce8e)) ? 2 : 0; /* PowerJoy Supermax Carts */
 	}
 
-	OneBus_Init(info, M256Sync, ws, info->battery);
-	info->Power = M256Power;
-	info->Reset = M256Reset;
+	OneBus_Init(info, Sync, ws, info->battery);
+	info->Power = Power;
+	info->Reset = Reset;
 }

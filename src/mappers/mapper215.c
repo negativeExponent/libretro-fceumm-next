@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2011 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,10 +35,75 @@
  * 9-in-1 High Standard Card: The Lion King, EarthWorm Jim 2, Aladdin, Boogerman, Somari, Turtles Tournament Fighters, Mortal Kombat 3, Captain Tsubasa 2, Taito Basketball (king001)
  */
 
+/* TODO: Enable dipswitch when proper menu or ddipswitch database is established */
+
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[4];
+static struct {
+	uint8 reg[8];
+} m215;
+
+static SFORMAT StateRegs[] = {
+	{ m215.reg, 8, "EXPR" },
+	{ 0 },
+};
+
+static void SetPRGBank_mmc3(uint16 A, uint16 V) {
+	uint16 mask = (m215.reg[0] & 0x40) ? 0x0F : 0x1F;
+	uint16 base = ((m215.reg[1] << 4) & 0x80) | ((m215.reg[1] << 5) & 0x60) | (m215.reg[1] & 0x10);
+
+	/* if (dipsw) {
+		if (dipsw & 0x01) {
+			base &= dipsw;
+		} else {
+			base |= dipsw;
+		}
+	} */
+
+	if (m215.reg[0] & 0x80) { /* NROM */
+		uint16 A14 = (m215.reg[0] >> 4) & 0x02;
+		uint16 tmpmask = (A14 | 0x01);
+		V = (((m215.reg[0] & 0x0F) << 1) & ~tmpmask) | ((A >> 13) & tmpmask);
+	}
+
+	setprg8(A, (base & ~mask) | (V & mask));
+}
+
+static void SetCHRBank_mmc3(uint16 A, uint16 V) {
+	uint16 mask = (m215.reg[0] & 0x40) ? 0x7F : 0xFF;
+	uint16 base = ((m215.reg[1] << 2) & 0x80) |
+	    (m215.reg[1] << ((iNESCart.submapper == 1) ? 7 : 6) & 0x700);
+
+	/* if (dipsw) {
+		if (dipsw & 0x01) {
+			base &= ((dipsw << 3) | 0x07);
+		}
+	} */
+
+	setchr1(A, (base & ~mask) | (V & mask));
+}
+
+static const uint8 protarray[8][8] = {
+	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, /* 0 Super Hang-On               */
+	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00 }, /* 1 Monkey King                 */
+	{ 0x00, 0x00, 0x00, 0x00, 0x03, 0x04, 0x00, 0x00 }, /* 2 Super Hang-On/Monkey King   */
+	{ 0x00, 0x00, 0x00, 0x01, 0x00, 0x04, 0x05, 0x00 }, /* 3 Super Hang-On/Monkey King   */
+	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, /* 4                             */
+	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, /* 5                             */
+	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, /* 6                             */
+	{ 0x00, 0x00, 0x00, 0x01, 0x02, 0x04, 0x0F, 0x00 } /* 7 (default) Blood of Jurassic */
+};
+
+static DECLFR(ReadProtection) {
+	return (cpu.openbus & ~0x0F) | (protarray[m215.reg[2] & 0x07][A & 0x07] & 0x0F);
+}
+
+static DECLFW(WriteReg) {
+	m215.reg[A & 0x07] = V;
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
+}
 
 static const uint8 regperm[8][8] = {
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
@@ -62,64 +127,11 @@ static const uint16 adrperm[8][8] = {
 	{ 0x8000, 0x8001, 0xA000, 0xA001, 0xC000, 0xC001, 0xE000, 0xE001 }, /* empty */
 };
 
-static const uint8 protarray[8][8] = {
-	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, /* 0 Super Hang-On               */
-	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00 }, /* 1 Monkey King                 */
-	{ 0x00, 0x00, 0x00, 0x00, 0x03, 0x04, 0x00, 0x00 }, /* 2 Super Hang-On/Monkey King   */
-	{ 0x00, 0x00, 0x00, 0x01, 0x00, 0x04, 0x05, 0x00 }, /* 3 Super Hang-On/Monkey King   */
-	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, /* 4                             */
-	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, /* 5                             */
-	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, /* 6                             */
-	{ 0x00, 0x00, 0x00, 0x01, 0x02, 0x04, 0x0F, 0x00 } /* 7 (default) Blood of Jurassic */
-};
-
-static void M215CW(uint16 A, uint16 V) {
-	uint16 mask = (reg[0] & 0x40) ? 0x7F : 0xFF;
-	uint16 base;
-
-	if (iNESCart.submapper == 1) {
-		base = (reg[1] << 7) & 0x700;
-	} else {
-		base = (reg[1] << 6) & 0x300;
-	}
-
-	base = (base & ~mask) | (((reg[1] << 2) & 0x80) & ~mask);
-	setchr1(A, base | (V & mask));
-}
-
-static void M215PW(uint16 A, uint16 V) {
-	uint16 mask = (reg[0] & 0x40) ? 0x0F : 0x1F;
-	uint16 base;
-
-	if (iNESCart.submapper == 1) {
-		base = ((reg[1] << 5) & 0x60) | ((reg[1] << 4) & 0x80);
-	} else {
-		base = (reg[1] << 5) & 0x60;
-	}
-
-	if (reg[0] & 0x80) { /* NROM */
-		uint16 bank = (((reg[1] & 0x10) & ~mask) >> 1) | ((base & ~mask) >> 1) | (reg[0] & (mask >> 1));
-
-		if (reg[0] & 0x20) { /* NROM-256 */
-			setprg32(0x8000, bank >> 1);
-		} else { /* NROM-128 */
-			setprg16(0x8000, bank);
-			setprg16(0xC000, bank);
-		}
-	} else {
-		setprg8(A, ((reg[1] & 0x10) & ~mask) | (base & ~mask) | (V & mask));
-	}
-}
-
-static DECLFR(M215ProtRead) {
-	return (cpu.openbus & ~0x0F) | (protarray[reg[2]][A & 0x07] & 0x0F);
-}
-
-static DECLFW(M215Write) {
-	A = adrperm[reg[3]][((A >> 12) & 0x06) | (A & 0x01)];
+static DECLFW(WriteMMC3Reg) {
+	A = adrperm[m215.reg[7] & 0x07][((A >> 12) & 0x06) | (A & 0x01)];
 	switch (A & 0xE001) {
 	case 0x8000:
-		MMC3_Write(A, (V & 0xC0) | regperm[reg[3]][V & 0x07]);
+		MMC3_Write(A, (V & 0xC0) | regperm[m215.reg[7] & 0x07][V & 0x07]);
 		break;
 	default:
 		MMC3_Write(A, V);
@@ -127,55 +139,36 @@ static DECLFW(M215Write) {
 	}
 }
 
-static DECLFW(M215Write5) {
-	switch (A & 0x07) {
-	case 0:
-		reg[0] = V;
-		MMC3_SyncPRG();
-		MMC3_SyncCHR();
-		break;
-	case 1:
-		reg[1] = V;
-		MMC3_SyncPRG();
-		MMC3_SyncCHR();
-		break;
-	case 2:
-		reg[2] = V & 0x07;
-		break;
-	case 7:
-		reg[3] = V & 0x07;
-		break;
-	}
-}
-
-static void M215Power(void) {
-	reg[0] = 0x00;
-	reg[1] = 0x0F;
-	reg[3] = 0x04;
-	reg[2] = 0x07;
+static void Power(void) {
+	memset(&m215, 0, sizeof(m215));
+	m215.reg[1] = 0xFF;
+	m215.reg[2] = 0x07;
+	m215.reg[7] = 0x04;
+	/* dipsw = 0; */
 	MMC3_Power();
-	SetReadHandler(0x5000, 0x5FFF, M215ProtRead);
-	SetWriteHandler(0x5000, 0x5FFF, M215Write5);
-	SetWriteHandler(0x8000, 0xFFFF, M215Write);
+	SetReadHandler(0x5000, 0x5FFF, ReadProtection);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
+	SetWriteHandler(0x8000, 0xFFFF, WriteMMC3Reg);
 }
 
-static void M215Reset(void) {
-	reg[0] = 0x00;
-	reg[1] = 0x0F;
-	reg[3] = 0x04;
-	reg[2] = 0x07;
+static void Reset(void) {
+	memset(&m215, 0, sizeof(m215));
+	m215.reg[1] = 0xFF;
+	m215.reg[7] = 0x04;
+	m215.reg[2] = 0x07;
+	/* dipsw = (dipsw + 1) & 0x3F; */
 	MMC3_Reset();
 }
 
 void Mapper215_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M215CW;
-	MMC3_pwrap = M215PW;
+	MMC3_cwrap = SetCHRBank_mmc3;
+	MMC3_pwrap = SetPRGBank_mmc3;
 
-	info->Power = M215Power;
-	info->Reset = M215Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 
-	AddExState(reg, 4, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, 0);
 
 	if ((!info->iNES2) && (ROM.prg.size >= (2048 * 1024))) { /* UNL-8237A */
 		info->submapper = 1;

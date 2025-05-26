@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ static void Sync(void) {
 	} else {
 		setprg32(0x8000, (latch.addr >> 7) & 0x3F);
 	}
-	setchr8(((latch.addr << 2) & 0x3C) | (latch.data & 0x3));
+	setchr8(((latch.addr << 2) & 0x3C) | (latch.data & 0x03));
 	setmirror(((latch.addr >> 13) & 0x01) ^ 0x01);
 }
 

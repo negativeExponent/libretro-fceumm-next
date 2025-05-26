@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,55 +24,56 @@
 
 #include "mapinc.h"
 
-static uint8 reg;
-static uint32 IRQCount, IRQa;
+static struct {
+	uint8 reg;
+	uint32 IRQCount, IRQa;
+} m050;
 
 static SFORMAT StateRegs[] = {
-	{ &IRQCount, 4, "IRQC" },
-	{ &IRQa, 4, "IRQA" },
-	{ &reg, 1, "REG" },
+	{ &m050.IRQCount, 4, "IRQC" },
+	{ &m050.IRQa, 4, "IRQA" },
+	{ &m050.reg, 1, "REG" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 prg = ((reg & 0x01) << 2) | ((reg & 0x02) >> 1) | ((reg & 0x04) >> 1) | (reg & 0x08);
+	uint8 prg = ((m050.reg & 0x01) << 2) | ((m050.reg & 0x02) >> 1) | ((m050.reg & 0x04) >> 1) | (m050.reg & 0x08);
 
-	setprg8(0x6000, 15);
-	setprg8(0x8000, 8);
-	setprg8(0xA000, 9);
+	setprg8(0x6000, 0x0F);
+	setprg8(0x8000, 0x08);
+	setprg8(0xA000, 0x09);
 	setprg8(0xC000, prg);
-	setprg8(0xE000, 11);
+	setprg8(0xE000, 0x0B);
 	setchr8(0);
 }
 
-static DECLFW(M050Write) {
+static DECLFW(WriteReg) {
 	switch (A & 0xD160) {
 	case 0x4120:
-		IRQa = V & 0x01;
-		if (!IRQa) {
-			IRQCount = 0;
+		m050.IRQa = V & 0x01;
+		if (!m050.IRQa) {
+			m050.IRQCount = 0;
 			X6502_IRQEnd(FCEU_IQEXT);
 		}
 		break;
 	case 0x4020:
-		reg = V;
+		m050.reg = V;
 		Sync();
 		break;
 	}
 }
 
-static void M050Power(void) {
-	reg = 0;
-	IRQa = IRQCount = 0;
+static void Power(void) {
+	memset(&m050, 0, sizeof(m050));
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4020, 0x4FFF, M050Write);
+	SetWriteHandler(0x4020, 0x4FFF, WriteReg);
 }
 
-static void M050IRQHook(int a) {
-	if (IRQa) {
-		IRQCount += a;
-		if (IRQCount & 0x1000) {
+static void CPUIRQHook(int a) {
+	if (m050.IRQa) {
+		m050.IRQCount += a;
+		if (m050.IRQCount & 0x1000) {
 			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
@@ -83,8 +84,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper050_Init(CartInfo *info) {
-	info->Power = M050Power;
-	MapIRQHook = M050IRQHook;
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

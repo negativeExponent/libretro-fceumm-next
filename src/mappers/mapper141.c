@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,26 +22,36 @@
 
 #include "mapinc.h"
 
-static uint8 cmd;
-static uint8 reg[8];
+static struct {
+	uint8 cmd;
+	uint8 reg[8];
+} m141;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 8, "REGS" },
-	{ &cmd, 1, "CMD0" },
+	{ m141.reg, 8, "REGS" },
+	{ &m141.cmd, 1, "CMD0" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg32(0x8000, reg[5]);
+static void SyncPRG(void) {
+	setprg32(0x8000, m141.reg[5]);
+}
+
+static void SyncCHR(void) {
 	if (!ROM.chr.size) {
 		setchr8(0);
 	} else {
-		setchr2(0x0000, (((reg[4] << 3) | (reg[(reg[7] & 0x01) ? 0 : 0] & 0x07)) << 1) | 0);
-		setchr2(0x0800, (((reg[4] << 3) | (reg[(reg[7] & 0x01) ? 0 : 1] & 0x07)) << 1) | 1);
-		setchr2(0x1000, (((reg[4] << 3) | (reg[(reg[7] & 0x01) ? 0 : 2] & 0x07)) << 1) | 0);
-		setchr2(0x1800, (((reg[4] << 3) | (reg[(reg[7] & 0x01) ? 0 : 3] & 0x07)) << 1) | 1);
+		uint16 base = m141.reg[4] << 3;
+
+		setchr2(0x0000, ((base | (m141.reg[(m141.reg[7] & 0x01) ? 0 : 0] & 0x07)) << 1) | 0);
+		setchr2(0x0800, ((base | (m141.reg[(m141.reg[7] & 0x01) ? 0 : 1] & 0x07)) << 1) | 1);
+		setchr2(0x1000, ((base | (m141.reg[(m141.reg[7] & 0x01) ? 0 : 2] & 0x07)) << 1) | 0);
+		setchr2(0x1800, ((base | (m141.reg[(m141.reg[7] & 0x01) ? 0 : 3] & 0x07)) << 1) | 1);
 	}
-	switch (reg[7] & 0x07) {
+}
+
+static void SyncMirror(void) {
+	switch (m141.reg[7] & 0x07) {
 	case 0:
 		setmirrorw(0, 0, 0, 1);
 		break;
@@ -57,32 +67,52 @@ static void Sync(void) {
 	}
 }
 
-static DECLFW(M141Write) {
+static DECLFW(WriteReg) {
 	if ((A & 0x4000) && (A & 0x100)) {
 		if (A & 0x01) {
-			reg[cmd & 0x07] = V;
-			Sync();
+			m141.reg[m141.cmd & 0x07] = V;
+			switch (m141.cmd & 0x07) {
+			case 0:
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 6:
+				SyncCHR();
+				break;
+			case 7:
+				SyncCHR();
+				SyncMirror();
+				break;
+			case 5:
+				SyncPRG();
+				break;
+			}
 		} else {
-			cmd = V;
+			m141.cmd = V;
 		}
 	}
 }
 
-static void M141Reset(void) {
-	cmd = 0;
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
-	reg[4] = reg[5] = reg[6] = reg[7] = 0;
-	Sync();
+static void Reset(void) {
+	memset(&m141, 0, sizeof(m141));
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4100, 0xFFFF, M141Write);
+	SetWriteHandler(0x4100, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper141_Init(CartInfo *info) {
-	info->Power = M141Reset;
+	info->Power = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

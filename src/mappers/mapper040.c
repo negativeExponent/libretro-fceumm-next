@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,80 +24,78 @@
 
 #include "mapinc.h"
 
-static uint8 reg[2];
-static uint32 IRQCount, IRQa;
+static struct {
+	uint8 prg;
+	uint8 outer;
+	uint32 IRQCount, IRQa;
+} m040;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
-	{ &IRQCount, 4, "IRQC" },
-	{ &IRQa, 4, "IRQA" },
+	{ &m040.prg, 1, "PREG" },
+	{ &m040.outer, 1, "OUTB" },
+	{ &m040.IRQCount, 4, "IRQC" },
+	{ &m040.IRQa, 4, "IRQA" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (reg[1] & 0x08) {
-		if (reg[1] & 0x10)
-			setprg32(0x8000, 2 | (reg[1] >> 6));
-		else {
-			setprg16(0x8000, 4 | (reg[1] >> 5));
-			setprg16(0xC000, 4 | (reg[1] >> 5));
+	if (m040.outer & 0x08) {
+		if (m040.outer & 0x10) {
+			setprg32(0x8000, 2 | (m040.outer >> 6));
+		} else {
+			setprg16(0x8000, 4 | (m040.outer >> 5));
+			setprg16(0xC000, 4 | (m040.outer >> 5));
 		}
 	} else {
 		setprg8(0x6000, 6);
 		setprg8(0x8000, 4);
 		setprg8(0xA000, 5);
-		setprg8(0xC000, reg[0] & 0x07);
+		setprg8(0xC000, m040.prg & 0x07);
 		setprg8(0xE000, 7);
 	}
-	setchr8((reg[1] >> 1) & 0x03);
-	setmirror((reg[1] & 0x01) ^ 0x01);
+	setchr8((m040.outer >> 1) & 0x03);
+	setmirror((m040.outer & 0x01) ^ 0x01);
 }
 
-static DECLFW(M040Write) {
-	switch (A & 0xE000) {
-	case 0x8000:
-		IRQa = FALSE;
-		IRQCount = 0;
-		X6502_IRQEnd(FCEU_IQEXT);
-		break;
-	case 0xA000:
-		IRQa = TRUE;
-		break;
-	case 0xC000:
-		if (iNESCart.submapper == 1) {
-			reg[1] = A & 0xFF;
-			Sync();
-		}
-		break;
-	case 0xE000:
-		reg[0] = V;
-		Sync();
-		break;
-	}
+static DECLFW(WriteIRQ) {
+	m040.IRQa = (A >> 13) & 0x01;
+	m040.IRQCount = 0;
+	X6502_IRQEnd(FCEU_IQEXT);
 }
 
-static void M040Power(void) {
-	reg[0] = reg[1] = 0;
-	IRQCount = IRQa = 0;
-	Sync();
-	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M040Write);
-}
-
-static void M040Reset(void) {
-	reg[0] = 0;
-	reg[1] = 0;
-	IRQCount = IRQa = 0;
+static DECLFW(WriteOuter) {
+	m040.outer = A & 0xFF;
 	Sync();
 }
 
-static void M040IRQHook(int a) {
-	if (IRQa) {
-		IRQCount += a;
-		if (IRQCount & 0x1000) {
+static DECLFW(WritePRG) {
+	m040.prg = V;
+	Sync();
+}
+
+static void CPUIRQHook(int a) {
+	if (m040.IRQa) {
+		m040.IRQCount += a;
+		if (m040.IRQCount & 0x1000) {
 			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
+}
+
+static void Power(void) {
+	memset(&m040, 0, sizeof(m040));
+	Sync();
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xBFFF, WriteIRQ);
+	if (iNESCart.submapper == 1) {
+		SetWriteHandler(0xC000, 0xDFFF, WriteOuter);
+	}
+	SetWriteHandler(0xE000, 0xFFFF, WritePRG);
+}
+
+static void Reset(void) {
+	memset(&m040, 0, sizeof(m040));
+	Sync();
 }
 
 static void StateRestore(int version) {
@@ -105,9 +103,9 @@ static void StateRestore(int version) {
 }
 
 void Mapper040_Init(CartInfo *info) {
-	info->Reset = M040Reset;
-	info->Power = M040Power;
-	MapIRQHook = M040IRQHook;
+	info->Reset = Reset;
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

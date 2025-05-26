@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,88 +24,104 @@
 
 #include "mapinc.h"
 
-static uint8 reg[8];
-static uint8 mirror, cmd, chrBase;
+static struct {
+	uint8 reg[8];
+	uint8 mirror, cmd, chrBase;
+} m112;
 
 static SFORMAT StateRegs[] = {
-	{ &cmd, 1, "CMD" },
-	{ &mirror, 1, "MIRR" },
-	{ &chrBase, 1, "CHRB" },
-	{ reg, 8, "REGS" },
+	{ &m112.cmd, 1, "CMD" },
+	{ &m112.mirror, 1, "MIRR" },
+	{ &m112.chrBase, 1, "CHRB" },
+	{ m112.reg, 8, "REGS" },
 	{ 0 }
 };
 
-static void Sync(void) {
+static void SyncPRG(void) {
 	setprg8r(0x10, 0x6000, 0);
 
-	setprg8(0x8000, reg[0]);
-	setprg8(0xA000, reg[1]);
-	setprg16(0xC000, ~0);
-
-	setchr2(0x0000, (reg[2] >> 1));
-	setchr2(0x0800, (reg[3] >> 1));
-	setchr1(0x1000, ((chrBase << 4) & 0x100) | reg[4]);
-	setchr1(0x1400, ((chrBase << 3) & 0x100) | reg[5]);
-	setchr1(0x1800, ((chrBase << 2) & 0x100) | reg[6]);
-	setchr1(0x1C00, ((chrBase << 1) & 0x100) | reg[7]);
-
-	setmirror((mirror & 0x01) ^ 0x01);
+	setprg8(0x8000, m112.reg[0]);
+	setprg8(0xA000, m112.reg[1]);
+	setprg16(0xC000, ~0);	
 }
 
-static DECLFW(M112Write) {
+static void SyncCHR(void) {
+	setchr2(0x0000, (m112.reg[2] >> 1));
+	setchr2(0x0800, (m112.reg[3] >> 1));
+	setchr1(0x1000, ((m112.chrBase << 4) & 0x100) | m112.reg[4]);
+	setchr1(0x1400, ((m112.chrBase << 3) & 0x100) | m112.reg[5]);
+	setchr1(0x1800, ((m112.chrBase << 2) & 0x100) | m112.reg[6]);
+	setchr1(0x1C00, ((m112.chrBase << 1) & 0x100) | m112.reg[7]);
+}
+
+static void SyncMirror(void) {
+	setmirror((m112.mirror & 0x01) ^ 0x01);
+}
+
+static DECLFW(WriteReg) {
 	switch (A & 0xE000) {
 	case 0x8000:
-		cmd = V;
+		m112.cmd = V;
 		break;
 	case 0xA000:
-		reg[cmd & 0x07] = V;
-		Sync();
+		m112.reg[m112.cmd & 0x07] = V;
+		SyncPRG();
+		SyncCHR();
 		break;
 	case 0xC000:
-		chrBase = V;
-		Sync();
+		m112.chrBase = V;
+		SyncCHR();
 		break;
 	case 0xE000:
-		mirror = V;
-		Sync();
+		m112.mirror = V;
+		SyncMirror();
 		break;
 	}
 }
 
-static void M112Close(void) {
+static void Close(void) {
 }
 
-static void M112Power(void) {
-	reg[0] = 0;
-	reg[1] = 1;
-	reg[2] = 0;
-	reg[3] = 2;
-	reg[4] = 4;
-	reg[5] = 5;
-	reg[6] = 6;
-	reg[7] = 7;
-	chrBase = 0;
-	Sync();
+static void Power(void) {
+	memset(&m112, 0, sizeof(m112));
+
+	m112.reg[0] = 0;
+	m112.reg[1] = 1;
+	m112.reg[2] = 0;
+	m112.reg[3] = 2;
+	m112.reg[4] = 4;
+	m112.reg[5] = 5;
+	m112.reg[6] = 6;
+	m112.reg[7] = 7;
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M112Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	FCEU_CheatAddRAM(8, 0x6000, WRAM);
+	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper112_Init(CartInfo *info) {
-	info->Power = M112Power;
-	info->Close = M112Close;
+	info->Power = Power;
+	info->Close = Close;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 
-	WRAM = (uint8 *)FCEU_gmalloc(8192);
-	SetupCartPRGMapping(0x10, WRAM, 8192, 1);
-	AddExState(WRAM, 8192, 0, "WRAM");
+	WRAMSIZE = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) : (info->battery ? 8192 : 0);
+	if (WRAMSIZE) {
+		WRAM = (uint8 *)FCEU_gmalloc(8192);
+		SetupCartPRGMapping(0x10, WRAM, 8192, 1);
+		AddExState(WRAM, 8192, 0, "WRAM");
+	}
 }

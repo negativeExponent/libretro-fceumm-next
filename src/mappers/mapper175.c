@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,26 +21,28 @@
 
 #include "mapinc.h"
 
-static uint8 reg[2], mirr;
+static struct {
+	uint8 reg[2], mirror;
+} m175;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REG" },
-	{ &mirr, 1, "MIRR" },
+	{ m175.reg, 2, "REG" },
+	{ &m175.mirror, 1, "MIRR" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg16(0x8000, reg[0]);
-	setprg16(0xC000, reg[0]);
-	setchr8(reg[0]);
-	setmirror(((mirr >> 2) & 0x01) ^ 0x01);
+	setprg16(0x8000, m175.reg[0]);
+	setprg16(0xC000, m175.reg[0]);
+	setchr8(m175.reg[0]);
+	setmirror(((m175.mirror >> 2) & 0x01) ^ 0x01);
 }
 
-static DECLFR(M175Read) {
+static DECLFR(ReadReg) {
 	switch (A & 0xF000) {
 	case 0xF000:
-		if (reg[0] != reg[1]) {
-			reg[0] = reg[1];
+		if (m175.reg[0] != m175.reg[1]) {
+			m175.reg[0] = m175.reg[1];
 			Sync();
 		}
 		break;
@@ -48,22 +50,22 @@ static DECLFR(M175Read) {
 	return CartBR(A);
 }
 
-static DECLFW(M175Write) {
+static DECLFW(WriteReg) {
 	switch (A & 0xF000) {
 	case 0x8000:
-		mirr = V;
+		m175.mirror = V;
 		Sync();
 		break;
 	case 0xA000:
-		reg[1] = V;
+		m175.reg[1] = V;
 		break;
 	}
 }
 
-static void M175Power(void) {
-	reg[0] = reg[1] = mirr = 0;
-	SetReadHandler(0x8000, 0xFFFF, M175Read);
-	SetWriteHandler(0x8000, 0xFFFF, M175Write);
+static void Power(void) {
+	m175.reg[0] = m175.reg[1] = m175.mirror = 0;
+	SetReadHandler(0x8000, 0xFFFF, ReadReg);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 	Sync();
 }
 
@@ -72,7 +74,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper175_Init(CartInfo *info) {
-	info->Power = M175Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

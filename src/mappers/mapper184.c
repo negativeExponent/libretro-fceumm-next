@@ -20,29 +20,31 @@
 
 #include "mapinc.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m184;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REG" },
+	{ &m184.reg, 1, "REG" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	setprg32(0x8000, 0);
-	setchr4(0x0000, reg & 0x0F);
-	setchr4(0x1000, (reg >> 4) & 0x0F);
+	setchr4(0x0000, m184.reg & 0x0F);
+	setchr4(0x1000, (m184.reg >> 4) & 0x0F);
 }
 
-static DECLFW(M184Write) {
-	reg = V;
+static DECLFW(WriteReg) {
+	m184.reg = V;
 	Sync();
 }
 
-static void M184Power(void) {
-	reg = 0;
+static void Power(void) {
+	m184.reg = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x7FFF, M184Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 static void StateRestore(int version) {
@@ -50,7 +52,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper184_Init(CartInfo *info) {
-	info->Power = M184Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

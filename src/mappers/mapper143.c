@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 #include "mapinc.h"
 
-static DECLFR(M143Read) {
+static DECLFR(ReadProtect) {
 	if ((A & 0x100) == 0x100) {
 		return (cpu.openbus & 0xC0) | ((~A) & 0x3F);
 	}
@@ -33,7 +33,7 @@ static void M143Power(void) {
 	setprg32(0x8000, 0);
 	setchr8(0);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetReadHandler(0x4100, 0x5FFF, M143Read);
+	SetReadHandler(0x4100, 0x5FFF, ReadProtect);
 }
 
 void Mapper143_Init(CartInfo *info) {

@@ -22,7 +22,7 @@
 #include "mapinc.h"
 #include "txc.h"
 
-static void M173Sync(void) {
+static void Sync(void) {
 	setprg32(0x8000, 0);
 	if (ROM.chr.size >= (16 * 1024)) {
 		setchr8(((txc.output & 0x01) | (txc.Y ? 0x02 : 0x00) | ((txc.output & 2) << 0x01)));
@@ -31,22 +31,22 @@ static void M173Sync(void) {
 	}
 }
 
-static DECLFW(M173Write) {
+static DECLFW(Write) {
 	TXC_Write(A, V & 0x0F);
 }
 
-static DECLFR(M173Read) {
+static DECLFR(Read) {
 	return ((cpu.openbus & 0xF0) | (TXC_Read(A) & 0x0F));
 }
 
-static void M173Power(void) {
+static void Power(void) {
 	TXC_Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetReadHandler(0x4100, 0x5FFF, M173Read);
-	SetWriteHandler(0x4100, 0xFFFF, M173Write);
+	SetReadHandler(0x4100, 0x5FFF, Read);
+	SetWriteHandler(0x4100, 0xFFFF, Write);
 }
 
 void Mapper173_Init(CartInfo *info) {
-	TXC_Init(info, M173Sync);
-	info->Power = M173Power;
+	TXC_Init(info, Sync);
+	info->Power = Power;
 }

@@ -25,11 +25,13 @@
 #include "latch.h"
 
 static void Sync(void) {
-	if (latch.addr & 0x40)
-		setprg32(0x8000, latch.addr >> 7);
-	else {
-		setprg16(0x8000, ((latch.addr >> 6) & 0x0E) | ((latch.addr >> 5) & 0x01));
-		setprg16(0xC000, ((latch.addr >> 6) & 0x0E) | ((latch.addr >> 5) & 0x01));
+	uint8 bank = ((latch.addr >> 6) & 0x0E) | ((latch.addr >> 5) & 0x01);
+
+	if (latch.addr & 0x40) {
+		setprg32(0x8000, bank >> 1);
+	} else {
+		setprg16(0x8000, bank);
+		setprg16(0xC000, bank);
 	}
 	setchr8(latch.addr & 0x0F);
 	setmirror(((latch.addr >> 4) & 0x01) ^ 0x01);
@@ -37,4 +39,5 @@ static void Sync(void) {
 
 void Mapper261_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
+	info->Reset = Latch_RegReset;
 }

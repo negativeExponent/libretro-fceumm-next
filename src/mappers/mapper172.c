@@ -22,7 +22,7 @@
 #include "mapinc.h"
 #include "jv001.h"
 
-static void M172Sync(void) {
+static void Sync(void) {
 	setprg32(0x8000, 0);
 	setchr8(jv001.output);
 	setmirror((jv001.X & 1) ^ 1);
@@ -33,22 +33,22 @@ static uint8 GetVal(uint8 V) {
 	        ((V >> 3) & 0x02) | ((V >> 5) & 0x01));
 }
 
-static DECLFW(M172Write) {
+static DECLFW(Write) {
 	JV001_Write(A, GetVal(V));
 }
 
-static DECLFR(M172Read) {
+static DECLFR(Read) {
 	return (cpu.openbus & 0xC0) | GetVal(JV001_Read(A));
 }
 
-static void M172Power(void) {
+static void Power(void) {
 	JV001_Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetReadHandler(0x4100, 0x5FFF, M172Read);
-	SetWriteHandler(0x4100, 0xFFFF, M172Write);
+	SetReadHandler(0x4100, 0x5FFF, Read);
+	SetWriteHandler(0x4100, 0xFFFF, Write);
 }
 
 void Mapper172_Init(CartInfo *info) {
-	JV001_Init(info, M172Sync);
-	info->Power = M172Power;
+	JV001_Init(info, Sync);
+	info->Power = Power;
 }

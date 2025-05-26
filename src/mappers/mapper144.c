@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,18 +27,18 @@ static void Sync(void) {
 	setchr8(latch.data >> 4);
 }
 
-static DECLFW(M144Write) {
+static DECLFW(WriteLatch) {
 	uint8 reg = CartBR(A);
-	latch.data = reg & ((V & reg) | 0x01);
+	latch.data = (reg & 0x01) | (V & reg & ~0x01);
 	Sync();
 }
 
 static void M144Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M144Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper144_Init(CartInfo *info) {
-	Latch_Init(info, Sync, NULL, FALSE, TRUE);
+	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Power = M144Power;
 }

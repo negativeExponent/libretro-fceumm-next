@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,43 +27,45 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[4];
-static uint8 cmd;
+static struct {
+	uint8 reg[4];
+	uint8 cmd;
+} m269;
 
-static void M269CW(uint16 A, uint16 V) {
-	uint16 mask = 0xFF >> (~reg[2] & 0xF);
-	uint16 base = ((reg[3] << 6) & 0x1000) | ((reg[2] << 4) & 0xF00) | reg[0];
+static void SetCHRBank(uint16 A, uint16 V) {
+	uint16 mask = 0xFF >> (~m269.reg[2] & 0xF);
+	uint16 base = ((m269.reg[3] << 6) & 0x1000) | ((m269.reg[2] << 4) & 0xF00) | m269.reg[0];
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void M269PW(uint16 A, uint16 V) {
-	uint16 mask = ~reg[3] & 0x3F;
-	uint16 base = ((reg[3] << 2) & 0x100) | reg[1];
+static void SetPRGBank(uint16 A, uint16 V) {
+	uint16 mask = ~m269.reg[3] & 0x3F;
+	uint16 base = ((m269.reg[3] << 2) & 0x100) | m269.reg[1];
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M269Write5) {
-	if (!(reg[3] & 0x80)) {
-		reg[cmd] = V;
-		cmd = (cmd + 1) & 3;
+static DECLFW(WriteReg) {
+	if (!(m269.reg[3] & 0x80)) {
+		m269.reg[m269.cmd] = V;
+		m269.cmd = (m269.cmd + 1) & 3;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M269Reset(void) {
-	reg[0] = reg[1] = reg[3] = cmd = 0;
-	reg[2] = 0x0F;
+static void Reset(void) {
+	memset(&m269, 0, sizeof(m269));
+	m269.reg[2] = 0x0F;
 	MMC3_Reset();
 }
 
-static void M269Power(void) {
-	reg[0] = reg[1] = reg[3] = cmd = 0;
-	reg[2] = 0x0F;
+static void Power(void) {
+	memset(&m269, 0, sizeof(m269));
+	m269.reg[2] = 0x0F;
 	MMC3_Power();
-	SetWriteHandler(0x5000, 0x5FFF, M269Write5);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 }
 
 static uint8 unscrambleCHR(uint8 data) {
@@ -79,12 +81,12 @@ static uint8 unscrambleCHR(uint8 data) {
 
 void Mapper269_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_cwrap = M269CW;
-	MMC3_pwrap = M269PW;
-	info->Power = M269Power;
-	info->Reset = M269Reset;
-	AddExState(reg, 4, 0, "EXPR");
-	AddExState(&cmd, 1, 0, "CMD0");
+	MMC3_cwrap = SetCHRBank;
+	MMC3_pwrap = SetPRGBank;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(m269.reg, 4, 0, "EXPR");
+	AddExState(&m269.cmd, 1, 0, "CMD0");
 
 	if (ROM.chr.size == 0) {
 		size_t i;

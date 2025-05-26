@@ -3,7 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
  *  Copyright (C) 2009 qeed
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,43 +26,47 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 mode;
+static struct {
+	uint8 mode;
+} m230;
 
 static SFORMAT StateRegs[] = {
-	{ &mode, 1, "MODE" },
+	{ &m230.mode, 1, "MODE" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (mode) { /* Contra mode */
+	if (m230.mode) { /* Contra m230.mode */
 		setprg16(0x8000, latch.data & 0x07);
 		setprg16(0xC000, 0x07);
 		setmirror(MI_V);
-	} else { /* multicart mode */
+	} else { /* multicart m230.mode */
+		uint8 bank = 0x08 + (latch.data & 0x1F);
+
 		if (latch.data & 0x20) {
-			setprg16(0x8000, 8 + (latch.data & 0x1F));
-			setprg16(0xC000, 8 + (latch.data & 0x1F));
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
 		} else {
-			setprg32(0x8000, (8 + (latch.data & 0x1F)) >> 1);
+			setprg32(0x8000, bank >> 1);
 		}
 		setmirror((latch.data >> 6) & 0x01);
 	}
 	setchr8(0);
 }
 
-static void M230Reset(void) {
-	mode ^= 1;
+static void Reset(void) {
+	m230.mode ^= 1;
 	Latch_RegReset();
 }
 
-static void M230Power(void) {
-	mode = 0;
+static void Power(void) {
+	m230.mode = 0;
 	Latch_Power();
 }
 
 void Mapper230_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M230Power;
-	info->Reset = M230Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

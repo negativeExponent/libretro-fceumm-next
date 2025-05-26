@@ -460,11 +460,12 @@ static void CheckHInfo(CartInfo *info, uint64 partialmd5) {
 			if (nesdb[x].prgram >= 0) {
 				int prgram = (nesdb[x].prgram & 0x0F) ? (64 << ((nesdb[x].prgram >> 0) & 0xF)) : 0;
 				int prgsaveram = (nesdb[x].prgram & 0xF0) ? (64 << ((nesdb[x].prgram >> 4) & 0xF)) : 0;
+
 				if (prgram != info->PRGRamSize || prgsaveram != info->PRGRamSaveSize) {
 					tofix |= 32;
 					info->iNES2          = 1;
-					info->PRGRamSize     = (nesdb[x].prgram & 0x0F) ? (64 << ((nesdb[x].prgram >> 0) & 0xF)) : 0;
-					info->PRGRamSaveSize = (nesdb[x].prgram & 0xF0) ? (64 << ((nesdb[x].prgram >> 4) & 0xF)) : 0;
+					info->PRGRamSize     = prgram;
+					info->PRGRamSaveSize = prgsaveram;
 				}
 			}
 
@@ -648,7 +649,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "IREM TAM-S1",               97, Mapper097_Init         )
 /*    INES_BOARD( "",                            98, Mapper98_Init ) */
 	INES_BOARD( "Vs. System",                99, Mapper099_Init         )
-    INES_BOARD( "Nesticle MMC3",            100, Mapper100_Init         ) 
+    INES_BOARD( "Nesticle MMC3",            100, Mapper100_Init         )
 	INES_BOARD( "",                         101, Mapper101_Init         )
 /*    INES_BOARD( "",                            102, Mapper102_Init ) */
 	INES_BOARD( "FDS DOKIDOKI FULL",        103, Mapper103_Init         )
@@ -699,14 +700,14 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "SA0037",                   148, Mapper148_Init         )
 	INES_BOARD( "SA0036",                   149, Mapper149_Init         )
 	INES_BOARD( "SA-015/SA-630",            150, Mapper150_Init         )
-	INES_BOARD( "Vs. Unisystem (Konami)",   151, Mapper151_Init         ) /* legacy support. all fixed roms should be using mapper 75 */
+	INES_BOARD( "Vs. Unisystem (Konami)",   151, Mapper075_Init         ) /* legacy support. all fixed roms should be using mapper 75 */
 	INES_BOARD( "",                         152, Mapper152_Init         )
 	INES_BOARD( "BANDAI SRAM",              153, Mapper153_Init         ) /* Bandai board 16 with SRAM instead of EEPROM */
 	INES_BOARD( "",                         154, Mapper154_Init         )
 	INES_BOARD( "",                         155, Mapper155_Init         )
 	INES_BOARD( "",                         156, Mapper156_Init         )
 	INES_BOARD( "BANDAI BARCODE",           157, Mapper157_Init         )
-	INES_BOARD( "TENGEN 800037",            158, Mapper158_Init         )
+	INES_BOARD( "TENGEN 800037",            158, Mapper064_Init         )
 	INES_BOARD( "BANDAI 24C01",             159, Mapper159_Init         ) /* Different type of EEPROM on the  bandai board */
 	INES_BOARD( "SA009/HUMMER/JY BOARD",    160, Mapper209_Init         ) /* iNES Mapper 160 appeared to describe variant behavior of iNES Mapper 090, but Mapper 90 fully encompasses the behavior Mapper 160 was intended to emulate. */
 /*    INES_BOARD( "",                            161, Mapper161_Init ) */
@@ -755,10 +756,10 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                         204, Mapper204_Init         )
 	INES_BOARD( "BMC 15-in-1/3-in-1",       205, Mapper205_Init         )
 	INES_BOARD( "NAMCOT 108 Rev. C",        206, Mapper206_Init         ) /* Deprecated, Used to be "DEIROM" whatever it means, but actually simple version of MMC3 */
-	INES_BOARD( "TAITO X1-005 Rev. B",      207, Mapper207_Init         )
+	INES_BOARD( "TAITO X1-005 Rev. B",      207, Mapper080_Init         )
 	INES_BOARD( "",                         208, Mapper208_Init         )
 	INES_BOARD( "HUMMER/JY BOARD",          209, Mapper209_Init         )
-	INES_BOARD( "",                         210, Mapper210_Init         )
+	INES_BOARD( "Namco 175/340",            210, Mapper210_Init         )
 	INES_BOARD( "HUMMER/JY BOARD",          211, Mapper209_Init         )
 	INES_BOARD( "",                         212, Mapper212_Init         )
 	INES_BOARD( "",                         213, Mapper058_Init         ) /* in mapper 58 */
@@ -1355,11 +1356,13 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 		FCEU_printf(" Submapper:    %2d\n", iNESCart.submapper);
 		if (PRGRAM || CHRRAM) {
 			if (iNESCart.battery) {
+				int wramtotal_1k = (PRGRAM / 1024) != 0;
+				int savesize_1k = (iNESCart.PRGRamSaveSize / 1024) != 0;
 				FCEU_printf(" PRG RAM:       %-3d %s ( %2d %s battery-backed )\n",
-					PRGRAM / 1024 ? PRGRAM / 1024 : PRGRAM,
-					PRGRAM / 1024 ? "KiB" : "bytes",
-					iNESCart.PRGRamSaveSize / 1024 ? iNESCart.PRGRamSaveSize / 1024 : iNESCart.PRGRamSaveSize,
-					PRGRAM / 1024 ? "KiB" : "bytes");
+					(wramtotal_1k ? PRGRAM / 1024 : PRGRAM),
+					(wramtotal_1k ? "KiB" : "bytes"),
+					(savesize_1k ? iNESCart.PRGRamSaveSize / 1024 : iNESCart.PRGRamSaveSize),
+					(savesize_1k ? "KiB" : "bytes"));
 				FCEU_printf(" CHR RAM:       %-3d KiB ( %2d KiB battery-backed)\n", CHRRAM / 1024, iNESCart.CHRRamSaveSize / 1024);
 			} else {
 				FCEU_printf(" PRG RAM:       %-3d KiB\n", PRGRAM / 1024);

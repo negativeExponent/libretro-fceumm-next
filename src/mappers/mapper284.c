@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,44 +25,46 @@
 #include "mapinc.h"
 #include "dripsound.h"
 
-static uint8 extattrib[2][1024];
-static uint8 jumper;
-static uint8 control;
-static uint8 prg;
-static uint8 chr[4];
-static uint8 IRQa;
-static uint8 IRQLatch;
-static int16 IRQCount;
-static uint16 lastAddr;
+static struct {
+	uint8 extattrib[2][1024];
+	uint8 jumper;
+	uint8 control;
+	uint8 prg;
+	uint8 chr[4];
+	uint8 IRQa;
+	uint8 IRQLatch;
+	int16 IRQCount;
+	uint16 lastAddr;
+} m284;
 
 static uint8 DRIPHack = FALSE;
 
 static SFORMAT StateRegs[] = {
-	{ &jumper, 1, "JUMP" },
-	{ &control, 1, "CTRL" },
-	{ &prg, 1, "PREG" },
-	{ chr, 4, "CREG" },
-	{ &IRQa, 1, "IRQA" },
-	{ &IRQLatch, 1, "IRQL" },
-	{ &IRQCount, 2, "IRQC" },
-	{ &lastAddr, 2, "LADD" },
+	{ &m284.jumper, 1, "JUMP" },
+	{ &m284.control, 1, "CTRL" },
+	{ &m284.prg, 1, "PREG" },
+	{ m284.chr, 4, "CREG" },
+	{ &m284.IRQa, 1, "IRQA" },
+	{ &m284.IRQLatch, 1, "IRQL" },
+	{ &m284.IRQCount, 2, "IRQC" },
+	{ &m284.lastAddr, 2, "LADD" },
 	{ 0 }
 };
 
-static uint8 Sync(void) {
-	if (control & 0x08) {
-		setprg8r(0x10, 0x6000, 0);
-	}
-
-	setprg16(0x8000, prg);
+static void SyncPRG(void) {
+	setprg16(0x8000, m284.prg);
 	setprg16(0xC000, 0x0F);
+}
 
-	setchr2(0x0000, chr[0]);
-	setchr2(0x0800, chr[1]);
-	setchr2(0x1000, chr[2]);
-	setchr2(0x1800, chr[3]);
+static void SyncCHR(void) {
+	setchr2(0x0000, m284.chr[0]);
+	setchr2(0x0800, m284.chr[1]);
+	setchr2(0x1000, m284.chr[2]);
+	setchr2(0x1800, m284.chr[3]);
+}
 
-	switch (control & 0x03) {
+static void SyncMirror(void) {
+	switch (m284.control & 0x03) {
 	case 0:
 		setmirror(MI_V);
 		break;
@@ -78,69 +80,84 @@ static uint8 Sync(void) {
 	}
 }
 
-static DECLFW(M284Write) {
-	switch (A & 0xE000) {
-	case 0x8000:
-	case 0xA000:
-		switch (A & 0x0F) {
-		case 0x0:
-		case 0x1:
-		case 0x2:
-		case 0x3:
-		case 0x4:
-		case 0x5:
-		case 0x6:
-		case 0x7:
-			DRIPSound_Write(A, V);
-			break;
-		case 0x8:
-			IRQLatch = V;
-			break;
-		case 0x9:
-			IRQCount = ((V & 0x7F) << 8) | IRQLatch;
-			IRQa = V & 0x80;
-			X6502_IRQEnd(FCEU_IQEXT);
-			break;
-		case 0xA:
-			control = V & 0x0F;
-			Sync();
-			break;
-		case 0xB:
-			prg = V & 0x0F;
-			Sync();
-			break;
-		case 0xC:
-		case 0xD:
-		case 0xE:
-		case 0xF:
-			chr[A & 0x03] = V & 0x0F;
-			Sync();
-			break;
-		}
-		break;
-	case 0xC000:
-	case 0xE000:
-		extattrib[(A & 0x400) >> 10][A & 0x3FF] = V & 0x03;
-		break;
+static void SyncWRAM(void) {
+	if (m284.control & 0x08) {
+		setprg8r(0x10, 0x6000, 0);
 	}
 }
 
-static DECLFR(M284Read) {
+static DECLFR(Read4) {
 	switch (A & 0xF800) {
+	case 0x4000:
+		return cpu.openbus;
 	case 0x4800:
-		return (jumper | 'd');
+		return (m284.jumper | 'd');
+	}
+}
+
+static DECLFR(Read5) {
+	switch (A & 0xF800) {
 	case 0x5000:
 	case 0x5800:
 		return DRIPSound_Read(A);
 	}
-	return CartBR(A);
 }
 
-uint8 M284PPURead(uint32 A) {
+static DECLFW(WriteL) {
+	if (A & 0x08) { /* $xxx8 - $xxxF */
+		switch (A & 0x07) {
+		case 0:
+			m284.IRQLatch = V;
+			break;
+		case 1:
+			m284.IRQCount = ((V & 0x7F) << 8) | m284.IRQLatch;
+			m284.IRQa = V & 0x80;
+			X6502_IRQEnd(FCEU_IQEXT);
+			break;
+		case 2:
+			m284.control = V & 0x0F;
+			SyncMirror();
+			SyncWRAM();
+			break;
+		case 3:
+			m284.prg = V & 0x0F;
+			SyncPRG();
+			break;
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+			m284.chr[A & 0x03] = V & 0x0F;
+			SyncCHR();
+			break;
+		}
+	} else { /* $xxx0 - $xxx7*/
+		switch (A & 0x07) {
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+			DRIPSound_Write(A, V);
+			break;
+		}
+
+	}
+}
+
+static DECLFW(WriteH) {
+	uint8 idx = (A & 0x400) >> 10;
+	m284.extattrib[idx][A & 0x3FF] = V & 0x03;
+}
+
+uint8 newppu_PPUNMTRead(uint32 A) {
 	if ((A > 0x2000) && (A < 0x3F00)) {
-		if (control & 0x04) {
+		if (m284.control & 0x04) {
 			if ((A & 0x3FF) < 0x3C0) {
-				lastAddr = A & 0x3FF;
+				m284.lastAddr = A & 0x3FF;
 			} else {
 				const uint8 ext_attrib[4] = { 0x00, 0x55, 0xAA, 0xFF };
 				uint8 bank = 0;
@@ -162,69 +179,69 @@ uint8 M284PPURead(uint32 A) {
 					bank = (A & 0x400) ? 1 : 0;
 					break;
 				}
-				return (ext_attrib[(extattrib[bank][lastAddr & 0x3FF]) & 0x03]);
+				return (ext_attrib[(m284.extattrib[bank][m284.lastAddr & 0x3FF]) & 0x03]);
 			}
 		}
 	}
 	return FFCEUX_PPURead_Default(A);
 }
 
-static void M284Reset(void) {
-	control = 0;
-	prg = 0;
-	chr[0] = 0;
-	chr[1] = 1;
-	chr[2] = 2;
-	chr[3] = 3;
-	memset(&extattrib[0][0], 0x00, sizeof(extattrib));
-	jumper = !jumper ? 0x80 : 0;
+static void Reset(void) {
+	m284.jumper = !m284.jumper ? 0x80 : 0;
 
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+	SyncWRAM();
 }
 
-static void M284Power(void) {
-	control = 0;
-	prg = 0;
-	chr[0] = 0;
-	chr[1] = 1;
-	chr[2] = 2;
-	chr[3] = 3;
-	memset(&extattrib[0][0], 0x00, sizeof(extattrib));
+static void Power(void) {
+	memset(&m284, 0, sizeof(m284));
+	m284.chr[0] = 0;
+	m284.chr[1] = 1;
+	m284.chr[2] = 2;
+	m284.chr[3] = 3;
 
-	jumper = 0;
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+	SyncWRAM();
 
-	Sync();
-
-	SetReadHandler(0x4800, 0x5FFF, M284Read);
+	SetReadHandler(0x4800, 0x4FFF, Read4);
+	SetReadHandler(0x5000, 0x5FFF, Read5);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetWriteHandler(0x8000, 0xFFFF, M284Write);
+	SetWriteHandler(0x8000, 0xBFFF, WriteL);
+	SetWriteHandler(0xC000, 0xFFFF, WriteH);
 
-	FFCEUX_PPURead = M284PPURead;
+	FFCEUX_PPURead = newppu_PPUNMTRead;
 }
 
-static void M284CPUIRQHook(int a) {
-	if (IRQa) {
-		IRQCount -= a;
-		if (IRQCount <= 0) {
-			IRQa = FALSE;
+static void CPUIRQHook(int a) {
+	if (m284.IRQa) {
+		m284.IRQCount -= a;
+		if (m284.IRQCount <= 0) {
+			m284.IRQa = FALSE;
 			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+	SyncWRAM();
 }
 
 void Mapper284_Init(CartInfo *info) {
-	info->Power = M284Power;
-	MapIRQHook = M284CPUIRQHook;
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
 
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
-	AddExState(extattrib[0], 1024, 0, "ATT0");
-	AddExState(extattrib[1], 1024, 0, "ATT1");
+	AddExState(m284.extattrib[0], 1024, 0, "ATT0");
+	AddExState(m284.extattrib[1], 1024, 0, "ATT1");
 
 	WRAMSIZE = 8192;
 	WRAM = FCEU_malloc(WRAMSIZE);

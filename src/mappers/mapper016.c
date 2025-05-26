@@ -22,11 +22,11 @@
 #include "eeprom_x24c0x.h"
 #include "bandai.h"
 
-static void M016PW(uint16 A, uint16 V) {
+static void SetPRGBank_bandai(uint16 A, uint16 V) {
 	setprg16(A, V & 0x0F);
 }
 
-static void M016CW(uint16 A, uint16 V) {
+static void SetCHRBank_bandai(uint16 A, uint16 V) {
 	setchr1(A, V);
 }
 
@@ -46,6 +46,6 @@ void Mapper016_Init(CartInfo *info) {
 		BANDAI_Init(info, EEPROM_NONE, TRUE);
 		break;
 	}
-	BANDAI_pwrap = M016PW;
-	BANDAI_cwrap = M016CW;
+	BANDAI_pwrap = SetPRGBank_bandai;
+	BANDAI_cwrap = SetCHRBank_bandai;
 }

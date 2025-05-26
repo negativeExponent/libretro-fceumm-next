@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2009 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,31 +27,37 @@
 
 #include "mapinc.h"
 
-static uint8 prg, mirr;
-static uint16 chr[8];
+static struct {
+	uint8 prg, mirror;
+	uint16 chr[8];
+} m156;
 
 static SFORMAT StateRegs[] = {
-	{ chr, 16, "CREG" },
-	{ &prg, 1, "PREG" },
-	{ &mirr, 1, "MIRR" },
+	{ m156.chr, 16, "CREG" },
+	{ &m156.prg, 1, "PREG" },
+	{ &m156.mirror, 1, "MIRR" },
 	{ 0 }
 };
 
-static void Sync(void) {
+static void SyncPRG(void) {
 	setprg8r(0x10, 0x6000, 0);
-	setprg16(0x8000, prg);
+	setprg16(0x8000, m156.prg);
 	setprg16(0xC000, ~0);
+}
 
-	setchr1(0x0000, chr[0]);
-	setchr1(0x0400, chr[1]);
-	setchr1(0x0800, chr[2]);
-	setchr1(0x0C00, chr[3]);
-	setchr1(0x1000, chr[4]);
-	setchr1(0x1400, chr[5]);
-	setchr1(0x1800, chr[6]);
-	setchr1(0x1C00, chr[7]);
+static void SyncCHR(void) {
+	setchr1(0x0000, m156.chr[0]);
+	setchr1(0x0400, m156.chr[1]);
+	setchr1(0x0800, m156.chr[2]);
+	setchr1(0x0C00, m156.chr[3]);
+	setchr1(0x1000, m156.chr[4]);
+	setchr1(0x1400, m156.chr[5]);
+	setchr1(0x1800, m156.chr[6]);
+	setchr1(0x1C00, m156.chr[7]);
+}
 
-	switch (mirr) {
+static void SyncMirror(void) {
+	switch (m156.mirror) {
 	case 0:
 		setmirror(MI_V);
 		break;
@@ -64,66 +70,65 @@ static void Sync(void) {
 	}
 }
 
-static DECLFW(M156Write) {
-	uint8 index = A & 0x03;
-
+static DECLFW(WriteReg) {
 	switch (A & 0xCFFC) {
 	case 0xC000:
-		chr[0 | index] = (chr[0 | index] & 0xFF00) | V;
-		Sync();
-		break;
 	case 0xC004:
-		chr[0 | index] = (chr[0 | index] & 0x00FF) | V << 8;
-		Sync();
-		break;
 	case 0xC008:
-		chr[4 | index] = (chr[4 | index] & 0xFF00) | V;
-		Sync();
+	case 0xC00C: {
+		uint8 index = ((A >> 1) & 0x04) | (A & 0x03); /* [0–3] + 0x04 if A is 0xC008 or 0xC00C */
+		uint16 mask = (A & 0x04) ? 0x00FF : 0xFF00;
+		uint16 value = (A & 0x04) ? (V << 8) : V;
+
+		m156.chr[index] = (m156.chr[index] & mask) | value;
+		SyncCHR();
 		break;
-	case 0xC00C:
-		chr[4 | index] = (chr[4 | index] & 0x00FF) | V << 8;
-		Sync();
-		break;
+	}
 	case 0xC010:
-		prg = V;
-		Sync();
+		m156.prg = V;
+		SyncPRG();
 		break;
 	case 0xC014:
-		mirr = V;
-		Sync();
+		m156.mirror = V;
+		SyncMirror();
 		break;
 	}
 }
 
-static void M156Reset(void) {
-	int i;
-	for (i = 0; i < 8; i++) {
-		chr[i] = 0;
-	}
-	prg = 0;
-	mirr = 2;
+static void Reset(void) {
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
-static void M156Power(void) {
-	M156Reset();
-	Sync();
+static void Power(void) {
+	memset(&m156, 0, sizeof(m156));
+
+	m156.mirror = MI_0;
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetWriteHandler(0xC000, 0xCFFF, M156Write);
+	SetWriteHandler(0xC000, 0xFFFF, WriteReg);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M156Close(void) {
+static void Close(void) {
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper156_Init(CartInfo *info) {
-	info->Reset = M156Reset;
-	info->Power = M156Power;
-	info->Close = M156Close;
+	info->Reset = Reset;
+	info->Power = Power;
+	info->Close = Close;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

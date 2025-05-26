@@ -1,8 +1,8 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2002 Xodnizel
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,38 +25,42 @@
 /* libretro saveram workaround, since there is no easy way to save more than 1 save index, so */
 /* packed both wram (if enabled) and internal ram into 1 memory block */
 static uint8 libretro_save_ram[8192 + 128]; /* wram 8k + 128 bytes internal ram */
-
-static uint8 prg[4];
-static uint8 chr[8];
-static uint8 nt[4];
-static uint8 wram_protect;
-
-static uint16 IRQCount;
-static uint8 IRQa;
-
 static uint8 *internalRAM = NULL;
 
-static SFORMAT StateRegs[] = {
-	{ prg, 4, "PREG" },
-	{ chr, 8, "CREG" },
-	{ nt, 4, "NMTA" },
-	{ &IRQCount, 2, "IRQC" },
-	{ &IRQa, 1, "IRQA" },
-	{ &wram_protect, 1, "WPRT" },
+static struct {
+	uint8 prg[4];
+	uint8 chr[8];
+	uint8 nmt[4];
+	uint8 write_protect;
+	uint32 IRQCount;
+	uint8 IRQa;
+} m019;
 
+static SFORMAT StateRegs[] = {
+	{ m019.prg, 4, "PREG" },
+	{ m019.chr, 8, "CREG" },
+	{ m019.nmt, 4, "NMTR" },
+	{ &m019.IRQCount, 4, "IRQC" },
+	{ &m019.IRQa, 1, "IRQA" },
+	{ &m019.write_protect, 1, "WPRT" },
 	{ 0 }
 };
 
+static void DoPRG(int x, uint8 V) {
+	m019.prg[x] = V;
+	setprg8(0x8000 + (x << 13), V);
+}
+
 static void SyncPRG(void) {
-	setprg8(0x8000, prg[0] & 0x3F);
-	setprg8(0xa000, prg[1] & 0x3F);
-	setprg8(0xc000, prg[2] & 0x3F);
-	setprg8(0xe000, prg[3] & 0x3F);
+	DoPRG(0, m019.prg[0] & 0x3F);
+	DoPRG(1, m019.prg[1] & 0x3F);
+	DoPRG(2, m019.prg[2] & 0x3F);
+	DoPRG(3, m019.prg[3] & 0x3F);
 }
 
 static void DoCHRRAMROM(int x, uint8 V) {
-	chr[x] = V;
-	if (((prg[1] >> ((x >> 2) + 6)) & 1) || (V < 0xE0)) {
+	m019.chr[x] = V;
+	if (((m019.prg[1] >> ((x >> 2) + 6)) & 1) || (V < 0xE0)) {
 		setchr1(x << 10, V);
 	}
 }
@@ -64,12 +68,12 @@ static void DoCHRRAMROM(int x, uint8 V) {
 static void SyncCHR(void) {
 	int x;
 	for (x = 0; x < 8; x++) {
-		DoCHRRAMROM(x, chr[x]);
+		DoCHRRAMROM(x, m019.chr[x]);
 	}
 }
 
-static void DoNTARAMROM(int w, uint8 V) {
-	nt[w] = V;
+static void DoNMTRAMROM(int w, uint8 V) {
+	m019.nmt[w] = V;
 	if (V < 0xE0) {
 		V &= CHRmask1[0];
 		setntamem(CHRptr[0] + (V << 10), 0, w);
@@ -78,162 +82,131 @@ static void DoNTARAMROM(int w, uint8 V) {
 	}
 }
 
-static void SyncNT(void) {
+static void SyncNMT(void) {
 	int x;
 	for (x = 0; x < 4; x++) {
-		DoNTARAMROM(x, nt[x]);
+		DoNMTRAMROM(x, m019.nmt[x]);
 	}
 }
 
-static void NamcoIRQHook(int a) {
-	if (IRQa) {
-		IRQCount += a;
-		if (IRQCount >= 0x7FFF) {
+static void CPUCycle(int a) {
+	if ((m019.IRQCount - 0x8000) < 0x7FFF) {
+		m019.IRQCount += a;
+		if (m019.IRQCount >= 0xFFFF) {
 			X6502_IRQBegin(FCEU_IQEXT);
-			IRQa = 0;
-			IRQCount = 0x7FFF;
 		}
 	}
 }
 
-static DECLFR(AWRAM) {
+static DECLFR(ReadInternalRAM) {
+	return N163Sound_Read(A);
+}
+
+static DECLFW(WriteInternalRAM) {
+	N163Sound_Write(A, V);
+}
+
+static DECLFR(ReadIRQCount) {
+	if (A & 0x800) {
+		return ((m019.IRQCount >> 8) & 0xFF);
+	}
+	return (m019.IRQCount & 0xFF);
+}
+
+static DECLFW(WriteIRQCount) {
+	X6502_IRQEnd(FCEU_IQEXT);
+	if (A & 0x800) {
+		m019.IRQCount = (m019.IRQCount & 0x00FF) | (V << 8);
+	} else {
+		m019.IRQCount = (m019.IRQCount & 0xFF00) | V;
+	}
+}
+
+static DECLFR(ReadWRAM) {
 	return WRAM[A - 0x6000];
 }
 
-static DECLFW(BWRAM) {
-	if (((A >= 0x6000) && (A <= 0x67FF) && ((wram_protect & 0xF1) == 0x40)) ||
-	    ((A >= 0x6800) && (A <= 0x6FFF) && ((wram_protect & 0xF2) == 0x40)) ||
-	    ((A >= 0x7000) && (A <= 0x77FF) && ((wram_protect & 0xF4) == 0x40)) ||
-	    ((A >= 0x7800) && (A <= 0x7FFF) && ((wram_protect & 0xF8) == 0x40))) {
+static DECLFW(WriteProtectedWRAM) {
+	if (((A >= 0x6000) && (A <= 0x67FF) && ((m019.write_protect & 0xF1) == 0x40)) ||
+		((A >= 0x6800) && (A <= 0x6FFF) && ((m019.write_protect & 0xF2) == 0x40)) ||
+		((A >= 0x7000) && (A <= 0x77FF) && ((m019.write_protect & 0xF4) == 0x40)) ||
+		((A >= 0x7800) && (A <= 0x7FFF) && ((m019.write_protect & 0xF8) == 0x40))) {
 		WRAM[A - 0x6000] = V;
 	}
 }
 
-static DECLFR(M019Read) {
-	switch (A & 0xF800) {
-	case 0x4800:
-		return N163Sound_Read(A);
-	case 0x5000:
-		return IRQCount & 0xFF;
-	case 0x5800:
-		return IRQCount >> 8;
-	}
-
-	return 0;
+static DECLFW(WriteCHR) {
+	DoCHRRAMROM((A - 0x8000) >> 11, V);
 }
 
-static DECLFW(M019Write) {
-	switch (A & 0xF800) {
-	case 0x4800:
-		N163Sound_Write(A, V);
-		break;
-	case 0x5000:
-		IRQCount &= 0xFF00;
-		IRQCount |= V;
-		X6502_IRQEnd(FCEU_IQEXT);
-		break;
-	case 0x5800:
-		IRQCount &= 0x00ff;
-		IRQCount |= (V & 0x7F) << 8;
-		IRQa = V & 0x80;
-		X6502_IRQEnd(FCEU_IQEXT);
-		break;
-	case 0x8000:
-	case 0x8800:
-	case 0x9000:
-	case 0x9800:
-	case 0xA000:
-	case 0xA800:
-	case 0xB000:
-	case 0xB800:
-		DoCHRRAMROM((A - 0x8000) >> 11, V);
-		break;
-	case 0xC000:
-	case 0xC800:
-	case 0xD000:
-	case 0xD800:
-		DoNTARAMROM((A - 0xC000) >> 11, V);
-		break;
-	case 0xE000:
-		prg[0] = V;
-		SyncPRG();
-		break;
-	case 0xE800:
-		prg[1] = V;
-		SyncPRG();
-		SyncCHR();
-		break;
-	case 0xF000:
-		prg[2] = V;
-		SyncPRG();
-		break;
-	case 0xF800:
-		wram_protect = V;
-		N163Sound_Write(A, V);
-		break;
-	}
+static DECLFW(WriteNT) {
+	DoNMTRAMROM((A - 0xC000) >> 11, V);
+}
+
+static DECLFW(WritePRG) {
+	DoPRG((A - 0xE000) >> 11, V);
+}
+
+static DECLFW(WriteWRAMProtect) {
+	m019.write_protect = V;
+	N163Sound_Write(A, V);
 }
 
 static void StateRestore(int version) {
 	SyncPRG();
 	SyncCHR();
-	SyncNT();
+	SyncNMT();
 }
 
-static void N163_Power(void) {
-	prg[0] = ~3;
-	prg[1] = ~2;
-	prg[2] = ~1;
-	prg[3] = ~0;
+static void Power(void) {
+	int i;
 
-	chr[0] = 0;
-	chr[1] = 1;
-	chr[2] = 2;
-	chr[3] = 3;
-	chr[4] = 4;
-	chr[5] = 5;
-	chr[6] = 6;
-	chr[7] = 7;
+	for (i = 0; i < 4; i++) m019.prg[i] = 0xFC + i;
+	for (i = 0; i < 8; i++) m019.chr[i] = i;
+	for (i = 0; i < 4; i++) m019.nmt[i] = 0xE0 + (i & 0x01);
 
-	nt[0] = 0xE0;
-	nt[1] = 0xE1;
-	nt[2] = 0xE0;
-	nt[3] = 0xE1;
-
-	wram_protect = 0xFF;
+	m019.write_protect = 0xFF;
 
 	SyncPRG();
 	SyncCHR();
-	SyncNT();
+	SyncNMT();
 
-	SetReadHandler(0x4800, 0x5FFF, M019Read);
-	SetWriteHandler(0x4800, 0x5FFF, M019Write);
+	SetReadHandler(0x4800, 0x4FFF, ReadInternalRAM);
+	SetWriteHandler(0x4800, 0x4FFF, WriteInternalRAM);
 
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M019Write);
+	SetReadHandler(0x5000, 0x5FFF, ReadIRQCount);
+	SetWriteHandler(0x5000, 0x5FFF, WriteIRQCount);
 
 	if (WRAMSIZE) {
-		SetReadHandler(0x6000, 0x7FFF, AWRAM);
-		SetWriteHandler(0x6000, 0x7FFF, BWRAM);
+		SetReadHandler(0x6000, 0x7FFF, ReadWRAM);
+		SetWriteHandler(0x6000, 0x7FFF, WriteProtectedWRAM);
 		FCEU_CheatAddRAM(8, 0x6000, WRAM);
 	}
 
-	if (iNESCart.battery) {
-		FCEU_MemoryRand(WRAM, sizeof(WRAM));
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xBFFF, WriteCHR);
+	SetWriteHandler(0xC000, 0xDFFF, WriteNT);
+	SetWriteHandler(0xE000, 0xF7FF, WritePRG);
+	SetWriteHandler(0xF800, 0xFFFF, WriteWRAMProtect);
+
+	if (!iNESCart.battery) {
+		FCEU_MemoryRand(WRAM, WRAMSIZE);
 		FCEU_MemoryRand(internalRAM, 128);
 	}
 }
 
-static void N163_Close(void) {
+static void Close(void) {
 	internalRAM = NULL;
 	WRAM = NULL;
 }
 
 void Mapper019_Init(CartInfo *info) {
-	info->Power = N163_Power;
-	info->Close = N163_Close;
+	memset(libretro_save_ram, 0, sizeof(libretro_save_ram));
 
-	MapIRQHook = NamcoIRQHook;
+	info->Power = Power;
+	info->Close = Close;
+
+	MapIRQHook = CPUCycle;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, 0);
 
@@ -243,7 +216,6 @@ void Mapper019_Init(CartInfo *info) {
 		WRAMSIZE = 8192;
 	}
 
-	/* internal RAM always enable */
 	internalRAM = &libretro_save_ram[0];
 
 	if (WRAMSIZE) {
@@ -254,11 +226,7 @@ void Mapper019_Init(CartInfo *info) {
 
 	if (info->battery) {
 		info->SaveGame[0] = libretro_save_ram;
-		if (WRAMSIZE) {
-			info->SaveGameLen[0] = 8192 + 128;
-		} else {
-			info->SaveGameLen[0] = 128;
-		}
+		info->SaveGameLen[0] = WRAMSIZE ? (8192 + 128) : 128;
 	}
 
 	N163Sound_ESI(internalRAM);

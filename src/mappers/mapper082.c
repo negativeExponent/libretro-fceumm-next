@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,123 +26,135 @@
 
 #include "mapinc.h"
 
-static uint8 chr[6], prg[3], protect[3], ctrl;
+static struct {
+	uint8 chr[6], prg[3], protect[3], ctrl;
+} m082;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 3, "PREGS" },
-	{ chr, 6, "CREGS" },
-	{ protect, 3, "PROT" },
-	{ &ctrl, 1, "CTRL" },
+	{ m082.prg, 3, "PREGS" },
+	{ m082.chr, 6, "CREGS" },
+	{ m082.protect, 3, "PROT" },
+	{ &m082.ctrl, 1, "CTRL" },
 
 	{ 0 }
 };
 
-static uint32 GetPRGBank(uint8 V) {
+static uint8 GetPRGBank(uint8 V) {
 	if (iNESCart.mapper == 552) {
-		return (((V << 5) & 0x20) |
-		((V << 3) & 0x10) |
-		((V << 1) & 0x08) |
-		((V >> 1) & 0x04) |
-		((V >> 3) & 0x02) |
-		((V >> 5) & 0x01));
+		return (((V << 5) & 0x20) | /* A18 */
+		    ((V << 3) & 0x10) |     /* A17 */
+		    ((V << 1) & 0x08) |     /* A16 */
+		    ((V >> 1) & 0x04) |     /* A15 */
+		    ((V >> 3) & 0x02) |     /* A14 */
+		    ((V >> 5) & 0x01));     /* A13 */
 	}
 	return V >> 2;
 }
 
-static void Sync(void) {
-	uint32 swap = ((ctrl & 2) << 11);
-
+static void SyncPRG(void) {
 	setprg8r(0x10, 0x6000, 0);
 
-	setprg8(0x8000, GetPRGBank(prg[0]));
-	setprg8(0xA000, GetPRGBank(prg[1]));
-	setprg8(0xC000, GetPRGBank(prg[2]));
+	setprg8(0x8000, GetPRGBank(m082.prg[0]));
+	setprg8(0xA000, GetPRGBank(m082.prg[1]));
+	setprg8(0xC000, GetPRGBank(m082.prg[2]));
 	setprg8(0xE000, ~0);
+}
 
-	setchr2(0x0000 ^ swap, chr[0] >> 1);
-	setchr2(0x0800 ^ swap, chr[1] >> 1);
-	setchr1(0x1000 ^ swap, chr[2]);
-	setchr1(0x1400 ^ swap, chr[3]);
-	setchr1(0x1800 ^ swap, chr[4]);
-	setchr1(0x1C00 ^ swap, chr[5]);
+static void SyncCHR(void) {
+	uint16 swap = ((m082.ctrl & 2) << 11);
 
-	setmirror(ctrl & 0x01);
+	setchr2(0x0000 ^ swap, m082.chr[0] >> 1);
+	setchr2(0x0800 ^ swap, m082.chr[1] >> 1);
+	setchr1(0x1000 ^ swap, m082.chr[2]);
+	setchr1(0x1400 ^ swap, m082.chr[3]);
+	setchr1(0x1800 ^ swap, m082.chr[4]);
+	setchr1(0x1C00 ^ swap, m082.chr[5]);
+}
+
+static void SyncMirror(void) {
+	setmirror(m082.ctrl & 0x01);
 }
 
 static DECLFR(ReadWRAM) {
-	if (((A >= 0x6000) && (A <= 0x67FF) && (protect[0] == 0xCA)) ||
-	    ((A >= 0x6800) && (A <= 0x6FFF) && (protect[1] == 0x69)) ||
-	    ((A >= 0x7000) && (A <= 0x73FF) && (protect[2] == 0x84))) {
+	if (((A >= 0x6000) && (A <= 0x67FF) && (m082.protect[0] == 0xCA)) ||
+	    ((A >= 0x6800) && (A <= 0x6FFF) && (m082.protect[1] == 0x69)) ||
+	    ((A >= 0x7000) && (A <= 0x73FF) && (m082.protect[2] == 0x84))) {
 		return CartBR(A);
 	}
 	return cpu.openbus;
 }
 
 static DECLFW(WriteWRAM) {
-	if (((A >= 0x6000) && (A <= 0x67FF) && (protect[0] == 0xCA)) ||
-	    ((A >= 0x6800) && (A <= 0x6FFF) && (protect[1] == 0x69)) ||
-	    ((A >= 0x7000) && (A <= 0x73FF) && (protect[2] == 0x84))) {
+	if (((A >= 0x6000) && (A <= 0x67FF) && (m082.protect[0] == 0xCA)) ||
+	    ((A >= 0x6800) && (A <= 0x6FFF) && (m082.protect[1] == 0x69)) ||
+	    ((A >= 0x7000) && (A <= 0x73FF) && (m082.protect[2] == 0x84))) {
 		CartBW(A, V);
 	}
 }
 
-static DECLFW(M082Write) {
-	switch (A & 0x0F) {
-	case 0x00:
-	case 0x01:
-	case 0x02:
-	case 0x03:
-	case 0x04:
-	case 0x05:
-		chr[A & 7] = V;
+static DECLFW(WriteReg) {
+	switch (A) {
+	case 0x7EF0:
+	case 0x7EF1:
+	case 0x7EF2:
+	case 0x7EF3:
+	case 0x7EF4:
+	case 0x7EF5:
+		m082.chr[A & 0x07] = V;
+		SyncCHR();
 		break;
-	case 0x06:
-		ctrl = V;
+	case 0x7EF6:
+		m082.ctrl = V;
+		SyncCHR();
+		SyncMirror();
 		break;
-	case 0x07:
-		protect[0] = V;
+	case 0x7EF7:
+	case 0x7EF8:
+	case 0x7EF9:
+		m082.protect[A - 0x7EF7] = V;
 		break;
-	case 0x08:
-		protect[1] = V;
-		break;
-	case 0x09:
-		protect[2] = V;
-		break;
-	case 0x0A:
-		prg[0] = V;
-		break;
-	case 0x0B:
-		prg[1] = V;
-		break;
-	case 0x0C:
-		prg[2] = V;
+	case 0x7EFA:
+	case 0x7EFB:
+	case 0x7EFC:
+		m082.prg[A - 0x7EFA] = V;
+		SyncPRG();
 		break;
 	default:
 		/* IRQ emulation ignored since no commercial games uses it */
-		return;
+		break;
 	}
-	Sync();
 }
 
-static void M082Power(void) {
-	Sync();
-	SetReadHandler(0x6000, 0xffff, CartBR);
-	SetReadHandler(0x6000, 0x73ff, ReadWRAM);
-	SetWriteHandler(0x6000, 0x73ff, WriteWRAM);
-	SetWriteHandler(0x7ef0, 0x7eff, M082Write); /* external WRAM might end at $73FF */
+static void Power(void) {
+	memset(&m082, 0, sizeof(m082));
+
+	m082.prg[0] = 0x00;
+	m082.prg[1] = 0x01;
+	m082.prg[2] = 0xFE;
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetReadHandler(0x6000, 0x73FF, ReadWRAM);
+	SetWriteHandler(0x6000, 0x73FF, WriteWRAM);
+	SetWriteHandler(0x7EF0, 0x7EFF, WriteReg);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M082Close(void) {
+static void Close(void) {
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper082_Init(CartInfo *info) {
-	info->Power = M082Power;
-	info->Close = M082Close;
+	info->Power = Power;
+	info->Close = Close;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

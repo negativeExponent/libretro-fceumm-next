@@ -24,35 +24,35 @@
 static uint8 reg;
 static uint8 dipsw;
 
-static void M012CW(uint16 A, uint16 V) {
+static void SetCHRBank_mmc3(uint16 A, uint16 V) {
 	uint16 base = reg << ((A & 0x1000) ? 4 : 8);
 
 	setchr1(A, (base & 0x100) | (V & 0xFF));
 }
 
-static DECLFW(M012Write) {
+static DECLFW(WriteReg) {
 	if (A & 0x100) {
 		reg = V;
 		MMC3_SyncCHR();
 	}
 }
 
-static DECLFR(M012Read) {
+static DECLFR(ReadDIP) {
 	if (A & 0x100) {
 		return dipsw;
 	}
 	return CartBR(A);
 }
 
-static void M012Power(void) {
+static void Power(void) {
 	reg = 0;
 	dipsw = 1; /* chinese is default */
 	MMC3_Power();
-	SetWriteHandler(0x4100, 0x4FFF, M012Write);
-	SetReadHandler(0x4100, 0x4FFF, M012Read);
+	SetWriteHandler(0x4100, 0x4FFF, WriteReg);
+	SetReadHandler(0x4100, 0x4FFF, ReadDIP);
 }
 
-static void M012Reset(void) {
+static void Reset(void) {
 	reg = 0;
 	dipsw ^= 1;
 	MMC3_Reset();
@@ -64,10 +64,10 @@ void Mapper012_Init(CartInfo *info) {
 	} else {
 		int ws = (info->PRGRamSize + info->PRGRamSaveSize) / 1024;
 		MMC3_Init(info, MMC3A, ws ? ws : 8, info->battery);
-		MMC3_cwrap = M012CW;
+		MMC3_cwrap = SetCHRBank_mmc3;
 
-		info->Power = M012Power;
-		info->Reset = M012Reset;
+		info->Power = Power;
+		info->Reset = Reset;
 		AddExState(&reg, 1, 0, "EXPR");
 		AddExState(&dipsw, 1, 0, "DPSW");
 	}

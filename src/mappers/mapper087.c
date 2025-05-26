@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,28 +20,30 @@
 
 #include "mapinc.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m087;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m087.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	setprg32(0x8000, 0);
-	setchr8(((reg << 1) & 0x02) | ((reg >> 1) & 0x01));
+	setchr8(((m087.reg << 1) & 0x02) | ((m087.reg >> 1) & 0x01));
 }
 
-static DECLFW(M087Write) {
-	reg = V;
+static DECLFW(WriteReg) {
+	m087.reg = V;
 	Sync();
 }
 
-static void M087Power(void) {
-	reg = 0;
+static void Power(void) {
+	m087.reg = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x7FFF, M087Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 static void StateRestore(int version) {
@@ -49,7 +51,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper087_Init(CartInfo *info) {
-	info->Power = M087Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

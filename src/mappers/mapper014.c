@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,56 +27,59 @@
 #include "mmc3.h"
 #include "vrc24.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m014;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m014.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static uint8 GetChrBase(uint16 A) {
 	if (A & 0x1000) {
 		if (A & 0x800) {
-			return ((reg & 0x80) >> 7);
+			return ((m014.reg & 0x80) >> 7);
 		} else {
-			return ((reg & 0x20) >> 5);
+			return ((m014.reg & 0x20) >> 5);
 		}
 	}
-	return ((reg & 0x08) >> 3);
+	return ((m014.reg & 0x08) >> 3);
 }
 
-static void M014MMC3CW(uint16 A, uint16 V) {
+static void SetCHRBank_mmc3(uint16 A, uint16 V) {
 	uint16 mask = 0xFF;
 	uint16 base = GetChrBase(A) << 8;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void M014VRC24CW(uint16 A, uint16 V) {
+static void SetCHRBank_vrc24(uint16 A, uint16 V) {
 	uint16 mask = 0xFF;
 	uint16 base = GetChrBase(A) << 8;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M014Write) {
+static DECLFW(WriteASIC) {
 	if (A == 0xA131) {
-		reg = V;
-		if (reg & 0x02) {
+		m014.reg = V;
+		if (m014.reg & 0x02) {
 			MMC3_SyncCHR();
 		} else {
 			VRC24_SyncCHR();
 		}
-	}
-	if (reg & 0x02) {
-		MMC3_Write(A, V);
 	} else {
-		VRC24_Write(A, V);
+		if (m014.reg & 0x02) {
+			MMC3_Write(A, V);
+		} else {
+			VRC24_Write(A, V);
+		}
 	}
 }
 
 static void StateRestore(int version) {
-	if (reg & 0x02) {
+	if (m014.reg & 0x02) {
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 		MMC3_SyncMirror();
@@ -87,20 +90,20 @@ static void StateRestore(int version) {
 	}
 }
 
-static void M014Power(void) {
-	reg = 0;
+static void Power(void) {
+	m014.reg = 0;
 	VRC24_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M014Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteASIC);
 }
 
 void Mapper014_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M014MMC3CW;
+	MMC3_cwrap = SetCHRBank_mmc3;
 
 	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, FALSE, TRUE);
-	VRC24_cwrap = M014VRC24CW;
+	VRC24_cwrap = SetCHRBank_vrc24;
 
-	info->Power = M014Power;
+	info->Power = Power;
 
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);

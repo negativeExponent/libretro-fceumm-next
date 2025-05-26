@@ -21,34 +21,36 @@
 
 #include "mapinc.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m232;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
+	{ m232.reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 base = (reg[0] >> 1) & 0x0C;
+	uint8 base = (m232.reg[0] >> 1) & 0x0C;
 
 	if (iNESCart.submapper == 1) {
 		base = ((base << 1) & 0x08) | ((base >> 1) & 0x04);
 	}
-	setprg16(0x8000, base | (reg[1] & 0x03));
+	setprg16(0x8000, base | (m232.reg[1] & 0x03));
 	setprg16(0xC000, base | 0x03);
 	setchr8(0);
 }
 
-static DECLFW(M232Write) {
-	reg[(A >> 14) & 0x01] = V;
+static DECLFW(WriteReg) {
+	m232.reg[(A >> 14) & 0x01] = V;
 	Sync();
 }
 
-static void M232Power(void) {
-	reg[0] = reg[1] = 0;
+static void Power(void) {
+	m232.reg[0] = m232.reg[1] = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M232Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
@@ -56,7 +58,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper232_Init(CartInfo *info) {
-	info->Power = M232Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, NULL);
 }

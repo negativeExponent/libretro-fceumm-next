@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,44 +24,47 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 reg;
-static writefunc pcm;
+static struct {
+	uint8 reg;
+} m266;
+
+static writefunc writepcm4011;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m266.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M266PW(uint16 A, uint16 V) {
-	setprg32(0x8000, reg >> 2);
+static void SyncPRG(void) {
+	setprg32(0x8000, m266.reg >> 2);
 }
 
-static DECLFW(M266Write) {
+static DECLFW(WriteVRC24) {
 	/* FCEU_printf("%04x %02x",A,V); */
 	A = (A & 0x9FFF) | ((A << 1) & 0x4000) | ((A >> 1) & 0x2000);
 	VRC24_Write(A, V);
 }
 
-static DECLFW(M266WriteMisc) {
+static DECLFW(WriteMisc) {
 	if (A & 0x800) {
-		pcm(0x4011, (V & 0x0F) << 3);
+		writepcm4011(0x4011, (V & 0x0F) << 3);
 	} else {
-		reg = V & 0x0C;
+		m266.reg = V & 0x0C;
 		VRC24_SyncPRG();
 	}
 }
 
-static void M266Power(void) {
-	reg = 0;
+static void Power(void) {
+	m266.reg = 0;
 	VRC24_Power();
-	pcm = GetWriteHandler(0x4011);
-	SetWriteHandler(0x8000, 0xFFFF, M266Write);
+	writepcm4011 = GetWriteHandler(0x4011);
+	SetWriteHandler(0x8000, 0xFFFF, WriteVRC24);
 }
 
 void Mapper266_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, FALSE, TRUE);
-	info->Power = M266Power;
-	VRC24_pwrap = M266PW;
-	VRC24_WriteExtSelect = M266WriteMisc;
+	info->Power = Power;
+	VRC24_SyncPRG = SyncPRG;
+	VRC24_WriteExtSelect = WriteMisc;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

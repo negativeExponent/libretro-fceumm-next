@@ -4,7 +4,7 @@
  *  Copyright (C) 1998 BERO
  *  Copyright (C) 2002 Xodnizel
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,40 +31,39 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 ppulatch;
-static uint16 lastAddr;
+static struct {
+	uint8 chrlatch;
+	uint16 lastPPUAddr;
+} m096;
 
 static SFORMAT StateRegs[] = {
-	{ &ppulatch, 1, "PPUL" },
-	{ &lastAddr, 2, "LADR" },
+	{ &m096.chrlatch, 1, "CHRL" },
+	{ &m096.lastPPUAddr, 2, "LADR" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	setmirror(MI_0);
-	setprg32(0x8000, latch.data & 3);
-	setchr4(0x0000, (latch.data & 4) | ppulatch);
-	setchr4(0x1000, (latch.data & 4) | 3);
+	setprg32(0x8000, latch.data & 0x03);
+	setchr4(0x0000, (latch.data & 0x04) | (m096.chrlatch & 0x03));
+	setchr4(0x1000, (latch.data & 0x04) | 0x03);
 }
 
 static void M096PPUHook(uint32 A) {
 	uint16 addr = A & 0x3000;
-	if ((lastAddr != 0x2000) && ((A & 0x3000) == 0x2000)) {
-		ppulatch = (A >> 8) & 3;
-		Sync();
+	if ((m096.lastPPUAddr != 0x2000) && (addr == 0x2000)) {
+		uint8 chr = A >> 8;
+		if (m096.chrlatch != chr) {
+			m096.chrlatch = A >> 8;
+			setchr4(0x0000, (latch.data & 0x04) | (m096.chrlatch & 0x03));
+		}
 	}
-	lastAddr = addr;
-}
-
-static void M096Power(void) {
-	ppulatch = 0;
-	lastAddr = 0;
-	Latch_Power();
+	m096.lastPPUAddr = addr;
 }
 
 void Mapper096_Init(CartInfo *info) {
+	memset(&m096, 0, sizeof(m096));
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
-	info->Power = M096Power;
 	PPU_hook = M096PPUHook;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

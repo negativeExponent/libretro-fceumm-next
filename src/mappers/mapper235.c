@@ -3,7 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
  *  Copyright (C) 2020
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,27 +23,35 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 mode;
+static struct {
+	uint8 reg;
+} m235;
 
 static SFORMAT StateRegs[] = {
-	{ &mode, 1, "UROM" },
+	{ &m235.reg, 1, "UROM" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (mode) { /* Contra mode */
+	FCEU_printf("%04x %02x reg = %02x\n", latch.addr, latch.data, m235.reg);
+	if (m235.reg) { /* Contra */
 		setprg16(0x8000, (PRG_BANK_COUNT(16) & 0xC0) | (latch.data & 0x07));
 		setprg16(0xC000, (PRG_BANK_COUNT(16) & 0xC0) | 0x07);
 		setchr8(0);
 		setmirror(MI_V);
 	} else {
-		uint8 bank = ((latch.addr >> 3) & 0x60) | (latch.addr & 0x1F);
+		uint16 bank = (((latch.addr >> 3) & 0x60) | (latch.addr & 0x1F));
+		uint8 rd = bank < PRG_BANK_COUNT(16);
 
-		if (latch.addr & 0x800) {
-			setprg16(0x8000, (bank << 1) | ((latch.addr >> 12) & 0x01));
-			setprg16(0xC000, (bank << 1) | ((latch.addr >> 12) & 0x01));
+		if (bank >= PRG_BANK_COUNT(16)) {
+			unsetcpu32(0x8000);
 		} else {
-			setprg32(0x8000, bank);
+			if (latch.addr & 0x800) {
+				setprg16(0x8000, (bank << 1) | ((latch.addr >> 12) & 0x01));
+				setprg16(0xC000, (bank << 1) | ((latch.addr >> 12) & 0x01));
+			} else {
+				setprg32(0x8000, bank);
+			}
 		}
 		setchr8(0);
 		if (latch.addr & 0x400) {
@@ -54,25 +62,18 @@ static void Sync(void) {
 	}
 }
 
-static DECLFR(M235Read) {
-	uint8 bank = ((latch.addr >> 3) & 0x60) | (latch.addr & 0x1F);
-
-	if (!mode && (bank >= PRG_BANK_COUNT(32))) {
-		return cpu.openbus;
-	}
-	return CartBR(A);
-}
-
 static void M235Reset(void) {
 	if (ROM.prg.size & 0x20000) {
-		mode = (mode + 1) & 1;
+		m235.reg = (m235.reg + 1) & 1;
 	}
+
 	Latch_RegReset();
-	FCEU_printf("mode : %d\n", mode);
+	FCEU_printf("mode : %s\n", m235.reg ? "contra" : "multicart");
 }
 
 void Mapper235_Init(CartInfo *info) {
-	Latch_Init(info, Sync, M235Read, FALSE, FALSE);
+	memset(&m235, 0, sizeof(m235));
+	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Reset = M235Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,27 +28,29 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m238;
 
 static const uint8 lut[4] = { 0x00, 0x02, 0x02, 0x03 };
 
-static DECLFW(M238ProtWrite) {
-	reg = lut[V & 0x03];
+static DECLFW(WriteProtection) {
+	m238.reg = lut[V & 0x03];
 }
 
-static DECLFR(M238ProtRead) {
-	return reg;
+static DECLFR(ReadProtection) {
+	return m238.reg;
 }
 
-static void M238Power(void) {
-	reg = 0;
+static void Power(void) {
+	m238.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x4020, 0x7FFF, M238ProtWrite);
-	SetReadHandler(0x4020, 0x7FFF, M238ProtRead);
+	SetWriteHandler(0x4020, 0x5FFF, WriteProtection);
+	SetReadHandler(0x4020, 0x5FFF, ReadProtection);
 }
 
 void Mapper238_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	info->Power = M238Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	info->Power = Power;
+	AddExState(&m238.reg, 1, 0, "EXPR");
 }

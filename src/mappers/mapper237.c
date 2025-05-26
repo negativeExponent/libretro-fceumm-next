@@ -52,7 +52,7 @@ static void Sync(void) {
 	setmirror(((latch.data & 0x20) >> 5) ^ 0x01);
 }
 
-static DECLFW(M237Write) {
+static DECLFW(WriteLatch) {
 	if (latch.addr & 0x02) {
 		latch.data = (latch.data & 0xF8) | (V & 0x07);
 	} else {
@@ -62,27 +62,27 @@ static DECLFW(M237Write) {
 	Sync();
 }
 
-static DECLFR(M237Read) {
+static DECLFR(ReadDIP) {
 	if (latch.addr & 0x01) {
 		return dipsw;
 	}
 	return CartBR(A);
 }
 
-static void M237Reset(void) {
+static void Reset(void) {
 	dipsw++;
 	dipsw &= 3;
 	Latch_RegReset();
 }
 
-static void M237Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M237Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper237_Init(CartInfo *info) {
-	Latch_Init(info, Sync, M237Read, FALSE, FALSE);
-	info->Power = M237Power;
-	info->Reset = M237Reset;
+	Latch_Init(info, Sync, ReadDIP, FALSE, FALSE);
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

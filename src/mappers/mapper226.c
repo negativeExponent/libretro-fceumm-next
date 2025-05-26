@@ -4,7 +4,7 @@
  *  Copyright (C) 2005 CaH4e3
  *  Copyright (C) 2009 qeed
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,43 +28,51 @@
 
 #include "mapinc.h"
 
-static uint8 reg[2], dipsw;
+static struct {
+	uint8 reg[2];
+} m226;
+
+static uint8 dipsw;
+
 static SFORMAT StateRegs[] = {
 	{ &dipsw, 1, "RST" },
-	{ reg, 2, "LATC" },
+	{ m226.reg, 2, "LATC" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 base = (reg[0] >> 7) | ((reg[1] & 0x01) << 1);
-	uint8 prg = reg[0] & 0x1F;
+	uint16 bank = ((m226.reg[1] & 0x01) << 1) | ((m226.reg[0] >> 7) & 0x01);
+	uint8 prg = m226.reg[0] & 0x1F;
 
 	/* 1536KiB PRG roms have different bank order */
-	if ((ROM.prg.size == (1536 * 1024)) && (base > 0)) {
-		base = (base - 1);
+	if ((ROM.prg.size == (1536 * 1024)) && (bank > 0)) {
+		bank = (bank - 1);
 	}
 
-	if (reg[0] & 0x20) {
-		setprg16(0x8000, (base << 5) | prg);
-		setprg16(0xC000, (base << 5) | prg);
+	bank = (bank << 5) | (m226.reg[0] & 0x1F);
+
+	if (m226.reg[0] & 0x20) {
+		setprg16(0x8000, bank);
+		setprg16(0xC000, bank);
 	} else {
-		setprg32(0x8000, ((base << 5) | prg) >> 1);
+		bank >>= 1;
+		setprg32(0x8000, bank);
 	}
 
-	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], !(reg[1] & 0x02));
+	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], !(m226.reg[1] & 0x02));
 	setchr8(0);
-	setmirror((reg[0] >> 6) & 0x01);
+	setmirror((m226.reg[0] >> 6) & 0x01);
 }
 
-static DECLFW(M226Write) {
-	reg[A & 0x01] = V;
+static DECLFW(WriteReg) {
+	m226.reg[A & 0x01] = V;
 	Sync();
 }
 
-static void M226Power(void) {
-	reg[0] = reg[1] = 0;
+static void Power(void) {
+	memset(&m226, 0, sizeof(m226));
 	Sync();
-	SetWriteHandler(0x8000, 0xFFFF, M226Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
@@ -72,14 +80,14 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-static void M226Reset(void) {
-	reg[0] = reg[1] = 0;
+static void Reset(void) {
+	memset(&m226, 0, sizeof(m226));
 	Sync();
 }
 
 void Mapper226_Init(CartInfo *info) {
-	info->Power = M226Power;
-	info->Reset = M226Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 	GameStateRestore = StateRestore;
 }

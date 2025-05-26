@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,83 +21,86 @@
 
 #include "mapinc.h"
 
-static uint8 prg[2], chr[8], prgMode, mirr;
+static struct {
+	uint8 prg[2], chr[8], mode;
+} m032;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 4, "PREG" },
-	{ chr, 8, "CREG" },
-	{ &prgMode, 1, "MODE" },
-	{ &mirr, 1, "mirr" },
+	{ m032.prg, 4, "PREG" },
+	{ m032.chr, 8, "CREG" },
+	{ &m032.mode, 1, "MODE" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	if (prgMode == 0) {
-		setprg8(0x8000, prg[0]);
-		setprg8(0xA000, prg[1]);
-		setprg8(0xC000, ~1);
-		setprg8(0xE000, ~0);
-	} else {
-		setprg8(0x8000, ~1);
-		setprg8(0xA000, prg[1]);
-		setprg8(0xC000, prg[0]);
-		setprg8(0xE000, ~0);
-	}
+static void SyncPRG(void) {
+	uint16 pswap = (m032.mode & 0x02) ? 0x4000 : 0;
 
-	setchr1(0x0000, chr[0]);
-	setchr1(0x0400, chr[1]);
-	setchr1(0x0800, chr[2]);
-	setchr1(0x0C00, chr[3]);
-	setchr1(0x1000, chr[4]);
-	setchr1(0x1400, chr[5]);
-	setchr1(0x1800, chr[6]);
-	setchr1(0x1C00, chr[7]);
+	setprg8(0x8000 ^ pswap, m032.prg[0]);
+	setprg8(0xA000, m032.prg[1]);
+	setprg8(0xC000 ^ pswap, 0xFE);
+	setprg8(0xE000, 0xFF);
+}
 
+static void SyncCHR(void) {
+	setchr1(0x0000, m032.chr[0]);
+	setchr1(0x0400, m032.chr[1]);
+	setchr1(0x0800, m032.chr[2]);
+	setchr1(0x0C00, m032.chr[3]);
+	setchr1(0x1000, m032.chr[4]);
+	setchr1(0x1400, m032.chr[5]);
+	setchr1(0x1800, m032.chr[6]);
+	setchr1(0x1C00, m032.chr[7]);
+}
+
+static void SyncMirror(void) {
 	if (iNESCart.submapper == 1) {
 		setmirror(MI_1);
 	} else {
-		setmirror((mirr & 0x01) ^ 0x01);
+		setmirror((m032.mode & 0x01) ^ 0x01);
 	}
 }
 
-static DECLFW(M032Write) {
-	switch (A & 0xF000) {
-	case 0x8000:
-	case 0xA000:
-		prg[(A >> 13) & 0x01] = V;
-		Sync();
-		break;
-	case 0x9000:
-		mirr = (V & 0x01) != 0;
-		prgMode = (V & 0x02) != 0;
-		if (iNESCart.submapper == 1) {
-			prgMode = 0;
-		}
-		Sync();
-		break;
-	case 0xB000:
-		chr[A & 0x07] = V;
-		Sync();
-		break;
-	}
+static DECLFW(WritePRG) {
+	m032.prg[(A >> 13) & 0x01] = V;
+	SyncPRG();
 }
 
-static void M032Power(void) {
-	prg[0] = 0;
-	prg[1] = 1;
-	chr[0] = 0;
-	chr[1] = 1;
-	chr[2] = 2;
-	chr[3] = 3;
-	chr[4] = 4;
-	chr[5] = 5;
-	chr[6] = 6;
-	chr[7] = 7;
-	prgMode = 0;
-	Sync();
+static DECLFW(WriteMode) {
+	m032.mode = V;
+	if (iNESCart.submapper == 1) {
+		m032.mode &= ~0x02;
+	}
+	SyncPRG();
+	SyncMirror();
+}
+
+static DECLFW(WriteCHR) {
+	m032.chr[A & 0x07] = V;
+	SyncCHR();
+}
+
+static void Power(void) {
+	m032.prg[0] = 0;
+	m032.prg[1] = 1;
+	m032.chr[0] = 0;
+	m032.chr[1] = 1;
+	m032.chr[2] = 2;
+	m032.chr[3] = 3;
+	m032.chr[4] = 4;
+	m032.chr[5] = 5;
+	m032.chr[6] = 6;
+	m032.chr[7] = 7;
+	m032.mode = 0;
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M032Write);
+	SetWriteHandler(0x8000, 0x8FFF, WritePRG);
+	SetWriteHandler(0x9000, 0x9FFF, WriteMode);
+	SetWriteHandler(0xA000, 0xAFFF, WritePRG);
+	SetWriteHandler(0xB000, 0xBFFF, WriteCHR);
 
 	if (WRAM) {
 		setprg8r(0x10, 0x6000, 0);
@@ -107,16 +110,18 @@ static void M032Power(void) {
 	}
 }
 
-static void M032Close(void) {
+static void Close(void) {
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper032_Init(CartInfo *info) {
-	info->Power = M032Power;
-	info->Close = M032Close;
+	info->Power = Power;
+	info->Close = Close;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,10 +33,12 @@
 #include "mapinc.h"
 #include "fdssound.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m108;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m108.reg, 1, "REGS" },
 	{ 0 }
 };
 
@@ -44,34 +46,34 @@ static void Sync(void) {
 	if (iNESCart.submapper == 4) {
 		setprg8(0x6000, ~0);
 	} else {
-		setprg8(0x6000, reg);
+		setprg8(0x6000, m108.reg);
 	}
 	setprg32(0x8000, ~0);
 	if (ROM.chr.size) {
-		setchr8(reg);
+		setchr8(m108.reg);
 	} else {
 		setchr8(0);
 	}
 }
 
-static DECLFW(M108Write) {
-	reg = V;
+static DECLFW(WriteReg) {
+	m108.reg = V;
 	Sync();
 }
 
-static void M108Power(void) {
-	reg = 0;
+static void Power(void) {
+	m108.reg = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	switch (iNESCart.submapper) {
 	case 1:
-		SetWriteHandler(0xF000, 0xFFFF, M108Write);
+		SetWriteHandler(0xF000, 0xFFFF, WriteReg);
 		break;
 	case 2:
-		SetWriteHandler(0xE000, 0xFFFF, M108Write);
+		SetWriteHandler(0xE000, 0xFFFF, WriteReg);
 		break;
 	default:
-		SetWriteHandler(0x8000, 0xFFFF, M108Write);
+		SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 		break;
 	}
 	FDSSound_Power();
@@ -82,7 +84,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper108_Init(CartInfo *info) {
-	info->Power = M108Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

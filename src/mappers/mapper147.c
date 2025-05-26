@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,28 +22,28 @@
 #include "mapinc.h"
 #include "jv001.h"
 
-static void M147Sync(void) {
+static void Sync(void) {
 	setprg32(0x8000, ((jv001.output >> 4) & 0x02) | (jv001.output & 0x01));
 	setchr8((jv001.output >> 1) & 0x0F);
 }
 
-static DECLFW(M147Write) {
+static DECLFW(WriteReg) {
 	JV001_Write(A, ((V >> 2) & 0x3F) | ((V << 6) & 0xC0));
 }
 
-static DECLFR(M147Read) {
+static DECLFR(ReadReg) {
 	uint8 ret = JV001_Read(A);
 	return ((ret << 2) | ((ret >> 6) & 0x03));
 }
 
-static void M147Power(void) {
+static void Power(void) {
 	JV001_Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetReadHandler(0x4100, 0x5FFF, M147Read);
-	SetWriteHandler(0x4100, 0xFFFF, M147Write);
+	SetReadHandler(0x4100, 0x5FFF, ReadReg);
+	SetWriteHandler(0x4100, 0xFFFF, WriteReg);
 }
 
 void Mapper147_Init(CartInfo *info) {
-	JV001_Init(info, M147Sync);
-	info->Power = M147Power;
+	JV001_Init(info, Sync);
+	info->Power = Power;
 }

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,93 +21,95 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 cmd;
-static uint8 prg[4];
-static uint8 chr[8];
+static struct {
+	uint8 cmd;
+	uint8 prg[4];
+	uint8 chr[8];
+} m100;
 
 static SFORMAT StateRegs[] = {
-	{ &cmd, 1, "CMD0" },
-	{ prg, 4, "PREG" },
-	{ chr, 8, "CREG" },
+	{ &m100.cmd, 1, "CMD0" },
+	{ m100.prg, 4, "PREG" },
+	{ m100.chr, 8, "CREG" },
 	{ 0 }
 };
 
-static void M100PRG(void) {
-	setprg8(0x8000, prg[0]);
-	setprg8(0xA000, prg[1]);
-	setprg8(0xC000, prg[2]);
-	setprg8(0xE000, prg[3]);
+static void SyncPRG(void) {
+	setprg8(0x8000, m100.prg[0]);
+	setprg8(0xA000, m100.prg[1]);
+	setprg8(0xC000, m100.prg[2]);
+	setprg8(0xE000, m100.prg[3]);
 }
 
-static void M100CHR(void) {
-	setchr1(0x0000, chr[0]);
-	setchr1(0x0400, chr[1]);
-	setchr1(0x0800, chr[2]);
-	setchr1(0x0C00, chr[3]);
-	setchr1(0x1000, chr[4]);
-	setchr1(0x1400, chr[5]);
-	setchr1(0x1800, chr[6]);
-	setchr1(0x1C00, chr[7]);
+static void SyncCHR(void) {
+	setchr1(0x0000, m100.chr[0]);
+	setchr1(0x0400, m100.chr[1]);
+	setchr1(0x0800, m100.chr[2]);
+	setchr1(0x0C00, m100.chr[3]);
+	setchr1(0x1000, m100.chr[4]);
+	setchr1(0x1400, m100.chr[5]);
+	setchr1(0x1800, m100.chr[6]);
+	setchr1(0x1C00, m100.chr[7]);
 }
 
-static DECLFW(M100WriteCMD) {
+static DECLFW(WriteReg) {
 	switch (A & 0xE001) {
 	case 0x8000:
-		cmd = V;
+		m100.cmd = V;
 		break;
 	case 0x8001:
-		switch (cmd) {
+		switch (m100.cmd) {
 		case 0x00:
-			chr[0] = V & 0xFE;
-			chr[1] = V | 0x01;
+			m100.chr[0] = V & 0xFE;
+			m100.chr[1] = V | 0x01;
 			break;
 		case 0x01:
-			chr[2] = V & 0xFE;
-			chr[3] = V | 0x01;
+			m100.chr[2] = V & 0xFE;
+			m100.chr[3] = V | 0x01;
 			break;
 		case 0x02:
-			chr[4] = V;
+			m100.chr[4] = V;
 			break;
 		case 0x03:
-			chr[5] = V;
+			m100.chr[5] = V;
 			break;
 		case 0x04:
-			chr[6] = V;
+			m100.chr[6] = V;
 			break;
 		case 0x05:
-			chr[7] = V;
+			m100.chr[7] = V;
 			break;
 		case 0x06:
-			prg[0] = V;
+			m100.prg[0] = V;
 			break;
 		case 0x07:
-			prg[1] = V;
+			m100.prg[1] = V;
 			break;
 		case 0x46:
-			prg[2] = V;
+			m100.prg[2] = V;
 			break;
 		case 0x47:
-			prg[1] = V;
+			m100.prg[1] = V;
 			break;
 		case 0x80:
-			chr[4] = V & 0xFE;
-			chr[5] = V | 0x01;
+			m100.chr[4] = V & 0xFE;
+			m100.chr[5] = V | 0x01;
 			break;
 		case 0x81:
-			chr[6] = V & 0xFE;
-			chr[7] = V | 0x01;
+			m100.chr[6] = V & 0xFE;
+			m100.chr[7] = V | 0x01;
 			break;
 		case 0x82:
-			chr[0] = V;
+			m100.chr[0] = V;
 			break;
 		case 0x83:
-			chr[1] = V;
+			m100.chr[1] = V;
 			break;
 		case 0x84:
-			chr[2] = V;
+			m100.chr[2] = V;
 			break;
 		case 0x85:
-			chr[3] = V;
+			m100.chr[3] = V;
 			break;
 		}
 		MMC3_SyncPRG();
@@ -116,39 +118,32 @@ static DECLFW(M100WriteCMD) {
 	}
 }
 
-static void M100Reset(void) {
-	cmd = 0;
-	prg[0] = 0;
-	prg[1] = 1;
-	prg[2] = ~1;
-	prg[3] = ~0;
-	chr[0] = 0;
-	chr[1] = 1;
-	chr[2] = 2;
-	chr[3] = 3;
-	chr[4] = 4;
-	chr[5] = 5;
-	chr[6] = 6;
-	chr[7] = 7;
+static void ResetRegs(void) {
+	memset(&m100, 0, sizeof(m100));
+
+	m100.prg[0] = 0x00;
+	m100.prg[1] = 0x01;
+	m100.prg[2] = 0xFE;
+	m100.prg[3] = 0xFF;
+	m100.chr[0] = 0x00;
+	m100.chr[1] = 0x01;
+	m100.chr[2] = 0x02;
+	m100.chr[3] = 0x03;
+	m100.chr[4] = 0x04;
+	m100.chr[5] = 0x05;
+	m100.chr[6] = 0x06;
+	m100.chr[7] = 0x07;
+}
+
+static void Reset(void) {
+	ResetRegs();
 	MMC3_Reset();
 }
 
-static void M100Power(void) {
-	cmd = 0;
-	prg[0] = 0;
-	prg[1] = 1;
-	prg[2] = ~1;
-	prg[3] = ~0;
-	chr[0] = 0;
-	chr[1] = 1;
-	chr[2] = 2;
-	chr[3] = 3;
-	chr[4] = 4;
-	chr[5] = 5;
-	chr[6] = 6;
-	chr[7] = 7;
+static void Power(void) {
+	ResetRegs();
 	MMC3_Power();
-	SetWriteHandler(0x8000, 0x9FFF, M100WriteCMD);
+	SetWriteHandler(0x8000, 0x9FFF, WriteReg);
 
 	if (iNESCart.trainer && ROM.misc.data) {
 		if (ROM.misc.data[0] == 0x4C) {
@@ -158,10 +153,10 @@ static void M100Power(void) {
 }
 
 void Mapper100_Init(CartInfo *info) {
-	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_SyncPRG = M100PRG;
-	MMC3_SyncCHR = M100CHR;
-	info->Power = M100Power;
-	info->Reset = M100Reset;
+	MMC3_Init(info, MMC3B, 1, 0);
+	MMC3_SyncPRG = SyncPRG;
+	MMC3_SyncCHR = SyncCHR;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,72 +25,78 @@
 #include "mapinc.h"
 #include "fdssound.h"
 
-static uint8 reg[3];
+static struct {
+	uint8 prg;
+	uint8 mirror;
+	uint8 ram_enabled;
+} m103;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 3, "REGS" },
+	{ &m103.prg, 1, "PREG" },
+	{ &m103.mirror, 1, "MIRR" },
+	{ &m103.ram_enabled, 3, "RAME" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg8(0x8000, 0x0C);
-	setprg8(0xE000, 0x0F);
-	if (reg[2] & 0x10) {
-		setprg8(0x6000, reg[0] & 0x0F);
-		setprg8(0xA000, 0x0D);
-		setprg8(0xC000, 0x0E);
+	if (!m103.ram_enabled) {
+		setprg8(0x6000, m103.prg);
 	} else {
 		setprg8r(0x10, 0x6000, 0);
-		setprg4(0xA000, (0x0D << 1));
-		setprg2(0xB000, (0x0D << 2) + 2);
-		setprg2r(0x10, 0xB800, 4);
-		setprg2r(0x10, 0xC000, 5);
-		setprg2r(0x10, 0xC800, 6);
-		setprg2r(0x10, 0xD000, 7);
-		setprg2(0xD800, (0x0E << 2) + 3);
 	}
+	setprg32(0x8000, 0x03);
 	setchr8(0);
-	setmirror(((reg[1] >> 3) & 0x01) ^ 0x01);
+	setmirror(((m103.mirror >> 3) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M103RamWrite0) {
-	WRAM[A & 0x1FFF] = V;
+static DECLFR(ReadRAM) {
+	if (m103.ram_enabled && (A >= 0xB8000) && (A <= 0xD7FF)) {
+		return WRAM[0x2000 + (A - 0xB800)];
+	}
+	return CartBR(A);
 }
 
-static DECLFW(M103RamWrite1) {
-	WRAM[0x2000 + ((A - 0xB800) & 0x1FFF)] = V;
+static DECLFW(WriteRAM) {
+	/* Writes to RAM-mappable regions always go to RAM, even if RAM is disabled
+	 * for reading (PRG-ROM area). */
+	if ((A >= 0x6000) && (A <= 0x7FFF)) {
+		WRAM[A - 0x6000] = V;
+	} else if ((A >= 0xB8000) && (A <= 0xD7FF)) {
+		WRAM[0x2000 + (A - 0xB800)] = V;
+	}
 }
 
-static DECLFW(M103WritePRG) {
-	reg[0] = V;
+static DECLFW(WritePRG) {
+	m103.prg = V;
 	Sync();
 }
 
-static DECLFW(M103WriteMirror) {
-	reg[1] = V;
+static DECLFW(WriteMirror) {
+	m103.mirror = V;
 	Sync();
 }
 
-static DECLFW(M103WriteRAMEnable) {
-	reg[2] = V;
+static DECLFW(WriteRAMDisable) {
+	m103.ram_enabled = (V & 0x10) == 0;
 	Sync();
 }
 
-static void M103Power(void) {
+static void Power(void) {
+	memset(&m103, 0, sizeof(m103));
+
 	FDSSound_Power();
-	reg[0] = reg[1] = 0;
-	reg[2] = 0;
 	Sync();
-	SetReadHandler(0x6000, 0x7FFF, CartBR);
-	SetWriteHandler(0x6000, 0x7FFF, M103RamWrite0);
+
+	SetReadHandler(0x6000, 0x7FFF, ReadRAM);
+	SetWriteHandler(0x6000, 0x7FFF, WriteRAM);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0xB800, 0xD7FF, M103RamWrite1);
-	SetWriteHandler(0x8000, 0x8FFF, M103WritePRG);
-	SetWriteHandler(0xE000, 0xEFFF, M103WriteMirror);
-	SetWriteHandler(0xF000, 0xFFFF, M103WriteRAMEnable);
+	SetWriteHandler(0xB800, 0xD7FF, WriteRAM);
+	SetWriteHandler(0x8000, 0x8FFF, WritePRG);
+	SetWriteHandler(0xE000, 0xEFFF, WriteMirror);
+	SetWriteHandler(0xF000, 0xFFFF, WriteRAMDisable);
 }
 
-static void M103Close(void) {
+static void Close(void) {
 }
 
 static void StateRestore(int version) {
@@ -98,8 +104,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper103_Init(CartInfo *info) {
-	info->Power = M103Power;
-	info->Close = M103Close;
+	info->Power = Power;
+	info->Close = Close;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

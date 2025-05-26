@@ -21,19 +21,21 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 unrom;
+static struct {
+	uint8 unrom;
+} m280;
 
 static void Sync(void) {
 	uint8 nrom = (latch.addr & 0x80) != 0;
 	uint8 A14 = (latch.addr & 0x01) != 0;
 	uint16 prg = (latch.addr >> 2) & 0x1F;
 
-	if (!unrom && nrom)
+	if (!m280.unrom && nrom)
 		SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], 0);
 	else
 		SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], 1);
 
-	if (unrom) {
+	if (m280.unrom) {
 		setprg16(0x8000, 0x20 | (latch.data & 0x07));
 		setprg16(0xC000, 0x20 | 0x07);
 		setchr8(0);
@@ -46,13 +48,13 @@ static void Sync(void) {
 	}
 }
 
-static void M280Reset(void) {
-	unrom = !unrom;
+static void Reset(void) {
+	m280.unrom = !m280.unrom;
 	Latch_RegReset();
 }
 
 void Mapper280_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
-	info->Reset = M280Reset;
-	AddExState(&unrom, 1, 0, "UNRM");
+	info->Reset = Reset;
+	AddExState(&m280.unrom, 1, 0, "UNRM");
 }

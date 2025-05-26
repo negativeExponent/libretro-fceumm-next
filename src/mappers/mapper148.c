@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 #include "latch.h"
 
 static void Sync(void) {
-	setprg32(0x8000, (latch.data >> 3) & 0x01);
+	setprg32(0x8000, latch.data >> 3);
 	setchr8(latch.data & 0x07);
 }
 

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,48 +21,52 @@
 
 #include "mapinc.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m244;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
+	{ m244.reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg32(0x8000, reg[0]);
-	setchr8(reg[1]);
+	setprg32(0x8000, m244.reg[0]);
+	setchr8(m244.reg[1]);
 }
 
-static DECLFW(M244Write) {
-	if (V & 8) {
-		static const uint8 chr_perm[8][8] = {
-			{ 0, 1, 2, 3, 4, 5, 6, 7, },
-			{ 0, 2, 1, 3, 4, 6, 5, 7, },
-			{ 0, 1, 4, 5, 2, 3, 6, 7, },
-			{ 0, 4, 1, 5, 2, 6, 3, 7, },
-			{ 0, 4, 2, 6, 1, 5, 3, 7, },
-			{ 0, 2, 4, 6, 1, 3, 5, 7, },
-			{ 7, 6, 5, 4, 3, 2, 1, 0, },
-			{ 7, 6, 5, 4, 3, 2, 1, 0, },
-		};
-		reg[1] = chr_perm[(V >> 4) & 0x07][V & 0x07];
+static const uint8 chr_perm[8][8] = {
+	{ 0, 1, 2, 3, 4, 5, 6, 7, },
+	{ 0, 2, 1, 3, 4, 6, 5, 7, },
+	{ 0, 1, 4, 5, 2, 3, 6, 7, },
+	{ 0, 4, 1, 5, 2, 6, 3, 7, },
+	{ 0, 4, 2, 6, 1, 5, 3, 7, },
+	{ 0, 2, 4, 6, 1, 3, 5, 7, },
+	{ 7, 6, 5, 4, 3, 2, 1, 0, },
+	{ 7, 6, 5, 4, 3, 2, 1, 0, },
+};
+
+static const uint8 prg_perm[4][4] = {
+	{ 0, 1, 2, 3, },
+	{ 3, 2, 1, 0, },
+	{ 0, 2, 1, 3, },
+	{ 3, 1, 2, 0, },
+};
+
+static DECLFW(WriteReg) {
+	if (V & 0x08) {
+		m244.reg[1] = chr_perm[(V >> 4) & 0x07][V & 0x07];
 		Sync();
 	} else {
-		static const uint8 prg_perm[4][4] = {
-			{ 0, 1, 2, 3, },
-			{ 3, 2, 1, 0, },
-			{ 0, 2, 1, 3, },
-			{ 3, 1, 2, 0, },
-		};
-		reg[0] = prg_perm[(V >> 4) & 0x03][V & 0x03];
+		m244.reg[0] = prg_perm[(V >> 4) & 0x03][V & 0x03];
 		Sync();
 	}
 }
 
-static void M244Power(void) {
-	reg[0] = reg[1] = 0;
+static void Power(void) {
+	memset(&m244, 0, sizeof(m244));
 	Sync();
-	SetWriteHandler(0x8000, 0xFFFF, M244Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
@@ -71,7 +75,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper244_Init(CartInfo *info) {
-	info->Power = M244Power;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 	GameStateRestore = StateRestore;
 }

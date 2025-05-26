@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,37 +22,39 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m046;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m046.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg32(0x8000, ((reg & 0x0F) << 1) | (latch.data & 0x01));
-	setchr8(((reg & 0xF0) >> 1) | ((latch.data >> 4) & 0x07));
+	setprg32(0x8000, ((m046.reg & 0x0F) << 1) | (latch.data & 0x01));
+	setchr8(((m046.reg & 0xF0) >> 1) | ((latch.data >> 4) & 0x07));
 }
 
-static DECLFW(M046WriteReg) {
-	reg = V;
+static DECLFW(WriteReg) {
+	m046.reg = V;
 	Sync();
 }
 
-static void M046Power(void) {
-	reg = 0;
+static void Power(void) {
+	m046.reg = 0;
 	Latch_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M046WriteReg);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
-static void M046Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m046.reg = 0;
 	Sync();
 }
 
 void Mapper046_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
-	info->Power = M046Power;
-	info->Reset = M046Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

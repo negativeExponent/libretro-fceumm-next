@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,28 +40,28 @@ static void Sync(void) {
 	setmirror(((latch.data >> 4) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M277Write) {
+static DECLFW(LatchWrite) {
 	if (!(latch.data & 0x20)) {
 		Latch_Write(A, V);
 	}
 }
 
-static void M277Power(void) {
+static void Power(void) {
 	latch.addr = 0;
-	latch.data = 8;
+	latch.data = 0x08;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBROB);
-	SetWriteHandler(0x8000, 0xFFFF, M277Write);
+	SetWriteHandler(0x8000, 0xFFFF, LatchWrite);
 }
 
-static void M277Reset(void) {
+static void Reset(void) {
 	latch.addr = 0;
-	latch.data = 8;
+	latch.data = 0x08;
 	Sync();
 }
 
 void Mapper277_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M277Power;
-	info->Reset = M277Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 }

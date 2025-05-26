@@ -25,12 +25,10 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 bank = ((latch.addr >> 3) & 0x60) | ((latch.addr >> 2) & 0x18) | (latch.data & 0x07);
+	uint8 bank = ((latch.addr >> 3) & 0xE0) | ((latch.addr >> 2) & 0x18) | (latch.data & 0x07);
 
 	if (latch.addr & 0x80) {
-		if (!bank) {
-			/* NOTE: Unofficial support but Tetris II in 11-in-1 variant
-			works as if its NROM-256 */
+		if (latch.addr & 0x01) {
 			setprg32(0x8000, bank >> 1);
 		} else {
 			setprg16(0x8000, bank);
@@ -44,22 +42,23 @@ static void Sync(void) {
 	setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M265Write) {
-	if (!(latch.addr & 0x2000)) {
-		latch.addr = A;
+static DECLFW(WriteLatch) {
+	if (latch.addr & 0x2000) {
+		latch.data = V;
+		Sync();
+	} else {
+		Latch_Write(A, V);
 	}
-	latch.data = V;
-	Sync();
 }
 
-static void M265Power(void) {
+static void Power(void) {
 	Latch_Power();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M265Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper265_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M265Power;
+	info->Power = Power;
 	info->Reset = Latch_RegReset;
 }

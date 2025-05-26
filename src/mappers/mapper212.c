@@ -33,16 +33,16 @@ static void Sync(void) {
 	setmirror(((latch.addr >> 3) & 0x01) ^ 0x01);
 }
 
-static DECLFR(M212Read) {
+static DECLFR(Read) {
 	return (cpu.openbus & ~0x80) | ((A & 0x10) ? 0 : 0x80);
 }
 
-static void M212Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetReadHandler(0x6000, 0x7FFF, M212Read);
+	SetReadHandler(0x6000, 0x7FFF, Read);
 }
 
 void Mapper212_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M212Power;
+	info->Power = Power;
 }

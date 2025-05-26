@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2009 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,19 +28,19 @@ static uint8 maskCHRBank;
 static writefunc writePPU;
 extern uint32 RefreshAddr;
 
-static void M252PW(uint16 A, uint16 V) {
+static void SetPRGBank_vrc24(uint16 A, uint16 V) {
 	setprg8(A, V & 0x1F);
 }
 
-static void M252CW(uint16 A, uint16 V) {
+static void SetCHRBank_vrc24(uint16 A, uint16 V) {
 	if ((V & maskCHRBank) == maskCHRCompare) {
-		setchr1r(0x10, A, V & 0x01);
+		setchr1r(0x10, A, V);
 	} else {
 		setchr1(A, V);
 	}
 }
 
-static DECLFW(M252PPU_B2007) {
+static DECLFW(PPUWrite2007) {
 	if (RefreshAddr < 0x2000) {
 		switch (vrc24.chr[RefreshAddr >> 10]) {
 		case 0x88:
@@ -60,11 +60,11 @@ static DECLFW(M252PPU_B2007) {
 	writePPU(A, V);
 }
 
-static void M252Close(void) {
+static void Close(void) {
 	VRC24_Close();
 }
 
-static void M252Power(void) {
+static void Power(void) {
 	if (iNESCart.mapper == 252) {
 		maskCHRBank = 0xFE;
 		maskCHRCompare = 0x06;
@@ -75,16 +75,16 @@ static void M252Power(void) {
 	VRC24_Power();
 
 	writePPU = GetWriteHandler(0x2007);
-	SetWriteHandler(0x2007, 0x2007, M252PPU_B2007);
+	SetWriteHandler(0x2007, 0x2007, PPUWrite2007);
 }
 
 void Mapper252_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, FALSE, TRUE);
-	VRC24_pwrap = M252PW;
-	VRC24_cwrap = M252CW;
+	VRC24_pwrap = SetPRGBank_vrc24;
+	VRC24_cwrap = SetCHRBank_vrc24;
 
-	info->Power = M252Power;
-	info->Close = M252Close;
+	info->Power = Power;
+	info->Close = Close;
 
 	CHRRAMSIZE = info->iNES2 ? (info->CHRRamSize + info->CHRRamSaveSize) : 2048;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

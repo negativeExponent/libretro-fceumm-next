@@ -1,7 +1,6 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2007 CaH4e3
  *  Copyright (C) 2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
@@ -17,63 +16,72 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * NES 2.0 Mapper 125 - UNL-M125
- * FDS Conversion - Monty no Doki Doki Daisassō, Monty on the Run, cartridge code M125
- *
  */
 
+/* iNES Mapper 137 - Sachen 8259D */
+/* this covers the old implementation of the mapper */
+
 #include "mapinc.h"
-#include "fdssound.h"
 
 static struct {
-	uint8 reg;
-} m125;
+	uint8 cmd;
+	uint8 reg[8];
+} m137_alt;
 
 static SFORMAT StateRegs[] = {
-	{ &m125.reg, 1, "REGS" },
+	{ m137_alt.reg, 8, "REGS" },
+	{ &m137_alt.cmd, 1, "CMD0" },
 	{ 0 }
 };
 
+static void SyncMirror(uint8 mirr) {
+	switch (mirr & 3) {
+	case 0: setmirror(MI_V); break;
+	case 1: setmirror(MI_H); break;
+	case 2: setmirrorw(0, 1, 1, 1); break;
+	case 3: setmirror(MI_0); break;
+	}
+}
+
 static void Sync(void) {
-	setprg8(0x6000, m125.reg);
-	setprg8(0x8000, ~3);
-	setprg8(0xa000, ~2);
-	setprg8r(0x10, 0xC000, 0);
-	setprg8(0xE000, ~0);
-	setchr8(0);
+    int x;
+    setprg32(0x8000, m137_alt.reg[5] & 0x07);
+    setchr1(0x0000, m137_alt.reg[x] & 7);
+    setchr1(0x0400, (m137_alt.reg[4] & 1) << 4 | m137_alt.reg[1] & 7);
+    setchr1(0x0800, (m137_alt.reg[4] & 2) << 3 | m137_alt.reg[2] & 7);
+    setchr1(0x0C00, (m137_alt.reg[4] & 4) << 2 | ((m137_alt.reg[6] & 1) << 3) | m137_alt.reg[3] & 7);
+    setchr4(0x1000, ~0);
+	if (!(m137_alt.reg[7] & 1))
+		SyncMirror(m137_alt.reg[7] >> 1);
+	else
+		setmirror(MI_V);
 }
 
 static DECLFW(WriteReg) {
-	m125.reg = V;
-	Sync();
+	A &= 0x4101;
+	if (A == 0x4100)
+		m137_alt.cmd = V;
+	else{
+		m137_alt.reg[m137_alt.cmd & 7] = V;
+		Sync();
+	}
 }
 
 static void Power(void) {
-	m125.reg = 0;
-	Sync();
-	FDSSound_Power();
-	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x6000, WriteReg);
-	SetWriteHandler(0xC000, 0xDFFF, CartBW);
-	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
-}
+	memset(&m137_alt, 0, sizeof(m137_alt));
 
-static void Close(void) {
+	Sync();
+
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x4100, 0x7FFF, WriteReg);
 }
 
 static void StateRestore(int version) {
 	Sync();
 }
 
-void Mapper125_Init(CartInfo *info) {
+void Mapper137_Init_alt(CartInfo *info) {
 	info->Power = Power;
-	info->Close = Close;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
-
-	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
-	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
-	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

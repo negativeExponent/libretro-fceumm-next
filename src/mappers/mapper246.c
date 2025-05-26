@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,70 +21,92 @@
 
 #include "mapinc.h"
 
-static uint8 prg[4];
-static uint8 chr[4];
+static struct {
+	uint8 prg[4];
+	uint8 chr[4];
+} m246;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 4, "PREG" },
-	{ chr, 4, "CREG" },
+	{ m246.prg, 4, "PREG" },
+	{ m246.chr, 4, "CREG" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg2r(0x10, 0x6800, 0);
-	setprg8(0x8000, prg[0]);
-	setprg8(0xA000, prg[1]);
-	setprg8(0xC000, prg[2]);
-	setprg8(0xE000, prg[3]);
-	setchr2(0x0000, chr[0]);
-	setchr2(0x0800, chr[1]);
-	setchr2(0x1000, chr[2]);
-	setchr2(0x1800, chr[3]);
+static void SyncPRG(void) {
+	setprg8(0x8000, m246.prg[0]);
+	setprg8(0xA000, m246.prg[1]);
+	setprg8(0xC000, m246.prg[2]);
+	setprg8(0xE000, m246.prg[3]);
 }
 
-static DECLFR(M246Read) {
+static void SyncCHR(void) {
+	setchr2(0x0000, m246.chr[0]);
+	setchr2(0x0800, m246.chr[1]);
+	setchr2(0x1000, m246.chr[2]);
+	setchr2(0x1800, m246.chr[3]);
+}
+
+static DECLFW(Write6) {
+	switch (A & 0x07) {
+	case 0:
+	case 1:
+	case 2:
+	case 3:
+		m246.prg[A & 0x03] = V;
+		SyncPRG();
+		break;
+	case 4:
+	case 5:
+	case 6:
+	case 7:
+		m246.chr[A & 0x03] = V;
+		SyncCHR();
+		break;
+	}
+}
+
+static DECLFR(ReadF) {
+	uint8 ret = CartBR(A);
+
 	if ((A & 0xFFE4) == 0xFFE4) {
-		size_t prgOffset = ((prg[3] | 0x10) << 13) | 0x1000 | (A & 0xFFF);
-		return PRGptr[0][prgOffset & 0x7FFFF];
+		size_t prgOffset = (((m246.prg[3] | 0x10) << 13) | (A & 0x1FFF));
+		ret = PRGptr[0][prgOffset & (ROM.prg.size - 1)];
 	}
-	return CartBR(A);
+	return ret;
 }
 
-static DECLFW(M246Write) {
-	if (A & 0x04) {
-		chr[A & 0x03] = V;
-		Sync();
-	} else {
-		prg[A & 0x03] = V;
-		Sync();
-	}
-}
+static void Power(void) {
+	m246.prg[0] = 0;
+	m246.prg[1] = 1;
+	m246.prg[2] = 0xFE;
+	m246.prg[3] = 0xFF;
 
-static void M246Power(void) {
-	prg[0] = 0;
-	prg[1] = 1;
-	prg[2] = ~1;
-	prg[3] = ~0;
-	Sync();
+	SyncPRG();
+	SyncCHR();
+
+	setprg2r(0x10, 0x6800, 0);
 
 	SetReadHandler(0x6800, 0x6FFF, CartBR);
-	SetReadHandler(0x8000, 0xFFFF, M246Read);
-	SetWriteHandler(0x6000, 0x67FF, M246Write);
+	SetReadHandler(0x8000, 0xEFFF, CartBR);
+	SetReadHandler(0xF000, 0xFFFF, ReadF);
+
+	SetWriteHandler(0x6000, 0x601F, Write6);
 	SetWriteHandler(0x6800, 0x6FFF, CartBW);
 
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M246Close(void) {
+static void Close(void) {
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
 }
 
 void Mapper246_Init(CartInfo *info) {
-	info->Power = M246Power;
-	info->Close = M246Close;
+	info->Power = Power;
+	info->Close = Close;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

@@ -35,7 +35,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRGBank(uint16 A, uint16 V) {
+static void SetPRGBank_mmc3(uint16 A, uint16 V) {
 	uint16 mask = (m134.reg[1] & 0x04) ? 0x0F : 0x1F;
 	uint16 base = ((m134.reg[1] << 4) & 0x30) | ((m134.reg[0] << 2) & 0x40);
 
@@ -48,7 +48,7 @@ static void SetPRGBank(uint16 A, uint16 V) {
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHRBank(uint16 A, uint16 V) {
+static void SetCHRBank_mmc3(uint16 A, uint16 V) {
 	uint16 mask = (m134.reg[1] & 0x40) ? 0x7F : 0xFF;
 	uint16 base = ((m134.reg[1] << 3) & 0x180) | ((m134.reg[0] << 4) & 0x200);
 
@@ -113,8 +113,8 @@ static void Power(void) {
 
 void Mapper134_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8, info->battery);
-	MMC3_cwrap = SetCHRBank;
-	MMC3_pwrap = SetPRGBank;
+	MMC3_cwrap = SetCHRBank_mmc3;
+	MMC3_pwrap = SetPRGBank_mmc3;
 	info->Power = Power;
 	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);

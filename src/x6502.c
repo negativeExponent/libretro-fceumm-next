@@ -808,9 +808,19 @@ void X6502_Run(int32 cycles) {
 		/* ASR */
 		case 0x4B: LD_IM(AND; LSRA);
 
+
+		/* NOTE: this code was added together with opcode 0x9C and 0x9E */
+		/* OPCODE 0xAB is reverted back to original fceux */
 		/* ATX(OAL) Is this(OR with $EE) correct? Blargg did some test
 		   and found the constant to be OR with is $FF for NES */
-		case 0xAB: LD_IM(cpu.A |= 0xFF; AND; cpu.X = cpu.A);
+	   case 0xAB: LD_IM(cpu.A |= 0xFF; AND; cpu.X = cpu.A);
+
+#if 0
+	   /* original fceumm opcode */
+		/* ATX(OAL) Is this(OR with $EE) correct? */
+		case 0xAB: LD_IM(cpu.A|=0xEE;AND;cpu.X=cpu.A);
+#endif
+
 
 		/* AXS */
 		case 0xCB: LD_IM(AXS);
@@ -930,6 +940,7 @@ void X6502_Run(int32 cycles) {
 		case 0x93: ST_IY(cpu.A & cpu.X & (((A - cpu.Y) >> 8) + 1));
 		case 0x9F: ST_ABY(cpu.A & cpu.X & (((A - cpu.Y) >> 8) + 1));
 
+#if 0
 		/* SYA */
 		case 0x9C: {
 			/* Can't reuse existing ST_ABI macro here, due to addressing
@@ -951,6 +962,18 @@ void X6502_Run(int32 cycles) {
 			WrMem(A, A >> 8);
 			break;
 		}
+#else
+		/* FIXME: */
+		/* fceumm original code */
+		/* at least 1 menu in a multicart game cause issue with above code */
+		/* 4-in-1 (Contra Force+Master Fighter II) (prgcrc32: 0x0CDEB325 romcrc32: 0x6881B553) */
+
+		/* SYA */
+		case 0x9C: ST_ABX(cpu.Y&(((A-cpu.X)>>8)+1));
+
+		/* SXA */
+		case 0x9E: ST_ABY(cpu.X&(((A-cpu.Y)>>8)+1));
+#endif
 
 		/* XAS */
 		case 0x9B:

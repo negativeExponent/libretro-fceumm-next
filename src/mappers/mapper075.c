@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,67 +24,75 @@
 
 #include "mapinc.h"
 
-static uint8 prg[3], chr[2], mode;
+static struct {
+	uint8 prg[3], chr[2], mode;
+} m075;
 
 static SFORMAT StateRegs[] = {
-	{ &mode, 1, "MODE" },
-	{ chr, 2, "CREG" },
-	{ prg, 3, "PREG" },
+	{ &m075.mode, 1, "MODE" },
+	{ m075.chr, 2, "CREG" },
+	{ m075.prg, 3, "PREG" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg8(0x8000, prg[0]);
-	setprg8(0xA000, prg[1]);
-	setprg8(0xC000, prg[2]);
+static void SyncPRG(void) {
+	setprg8(0x8000, m075.prg[0]);
+	setprg8(0xA000, m075.prg[1]);
+	setprg8(0xC000, m075.prg[2]);
 	setprg8(0xE000, ~0);
+}
 
-	setchr4(0x0000, (chr[0] & 0x0F) | ((mode & 2) << 3));
-	setchr4(0x1000, (chr[1] & 0x0F) | ((mode & 4) << 2));
+static void SyncCHR(void) {
+	setchr4(0x0000, (m075.chr[0] & 0x0F) | ((m075.mode & 0x02) << 3));
+	setchr4(0x1000, (m075.chr[1] & 0x0F) | ((m075.mode & 0x04) << 2));
+}
 
-	if (iNESCart.mirror != MI_4) { /* VS rom conversion uses 4-screen mirroring */
-		setmirror((mode & 1) ^ 1);
+static void SyncMirror(void) {
+	if (iNESCart.mirror == MI_4) {
+		setmirror(MI_4);
+	} else {
+		setmirror((m075.mode & 1) ^ 1);
 	}
 }
 
-static DECLFW(M75Write) {
-	switch (A & 0xF000) {
-	case 0x8000:
-	case 0xA000:
-	case 0xC000:
-		prg[(A >> 13) & 0x03] = V;
-		Sync();
-		break;
-	case 0x9000:
-		mode = V;
-		Sync();
-		break;
-	case 0xE000:
-	case 0xF000:
-		chr[(A >> 12) & 0x01] = V;
-		Sync();
-		break;
-	}
+static DECLFW(WritePRG) {
+	m075.prg[(A >> 13) & 0x03] = V;
+	SyncPRG();
 }
 
-static void M75Power(void) {
-	Sync();
-	SetWriteHandler(0x8000, 0xFFFF, M75Write);
+static DECLFW(WriteMode) {
+	m075.mode = V;
+	SyncCHR();
+	SyncMirror();
+}
+
+static DECLFW(WriteCHR) {
+	m075.chr[(A >> 12) & 0x01] = V;
+	SyncCHR();
+}
+
+static void Power(void) {
+	memset(&m075, 0, sizeof(m075));
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0x8FFF, WritePRG);
+	SetWriteHandler(0x9000, 0x9FFF, WriteMode);
+	SetWriteHandler(0xA000, 0xDFFF, WritePRG);
+	SetWriteHandler(0xE000, 0xFFFF, WriteCHR);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper075_Init(CartInfo *info) {
-	info->Power = M75Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
-}
-
-void Mapper151_Init(CartInfo *info) {
-	Mapper075_Init(info);
-	info->mirror = MI_4;
-	setmirror(MI_4);
 }

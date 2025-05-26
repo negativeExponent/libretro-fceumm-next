@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,13 @@
 #include "latch.h"
 
 static void Sync(void) {
+	uint16 bank = latch.addr & 0x1E;
+
 	if (latch.addr & 0x20) {
-		setprg32(0x8000, (latch.addr >> 1) & 0x0F);
+		setprg32(0x8000, bank >> 1);
 	} else {
-		setprg16(0x8000, latch.addr & 0x1E);
-		setprg16(0xC000, latch.addr & 0x1E);
+		setprg16(0x8000, bank);
+		setprg16(0xC000, bank);
 	}
 	setchr8(0);
 	switch ((latch.addr >> 6) & 0x03) {

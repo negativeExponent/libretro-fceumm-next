@@ -3,6 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
  *  Copyright (C) 2020
+ *  Copyright (C) 2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,135 +29,167 @@
 
 #include "mapinc.h"
 
-static uint8 chr[4], prg[2];
-static uint8 outerbank;
-static uint8 mirr;
+static struct {
+	uint8 chr[4], prg[2];
+	uint8 outer;
+	uint8 mirror;
 
-static uint8 IRQa;
-static uint8 IRQPrescaler;
-static uint8 IRQCount;
-static int16 IRQCount16;
+	uint8 IRQa;
+	struct {
+		uint8 IRQCount;
+	} pa12;
+	struct {
+		uint8 IRQPrescaler;
+		int16 IRQCount;
+	} m2;
+} m091;
 
 static SFORMAT StateRegs[] = {
-	{ chr, 4, "CREG" },
-	{ prg, 2, "PREG" },
-	{ &IRQa, 1, "IRQA" },
-	{ &IRQPrescaler, 1, "IRQP" },
-	{ &IRQCount, 1, "IRQC" },
-	{ &IRQCount16, 4, "IRQ2" },
-	{ &outerbank, 1, "OUTB" },
-	{ &mirr, 1, "MIRR" },
+	{ m091.chr, 4, "CREG" },
+	{ m091.prg, 2, "PREG" },
+	{ &m091.IRQa, 1, "IRQA" },
+	{ &m091.m2.IRQPrescaler, 1, "IRQP" },
+	{ &m091.pa12.IRQCount, 1, "IRQC" },
+	{ &m091.m2.IRQCount, 4, "IRQ2" },
+	{ &m091.outer, 1, "OUTB" },
+	{ &m091.mirror, 1, "MIRR" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	/*	FCEU_printf("P0:%02x P1:%02x outerbank:%02x\n", prg[0], prg[1], outerbank);*/
-	setprg8(0x8000, ((outerbank << 3) & ~0x0F) | prg[0]);
-	setprg8(0xa000, ((outerbank << 3) & ~0x0F) | prg[1]);
-	setprg8(0xc000, ((outerbank << 3) & ~0x0F) | 0x0E);
-	setprg8(0xe000, ((outerbank << 3) & ~0x0F) | 0x0F);
+static void SyncPRG(void) {
+	uint16 base = (m091.outer << 3) & ~0x0F;
 
-	setchr2(0x0000, ((outerbank << 8) & 0x100) | chr[0]);
-	setchr2(0x0800, ((outerbank << 8) & 0x100) | chr[1]);
-	setchr2(0x1000, ((outerbank << 8) & 0x100) | chr[2]);
-	setchr2(0x1800, ((outerbank << 8) & 0x100) | chr[3]);
+	setprg8(0x8000, (base | (m091.prg[0] & 0x0F)));
+	setprg8(0xA000, (base | (m091.prg[1] & 0x0F)));
+	setprg8(0xC000, (base | 0x0E));
+	setprg8(0xE000, (base | 0x0F));
+}
 
-	if (iNESCart.submapper != 0) {
-		setmirror((mirr & 0x01) ^ 0x01);
+static void SyncCHR(void) {
+	uint16 base = (m091.outer << 8);
+
+	setchr2(0x0000, (base | m091.chr[0]));
+	setchr2(0x0800, (base | m091.chr[1]));
+	setchr2(0x1000, (base | m091.chr[2]));
+	setchr2(0x1800, (base | m091.chr[3]));
+}
+
+static void SyncMirror(void) {
+	if (iNESCart.submapper == 1) {
+		setmirror((m091.mirror & 0x01) ^ 0x01);
+	} else {
+		setmirror(iNESCart.mirror);
 	}
 }
 
-static DECLFW(M091CHRWrite) {
+static DECLFW(WriteCHRM2) {
 	if (iNESCart.submapper == 1) {
 		switch (A & 0x07) {
 		case 0:
 		case 1:
 		case 2:
 		case 3:
-			chr[A & 0x03] = V;
-			Sync();
+			m091.chr[A & 0x03] = V;
+			SyncCHR();
 			break;
 		case 4:
 		case 5:
-			mirr = V;
-			Sync();
+			m091.mirror = V;
+			SyncMirror();
 			break;
 		case 6:
-			IRQCount16 = (IRQCount16 & 0xFF00) | V;
+			m091.m2.IRQCount = (m091.m2.IRQCount & 0xFF00) | V;
 			break;
 		case 7:
-			IRQCount16 = (IRQCount16 & 0x00FF) | (V << 8);
+			m091.m2.IRQCount = (m091.m2.IRQCount & 0x00FF) | (V << 8);
 			break;
 		}
 	} else {
-		chr[A & 0x03] = V;
-		Sync();
+		m091.chr[A & 0x03] = V;
+		SyncCHR();
 	}
 }
 
-static DECLFW(M091IRQWrite) {
+static DECLFW(WritePRGIRQ) {
 	switch (A & 0x03) {
 	case 0:
 	case 1:
-		prg[A & 0x01] = V;
-		Sync();
+		m091.prg[A & 0x01] = V;
+		SyncPRG();
 		break;
 	case 2:
-		IRQa = IRQCount = 0;
+		m091.IRQa = FALSE;
+		m091.pa12.IRQCount = 0;
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	case 3:
-		IRQa = 1;
-		IRQPrescaler = 3;
+		m091.IRQa = TRUE;
+		m091.m2.IRQPrescaler = 3;
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	}
 }
 
-static DECLFW(M091OuterBankWrite) {
-	outerbank = A & 0xFF;
-	Sync();
+static DECLFW(WriteOuter) {
+	m091.outer = A & 0xFF;
+	SyncPRG();
+	SyncCHR();
 }
 
-static void M091Power(void) {
-	Sync();
+static void HBIRQHook(void) {
+	if ((m091.pa12.IRQCount < 8) && m091.IRQa) {
+		m091.pa12.IRQCount++;
+		if (m091.pa12.IRQCount >= 8) {
+			X6502_IRQBegin(FCEU_IQEXT);
+		}
+	}
+}
+
+static void CPUIRQHook(int a) {
+	m091.m2.IRQPrescaler += a;
+	if (m091.m2.IRQPrescaler >= 4) {
+		m091.m2.IRQPrescaler -= 4;
+		m091.m2.IRQCount -= 5;
+		if ((m091.m2.IRQCount <= 0) && m091.IRQa) {
+			X6502_IRQBegin(FCEU_IQEXT);
+		}
+	}
+}
+
+static void Power(void) {
+	memset(&m091, 0, sizeof(m091));
+
+	m091.prg[0] = 0x00;
+	m091.prg[1] = 0x01;
+
+	m091.chr[0] = 0x00;
+	m091.chr[1] = 0x01;
+	m091.chr[2] = 0x02;
+	m091.chr[3] = 0x03;
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x6FFF, M091CHRWrite);
-	SetWriteHandler(0x7000, 0x7FFF, M091IRQWrite);
-	SetWriteHandler(0x8000, 0x9FFF, M091OuterBankWrite);
-}
-
-static void M091HBHook(void) {
-	if ((IRQCount < 8) && IRQa) {
-		IRQCount++;
-		if (IRQCount >= 8) {
-			X6502_IRQBegin(FCEU_IQEXT);
-		}
-	}
-}
-
-static void M091IRQHook(int a) {
-	IRQPrescaler += a;
-	if (IRQPrescaler >= 4) {
-		IRQPrescaler -= 4;
-		IRQCount16 -= 5;
-		if ((IRQCount16 <= 0) && IRQa) {
-			X6502_IRQBegin(FCEU_IQEXT);
-		}
-	}
+	SetWriteHandler(0x6000, 0x6FFF, WriteCHRM2);
+	SetWriteHandler(0x7000, 0x7FFF, WritePRGIRQ);
+	SetWriteHandler(0x8000, 0x9FFF, WriteOuter);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper091_Init(CartInfo *info) {
-	info->Power = M091Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 	if (info->submapper == 1) {
-		MapIRQHook = M091IRQHook;
+		MapIRQHook = CPUIRQHook;
 	} else {
-		GameHBIRQHook = M091HBHook;
+		GameHBIRQHook = HBIRQHook;
 	}
 }

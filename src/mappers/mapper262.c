@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
- * 	Copyright (C) 2023
+ * 	Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,62 +24,62 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m262;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
-	{ &dipsw, 1, "DPSW" },
+	{ &m262.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M262CW(uint16 A, uint16 V) {
-	if (reg & 0x40) {
+static void SetCHRBank_mmc3(uint16 A, uint16 V) {
+	if (m262.reg & 0x40) {
 		setchr8r(0x10, 0);
 	} else {
-		uint8 lsh[] = { 3, 2, 0, 1 };
-		uint8 bank = (A >> 11) & 0x03;
-
-		setchr1(A, (((reg >> lsh[bank]) << 8) & 0x100) | (V & 0xFF));
+		uint16 base = ((m262.reg << 5) << (A >> 11) & 0x100);
+		setchr1(A, base | V);
 	}
 }
 
-static DECLFW(M262Write) {
-	if (A & 0x100) {
-		reg = V;
-		MMC3_SyncCHR();
-	}
-}
-
-static DECLFR(M262Read) {
+static DECLFR(ReadDIP) {
 	if (A & 0x100) {
 		return (dipsw);
 	}
 	return cpu.openbus;
 }
 
-static void M262Reset(void) {
+static DECLFW(WriteReg) {
+	if (A & 0x100) {
+		m262.reg = (V & 0xFC) | ((V << 1) & 0x02) | ((V >> 1) & 0x01);
+		MMC3_SyncCHR();
+	}
+}
+
+static void Reset(void) {
 	MMC3_Reset();
 	dipsw ^= 0xFF;
 }
 
-static void M262Power(void) {
+static void Power(void) {
 	dipsw = 0x00;
 	MMC3_Power();
-	SetWriteHandler(0x4100, 0x4FFF, M262Write);
-	SetReadHandler(0x4100, 0x4FFF, M262Read);
+	SetReadHandler(0x4100, 0x5FFF, ReadDIP);
+	SetWriteHandler(0x4100, 0x5FFF, WriteReg);
 }
 
-static void M262Close(void) {
+static void Close(void) {
 	MMC3_Close();
 }
 
 void Mapper262_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M262CW;
-	info->Power = M262Power;
-	info->Reset = M262Reset;
-	info->Close = M262Close;
+	MMC3_cwrap = SetCHRBank_mmc3;
+	info->Power = Power;
+	info->Reset = Reset;
+	info->Close = Close;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8192;

@@ -37,62 +37,69 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m287;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
-	{ &dipsw, 1, "DPSW" },
+	{ &m287.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M287CW(uint16 A, uint16 V) {
-	uint16 base = reg & 0x07;
+static void SetCHRBank(uint16 A, uint16 V) {
+	uint16 base = m287.reg << 7;
+	uint16 mask = 0x7F;
 
-	setchr1(A, (base << 7) | (V & 0x7F));
+	setchr1(A, ((base & ~mask) | (V & mask)));
 }
 
-static void M287PW(uint16 A, uint16 V) {
-	uint16 mode = reg & ((dipsw && (ROM.prg.size <= (512 * 1024))) ? 0x0C : 0x08);
-	uint16 base = reg & 0x07;
-
-	if (mode) {
-		/* 32K Mode */
-		setprg32(0x8000, (base << 2) | ((reg >> 4) & 0x03));
-		/* FCEU_printf("32K mode: bank:%02x\n", ((reg >> 4) & 3) | ((reg & 7) << 2)); */
+static void SetPRGBank(uint16 A, uint16 V) {
+	if ((m287.reg & 0x04) && dipsw && ROM.prg.size < (1024 * 1024)) {
+		unsetcpu32(0x8000);
 	} else {
-		/* MMC3 Mode */
-		setprg8(A, (base << 4) | (V & 0x0F));
-		/* FCEU_printf("MMC3: %04x:%02x\n", A, (V & 0x0F) | ((reg & 7) << 4)); */
+		if (m287.reg & 0x08) {
+			/* 32K Mode */
+			setprg32(0x8000, ((m287.reg << 2) & ~0x03) | ((m287.reg >> 4) & 0x03));
+			/* FCEU_printf("32K mode: bank:%02x\n", ((m287.reg >> 4) & 3) | ((m287.reg & 7) << 2)); */
+		} else {
+			/* MMC3 Mode */
+			uint8 base = m287.reg << 4;
+			uint8 mask = 0x0F;
+
+			setprg8(A, ((base & ~mask) | (V & mask)));
+			/* FCEU_printf("MMC3: %04x:%02x\n", A, (V & 0x0F) | ((m287.reg & 7) << 4)); */
+		}
 	}
 }
 
-static DECLFW(M287WriteReg) {
+static DECLFW(WriteReg) {
 	/*	printf("Wr: A:%04x V:%02x\n", A, V); */
 	if (MMC3_WramIsWritable()) {
-		reg = A;
+		m287.reg = A;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M287Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m287.reg = 0;
 	dipsw ^= 4;
 	MMC3_Reset();
 }
 
-static void M287Power(void) {
-	reg = 0;
+static void Power(void) {
+	m287.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M287WriteReg);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper287_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M287PW;
-	MMC3_cwrap = M287CW;
-	info->Power = M287Power;
-	info->Reset = M287Reset;
+	MMC3_pwrap = SetPRGBank;
+	MMC3_cwrap = SetCHRBank;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -56,7 +56,7 @@ static void Sync(void) {
 	setchr8(0);
 }
 
-static DECLFW(M043Write) {
+static DECLFW(WriteReg) {
 	switch (A & 0xF1FF) {
 	case 0x4022:
 		m043.reg = V;
@@ -86,10 +86,10 @@ static void Power(void) {
 	dipsw = 1;
 	Sync();
 	SetReadHandler(0x5000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4020, 0x8FFF, M043Write);
+	SetWriteHandler(0x4020, 0x8FFF, WriteReg);
 }
 
-static void M043IRQHook(int a) {
+static void CPUIRQHook(int a) {
 	m043.IRQCount += a;
 	if (m043.IRQCount >= 4096) {
 		if (m043.IRQa & 0x01) {
@@ -105,7 +105,7 @@ static void StateRestore(int version) {
 void Mapper043_Init(CartInfo *info) {
 	info->Power = Power;
 	info->Reset = Reset;
-	MapIRQHook = M043IRQHook;
+	MapIRQHook = CPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

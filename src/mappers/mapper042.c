@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,136 +32,144 @@
 #include "mapinc.h"
 #include "fdssound.h"
 
-static uint8 reg[2];
-static uint8 IRQa;
-static uint16 IRQCount;
-
 static void (*WSync)(void);
 
+static struct {
+	uint8 reg[2];
+	uint8 IRQa;
+	uint16 IRQCount;
+} m042;
+
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
-	{ &IRQa, 1, "IRQA" },
-	{ &IRQCount, 2, "IRQC" },
+	{ m042.reg, 2, "REGS" },
+	{ &m042.IRQa, 1, "IRQA" },
+	{ &m042.IRQCount, 2, "IRQC" },
 	{ 0 }
 };
 
 /* Submapper 1 - Ai Senshi Nicol */
 
-static void M042_Sub1_Sync(void) {
-	setprg8(0x6000, reg[1] & 0x0F);
+static void Sync_sub1(void) {
+	setprg8(0x6000, m042.reg[1] & 0x0F);
 	setprg32(0x8000, ~0);
-	setchr8(reg[0] & 0x0F);
+	setchr8(m042.reg[0] & 0x0F);
 }
 
-static DECLFW(M042_Sub1_Write) {
+static DECLFW(WriteReg_sub1) {
 	switch (A & 0xE000) {
 	case 0x8000:
-		reg[0] = V;
-		WSync();
+		m042.reg[0] = V;
+		Sync_sub1();
 		break;
 	case 0xE000:
-		reg[1] = V;
-		WSync();
+		m042.reg[1] = V;
+		Sync_sub1();
 		break;
 	}
 }
 
-static void M042_Sub1_Power(void) {
-	reg[1] = 0;
-	reg[0] = 0;
+static void Power_sub1(void) {
+	m042.reg[1] = 0;
+	m042.reg[0] = 0;
 	FDSSound_Power();
-	WSync();
+	Sync_sub1();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M042_Sub1_Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg_sub1);
 }
 
 /* Submapper 2 - Green Beret */
 
-static void M042_Sub2_Sync(void) {
-	setprg8(0x6000, (reg[0] >> 1) & 0x0F);
+static void Sync_sub2(void) {
+	setprg8(0x6000, (m042.reg[0] >> 1) & 0x0F);
 	setprg32(0x8000, (PRG_BANK_COUNT(16) & 0x07) ? 4 : 7);
 	setchr8(0);
-	setmirror(((reg[1] >> 3) & 1) ^ 1);
+	setmirror(((m042.reg[1] >> 3) & 1) ^ 1);
 }
 
-static DECLFW(M042_Sub2_Write) {
+static DECLFW(WriteReg_sub2) {
 	switch (A & 0xF001) {
 	case 0x4001:
 	case 0x4000:
 		if ((A & 0xFF) != 0x25) {
 			break;
 		}
-		reg[1] = V;
-		WSync();
+		m042.reg[1] = V;
+		Sync_sub2();
 		break;
 	case 0x8001:
-		reg[0] = V;
-		WSync();
+		m042.reg[0] = V;
+		Sync_sub2();
 		break;
 	}
 }
 
-static void M042_Sub2_Power(void) {
-	reg[0] = 0;
-	reg[1] = 0;
-	WSync();
+static void Power_sub2(void) {
+	m042.reg[0] = 0;
+	m042.reg[1] = 0;
+	Sync_sub2();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4020, 0xFFFF, M042_Sub2_Write);
+	SetWriteHandler(0x4020, 0xFFFF, WriteReg_sub2);
 }
 
 /* Submapper 3 - Mario Baby */
 
-static void M042_Sub3_Sync(void) {
-	setprg8(0x6000, reg[0] & 0x0F);
+static void Sync_sub3(void) {
+	setprg8(0x6000, m042.reg[0] & 0x0F);
 	setprg32(0x8000, ~0);
 	setchr8(0);
-	setmirror(((reg[1] >> 3) & 1) ^ 1);
+	setmirror(((m042.reg[1] >> 3) & 1) ^ 1);
 }
 
-static DECLFW(M042_Sub3_Write) {
+static DECLFW(WriteReg_sub3) {
 	switch (A & 0xE003) {
 	case 0xE000:
-		reg[0] = V;
-		WSync();
+		m042.reg[0] = V;
+		Sync_sub3();
 		break;
 	case 0xE001:
-		reg[1] = V;
-		WSync();
+		m042.reg[1] = V;
+		Sync_sub3();
 		break;
 	case 0xE002:
-		IRQa = (V & 0x02) != 0;
-		if (!IRQa) {
-			IRQCount = 0;
+		m042.IRQa = V;
+		if (!(m042.IRQa & 0x02)) {
+			m042.IRQCount = 0;
 			X6502_IRQEnd(FCEU_IQEXT);
 		}
 		break;
 	}
 }
 
-static void M042_Sub3_Power(void) {
-	reg[0] = 0;
-	reg[1] = 0;
-	IRQa = IRQCount = 0;
-	WSync();
-	FDSSound_Power();
-	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0xE000, 0xFFFF, M042_Sub3_Write);
-}
-
-static void M042_Sub3_IRQHook(int a) {
-	if (IRQa) {
-		IRQCount += a;
-		if (IRQCount >= 24576) {
-			X6502_IRQBegin(FCEU_IQEXT);
-		} else {
-			X6502_IRQEnd(FCEU_IQEXT);
+static void CPUIRQHook_sub3(int a) {
+	if (m042.IRQa & 0x02) {
+		while (a--) {
+			if ((++m042.IRQCount & 0x6000) == 0x6000) {
+				X6502_IRQBegin(FCEU_IQEXT);
+			} else {
+				X6502_IRQEnd(FCEU_IQEXT);
+			}
 		}
 	}
 }
 
-/* Mapper 42 Loader */
+static void Power_sub3(void) {
+	m042.reg[0] = 0;
+	m042.reg[1] = 0;
+	m042.IRQa = m042.IRQCount = 0;
+	Sync_sub3();
+	FDSSound_Power();
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0xE000, 0xFFFF, WriteReg_sub3);
+}
+
+/* Mapper common */
+
 static void StateRestore(int version) {
-	WSync();
+	switch (iNESCart.submapper) {
+	case 1: Sync_sub1(); break;
+	case 2: Sync_sub2(); break;
+	default: Sync_sub3(); break;
+	}
 }
 
 void Mapper042_Init(CartInfo *info) {
@@ -184,18 +192,11 @@ void Mapper042_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	switch (info->submapper) {
-	case 1:
-		info->Power = M042_Sub1_Power;
-		WSync = M042_Sub1_Sync;
-		break;
-	case 2:
-		info->Power = M042_Sub2_Power;
-		WSync = M042_Sub2_Sync;
-		break;
+	case 1: info->Power = Power_sub1; break;
+	case 2: info->Power = Power_sub2; break;
 	default:
-		info->Power = M042_Sub3_Power;
-		WSync = M042_Sub3_Sync;
-		MapIRQHook = M042_Sub3_IRQHook;
+		info->Power = Power_sub3;
+		MapIRQHook = CPUIRQHook_sub3;
 		break;
 	}
 }

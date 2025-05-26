@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,16 +21,26 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static DECLFW(M250Write) {
+static void SetPRGBank_mmc3(uint16 A, uint16 V) {
+	setprg8(A, V & 0x3F);
+}
+
+static void SetCHRBank_mmc3(uint16 A, uint16 V) {
+	setchr1(A, V & 0xFF);
+}
+
+static DECLFW(WriteMMC3) {
 	MMC3_Write(((A & 0xE000) | ((A & 0x400) >> 10)), (A & 0xFF));
 }
 
-static void M250Power(void) {
+static void Power(void) {
 	MMC3_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M250Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteMMC3);
 }
 
 void Mapper250_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, info->battery);
-	info->Power = M250Power;
+	MMC3_pwrap = SetPRGBank_mmc3;
+	MMC3_cwrap = SetCHRBank_mmc3;
+	info->Power = Power;
 }

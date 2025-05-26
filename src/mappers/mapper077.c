@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,13 +29,8 @@ static void Sync(void) {
 	setchr4r(0x10, 0x1000, 0);
 }
 
-static void M077Close(void) {
-	Latch_Close();
-}
-
 void Mapper077_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
-	info->Close = M077Close;
 
 	CHRRAMSIZE = 6 * 1024;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

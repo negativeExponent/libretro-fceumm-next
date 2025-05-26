@@ -18,7 +18,8 @@ struct CHINF {
 
 /* ROM images that have the battery-backed bit set in the header that really
 don't have battery-backed RAM is not that big of a problem, so I'll
-treat this differently by only listing games that should have battery-backed RAM.
+treat this differently by only listing games that should have battery-backed
+RAM.
 */
 static struct CHINF nesdb[] = {
 	/* CRC32, mapperNum, SubMapper, Mirroring, hasBattery, prgRam, chrRam, region, extra flags */
@@ -396,7 +397,7 @@ static struct CHINF nesdb[] = {
 	{ 0x8589652D,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 农场小精灵 */
 	{ 0x99FE9AB5,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 时空斗士 - Pegasus Senya */
 	{ 0x82F204AE,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 梁山英雄 */
-	
+
 	/* Mapper 163: Nanjing, running with $5300=$04 */
 	{ 0xC9ABA7F0,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* Chrono Trigger - 时空之轮 */
 	{ 0x143B4D30,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* Final Fantasy VII - 最终幻想 7 */
@@ -443,7 +444,7 @@ static struct CHINF nesdb[] = {
 	{ 0x04166E96,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 魔幻世界 */
 	{ 0x85FA53E1,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 魔界塔士 */
 	{ 0x2121DAB2,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 魔界霸主 */
-	{ 0xE3EF9739,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 黄金太阳 */	
+	{ 0xE3EF9739,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 黄金太阳 */
 	/* Mapper 163: Nanjing, running with $5300=$07 */
 	{ 0x6F94C5E5,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* Final Fantasy IV - 最终幻想 4: 光与暗 水晶纷争 */
 	{ 0xD6CBB05D,  163,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* Naruto RPG - 火影忍者 */
@@ -488,14 +489,14 @@ static struct CHINF nesdb[] = {
 	{ 0x57414FB6,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 武侠天地 */
 	{ 0x979239DE,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 毁灭之神 */
 	{ 0xEFF96E8A,  162,       0,    MI_V, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 魔兽世界: 恶魔猎人 */
-	
+
 	/* Mapper 164: Dongda PEC-9588 and Yancheng cy2000-3 PCB */
 	{ 0xFE31765B,  164,       0,    MI_V, 0,    0x07,    0x07,   DENDY, NOEXTRA }, /* Pyramid 金字塔 PEC-9588 家庭电脑 */
-	{ 0x0878A7EE,  164,       0,    MI_H, 1,    0x35,    0x07,   DENDY, NOEXTRA }, /* Dark Seed - 黑暗之蛊 */
+	{ 0x0878A7EE,  164,       0,    MI_H, 1,    0x30,    0x07,   DENDY, NOEXTRA }, /* Dark Seed - 黑暗之蛊 */
 	{ 0x56A0D271,  164,       0,    MI_H, 1,    0x35,    0x07,   DENDY, NOEXTRA }, /* Final Fantasy 太空戰士 V (rev0) */
 	{ 0xCB1EF911,  164,       0,    MI_H, 1,    0x35,    0x07,   DENDY, NOEXTRA }, /* Final Fantasy 太空戰士 V (rev1) */
-	{ 0x8209BA79,  164,       0,    MI_H, 1,    0x35,    0x07,   DENDY, NOEXTRA }, /* 櫻桃小丸子 */
-	{ 0xBC7562A6,  164,       0,    MI_H, 1,    0x35,    0x07,   DENDY, NOEXTRA }, /* 口袋精靈: 金 */
+	{ 0x8209BA79,  164,       0,    MI_H, 1,    0x30,    0x07,   DENDY, NOEXTRA }, /* 櫻桃小丸子 */
+	{ 0xBC7562A6,  164,       0,    MI_H, 1,    0x30,    0x07,   DENDY, NOEXTRA }, /* 口袋精靈: 金 */
 	{ 0x65F1DB91,  164,       0,    MI_H, 1,    0x35,    0x07,   DENDY, NOEXTRA }, /* 大話西游 [restored, no good dump known] */
 	{ 0x0A244228,  164,       0,    MI_H, 1,    0x35,    0x07,   DENDY, NOEXTRA }, /* 岳飛傳 [restored, no good dump known] */
 
@@ -589,7 +590,7 @@ static struct CHINF nesdb[] = {
 	{ 0x0881169E,  176,       0, DEFAULT, 0,    0x07, DEFAULT, DEFAULT, NOEXTRA }, /* (YH-801) Super Game 8-in-1 [font change].nes */
 	{ 0xCD55A865,  176,       0, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (YH-8023) 4-in-1.nes */
 	{ 0x92B52357,  176,       0, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (YH-8028) 4-in-1.nes */
-	{ 0xDE94B7FD,  176,       0, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (YH-8029) 4-in-1.nes */	
+	{ 0xDE94B7FD,  176,       0, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (YH-8029) 4-in-1.nes */
 	{ 0xD56F27AE,  176,       0, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (YH-8046) 4-in-1.nes */
 	{ 0x0E8766DC,  176,       0, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (YH-8049) 4-in-1.nes */
 	{ 0x05E43745,  176,       0, DEFAULT, 0,    0x07, DEFAULT, DEFAULT, NOEXTRA }, /* (YH-904) Super Game 9-in-1.nes */
@@ -873,7 +874,7 @@ static struct CHINF nesdb[] = {
 	{ 0x2447e03b,  210,       2,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Top Striker (Japan).nes */
 	{ 0x1dc0f740,  210,       2,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Wagyan Land 2 (Japan).nes */
 	{ 0xd323b806,  210,       2,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Wagyan Land 3 (Japan).nes */
-	{ 0xbd523011,  210,       2,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Namco Prism Zone - Dream Master (Japan).nes */
+	{ 0xbd523011,  210,       1,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Namco Prism Zone - Dream Master (Japan).nes */
 	{ 0x5daae69a,  211, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Aladdin - Return of Jaffar, The (Unl) [!].nes */
 	{ 0x1ec1dfeb,  217, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* 255-in-1 (Mapper 204) [p1].nes */
 	{ 0x046d70cc,  217, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* ?? 500-in-1 (Anim Splash, Alt Mapper)[p1][!] */
@@ -900,7 +901,7 @@ static struct CHINF nesdb[] = {
 	{ 0x345ee51a,  245, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Yong Zhe Dou E Long - Dragon Quest VII (Ch).nes */
 	{ 0x57514c6c,  245, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Yong Zhe Dou E Long - Dragon Quest VI (Ch).nes */
 	{ 0xdb9d71b7,  114, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Super Donkey Kong (Unl) [o1].nes */
-	
+
 	/* KT-008 PCB. These require mapper 224 for having an outer bank register at $5xxx, but are usually found set to mapper 4. */
 	{ 0x61fc4d20,  224, DEFAULT,    MI_H, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* (KT-1062) 口袋怪兽꞉ 水晶版.nes */
 	{ 0xaa666c19,  224, DEFAULT,    MI_H, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* Ys Origin: Hugo.nes */
@@ -935,7 +936,7 @@ static struct CHINF nesdb[] = {
 	{ 0x91396b3f,  224, DEFAULT,    MI_H, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 轩辕剑꞉ 天之痕.nes */
 	{ 0xaa621fa0,  224, DEFAULT,    MI_H, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 轩辕剑꞉ 枫之舞.nes */
 	{ 0x48d1f54a,  224, DEFAULT,    MI_H, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* 轩辕剑꞉ 王者归来.nes */
-	
+
 	{ 0xbdbe3c96,  238, DEFAULT,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Contra Fighter (Unl).nes */
 	{ 0xcb53c523,   11, DEFAULT,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* King Neptune's Adventure (USA) (Unl).nes */
 	{ 0x6e149729,  189, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Master Fighter II (Unl) [a1].nes */
