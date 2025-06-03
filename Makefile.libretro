@@ -5,7 +5,7 @@ ENDIANNESS_DEFINES=
 SIGNED_CHAR=0
 HAVE_NTSC=1
 C89_BUILD=1
-V=1
+V=0
 WANT_32BPP=1
 
 SPACE :=
@@ -782,7 +782,7 @@ ifneq (,$(findstring msvc,$(platform)))
 COREDEFINES += -DINLINE=_inline
 endif
 
-OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o) 
+OBJECTS := $(SOURCES_CXX:.cpp=.o) $(SOURCES_C:.c=.o)
 OBJECTS += $(RETROARCH_OBJECTS)
 
 DEFINES := $(COREDEFINES) $(PLATFORM_DEFINES)
@@ -845,25 +845,25 @@ else
 	$(AR) rcs $@ $(OBJECTS)
 endif
 else
-	@$(if $(Q), $(shell echo echo LD $@),)
+	@echo LD $@
 	$(Q)$(LD) $(LINKOUT)$@ $(SHARED) $(OBJECTS) $(LDFLAGS) $(LIBS)
 endif
 
 %.o: %.cpp
-	@$(if $(Q), $(shell echo echo CXX $<),)
+	@echo CXX $<
 	$(Q)$(CXX) -c $(OBJOUT)$@ $< $(CXXFLAGS) $(INCFLAGS)
 
 %.o: %.c
-	@$(if $(Q), $(shell echo echo CC $<),)
+	@echo CC $<
 	$(Q)$(CC) -c $(OBJOUT)$@ $< $(CFLAGS) $(INCFLAGS)
 
 clean-objs:
 	rm -f $(OBJECTS)
 
 clean:
-	@$(if $(Q), $(shell echo echo rm -rf *.o),)
+	@echo rm -rf *.o
 	$(Q)rm -f $(OBJECTS)
-	@$(if $(Q), $(shell echo echo rm -rf $(TARGET)),)
+	@echo rm -rf $(TARGET)
 	$(Q)rm -f $(TARGET)
 
 .PHONY: clean clean-objs
@@ -871,3 +871,5 @@ endif
 
 print-%:
 	@echo '$*=$($*)'
+
+$(V).SILENT:

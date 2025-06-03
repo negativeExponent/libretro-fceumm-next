@@ -35,21 +35,20 @@ static void Sync(void) {
 	setmirror(((latch.addr >> 5) & 0x01) ^ 0x01);
 }
 
-static DECLFR(M288Read) {
-	uint8 ret = CartBR(A);
-	if (latch.addr & 0x20) {
+static DECLFR(Read) {
+	if (latch.addr & 0x120) {
 		return CartBR(A | (dipsw & 0x0F));
 	}
-	return ret;
+	return CartBR(A);
 }
 
-static void M288Reset(void) {
+static void Reset(void) {
 	dipsw++;
 	Sync();
 }
 
 void Mapper288_Init(CartInfo *info) {
-	Latch_Init(info, Sync, M288Read, FALSE, FALSE);
-	info->Reset = M288Reset;
+	Latch_Init(info, Sync, Read, FALSE, FALSE);
+	info->Reset = Reset;
 	AddExState(&dipsw, 1, 0, "DIPSW");
 }
