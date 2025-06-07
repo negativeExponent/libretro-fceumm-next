@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,40 +22,53 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m456;
 
-static void M456PW(uint16 A, uint16 V) {
-	setprg8(A, (reg << 4) | (V & 0x0F));
+static SFORMAT StateRegs[] = {
+	{ &m456.reg, 1, "EXPR" },
+	{ 0 }
+};
+
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = 0x0F;
+	uint16 base = m456.reg << 4;
+
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M456CW(uint16 A, uint16 V) {
-	setchr1(A, (reg << 7) | (V & 0x7F));
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = 0x7F;
+	uint16 base = m456.reg << 7;
+
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M456Write) {
+static DECLFW(WriteReg) {
 	if (A & 0x100) {
-		reg = V;
+		m456.reg = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M456Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m456, 0, sizeof(m456));
 	MMC3_Reset();
 }
 
-static void M456Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m456, 0, sizeof(m456));
 	MMC3_Power();
-	SetWriteHandler(0x4100, 0x5FFF, M456Write);
+	SetWriteHandler(0x4100, 0x5FFF, WriteReg);
 }
 
 void Mapper456_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_cwrap = M456CW;
-	MMC3_pwrap = M456PW;
-	info->Power = M456Power;
-	info->Reset = M456Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

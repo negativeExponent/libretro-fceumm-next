@@ -27,37 +27,37 @@
 
 #include "mapinc.h"
 
-static uint8 prg[4], chr[8];
-static uint32 IRQCount;
+static struct {
+	uint8 prg[4], chr[8];
+	uint32 IRQCount;
+} m526;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 4, "PREG" },
-	{ chr, 8, "CREG" },
-	{ &IRQCount, 4, "IRQC" },
+	{ m526.prg, 4, "PREG" },
+	{ m526.chr, 8, "CREG" },
+	{ &m526.IRQCount, 4, "IRQC" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg8r(0x10, 0x6000, 0);
-
-	setprg8(0x8000, prg[0]);
-	setprg8(0xA000, prg[1]);
-	setprg8(0xC000, prg[2]);
-	setprg8(0xE000, prg[3]);
-
-	setchr1(0x0000, chr[0]);
-	setchr1(0x0400, chr[1]);
-	setchr1(0x0800, chr[2]);
-	setchr1(0x0C00, chr[3]);
-	setchr1(0x1000, chr[4]);
-	setchr1(0x1400, chr[5]);
-	setchr1(0x1800, chr[6]);
-	setchr1(0x1C00, chr[7]);
-
-	setmirror(MI_V);
+static void SyncPRG(void) {
+	setprg8(0x8000, m526.prg[0]);
+	setprg8(0xA000, m526.prg[1]);
+	setprg8(0xC000, m526.prg[2]);
+	setprg8(0xE000, m526.prg[3]);
 }
 
-static DECLFW(M526Write) {
+static void SyncCHR(void) {
+	setchr1(0x0000, m526.chr[0]);
+	setchr1(0x0400, m526.chr[1]);
+	setchr1(0x0800, m526.chr[2]);
+	setchr1(0x0C00, m526.chr[3]);
+	setchr1(0x1000, m526.chr[4]);
+	setchr1(0x1400, m526.chr[5]);
+	setchr1(0x1800, m526.chr[6]);
+	setchr1(0x1C00, m526.chr[7]);
+}
+
+static DECLFW(WriteReg) {
 	/*	FCEU_printf("Wr: A:%04x V:%02x\n", A, V); */
 	switch (A & 0x0F) {
 	case 0x00:
@@ -68,15 +68,15 @@ static DECLFW(M526Write) {
 	case 0x05:
 	case 0x06:
 	case 0x07:
-		chr[A & 0x07] = V;
-		Sync();
+		m526.chr[A & 0x07] = V;
+		SyncCHR();
 		break;
 	case 0x08:
 	case 0x09:
 	case 0x0A:
 	case 0x0B:
-		prg[A & 0x03] = V;
-		Sync();
+		m526.prg[A & 0x03] = V;
+		SyncPRG();
 		break;
 	case 0x0D:
 	case 0x0F:
@@ -84,42 +84,53 @@ static DECLFW(M526Write) {
 		 * resets to IRQ counter to zero. Because they are always written
 		 * to one after the other, it's not clear which one does which. */
 		X6502_IRQEnd(FCEU_IQEXT);
-		IRQCount = 0;
+		m526.IRQCount = 0;
 		break;
 	}
 }
 
-static void M526IRQHook(int a) {
-	IRQCount += a;
-	if (IRQCount & 0x1000) {
+static void CPUIRQHook(int a) {
+	m526.IRQCount += a;
+	if (m526.IRQCount & 0x1000) {
 		X6502_IRQBegin(FCEU_IQEXT);
 	}
 }
 
-static void M526Close(void) {
-}
-
-static void M526Power(void) {
-	prg[0] = ~3;
-	prg[1] = ~2;
-	prg[2] = ~1;
-	prg[3] = ~0;
-	Sync();
+static void Power(void) {
+	memset(&m526, 0, sizeof(m526));
+	m526.prg[0] = ~3;
+	m526.prg[1] = ~2;
+	m526.prg[2] = ~1;
+	m526.prg[3] = ~0;
+	m526.chr[0] = 0;
+	m526.chr[1] = 1;
+	m526.chr[2] = 2;
+	m526.chr[3] = 3;
+	m526.chr[4] = 4;
+	m526.chr[5] = 5;
+	m526.chr[6] = 6;
+	m526.chr[7] = 7;
+	setprg8r(0x10, 0x6000, 0);
+	setmirror(MI_V);
+	SyncPRG();
+	SyncCHR();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetWriteHandler(0x8000, 0x800F, M526Write);
+	SetWriteHandler(0x8000, 0x800F, WriteReg);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
 }
 
 void Mapper526_Init(CartInfo *info) {
-	info->Power = M526Power;
-	info->Close = M526Close;
-	MapIRQHook = M526IRQHook;
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
 	GameStateRestore = StateRestore;
+	AddExState(StateRegs, ~0, 0, NULL);
+
 	WRAMSIZE = 8192;
 	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
@@ -128,5 +139,4 @@ void Mapper526_Init(CartInfo *info) {
 		info->SaveGameLen[0] = WRAMSIZE;
 	}
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-	AddExState(StateRegs, ~0, 0, NULL);
 }

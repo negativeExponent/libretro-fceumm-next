@@ -24,55 +24,59 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 regs[4];
+static struct {
+	uint8 reg[4];
+} m314;
 
 static SFORMAT StateRegs[] = {
-	{ regs, 4, "REGS" },
+	{ m314.reg, 4, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 prg = ((regs[1] << 1) & 0x7E)  | ((regs[1] >> 6) & 0x01);
+	uint16 bank = ((m314.reg[1] << 1) & 0x7E)  | ((m314.reg[1] >> 6) & 0x01);
 
-	if (regs[0] & 0x80) { /* NROM mode */
-		if (regs[1] & 0x80) {
-			setprg32(0x8000, prg >> 1);
+	if (m314.reg[0] & 0x80) { /* NROM mode */
+		if (m314.reg[1] & 0x80) {
+			setprg32(0x8000, bank >> 1);
 		} else {
-			setprg16(0x8000, prg);
-			setprg16(0xC000, prg);
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
 		}
 	} else { /* UNROM mode */
-		setprg16(0x8000, (prg & ~0x07) | (latch.data & 0x07));
-		setprg16(0xC000, prg | 0x07);
+		setprg16(0x8000, (bank & ~0x07) | (latch.data & 0x07));
+		setprg16(0xC000, bank | 0x07);
 	}
-	setchr8((regs[2] << 2) | ((regs[0] >> 1) & 0x03));
-	setmirror(((regs[0] >> 5) & 0x01) ^ 0x01);
+	setchr8((m314.reg[2] << 2) | ((m314.reg[0] >> 1) & 0x03));
+	setmirror(((m314.reg[0] >> 5) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M314Write) {
-	regs[A & (ROM.chr.size ? 3 : 1)] = V;
+static DECLFW(WriteReg) {
+	uint8 mask = ROM.chr.size ? 0x03 : 0x01;
+
+	m314.reg[A & mask] = V;
 	Sync();
 }
 
-static void M314Reset(void) {
+static void Reset(void) {
 	/* Reset returns to menu */
-	regs[0] = 0x80;
-	regs[1] = 0x43;
-	regs[2] = regs[3] = 0;
+	memset(&m314, 0, sizeof(m314));
+	m314.reg[0] = 0x80;
+	m314.reg[1] = 0x43;
 	Sync();
 }
 
-static void M314Power(void) {
-	regs[0] = 0x80;
-	regs[1] = 0x43;
-	regs[2] = regs[3] = 0;
+static void Power(void) {
+	memset(&m314, 0, sizeof(m314));
+	m314.reg[0] = 0x80;
+	m314.reg[1] = 0x43;
 	Latch_Power();
-	SetWriteHandler(0x5000, 0x5FFF, M314Write);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 }
 
 void Mapper314_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
-	info->Power = M314Power;
-	info->Reset = M314Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,57 +23,62 @@
 #include "mapinc.h"
 #include "fdssound.h"
 
-static uint8 prg;
-static uint8 mirr;
+static struct {
+	uint8 prg;
+	uint8 mirror;
+} m539;
 
 static SFORMAT StateRegs[] = {
-	{ &prg, 1, "PREG" },
-	{ &mirr, 1, "MIRR" },
+	{ &m539.prg, 1, "PREG" },
+	{ &m539.mirror, 1, "MIRR" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg8(0x6000, 0x0D);
-	setprg8(0x8000, 0x0C);
-	setprg8(0xA000, prg & 0x0F);
-	setprg8(0xC000, 0x0E);
-	setprg8(0xE000, 0x0F);
-	setchr8(0);
-	setmirror(((mirr & 8) >> 3) ^ 1);
+static void SyncPRG(void) {
+	setprg8(0xA000, m539.prg & 0x0F);
 }
 
-static DECLFR(M539ReadWRAM) {
+static void SyncMirror(void){
+	setmirror(((m539.mirror & 8) >> 3) ^ 1);
+}
+
+static DECLFR(ReadWRAM) {
 	A = (((A) & 0x1FFF) | (((A) < 0xC000) ? 0x1000 : 0x0000) | (((A) < 0x8000) ? 0x800 : 0x000));
 	return WRAM[A];
 }
 
-static DECLFW(M539WriteWRAM) {
+static DECLFW(WriteWRAM) {
 	A = (((A) & 0x1FFF) | (((A) < 0xC000) ? 0x1000 : 0x0000) | (((A) < 0x8000) ? 0x800 : 0x000));
 	WRAM[A] = V;
 }
 
-static DECLFW(M539WritePRG) {
-	prg = V;
-	Sync();
+static DECLFW(WritePRG) {
+	m539.prg = V;
+	SyncPRG();
 }
 
-static DECLFW(M539WriteMirroring) {
+static DECLFW(WriteMirror) {
 	if ((A & 0x25) == 0x25) {
-		mirr = V;
-		Sync();
+		m539.mirror = V;
+		SyncMirror();
 	}
 }
 
-static void M539Power(void) {
+static void Power(void) {
+	memset(&m539, 0, sizeof(m539));
 	FDSSound_Power();
-	prg = 0;
-	mirr = 0;
-	Sync();
+
+	setprg8(0x6000, 0x0D);
+	setprg8(0x8000, 0x0C);
+	setprg8(0xA000, m539.prg & 0x0F);
+	setprg8(0xC000, 0x0E);
+	setprg8(0xE000, 0x0F);
+	setchr8(0);
 
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 
-	SetWriteHandler(0xA000, 0xAFFF, M539WritePRG);
-	SetWriteHandler(0xF000, 0xFFFF, M539WriteMirroring);
+	SetWriteHandler(0xA000, 0xAFFF, WritePRG);
+	SetWriteHandler(0xF000, 0xFFFF, WriteMirror);
 
 	/* Certain ranges in the CPU address space are overlaid with portions of 8 KiB of PRG-RAM as follows:
 	 * CPU $6000-$60FF
@@ -84,27 +89,28 @@ static void M539Power(void) {
 	 * CPU $DF00-$DFFF
 	 */
 
-	SetReadHandler(0x6000, 0x60FF, M539ReadWRAM);
-	SetReadHandler(0x6200, 0x62FF, M539ReadWRAM);
-	SetReadHandler(0x6400, 0x65FF, M539ReadWRAM);
-	SetReadHandler(0x8200, 0x82FF, M539ReadWRAM);
-	SetReadHandler(0xC000, 0xD1FF, M539ReadWRAM);
-	SetReadHandler(0xDF00, 0xDFFF, M539ReadWRAM);
+	SetReadHandler(0x6000, 0x60FF, ReadWRAM);
+	SetReadHandler(0x6200, 0x62FF, ReadWRAM);
+	SetReadHandler(0x6400, 0x65FF, ReadWRAM);
+	SetReadHandler(0x8200, 0x82FF, ReadWRAM);
+	SetReadHandler(0xC000, 0xD1FF, ReadWRAM);
+	SetReadHandler(0xDF00, 0xDFFF, ReadWRAM);
 
-	SetWriteHandler(0x6000, 0x60FF, M539WriteWRAM);
-	SetWriteHandler(0x6200, 0x62FF, M539WriteWRAM);
-	SetWriteHandler(0x6400, 0x65FF, M539WriteWRAM);
-	SetWriteHandler(0x8200, 0x82FF, M539WriteWRAM);
-	SetWriteHandler(0xC000, 0xD1FF, M539WriteWRAM);
-	SetWriteHandler(0xDF00, 0xDFFF, M539WriteWRAM);
+	SetWriteHandler(0x6000, 0x60FF, WriteWRAM);
+	SetWriteHandler(0x6200, 0x62FF, WriteWRAM);
+	SetWriteHandler(0x6400, 0x65FF, WriteWRAM);
+	SetWriteHandler(0x8200, 0x82FF, WriteWRAM);
+	SetWriteHandler(0xC000, 0xD1FF, WriteWRAM);
+	SetWriteHandler(0xDF00, 0xDFFF, WriteWRAM);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncMirror();
 }
 
 void Mapper539_Init(CartInfo *info) {
-	info->Power = M539Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

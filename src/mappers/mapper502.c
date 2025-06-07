@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,56 +19,62 @@
  *
  */
 
+/* NES 2.0 Mapper 502 */
+/* Super Game 10-in-1 (Yhc002) */
+/* BMC-Yhc-A/B/Uxrom-Cart */
+
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m502;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
+	{ m502.reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 mask = (8 << ((reg[1] >> 4) & 0x03)) - 1;
+	uint8 mask = (8 << ((m502.reg[1] >> 4) & 0x03)) - 1;
 
 	setprg4(0x7000, 0);
-	if (reg[1] & 0x06) {
-		setprg32(0x8000, (reg[0] << 2) + (latch.data & (mask >> 1)));
+	if (m502.reg[1] & 0x06) {
+		setprg32(0x8000, (m502.reg[0] << 2) + (latch.data & (mask >> 1)));
 	} else {
-		setprg16(0x8000, (reg[0] << 3) + (latch.data & mask));
-		setprg16(0xC000, (reg[0] << 3) + mask);
+		setprg16(0x8000, (m502.reg[0] << 3) + (latch.data & mask));
+		setprg16(0xC000, (m502.reg[0] << 3) + mask);
 	}
 	setchr8(0);
-	if (reg[1] & 0x02) {
+	if (m502.reg[1] & 0x02) {
 		setmirror(MI_0 + ((latch.data >> 4) & 0x01));
 	} else {
-		setmirror(reg[1] & 0x01);
+		setmirror(m502.reg[1] & 0x01);
 	}
 }
 
-static DECLFW(M502WriteReg) {
-	if (!(reg[1] & 0x80)) {
-		reg[A & 0x01] = V;
+static DECLFW(WriteReg) {
+	if (!(m502.reg[1] & 0x80)) {
+		m502.reg[A & 0x01] = V;
 		Sync();
 	}
 }
 
-static void M502Power(void) {
-	reg[0] = reg[1] = 0;
+static void Power(void) {
+	memset(&m502, 0, sizeof(m502));
 	Latch_Power();
 	SetReadHandler(0x7000, 0x7FFF, CartBR);
-	SetWriteHandler(0x6000, 0x6FFF, M502WriteReg);
+	SetWriteHandler(0x6000, 0x6FFF, WriteReg);
 }
 
-static void M502Reset(void) {
-	reg[0] = reg[1] = 0;
+static void Reset(void) {
+	memset(&m502, 0, sizeof(m502));
 	Latch_RegReset();
 }
 
 void Mapper502_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M502Power;
-	info->Reset = M502Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

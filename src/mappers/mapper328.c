@@ -29,23 +29,23 @@
 #include <stdlib.h>
 #include "mapinc.h"
 
-static DECLFR(M328Read) {
+static DECLFR(Read) {
 	if (((A >= 0xCE80) && (A < 0xCF00)) || ((A >= 0xFE80) && (A < 0xFF00))) {
 		return 0xF2 | (rand() & 0x0D);
 	}
 	return CartBR(A);
 }
 
-static void M328Power(void) {
+static void Power(void) {
 	setprg16(0x8000, 0);
 	setprg16(0xC000, 0);
 	setchr2(0x0000, 0);
 	setchr2(0x0800, 0);
 	setchr2(0x1000, 0);
 	setchr2(0x1800, 0);
-	SetReadHandler(0x8000, 0xFFFF, M328Read);
+	SetReadHandler(0x8000, 0xFFFF, Read);
 }
 
 void Mapper328_Init(CartInfo *info) {
-	info->Power = M328Power;
+	info->Power = Power;
 }

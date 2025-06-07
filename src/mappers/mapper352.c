@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,27 +26,29 @@
 
 #include "mapinc.h"
 
-static uint8 gameblock;
+static struct {
+	uint8 reg;
+} m352;
 
 static SFORMAT StateRegs[] = {
-	{ &gameblock, 1, "GAME" },
+	{ &m352.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg32(0x8000, gameblock);
-	setchr8(gameblock);
-	setmirror(gameblock & 0x01);
+	setprg32(0x8000, m352.reg);
+	setchr8(m352.reg);
+	setmirror(m352.reg & 0x01);
 }
 
-static void M352Power(void) {
-	gameblock = 0;
+static void Power(void) {
+	m352.reg = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
-static void M352Reset(void) {
-	gameblock++;
+static void Reset(void) {
+	m352.reg++;
 	Sync();
 }
 
@@ -55,8 +57,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper352_Init(CartInfo *info) {
-	info->Power = M352Power;
-	info->Reset = M352Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,53 +34,55 @@
 
 #include "mapinc.h"
 
-static uint8 prg;
-static uint32 IRQCount, IRQa;
+static struct {
+	uint8 prg;
+	uint32 IRQCount, IRQa;
+} m304;
 
 static SFORMAT StateRegs[] = {
-	{ &IRQCount, 4, "IRQC" },
-	{ &IRQa, 4, "IRQA" },
-	{ &prg, 1, "PRG" },
+	{ &m304.IRQCount, 4, "IRQC" },
+	{ &m304.IRQa, 4, "IRQA" },
+	{ &m304.prg, 1, "PRG" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg8(0x6000, 4 | prg);
+	setprg8(0x6000, 4 | m304.prg);
 	setprg32(0x8000, 0);
 	setchr8(0);
 }
 
-static DECLFW(M304Write1) {
-	prg = V & 0x01;
+static DECLFW(WritePRG) {
+	m304.prg = V & 0x01;
 	Sync();
 }
 
-static DECLFW(M304Write2) {
-	IRQa = V & 0x01;
-	IRQCount = 0;
+static DECLFW(WriteIRQ) {
+	m304.IRQa = V & 0x01;
+	m304.IRQCount = 0;
 	X6502_IRQEnd(FCEU_IQEXT);
 }
 
-static DECLFR(M304Read) {
+static DECLFR(Read) {
 	return 0xFF;
 }
 
-static void M304Power(void) {
-	prg = 0;
-	IRQCount = IRQa = 0;
+static void Power(void) {
+	m304.prg = 0;
+	m304.IRQCount = m304.IRQa = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetReadHandler(0x4020, 0x4FFF, M304Read);
-	SetWriteHandler(0x4068, 0x4068, M304Write2);
-	SetWriteHandler(0x4027, 0x4027, M304Write1);
+	SetReadHandler(0x4020, 0x4FFF, Read);
+	SetWriteHandler(0x4068, 0x4068, WriteIRQ);
+	SetWriteHandler(0x4027, 0x4027, WritePRG);
 }
 
-static void M304IRQHook(int a) {
-	if (IRQa) {
-		if (IRQCount < 5750) {
-			IRQCount += a;
+static void CPUIRQHook(int a) {
+	if (m304.IRQa) {
+		if (m304.IRQCount < 5750) {
+			m304.IRQCount += a;
 		} else {
-			IRQa = 0;
+			m304.IRQa = 0;
 			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
@@ -91,8 +93,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper304_Init(CartInfo *info) {
-	info->Power = M304Power;
-	MapIRQHook = M304IRQHook;
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

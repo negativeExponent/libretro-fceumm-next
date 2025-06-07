@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,48 +19,49 @@
  */
 
 /* NES 2.0 Mapper 544 - Waixing FS306 */
+
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 nt[4];
-static uint8 cpuC;
-
-static uint8 chrRamMask;
-static uint8 chrRamCompare;
+static struct {
+	uint8 nt[4];
+	uint8 prg;
+	uint8 chrRamMask;
+	uint8 chrRamCompare;
+} m544;
 
 static writefunc writePPU;
 extern uint32 RefreshAddr;
 
 static SFORMAT StateRegs[] = {
-	{ nt, 4, "NTBL" },
-	{ &cpuC, 1, "CPUC" },
-	{ &chrRamMask, 1, "CHRM" },
-	{ &chrRamCompare, 1, "CHRB" },
+	{ m544.nt, 4, "NTBL" },
+	{ &m544.prg, 1, "PRGC" },
+	{ &m544.chrRamMask, 1, "CHRM" },
+	{ &m544.chrRamCompare, 1, "CHRB" },
 	{ 0 }
 };
 
-static void M544PW(uint16 A, uint16 V) {
-	V &= 0x1F;
+static void SetPRG(uint16 A, uint16 V) {
 	if (A == 0xC000) {
-		V = cpuC;
+		V = m544.prg;
 	}
-	setprg8(A, V);
+	setprg8(A, V & 0x1F);
 }
 
-static void M544CW(uint16 A, uint16 V) {
-	if ((V & chrRamMask) == chrRamCompare) {
+static void SetCHR(uint16 A, uint16 V) {
+	if ((V & m544.chrRamMask) == m544.chrRamCompare) {
 		setchr1r(0x10, A, V);
 	} else {
 		setchr1(A, V);
 	}
 }
 
-static DECLFW(M544WriteExtra) {
+static DECLFW(WriteMisc) {
 	if (A & 0x04) {
-		nt[A & 0x03] = V & 0x01;
-		setmirrorw(nt[0], nt[1], nt[2], nt[3]);
+		m544.nt[A & 0x03] = V & 0x01;
+		setmirrorw(m544.nt[0], m544.nt[1], m544.nt[2], m544.nt[3]);
 	} else {
-		cpuC = V;
+		m544.prg = V;
 		VRC24_SyncPRG();
 	}
 }
@@ -69,17 +70,17 @@ static const uint8 compareMasks[8] = {
     0x28, 0x00, 0x4C, 0x64, 0x46, 0x7C, 0x04, 0xFF
 };
 
-static DECLFW(M544PPUWrite) {
+static DECLFW(WritePPU2007) {
 	if (RefreshAddr < 0x2000) {
 		uint8 reg = RefreshAddr >> 10;
 		uint8 chrBank = vrc24.chr[reg];
 		if (chrBank & 0x80) {
 			if (chrBank & 0x10) {
-				chrRamMask = 0x00;
-				chrRamCompare = 0xFF;
+				m544.chrRamMask = 0x00;
+				m544.chrRamCompare = 0xFF;
 			} else {
-				chrRamMask = (chrBank & 0x40) ? 0xFE : 0xFC;
-				chrRamCompare = compareMasks[((chrBank >> 1) & 0x01) | ((chrBank >> 2) & 0x02) | ((chrBank >> 4) & 0x04)];
+				m544.chrRamMask = (chrBank & 0x40) ? 0xFE : 0xFC;
+				m544.chrRamCompare = compareMasks[((chrBank >> 1) & 0x01) | ((chrBank >> 2) & 0x02) | ((chrBank >> 4) & 0x04)];
 			}
 			VRC24_SyncCHR();
 		}
@@ -87,29 +88,26 @@ static DECLFW(M544PPUWrite) {
 	writePPU(A, V);
 }
 
-static void M544Power(void) {
-	chrRamMask = 0xFC;
-	chrRamCompare = 0x28;
-	nt[0] = 0;
-	nt[1] = 0;
-	nt[2] = 1;
-	nt[3] = 1;
-	cpuC = ~1;
+static void Power(void) {
+	memset(&m544, 0, sizeof(m544));
+	m544.chrRamMask = 0xFC;
+	m544.chrRamCompare = 0x28;
+	m544.nt[0] = 0;
+	m544.nt[1] = 0;
+	m544.nt[2] = 1;
+	m544.nt[3] = 1;
+	m544.prg = ~1;
 	VRC24_Power();
 	writePPU = GetWriteHandler(0x2007);
-	SetWriteHandler(0x2007, 0x2007, M544PPUWrite);
-}
-
-static void M544Close(void) {
+	SetWriteHandler(0x2007, 0x2007, WritePPU2007);
 }
 
 void Mapper544_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x400, 0x800, 1, 1);
-	info->Power = M544Power;
-	info->Close = M544Close;
-	VRC24_pwrap = M544PW;
-	VRC24_cwrap = M544CW;
-	VRC24_WriteExtSelect = M544WriteExtra;
+	info->Power = Power;
+	VRC24_pwrap = SetPRG;
+	VRC24_cwrap = SetCHR;
+	VRC24_WriteExtSelect = WriteMisc;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 2048;

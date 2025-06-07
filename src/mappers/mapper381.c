@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,26 +19,41 @@
  *
  */
 
-/* Map 381 - 2-in-1 High Standard Game (BC-019), reset-based */
+/* Map 381 - 2-in-1 High Standard Game (BC-019), m381.reg-based */
 
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reset = 0;
+static struct {
+	uint8 reg;
+} m381;
+
+static SFORMAT StateRegs[] = {
+	{ &m381.reg, 1, "REGS" },
+	{ 0 }
+};
 
 static void Sync(void) {
-	setprg16(0x8000, (reset << 4) | ((latch.data & 0x07) << 1) | ((latch.data >> 4) & 0x0F));
-	setprg16(0xC000, (reset << 4) | 0x0F);
+	uint8 bank = (m381.reg << 4) | ((latch.data << 1) & 0x0E) | ((latch.data >> 4) & 0x01);
+
+	setprg16(0x8000, bank);
+	setprg16(0xC000, bank | 0x0F);
 	setchr8(0);
 }
 
-static void M381Reset(void) {
-	reset++;
+static void Reset(void) {
+	m381.reg++;
 	Sync();
+}
+
+static void Power(void) {
+	m381.reg = 0;
+	Latch_Power();
 }
 
 void Mapper381_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Reset = M381Reset;
-	AddExState(&reset, 1, 0, "RST0");
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

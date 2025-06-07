@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2022-2024 negativeExponent
+ *  Copyright (C) 2022-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,69 +24,95 @@
 
 #include "mapinc.h"
 
-static uint8 prg[4], chr[16], nt[4];
+static struct {
+	uint8 prg[4], chr[8], nmt[4];
+} m326;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 4, "PREG" },
-	{ chr, 16, "CREG" },
+	{ m326.prg, 4, "PREG" },
+	{ m326.chr, 8, "CREG" },
+	{ m326.nmt, 4, "NREG" },
 	{ 0 }
 };
 
-static void Sync(void) {
+static void SyncPRG(void) {
 	int i;
 
 	for (i = 0; i < 4; i++) {
-		setprg8(0x8000 + (i << 13), prg[i]);
-	}
-	for (i = 0; i < 8; i++) {
-		setchr1(i << 10, chr[i]);
-	}
-	for (i = 0; i < 3; i++) {
-		setntamem(NTARAM + 0x400 * (chr[8 | i] & 0x01), 1, i);
+		setprg8(0x8000 + (i * 0x2000), m326.prg[i]);
 	}
 }
 
-static DECLFW(M326Write) {
+static void SyncCHR(void) {
+	int i;
+
+	for (i = 0; i < 8; i++) {
+		setchr1(i * 0x400, m326.chr[i]);
+	}
+}
+
+static void SyncNMT(void) {
+	int i;
+
+	for (i = 0; i < 4; i++) {
+		setntamem(NTARAM + (m326.nmt[i] * 0x400), TRUE, i);
+	}
+}
+
+static DECLFW(WriteReg) {
 	switch (A & 0xE010) {
 	case 0x8000:
 	case 0xA000:
 	case 0xC000:
-		prg[A >> 13 & 3] = V;
-		Sync();
+		m326.prg[(A >> 13) & 0x03] = V;
+		SyncPRG();
 		break;
-	}
-
-	if ((A & 0x8010) == 0x8010){
-		chr[A & 0x0F] = V;
-		Sync();
+	case 0xE000:
+		break;
+	case 0x8010:
+	case 0xA010:
+	case 0xC010:
+	case 0xE010:
+		if (A & 0x08) {
+			m326.nmt[A & 0x07] = V;
+			SyncNMT();
+		} else {
+			m326.chr[A & 0x07] = V;
+			SyncCHR();
+		}
+		break;
 	}
 }
 
-static void M326Power(void) {
+static void Power(void) {
 	int i;
 
 	for (i = 0; i < 4; i++) {
-		prg[i] = 0xFC | i;
+		m326.prg[i] = 0xFC + i;
 	}
 	for (i = 0; i < 8; i++) {
-		chr[i] = i;
+		m326.chr[i] = i;
 	}
 	for (i = 0; i < 4; i++) {
-		chr[8 | i] = (i >> 1) & 0x01;
+		m326.nmt[i] = (i >> 1) & 0x01;
 	}
 
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncNMT();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M326Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncNMT();
 }
 
 void Mapper326_Init(CartInfo *info) {
-	info->Power = M326Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -20,49 +20,47 @@
 
 #include "mapinc.h"
 
-static uint8 regs[4];
+static struct {
+	uint8 reg[4];
+} m463;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ regs, 4, "EXPR" },
-	{ &dipsw, 1, "DPSW" },
+	{ m463.reg, 4, "EXPR" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 prg = regs[1];
-	uint8 chr = regs[2];
-	uint8 mirr = (regs[0] & 0x01) ^ 0x01;
-
-	if (regs[0] & 0x04) {
-		setprg16(0x8000, prg);
-		setprg16(0xC000, prg);
+	if (m463.reg[0] & 0x04) {
+		setprg16(0x8000, m463.reg[1]);
+		setprg16(0xC000, m463.reg[1]);
 	} else {
-		setprg32(0x8000, prg >> 1);
+		setprg32(0x8000, m463.reg[1] >> 1);
 	}
-	setchr8(chr);
-	setmirror(mirr);
+	setchr8(m463.reg[2]);
+	setmirror((m463.reg[0] & 0x01) ^ 0x01);
 }
 
-static DECLFW(M463Write5000) {
+static DECLFW(WriteReg) {
 	if (A & (0x10 << dipsw)) {
-		regs[A & 0x03] = V;
+		m463.reg[A & 0x03] = V;
 		Sync();
 	}
 }
 
-static void M463Reset(void) {
-	dipsw = (dipsw + 1) & 0x07;
-	regs[0] = regs[1] = regs[2] = regs[3] = 0;
+static void Reset(void) {
+	memset(&m463, 0, sizeof(m463));
+	dipsw = (dipsw + 1) & 0x01;
 	Sync();
 }
 
-static void M463Power(void) {
+static void Power(void) {
+	memset(&m463, 0, sizeof(m463));
 	dipsw = 0;
-	regs[0] = regs[1] = regs[2] = regs[3] = 0;
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x5000, 0x5FFF, M463Write5000);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 }
 
 static void StateRestore(int version) {
@@ -70,8 +68,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper463_Init(CartInfo *info) {
-	info->Power = M463Power;
-	info->Reset = M463Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

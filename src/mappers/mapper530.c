@@ -17,7 +17,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
- *
+ */
+
+/*
  * NES 2.0 Mapper 530 is used for Super Mario Bros. Pocker Mali (sic), a bootleg
  * version of Bandai's Crayon Shin-chan: Ora to Poi Poi. It's a VRC4 clone
  * (A0/A1, VRC4f) with the PRG and CHR address lines scrambled: PRG A14 is
@@ -30,7 +32,7 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static DECLFW(M530Write) {
+static DECLFW(WriteVRC4) {
 	A = (A & ~0x1000) | ((A << 9) & 0x1000);
 	switch (A & 0xF000) {
 	case 0x8000:
@@ -49,12 +51,12 @@ static DECLFW(M530Write) {
 	VRC24_Write(A, V);
 }
 
-static void M530Power(void) {
+static void Power(void) {
 	VRC24_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M530Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteVRC4);
 }
 
 void Mapper530_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x01, 0x02, 0, 1);
-	info->Power = M530Power;
+	info->Power = Power;
 }

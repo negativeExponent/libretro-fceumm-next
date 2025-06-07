@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,28 +28,25 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[4];
+static struct {
+	uint8 reg[4];
+} m412;
+
 static uint8 dipsw;
 
-static void M412CW(uint16 A, uint16 V) {
-	uint16 mask = (reg[1] & 0x20) ? 0x7F : 0xFF;
-	uint16 base = ((reg[1] << 5) & 0x100) | (reg[1] & 0x80);
-	uint16 bank = reg[0] >> 2;
+static SFORMAT StateReg[] = {
+	{ m412.reg, 4, "EXPR" },
+	{ 0 }
+};
 
-	if (reg[2] & 0x02) {
-		setchr8(bank);
-	} else {
-		setchr1(A, (base & ~mask) | (V & mask));
-	}
-}
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = 0x3F & ~(((m412.reg[1] << 4) & 0x20) | (m412.reg[1] & 0x10));
+	uint16 base = ((m412.reg[1] << 3) & 0x20) | ((m412.reg[1] >> 2) & 0x10);
 
-static void M412PW(uint16 A, uint16 V) {
-	uint16 mask = 0x3F & ~(((reg[1] << 4) & 0x20) | (reg[1] & 0x10));
-	uint16 base = ((reg[1] << 3) & 0x20) | ((reg[1] >> 2) & 0x10);
-	uint16 bank = reg[2] >> 3;
+	if (m412.reg[2] & 0x02) {
+		uint16 bank = m412.reg[2] >> 3;
 
-	if (reg[2] & 0x02) {
-		if (reg[2] & 0x04) {
+		if (m412.reg[2] & 0x04) {
 			setprg32(0x8000, bank >> 1);
 		} else {
 			setprg16(0x8000, bank);
@@ -58,45 +55,55 @@ static void M412PW(uint16 A, uint16 V) {
 	} else {
 		setprg8(A, (base & ~mask) | (V & mask));
 	}
+
+	mmc3.wram = 0x80;
 }
 
-static DECLFR(M412Read5) {
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = (m412.reg[1] & 0x20) ? 0x7F : 0xFF;
+	uint16 base = ((m412.reg[1] << 5) & 0x100) | (m412.reg[1] & 0x80);
+
+	if (m412.reg[2] & 0x02) {
+		setchr8(m412.reg[0] >> 2);
+	} else {
+		setchr1(A, (base & ~mask) | (V & mask));
+	}
+}
+
+static DECLFR(ReadDIP) {
 	return dipsw;
 }
 
-static DECLFW(M412Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
 		CartBW(A, V);
-		if (!(reg[1] & 0x01)) {
-			reg[A & 0x03] = V;
+		if (!(m412.reg[1] & 0x01)) {
+			m412.reg[A & 0x03] = V;
 			MMC3_SyncPRG();
 			MMC3_SyncCHR();
 		}
 	}
 }
 
-static void M412Reset(void) {
+static void Reset(void) {
+	memset(&m412, 0, sizeof(m412));
 	dipsw++;
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	MMC3_Reset();
-	mmc3.wram = 0x80;
 }
 
-static void M412Power(void) {
+static void Power(void) {
+	memset(&m412, 0, sizeof(m412));
 	dipsw = 0;
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	MMC3_Power();
-	mmc3.wram = 0x80;
-	SetReadHandler(0x5000, 0x5FFF, M412Read5);
-	SetWriteHandler(0x6000, 0x7FFF, M412Write);
+	SetReadHandler(0x5000, 0x6FFF, ReadDIP);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper412_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M412CW;
-	MMC3_pwrap = M412PW;
-	info->Reset = M412Reset;
-	info->Power = M412Power;
-	AddExState(reg, 4, 0, "EXPR");
-	AddExState(&dipsw, 1, 0, "DPSW");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Reset = Reset;
+	info->Power = Power;
+	AddExState(StateReg, ~0, 0, NULL);
 }

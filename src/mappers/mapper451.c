@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,37 +20,40 @@
 
 /* NES 2.0 Mapper 451 */
 /* Uses flashrom to save high scores. */
+/* MP3 support not implemented */
 
 #include "mapinc.h"
 #include "mmc3.h"
 #include "flashrom.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m451;
 
 static uint8 *FLASHROM = NULL;
 static uint32 FLASHROM_size = 0;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m451.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M451SyncPRG(void) {
+static void SyncPRG(void) {
 	setprg8r(0x10, 0x8000, 0);
-	setprg8r(0x10, 0xA000, 0x10 | ((reg << 2) & 0x08) | (reg & 0x01));
-	setprg8r(0x10, 0xC000, 0x20 | ((reg << 2) & 0x08) | (reg & 0x01));
+	setprg8r(0x10, 0xA000, 0x10 | ((m451.reg << 2) & 0x08) | (m451.reg & 0x01));
+	setprg8r(0x10, 0xC000, 0x20 | ((m451.reg << 2) & 0x08) | (m451.reg & 0x01));
 	setprg8r(0x10, 0xE000, 0x30);
 }
 
-static void M451SyncCHR(void) {
-	setchr8(reg & 0x01);
+static void SyncCHR(void) {
+	setchr8(m451.reg & 0x01);
 }
 
-static DECLFR(M451Read) {
+static DECLFR(ReadFlash) {
 	return FlashROM_Read(A);
 }
 
-static DECLFW(M451Write) {
+static DECLFW(WriteFlash) {
 	FlashROM_Write(A, V);
 	switch (A & 0xE000) {
 	case 0xA000:
@@ -63,20 +66,24 @@ static DECLFW(M451Write) {
 		MMC3_IRQWrite(0xE000 + ((A == 0xFF) ? 0x00 : 0x01), 0x00);
 		break;
 	case 0xE000:
-		reg = A & 0x03;
+		m451.reg = A & 0x03;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 		break;
 	}
 }
 
-static void M451Power(void) {
-	MMC3_Power();
-	SetReadHandler(0x8000, 0xFFFF, M451Read);
-	SetWriteHandler(0x8000, 0xFFFF, M451Write);
+static void CPUIRQHook(int a) {
+	FlashROM_CPUCyle(a);
 }
 
-static void M451Close(void) {
+static void Power(void) {
+	MMC3_Power();
+	SetReadHandler(0x8000, 0xFFFF, ReadFlash);
+	SetWriteHandler(0x8000, 0xFFFF, WriteFlash);
+}
+
+static void Close(void) {
 	MMC3_Close();
 	if (FLASHROM) {
 		FCEU_free(FLASHROM);
@@ -88,11 +95,11 @@ void Mapper451_Init(CartInfo *info) {
 	uint32 w, r;
 
 	MMC3_Init(info, MMC3B, 0, 0);
-	info->Power = M451Power;
-	info->Close = M451Close;
-	MMC3_SyncPRG = M451SyncPRG;
-	MMC3_SyncCHR = M451SyncCHR;
-	MapIRQHook = FlashROM_CPUCyle;
+	info->Power = Power;
+	info->Close = Close;
+	MMC3_SyncPRG = SyncPRG;
+	MMC3_SyncCHR = SyncCHR;
+	MapIRQHook = CPUIRQHook;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	info->battery = 1;

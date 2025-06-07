@@ -38,7 +38,7 @@ static void Sync(void) {
 	setmirror(MI_V);
 }
 
-static DECLFW(M320Write) {
+static DECLFW(WriteLatch) {
 	if ((A & 0xFFE0) == 0xF0E0) {
 		latch.addr = A;
 	}
@@ -46,13 +46,13 @@ static DECLFW(M320Write) {
 	Sync();
 }
 
-static void M320Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M320Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper320_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M320Power;
+	info->Power = Power;
 	info->Reset = Latch_RegReset;
 }

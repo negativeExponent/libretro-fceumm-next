@@ -24,16 +24,24 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m443;
+
 static uint8 dipsw;
 
-static void M443PW(uint16 A, uint16 V) {
-	uint8 mask = 0x0F;
-	uint8 base = ((reg << 4) & 0x20) | (reg & 0x10);
+static SFORMAT StateRegs[] = {
+	{ &m443.reg, 1, "EXPR" },
+	{ 0 }
+};
 
-	if (reg & 0x04) { /* NROM */
+static void SetPRG(uint16 A, uint16 V) {
+	uint8 mask = 0x0F;
+	uint8 base = ((m443.reg << 4) & 0x20) | (m443.reg & 0x10);
+
+	if (m443.reg & 0x04) { /* NROM */
 		uint16 bank = (base & ~mask) | (mmc3.reg[6] & mask);
-		if (reg & 0x08) { /* NROM-128 */
+		if (m443.reg & 0x08) { /* NROM-128 */
 			setprg16(0x8000, bank >> 1);
 			setprg16(0xC000, bank >> 1);
 		} else { /* NROM-256 */
@@ -44,41 +52,40 @@ static void M443PW(uint16 A, uint16 V) {
 	}
 }
 
-static void M443CW(uint16 A, uint16 V) {
-	setchr1(A, ((reg << 8) & ~0xFF) | (V & 0xFF));
+static void SetCHR(uint16 A, uint16 V) {
+	setchr1(A, ((m443.reg << 8) & ~0xFF) | (V & 0xFF));
 }
 
-static DECLFR(M443Read) {
-	return (((reg & 0x0C) == 0x08) ? dipsw : CartBR(A));
+static DECLFR(ReadDIP) {
+	return (((m443.reg & 0x0C) == 0x08) ? dipsw : CartBR(A));
 }
 
-static DECLFW(M443Write) {
-	reg = A & 0xFF;
+static DECLFW(WriteReg) {
+	m443.reg = A & 0xFF;
 	MMC3_SyncPRG();
 	MMC3_SyncCHR();
 }
 
-static void M443Reset(void) {
+static void Reset(void) {
 	dipsw++;
 	dipsw &= 15;
-	reg = 0;
+	m443.reg = 0;
 	MMC3_Reset();
 }
 
-static void M443Power(void) {
+static void Power(void) {
 	dipsw = 0;
-	reg = 0;
+	m443.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M443Write);
-	SetReadHandler(0x8000, 0xFFFF, M443Read);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
+	SetReadHandler(0x8000, 0xFFFF, ReadDIP);
 }
 
 void Mapper443_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M443CW;
-	MMC3_pwrap = M443PW;
-	info->Power = M443Power;
-	info->Reset = M443Reset;
-	AddExState(&reg, 1, 0, "EXPR");
-	AddExState(&dipsw, 1, 0, "DIPS");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

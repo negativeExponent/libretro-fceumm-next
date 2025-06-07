@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,27 +20,29 @@
 
 #include "mapinc.h"
 
-static uint8 prg[4];
-static uint8 chr;
-static uint8 latch;
-static uint8 reg1M;
-static uint8 reg4M;
+static struct {
+	uint8 prg[4];
+	uint8 chr;
+	uint8 latch;
+	uint8 reg1M;
+	uint8 reg4M;
 
-static uint8 IRQa_fds;
-static int16 IRQCount_fds;
-static int16 IRQCount_sgd;
+	uint8 IRQa_fds;
+	int16 IRQCount_fds;
+	int16 IRQCount_sgd;
+} m561;
 
 static SFORMAT StateRegs[] = {
-	{ &reg1M, 1, "REG1" },
-	{ &reg4M, 1, "REG4" },
-	{ &latch, 1, "LATC" },
-	{ &chr, 1, "CREG" },
-	{ prg, 4, "PREG" },
+	{ &m561.reg1M, 1, "REG1" },
+	{ &m561.reg4M, 1, "REG4" },
+	{ &m561.latch, 1, "LATC" },
+	{ &m561.chr, 1, "CREG" },
+	{ m561.prg, 4, "PREG" },
 
-	{ &IRQa_fds, 1, "IRQA" },
-	{ &IRQCount_fds, 2, "FDSC" },
+	{ &m561.IRQa_fds, 1, "IRQA" },
+	{ &m561.IRQCount_fds, 2, "FDSC" },
 
-	{ &IRQCount_sgd, 2, "SGDC" },
+	{ &m561.IRQCount_sgd, 2, "SGDC" },
 
 	{ 0 }
 };
@@ -48,54 +50,54 @@ static SFORMAT StateRegs[] = {
 static void Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
 	/* PRG memory can be writable */
-	SetupCartPRGMapping(0, PRGptr[0], PRGsize[0], !(reg1M & 0x02));
-	if (!(reg4M & 0x01)) {
-		setprg8(0x8000, prg[0]);
-		setprg8(0xA000, prg[1]);
-		setprg8(0xC000, prg[2]);
-		setprg8(0xE000, prg[3]);
+	SetupCartPRGMapping(0, PRGptr[0], PRGsize[0], !(m561.reg1M & 0x02));
+	if (!(m561.reg4M & 0x01)) {
+		setprg8(0x8000, m561.prg[0]);
+		setprg8(0xA000, m561.prg[1]);
+		setprg8(0xC000, m561.prg[2]);
+		setprg8(0xE000, m561.prg[3]);
 	} else {
-		switch (reg1M >> 5) {
+		switch (m561.reg1M >> 5) {
 		case 0:
-			setprg16(0x8000, latch & 0x07);
+			setprg16(0x8000, m561.latch & 0x07);
 			setprg16(0xC000, 0x07);
 			break;
 		case 1:
-			setprg16(0x8000, (latch >> 2) & 0x0F);
+			setprg16(0x8000, (m561.latch >> 2) & 0x0F);
 			setprg16(0xC000, 0x07);
 			break;
 		case 2:
-			setprg16(0x8000, latch & 0x0F);
+			setprg16(0x8000, m561.latch & 0x0F);
 			setprg16(0xC000, 0x0F);
 			break;
 		case 3:
 			setprg16(0x8000, 0x0F);
-			setprg16(0xC000, latch & 0x0F);
+			setprg16(0xC000, m561.latch & 0x0F);
 			break;
 		case 4:
-			setprg32(0x8000, (latch >> 4) & 0x03);
+			setprg32(0x8000, (m561.latch >> 4) & 0x03);
 			break;
 		case 5:
 			setprg32(0x8000, 0x03);
 			break;
 		case 6:
-			setprg8(0x8000, latch & 0x0F);
-			setprg8(0xA000, latch >> 4);
+			setprg8(0x8000, m561.latch & 0x0F);
+			setprg8(0xA000, m561.latch >> 4);
 			setprg16(0xC000, 0x07);
 			break;
 		case 7:
-			setprg8(0x8000, latch & 0x0E);
-			setprg8(0xA000, (latch >> 4) | 0x01);
+			setprg8(0x8000, m561.latch & 0x0E);
+			setprg8(0xA000, (m561.latch >> 4) | 0x01);
 			setprg16(0xC000, 0x07);
 			break;
 		}
 	}
 
 	/* CHR RAN can be write-protected */
-	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], !((reg1M & 0xE0) & 0x80));
-	setchr8(chr);
+	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], !((m561.reg1M & 0xE0) & 0x80));
+	setchr8(m561.chr);
 
-	switch (reg1M & 0x11) {
+	switch (m561.reg1M & 0x11) {
 	case 0x00:
 		setmirror(MI_0);
 		break;
@@ -111,92 +113,106 @@ static void Sync(void) {
 	}
 }
 
-static DECLFW(M561WriteReg) {
+static DECLFW(WriteReg) {
 	switch (A) {
 	case 0x4024:
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	case 0x4025:
 		X6502_IRQEnd(FCEU_IQEXT);
-		IRQa_fds = V;
-		if (IRQa_fds & 0x42) {
-			IRQCount_fds = 0;
+		m561.IRQa_fds = V;
+		if (m561.IRQa_fds & 0x42) {
+			m561.IRQCount_fds = 0;
 		}
 		break;
 	case 0x4100:
 		X6502_IRQEnd(FCEU_IQEXT);
-		IRQCount_sgd = (int16)((IRQCount_sgd & 0xFF00) | V);
+		m561.IRQCount_sgd = (int16)((m561.IRQCount_sgd & 0xFF00) | V);
 		if (!V) {
-			IRQCount_sgd = V;
+			m561.IRQCount_sgd = V;
 		}
 		break;
 	case 0x4101:
 		X6502_IRQEnd(FCEU_IQEXT);
-		IRQCount_sgd = (int16)((IRQCount_sgd & 0x00FF) | (V << 8));
+		m561.IRQCount_sgd = (int16)((m561.IRQCount_sgd & 0x00FF) | (V << 8));
 		break;
 	case 0x42FC:
 	case 0x42FD:
 	case 0x42FE:
 	case 0x42FF:
-		reg1M = (V & 0xF0) | (A & 0x03);
+		m561.reg1M = (V & 0xF0) | (A & 0x03);
 		Sync();
 		break;
 	case 0x43FC:
 	case 0x43FD:
 	case 0x43FE:
 	case 0x43FF:
-		reg4M = (V & 0xF0) | (A & 0x03);
-		chr = V & 0x03;
+		m561.reg4M = (V & 0xF0) | (A & 0x03);
+		m561.chr = V & 0x03;
 		Sync();
 		break;
 	}
 }
 
-static DECLFW(M561Write) {
-	if (reg1M & 0x02) {
-		latch = V;
-		switch (reg1M >> 5) {
+static DECLFW(writeLatch) {
+	if (m561.reg1M & 0x02) {
+		m561.latch = V;
+		switch (m561.reg1M >> 5) {
 		case 0:
 		case 2:
-			chr = 0;
+			m561.chr = 0;
 			break;
 		case 1:
 		case 4:
 		case 5:
-			chr = latch & 0x03;
+			m561.chr = m561.latch & 0x03;
 			break;
 		case 3:
-			chr = (latch >> 4) & 0x03;
+			m561.chr = (m561.latch >> 4) & 0x03;
 			break;
 		default:
-			/* keep chr bank from last mode */
+			/* keep m561.chr bank from last mode */
 			break;
 		}
-		prg[(A >> 13) & 0x03] = V >> 2;
+		m561.prg[(A >> 13) & 0x03] = V >> 2;
 		Sync();
 	} else {
 		CartBW(A, V);
 	}
 }
 
-static void M561Reset(void) {
-	IRQa_fds = IRQCount_fds = IRQCount_sgd = 0;
+static void CPUIRQHook(int a) {
+	m561.IRQCount_fds += 3 * a;
+	while ((m561.IRQCount_fds >= 448) && (m561.IRQa_fds & 0x80)) {
+		m561.IRQCount_fds -= 448;
+		X6502_IRQBegin(FCEU_IQEXT);
+	}
+	if (m561.IRQCount_sgd < 0) {
+		m561.IRQCount_sgd += a;
+		if (m561.IRQCount_sgd >= 0) {
+			X6502_IRQBegin(FCEU_IQEXT);
+		}
+	}
+}
+
+static void Reset(void) {
+	m561.IRQa_fds = m561.IRQCount_fds = m561.IRQCount_sgd = 0;
 	Sync();
 }
 
-static void M561Power(void) {
-	reg1M = (iNESCart.submapper << 5) | ((iNESCart.mirror == MI_V) ? 0x01 : 0x11) | 0x02;
-	reg4M = 0x03;
-	prg[0] = 0x1C;
-	prg[1] = 0x1D;
-	prg[2] = 0x1E;
-	prg[3] = 0x1F;
-	chr = 0;
+static void Power(void) {
+	m561.reg1M = (iNESCart.submapper << 5) | ((iNESCart.mirror == MI_V) ? 0x01 : 0x11) | 0x02;
+	m561.reg4M = 0x03;
+	m561.prg[0] = 0x1C;
+	m561.prg[1] = 0x1D;
+	m561.prg[2] = 0x1E;
+	m561.prg[3] = 0x1F;
+	m561.chr = 0;
 
-	SetWriteHandler(0x4020, 0x4FFF, M561WriteReg);
+	SetWriteHandler(0x4020, 0x4FFF, WriteReg);
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M561Write);
+	SetWriteHandler(0x8000, 0xFFFF, writeLatch);
 
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
@@ -216,6 +232,10 @@ static void M561Power(void) {
 			trainerInitAddr = (ROM.misc.data[3] << 8) | ROM.misc.data[2];
 			trainerSize = ROM.misc.size - 4;
 			trainerData = ROM.misc.data + 4;
+
+			FCEU_printf(" load addr : %04x\n", trainerLoadAddr);
+			FCEU_printf(" init addr : %04x\n", trainerInitAddr);
+			FCEU_printf(" data size : %d\n", trainerSize);
 		}
 
 		for (i = 0; i < ROM.misc.size; i++) {
@@ -243,26 +263,12 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-static void M561CPUIRQHook(int a) {
-	IRQCount_fds += 3 * a;
-	while ((IRQCount_fds >= 448) && (IRQa_fds & 0x80)) {
-		IRQCount_fds -= 448;
-		X6502_IRQBegin(FCEU_IQEXT);
-	}
-	if (IRQCount_sgd < 0) {
-		IRQCount_sgd += a;
-		if (IRQCount_sgd >= 0) {
-			X6502_IRQBegin(FCEU_IQEXT);
-		}
-	}
-}
-
 void Mapper561_Init(CartInfo *info) {
 	uint32 wramsize = info->PRGRamSize + info->PRGRamSaveSize;
 
-	info->Power = M561Power;
-	info->Reset = M561Reset;
-	MapIRQHook = M561CPUIRQHook;
+	info->Power = Power;
+	info->Reset = Reset;
+	MapIRQHook = CPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

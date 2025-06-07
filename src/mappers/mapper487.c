@@ -28,60 +28,68 @@
  */
 
 #include "mapinc.h"
-#include "mmc3.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m487;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
+	{ m487.reg, 2, "EXPR" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (reg[1] & 0x40) {
-		setprg32(0x8000, (reg[1] & 0x3E) | ((reg[0] >> 3) & 0x01));
-		setchr8(((reg[1] << 2) & 0xF8) | (reg[0] & 0x07));
+	uint8 prg, chr;
+
+	if (m487.reg[1] & 0x40) {
+		prg = (m487.reg[1] & 0x3E) | ((m487.reg[0] >> 3) & 0x01);
+		chr = ((m487.reg[1] << 2) & 0xF8) | (m487.reg[0] & 0x07);
 	} else {
-		setprg32(0x8000, reg[1] & 0x3F);
-		setchr8(((reg[1] << 2) & 0xFC) | (reg[0] & 0x03));
+		prg = m487.reg[1] & 0x3F;
+		chr = ((m487.reg[1] << 2) & 0xFC) | (m487.reg[0] & 0x03);
 	}
-	setmirror(((reg[1] >> 7) & 0x01) ^ 0x01);
+
+	setprg32(0x8000, prg);
+	setchr8(chr);
+	setmirror(((m487.reg[1] >> 7) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M487WriteNINA) {
+static DECLFW(Write4) {
 	/*	FCEU_printf("wr %04x %02x\n", A, V); */
 	switch (A & 0x4180) {
-	case 0x4100:
-		if (!(reg[1] & 0x20)) {
-			reg[0] = V;
+	case 0x4100: /* NINA-03-compatible Inner Bank Register */
+		if (!(m487.reg[1] & 0x20)) {
+			m487.reg[0] = V;
 			Sync();
 		}
 		break;
-	case 0x4180:
-		reg[1] = V;
+	case 0x4180: /* Outer Bank Register */
+		m487.reg[1] = V;
 		Sync();
 		break;
 	}
 }
 
-static DECLFW(M487WriteColorDreams) {
-	if (reg[1] & 0x20) {
-		reg[0] = ((V << 3) & 0x08) | ((V >> 4) & 0x07);
+static DECLFW(Write8) {
+	if (m487.reg[1] & 0x20) {
+		/* Color-Dreams-compatible Inner Bank Register */
+		/* Registers rearranged to be similar to NINA-03 registers */
+		m487.reg[0] = ((V << 3) & 0x08) | ((V >> 4) & 0x07);
 		Sync();
 	}
 }
 
-static void M487Reset(void) {
-	reg[0] = reg[1] = 0;
+static void Reset(void) {
+	memset(&m487, 0, sizeof(m487));
 	Sync();
 }
 
-static void M487Power(void) {
-	reg[0] = reg[1] = 0;
+static void Power(void) {
+	memset(&m487, 0, sizeof(m487));
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4100, 0x5FFF, M487WriteNINA);
-	SetWriteHandler(0x8000, 0xFFFF, M487WriteColorDreams);
+	SetWriteHandler(0x4100, 0x5FFF, Write4);
+	SetWriteHandler(0x8000, 0xFFFF, Write8);
 }
 
 static void StateRestore(int version) {
@@ -89,18 +97,30 @@ static void StateRestore(int version) {
 }
 
 void Mapper487_Init(CartInfo *info) {
-	info->Power = M487Power;
-	info->Reset = M487Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 
-	ROM.prg.data = realloc(ROM.prg.data, 2048 * 1024);
-	memmove(ROM.prg.data + (1024 * 1024), ROM.prg.data + (512 * 1024), 1024 * 1024);
-	memcpy(ROM.prg.data + (512 * 1024), ROM.prg.data, 512 * 1024);
-	SetupCartPRGMapping(0, ROM.prg.data, 2048 * 1024, 0);
+	/* The register layout assumes a 2 MiB address space for PRG and CHR,
+	 * with 1 MiB allocated for each. However, the first ROM chip only contains
+	 * 512 KiB of PRG and 512 KiB of CHR, and the .NES file is not padded or
+	 * repeated to fill the full 2 MiB space.
+	 *
+	 * To accommodate the banking logic without modifying it, the ROM is rebuilt
+	 * by duplicating the first 512 KiB of PRG and CHR to fill the full 1 MiB
+	 * expected by the mapper.
+	 */
 
-	ROM.chr.data = realloc(ROM.chr.data, 2048 * 1024);
-	memmove(ROM.chr.data + (1024 * 1024), ROM.chr.data + (512 * 1024), 1024 * 1024);
-	memcpy(ROM.chr.data + (512 * 1024), ROM.chr.data, 512 * 1024);
-	SetupCartCHRMapping(0, ROM.chr.data, 2048 * 1024, 0);
+	if (ROM.prg.size < (2048 * 1024) && ROM.chr.size < (2048 * 1024)) {
+		ROM.prg.data = realloc(ROM.prg.data, 2048 * 1024);
+		memmove(ROM.prg.data + (1024 * 1024), ROM.prg.data + (512 * 1024), 1024 * 1024);
+		memcpy(ROM.prg.data + (512 * 1024), ROM.prg.data, 512 * 1024);
+		SetupCartPRGMapping(0, ROM.prg.data, 2048 * 1024, 0);
+
+		ROM.chr.data = realloc(ROM.chr.data, 2048 * 1024);
+		memmove(ROM.chr.data + (1024 * 1024), ROM.chr.data + (512 * 1024), 1024 * 1024);
+		memcpy(ROM.chr.data + (512 * 1024), ROM.chr.data, 512 * 1024);
+		SetupCartCHRMapping(0, ROM.chr.data, 2048 * 1024, 0);
+	}
 }

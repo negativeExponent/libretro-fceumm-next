@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,27 +19,42 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-/* NES 2.0 Mapper 516 - Brilliant Com Cocoma Pack */
+/*
+ * NES 2.0 Mapper 555 is used for the Nintendo Campus Challenge 1991 cartridge
+ * (retroUSB version, which may or may not have been modified from the only
+ * known copy in existence).
+ */
 
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[2];
-static uint8 count_expired;
-static uint32 count;
-static uint32 count_target = 0x20000000;
+#define TARGET_COUNT 0x20000000
+
+static struct {
+	uint8 reg[2];
+	uint8 count_expired;
+	uint32 count;
+	uint32 count_target;
+} m555;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
-	{ &count, 2, "CNTR" },
-	{ &count_expired, 2, "CNTE" },
+	{ m555.reg, 2, "EXPR" },
+	{ &m555.count, 2, "CNTR" },
+	{ &m555.count_expired, 2, "CNTE" },
 	{ 0 }
 };
 
-static void M555CW(uint16 A, uint16 V) {
-	uint16 base = (reg[0] << 5) & 0x80;
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = ((m555.reg[0] << 3) & 0x18) | 0x07;
+	uint16 base = ((m555.reg[0] << 3) & 0x20);
 
-	if ((reg[0] & 0x06) == 0x02) {
+	setprg8(A, base | (V & mask));
+}
+
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 base = (m555.reg[0] << 5) & 0x80;
+
+	if ((m555.reg[0] & 0x06) == 0x02) {
 		if (V & 0x40) {
 			setchr1r(0x10, A, base | (V & 0x07));
 		} else {
@@ -50,23 +65,16 @@ static void M555CW(uint16 A, uint16 V) {
 	}
 }
 
-static void M555PW(uint16 A, uint16 V) {
-	uint16 mask = ((reg[0] << 3) & 0x18) | 0x07;
-	uint16 base = ((reg[0] << 3) & 0x20);
-
-	setprg8(A, base | (V & mask));
-}
-
-static DECLFR(M555Read5) {
+static DECLFR(Read5000) {
 	if (A & 0x800) {
-		return (0x5C | (count_expired ? 0x80 : 0));
+		return (0x5C | (m555.count_expired ? 0x80 : 0));
 	}
 	return WRAM[0x2000 | (A & 0xFFF)];
 }
 
-static DECLFW(M555Write5) {
+static DECLFW(Write5000) {
 	if (A & 0x800) {
-		reg[(A >> 10) & 0x01] = V;
+		m555.reg[(A >> 10) & 0x01] = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	} else {
@@ -74,51 +82,49 @@ static DECLFW(M555Write5) {
 	}
 }
 
-static void M555Reset(void) {
-	count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
-	count = 0;
-	memset(reg, 0, sizeof(reg));
-	MMC3_Reset();
-}
-
-static void M555Power(void) {
-	count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
-	count = 0;
-	memset(reg, 0, sizeof(reg));
-	MMC3_Power();
-
-	SetReadHandler(0x5000, 0x5FFF, M555Read5);
-	SetWriteHandler(0x5000, 0x5FFF, M555Write5);
-
-	setprg8r(0x10, 0x6000, 0);
-	SetReadHandler(0x6000, 0x7FFF, CartBR);
-	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-}
-
-static void M555CPUIRQHook(int a) {
+static void CPUIRQHook(int a) {
 	while (a--) {
-		if (!(reg[0] & 0x08)) {
-			count = 0;
-			count_expired = false;
+		if (!(m555.reg[0] & 0x08)) {
+			m555.count = 0;
+			m555.count_expired = false;
 		} else {
-			if (++count == count_target) {
-				count_expired = TRUE;
+			if (++m555.count == m555.count_target) {
+				m555.count_expired = TRUE;
 			}
-			if ((count % 1789773) == 0) {
-				uint32 seconds = (count_target - count) / 1789773;
+			if ((m555.count % 1789773) == 0) {
+				uint32 seconds = (m555.count_target - m555.count) / 1789773;
 				FCEU_DispMessage(RETRO_LOG_INFO, 1000, "Time left: %02i:%02i\n", seconds / 60, seconds % 60);
 			}
 		}
 	}
 }
 
+static void Reset(void) {
+	memset(&m555, 0, sizeof(m555));
+	m555.count_target = TARGET_COUNT | ((uint32)GameInfo->cspecial << 25);
+	MMC3_Reset();
+}
+
+static void Power(void) {
+	memset(&m555, 0, sizeof(m555));
+	m555.count_target = TARGET_COUNT | ((uint32)GameInfo->cspecial << 25);
+	MMC3_Power();
+
+	SetReadHandler(0x5000, 0x5FFF, Read5000);
+	SetWriteHandler(0x5000, 0x5FFF, Write5000);
+
+	setprg8r(0x10, 0x6000, 0);
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
+	SetWriteHandler(0x6000, 0x7FFF, CartBW);
+}
+
 void Mapper555_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M555CW;
-	MMC3_pwrap = M555PW;
-	info->Power = M555Power;
-	info->Reset = M555Reset;
-	MapIRQHook = M555CPUIRQHook;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
+	MapIRQHook = CPUIRQHook;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 16 * 1024;

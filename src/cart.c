@@ -221,7 +221,7 @@ void setprg2r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	setpageptr(2, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 11]) : 0, (rd && wr) ? PRGram[r] : 0);
 }
 
-void setprg2_rw(uint16 A, uint16 V, uint8 rd, uint8 wr) {
+void setprg2_access(uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	setprg2r_rw(0, A, V, rd, wr);
 }
 
@@ -230,7 +230,7 @@ void setprg4r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	setpageptr(4, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 12]) : 0, (rd && wr) ? PRGram[r] : 0);
 }
 
-void setprg4_rw(uint16 A, uint16 V, uint8 rd, uint8 wr) {
+void setprg4_access(uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	setprg4r_rw(0, A, V, rd, wr);
 }
 
@@ -247,7 +247,7 @@ void setprg8r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	}
 }
 
-void setprg8_rw(uint16 A, uint16 V, uint8 rd, uint8 wr) {
+void setprg8_access(uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	setprg8r_rw(0, A, V, rd, wr);
 }
 
@@ -265,7 +265,7 @@ void setprg16r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	}
 }
 
-void setprg16_rw(uint16 A, uint16 V, uint8 rd, uint8 wr) {
+void setprg16_access(uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	setprg16r_rw(0, A, V, rd, wr);
 }
 
@@ -283,7 +283,7 @@ void setprg32r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	}
 }
 
-void setprg32_rw(uint16 A, uint16 V, uint8 rd, uint8 wr) {
+void setprg32_access(uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	setprg32r_rw(0, A, V, rd, wr);
 }
 

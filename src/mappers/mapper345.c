@@ -19,7 +19,7 @@
  */
 
 /* NES 2.0 Mapper 345
- * BMC-L6IN1
+ * UNIF BMC-L6IN1
  * New Star 6-in-1 Game Cartridge
  * https://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_345
  */
@@ -27,50 +27,58 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m345;
 
-static void M345PW(uint16 A, uint16 V) {
-	uint8 base = reg >> 6;
+static SFORMAT StateRegs[] = {
+	{ &m345.reg, 1, "EXPR" },
+	{ 0 }
+};
 
-	if (reg & 0x0C) {
-		setprg8(A, (base << 4) | (V & 0x0F));
-	} else {
-		setprg32(0x8000, (base << 2) | (reg & 0x03));
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 base = m345.reg >> 2;
+	uint16 mask = 0x0F;
+
+	if (!(m345.reg & 0x0C)) { /* NROM-256 */
+		V = ((m345.reg << 2) & ~0x03) | ((A >> 13) & 0x03);
 	}
+
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M345MIR(void) {
-	if (reg & 0x20) {
-		setmirror(MI_0 + ((reg & 0x10) >> 1));
+static void SyncMirror(void) {
+	if (m345.reg & 0x20) {
+		setmirror(MI_0 + ((m345.reg & 0x10) >> 1));
 	} else {
 		setmirror((mmc3.mirr & 0x01) ^ 0x01);
 	}
 }
 
-static DECLFW(M345Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		reg = V;
+		m345.reg = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 		MMC3_SyncMirror();
 	}
 }
 
-static void M345Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m345.reg = 0;
 	MMC3_Reset();
 }
 
-static void M345Power(void) {
+static void Power(void) {
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M345Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper345_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M345PW;
-	MMC3_SyncMirror = M345MIR;
-	info->Power = M345Power;
-	info->Reset = M345Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_pwrap = SetPRG;
+	MMC3_SyncMirror = SyncMirror;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

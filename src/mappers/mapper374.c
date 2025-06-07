@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,30 +26,44 @@
 #include "mapinc.h"
 #include "mmc1.h"
 
-static uint8 game = 0;
+static struct {
+	uint8 reg;
+} m374;
 
 static SFORMAT StateRegs[] = {
-	{ &game, 1, "GAME" },
+	{ &m374.reg, 1, "GAME" },
 	{ 0 }
 };
 
-static void M374PRG(uint16 A, uint16 V) {
-	setprg16(A, (game << 3) | (V & 0x07));
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = 0x07;
+	uint16 base = m374.reg << 3; 
+
+	setprg16(A, (base & ~mask) |  (V & mask));
 }
 
-static void M374CHR(uint16 A, uint16 V) {
-	setchr4(A, (game << 5) | (V & 0x1F));
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = 0x1F;
+	uint16 base = m374.reg << 5; 
+
+	setchr4(A, (base & ~mask) |  (V & mask));
 }
 
-static void M374Reset(void) {
-	game = (game + 1) & 0x03;
+static void Reset(void) {
+	m374.reg = (m374.reg + 1) & 0x03;
 	MMC1_Reset();
+}
+
+static void Power(void) {
+	m374.reg = 0;
+	MMC1_Power();
 }
 
 void Mapper374_Init(CartInfo *info) {
 	MMC1_Init(info, MMC1B, 0, 0);
-	MMC1_cwrap = M374CHR;
-	MMC1_pwrap = M374PRG;
-	info->Reset = M374Reset;
+	MMC1_cwrap = SetCHR;
+	MMC1_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,61 +27,57 @@
 #include "mmc3.h"
 #include "fdssound.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m353;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m353.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M353PW(uint16 A, uint16 V) {
-	uint16 base = reg << 5;
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 base = m353.reg << 5;
 	uint16 mask = 0x1F;
 
-	if (reg == 2) {
-		base |= (mmc3.reg[0] & 0x80) ? 0x10 : 0x00;
-		mask >>= 1;
-	} else if ((reg == 3) && !(mmc3.reg[0] & 0x80) && (A >= 0xC000)) {
+	if (m353.reg == 2) {
+		base |= ((mmc3.reg[0] >> 3) & 0x10);
+		mask = 0x0F;
+	} else if ((m353.reg == 3) && !(mmc3.reg[0] & 0x80) && (A & 0x4000)) {
 		base = 0x70;
 		mask = 0x0F;
-		V = mmc3.reg[6 + ((A >> 13) & 0x01)];
+		V = mmc3.reg[A >> 13];
 	}
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M353CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	uint16 mask = 0x7F;
-	uint16 base = reg << 7;
+	uint16 base = m353.reg << 7;
 
-	if ((reg == 2) && (mmc3.reg[0] & 0x80)) {
+	if ((m353.reg == 2) && (mmc3.reg[0] & 0x80)) {
 		setchr8r(0x10, 0);
 	} else {
 		setchr1(A, (base & ~mask) | (V & mask));
 	}
 }
 
-static void M353MIR(void) {
-	if (reg == 0) {
-		if (mmc3.cmd & 0x80) {
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[2] >> 7) & 0x01), 1, 0);
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[3] >> 7) & 0x01), 1, 1);
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[4] >> 7) & 0x01), 1, 2);
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[5] >> 7) & 0x01), 1, 3);
-		} else {
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[0] >> 7) & 0x01), 1, 0);
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[0] >> 7) & 0x01), 1, 1);
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[1] >> 7) & 0x01), 1, 2);
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[1] >> 7) & 0x01), 1, 3);
-		}
+static void SyncMirror(void) {
+	if (m353.reg == 0) {
+		setmirrorw(
+			MMC3_GetCHRBank(0) >> 7,
+			MMC3_GetCHRBank(1) >> 7,
+			MMC3_GetCHRBank(2) >> 7,
+			MMC3_GetCHRBank(3) >> 7);
 	} else {
 		setmirror((mmc3.mirr & 0x01) ^ 0x01);
 	}
 }
 
-static DECLFW(M353Write) {
+static DECLFW(WriteReg) {
 	if (A & 0x80) {
-		reg = (A >> 13) & 0x03;
+		m353.reg = (A >> 13) & 0x03;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 		MMC3_SyncMirror();
@@ -128,32 +124,32 @@ static DECLFW(M353Write) {
 	}
 }
 
-static void M353Power(void) {
+static void Power(void) {
+	memset(&m353, 0, sizeof(m353));
 	FDSSound_Power();
-	reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M353Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
-static void M353Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m353, 0, sizeof(m353));
 	MMC3_Reset();
 	FDSSoundRegReset();
 	FDSSound_SC();
 }
 
-static void M353Close(void) {
+static void Close(void) {
 	MMC3_Close();
 }
 
 void Mapper353_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, info->battery);
-	MMC3_cwrap = M353CW;
-	MMC3_pwrap = M353PW;
-	MMC3_SyncMirror = M353MIR;
-	info->Power = M353Power;
-	info->Close = M353Close;
-	info->Reset = M353Reset;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	MMC3_SyncMirror = SyncMirror;
+	info->Power = Power;
+	info->Close = Close;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8192;

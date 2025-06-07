@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,25 +19,26 @@
  */
 
 /* NES 2.0 Mapper 450 - YY841157C
+ * 1996 Super HiK 4-in-1 (JY-049)
  */
 
 #include "mapinc.h"
 #include "vrc24.h"
 
-static void M450PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, (vrc24.wire << 4) | (V & 0x0F));
 }
 
-static void M450CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, (vrc24.wire << 7) | (V & 0x7F));
 }
 
-static void M450SyncWire(void) {
+static void SyncWires(void) {
 	VRC24_SyncPRG();
 	VRC24_SyncCHR();
 }
 
-static void M450Reset(void) {
+static void Reset(void) {
 	vrc24.wire = 0;
 	VRC24_SyncPRG();
 	VRC24_SyncCHR();
@@ -46,8 +47,8 @@ static void M450Reset(void) {
 
 void Mapper450_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, 0, 1);
-	VRC24_pwrap = M450PW;
-	VRC24_cwrap = M450CW;
-	VRC24_SyncWires = M450SyncWire;
-	info->Reset = M450Reset;
+	VRC24_pwrap = SetPRG;
+	VRC24_cwrap = SetCHR;
+	VRC24_SyncWires = SyncWires;
+	info->Reset = Reset;
 }

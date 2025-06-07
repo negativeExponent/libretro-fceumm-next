@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2011 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,35 +20,45 @@
  *
  * NES 2.0 Mapper 302 - UNL-KS7057
  * FDS Conversion
+ * Gyruss (KS-7057)
  */
 
 #include "mapinc.h"
 #include "vrc24.h"
 
-static void M302PW(uint16 A, uint16 V) {
-	setprg8(0x8000, 0x00);
-	setprg8(0xA000, 0x0D);
+static void SyncPRG(void) {
+	setprg8( 0x8000, 0x00);
+	setprg8( 0xA000, 0x0D);
 	setprg16(0xC000, 0x07);
 }
 
-static void M302CW(uint16 A, uint16 V) {
+static void SyncCHR(void) {
+	setprg2(0x6000, vrc24.chr[4]);
+	setprg2(0x6800, vrc24.chr[5]);
+	setprg2(0x7000, vrc24.chr[6]);
+	setprg2(0x7800, vrc24.chr[7]);
+
+	setprg2(0x8000, vrc24.chr[0]);
+	setprg2(0x8800, vrc24.chr[1]);
+	setprg2(0x9000, vrc24.chr[2]);
+	setprg2(0x9800, vrc24.chr[3]);
+
 	setchr8(0);
 }
 
-static DECLFR(M302Read) {
-	uint8 bank = (((A - 0x6000) >> 11) & 0x06) | ((A >> 11) & 0x01);
-
-	return PRGptr[0][(vrc24.chr[bank ^ 4] << 11) | (A & 0x07FF)];
+static void SyncMirror(void) {
+	setmirror(vrc24.mirr & 0x01);
 }
 
 static void M302Power(void) {
 	VRC24_Power();
-	SetReadHandler(0x6000, 0x9FFF, M302Read);
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
 }
 
 void Mapper302_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, FALSE, TRUE);
 	info->Power = M302Power;
-	VRC24_pwrap = M302PW;
-	VRC24_cwrap = M302CW;
+	VRC24_SyncPRG = SyncPRG;
+	VRC24_SyncCHR = SyncCHR;
+	VRC24_SyncMirror = SyncMirror;
 }

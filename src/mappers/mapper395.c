@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,51 +28,53 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m395;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
+	{ m395.reg, 2, "EXPR" },
 	{ 0 }
 };
 
-static void M395CW(uint16 A, uint16 V) {
-	uint16 mask = (reg[1] & 0x40) ? 0x7F : 0xFF;
-	uint16 base = ((reg[0] << 4) & 0x300) | ((reg[1] << 5) & 0x400) | ((reg[1] << 3) & 0x80);
-
-	setchr1(A, base | (V & mask));
-}
-
-static void M395PW(uint16 A, uint16 V) {
-	uint16 mask = (reg[1] & 0x08) ? 0x0F : 0x1F;
-	uint16 base = ((reg[0] << 4) & 0x80) | ((reg[0] << 1) & 0x60) | ((reg[1] << 4) & 0x10);
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = (m395.reg[1] & 0x08) ? 0x0F : 0x1F;
+	uint16 base = ((m395.reg[0] << 4) & 0x80) | ((m395.reg[0] << 1) & 0x60) | ((m395.reg[1] << 4) & 0x10);
 
 	setprg8(A, base | (V & mask));
 }
 
-static DECLFW(M395Write) {
-	if (!(reg[1] & 0x80)) {
-		reg[(A >> 4) & 0x01] = V;
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = (m395.reg[1] & 0x40) ? 0x7F : 0xFF;
+	uint16 base = ((m395.reg[0] << 4) & 0x300) | ((m395.reg[1] << 5) & 0x400) | ((m395.reg[1] << 3) & 0x80);
+
+	setchr1(A, base | (V & mask));
+}
+
+static DECLFW(WriteReg) {
+	if (!(m395.reg[1] & 0x80)) {
+		m395.reg[(A >> 4) & 0x01] = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M395Reset(void) {
-	reg[0] = reg[1] = 0;
+static void Reset(void) {
+	memset(&m395, 0, sizeof(m395));
 	MMC3_Reset();
 }
 
-static void M395Power(void) {
-	reg[0] = reg[1] = 0;
+static void Power(void) {
+	memset(&m395, 0, sizeof(m395));
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M395Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper395_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M395CW;
-	MMC3_pwrap = M395PW;
-	info->Power = M395Power;
-	info->Reset = M395Reset;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

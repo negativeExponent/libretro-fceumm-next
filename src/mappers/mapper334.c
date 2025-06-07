@@ -23,51 +23,53 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg[2];
+} m334;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
-	{ &dipsw, 1, "DPSW" },
+	{ m334.reg, 2, "REGS" },
 	{ 0 }
 };
 
-static void M334PW(uint16 A, uint16 V) {
-	setprg32(0x8000, reg >> 1);
+static void SetPRG(uint16 A, uint16 V) {
+	setprg32(0x8000, m334.reg[0] >> 1);
 }
 
-static DECLFW(M334Write) {
-	if (!(A & 0x01) && MMC3_WramIsWritable()) {
-		reg = V;
+static DECLFW(WriteReg) {
+	if (MMC3_WramIsWritable()) {
+		m334.reg[A & 0x01] = V;
 		MMC3_SyncPRG();
 	}
 }
 
-static DECLFR(M334Read) {
+static DECLFR(ReadDIP) {
 	if (A & 0x02) {
 		return ((cpu.openbus & 0xFE) | (dipsw & 0x01));
 	}
 	return cpu.openbus;
 }
 
-static void M334Reset(void) {
+static void Reset(void) {
 	dipsw++;
-	reg = 0;
+	m334.reg[0] = 0;
 	MMC3_Reset();
 }
 
-static void M334Power(void) {
+static void Power(void) {
 	dipsw = 0;
-	reg = 0;
+	m334.reg[0] = 0;
 	MMC3_Power();
-	SetReadHandler(0x6000, 0x7FFF, M334Read);
-	SetWriteHandler(0x6000, 0x7FFF, M334Write);
+	SetReadHandler(0x6000, 0x7FFF, ReadDIP);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper334_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M334PW;
-	info->Power = M334Power;
-	info->Reset = M334Reset;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

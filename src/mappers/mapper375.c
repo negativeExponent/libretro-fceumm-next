@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,33 +33,33 @@ static void Sync(void) {
 	setprg16(0x8000, ((prg & ~cpuA14) & ~(0x07 * unrom_like)) | (unrom_like * latch.data));
 	setprg16(0xC000, ((prg | cpuA14) & ~(0x07 * !nrom * !unrom)) | (0x07 * !nrom * unrom));
 
-	setchr8(0);
-	setmirror(((latch.addr >> 1) & 1) ^ 1);
 	if ((latch.addr & 0x80) == 0x80) {
 		/* CHR-RAM write protect hack, needed for some multicarts */
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
 	} else {
 		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
 	}
+
+	setchr8(0);
+	setmirror(((latch.addr >> 1) & 1) ^ 1);
 }
 
-static DECLFW(M375Write) {
+static DECLFW(WriteLatch) {
 	if (latch.addr & 0x800) {
 		latch.data = V;
+		Sync();
 	} else {
-		latch.addr = A;
-		latch.data = V;
+		Latch_Write(A, V);
 	}
-	Sync();
 }
 
-static void M375Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M375Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper375_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, TRUE, FALSE);
-	info->Power = M375Power;
+	info->Power = Power;
 	info->Reset = Latch_RegReset;
 }

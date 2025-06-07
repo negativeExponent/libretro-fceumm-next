@@ -36,7 +36,7 @@ static void Sync(void) {
 }
 
 static DECLFR(Read) {
-	if (latch.addr & 0x120) {
+	if (latch.addr & 0x20) {
 		return CartBR(A | (dipsw & 0x0F));
 	}
 	return CartBR(A);

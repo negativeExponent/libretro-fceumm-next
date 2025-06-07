@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,60 +20,46 @@
  */
 
 #include "mapinc.h"
+#include "latch.h"
 
-static uint8 mode;
-static uint32 lastnt;
+static struct {
+	uint8 lastnt;
+} m514;
 
 static SFORMAT StateRegs[] = {
-	{ &mode, 1, "MODE" },
-	{ &lastnt, 4, "LSNT" },
+	{ &m514.lastnt, 1, "LSNT" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
-	setprg32(0x8000, mode & 0x3F);
-	setchr4(0x0000, lastnt);
+	setprg32(0x8000, latch.data);
+	setchr4(0x0000, m514.lastnt);
 	setchr4(0x1000, 1);
-	setmirror(((mode >> 6) & 0x01) ^ 0x01);
+	setmirror(((latch.data >> 6) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M514Write8) {
-	if ((A & 0xFFF) == 0) {
-		mode = V;
-		Sync();
-	}
-}
-
-static void M514PPUHook(uint32 A) {
+static void PPUIRQHook(uint32 A) {
 	if ((A & 0x3000) == 0x2000) {
-		uint32 mask = (mode & 0x40) ? 0x02 : 0x01;
+		uint32 mask = (latch.data & 0x40) ? 0x02 : 0x01;
 		uint32 bank = A >> 10;
-		if ((mode & 0x80) && (bank & mask)) {
+		if ((latch.data & 0x80) && (bank & mask)) {
 			setchr4(0, 1);
-			lastnt = 1;
+			m514.lastnt = 1;
 		} else {
-			lastnt = 0;
+			m514.lastnt = 0;
 			setchr4(0, 0);
 		}
 	}
 }
 
-static void M514Reset(void) {
-	lastnt = 0;
-	mode = 0;
-	Sync();
+static void Reset(void) {
+	Latch_RegReset();
 }
 
-static void M514Power(void) {
-	lastnt = 0;
-	mode = 0;
-	Sync();
-	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0x8FFF, M514Write8);
-}
-
-static void M514Close(void) {
+static void Power(void) {
+	m514.lastnt = 0;
+	Latch_Power();
 }
 
 static void StateRestore(int version) {
@@ -81,10 +67,10 @@ static void StateRestore(int version) {
 }
 
 void Mapper514_Init(CartInfo *info) {
-	info->Power = M514Power;
-	info->Reset = M514Reset;
-	info->Close = M514Close;
-	PPU_hook = M514PPUHook;
+	Latch_Init(info, Sync, NULL, TRUE, FALSE);
+	info->Power = Power;
+	info->Reset = Reset;
+	PPU_hook = PPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

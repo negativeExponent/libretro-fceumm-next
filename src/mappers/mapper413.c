@@ -1,8 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
- *  Copyright (C) 2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,125 +20,141 @@
 
 #include "mapinc.h"
 
-static uint8 reg[4];
-static uint8 IRQCount;
-static uint8 IRQReload;
-static uint8 IRQa;
-static uint8 serialControl;
-static uint32 serialAddress;
+static struct {
+	uint8 reg[4];
+	uint8 IRQCount;
+	uint8 IRQReload;
+	uint8 IRQa;
+	uint8 serialControl;
+	uint32 serialAddress;
+} m413;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
-	{ &IRQCount, 1, "IRQC" },
-	{ &IRQReload, 1, "IRQR" },
-	{ &IRQa, 1, "IRQA" },
-	{ &serialAddress, 4, "ADDR" },
-	{ &serialControl, 1, "CTRL" },
+	{ m413.reg, 4, "REGS" },
+	{ &m413.IRQCount, 1, "IRQC" },
+	{ &m413.IRQReload, 1, "IRQR" },
+	{ &m413.IRQa, 1, "IRQA" },
+	{ &m413.serialAddress, 4, "ADDR" },
+	{ &m413.serialControl, 1, "CTRL" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg4(0x5000, 0x01);
-	setprg8(0x6000, reg[0]);
-
-	setprg8(0x8000, reg[1]);
-	setprg8(0xA000, reg[2]);
+static void SyncPRG(void) {
+	setprg8(0x8000, m413.reg[1]);
+	setprg8(0xA000, m413.reg[2]);
 	setprg4(0xD000, 0x07);
 	setprg8(0xE000, 0x04);
+}
 
-	setchr4(0x0000, reg[3]);
+static void SyncCHR(void) {
+	setchr4(0x0000, m413.reg[3]);
 	setchr4(0x1000, ~0x02);
+}
+
+static void SyncWRAM(void) {
+	setprg4(0x5000, 0x01);
+	setprg8(0x6000, m413.reg[0]);
 }
 
 static uint64 lreset = 0;
 
-static DECLFR(M413ReadPCM) {
-	uint8 ret = ROM.misc.data[serialAddress & (ROM.misc.size - 1)];
+static DECLFR(ReadPCM) {
+	uint8 ret = ROM.misc.data[m413.serialAddress & (ROM.misc.size - 1)];
 	uint64 ts = timestampbase + timestamp;
 
 	if ((ts >= lreset) && (ts < (lreset + 6))) {
 		return ret;
 	}
-	if (serialControl & 0x02) {
-		serialAddress++;
+	if (m413.serialControl & 0x02) {
+		m413.serialAddress++;
 	}
 	lreset = ts;
 	return ret;
 }
 
-static DECLFW(M413Write) {
+static DECLFW(WriteIRQ) {
 	switch (A & 0xF000) {
 	case 0x8000:
-		IRQReload = V;
+		m413.IRQReload = V;
 		break;
 	case 0x9000:
-		IRQCount = 0;
+		m413.IRQCount = 0;
 		break;
 	case 0xA000:
 	case 0xB000:
-		IRQa = (A & 0x1000) != 0;
-		if (!IRQa) {
+		m413.IRQa = (A & 0x1000) != 0;
+		if (!m413.IRQa) {
 			X6502_IRQEnd(FCEU_IQEXT);
 		}
 		break;
-	case 0xC000:
-		serialAddress = (serialAddress << 1) | (V >> 7);
+	}
+}
+
+static DECLFW(WriteSerialAddress) {
+	m413.serialAddress = (m413.serialAddress << 1) | (V >> 7);
+}
+
+static DECLFW(WriteSerialControl) {
+	m413.serialControl = V;
+}
+
+static DECLFW(WriteReg) {
+	uint8 index = V >> 6;
+	m413.reg[index] = V;
+	switch (index) {
+	case 0:
+		SyncWRAM();
 		break;
-	case 0xD000:
-		serialControl = V;
+	case 1:
+	case 2:
+		SyncPRG();
 		break;
-	case 0xE000:
-	case 0xF000:
-		reg[V >> 6] = V & 0x3F;
-		Sync();
+	case 3:	
+		SyncCHR();
 		break;
 	}
 }
 
-static void M413Power(void) {
-	serialAddress = 0;
-	serialControl = 0;
-
-	IRQCount = 0;
-	IRQReload = 0;
-	IRQa = 0;
-
-	reg[0] = 0;
-	reg[1] = 0;
-	reg[2] = 0;
-	reg[3] = 0;
-
-	lreset = 0;
-
-	Sync();
-
-	SetReadHandler(0x4800, 0x4FFF, M413ReadPCM);
-	SetReadHandler(0xC000, 0xCFFF, M413ReadPCM);
-	SetReadHandler(0x5000, 0x7FFF, CartBR);
-	SetReadHandler(0x8000, 0xBFFF, CartBR);
-	SetReadHandler(0xD000, 0xFFFF, CartBR);
-
-	SetWriteHandler(0x8000, 0xFFFF, M413Write);
-}
-
-static void M413IRQHook(void) {
-	if (IRQCount == 0) {
-		IRQCount = IRQReload;
+static void HBIRQHook(void) {
+	if (m413.IRQCount == 0) {
+		m413.IRQCount = m413.IRQReload;
 	} else {
-		IRQCount--;
+		m413.IRQCount--;
 	}
-	if ((IRQCount == 0) && IRQa) {
+	if ((m413.IRQCount == 0) && m413.IRQa) {
 		X6502_IRQBegin(FCEU_IQEXT);
 	}
 }
 
+static void Power(void) {
+	memset(&m413, 0, sizeof(m413));
+	lreset = 0;
+
+	SyncPRG();
+	SyncCHR();
+	SyncWRAM();
+	
+	SetReadHandler(0x5000, 0xBFFF, CartBR);
+	SetReadHandler(0xD000, 0xFFFF, CartBR);
+
+	SetReadHandler(0x4800, 0x4FFF, ReadPCM);
+	SetReadHandler(0xC000, 0xCFFF, ReadPCM);
+
+	SetWriteHandler(0x8000, 0xBFFF, WriteIRQ);
+	SetWriteHandler(0xC000, 0xCFFF, WriteSerialAddress);
+	SetWriteHandler(0xD000, 0xDFFF, WriteSerialControl);
+	SetWriteHandler(0xE000, 0xFFFF, WriteReg);
+}
+
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncWRAM();
 }
 
 void Mapper413_Init(CartInfo *info) {
-	info->Power = M413Power;
-	GameHBIRQHook = M413IRQHook;
+	info->Power = Power;
+	GameHBIRQHook = HBIRQHook;
 	GameStateRestore = StateRestore;
-	AddExState(&StateRegs, ~0, 0, 0);
+	AddExState(StateRegs, ~0, 0, 0);
 }

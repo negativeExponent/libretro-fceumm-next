@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,82 +16,88 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * NES 2.0 - Mapper 401 (reference from NewRisingSun)
+ */
+
+/*
+ * NES 2.0 Mapper 401 denotes the KC885 multicart circuit board, used for the Super 19-in-1 (VIP19) multicart. It is basically mapper 45 with the higher address lines connected weirdly.
+ * 
+ * PRG A13-A17: from $6000 #1 bits 0-4, same as mapper 45
+ * PRG A18: either from $6000 #2 bit 5 or from $6000 #1 bit 6, depending on solder pad setting
+ * PRG A19: either from $6000 #2 bit 6 or from $6000 #1 bit 5, depending on solder pad setting
+ * PRG /CE: $6000 #1 bit 7, if solder pad connected
+ * The menu code tries the two ways of selecting PRG A18 and A19 and whether $6000 #1 bit 7 disables PRG-ROM, and selects one of eight different menus based on what it finds. Other multicarts using mapper 45's chipset do the same thing; KC885 is unique in that the standard mapper 45 way of connecting PRG-ROM will not work at all.
+ * 
  * Super 19-in-1 (VIP19) (crc 0x2F497313)
- *
  */
 
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[4];
-static uint8 cmd;
+static struct {
+	uint8 reg[4];
+	uint8 cmd;
+} m401;
+
 static uint8 dipsw = 0;
 
-static void M401CW(uint16 A, uint16 V) {
-	uint32 mask = (0xFF >> (~reg[2] & 0xF));
-	uint32 bank = (reg[0] | ((reg[2] << 4) & 0xF00));
+static SFORMAT StateRegs[] = {
+	{ m401.reg, 4, "EXPR" },
+	{ &m401.cmd, 1, "CMD0" },
+	{ 0 }
+};
 
-	setchr1(A, bank | (V & mask));
-}
+static void SetPRG(uint16 A, uint16 V) {
+	if ((dipsw & 0x01)  && (m401.reg[1] & 0x80)) {
+		unsetcpu8(A);
+	} else {
+		uint16 mask = (~m401.reg[3] & 0x1F);
+		uint16 base = (m401.reg[1] & 0x1F) | (m401.reg[2] & 0x80) |
+		    ((dipsw & 0x02) ? (m401.reg[2] & 0x20) : ((m401.reg[1] >> 1) & 0x20)) |
+		    ((dipsw & 0x04) ? (m401.reg[2] & 0x40) : ((m401.reg[1] << 1) & 0x40));
 
-static void M401PW(uint16 A, uint16 V) {
-	uint32 mask = (~reg[3] & 0x1F);
-	uint32 bank = (reg[1] & 0x1F) | (reg[2] & 0x80) |
-	    ((dipsw & 2) ? (reg[2] & 0x20) : ((reg[1] >> 1) & 0x20)) |
-	    ((dipsw & 4) ? (reg[2] & 0x40) : ((reg[1] << 1) & 0x40));
-	setprg8(A, bank | (V & mask));
-}
-
-static DECLFR(M401Read) {
-	if ((dipsw & 0x01) && (reg[1] & 0x80)) {
-		return cpu.openbus;
+		setprg8(A, base | (V & mask));
 	}
-	return CartBR(A);
 }
 
-static DECLFW(M401Write) {
-	/* FCEU_printf("Wr A:%04x V:%02x index:%d\n", A, V, cmd); */
-	if (!(reg[3] & 0x40)) {
-		reg[cmd] = V;
-		cmd = (cmd + 1) & 0x03;
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = (0xFF >> (~m401.reg[2] & 0xF));
+	uint16 base = (m401.reg[0] | ((m401.reg[2] << 4) & 0xF00));
+
+	setchr1(A, base | (V & mask));
+}
+
+static DECLFW(WriteReg) {
+	/* FCEU_printf("Wr A:%04x V:%02x index:%d\n", A, V, m401.cmd); */
+	if (!(m401.reg[3] & 0x40)) {
+		m401.reg[m401.cmd] = V;
+		m401.cmd = (m401.cmd + 1) & 0x03;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 	CartBW(A, V);
 }
 
-static void M401Reset(void) {
-	dipsw = (dipsw + 1) & 7;
+static void Reset(void) {
+	memset(&m401, 0, sizeof(m401));
+	m401.reg[2] = 0x0F;
+	dipsw = (dipsw + 1) & 0x07;
 	FCEU_printf("dipsw = %d\n", dipsw);
-	reg[0] = 0x00;
-	reg[1] = 0x00;
-	reg[2] = 0x0F;
-	reg[3] = 0x00;
-	cmd = 0x00;
 	MMC3_Reset();
 }
 
-static void M401Power(void) {
+static void Power(void) {
+	memset(&m401, 0, sizeof(m401));
+	m401.reg[2] = 0x0F;
 	dipsw = 7;
-	reg[0] = 0x00;
-	reg[1] = 0x00;
-	reg[2] = 0x0F;
-	reg[3] = 0x00;
-	cmd = 0x00;
 	MMC3_Power();
-	SetReadHandler(0x8000, 0xFFFF, M401Read);
-	SetWriteHandler(0x6000, 0x7FFF, M401Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper401_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_cwrap = M401CW;
-	MMC3_pwrap = M401PW;
-	info->Power = M401Power;
-	info->Reset = M401Reset;
-	AddExState(reg, 4, 0, "EXPR");
-	AddExState(&cmd, 1, 0, "CMD0");
-	AddExState(&dipsw, 1, 0, "DPSW");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

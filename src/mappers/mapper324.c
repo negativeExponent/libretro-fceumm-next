@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,27 +28,29 @@
 #include "latch.h"
 
 static void Sync(void) {
+	uint8 bank = ((latch.data >> 1) & ~0x07) | (latch.data & 0x07);
+
+	setprg16(0x8000, bank);
+	setprg16(0xC000, bank | 0x07);
 	setchr8(0);
-	setprg16(0x8000, ((latch.data & 0x70) >> 1) | (latch.data & 0x07));
-	setprg16(0xC000, ((latch.data & 0x70) >> 1) | 0x07);
 }
 
-static DECLFW(M324Write) {
-	if ((V & 0x80) && !(latch.data & 0x80) && !(latch.data & 0x08)) {
-		Latch_Write(A, V);
-	} else {
+static DECLFW(WriteLatch) {
+	if ((latch.data & 0x08) || (latch.data & 0x80) || !(V & 0x80)) {
 		latch.data = (latch.data & ~0x07) | (V & 0x07);
 		Sync();
+	} else {
+		Latch_Write(A, V);
 	}
 }
 
-static void M324Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M324Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper324_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
-	info->Power = M324Power;
+	info->Power = Power;
 	info->Reset = Latch_RegReset;
 }

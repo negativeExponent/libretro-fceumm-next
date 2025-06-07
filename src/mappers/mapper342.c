@@ -1851,7 +1851,7 @@ static DECLFR(M342Read) {
 	return cpu.openbus; /* Open bus */
 }
 
-static void M342HBHook(void) {
+static void HBIRQHook(void) {
 	/* for MMC3 and MMC3-based */
 	if (mmc3_irq_reload || !mmc3_irq_counter) {
 		mmc3_irq_counter = mmc3_irq_latch;
@@ -1881,7 +1881,7 @@ static void M342HBHook(void) {
 	}
 }
 
-static void M342CPUHook(int a) {
+static void CPUIRQHook(int a) {
 	while (a--) {
 		/* Mapper #23 - VRC4 */
 		if (vrc4_irq_control & 0x02) {
@@ -1994,7 +1994,7 @@ static void M342CPUHook(int a) {
 	}
 }
 
-static void M342PPUHook(uint32 A) {
+static void PPUHook(uint32 A) {
 	/* For TxROM */
 	if ((mapper == 20) && (flags & 0x01)) {
 		setmirror(MI_0 + (TKSMIR[(A & 0x1FFF) >> 10] >> 7));
@@ -2021,7 +2021,7 @@ static void M342PPUHook(uint32 A) {
 	}
 }
 
-static void M342Reset(void) {
+static void Reset(void) {
 	sram_enabled = 0;
 	sram_page = 0;
 	can_write_chr = 0;
@@ -2099,15 +2099,15 @@ static void M342Reset(void) {
 	Sync();
 }
 
-static void M342Power(void) {
+static void Power(void) {
 	FCEU_CheatAddRAM(32, 0x6000, WRAM);
 	SetReadHandler(0x4020, 0x7FFF, M342Read);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x4020, 0xFFFF, M342Write);
-	M342Reset();
+	Reset();
 }
 
-static void M342Close(void) {
+static void Close(void) {
 	if (SAVE_FLASH) {
 		FCEU_gfree(SAVE_FLASH);
 	}
@@ -2129,17 +2129,17 @@ static void StateRestore(int version) {
 void Mapper342_Init(CartInfo *info) {
 	int i;
 
-	info->Power = M342Power;
-	info->Reset = M342Reset;
-	info->Close = M342Close;
+	info->Power = Power;
+	info->Reset = Reset;
+	info->Close = Close;
 	GameStateRestore = StateRestore;
-	GameHBIRQHook = M342HBHook;
-	MapIRQHook = M342CPUHook;
-	PPU_hook = M342PPUHook;
+	GameHBIRQHook = HBIRQHook;
+	MapIRQHook = CPUIRQHook;
+	PPU_hook = PPUHook;
 
 	CHR_SIZE = info->CHRRamSize ? info->CHRRamSize : (512 * 1024) /* non-iNES2 or UNIF */;
-
 	WRAMSIZE = (info->PRGRamSize + info->PRGRamSaveSize) ? (info->PRGRamSize + info->PRGRamSaveSize) : (32 * 1024);
+
 	if (WRAMSIZE) {
 		WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
 		SetupCartPRGMapping(WRAM_CHIP, WRAM, WRAMSIZE, 1);

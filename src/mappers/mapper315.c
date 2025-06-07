@@ -28,54 +28,62 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m315;
 
-static void M315CCW(uint16 A, uint16 V) {
-	uint16 mask = 0xFF;
-	uint16 base = reg << 8;
+static SFORMAT StateRegs[] = {
+	{ &m315.reg, 1, "EXPR"},
+	{ 0 }
+};
 
-	V = ((reg << 6) & 0x80) | ((reg << 3) & 0x40) | (V & 0xFF);
-	setchr1(A, (base & ~mask) | (V & mask));
-}
-
-static void M315CPW(uint16 A, uint16 V) {
+static void SetPRGBank(uint16 A, uint16 V) {
 	uint16 mask = 0x0F;
-	uint16 base = reg << 3;
+	uint16 base = m315.reg << 3;
 
-	if ((reg & 0x06) == 0x06) { /* GNROM-like */
-		setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & 0xFD) & mask));
-		setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & 0xFD) & mask));
-		setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] | 0x02) & mask));
-		setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] | 0x02) & mask));
+	if (m315.reg & 0x08) { /* GNROM-like */
+		if (!(A & 0x4000)) {
+			setprg8(A, (base & ~mask) | ((V & mask) & 0xFD));
+			A += 0x4000;
+			setprg8(A, (base & ~mask) | ((V & mask) | 0x02));
+		}
 	} else {
 		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
-static DECLFW(M315CWrite) {
+static void SetCHRBank(uint16 A, uint16 V) {
+	uint16 mask = 0xFF;
+	uint16 base = m315.reg << 8;
+
+	V = ((m315.reg << 6) & 0x80) | ((m315.reg << 3) & 0x40) | (V & 0xFF);
+	setchr1(A, (base & ~mask) | (V & mask));
+}
+
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		reg = V;
+		m315.reg = A & 0xFF;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M315CReset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m315, 0, sizeof(m315));
 	MMC3_Reset();
 }
 
-static void M315CPower(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m315, 0, sizeof(m315));
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M315CWrite);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper315_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M315CPW;
-	MMC3_cwrap = M315CCW;
-	info->Power = M315CPower;
-	info->Reset = M315CReset;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_pwrap = SetPRGBank;
+	MMC3_cwrap = SetCHRBank;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

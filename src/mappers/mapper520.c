@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,51 +25,46 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 PPUCHRBus = 0;
+static struct {
+	uint8 ppuchrbus;
+} m520;
 
 static SFORMAT StateRegs[] = {
-	{ &PPUCHRBus, 1, "PPUC" },
+	{ &m520.ppuchrbus, 1, "PPUC" },
 	{ 0 }
 };
 
-static void M520PW(uint16 A, uint16 V) {
-	setprg8(A, ((vrc24.chr[PPUCHRBus] << 2) & 0x20) | (V & 0x1F));
+static void SetPRG(uint16 A, uint16 V) {
+	setprg8(A, ((VRC24_GetCHRBank(m520.ppuchrbus) << 2) & 0x20) | (V & 0x1F));
 }
 
-static void M520CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, V & 0x07);
 }
 
-static void M520PPUHook(uint32 A) {
+static void PPUIRQHook(uint32 A) {
 	uint8 bank = (A & 0x1FFF) >> 10;
-	if ((PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
-		PPUCHRBus = bank;
+	if ((m520.ppuchrbus != bank) && ((A & 0x3000) != 0x2000)) {
+		m520.ppuchrbus = bank;
 		VRC24_SyncPRG();
 	}
 }
 
-static DECLFW(M520WriteCHR) {
+static DECLFW(WriteVRC4CHR) {
 	VRC24_Write(A, V);
-	switch (A & 0xF000) {
-	case 0xB000:
-	case 0xC000:
-	case 0xD000:
-	case 0xE000:
-		VRC24_SyncPRG();
-		break;
-	}
+	VRC24_SyncPRG();
 }
 
-static void M520Power(void) {
+static void Power(void) {
 	VRC24_Power();
-	SetWriteHandler(0xB000, 0xEFFF, M520WriteCHR);
+	SetWriteHandler(0xB000, 0xEFFF, WriteVRC4CHR);
 }
 
 void Mapper520_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 0, 1);
-	info->Power = M520Power;
-	PPU_hook = M520PPUHook;
-	VRC24_pwrap = M520PW;
-	VRC24_cwrap = M520CW;
+	info->Power = Power;
+	PPU_hook = PPUIRQHook;
+	VRC24_pwrap = SetPRG;
+	VRC24_cwrap = SetCHR;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -29,56 +29,60 @@
 #include "mapinc.h"
 #include "fdssound.h"
 
-static uint8 reg, mirr;
+static struct {
+	uint8 reg[2];
+} m309;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REG" },
-	{ &mirr, 1, "MIRR" },
+	{ m309.reg, 2, "REGS" },
 	{ 0 }
 };
 
-static void Sync(void) {
+static void SyncPRG(void) {
 	setprg8r(0x10, 0x6000, 0);
-	setprg8(0x8000, reg);
-	setprg8(0xA000, ~2);
-	setprg8(0xC000, ~1);
-	setprg8(0xE000, ~0);
+
+	setprg8(0x8000, m309.reg[0]);
+	setprg8(0xA000, 0xFD);
+	setprg8(0xC000, 0xFE);
+	setprg8(0xE000, 0xFF);
+}
+
+static void SyncCHR(void) {
 	setchr8(0);
-	setmirror(((mirr >> 3) & 0x01) ^ 0x01);
+	setmirror(((m309.reg[1] >> 3) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M309Write) {
-	switch (A & 0xF000) {
-	case 0x8000:
-		reg = V;
-		Sync();
-		break;
-	case 0xF000:
-		mirr = V;
-		Sync();
-		break;
-	}
+static DECLFW(WritePRG) {
+	m309.reg[0] = V;
+	SyncPRG();
 }
 
-static void M309Power(void) {
+static DECLFW(WriteMirror) {
+	m309.reg[1] = V;
+	SyncCHR();
+}
+
+static void Power(void) {
 	FDSSound_Power();
-	Sync();
-	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SyncPRG();
+	SyncCHR();
+
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0x8FFF, WritePRG);
+	SetWriteHandler(0xF000, 0xFFFF, WriteMirror);
+
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetWriteHandler(0x8000, 0xFFFF, M309Write);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M309Close(void) {
-}
-
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
 }
 
 void Mapper309_Init(CartInfo *info) {
-	info->Power = M309Power;
-	info->Close = M309Close;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

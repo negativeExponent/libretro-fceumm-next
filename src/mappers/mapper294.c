@@ -23,41 +23,45 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m294;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m294.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg16(0x8000, (reg << 3) | (latch.data & 0x07));
-	setprg16(0xC000, (reg << 3) | 0x07);
+	uint16 base = m294.reg << 3;
+
+	setprg16(0x8000, base | (latch.data & 0x07));
+	setprg16(0xC000, base | 0x07);
 	setchr8(0);
-	setmirror(((reg >> 4) & 0x01) ^ 0x01);
+	setmirror(((m294.reg >> 4) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M294Write) {
+static DECLFW(WriteReg) {
 	if (A & 0x100) {
-		reg = V;
+		m294.reg = V;
 		Sync();
 	}
 }
 
-static void M294Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m294.reg = 0;
 	Latch_RegReset();
 }
 
-static void M294Power(void) {
-	reg = 0;
+static void Power(void) {
+	m294.reg = 0;
 	Latch_Power();
-	SetWriteHandler(0x4100, 0x5FFF, M294Write);
+	SetWriteHandler(0x4100, 0x5FFF, WriteReg);
 }
 
 void Mapper294_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M294Power;
-	info->Reset = M294Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,38 +24,43 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m516;
 
-static void M516CW(uint16 A, uint16 V) {
-	/* FCEU_printf("CHR: A:%04x V:%02x R0:%02x\n", A, V, reg); */
-	setchr1(A, ((reg << 5) & 0x180) | (V & 0x7F));
+static SFORMAT StateRegs[] = {
+	{ &m516.reg, 1, "EXPR" },
+	{ 0 }
+};
+
+static void SetPRG(uint16 A, uint16 V) {
+	/* FCEU_printf("PRG: A:%04x V:%02x R0:%02x\n", A, V, m516.reg); */
+	setprg8(A, ((m516.reg << 4) & 0x30) | (V & 0x0F));
 }
 
-static void M516PW(uint16 A, uint16 V) {
-	/* FCEU_printf("PRG: A:%04x V:%02x R0:%02x\n", A, V, reg); */
-	setprg8(A, ((reg << 4) & 0x30) | (V & 0x0F));
+static void SetCHR(uint16 A, uint16 V) {
+	/* FCEU_printf("CHR: A:%04x V:%02x R0:%02x\n", A, V, m516.reg); */
+	setchr1(A, ((m516.reg << 5) & 0x180) | (V & 0x7F));
 }
 
-static DECLFW(M516Write) {
-	/* FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, reg); */
+static DECLFW(WriteMMC3) {
+	/* FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, m516.reg); */
 	if (A & 0x10) {
-		reg = A & 0x0F;
-		MMC3_SyncPRG();
-		MMC3_SyncCHR();
+		m516.reg = A & 0x0F;
 	}
 	MMC3_Write(A, V);
 }
 
-static void M516Power(void) {
-	reg = 0;
+static void Power(void) {
+	m516.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M516Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteMMC3);
 }
 
 void Mapper516_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M516CW;
-	MMC3_pwrap = M516PW;
-	info->Power = M516Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

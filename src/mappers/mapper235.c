@@ -28,12 +28,11 @@ static struct {
 } m235;
 
 static SFORMAT StateRegs[] = {
-	{ &m235.reg, 1, "UROM" },
+	{ &m235.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	FCEU_printf("%04x %02x reg = %02x\n", latch.addr, latch.data, m235.reg);
 	if (m235.reg) { /* Contra */
 		setprg16(0x8000, (PRG_BANK_COUNT(16) & 0xC0) | (latch.data & 0x07));
 		setprg16(0xC000, (PRG_BANK_COUNT(16) & 0xC0) | 0x07);

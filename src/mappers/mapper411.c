@@ -32,52 +32,40 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m411;
+
 static uint8 dipsw;
 
-static void M411CW(uint16 A, uint16 V) {
+static SFORMAT StateRegs[] = {
+	{ m411.reg, 4, "EXPR" },
+	{ 0 }
+};
+
+
+static void SetPRG(uint16 A, uint16 V) {
 	uint16 base, mask;
 
 	switch (iNESCart.submapper) {
 	default:
-		base = ((reg[1] << 5) & 0x080) | ((reg[0] << 4) & 0x100) | ((reg[1] << 2) & 0x200);
-		mask = (reg[1] & 0x02) ? 0xFF : 0x7F;
+		base = ((m411.reg[1] << 1) & 0x10) | ((m411.reg[1] >> 1) & 0x60);
+		mask = (m411.reg[1] & 0x02) ? 0x1F : 0x0F;
 		break;
 	case 1:
-		base = ((reg[1] << 5) & 0x080) | ((reg[1] << 2) & 0x100);
-		mask = (reg[1] & 0x02) ? 0xFF : 0x7F;
+		base = ((m411.reg[1] << 1) & 0x10) | ((m411.reg[1] >> 1) & 0x60);
+		mask = (m411.reg[1] & 0x02) ? 0x1F : 0x0F;
 		break;
 	case 2:
-		base = ((reg[1] << 5) & 0x080) | ((reg[0] << 4) & 0x100) | ((reg[1] << 2) & 0x200);
-		mask = (reg[1] & 0x02) ? 0xFF : 0x7F;
-		break;
-	}
-
-	setchr1(A, (base & ~mask) | (V & mask));
-}
-
-static void M411PW(uint16 A, uint16 V) {
-	uint16 base, mask;
-
-	switch (iNESCart.submapper) {
-	default:
-		base = ((reg[1] << 1) & 0x10) | ((reg[1] >> 1) & 0x60);
-		mask = (reg[1] & 0x02) ? 0x1F : 0x0F;
-		break;
-	case 1:
-		base = ((reg[1] << 1) & 0x10) | ((reg[1] >> 1) & 0x60);
-		mask = (reg[1] & 0x02) ? 0x1F : 0x0F;
-		break;
-	case 2:
-		base = ((reg[1] << 1) & 0x10) | ((reg[1] >> 1) & 0x60);
-		mask = (reg[1] & 0x01) ? 0x1F : 0x0F;
+		base = ((m411.reg[1] << 1) & 0x10) | ((m411.reg[1] >> 1) & 0x60);
+		mask = (m411.reg[1] & 0x01) ? 0x1F : 0x0F;
 		break;
 	}
 
 	/* NROM Mode */
-	if ((reg[0] & 0x40) && !(reg[0] & 0x20)) { /* NOTE: $5xx0 bit 5 check required for JY-212 */
-		uint16 bank = (base >> 1) | (reg[0] & 0x05) | ((reg[0] >> 2) & 0x02);
-		if (reg[0] & 0x02) { /* NROM-256 */
+	if ((m411.reg[0] & 0x40) && !(m411.reg[0] & 0x20)) { /* NOTE: $5xx0 bit 5 check required for JY-212 */
+		uint16 bank = (base >> 1) | (m411.reg[0] & 0x05) | ((m411.reg[0] >> 2) & 0x02);
+		if (m411.reg[0] & 0x02) { /* NROM-256 */
 			setprg32(0x8000, bank >> 1);
 		} else { /* NROM-128 */
 			setprg16(0x8000, bank);
@@ -88,38 +76,60 @@ static void M411PW(uint16 A, uint16 V) {
 	}
 }
 
-static DECLFR(M411Read5) {
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 base, mask;
+
+	switch (iNESCart.submapper) {
+	default:
+		base = ((m411.reg[1] << 5) & 0x080) | ((m411.reg[0] << 4) & 0x100) | ((m411.reg[1] << 2) & 0x200);
+		mask = (m411.reg[1] & 0x02) ? 0xFF : 0x7F;
+		break;
+	case 1:
+		base = ((m411.reg[1] << 5) & 0x080) | ((m411.reg[1] << 2) & 0x100);
+		mask = (m411.reg[1] & 0x02) ? 0xFF : 0x7F;
+		break;
+	case 2:
+		base = ((m411.reg[1] << 5) & 0x080) | ((m411.reg[0] << 4) & 0x100) | ((m411.reg[1] << 2) & 0x200);
+		mask = (m411.reg[1] & 0x02) ? 0xFF : 0x7F;
+		break;
+	}
+
+	setchr1(A, (base & ~mask) | (V & mask));
+}
+
+static DECLFR(ReadDIP) {
 	return dipsw;
 }
 
-static DECLFW(M411Write5) {
+static DECLFW(WriteReg) {
 	if ((iNESCart.submapper == 2) || (A & 0x800)) {
-		reg[A & 0x01] = V;
+		m411.reg[A & 0x01] = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M411Reset(void) {
+static void Reset(void) {
+	memset(&m411, 0, sizeof(m411));
+	m411.reg[1] = 0x03;
 	dipsw++;
 	MMC3_Reset();
 }
 
-static void M411Power(void) {
+static void Power(void) {
+	memset(&m411, 0, sizeof(m411));
+	m411.reg[1] = 0x03;
 	dipsw = 0;
-	reg[0] = 0x80;
-	reg[1] = 0x82;
 	MMC3_Power();
-	SetReadHandler(0x5000, 0x5FFF, M411Read5);
-	SetWriteHandler(0x5000, 0x5FFF, M411Write5);
+	SetReadHandler(0x5000, 0x5FFF, ReadDIP);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 }
 
 void Mapper411_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M411PW;
-	MMC3_cwrap = M411CW;
-	info->Power = M411Power;
-	info->Reset = M411Reset;
-	AddExState(reg, 2, 0, "EXPR");
-	AddExState(&dipsw, 1, 0, "DPSW");
+	MMC3_pwrap = SetPRG;
+	MMC3_cwrap = SetCHR;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

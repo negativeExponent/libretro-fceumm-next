@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,20 +33,19 @@ static void Sync(void) {
 	setchr8(0);
 }
 
-static void M549Power(void) {
+static void Power(void) {
 	Latch_Power();
 	FDSSound_Power();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 }
 
-static void M549Reset(void) {
-	Sync();
+static void Reset(void) {
 	FDSSoundRegReset();
 	FDSSound_SC();
 }
 
 void Mapper549_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
-	info->Power = M549Power;
-	info->Reset = M549Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 }

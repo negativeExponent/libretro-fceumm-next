@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,27 +24,32 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 ppuchrbus;
+} m513;
 
-static void M513CW(uint16 A, uint16 V) {
-	setchr1(A, V & 0x3F);
+static SFORMAT StateRegs[] = {
+	{ &m513.ppuchrbus, 1, "PPUC" },
+	{ 0 }
+};
+
+static void SyncPRG(void) {
+	/* FIXME: fetch outer from active chr read bank */
+	setprg8(0x8000, (MMC3_GetPRGBank(0) & 0x3F) | (MMC3_GetCHRBank(m513.ppuchrbus) & 0xC0));
+	setprg8(0xA000, (MMC3_GetPRGBank(1) & 0x3F) | (MMC3_GetCHRBank(m513.ppuchrbus) & 0xC0));
+	setprg8(0xC000, (MMC3_GetPRGBank(2) & 0x3F));
+	setprg8(0xE000, (MMC3_GetPRGBank(3) & 0x3F));
 }
 
-static void M513PW(uint16 A, uint16 V) {
-	if (!(A & 0x4000)) {
-		setprg8(A, (reg & 0xC0) | (V & 0x3F));
-	} else {
-		setprg8(A, (V & 0x3F));
+
+static void PPUIRQHook(uint32 A) {
+	if ((A & 0x3000) != 0x2000) {
+		m513.ppuchrbus = A >> 10;
 	}
 }
 
-static DECLFW(M513Write) {
+static DECLFW(WriteMMC3) {
 	switch (A & 0xE001) {
-	case 0x8000:
-		mmc3.cmd = V;
-		MMC3_SyncPRG();
-		MMC3_SyncCHR();
-		break;
 	case 0x8001:
 		mmc3.reg[mmc3.cmd & 0x07] = V;
 		switch (mmc3.cmd & 0x07) {
@@ -54,7 +59,6 @@ static DECLFW(M513Write) {
 		case 3:
 		case 4:
 		case 5:
-			reg = V;
 			MMC3_SyncPRG();
 			MMC3_SyncCHR();
 			break;
@@ -62,24 +66,25 @@ static DECLFW(M513Write) {
 			MMC3_SyncPRG();
 			break;
 		}
+		break;
 	default:
+		MMC3_Write(A, V);
 		break;
 	}
 }
 
-static void M513Power(void) {
-	reg = 0;
+static void Power(void) {
 	MMC3_Power();
-	SetWriteHandler(0x8000, 0x9FFF, M513Write);
+	SetWriteHandler(0x8000, 0x9FFF, WriteMMC3);
 }
 
 void Mapper513_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M513PW;
-	MMC3_cwrap = M513CW;
+	MMC3_SyncPRG = SyncPRG;
 	mmc3.opts |= 2;
-	info->SaveGame[0] = ROM.chr.data;
+	info->SaveGame[0] = CHRRAM;
 	info->SaveGameLen[0] = info->CHRRamSaveSize;
-	info->Power = M513Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	info->Power = Power;
+	PPU_hook = PPUIRQHook;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

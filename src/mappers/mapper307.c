@@ -26,9 +26,10 @@
 #include "n118.h"
 #include "fdssound.h"
 
-static void M307SyncPRG(void) {
+static void SyncPRG(void) {
 	setprg4r(0x10, 0x6000, 0);
 	setprg4(0x7000, 15);
+
 	setprg8(0x8000, n118.reg[6]);
 	setprg4(0xA000, ~3);
 	setprg4r(0x10, 0xB000, 0x01);
@@ -36,9 +37,14 @@ static void M307SyncPRG(void) {
 	setprg8(0xE000, ~0);
 }
 
-static void M307SyncCHR(void) {
+static void SyncCHR(void) {
 	setchr8(0);
-	setmirrorw(n118.reg[2] & 0x01, n118.reg[4] & 0x01, n118.reg[3] & 0x01, n118.reg[5] & 0x01);
+	setmirrorw(
+		n118.reg[2] & 0x01,
+		n118.reg[4] & 0x01,
+		n118.reg[3] & 0x01,
+		n118.reg[5] & 0x01
+	);
 }
 
 static void M307Power(void) {
@@ -50,6 +56,6 @@ static void M307Power(void) {
 void Mapper307_Init(CartInfo *info) {
 	N118_Init(info, 8, info->battery);
 	info->Power = M307Power;
-	N118_SyncPRG = M307SyncPRG;
-	N118_SyncCHR = M307SyncCHR;
+	N118_SyncPRG = SyncPRG;
+	N118_SyncCHR = SyncCHR;
 }

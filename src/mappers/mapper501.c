@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,45 +19,51 @@
  *
  */
 
+/* NES 2.0 Mapper 501 */
+/* 7-in-1 (YHC001) (Unl) */
+/* UNIF: BMC-Yhc-Axrom-Cart */
+
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m501;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
+	{ m501.reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	setprg4(0x7000, 0);
-	setprg32(0x8000, (reg[0] << 2) + (latch.data & 0x07));
+	setprg32(0x8000, (m501.reg[0] << 2) + (latch.data & 0x07));
 	setchr8(0);
 	setmirror(MI_0 + ((latch.data >> 4) & 0x01));
 }
 
-static DECLFW(M501WriteReg) {
-	if (!(reg[1] & 0x80)) {
-		reg[A & 0x01] = V;
+static DECLFW(WriteReg) {
+	if (!(m501.reg[1] & 0x80)) {
+		m501.reg[A & 0x01] = V;
 		Sync();
 	}
 }
 
-static void M501Power(void) {
-	reg[0] = reg[1] = 0;
+static void Power(void) {
+	memset(&m501, 0, sizeof(m501));
 	Latch_Power();
 	SetReadHandler(0x7000, 0x7FFF, CartBR);
-	SetWriteHandler(0x6000, 0x6FFF, M501WriteReg);
+	SetWriteHandler(0x6000, 0x6FFF, WriteReg);
 }
 
-static void M501Reset(void) {
-	reg[0] = reg[1] = 0;
+static void Reset(void) {
+	memset(&m501, 0, sizeof(m501));
 	Latch_RegReset();
 }
 
 void Mapper501_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M501Power;
-	info->Reset = M501Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

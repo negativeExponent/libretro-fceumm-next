@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,40 +26,42 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 base;
+static struct {
+	uint8 reg;
+} m382;
 
 static SFORMAT StateRegs[] = {
-	{ &base, 1, "BASE" },
+	{ &m382.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (!(base & 0x20)) {
-		base = latch.addr & 0x3F;
+	if (!(m382.reg & 0x20)) {
+		m382.reg = latch.addr & 0x3F;
 	}
-	switch (base & 0x08) {
-	case 8:
-		/* bnrom */
-		setprg32(0x8000, (base << 2) | (latch.data & 0x03));
-		break;
-	default:
-		/* unrom */
-		setprg16(0x8000, (base << 3) | (latch.data & 0x07));
-		setprg16(0xC000, (base << 3) | 0x07);
-		break;
+	if (m382.reg & 0x08) { /* bnrom */
+		setprg32(0x8000, (m382.reg << 2) | (latch.data & 0x03));
+	} else { /* unrom */
+		setprg16(0x8000, (m382.reg << 3) | (latch.data & 0x07));
+		setprg16(0xC000, (m382.reg << 3) | 0x07);
 	}
 	setchr8(0);
-	setmirror(((base >> 4) & 0x01) ^ 0x01);
-	/* FCEU_printf("inB[0]:%02x outB[1]:%02x mode:%02x mirr:%02x lock:%02x\n", latch.data, latch.addr, mode, mirr, lock); */
+	setmirror(((m382.reg >> 4) & 0x01) ^ 0x01);
 }
 
-static void M382Reset(void) {
-	base = 0;
+static void Reset(void) {
+	m382.reg = 0;
 	Latch_RegReset();
+}
+
+static void Power(void) {
+	m382.reg = 0;
+	Latch_Power();
 }
 
 void Mapper382_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
-	info->Reset = M382Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -28,70 +28,68 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m322;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m322.reg, 1, "EXPR" },
 	{ 0 }
 };
 
-static void M322CW(uint16 A, uint16 V) {
-	if (reg & 0x20) {
-		uint16 base = ((reg >> 4) & 0x04) | ((reg >> 3) & 0x03);
+static uint16 GetOuterBank(void) {
+	return ((m322.reg >> 4) & 0x04) | ((m322.reg >> 3) & 0x03);
+}
 
-		if (reg & 0x80) {
-			setchr1(A, (base << 8) | (V & 0xFF));
+static void SetPRGBank(uint16 A, uint16 V) {
+	uint16 base = GetOuterBank() << 4;
+	uint16 mask = (m322.reg & 0x80) ? 0x1F : 0x0F;
+
+	if (!(m322.reg & 0x20)) {
+		uint16 bank = (base >> 1) | (m322.reg & 0x07);
+
+		if (m322.reg & 0x03) {
+			setprg32(0x8000, bank >> 1);
 		} else {
-			setchr1(A, (base << 7) | (V & 0x7F));
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
 		}
 	} else {
-		setchr1(A, (V & 0x7F));
+		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
-static void M322PW(uint16 A, uint16 V) {
-	uint16 base = ((reg >> 4) & 0x04) | ((reg >> 3) & 0x03);
+static void SetCHRBank(uint16 A, uint16 V) {
+	uint16 base = GetOuterBank() << 7;
+	uint16 mask = (m322.reg & 0x80) ? 0xFF : 0x7F;
 
-	if (reg & 0x20) {
-		if (reg & 0x80) {
-			setprg8(A, (base << 5) | (V & 0x1F));
-		} else {
-			setprg8(A, (base << 4) | (V & 0x0F));
-		}
-	} else {
-		if (reg & 0x03) {
-			setprg32(0x8000, (base << 3) | ((reg >> 1) & 0x03));
-		} else {
-			setprg16(0x8000, (base << 3) | (reg & 0x07));
-			setprg16(0xC000, (base << 3) | (reg & 0x07));
-		}
-	}
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M322Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		reg = A & 0xFF;
+		m322.reg = A & 0xFF;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M322Power(void) {
-	reg = 0;
+static void Power(void) {
+	m322.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M322Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
-static void M322Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m322.reg = 0;
 	MMC3_Reset();
 }
 
 void Mapper322_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M322PW;
-	MMC3_cwrap = M322CW;
-	info->Power = M322Power;
-	info->Reset = M322Reset;
+	MMC3_pwrap = SetPRGBank;
+	MMC3_cwrap = SetCHRBank;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

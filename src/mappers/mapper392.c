@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,50 +31,57 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m392;
 
-static void M392PW(uint16 A, uint16 V) {
+static SFORMAT StateRegs[] = {
+	{ &m392.reg, 1, "EXPR" },
+	{ 0 }
+};
+
+static void SetPRG(uint16 A, uint16 V) {
 	uint8 mask = 0x0F;
-	uint8 base = reg << 4;
+	uint8 base = m392.reg << 4;
 
-	if (reg & 0x10) {
+	if (m392.reg & 0x10) {
 		setprg8(A, (base & ~mask) | (V & mask));
 	} else {
 		setprg8(A, 0x20);
 	}
 }
 
-static void M392CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	uint16 mask = 0x7F;
-	uint16 base = reg << 7;
+	uint16 base = m392.reg << 7;
 
-	if (reg & 0x10) {
+	if (m392.reg & 0x10) {
 		setchr1(A, (base & ~mask) | (V & mask));
 	} else {
 		setchr8r(0x10, 0);
 	}
 }
 
-static DECLFW(M392Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
 		CartBW(A, V);
-		if (!(reg & 0x10)) {
-			reg = V;
+		if (!(m392.reg & 0x10)) {
+			m392.reg = V;
 			MMC3_SyncPRG();
 			MMC3_SyncCHR();
 		}
 	}
 }
 
-static void M392Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m392, 0, sizeof(m392));
 	MMC3_Reset();
 }
 
-static void M392Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m392, 0, sizeof(m392));
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M392Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper392_Init(CartInfo *info) {
@@ -87,11 +94,11 @@ void Mapper392_Init(CartInfo *info) {
 	}
 
 	MMC3_Init(info, MMC3B, ws ? ws : 8, info->battery);
-	MMC3_cwrap = M392CW;
-	MMC3_pwrap = M392PW;
-	info->Power = M392Power;
-	info->Reset = M392Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8 * 1024;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

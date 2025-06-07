@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,41 +22,45 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m364;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m364.reg, 1, "EXPR" },
 	{ 0 }
 };
 
-static void M364CW(uint16 A, uint16 V) {
-	uint8 mask = (reg & 0x20) ? 0x7F : 0xFF;
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = (m364.reg & 0x20) ? 0x0F : 0x1F;
+	uint16 base = (m364.reg >> 1) & 0x20;
 
-	setchr1(A, ((reg << 4) & 0x100) | (V & mask));
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M364PW(uint16 A, uint16 V) {
-	uint8 mask = (reg & 0x20) ? 0x0F : 0x1F;
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = (m364.reg & 0x20) ? 0x7F : 0xFF;
+	uint16 base = (m364.reg << 4) & 0x100;
 
-	setprg8(A, ((reg >> 1) & 0x20) | (V & mask));
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M364Write) {
-	reg = V;
+static DECLFW(WriteReg) {
+	m364.reg = V;
 	MMC3_SyncPRG();
 	MMC3_SyncCHR();
 }
 
-static void M364Power(void) {
-	reg = 0;
+static void Power(void) {
+	m364.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M364Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper364_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_pwrap = M364PW;
-	MMC3_cwrap = M364CW;
-	info->Power = M364Power;
+	MMC3_pwrap = SetPRG;
+	MMC3_cwrap = SetCHR;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

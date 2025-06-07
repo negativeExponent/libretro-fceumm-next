@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- * Copyright (C) 2023
+ * Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -33,16 +33,13 @@ static void Sync(void) {
 	setchr8((latch.data >> 4) & 0x01);
 }
 
-static DECLFR(M533Read) {
-	switch (A & 0xF000) {
-	case 0xE000:
-		return ((PRGptr[0][0x6000 | (A & 0xFFFF)] & 0xF0) | (latch.data >> 4));
-	default:
-		break;
+static DECLFR(ReadLatch) {
+	if ((A & 0xF000) == 0xE000) {
+		return ((ROM.prg.data[0x6000 | (A & 0xFFFF)] & 0xF0) | (latch.data >> 4));
 	}
 	return CartBROB(A);
 }
 
 void Mapper533_Init(CartInfo *info) {
-	Latch_Init(info, Sync, M533Read, FALSE, TRUE);
+	Latch_Init(info, Sync, ReadLatch, FALSE, TRUE);
 }

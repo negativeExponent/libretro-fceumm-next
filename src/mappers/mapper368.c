@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,14 +26,16 @@
 
 #include "mapinc.h"
 
-static uint8 reg[2];
-static uint8 IRQa;
-static uint16 IRQCount;
+static struct {
+	uint8 reg[2];
+	uint8 IRQa;
+	uint16 IRQCount;
+} m368;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
-	{ &IRQCount, 2, "IRQC" },
-	{ &IRQa, 1, "IRQA" },
+	{ m368.reg, 2, "REGS" },
+	{ &m368.IRQCount, 2, "IRQC" },
+	{ &m368.IRQa, 1, "IRQA" },
 	{ 0 }
 };
 
@@ -50,63 +52,62 @@ static void Sync(void) {
 	 5      3
 	 6      7
 	 7      3 */
-	uint8 prg = (reg[0] & 0x01) ? 0x03 : (0x04 | ((reg[0] >> 1) & 0x03));
+	uint8 banklut[] = { 4, 3, 5, 3, 6, 3, 7, 3 };
+	uint8 bank = banklut[m368.reg[0] & 0x07];
 
 	setprg8(0x6000, 0x02);
 	setprg8(0x8000, 0x01);
 	setprg8(0xA000, 0x00);
-	setprg8(0xC000, prg);
+	setprg8(0xC000, bank);
 	setprg8(0xE000, 0x08);
 	setchr8(0);
 }
 
-static DECLFR(M368Read) {
+static DECLFR(ReadLatch) {
 	if ((A & 0xF1FF) == 0x4122) {
-		return (0x8A | (reg[1] & 0x35));
+		return (0x8A | (m368.reg[1] & 0x35));
 	}
 	return CartBR(A);
 }
 
-static DECLFW(M368Write) {
+static DECLFW(WriteLatch) {
 	switch (A & 0xF1FF) {
 	case 0x4022:
-		reg[0] = V;
+		m368.reg[0] = V;
 		Sync();
 		break;
 	case 0x4122:
-		reg[1] = V;
-		IRQa = V & 0x01;
-		if (!IRQa) {
-			IRQCount = 0;
+		m368.reg[1] = V;
+		m368.IRQa = V & 0x01;
+		if (!m368.IRQa) {
+			m368.IRQCount = 0;
 			X6502_IRQEnd(FCEU_IQEXT);
 		}
 		break;
 	}
 }
 
-static void M368Power(void) {
-	reg[0] = reg[1] = 0;
-	IRQa = IRQCount = 0;
-	Sync();
-	SetReadHandler(0x4020, 0x4FFF, M368Read);
-	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4020, 0x4FFF, M368Write);
-}
-
-static void M368Reset(void) {
-	reg[0] = reg[1] = 0;
-	IRQa = IRQCount = 0;
-	Sync();
-}
-
-static void M368IRQHook(int a) {
-	if (IRQa) {
-		IRQCount += a;
-		if (IRQCount >= 4096) {
-			IRQCount -= 4096;
+static void CPUIRQHook(int a) {
+	if (m368.IRQa) {
+		m368.IRQCount += a;
+		if (m368.IRQCount >= 4096) {
+			m368.IRQCount -= 4096;
 			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
+}
+
+static void Power(void) {
+	memset(&m368, 0, sizeof(m368));
+	Sync();
+	SetReadHandler(0x4020, 0x4FFF, ReadLatch);
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x4020, 0x4FFF, WriteLatch);
+}
+
+static void Reset(void) {
+	memset(&m368, 0, sizeof(m368));
+	Sync();
 }
 
 static void StateRestore(int version) {
@@ -114,9 +115,9 @@ static void StateRestore(int version) {
 }
 
 void Mapper368_Init(CartInfo *info) {
-	info->Reset = M368Reset;
-	info->Power = M368Power;
-	MapIRQHook = M368IRQHook;
+	info->Reset = Reset;
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

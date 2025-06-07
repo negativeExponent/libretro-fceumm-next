@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -42,4 +42,5 @@ static void Sync(void) {
 
 void Mapper349_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
+	info->Reset = Latch_RegReset;
 }

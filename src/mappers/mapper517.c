@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,19 +19,28 @@
  *
  */
 
+/*
+ * NES 2.0 Mapper 517 is used for 까치와 노래친구 (Kkachi-wa Nolae Chingu), a
+ * Korean Karaoke game. It uses banking similar to UNROM without bus conflicts,
+ * but has additional ADC hardware (different from NES 2.0 Mapper 515) for its
+ * custom microphone socket at $6000 and $6001.
+ */
+
 #include "mapinc.h"
 #include "latch.h"
 
-static int32 adc_data;
-static int32 adc_high;
-static int32 adc_low;
-static uint8 adc_state;
+static struct {
+	int32 adc_data;
+	int32 adc_high;
+	int32 adc_low;
+	uint8 adc_state;
+} m517;
 
 static SFORMAT StateRegs[] = {
-	{ &adc_data, sizeof(adc_data), "DATA" },
-	{ &adc_high, sizeof(adc_high), "DTHI" },
-	{ &adc_low, sizeof(adc_low), "DTLO" },
-	{ &adc_state, sizeof(adc_state), "STAT" },
+	{ &m517.adc_data, sizeof(m517.adc_data), "DATA" },
+	{ &m517.adc_high, sizeof(m517.adc_high), "DTHI" },
+	{ &m517.adc_low, sizeof(m517.adc_low), "DTLO" },
+	{ &m517.adc_state, sizeof(m517.adc_state), "STAT" },
 	{ 0 }
 };
 
@@ -41,61 +50,60 @@ static void Sync(void) {
 	setchr8(0);
 }
 
-static DECLFR(M517Read) {
+static DECLFR(Read6000) {
 	uint8 result = 0;
 	if (A == 0x6000) {
-		switch (adc_state) {
+		switch (m517.adc_state) {
 		case 0:
-			adc_state = 1;
+			m517.adc_state = 1;
 			result = 0;
 			break;
 		case 1:
-			adc_state = 2;
+			m517.adc_state = 2;
 			result = 1;
 			break;
 		case 2:
-			if (adc_low > 0) {
-				adc_low--;
+			if (m517.adc_low > 0) {
+				m517.adc_low--;
 				result = 1;
 			} else {
-				adc_state = 0;
+				m517.adc_state = 0;
 				result = 0;
 			}
 			break;
 		}
 	} else {
-		result = adc_high-- > 0 ? 0 : 1;
+		result = m517.adc_high-- > 0 ? 0 : 1;
 	}
 	return result;
 }
 
-static DECLFW(M517Write) {
+static DECLFW(Write8000) {
 	/* TODO: implement mic input from frontend */
-	/* adc_data = MIC * 63.0; */
-	adc_data = 0.0 * 63.0;
-	adc_high = adc_data >> 2;
-	adc_low = 0x40 - adc_high - ((adc_data & 0x03) << 2);
-	adc_state = 0;
+	/* m517.adc_data = MIC * 63.0; */
+	m517.adc_data = 0.0 * 63.0;
+	m517.adc_high = m517.adc_data >> 2;
+	m517.adc_low = 0x40 - m517.adc_high - ((m517.adc_data & 0x03) << 2);
+	m517.adc_state = 0;
 	Latch_Write(A, V);
 }
 
-static void M517Reset(void) {
-	adc_data = 0;
-	adc_state = 0;
+static void Reset(void) {
+	m517.adc_data = 0;
+	m517.adc_state = 0;
 	Sync();
 }
 
-static void M517Power(void) {
-	adc_data = 0;
-	adc_state = 0;
+static void Power(void) {
+	memset(&m517, 0, sizeof(m517));
 	Latch_Power();
-	SetReadHandler(0x6000, 0x6FFF, M517Read);
-	SetWriteHandler(0x8000, 0x8FFF, M517Write);
+	SetReadHandler(0x6000, 0x6FFF, Read6000);
+	SetWriteHandler(0x8000, 0x8FFF, Write8000);
 }
 
 void Mapper517_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M517Power;
-	info->Reset = M517Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

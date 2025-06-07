@@ -33,7 +33,7 @@ static MMC1TYPE type = MMC1B;
 void (*MMC1_pwrap)(uint16 A, uint16 V);
 void (*MMC1_cwrap)(uint16 A, uint16 V);
 void (*MMC1_mwrap)(uint8 V);
-void (*MMC1_wwrap)(void);
+void (*MMC1_SyncWRAM)(void);
 
 MMC1 mmc1;
 
@@ -119,8 +119,8 @@ uint32 MMC1_GetCHRBank(int index) {
 }
 
 void MMC1_SyncCHR(void) {
-	if (MMC1_wwrap) {
-		MMC1_wwrap();
+	if (MMC1_SyncWRAM) {
+		MMC1_SyncWRAM();
 	}
 
 	MMC1_cwrap(0x0000, MMC1_GetCHRBank(0));
@@ -247,7 +247,7 @@ void MMC1_Close(void) {
 void MMC1_Init(CartInfo *info, MMC1TYPE _type, int wram, int saveram) {
 	MMC1_pwrap = GENPWRAP;
 	MMC1_cwrap = GENCWRAP;
-	MMC1_wwrap = GENWRAMWRAP;
+	MMC1_SyncWRAM = GENWRAMWRAP;
 
 	WRAMSIZE = wram * 1024;
 	NONSaveRAMSIZE = (wram - saveram) * 1024;

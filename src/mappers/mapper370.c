@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,53 +25,55 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m370;
+
 static uint8 dipsw;
 
-static void M370CW(uint16 A, uint16 V) {
-	uint16 mask = (reg & 0x04) ? 0xFF : 0x7F;
-	uint16 base = reg << 7;
+static SFORMAT StateRegs[] = {
+	{ &m370.reg, 1, "EXPR" },
+	{ 0 }
+};
 
-	setchr1(A, (base & ~mask) | (V & mask));
-}
-
-static void M370PW(uint16 A, uint16 V) {
-	uint16 mask = reg & 0x20 ? 0x0F : 0x1F;
-	uint16 base = reg << 1;
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = m370.reg & 0x20 ? 0x0F : 0x1F;
+	uint16 base = m370.reg << 1;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M370MIR(void) {
-	if ((reg & 0x07) == 1) {
-		if (mmc3.cmd & 0x80) {
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[2] >> 7) & 0x01), 1, 0);
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[3] >> 7) & 0x01), 1, 1);
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[4] >> 7) & 0x01), 1, 2);
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[5] >> 7) & 0x01), 1, 3);
-		} else {
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[0] >> 7) & 0x01), 1, 0);
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[0] >> 7) & 0x01), 1, 1);
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[1] >> 7) & 0x01), 1, 2);
-			setntamem(NTARAM + 0x400 * ((mmc3.reg[1] >> 7) & 0x01), 1, 3);
-		}
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = (m370.reg & 0x04) ? 0xFF : 0x7F;
+	uint16 base = m370.reg << 7;
+
+	setchr1(A, (base & ~mask) | (V & mask));
+}
+
+static void SyncMirror(void) {
+	if ((m370.reg & 0x07) == 1) {
+		setmirrorw(
+			MMC3_GetCHRBank(0) >> 7,
+			MMC3_GetCHRBank(1) >> 7,
+			MMC3_GetCHRBank(2) >> 7,
+			MMC3_GetCHRBank(3) >> 7);
 	} else {
 		setmirror((mmc3.mirr & 0x01) ^ 0x01);
 	}
 }
 
-static DECLFR(M370Read) {
+static DECLFR(ReadDIP) {
 	return (((dipsw << 7) & 0x80) | (cpu.openbus & 0x7F));
 }
 
-static DECLFW(M370Write) {
-	reg = (A & 0xFF);
+static DECLFW(WriteReg) {
+	m370.reg = (A & 0xFF);
 	MMC3_SyncPRG();
 	MMC3_SyncCHR();
 	MMC3_SyncMirror();
 }
 
-static DECLFW(M370WriteCMD) {
+static DECLFW(WriteMMC3) {
 	uint8 oldcmd = mmc3.cmd;
 
 	switch (A & 0xE001) {
@@ -98,39 +100,38 @@ static DECLFW(M370WriteCMD) {
 			MMC3_SyncMirror();
 			break;
 		default:
-			MMC3_CMDWrite(A, V);
+			MMC3_Write(A, V);
 			break;
 		}
 		break;
 	default:
-		MMC3_CMDWrite(A, V);
+		MMC3_Write(A, V);
 		break;
 	}
 }
 
-static void M370Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m370, 0, sizeof(m370));
 	dipsw ^= 1;
 	FCEU_printf("solderpad=%02x\n", dipsw);
 	MMC3_Reset();
 }
 
-static void M370Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m370, 0, sizeof(m370));
 	dipsw = 1; /* start off with the 6-in-1 menu */
 	MMC3_Power();
-	SetReadHandler(0x5000, 0x5FFF, M370Read);
-	SetWriteHandler(0x5000, 0x5FFF, M370Write);
-	SetWriteHandler(0x8000, 0x9FFF, M370WriteCMD);
+	SetReadHandler(0x5000, 0x5FFF, ReadDIP);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
+	SetWriteHandler(0x8000, 0x9FFF, WriteMMC3);
 }
 
 void Mapper370_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_SyncMirror = M370MIR;
-	MMC3_cwrap = M370CW;
-	MMC3_pwrap = M370PW;
-	info->Power = M370Power;
-	info->Reset = M370Reset;
-	AddExState(&reg, 1, 0, "EXPR");
-	AddExState(&dipsw, 1, 0, "DPSW");
+	MMC3_SyncMirror = SyncMirror;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -50,46 +50,49 @@
 #define FLASH_CHIP 0x11
 
 static uint8 *flash = NULL;
-static uint8_t reg[9];
+
+static struct {
+	uint8_t reg[9];
+} m446;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 9, "REGS" },
+	{ m446.reg, 9, "EXPR" },
 	{ 0 }
 };
 
 static uint32 GetPRGBase(void) {
-	return ((reg[2] << 8) | reg[1]);
+	return ((m446.reg[2] << 8) | m446.reg[1]);
 }
 
 static uint32 GetPRGMask(void) {
-	return reg[3];
+	return m446.reg[3];
 }
 
 static uint32 GetCHRBase(void) {
-	return reg[6];
+	return m446.reg[6];
 }
 
-static void M446MMC1PW(uint16 A, uint16 V) {
+static void SetPRG_mmc1(uint16 A, uint16 V) {
 	setprg16r(FLASH_CHIP, A, (GetPRGBase() >> 1) | (V & (GetPRGMask() >> 1)));
 }
-static void M446MMC1CW(uint16 A, uint16 V) {
+static void SetCHR_mmc1(uint16 A, uint16 V) {
 	setchr4(A, (GetCHRBase() >> 2) | (V & 0x1F));
 }
 
-static void M446MMC3PW(uint16 A, uint16 V) {
-	switch (reg[0] & 0x1F) {
+static void SetPRG_mmc3(uint16 A, uint16 V) {
+	switch (m446.reg[0] & 0x1F) {
 	case MAPPER_MMC3:
 	case MAPPER_TLSROM:
 		setprg8r(FLASH_CHIP, A, GetPRGBase() | (V & GetPRGMask()));
 		break;
 
 	case MAPPER_189:
-		setprg32r(FLASH_CHIP, 0x8000, (GetPRGBase() >> 2) | (reg[8] & 0x03));
+		setprg32r(FLASH_CHIP, 0x8000, (GetPRGBase() >> 2) | (m446.reg[8] & 0x03));
 		break;
 	}
 }
-static void M446MMC3CW(uint16 A, uint16 V) {
-	switch (reg[0] & 0x1F) {
+static void SetCHR_mmc3(uint16 A, uint16 V) {
+	switch (m446.reg[0] & 0x1F) {
 	case MAPPER_TLSROM:
 		setchr1(A, GetCHRBase() | (V & 0x7F));
 		break;
@@ -101,8 +104,8 @@ static void M446MMC3CW(uint16 A, uint16 V) {
 	}
 }
 
-static void M446VRC24PW(uint16 A, uint16 V) {
-	switch (reg[0] & 0x1F) {
+static void SetPRG_vrc24(uint16 A, uint16 V) {
+	switch (m446.reg[0] & 0x1F) {
 	case MAPPER_VRC2_22:
 	case MAPPER_VRC4_23:
 	case MAPPER_VRC4_25:
@@ -110,8 +113,8 @@ static void M446VRC24PW(uint16 A, uint16 V) {
 		break;
 	}
 }
-static void M446VRC24CW(uint16 A, uint16 V) {
-	switch (reg[0] & 0x1F) {
+static void SetCHR_vrc24(uint16 A, uint16 V) {
+	switch (m446.reg[0] & 0x1F) {
 	case MAPPER_VRC2_22:
 		setchr1(A, V >> 1);
 		break;
@@ -123,27 +126,27 @@ static void M446VRC24CW(uint16 A, uint16 V) {
 	}
 }
 
-static void M446VRC6PW(uint16 A, uint16 V) {
+static void SetPRG_vrc6(uint16 A, uint16 V) {
 	setprg8r(FLASH_CHIP, A, GetPRGBase() | (V & GetPRGMask()));
 }
 
-static void M446VRC6CW(uint16 A, uint16 V) {
+static void SetCHR_vrc6(uint16 A, uint16 V) {
 	setchr1(A, V & 0xFF);
 }
 
 static void Sync(void) {
 	/* CHR-RAM Protect */
-	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], (reg[5] & 0x04) ? 0 : 1);
+	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], (m446.reg[5] & 0x04) ? 0 : 1);
 
-	if (reg[0] & 0x80) {
-		switch (reg[0] & 0x1F) {
+	if (m446.reg[0] & 0x80) {
+		switch (m446.reg[0] & 0x1F) {
 		case MAPPER_NROM:
 			setprg8r(FLASH_CHIP, 0x8000, GetPRGBase() | (0x00 & GetPRGMask()));
 			setprg8r(FLASH_CHIP, 0xA000, GetPRGBase() | (0x01 & GetPRGMask()));
 			setprg8r(FLASH_CHIP, 0xC000, GetPRGBase() | (0x02 & GetPRGMask()));
 			setprg8r(FLASH_CHIP, 0xE000, GetPRGBase() | (0x03 & GetPRGMask()));
 			setchr8(GetCHRBase());
-			setmirror(reg[4] & 0x01);
+			setmirror(m446.reg[4] & 0x01);
 			break;
 
 		case MAPPER_CNROM:
@@ -152,14 +155,14 @@ static void Sync(void) {
 			setprg8r(FLASH_CHIP, 0xC000, GetPRGBase() | (0x02 & GetPRGMask()));
 			setprg8r(FLASH_CHIP, 0xE000, GetPRGBase() | (0x03 & GetPRGMask()));
 			setchr8(latch.data & 3);
-			setmirror(reg[4] & 0x01);
+			setmirror(m446.reg[4] & 0x01);
 			break;
 
 		case MAPPER_UNROM:
 			setprg16r(FLASH_CHIP, 0x8000, (GetPRGBase() >> 1) | (latch.data & (GetPRGMask() >> 1)));
 			setprg16r(FLASH_CHIP, 0xC000, (GetPRGBase() >> 1) | ((GetPRGMask() >> 1) & 0x1F));
 			setchr8(GetCHRBase());
-			setmirror(reg[4] & 0x01);
+			setmirror(m446.reg[4] & 0x01);
 			break;
 
 		case MAPPER_BANDAI152:
@@ -178,7 +181,7 @@ static void Sync(void) {
 		case MAPPER_GNROM:
 			setprg32r(FLASH_CHIP, 0x8000, (GetPRGBase() >> 2) | ((latch.data >> 4) & (GetPRGMask() >> 2)));
 			setchr8(latch.data & 0x03);
-			setmirror(reg[4] & 0x01);
+			setmirror(m446.reg[4] & 0x01);
 			break;
 
 		case MAPPER_SLROM:
@@ -247,13 +250,13 @@ static void Sync(void) {
 		setprg8r(FLASH_CHIP, 0xC000, 0x3E);
 		setprg8r(FLASH_CHIP, 0xE000, 0x3F);
 		setchr8(GetCHRBase());
-		setmirror(reg[4] & 0x01);
+		setmirror(m446.reg[4] & 0x01);
 	}
 }
 
 static void apply_mode(void) {
-	if (reg[0] & 0x80) {
-		switch (reg[0] & 0x1F) {
+	if (m446.reg[0] & 0x80) {
+		switch (m446.reg[0] & 0x1F) {
 		case MAPPER_ANROM:
 		case MAPPER_CNROM:
 		case MAPPER_UNROM:
@@ -295,19 +298,19 @@ static void apply_mode(void) {
 	}
 }
 
-static DECLFR(M446Read) {
+static DECLFR(Read8000) {
 	return FlashROM_Read(A);
 }
 
-static DECLFW(M446WriteLatch) {
+static DECLFW(WriteLatch) {
 	CartBW(A, V);
-	if (reg[0] & 0x1F == MAPPER_189) {
-		reg[8] = A & 0xFF;
+	if (m446.reg[0] & 0x1F == MAPPER_189) {
+		m446.reg[8] = A & 0xFF;
 		Sync();
 	}
 }
 
-static DECLFW(M446WriteReg) {
+static DECLFW(WriteReg) {
 	uint8 index = A & 0x07;
 	if ((index == 0x03) && (iNESCart.submapper != 2)) {
 		/* The register has an inverted meaning in Submapper 2 vs.
@@ -323,16 +326,16 @@ static DECLFW(M446WriteReg) {
 			break;
 		}
 	}
-	reg[index] = V;
-	if (reg[0] & 0x80) {
+	m446.reg[index] = V;
+	if (m446.reg[0] & 0x80) {
 		apply_mode();
 	}
 	Sync();
 }
 
-static DECLFW(M446Write) {
-	if (reg[0] & 0x80) {
-		switch (reg[0] & 0x1F) {
+static DECLFW(Write8000) {
+	if (m446.reg[0] & 0x80) {
+		switch (m446.reg[0] & 0x1F) {
 		case MAPPER_ANROM:
 		case MAPPER_CNROM:
 		case MAPPER_UNROM:
@@ -373,9 +376,9 @@ static DECLFW(M446Write) {
 	}
 }
 
-static void M446HBIRQHook(void) {
-	if (reg[0] & 0x80) {
-		switch (reg[0] & 0x1F) {
+static void HBIRQHook(void) {
+	if (m446.reg[0] & 0x80) {
+		switch (m446.reg[0] & 0x1F) {
 		case MAPPER_MMC3:
 		case MAPPER_TLSROM:
 		case MAPPER_189:
@@ -385,11 +388,11 @@ static void M446HBIRQHook(void) {
 	}
 }
 
-static void M446CPUIRQHook(int a) {
+static void CPUIRQHook(int a) {
 	FlashROM_CPUCyle(a);
 
-	if (reg[0] & 0x80) {
-		switch (reg[0] & 0x1F) {
+	if (m446.reg[0] & 0x80) {
+		switch (m446.reg[0] & 0x1F) {
 		case MAPPER_VRC2_22:
 		case MAPPER_VRC4_23:
 		case MAPPER_VRC4_25:
@@ -403,30 +406,30 @@ static void M446CPUIRQHook(int a) {
 	}
 }
 
-static void M446Close(void) {
+static void Close(void) {
 	if (flash) {
 		FCEU_free(flash);
 		flash = NULL;
 	}
 }
 
-static void M446Reset(void) {
-	memset(reg, 0, sizeof(reg));
+static void Reset(void) {
+	memset(m446.reg, 0, sizeof(m446.reg));
 	apply_mode();
 	Sync();
 }
 
-static void M446Power(void) {
-	memset(reg, 0, sizeof(reg));
+static void Power(void) {
+	memset(m446.reg, 0, sizeof(m446.reg));
 
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 
-	SetReadHandler(0x8000, 0xFFFF, M446Read);
+	SetReadHandler(0x8000, 0xFFFF, Read8000);
 
-	SetWriteHandler(0x5000, 0x5FFF, M446WriteReg);
-	SetWriteHandler(0x6000, 0x6FFF, M446WriteLatch);
-	SetWriteHandler(0x8000, 0xFFFF, M446Write);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
+	SetWriteHandler(0x6000, 0x6FFF, WriteLatch);
+	SetWriteHandler(0x8000, 0xFFFF, Write8000);
 
 	apply_mode();
 	Sync();
@@ -440,27 +443,27 @@ void Mapper446_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 
 	MMC1_Init(info, MMC1B, FALSE, FALSE);
-	MMC1_pwrap = M446MMC1PW;
-	MMC1_cwrap = M446MMC1CW;
+	MMC1_pwrap = SetPRG_mmc1;
+	MMC1_cwrap = SetCHR_mmc1;
 
 	MMC3_Init(info, MMC3B, FALSE, FALSE);
-	MMC3_pwrap = M446MMC3PW;
-	MMC3_cwrap = M446MMC3CW;
+	MMC3_pwrap = SetPRG_mmc3;
+	MMC3_cwrap = SetCHR_mmc3;
 
 	VRC24_Init(info, VRC24_VRC4, 0x01, 0x02, FALSE, TRUE);
-	VRC24_pwrap = M446VRC24PW;
-	VRC24_cwrap = M446VRC24CW;
+	VRC24_pwrap = SetPRG_vrc24;
+	VRC24_cwrap = SetCHR_vrc24;
 
 	VRC6_Init(info, 0x01, 0x02, FALSE);
-	VRC6_pwrap = M446VRC6PW;
-	VRC6_cwrap = M446VRC6CW;
+	VRC6_pwrap = SetPRG_vrc6;
+	VRC6_cwrap = SetCHR_vrc6;
 
-	info->Power = M446Power;
-	info->Reset = M446Reset;
-	info->Close = M446Close;
+	info->Power = Power;
+	info->Reset = Reset;
+	info->Close = Close;
 
-	MapIRQHook = M446CPUIRQHook;
-	GameHBIRQHook = M446HBIRQHook;
+	MapIRQHook = CPUIRQHook;
+	GameHBIRQHook = HBIRQHook;
 
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);

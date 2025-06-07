@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* NES 2.0 Mapper 465 */
+/* 310-in-1 (UNL) (92 劃面選關 310-in-1 王牌老四強) */
+
 #include "mapinc.h"
 #include "latch.h"
 
@@ -40,7 +43,7 @@ static void Sync(void) {
 	setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M465WriteLatch) {
+static DECLFW(WriteLatch) {
 	if (latch.addr & 0x200) {
 		/* unrom latch */
 		latch.data = V;
@@ -50,13 +53,13 @@ static DECLFW(M465WriteLatch) {
 	Sync();
 }
 
-static void M465Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M465WriteLatch);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper465_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M465Power;
+	info->Power = Power;
 	info->Reset = Latch_RegReset;
 }

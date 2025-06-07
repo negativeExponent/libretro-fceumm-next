@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,51 +27,62 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m339;
 
-static void M339CW(uint16 A, uint16 V) {
-	setchr1(A, ((reg << 4) & ~0x7F) | (V & 0x7F));
-}
+static SFORMAT StateRegs[] = {
+	{ &m339.reg, 1, "EXPR" },
+	{ 0 }
+};
 
-static void M339PW(uint16 A, uint16 V) {
-	uint16 base = reg & 0x1F;
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 base = m339.reg << 1;
+	uint16 mask = 0x0F;
 
-	if (reg & 0x20) { /* MMC3 mode */
-		setprg8(A, ((base << 1) & ~0x0F) | (V & 0x0F));
-	} else {
-		if ((reg & 0x07) == 0x06) { /* NROM-256 */
-			setprg32(0x8000, base >> 1);
+	if (!(m339.reg & 0x20)) { /* NROM */
+		if ((m339.reg & 0x06) == 0x06) { /* NROM-256 */
+			mask = 0x03;
 		} else { /* NROM-128 */
-			setprg16(0x8000, base);
-			setprg16(0xC000, base);
+			mask = 0x01;
 		}
+		V = (A >> 13);
 	}
+
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M339Write) {
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 base = m339.reg << 4;
+	uint16 mask = 0x7F; 
+
+	setchr1(A, (base & ~mask) | (V & mask));
+}
+
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		reg = A & 0x3F;
+		m339.reg = A & 0xFF;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M339Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m339, 0, sizeof(m339));
 	MMC3_Reset();
 }
 
-static void M339Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m339, 0, sizeof(m339));
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M339Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper339_Init(CartInfo *info) {
-	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_pwrap = M339PW;
-	MMC3_cwrap = M339CW;
-	info->Power = M339Power;
-	info->Reset = M339Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_Init(info, MMC3B, 0, 0);
+	MMC3_pwrap = SetPRG;
+	MMC3_cwrap = SetCHR;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

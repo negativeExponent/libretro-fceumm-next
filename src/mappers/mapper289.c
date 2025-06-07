@@ -25,57 +25,65 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m289;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
-	{ &dipsw, 1, "DPSW" },
+	{ m289.reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint32 bank = reg[1] & 0x7F;
+	uint16 base = m289.reg[1] & ~0x07;
 
-	if (reg[0] & 0x02) {
-		setprg16(0x8000, (bank & ~0x07) | ((reg[0] & 0x01) ? 0x07 : (latch.data & 0x07)));
-		setprg16(0xC000, bank | 0x07);
+	if (m289.reg[0] & 0x02) {
+		setprg16(0x8000, base | (latch.data & 0x07));
+		setprg16(0xC000, base | 0x07);
 	} else {
-		setprg16(0x8000, bank & ~(reg[0] & 0x01));
-		setprg16(0xC000, bank | (reg[0] & 0x01));
+		uint16 bank = base | (m289.reg[1] & 0x07);
+
+		if (m289.reg[0] & 0x01) {
+			setprg32(0x8000, bank >> 1);
+		} else {
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
+		}
 	}
 	/* CHR-RAM write-protect */
-	SetupCartCHRMapping(0, CHRptr[0], 0x2000, ((reg[0] >> 2) & 0x01) ^ 0x01);
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, ((m289.reg[0] >> 2) & 0x01) ^ 0x01);
 	setchr8(0);
-	setmirror(((reg[0] >> 3) & 0x01) ^ 0x01);
+	setmirror(((m289.reg[0] >> 3) & 0x01) ^ 0x01);
 }
 
-static DECLFR(M289Read) {
+static DECLFR(ReadDIP) {
 	return (cpu.openbus & ~0x03) | (dipsw & 0x03);
 }
 
-static DECLFW(M289Write) {
-	reg[A & 0x01] = V;
+static DECLFW(WriteReg) {
+	m289.reg[A & 0x01] = V;
 	Sync();
 }
 
-static void M289Power(void) {
+static void Power(void) {
+	memset(&m289, 0, sizeof(m289));
 	dipsw = 0;
-	reg[0] = reg[1] = 0;
 	Latch_Power();
-	SetReadHandler(0x6000, 0x7FFF, M289Read);
-	SetWriteHandler(0x6000, 0x7FFF, M289Write);
+	SetReadHandler(0x6000, 0x7FFF, ReadDIP);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
-static void M289Reset(void) {
+static void Reset(void) {
+	memset(&m289, 0, sizeof(m289));
 	dipsw++;
-	reg[0] = reg[1] = 0;
 	Latch_RegReset();
 }
 
 void Mapper289_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M289Power;
-	info->Reset = M289Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

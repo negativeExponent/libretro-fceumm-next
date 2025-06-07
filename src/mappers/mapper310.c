@@ -22,18 +22,20 @@
 
 #include "mapinc.h"
 
-static uint8 reg[3];
+static struct {
+	uint8 reg[3];
+} m310;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
+	{ m310.reg, 4, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint16 prg = (reg[0] & 0x3F) | ((reg[1] << 4) & ~0x3F);
+	uint16 prg = (m310.reg[0] & 0x3F) | ((m310.reg[1] << 4) & ~0x3F);
 	uint8 chrProtect = FALSE;
 
-	switch (reg[1] & 3) {
+	switch (m310.reg[1] & 3) {
 	case 0:
 		setprg32(0x8000, prg >> 1);
 		chrProtect = TRUE;
@@ -43,7 +45,7 @@ static void Sync(void) {
 		setprg16(0xC000, prg | 7);
 		break;
 	case 2:
-		prg = prg << 1 | reg[0] >> 7;
+		prg = prg << 1 | m310.reg[0] >> 7;
 		setprg8(0x8000, prg);
 		setprg8(0xA000, prg);
 		setprg8(0xC000, prg);
@@ -56,32 +58,32 @@ static void Sync(void) {
 		break;
 	}
 	SetupCartCHRMapping(0, CHRptr[0], 0x8000, !chrProtect);
-	setchr8(reg[2]);
-	setmirror((reg[0] & 0x40) ? MI_H : MI_V);
+	setchr8(m310.reg[2]);
+	setmirror((m310.reg[0] & 0x40) ? MI_H : MI_V);
 }
 
-static DECLFW(M310WriteReg0) {
-	reg[0] = V;
+static DECLFW(WriteReg0) {
+	m310.reg[0] = V;
 	Sync();
 }
 
-static DECLFW(M310WriteReg1) {
-	reg[1] = A & 0xFF;
-	reg[2] = V;
+static DECLFW(WriteReg1) {
+	m310.reg[1] = A & 0xFF;
+	m310.reg[2] = V;
 	Sync();
 }
 
-static void M310Reset(void) {
-	reg[0] = reg[1] = reg[2] = 0;
+static void Reset(void) {
+	memset(&m310, 0, sizeof(m310));
 	Sync();
 }
 
-static void M310Power(void) {
-	reg[0] = reg[1] = reg[2] = 0;
+static void Power(void) {
+	memset(&m310, 0, sizeof(m310));
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xBFFF, M310WriteReg0);
-	SetWriteHandler(0xC000, 0xFFFF, M310WriteReg1);
+	SetWriteHandler(0x8000, 0xBFFF, WriteReg0);
+	SetWriteHandler(0xC000, 0xFFFF, WriteReg1);
 }
 
 static void StateRestore(int version) {
@@ -89,8 +91,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper310_Init(CartInfo *info) {
-	info->Power = M310Power;
-	info->Reset = M310Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(&StateRegs, ~0, 0, 0);
 }

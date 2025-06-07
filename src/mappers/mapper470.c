@@ -1,7 +1,7 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2024 negativeExponent
+ *  Copyright (C) 2024-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,38 +27,40 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m470;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m470.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg32(0x8000, (reg << 3) | (latch.data & 0x07));
+	setprg32(0x8000, (m470.reg << 3) | (latch.data & 0x07));
 	setchr8(0);
 	setmirror((MI_0 + (latch.data >> 4) & 1));
 }
 
-static DECLFW(M470Write5) {
-	reg = V;
+static DECLFW(WriteReg) {
+	m470.reg = V;
 	Sync();
 }
 
-static void M470Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m470, 0, sizeof(m470));
 	Latch_RegReset();
 }
 
-static void M470Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m470, 0, sizeof(m470));
 	Latch_Power();
-	SetWriteHandler(0x5000, 0x5FFF, M470Write5);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 }
 
 void Mapper470_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M470Power;
-	info->Reset = M470Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

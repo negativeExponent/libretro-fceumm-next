@@ -23,56 +23,59 @@
 
 #include "mapinc.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m293;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
+	{ m293.reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 mode = ((reg[0] >> 2) & 0x02) | ((reg[1] >> 6) & 0x01);
-	uint8 base = ((reg[1] << 5) & 0x20) | ((reg[1] >> 1) & 0x18);
-	uint8 bank = (reg[0] & 0x07);
+	uint8 mode = ((m293.reg[0] >> 2) & 0x02) | ((m293.reg[1] >> 6) & 0x01);
+	uint8 base = ((m293.reg[1] << 5) & 0x20) | ((m293.reg[1] >> 1) & 0x18);
+	uint8 bank = (base | (m293.reg[0] & 0x07));
 
 	switch (mode) {
 	case 0: /* UNROM */
-		setprg16(0x8000, base | bank);
-		setprg16(0xC000, base | 0x07);
+		setprg16(0x8000, bank);
+		setprg16(0xC000, bank | 0x07);
 		break;
 	case 1:
-		setprg16(0x8000, base | (bank & 0xFE));
-		setprg16(0xC000, base | 0x07);
+		setprg16(0x8000, bank & 0xFE);
+		setprg16(0xC000, bank | 0x07);
 		break;
 	case 2: /* NROM-128 */
-		setprg16(0x8000, base | bank);
-		setprg16(0xC000, base | bank);
+		setprg16(0x8000, bank);
+		setprg16(0xC000, bank);
 		break;
 	case 3: /* NROM-256 */
-		setprg16(0x8000, (base | bank) & 0xFE);
-		setprg16(0xC000, (base | bank) | 1);
+		setprg16(0x8000, bank & 0xFE);
+		setprg16(0xC000, bank | 0x01);
 		break;
 	}
 	setchr8(0);
-	setmirror(((reg[1] >> 7) & 0x01) ^ 0x01);
+	setmirror(((m293.reg[1] >> 7) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M293Write) {
+static DECLFW(WriteReg) {
 	if (!(A & 0x2000)) {
 		/* First Banking Register ($8000-$9FFF, $C000-$DFFF) */
-		reg[0] = V;
+		m293.reg[0] = V;
 	}
 	if (!(A & 0x4000)) {
 		/* Second Banking Register ($8000-$BFFF) */
-		reg[1] = V;
+		m293.reg[1] = V;
 	}
+	Sync();
 }
 
-static void M293Power(void) {
-	reg[0] = reg[1] = 0;
+static void Power(void) {
+	memset(&m293, 0, sizeof(m293));
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xDFFF, M293Write);
+	SetWriteHandler(0x8000, 0xDFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
@@ -81,7 +84,7 @@ static void StateRestore(int version) {
 
 /* BMC 12-in-1/76-in-1 (NewStar) (Unl) */
 void Mapper293_Init(CartInfo *info) {
-	info->Power = M293Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

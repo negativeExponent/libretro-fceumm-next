@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,30 +18,36 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* NOTE: This only emulates the UNIF variant of 3D-Blocks */
-
 #include "mapinc.h"
 
 #include "mapper355.h"
 #include "hw/pic16c5x.h"
 
-static uint32 address;
+static struct {
+	uint16 address;
+} m355;
+
 static uint8 *eprom = NULL;
+
+static SFORMAT StateRegs[] = {
+	{ &m355.address, 2, "PICA" },
+	{ 0 }
+};
 
 static uint8_t pci16c5x_read(int port) {
 	if (port == 0) {
-		return (1 | (address & 0x0040 ? 0x02 : 0) | /*  A6 -> RA1 */
-			(address & 0x0020 ? 0x04 : 0) | /*  A5 -> RA2 */
-			(address & 0x0010 ? 0x08 : 0)); /*  A4 -> RA3 */
+		return (1 | (m355.address & 0x0040 ? 0x02 : 0) | /*  A6 -> RA1 */
+			(m355.address & 0x0020 ? 0x04 : 0) | /*  A5 -> RA2 */
+			(m355.address & 0x0010 ? 0x08 : 0)); /*  A4 -> RA3 */
 	} else if (port == 1) {
-		return ((address & 0x1000 ? 0x01 : 0) | /* A12 -> RB0 */
-			(address & 0x0080 ? 0x02 : 0) | /*  A7 -> RB1 */
-			(address & 0x0400 ? 0x04 : 0) | /* A10 -> RB2 */
-			(address & 0x0800 ? 0x08 : 0) | /* A11 -> RB3 */
-			(address & 0x0200 ? 0x10 : 0) | /*  A9 -> RB4 */
-			(address & 0x0100 ? 0x20 : 0) | /*  A8 -> RB5 */
-			(address & 0x2000 ? 0x40 : 0) | /* A13 -> RB6 */
-			(address & 0x4000 ? 0x80 : 0)); /* A14 -> RB7 */
+		return ((m355.address & 0x1000 ? 0x01 : 0) | /* A12 -> RB0 */
+			(m355.address & 0x0080 ? 0x02 : 0) | /*  A7 -> RB1 */
+			(m355.address & 0x0400 ? 0x04 : 0) | /* A10 -> RB2 */
+			(m355.address & 0x0800 ? 0x08 : 0) | /* A11 -> RB3 */
+			(m355.address & 0x0200 ? 0x10 : 0) | /*  A9 -> RB4 */
+			(m355.address & 0x0100 ? 0x20 : 0) | /*  A8 -> RB5 */
+			(m355.address & 0x2000 ? 0x40 : 0) | /* A13 -> RB6 */
+			(m355.address & 0x4000 ? 0x80 : 0)); /* A14 -> RB7 */
 	}
 	return (0xFF);
 }
@@ -56,7 +62,7 @@ static void pci16c5x_write(int port, int val) {
 	}
 }
 
-static void M355CPUIRQHook(int a) {
+static void CPUIRQHook(int a) {
 	while (a--) {
 		pic16c5x_run();
 	}
@@ -65,25 +71,25 @@ static void M355CPUIRQHook(int a) {
 static readfunc cpuRead[0x10000];
 static writefunc cpuWrite[0x10000];
 
-static DECLFR(M555Read) {
-	address = A;
+static DECLFR(ReadCPU) {
+	m355.address = A;
 	if (A >= 0x8000) {
 		return CartBR(A);
 	}
 	return cpuRead[A](A);
 }
 
-static DECLFW(M555Write) {
-	address = A;
+static DECLFW(WriteCPU) {
+	m355.address = A;
 	if (cpuWrite[A]) {
 		cpuWrite[A](A, V);
 	}
 }
 
-static void M555Power(void) {
+static void Power(void) {
 	int x;
 
-	address = 0;
+	m355.address = 0;
 
 	pic16c5x_reset(1);
 
@@ -95,16 +101,16 @@ static void M555Power(void) {
 		cpuWrite[x] = GetWriteHandler(x);
 	}
 
-	SetReadHandler(0, 0xFFFF, M555Read);
-	SetWriteHandler(0, 0xFFFF, M555Write);
+	SetReadHandler(0, 0xFFFF, ReadCPU);
+	SetWriteHandler(0, 0xFFFF, WriteCPU);
 }
 
-static void M555Reset(void) {
-	address = 0;
+static void Reset(void) {
+	m355.address = 0;
 	pic16c5x_reset(0);
 }
 
-static void M555Close(void) {
+static void Close(void) {
 	eprom = NULL;
 }
 
@@ -125,9 +131,9 @@ void Mapper355_Init(CartInfo *info) {
 		pic16c5x_add_statesinfo();
 	}
 
-	info->Power = M555Power;
-	info->Reset = M555Reset;
-	info->Close = M555Close;
-	MapIRQHook = M355CPUIRQHook;
-	AddExState(&address, sizeof(address), 0, "ADDR");
+	info->Power = Power;
+	info->Reset = Reset;
+	info->Close = Close;
+	MapIRQHook = CPUIRQHook;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

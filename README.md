@@ -117,6 +117,9 @@ Changelog:
 - Fixed bug in vrc24 module that caused incorrect chr bank data (regression)
 - Add helpers to easily set or remove read/write access to cpu pages
 - Revert opcode update that broke a few games (opcode 0xAB, 0x9C, 0x9E)
+- Fixed mirroring in mapper 302
+- Add support for submapper 1 in mapper 396
+- Add support for submapper 1 in mapper 458
 
 25.04.25
 - moved to a standalone repo

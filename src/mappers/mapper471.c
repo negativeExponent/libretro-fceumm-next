@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,23 +30,23 @@ static void Sync(void) {
 	setchr8(latch.addr);
 }
 
-static DECLFW(M471Write) {
+static DECLFW(WriteLatch) {
 	X6502_IRQEnd(FCEU_IQEXT);
 	Latch_Write(A, V);
 }
 
-static void M471HBHook(void) {
+static void HBIRQHook(void) {
 	X6502_IRQBegin(FCEU_IQEXT);
 }
 
-static void M471Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M471Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper471_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M471Power;
+	info->Power = Power;
 	info->Reset = Latch_RegReset;
-	GameHBIRQHook = M471HBHook;
+	GameHBIRQHook = HBIRQHook;
 }

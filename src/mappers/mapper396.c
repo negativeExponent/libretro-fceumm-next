@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,35 +22,50 @@
  * Super 8-in-1 Gold Card Series (JY-085)
  * Super 8-in-1 Gold Card Series (JY-086)
  * 2-in-1 (GN-51)
+ * 
+ * Submapper 1:
+ * 2-in-1 (QB003) (Unl)
  */
 
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m396;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m396.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if ((latch.addr & 0x6000) == 0x2000) {
-		reg = latch.data;
+	uint8 bank;
+	if ((latch.addr >= 0x8000) && (latch.addr <= 0xBFFF) && ((iNESCart.submapper == 1) || (latch.addr >= 0xA000))) {
+		m396.reg = latch.data;
 	}
-	setprg16(0x8000, (reg << 3) | (latch.data & 0x07));
-	setprg16(0xC000, (reg << 3) | 0x07);
+	bank = (m396.reg << 3) | (latch.data & 0x07);
+	setprg16(0x8000, bank);
+	setprg16(0xC000, bank | 0x07);
 	setchr8(0);
-	setmirror((reg & 0x60) ? MI_H : MI_V);
+	setmirror((m396.reg & 0x60) ? MI_H : MI_V);
 }
 
-static void M396Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	if (!iNESCart.submapper) {
+		m396.reg = 0;
+	}
 	Latch_RegReset();
+}
+
+static void Power(void) {
+	memset(&m396, 0, sizeof(m396));
+	Latch_Power();
 }
 
 void Mapper396_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Reset = M396Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

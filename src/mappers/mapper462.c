@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2024 negativeExponent
+ *  Copyright (C) 2024-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,44 +22,46 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m462;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m462.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (reg & 0x40) {
-		setprg32(0x8000, ((reg >> 3) & ~0x07) | (latch.data & 0x07));
+	if (m462.reg & 0x40) {
+		setprg32(0x8000, ((m462.reg >> 3) & ~0x07) | (latch.data & 0x07));
 		setmirror(MI_0 + ((latch.data >> 4) & 0x01));
 	} else {
-		setprg16(0x8000, ((reg >> 2) & ~0x07) | (latch.data & 0x07));
-		setprg16(0xC000, ((reg >> 2) & ~0x07) | 0x07);
-		setchr8(0);
-		setmirror((reg >> 4) & 1);
+		setprg16(0x8000, ((m462.reg >> 2) & ~0x07) | (latch.data & 0x07));
+		setprg16(0xC000, ((m462.reg >> 2) & ~0x07) | 0x07);
+		setmirror((m462.reg >> 4) & 0x01);
 	}
+	setchr8(0);
 }
 
-static DECLFW(M462Write) {
-	reg = V;
+static DECLFW(WriteReg) {
+	m462.reg = V;
 	Sync();
 }
 
-static void M462Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m462, 0, sizeof(m462));
 	Latch_RegReset();
 }
 
-static void M462Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m462, 0, sizeof(m462));
 	Latch_Power();
-	SetWriteHandler(0xA000, 0xBFFF, M462Write);
+	SetWriteHandler(0xA000, 0xBFFF, WriteReg);
 }
 
 void Mapper462_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, TRUE, FALSE);
-	info->Reset = M462Reset;
-	info->Power = M462Power;
+	info->Reset = Reset;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

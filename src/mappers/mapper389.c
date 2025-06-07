@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,62 +23,79 @@
 
 #include "mapinc.h"
 
-static uint8 regs[3];
+static struct {
+	uint8 reg[3];
+} m389;
 
 static SFORMAT StateRegs[] = {
-	{ &regs, 3, "REGS" },
+	{ &m389.reg, 3, "REGS" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	if (regs[1] & 0x02) {
+static void SyncPRG(void) {
+	if (m389.reg[1] & 0x02) {
 		/* UNROM-064 */
-		setprg16(0x8000, (regs[0] >> 2) | ((regs[2] >> 2) & 0x03));
-		setprg16(0xC000, (regs[0] >> 2) | 0x03);
+		setprg16(0x8000, (m389.reg[0] >> 2) | ((m389.reg[2] >> 2) & 0x03));
+		setprg16(0xC000, (m389.reg[0] >> 2) | 0x03);
 	} else {
 		/* NROM-256 */
-		setprg32(0x8000, regs[0] >> 3);
-	}
-	setchr8(((regs[1] >> 1) & 0x1C) | (regs[2] & 0x03));
-	setmirror((regs[0] & 0x01) ^ 1);
-}
-
-static DECLFW(M389Write) {
-	switch (A & 0xF000) {
-	case 0x8000:
-		regs[0] = (A & 0xFF);
-		Sync();
-		break;
-	case 0x9000:
-		regs[1] = (A & 0xFF);
-		Sync();
-		break;
-	default:
-		regs[2] = (A & 0x0F);
-		Sync();
-		break;
+		setprg32(0x8000, m389.reg[0] >> 3);
 	}
 }
 
-static void M389Reset(void) {
-	regs[0] = regs[1] = regs[2] = 0;
-	Sync();
+static void SyncCHR(void) {
+	setchr8(((m389.reg[1] >> 1) & 0x1C) | (m389.reg[2] & 0x03));
 }
 
-static void M389Power(void) {
-	regs[0] = regs[1] = regs[2] = 0;
-	Sync();
+static void SyncMirror(void) {
+	setmirror((m389.reg[0] & 0x01) ^ 1);
+}
+
+static DECLFW(WriteReg0) {
+	m389.reg[0] = (A & 0xFF);
+	SyncPRG();
+	SyncMirror();
+}
+
+static DECLFW(WriteReg1) {
+	m389.reg[1] = (A & 0xFF);
+	SyncPRG();
+	SyncCHR();
+}
+
+static DECLFW(WriteReg2) {
+	m389.reg[2] = (A & 0x0F);
+	SyncPRG();
+	SyncCHR();
+}
+
+static void Reset(void) {
+	memset(&m389, 0, sizeof(m389));
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+}
+
+static void Power(void) {
+	memset(&m389, 0, sizeof(m389));
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M389Write);
+	SetWriteHandler(0x8000, 0x8FFF, WriteReg0);
+	SetWriteHandler(0x9000, 0x9FFF, WriteReg1);
+	SetWriteHandler(0xA000, 0xFFFF, WriteReg2);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper389_Init(CartInfo *info) {
-	info->Power = M389Power;
-	info->Reset = M389Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -19,34 +19,48 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/*
+ * NES 2.0 Mapper 521 is used for 장두진 바둑교실: 입문편, commonly known as
+ * Korean Igo. Its UNIF board name is DREAMTECH01, without prefix.
+ */
+
 #include "mapinc.h"
 
-static uint8 prg;
+static struct {
+	uint8 reg;
+} m521;
+
+static SFORMAT StateRegs[] = {
+	{ &m521.reg, 1, "REGS" },
+	{ 0 }
+};
 
 static void Sync(void) {
-	setprg16(0x8000, prg);
-	setprg16(0xC000, 0x08);
+	setprg16(0x8000, m521.reg);
+	setprg16(0xC000, PRG_BANK_COUNT(16) - 1);
 	setchr8(0);
 }
 
-static DECLFW(M521Write) {
-	prg = V;
-	Sync();
+static DECLFW(WriteReg) {
+	if ((A & 0x20) && !(A & 0x10)) {
+		m521.reg = V;
+		Sync();
+	}
 }
 
-static void M521Power(void) {
-	prg = 0;
+static void Power(void) {
+	memset(&m521, 0, sizeof(m521));
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x5020, 0x5020, M521Write);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 }
 
-static void Restore(int version) {
+static void StateRestore(int version) {
 	Sync();
 }
 
 void Mapper521_Init(CartInfo *info) {
-	GameStateRestore = Restore;
-	info->Power = M521Power;
-	AddExState(&prg, 1, 0, "LATC");
+	GameStateRestore = StateRestore;
+	info->Power = Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

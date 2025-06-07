@@ -23,33 +23,41 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m441;
 
-static void M441PW(uint16 A, uint16 V) {
-	uint8 mask = (reg & 0x08) ? 0x0F : 0x1F;
-	uint8 base = (reg << 4) & 0x30;
+static SFORMAT StateRegs[] = {
+	{ &m441.reg, 1, "EXPR" },
+	{ 0 }
+};
 
-	if (reg & 0x04) {
-		setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & 0xFD) & mask));
-		setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & 0xFD) & mask));
-		setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] | 0x02) & mask));
-		setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] | 0x02) & mask));
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = (m441.reg & 0x08) ? 0x0F : 0x1F;
+	uint16 base = m441.reg << 4;
+
+	if (m441.reg & 0x04) {
+		if (!(A & 0x4000)) {
+			setprg8(A, (base & ~mask) | ((V & mask) & 0xFD));
+			A += 0x4000;
+			setprg8(A, (base & ~mask) | ((V & mask) | 0x02));
+		}
 	} else {
 		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
-static void M441CW(uint16 A, uint16 V) {
-	uint16 mask = (reg & 0x40) ? 0x7F : 0xFF;
-	uint16 base = (reg << 3) & 0x180;
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = (m441.reg & 0x40) ? 0x7F : 0xFF;
+	uint16 base = (m441.reg << 3) & 0x180;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M441Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		if (!(reg & 0x80)) {
-			reg = V;
+		if (!(m441.reg & 0x80)) {
+			m441.reg = V;
 			MMC3_SyncPRG();
 			MMC3_SyncCHR();
 		} else {
@@ -58,30 +66,24 @@ static DECLFW(M441Write) {
 	}
 }
 
-static void M441Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m441.reg = 0;
 	MMC3_Reset();
 }
 
-static void M441Power(void) {
-	reg = 0;
+static void Power(void) {
+	m441.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M441Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper441_Init(CartInfo *info) {
-	int ws = (info->PRGRamSize + info->PRGRamSaveSize) / 1024;
-
-	if (!ws) {
-		if (info->battery) {
-			ws = 8;
-		}
-	}
+	int ws = (info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) : (info->battery ? 8192 : 0)) / 1024;
 
 	MMC3_Init(info, MMC3B, ws, info->battery);
-	MMC3_cwrap = M441CW;
-	MMC3_pwrap = M441PW;
-	info->Power = M441Power;
-	info->Reset = M441Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

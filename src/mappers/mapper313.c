@@ -28,69 +28,78 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m313;
 
-static void M313CW(uint16 A, uint16 V) {
+static SFORMAT StateRegs[] = {
+	{ &m313.reg, 1, "EXPR" },
+	{ 0 }
+};
+
+static void SetPRGBank(uint16 A, uint16 V) {
 	switch (iNESCart.submapper) {
 	default:
-		setchr1(A, (reg << 7) | (V & 0x7F));
+		setprg8(A, (m313.reg << 4) | (V & 0x0F));
 		break;
 	case 1:
-		setchr1(A, (reg << 7) | (V & 0x7F));
+		setprg8(A, (m313.reg << 5) | (V & 0x1F));
 		break;
 	case 2:
-		setchr1(A, (reg << 8) | (V & 0xFF));
+		setprg8(A, (m313.reg << 4) | (V & 0x0F));
 		break;
 	case 3:
-		setchr1(A, (reg << 8) | (V & 0xFF));
+		setprg8(A, (m313.reg << 5) | (V & 0x1F));
 		break;
 	case 4:
-		setchr1(A, (reg << 7) | (V & 0x7F));
-		break;
-	}
-}
-
-static void M313PW(uint16 A, uint16 V) {
-	switch (iNESCart.submapper) {
-	default:
-		setprg8(A, (reg << 4) | (V & 0x0F));
-		break;
-	case 1:
-		setprg8(A, (reg << 5) | (V & 0x1F));
-		break;
-	case 2:
-		setprg8(A, (reg << 4) | (V & 0x0F));
-		break;
-	case 3:
-		setprg8(A, (reg << 5) | (V & 0x1F));
-		break;
-	case 4:
-		if (reg == 0) {
-			setprg8(A, (reg << 5) | (V & 0x1F));
+		if (m313.reg == 0) {
+			setprg8(A, (m313.reg << 5) | (V & 0x1F));
 		} else {
-			setprg8(A, (reg << 4) | (V & 0x0F));
+			setprg8(A, (m313.reg << 4) | (V & 0x0F));
 		}
 		break;
 	}
 }
 
-static void M313Reset(void) {
-	reg++;
-	reg &= 0x03;
+static void SetCHRBank(uint16 A, uint16 V) {
+	switch (iNESCart.submapper) {
+	default:
+		setchr1(A, (m313.reg << 7) | (V & 0x7F));
+		break;
+	case 1:
+		setchr1(A, (m313.reg << 7) | (V & 0x7F));
+		break;
+	case 2:
+		setchr1(A, (m313.reg << 8) | (V & 0xFF));
+		break;
+	case 3:
+		setchr1(A, (m313.reg << 8) | (V & 0xFF));
+		break;
+	case 4:
+		setchr1(A, (m313.reg << 7) | (V & 0x7F));
+		break;
+	}
+}
+
+static void Reset(void) {
+	m313.reg++;
+	m313.reg &= 0x03;
 	MMC3_Reset();
 }
 
-static void M313Power(void) {
-	reg = 0;
+static void Power(void) {
+	m313.reg = 0;
 	MMC3_Power();
 }
 
 /* NES 2.0 313, UNIF BMC-RESET-TXROM */
 void Mapper313_Init(CartInfo *info) {
-	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_cwrap = M313CW;
-	MMC3_pwrap = M313PW;
-	info->Power = M313Power;
-	info->Reset = M313Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	uint32 ws = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) : (info->battery ? 8192 : 0);
+
+	MMC3_Init(info, MMC3B, ws / 1024, info->battery);
+	MMC3_cwrap = SetCHRBank;
+	MMC3_pwrap = SetPRGBank;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

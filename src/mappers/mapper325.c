@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,27 +25,27 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M325PW(uint16 A, uint16 V) {
-	setprg8(A, ((V << 1) & 0x08) | ((V >> 1) & 0x04) | (V & 0x03));
+static void SetPRGBank(uint16 A, uint16 V) {
+	setprg8(A, (V & 0xF3) | ((V & 0x04) << 1) | ((V & 0x08) >> 1));
 }
 
-static void M325CW(uint16 A, uint16 V) {
-	setchr1(A, (V & 0xDD) | ((V << 4) & 0x20) | ((V >> 4) & 0x02));
+static void SetCHRBank(uint16 A, uint16 V) {
+	setchr1(A, (V & 0xDD) | ((V & 0x02) << 4) | ((V & 0x20) >> 4));
 }
 
-static DECLFW(M325Write) {
-	A = (A & 0xFFFE) | ((A >> 3) & 1);
+static DECLFW(WriteMMC3) {
+	A = (A & ~0x01) | ((A >> 3) & 0x01);
 	MMC3_Write(A, V);
 }
 
-static void M325Power(void) {
+static void Power(void) {
 	MMC3_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M325Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteMMC3);
 }
 
 void Mapper325_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M325PW;
-	MMC3_cwrap = M325CW;
-	info->Power = M325Power;
+	MMC3_pwrap = SetPRGBank;
+	MMC3_cwrap = SetCHRBank;
+	info->Power = Power;
 }

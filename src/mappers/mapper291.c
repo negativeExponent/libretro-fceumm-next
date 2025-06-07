@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,48 +21,55 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m291;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m291.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M291CW(uint16 A, uint16 V) {
-	setchr1(A, ((reg << 2) & 0x100) | (V & 0xFF));
+static void SetCHRBank(uint16 A, uint16 V) {
+	setchr1(A, ((m291.reg << 2) & 0x100) | (V & 0xFF));
 }
 
-static void M291PW(uint16 A, uint16 V) {
-	if (reg & 0x20) {
-		setprg32(0x8000, ((reg >> 4) & 0x04) | ((reg >> 1) & 0x03));
+static void SetPRGBank(uint16 A, uint16 V) {
+	if (m291.reg & 0x20) {
+		uint16 bank = ((m291.reg >> 4) & 0x04) | ((m291.reg >> 1) & 0x03);
+
+		setprg32(0x8000, bank);
 	} else {
-		setprg8(A, ((reg >> 2) & 0x10) | (V & 0x0F));
+		uint16 mask = 0x0F;
+		uint16 base = m291.reg >> 2;
+
+		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
-static DECLFW(M291Write) {
+static DECLFW(WriteReg) {
 	/* The Outer Bank Register responds even when the MMC3 clone's WRAM bit is clear. */
-	reg = V;
+	m291.reg = V;
 	MMC3_SyncPRG();
 	MMC3_SyncCHR();
 }
 
-static void M291Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m291.reg = 0;
 	MMC3_Reset();
 }
 
-static void M291Power(void) {
-	reg = 0;
+static void Power(void) {
+	m291.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M291Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper291_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M291CW;
-	MMC3_pwrap = M291PW;
-	info->Power = M291Power;
-	info->Reset = M291Reset;
+	MMC3_cwrap = SetCHRBank;
+	MMC3_pwrap = SetPRGBank;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

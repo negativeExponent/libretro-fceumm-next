@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2015 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,61 +26,66 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 lock, dipsw, chr, ram[4];
+static struct {
+	uint8 scratch[4];
+} m519;
 
 static SFORMAT StateRegs[] = {
-	{ &dipsw, 1, "DPSW" },
-	{ &lock, 1, "LOCK" },
-	{ &chr, 1, "CREG" },
+	{ m519.scratch, 4, "SCRA" },
 	{ 0 }
 };
 
+static uint8 dipsw;
+
 static void Sync(void) {
-	if (lock == 0) {
-		if (latch.addr & 0x80) {
-			setprg16(0x8000, latch.addr);
-			setprg16(0xC000, latch.addr);
-		} else {
-			setprg32(0x8000, latch.addr >> 1);
-		}
-		setmirror(((latch.data >> 7) & 0x01) ^ 0x01);
-		lock = (latch.addr & 0x100) == 0x100;
-		chr = latch.data & 0x7C;
+	if (latch.addr & 0x80) {
+		setprg16(0x8000, latch.addr);
+		setprg16(0xC000, latch.addr);
+	} else {
+		setprg32(0x8000, latch.addr >> 1);
 	}
-	setchr8(chr | (latch.data & 0x03));
+	setchr8(latch.data);
+	setmirror(((latch.data >> 7) & 0x01) ^ 0x01);
 }
 
-static DECLFR(M519ReadRAM) {
-	return ram[A & 0x03];
+static DECLFR(ReadRAM) {
+	return m519.scratch[A & 0x03];
 }
 
-static DECLFW(M519WriteRAM) {
-	ram[A & 0x03] = V & 0x0F;
+static DECLFW(WriteRAM) {
+	m519.scratch[A & 0x03] = V & 0x0F;
 }
 
-static DECLFR(M519Read) {
+static DECLFR(ReadDIP) {
 	if (latch.addr & 0x40) {
 		return CartBR((A & 0xFFF0) | (dipsw & 0x0F));
 	}
 	return CartBR(A);
 }
 
-static void M519Power(void) {
-	dipsw = lock = 0;
-	Latch_Power();
-	SetReadHandler(0x5800, 0x5FFF, M519ReadRAM);
-	SetWriteHandler(0x5800, 0x5FFF, M519WriteRAM);
+static DECLFW(WriteLatch) {
+	if (A & 0x100) {
+		V = (latch.data & 0xFC) | (V & 0x03);
+	}
+	Latch_Write(A, V);
 }
 
-static void M519Reset(void) {
-	lock = 0;
+static void Power(void) {
+	memset(&m519, 0, sizeof(m519));
+	Latch_Power();
+	SetReadHandler(0x5800, 0x5FFF, ReadRAM);
+	SetWriteHandler(0x5800, 0x5FFF, WriteRAM);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
+}
+
+static void Reset(void) {
 	dipsw++;
 	Latch_RegReset();
 }
 
 void Mapper519_Init(CartInfo *info) {
-	Latch_Init(info, Sync, M519Read, FALSE, FALSE);
-	info->Reset = M519Reset;
-	info->Power = M519Power;
+	Latch_Init(info, Sync, ReadDIP, FALSE, FALSE);
+	info->Reset = Reset;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

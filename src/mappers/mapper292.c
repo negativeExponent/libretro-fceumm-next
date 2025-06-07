@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2015 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,41 +31,43 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[3];
+static struct {
+	uint8 reg[3];
+} m292;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 3, "REGS" },
+	{ m292.reg, 3, "REGS" },
 	{ 0 }
 };
 
 static void M292PW(uint16 A, uint16 V) {
 	setprg8(A, V);
-	setprg8(0x8000, reg[0] & 0x1F);
+	setprg8(0x8000, m292.reg[0] & 0x1F);
 }
 
 static void M292CW(uint16 A, uint16 V) {
-	setchr2(0x0000, (mmc3.reg[0] >> 1) ^ reg[1]);
-	setchr2(0x0800, (mmc3.reg[1] >> 1) ^ ((reg[2] & 0x40) << 1));
-	setchr4(0x1000, reg[2] & 0x3F);
+	setchr2(0x0000, (m292.reg[0] >> 1) ^ m292.reg[1]);
+	setchr2(0x0800, (m292.reg[1] >> 1) ^ ((m292.reg[2] & 0x40) << 1));
+	setchr4(0x1000, m292.reg[2] & 0x3F);
 }
 
 static DECLFW(M292ProtWrite) {
-	reg[0] = V;
+	m292.reg[0] = V;
 	MMC3_SyncPRG();
 }
 
 static DECLFR(M292ProtRead) {
-	if ((reg[0] & 0xE0) == 0xC0) {
-		reg[1] = ARead[0x6A](0x6A);
+	if ((m292.reg[0] & 0xE0) == 0xC0) {
+		m292.reg[1] = ARead[0x6A](0x6A);
 	} else {
-		reg[2] = ARead[0xFF](0xFF);
+		m292.reg[2] = ARead[0xFF](0xFF);
 	}
 	MMC3_SyncCHR();
 	return cpu.openbus;
 }
 
 static void M292Power(void) {
-	reg[0] = reg[1] = reg[2] = 0;
+	memset(&m292, 0x00, sizeof(m292));
 	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, M292ProtWrite);
 	SetReadHandler(0x6000, 0x7FFF, M292ProtRead);

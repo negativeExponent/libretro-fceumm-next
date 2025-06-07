@@ -25,69 +25,73 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 game;
-static uint8 PPUCHRBus;
+static struct {
+	uint8 game;
+	uint8 ppuchrbus;
+} m362;
 
 static SFORMAT StateRegs[] = {
-	{ &game, 1, "GAME" },
-	{ &PPUCHRBus, 1, "PPUC" },
+	{ &m362.game, 1, "GAME" },
+	{ &m362.ppuchrbus, 1, "PPUC" },
 	{ 0 }
 };
 
-static void M362PW(uint16 A, uint16 V) {
-	uint16 base = (game == 0) ? (vrc24.chr[PPUCHRBus] >> 3) : 0x40;
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 base = (m362.game == 0) ? (vrc24.chr[m362.ppuchrbus] >> 3) : 0x40;
 	uint16 mask = 0x0F;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M362CW(uint16 A, uint16 V) {
-	uint16 base = (game == 0) ? vrc24.chr[PPUCHRBus] : 0x200;
-	uint16 mask = (game == 0) ? 0x7F : 0x1FF;
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 base = (m362.game == 0) ? vrc24.chr[m362.ppuchrbus] : 0x200;
+	uint16 mask = (m362.game == 0) ? 0x7F : 0x1FF;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M362CHRWrite) {
+static DECLFW(WriteCHR) {
 	VRC24_Write(A, V);
-	if ((game == 0) && (A & 0x01)) {
+	if ((m362.game == 0) && (A & 0x01)) {
 		/* NOTE: Because the lst higher 2 CHR-ROM bits are repurposed as PRG/CHR outer bank,
 		an extra PRG sync after a CHR write. */
 		VRC24_SyncPRG();
 	}
 }
 
-static void M362PPUHook(uint32 A) {
+static void HBIRQHook(uint32 A) {
 	uint8 bank = (A & 0x1FFF) >> 10;
-	if ((game == 0) && (PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
-		PPUCHRBus = bank;
+	if ((m362.game == 0) && (m362.ppuchrbus != bank) && ((A & 0x3000) != 0x2000)) {
+		m362.ppuchrbus = bank;
 		VRC24_SyncCHR();
 		VRC24_SyncPRG();
 	}
 }
 
-static void M362Reset(void) {
+static void Reset(void) {
 	if (ROM.prg.size <= (512 * 1024)) {
-		game = 0;
+		m362.game = 0;
 	} else {
-		game = (game + 1) & 0x01;
+		m362.game = (m362.game + 1) & 0x01;
 	}
 	VRC24_SyncCHR();
 	VRC24_SyncPRG();
 }
 
-static void M362Power(void) {
-	PPUCHRBus = game = 0;
+static void Power(void) {
+	memset(&m362, 0, sizeof(m362));
 	VRC24_Power();
-	SetWriteHandler(0xB000, 0xEFFF, M362CHRWrite);
+	SetWriteHandler(0xB000, 0xEFFF, WriteCHR);
 }
 
 void Mapper362_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x01, 0x02, 0, 0);
-	info->Reset = M362Reset;
-	info->Power = M362Power;
-	PPU_hook = M362PPUHook;
-	VRC24_pwrap = M362PW;
-	VRC24_cwrap = M362CW;
+	VRC24_pwrap = SetPRG;
+	VRC24_cwrap = SetCHR;
+
+	info->Reset = Reset;
+	info->Power = Power;
+	PPU_hook = HBIRQHook;
+
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,62 +20,71 @@
  */
 
 /* NES 2.0 Mapper 472 denotes the 恒格 FK-206 JG MMC3-compatible PCB. It is basically mapper 52 with the bits reshuffled. */
+/* 11-in-1 (JY008) (Unl) */
 
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m472;
+
 static uint8 dipsw;
 
-static void M472CW(uint16 A, uint16 V) {
-	uint16 mask = (reg & 0x20) ? 0x7F : 0xFF;
-	uint16 base = reg << 3;
+static SFORMAT StateRegs[] = {
+	{ &m472.reg, 1, "EXPR" },
+	{ 0 }
+};
 
-	/* FCEU_printf("CHR: A:%04x V:%02x R0:%02x\n", A, V, reg); */
-	setchr1(A, (base & ~mask) | (V & mask));
-}
-
-static void M472PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	uint16 mask = 0x0F;
-	uint16 base = reg & 0xF0;
+	uint16 base = m472.reg & 0xF0;
 
-	/* FCEU_printf("PRG: A:%04x V:%02x R0:%02x\n", A, V, reg); */
+	/* FCEU_printf("PRG: A:%04x V:%02x R0:%02x\n", A, V, m472.reg); */
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M472Write) {
-	/* FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, reg); */
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = (m472.reg & 0x20) ? 0x7F : 0xFF;
+	uint16 base = m472.reg << 3;
+
+	/* FCEU_printf("CHR: A:%04x V:%02x R0:%02x\n", A, V, m472.reg); */
+	setchr1(A, (base & ~mask) | (V & mask));
+}
+
+static DECLFW(WriteReg) {
+	/* FCEU_printf("Wr: A:%04x V:%02x R0:%02x\n", A, V, m472.reg); */
 	if (MMC3_WramIsWritable()) {
-		reg = V;
+		m472.reg = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static DECLFR(M472Read) {
+static DECLFR(ReadDIP) {
 	/* FCEU_printf("Rd: A:%04x DIP:%02x\n", A, dipsw); */
 	return dipsw;
 }
 
-static void M472Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m472.reg = 0;
 	dipsw ^= 0x80; /* any other variants? */
 	MMC3_Reset();
 }
 
-static void M472Power(void) {
-	reg = 0;
+static void Power(void) {
+	m472.reg = 0;
 	dipsw = 0x80; /* start with 4-in-1 menu */
 	MMC3_Power();
-	SetReadHandler(0x6000, 0x7FFF, M472Read);
-	SetWriteHandler(0x6000, 0x7FFF, M472Write);
+	SetReadHandler(0x6000, 0x7FFF, ReadDIP);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper472_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M472CW;
-	MMC3_pwrap = M472PW;
-	info->Power = M472Power;
-	info->Reset = M472Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(&m472.reg, 1, 0, "EXPR");
 }

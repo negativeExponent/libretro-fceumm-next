@@ -23,16 +23,18 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m319;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REG" },
-	{ &dipsw, 1, "DPSW" },
+	{ m319.reg, 2, "REG" },
 	{ 0 }
 };
 
-static void M319Sync(void) {
+static void Sync(void) {
 	uint16 bank, mask;
 
 	if (iNESCart.CRC32 == 0xE5B9AB1F || iNESCart.PRGCRC32 == 0xC25FD362) {
@@ -41,51 +43,51 @@ static void M319Sync(void) {
 		 * PRG A14 mode bit operates on A16 instead of A14. To obtain the
 		 * correct bank order, use UNIF 16 KiB PRG banks 0, 4, 1, 5, 2, 6, 3, 7.
 		 */
-		bank = (reg[1] >> 3) & 7;
-		mask = (reg[1] >> 4) & 4;
+		bank = (m319.reg[1] >> 3) & 7;
+		mask = (m319.reg[1] >> 4) & 4;
 
 		setprg16(0x8000, bank & ~mask);
 		setprg16(0xC000, bank | mask);
 	} else {
-		bank = ((reg[1] >> 2) & 0x06) | ((reg[1] >> 5) & 0x01);
-		mask = (reg[1] >> 6) & 0x01;
+		bank = ((m319.reg[1] >> 2) & 0x06) | ((m319.reg[1] >> 5) & 0x01);
+		mask = (m319.reg[1] >> 6) & 0x01;
 
 		setprg16(0x8000, (bank & ~mask));
 		setprg16(0xC000, (bank | mask));
 	}
 
-	bank = reg[0] >> 4;
-	mask = (reg[0] << 2) & 0x04;
+	bank = m319.reg[0] >> 4;
+	mask = (m319.reg[0] << 2) & 0x04;
 
 	setchr8((bank & ~mask) | ((latch.data << 2) & mask));
-	setmirror(reg[1] >> 7);
+	setmirror(m319.reg[1] >> 7);
 }
 
-static DECLFR(M319ReadDIP) {
+static DECLFR(ReadDIP) {
 	return dipsw;
 }
 
-static DECLFW(M319Write) {
-	reg[(A >> 2) & 0x01] = V;
-	M319Sync();
+static DECLFW(WriteReg) {
+	m319.reg[(A >> 2) & 0x01] = V;
+	Sync();
 }
 
-static void M319Reset(void) {
-	reg[0] = reg[1] = 0;
+static void Reset(void) {
+	memset(&m319, 0, sizeof(m319));
 	dipsw ^= 0x40;
-	M319Sync();
+	Sync();
 }
 
-static void M319Power(void) {
-	reg[0] = reg[1] = dipsw = 0;
+static void Power(void) {
+	memset(&m319, 0, sizeof(m319));
 	Latch_Power();
-	SetReadHandler(0x5000, 0x5FFF, M319ReadDIP);
-	SetWriteHandler(0x6000, 0x7FFF, M319Write);
+	SetReadHandler(0x5000, 0x5FFF, ReadDIP);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper319_Init(CartInfo *info) {
-	Latch_Init(info, M319Sync, NULL, 0, 0);
-	info->Power = M319Power;
-	info->Reset = M319Reset;
+	Latch_Init(info, Sync, NULL, 0, 0);
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

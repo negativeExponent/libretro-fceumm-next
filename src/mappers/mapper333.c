@@ -23,50 +23,65 @@
  *
  * no reset-citcuit, so selected game can be reset, but to change it you must use power
  *
+ * UNIF: BMC-NEWSTAR-GRM070-8IN1
+ *
  */
 
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m333;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m333.reg, 1, "EXPR" },
 	{ 0 }
 };
 
-static void M333CW(uint16 A, uint16 V) {
-	setchr1(A, ((reg & 0x0C) << 5) | (V & 0x7F));
-}
+static void SetPRGBank(uint16 A, uint16 V) {
+	uint16 base = m333.reg << 2;
+	uint16 mask = 0x0F;
 
-static void M333PW(uint16 A, uint16 V) {
-	if (reg & 0x10) { /* MMC3 mode */
-		setprg8(A, ((reg & 0x0C) << 2) | (V & 0x0F));
+	if (m333.reg & 0x10) { /* MMC3 mode */
+		setprg8(A, (base & ~mask) | (V & mask));
 	} else {
-		setprg32(0x8000, reg & 0x0F);
+		setprg32(0x8000, m333.reg);
 	}
 }
 
-static DECLFW(M333Write) {
-	if (A & 0x1000) {
-		reg = V;
-		MMC3_SyncPRG();
-		MMC3_SyncCHR();
-	} else {
-		MMC3_Write(A, V);
-	}
+static void SetCHRBank(uint16 A, uint16 V) {
+	uint16 base = m333.reg << 5;
+	uint16 mask = 0x7F;
+
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void M333Power(void) {
-	reg = 0;
+static DECLFW(WriteReg) {
+	m333.reg = V;
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
+}
+
+static void Reset(void) {
+	memset(&m333, 0, sizeof(m333));
+	MMC3_Reset();
+}
+
+static void Power(void) {
+	memset(&m333, 0, sizeof(m333));
 	MMC3_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M333Write);
+	SetWriteHandler(0x9000, 0x9FFF, WriteReg);
+	SetWriteHandler(0xB000, 0xBFFF, WriteReg);
+	SetWriteHandler(0xD000, 0xDFFF, WriteReg);
+	SetWriteHandler(0xF000, 0xFFFF, WriteReg);
 }
 
 void Mapper333_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M333CW;
-	MMC3_pwrap = M333PW;
-	info->Power = M333Power;
-	AddExState(&StateRegs, ~0, 0, NULL);
+	MMC3_cwrap = SetCHRBank;
+	MMC3_pwrap = SetPRGBank;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

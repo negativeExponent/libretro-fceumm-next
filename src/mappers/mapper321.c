@@ -24,49 +24,54 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m321;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m321.reg, 1, "EXPR" },
 	{ 0 }
 };
 
-static void M321PW(uint16 A, uint16 V) {
-	if (reg & 0x08) { /* NROM */
-		setprg32(0x8000, (reg & 0x04) | ((reg >> 4) & 0x03));
+static void SetPRGBank(uint16 A, uint16 V) {
+	uint16 mask = 0x0F;
+	uint16 base = m321.reg << 2;
+
+	if (m321.reg & 0x08) { /* NROM */
+		setprg32(0x8000, (m321.reg & 0x04) | ((m321.reg >> 4) & 0x03));
 	} else { /*  MMC3 */
-		setprg8(A, ((reg << 2) & ~0x0F) | (V & 0x0F));
+		setprg8(A, ((m321.reg << 2) & ~0x0F) | (V & 0x0F));
 	}
 }
 
-static void M321CW(uint16 A, uint16 V) {
-	setchr1(A, ((reg << 5) & ~0x7F) | (V & 0x7F));
+static void SetCHRBank(uint16 A, uint16 V) {
+	setchr1(A, ((m321.reg << 5) & ~0x7F) | (V & 0x7F));
 }
 
-static DECLFW(M321Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
 		CartBW(A, V);
-		reg = V & 0xFF;
+		m321.reg = V & 0xFF;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
 static void M321Reset(void) {
-	reg = 0;
+	m321.reg = 0;
 	MMC3_Reset();
 }
 
 static void M321Power(void) {
-	reg = 0;
+	m321.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M321Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper321_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M321CW;
-	MMC3_pwrap = M321PW;
+	MMC3_cwrap = SetCHRBank;
+	MMC3_pwrap = SetPRGBank;
 	info->Power = M321Power;
 	info->Reset = M321Reset;
 	AddExState(StateRegs, ~0, 0, NULL);

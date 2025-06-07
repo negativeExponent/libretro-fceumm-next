@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +18,17 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/*
+ * NES 2.0 Mapper 459 denotes an unmarked circuit board used by 卡聖 (Kǎshèng)'s
+ * 天龍八強 (VQ-168) multicart.
+ */
+
 #include "mapinc.h"
 #include "latch.h"
 
 static void Sync(void) {
 	uint8 prg = latch.addr >> 4;
-	uint8 chr = (latch.addr & 0x03) | ((latch.addr >> 2) & 0x04) | ((latch.addr >> 4) & 0x08);
+	uint8 chr = ((latch.addr >> 4) & 0x08) | ((latch.addr >> 2) & 0x04) | (latch.addr & 0x03);
 	uint8 mirr = ((latch.addr >> 8) & 0x01) ^ 0x01;
 
 	if (latch.addr & 0x04) {

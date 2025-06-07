@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2005 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,44 +25,41 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 dipsw;
-
-static SFORMAT StateRegs[] = {
-	{ &dipsw, 1, "DPSW" },
-	{ 0 }
-};
+static uint8 dipsw = 0;
 
 static void Sync(void) {
 	uint8 prg = (latch.addr >> 2) & 0x1F;
-	uint8 nrom = (latch.addr & 0x80) != 0;
+	uint8 invert = (latch.addr & 0x80) != 0;
 	uint8 unrom = (latch.addr & 0x200) != 0;
 
 	setprg16(0x8000, prg);
-	setprg16(0xC000, (prg & ~(0x07 * nrom)) | (0x07 * unrom));
+	setprg16(0xC000, (prg & ~(0x07 * invert)) | (0x07 * unrom));
 	setchr8(0);
 	setmirror(((latch.addr & 2) >> 1) ^ 1);
 }
 
-static DECLFR(M301Read) {
+static uint8 lastdip;
+
+static DECLFR(ReadDIP) {
 	if ((latch.addr & 0x100) && (PRGsize[0] <= (512 * 1024))) {
 		A = (A & 0xFFFE) + (dipsw & 0x01);
 	}
+
 	return CartBR(A);
 }
 
-static void M301Power(void) {
-	dipsw = 0;
+static void Power(void) {
+	dipsw = 0x01;
 	Latch_Power();
 }
 
-static void M301Reset(void) {
+static void Reset(void) {
 	dipsw++;
 	Latch_RegReset();
 }
 
 void Mapper301_Init(CartInfo *info) {
-	Latch_Init(info, Sync, M301Read, FALSE, FALSE);
-	info->Power = M301Power;
-	info->Reset = M301Reset;
-	AddExState(StateRegs, ~0, 0, NULL);
+	Latch_Init(info, Sync, ReadDIP, FALSE, FALSE);
+	info->Power = Power;
+	info->Reset = Reset;
 }

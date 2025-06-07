@@ -24,67 +24,66 @@
 #include "mapinc.h"
 #include "mmc1.h"
 
-static uint8 reg;
-static uint8 bits;
-static uint8 shift;
+static struct {
+	uint8 reg;
+	uint8 bits;
+	uint8 shift;
+} m543;
 
 static SFORMAT StateRegs[] = {
-	{ &bits, 1, "BITS" },
-	{ &shift, 1, "SHFT" },
-	{ &reg, 1, "REG0" },
+	{ &m543.bits, 1, "BITS" },
+	{ &m543.shift, 1, "SHFT" },
+	{ &m543.reg, 1, "REG0" },
 	{ 0 }
 };
 
-static void M543PW(uint16 A, uint16 V) {
-	setprg16(A, (reg << 4) | (V & 0x0F));
+static void SetPRG(uint16 A, uint16 V) {
+	setprg16(A, (m543.reg << 4) | (V & 0x0F));
 }
 
-static void M543CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr4(A, (V & 0x07));
 }
 
-static void M543WW(void) {
+static void SyncWRAM(void) {
 	uint32 wramBank;
 
-	if (reg & 0x02) {
-		wramBank = 0x04 | ((reg >> 1) & 0x02) | (reg & 0x01);
+	if (m543.reg & 0x02) {
+		wramBank = 0x04 | ((m543.reg >> 1) & 0x02) | (m543.reg & 0x01);
 	} else {
-		wramBank = ((reg << 1) & 0x02) | ((MMC1_GetCHRBank(0) >> 3) & 0x01);
+		wramBank = ((m543.reg << 1) & 0x02) | ((MMC1_GetCHRBank(0) >> 3) & 0x01);
 	}
 	setprg8r(0x10, 0x6000, wramBank);
 }
 
-static DECLFW(M543Write) {
-	bits |= ((V >> 3) & 0x01) << shift++;
-	if (shift == 4) {
-		reg = bits;
-		bits = shift = 0;
+static DECLFW(WriteReg) {
+	m543.bits |= ((V >> 3) & 0x01) << m543.shift++;
+	if (m543.shift == 4) {
+		m543.reg = m543.bits;
+		m543.bits = m543.shift = 0;
 		MMC1_SyncPRG();
 		MMC1_SyncCHR();
+		MMC1_SyncWRAM();
 	}
 }
 
-static void M543Reset(void) {
-	bits = 0;
-	shift = 0;
-	reg = 0;
+static void Reset(void) {
+	memset(&m543, 0, sizeof(m543));
 	MMC1_Reset();
 }
 
-static void M543Power(void) {
-	bits = 0;
-	shift = 0;
-	reg = 0;
+static void Power(void) {
+	memset(&m543, 0, sizeof(m543));
 	MMC1_Power();
-	SetWriteHandler(0x5000, 0x5FFF, M543Write);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 }
 
 void Mapper543_Init(CartInfo *info) {
 	MMC1_Init(info, MMC1B, 64, info->battery ? 64 : 0);
-	info->Power = M543Power;
-	info->Reset = M543Reset;
-	MMC1_cwrap = M543CW;
-	MMC1_pwrap = M543PW;
-	MMC1_wwrap = M543WW;
+	info->Power = Power;
+	info->Reset = Reset;
+	MMC1_cwrap = SetCHR;
+	MMC1_pwrap = SetPRG;
+	MMC1_SyncWRAM = SyncWRAM;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -210,44 +210,46 @@ static const uint8 tgd4800[2048] = {
 	0x78, 0x4f
 };
 
-static uint8 prg[4];
-static uint8 chr1K[8];
-static uint8 chr8k;
-static uint8 latch;
+static struct {
+	uint8 prg[4];
+	uint8 chr1K[8];
+	uint8 chr8k;
+	uint8 latch;
 
-static uint8 reg1M;
-static uint8 reg2M;
-static uint8 regtgd;
+	uint8 reg1M;
+	uint8 reg2M;
+	uint8 regtgd;
 
-static uint8 lockCHR;
-static uint8 lastCHRBank;
+	uint8 lockCHR;
+	uint8 lastCHRBank;
 
-static uint8 IRQa_fds;
-static int16 IRQCount_fds;
-static uint16 IRQCount_tgd;
-static uint16 count_target_tgd;
+	uint8 IRQa_fds;
+	int16 IRQCount_fds;
+	uint16 IRQCount_tgd;
+	uint16 count_target_tgd;
 
-static uint32 lastAddr;
+	uint32 lastPPUAddr;
+} m562;
 
 static writefunc writePPU;
 
 static SFORMAT StateRegs[] = {
-	{ &reg1M, 1, "REG1" },
-	{ &reg2M, 1, "REG2" },
-	{ &regtgd, 1, "REGT" },
-	{ &latch, 1, "LATC" },
-	{ &chr8k, 1, "CREG" },
-	{ &lockCHR, 1, "CHRL" },
-	{ chr1K, 8, "CHR1" },
-	{ prg, 4, "PREG" },
+	{ &m562.reg1M, 1, "REG1" },
+	{ &m562.reg2M, 1, "REG2" },
+	{ &m562.regtgd, 1, "REGT" },
+	{ &m562.latch, 1, "LATC" },
+	{ &m562.chr8k, 1, "CREG" },
+	{ &m562.lockCHR, 1, "CHRL" },
+	{ m562.chr1K, 8, "CHR1" },
+	{ m562.prg, 4, "PREG" },
 
-	{ &IRQa_fds, 1, "IRQa" },
-	{ &IRQCount_fds, 2, "FDSC" },
+	{ &m562.IRQa_fds, 1, "IRQa" },
+	{ &m562.IRQCount_fds, 2, "FDSC" },
 
-	{ &IRQCount_tgd, 2, "TGDC" },
-	{ &count_target_tgd, 2, "TGDT" },
+	{ &m562.IRQCount_tgd, 2, "TGDC" },
+	{ &m562.count_target_tgd, 2, "TGDT" },
 
-	{ &lastAddr, 1, "LADR" },
+	{ &m562.lastPPUAddr, 1, "LADR" },
 
 	{ 0 }
 };
@@ -255,71 +257,71 @@ static SFORMAT StateRegs[] = {
 static void Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
 	/* PRG memory can be writable */
-	SetupCartPRGMapping(0, PRGptr[0], PRGsize[0], !(reg1M & 0x02));
-	if (regtgd & 0x80) {
-		setprg8(0x8000, prg[0]);
-		setprg8(0xA000, prg[1]);
-		setprg8(0xC000, prg[2]);
-		setprg8(0xE000, prg[3]);
-	} else if (!(reg2M & 0x01)) {
-		setprg8(0x8000, (prg[0] & 0x0F) | ((reg2M >> 2) & 0x10));
-		setprg8(0xA000, (prg[1] & 0x0F) | ((reg2M >> 2) & 0x10));
-		setprg8(0xC000, (prg[2] & 0x0F));
-		setprg8(0xE000, (prg[3] & 0x0F));
+	SetupCartPRGMapping(0, PRGptr[0], PRGsize[0], !(m562.reg1M & 0x02));
+	if (m562.regtgd & 0x80) {
+		setprg8(0x8000, m562.prg[0]);
+		setprg8(0xA000, m562.prg[1]);
+		setprg8(0xC000, m562.prg[2]);
+		setprg8(0xE000, m562.prg[3]);
+	} else if (!(m562.reg2M & 0x01)) {
+		setprg8(0x8000, (m562.prg[0] & 0x0F) | ((m562.reg2M >> 2) & 0x10));
+		setprg8(0xA000, (m562.prg[1] & 0x0F) | ((m562.reg2M >> 2) & 0x10));
+		setprg8(0xC000, (m562.prg[2] & 0x0F));
+		setprg8(0xE000, (m562.prg[3] & 0x0F));
 	} else {
-		switch (reg1M >> 5) {
+		switch (m562.reg1M >> 5) {
 		case 0:
-			setprg16(0x8000, latch & 0x07);
+			setprg16(0x8000, m562.latch & 0x07);
 			setprg16(0xC000, 0x07);
 			break;
 		case 1:
-			setprg16(0x8000, (latch >> 2) & 0x0F);
+			setprg16(0x8000, (m562.latch >> 2) & 0x0F);
 			setprg16(0xC000, 0x07);
 			break;
 		case 2:
-			setprg16(0x8000, latch & 0x0F);
+			setprg16(0x8000, m562.latch & 0x0F);
 			setprg16(0xC000, 0x0F);
 			break;
 		case 3:
 			setprg16(0x8000, 0x0F);
-			setprg16(0xC000, latch & 0x0F);
+			setprg16(0xC000, m562.latch & 0x0F);
 			break;
 		case 4:
-			setprg32(0x8000, (latch >> 4) & 0x03);
+			setprg32(0x8000, (m562.latch >> 4) & 0x03);
 			break;
 		case 5:
 			setprg32(0x8000, 0x03);
 			break;
 		case 6:
-			setprg8(0x8000, latch & 0x0F);
-			setprg8(0xA000, latch >> 4);
+			setprg8(0x8000, m562.latch & 0x0F);
+			setprg8(0xA000, m562.latch >> 4);
 			setprg16(0xC000, 0x07);
 			break;
 		case 7:
-			setprg8(0x8000, latch & 0x0E);
-			setprg8(0xA000, (latch >> 4) | 0x01);
+			setprg8(0x8000, m562.latch & 0x0E);
+			setprg8(0xA000, (m562.latch >> 4) | 0x01);
 			setprg16(0xC000, 0x07);
 			break;
 		}
 	}
 
 	/* CHR RAN can be write-protected */
-	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], !(((reg1M & 0xE0) & 0x80) || lockCHR));
+	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], !(((m562.reg1M & 0xE0) & 0x80) || m562.lockCHR));
 
-	if (regtgd & 0x40) {
-		setchr1(0x0000, chr1K[0]);
-		setchr1(0x0400, chr1K[1]);
-		setchr1(0x0800, chr1K[2]);
-		setchr1(0x0C00, chr1K[3]);
-		setchr1(0x1000, chr1K[4]);
-		setchr1(0x1400, chr1K[5]);
-		setchr1(0x1800, chr1K[6]);
-		setchr1(0x1C00, chr1K[7]);
+	if (m562.regtgd & 0x40) {
+		setchr1(0x0000, m562.chr1K[0]);
+		setchr1(0x0400, m562.chr1K[1]);
+		setchr1(0x0800, m562.chr1K[2]);
+		setchr1(0x0C00, m562.chr1K[3]);
+		setchr1(0x1000, m562.chr1K[4]);
+		setchr1(0x1400, m562.chr1K[5]);
+		setchr1(0x1800, m562.chr1K[6]);
+		setchr1(0x1C00, m562.chr1K[7]);
 	} else {
-		setchr8(chr8k);
+		setchr8(m562.chr8k);
 	}
 
-	switch (reg1M & 0x11) {
+	switch (m562.reg1M & 0x11) {
 	case 0x00:
 		setmirror(MI_0);
 		break;
@@ -345,22 +347,22 @@ static DECLFR(M562ReadReg) {
 	case 0x4405:
 	case 0x4406:
 	case 0x4407:
-		return chr1K[A & 0x07];
+		return m562.chr1K[A & 0x07];
 	case 0x4408:
 	case 0x4409:
 	case 0x440A:
 	case 0x440B:
-		return (prg[A & 0x03] << 2) | (latch & 0x03);
+		return (m562.prg[A & 0x03] << 2) | (m562.latch & 0x03);
 	case 0x440C:
-		return (IRQCount_tgd >> 8);
+		return (m562.IRQCount_tgd >> 8);
 	case 0x440D:
-		return (IRQCount_tgd & 0xFF);
+		return (m562.IRQCount_tgd & 0xFF);
 	case 0x4411:
-		return regtgd;
+		return m562.regtgd;
 	case 0x4415:
-		return reg1M;
+		return m562.reg1M;
 	case 0x4420:
-		return chr1K[lastCHRBank];
+		return m562.chr1K[m562.lastCHRBank];
 	default:
 		if (A & 0x800) {
 			return tgd4800[A & 0x7FF];
@@ -376,18 +378,18 @@ static DECLFW(M562WriteReg) {
 		break;
 	case 0x4025:
 		X6502_IRQEnd(FCEU_IQEXT);
-		IRQa_fds = V;
-		if (IRQa_fds & 0x42) {
-			IRQCount_fds = 0;
+		m562.IRQa_fds = V;
+		if (m562.IRQa_fds & 0x42) {
+			m562.IRQCount_fds = 0;
 		}
 		break;
 	case 0x42FC:
 	case 0x42FD:
 	case 0x42FE:
 	case 0x42FF:
-		reg1M = (V & 0xF0) | (A & 0x03);
-		if (reg1M >= 0x80) {
-			lockCHR = 0;
+		m562.reg1M = (V & 0xF0) | (A & 0x03);
+		if (m562.reg1M >= 0x80) {
+			m562.lockCHR = 0;
 		}
 		Sync();
 		break;
@@ -395,8 +397,8 @@ static DECLFW(M562WriteReg) {
 	case 0x43FD:
 	case 0x43FE:
 	case 0x43FF:
-		reg2M = (V & 0xF0) | (A & 0x03);
-		chr8k = V & 0x03;
+		m562.reg2M = (V & 0xF0) | (A & 0x03);
+		m562.chr8k = V & 0x03;
 		Sync();
 		break;
 	case 0x4400:
@@ -407,41 +409,41 @@ static DECLFW(M562WriteReg) {
 	case 0x4405:
 	case 0x4406:
 	case 0x4407:
-		chr1K[A & 7] = V;
+		m562.chr1K[A & 7] = V;
 		Sync();
 		break;
 	case 0x440C:
 		X6502_IRQEnd(FCEU_IQEXT);
 		if (!(V & 0x80)) {
-			IRQCount_tgd = 0x8000;
+			m562.IRQCount_tgd = 0x8000;
 		}
-		count_target_tgd = (count_target_tgd & 0x00FF) | (V << 8);
+		m562.count_target_tgd = (m562.count_target_tgd & 0x00FF) | (V << 8);
 		break;
 	case 0x440D:
 		X6502_IRQEnd(FCEU_IQEXT);
-		count_target_tgd = (count_target_tgd & 0xFF00) | V;
+		m562.count_target_tgd = (m562.count_target_tgd & 0xFF00) | V;
 		break;
 	case 0x4411:
-		regtgd = V;
+		m562.regtgd = V;
 		Sync();
 		break;
 	}
 }
 
 static DECLFW(M562Write) {
-	if (reg1M & 0x02) {
-		latch = V;
-		switch (reg1M >> 5) {
+	if (m562.reg1M & 0x02) {
+		m562.latch = V;
+		switch (m562.reg1M >> 5) {
 		case 1:
 		case 4:
 		case 5:
-			chr8k = latch & 0x03;
+			m562.chr8k = m562.latch & 0x03;
 			break;
 		case 3:
-			chr8k = (latch >> 4) & 0x03;
+			m562.chr8k = (m562.latch >> 4) & 0x03;
 			break;
 		}
-		prg[(A >> 13) & 0x03] = V >> 2;
+		m562.prg[(A >> 13) & 0x03] = V >> 2;
 		Sync();
 	} else {
 		CartBW(A, V);
@@ -451,46 +453,46 @@ static DECLFW(M562Write) {
 extern uint32 RefreshAddr;
 static DECLFW(M562PPUWrite2007) {
 	if (!(RefreshAddr & 0x2000)) {
-		if ((reg1M >= 0xA0) && !(reg1M & 0x01)) {
-			lockCHR = !!(reg1M & 0x10);
+		if ((m562.reg1M >= 0xA0) && !(m562.reg1M & 0x01)) {
+			m562.lockCHR = !!(m562.reg1M & 0x10);
 		}
 	}
 	writePPU(A, V);
 }
 
 static void M562Reset(void) {
-	IRQa_fds = 0;
-	IRQCount_fds = 0;
-	IRQCount_tgd = 0xFFFF;
-	count_target_tgd = 0;
+	m562.IRQa_fds = 0;
+	m562.IRQCount_fds = 0;
+	m562.IRQCount_tgd = 0xFFFF;
+	m562.count_target_tgd = 0;
 	Sync();
 }
 
 static void M562Power(void) {
-	reg1M = (iNESCart.submapper << 5) | ((iNESCart.mirror == MI_V) ? 0x01 : 0x11) | 0x04 | 0x02;
-	reg2M = 0x03;
-	regtgd = 0x03;
+	m562.reg1M = (iNESCart.submapper << 5) | ((iNESCart.mirror == MI_V) ? 0x01 : 0x11) | 0x04 | 0x02;
+	m562.reg2M = 0x03;
+	m562.regtgd = 0x03;
 
-	latch = 0;
-	chr8k = 0;
-	lockCHR = FALSE;
+	m562.latch = 0;
+	m562.chr8k = 0;
+	m562.lockCHR = FALSE;
 
-	prg[0] = 0x1C;
-	prg[1] = 0x1D;
-	prg[2] = 0x1E;
-	prg[3] = 0x1F;
-	chr1K[0] = 0;
-	chr1K[1] = 1;
-	chr1K[2] = 2;
-	chr1K[3] = 3;
-	chr1K[4] = 4;
-	chr1K[5] = 5;
-	chr1K[6] = 6;
-	chr1K[7] = 7;
-	IRQa_fds = 0;
-	IRQCount_fds = 0;
-	IRQCount_tgd = 0xFFFF;
-	count_target_tgd = 0;
+	m562.prg[0] = 0x1C;
+	m562.prg[1] = 0x1D;
+	m562.prg[2] = 0x1E;
+	m562.prg[3] = 0x1F;
+	m562.chr1K[0] = 0;
+	m562.chr1K[1] = 1;
+	m562.chr1K[2] = 2;
+	m562.chr1K[3] = 3;
+	m562.chr1K[4] = 4;
+	m562.chr1K[5] = 5;
+	m562.chr1K[6] = 6;
+	m562.chr1K[7] = 7;
+	m562.IRQa_fds = 0;
+	m562.IRQCount_fds = 0;
+	m562.IRQCount_tgd = 0xFFFF;
+	m562.count_target_tgd = 0;
 
 	writePPU = GetWriteHandler(0x2007);
 	SetWriteHandler(0x2007, 0x2007, M562PPUWrite2007);
@@ -552,26 +554,26 @@ static void StateRestore(int version) {
 
 static void M562CPUIRQHook(int a) {
 	while (a--) {
-		IRQCount_fds += 3;
-		while ((IRQCount_fds >= 448) && (IRQa_fds & 0x80)) {
-			IRQCount_fds -= 448;
+		m562.IRQCount_fds += 3;
+		while ((m562.IRQCount_fds >= 448) && (m562.IRQa_fds & 0x80)) {
+			m562.IRQCount_fds -= 448;
 			X6502_IRQBegin(FCEU_IQEXT);
 		}
-		if (count_target_tgd & 0x8000) {
-			if (IRQCount_tgd == count_target_tgd && (IRQCount_tgd != 0xFFFF)) {
+		if (m562.count_target_tgd & 0x8000) {
+			if (m562.IRQCount_tgd == m562.count_target_tgd && (m562.IRQCount_tgd != 0xFFFF)) {
 				X6502_IRQBegin(FCEU_IQEXT);
 			} else {
-				IRQCount_tgd++;
+				m562.IRQCount_tgd++;
 			}
 		}
 	}
 }
 
 static void M562PPUHook(uint32 A) {
-	if ((lastAddr != A) && ((A & 0x3000) != 0x2000)) {
-		lastCHRBank = (A >> 13) & 0x07;
+	if ((m562.lastPPUAddr != A) && ((A & 0x3000) != 0x2000)) {
+		m562.lastCHRBank = (A >> 13) & 0x07;
 	}
-	lastAddr = A;
+	m562.lastPPUAddr = A;
 }
 
 void Mapper562_Init(CartInfo *info) {

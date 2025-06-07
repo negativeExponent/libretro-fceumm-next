@@ -3,7 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
  *  Copyright (C) 2002 Xodnizel
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,34 +25,43 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg;
+static struct {
+	uint8 outer;
+} m434;
+
+static SFORMAT StateRegs[] = {
+	{ &m434.outer, 1, "OUTB" },
+	{ 0 }
+};
 
 static void Sync(void) {
-	setprg16(0x8000, (reg << 3) | (latch.data & 0x07));
-	setprg16(0xC000, (reg << 3) | 0x07);
+	uint8 bank = (m434.outer << 3) | (latch.data & 0x07);
+
+	setprg16(0x8000, bank);
+	setprg16(0xC000, bank | 0x07);
 	setchr8(0);
-	setmirror((reg >> 5) & 0x01);
+	setmirror((m434.outer >> 5) & 0x01);
 }
 
-static DECLFW(M434WriteOuterBank) {
-	reg = V;
+static DECLFW(WriteOuter) {
+	m434.outer = V;
 	Sync();
 }
 
-static void M434Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m434.outer = 0;
 	Sync();
 }
 
-static void M434Power(void) {
-	reg = 0;
+static void Power(void) {
+	m434.outer = 0;
 	Latch_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M434WriteOuterBank);
+	SetWriteHandler(0x6000, 0x7FFF, WriteOuter);
 }
 
 void Mapper434_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
-	info->Reset = M434Reset;
-	info->Power = M434Power;
-	AddExState(&reg, 1, 0, "REGS");
+	info->Reset = Reset;
+	info->Power = Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

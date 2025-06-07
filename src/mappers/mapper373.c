@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2024 negativeExponent
+ *  Copyright (C) 2024-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,64 +23,68 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[4];
-static uint8 cmd;
+static struct {
+	uint8 reg[4];
+	uint8 cmd;
+} m373;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
-	{ &cmd, 1, "CMD0" },
+	{ m373.reg, 4, "EXPR" },
+	{ &m373.cmd, 1, "CMD0" },
 	{ 0 }
 };
 
-static void M373CW(uint16 A, uint16 V) {
-	uint32 mask = 0xFF >> (~reg[2] & 0xF);
-	uint32 base = reg[0] | reg[2] << 4 & 0xF00;
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = ~m373.reg[3] & 0x3F;
+	uint16 base = m373.reg[1] | m373.reg[2] << 2 & 0x300;
 
-	setchr1(A, base | (V & mask));
-}
-
-static void M373PW(uint16 A, uint16 V) {
-	uint16 mask = ~reg[3] & 0x3F;
-	uint16 base = reg[1] | reg[2] << 2 & 0x300;
-
-	if (reg[2] & 0x20) { /* GNROM-like */
-		setprg8(0x8000, base | ((mmc3.reg[6] & ~0x02) & mask));
-		setprg8(0xA000, base | ((mmc3.reg[7] & ~0x02) & mask));
-		setprg8(0xC000, base | ((mmc3.reg[6] | 0x02) & mask));
-		setprg8(0xE000, base | ((mmc3.reg[7] | 0x02) & mask));
+	if (m373.reg[2] & 0x20) { /* GNROM-like */
+		if (!(A & 0x4000)) {
+			setprg8(A, (base & ~mask) | ((V & mask) & 0xFD));
+			A += 0x4000;
+			setprg8(A, (base & ~mask) | ((V & mask) | 0x02));
+		}
 	} else {
 		setprg8(A, base | (V & mask));
 	}
 }
 
-static DECLFW(M373WriteReg) {
+static void SetCHR(uint16 A, uint16 V) {
+	uint32 mask = 0xFF >> (~m373.reg[2] & 0xF);
+	uint32 base = m373.reg[0] | ((m373.reg[2] << 4) & 0xF00);
+
+	/* CHR A10-A17, OR'd with MMC3's CHR A10-A17 masked according to CHR-AND */
+	setchr1(A, base | (V & mask));
+}
+
+static DECLFW(WriteReg) {
 	CartBW(A, V);
-	if (!(reg[3] & 0x40)) {
-		reg[cmd] = V;
-		cmd = (cmd + 1) & 0x03;
+	if (!(m373.reg[3] & 0x40)) {
+		m373.reg[m373.cmd] = V;
+		m373.cmd = (m373.cmd + 1) & 0x03;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M373Reset(void) {
-	reg[0] = reg[1] = reg[3] = cmd = 0;
-	reg[2] = 0x0F;
+static void Reset(void) {
+	memset(&m373, 0, sizeof(m373));
+	m373.reg[2] = 0x0F;
 	MMC3_Reset();
 }
 
-static void M373Power(void) {
-	reg[0] = reg[1] = reg[3] = cmd = 0;
-	reg[2] = 0x0F;
+static void Power(void) {
+	memset(&m373, 0, sizeof(m373));
+	m373.reg[2] = 0x0F;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M373WriteReg);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper373_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, info->battery);
-	MMC3_cwrap = M373CW;
-	MMC3_pwrap = M373PW;
-	info->Reset = M373Reset;
-	info->Power = M373Power;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Reset = Reset;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,12 +29,12 @@ static void Sync(void) {
 	setchr8(latch.data);
 }
 
-static void Mapper429_Reset(void) {
+static void Reset(void) {
 	latch.data = 4; /* Initial CHR bank 0, initial PRG bank 1 */
 	Sync();
 }
 
 void Mapper429_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Reset = Mapper429_Reset;
+	info->Reset = Reset;
 }

@@ -24,41 +24,42 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m478;
 
 static SFORMAT StateRegs[] = {
-	{ &reg[0], 1, "REGS" },
-	{ &reg[1], 1, "MODE" },
+	{ m478.reg, 2, "EXPR" },
 	{ 0 }
 };
 
-static void M478PW(uint16 A, uint16 V) {
-	uint16 base = (iNESCart.submapper == 1) ? (reg[0] << 3) : (reg[0] << 2);
-	uint16 mask = (iNESCart.submapper == 1) ? 0x0F : (((reg[0] & 0x0C) == 0x0C) ? 0x03 : 0x0F);
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 base = (iNESCart.submapper == 1) ? (m478.reg[0] << 3) : (m478.reg[0] << 2);
+	uint16 mask = (iNESCart.submapper == 1) ? 0x0F : (((m478.reg[0] & 0x0C) == 0x0C) ? 0x03 : 0x0F);
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M478CW(uint16 A, uint16 V) {
-	uint16 base = (iNESCart.submapper == 1) ? (reg[0] << 6) : (reg[0] << 5);
-	uint16 mask = (iNESCart.submapper == 1) ? 0x7F : (((reg[0] & 0x0C) == 0x0C) ? 0x1F : 0x7F);
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 base = (iNESCart.submapper == 1) ? (m478.reg[0] << 6) : (m478.reg[0] << 5);
+	uint16 mask = (iNESCart.submapper == 1) ? 0x7F : (((m478.reg[0] & 0x0C) == 0x0C) ? 0x1F : 0x7F);
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M478Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		if (reg[1] & 0x60) {
-			reg[0] = A & 0xFF;
-			reg[1] = V;
+		if (m478.reg[1] & 0x60) {
+			m478.reg[0] = A & 0xFF;
+			m478.reg[1] = V;
 			MMC3_SyncPRG();
 			MMC3_SyncCHR();
 		}
 	}
 }
 
-static DECLFW(M478WriteMMC3) {
-	if (reg[1] & 0x80) {
+static DECLFW(WriteMMC3) {
+	if (m478.reg[1] & 0x80) {
 		MMC3_Write(A, V);
 	} else {
 		/* Mickey Mouse */
@@ -72,25 +73,25 @@ static DECLFW(M478WriteMMC3) {
 	}
 }
 
-static void M478Reset(void) {
-	reg[0] = 0;
-	reg[1] = 0xF0;
+static void Reset(void) {
+	memset(&m478, 0, sizeof(m478));
+	m478.reg[1] = 0xF0;
 	MMC3_Reset();
 }
 
-static void M478Power(void) {
-	reg[0] = 0;
-	reg[1] = 0xF0;
+static void Power(void) {
+	memset(&m478, 0, sizeof(m478));
+	m478.reg[1] = 0xF0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M478Write);
-	SetWriteHandler(0x8000, 0xFFFF, M478WriteMMC3);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
+	SetWriteHandler(0x8000, 0xFFFF, WriteMMC3);
 }
 
 void Mapper478_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M478CW;
-	MMC3_pwrap = M478PW;
-	info->Reset = M478Reset;
-	info->Power = M478Power;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Reset = Reset;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

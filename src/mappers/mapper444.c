@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,67 +26,68 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m444;
+
 static uint8 dipsw;
 
-static void M444PW(uint16 A, uint16 V) {
-	uint16 mask = ((iNESCart.submapper & 0x04) && (reg & 0x02)) ? 0x1F : 0x0F;
-	uint16 base = reg << 4;
+static SFORMAT StateRegs[] = {
+	{ &m444.reg, 1, "EXPR" },
+	{ 0 }
+};
 
-	if (reg & 0x04) { /* NROM */
-		uint16 bank = (base & ~mask) | (mmc3.reg[6] & mask);
-		if (reg & 0x08) { /* NROM-128 */
-			setprg16(0x8000, bank >> 1);
-			setprg16(0xC000, bank >> 1);
-		} else { /* NROM-256 */
-			setprg32(0x8000, bank >> 2);
-		}
-	} else { /*  MMC3 */
-		setprg8(A, (base & ~mask) | (V & mask));
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = ((iNESCart.submapper & 0x04) && (m444.reg & 0x02)) ? 0x1F : 0x0F;
+	uint16 base = m444.reg << 4;
+
+	if (m444.reg & 0x04) { /* NROM */
+		V = (mmc3.reg[6] & ~((m444.reg & 0x08) ? 0x01 : 0x03)) | ((A >> 13) & ((m444.reg & 0x08) ? 0x01 : 0x03));
 	}
+
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M444CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	uint16 mask = (iNESCart.submapper & 0x01) ? 0xFF : 0x7F;
-	uint16 base = ((reg << 7) & ((iNESCart.submapper & 0x01) ? 0x00 : 0x80)) | ((reg << ((iNESCart.submapper & 0x02) ? 4 : 7)) & 0x100);
+	uint16 base = ((m444.reg << 7) & ((iNESCart.submapper & 0x01) ? 0x00 : 0x80)) | ((m444.reg << ((iNESCart.submapper & 0x02) ? 4 : 7)) & 0x100);
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFR(M444Read) {
-	if ((reg & 0x0C) == 0x08) {
+static DECLFR(ReadDIP) {
+	if ((m444.reg & 0x0C) == 0x08) {
 		return dipsw;
 	}
 	return CartBR(A);
 }
 
-static DECLFW(M444Write) {
-	reg = A & 0xFF;
+static DECLFW(WriteReg) {
+	m444.reg = A & 0xFF;
 	MMC3_SyncPRG();
 	MMC3_SyncCHR();
 }
 
-static void M444Reset(void) {
+static void Reset(void) {
+	memset(&m444, 0, sizeof(m444));
 	dipsw++;
 	dipsw &= 3;
-	reg = 0;
 	MMC3_Reset();
 }
 
-static void M444Power(void) {
+static void Power(void) {
+	memset(&m444, 0, sizeof(m444));
 	dipsw = 0;
-	reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M444Write);
-	SetReadHandler(0x8000, 0xFFFF, M444Read);
+	SetReadHandler(0x8000, 0xFFFF, ReadDIP);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper444_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M444CW;
-	MMC3_pwrap = M444PW;
-	info->Power = M444Power;
-	info->Reset = M444Reset;
-	AddExState(&reg, 1, 0, "EXPR");
-	AddExState(&dipsw, 1, 0, "DIPS");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

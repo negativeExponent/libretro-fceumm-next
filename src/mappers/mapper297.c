@@ -23,58 +23,56 @@
 #include "mapinc.h"
 #include "mmc1.h"
 
-static uint8 mode;
-static uint8 latch;
+static struct {
+	uint8 reg[2];
+} m297;
 
 static SFORMAT StateRegs[] = {
-	{ &mode, 1, "MODE" },
-	{ &latch, 1, "LATC" },
+	{ m297.reg, 2, "REGS" },
 	{ 0 }
 };
 
-static void M297PRG(uint16 A, uint16 V) {
+static void SetPRGBank_mmc1(uint16 A, uint16 V) {
 	setprg16(A, 0x08 | (V & 0x07));
 }
 
-static void M297CHR(uint16 A, uint16 V) {
+static void SetCHRBank_mmc1(uint16 A, uint16 V) {
 	setchr4(A, 0x20 | (V & 0x1F));
 }
 
 static void Sync(void) {
-	if (mode & 0x01) {
+	if (m297.reg[0] & 0x01) {
 		/* MMC1 */
 		MMC1_SyncPRG();
 		MMC1_SyncCHR();
 		MMC1_SyncMirror();
 	} else {
 		/* Mapper 70 */
-		setprg16(0x8000, ((mode & 0x02) << 1) | ((latch >> 4) & 0x03));
-		setprg16(0xC000, ((mode & 0x02) << 1) | 0x03);
-		setchr8(latch & 0x0F);
+		setprg16(0x8000, ((m297.reg[0] & 0x02) << 1) | ((m297.reg[1] >> 4) & 0x03));
+		setprg16(0xC000, ((m297.reg[0] & 0x02) << 1) | 0x03);
+		setchr8(m297.reg[1] & 0x0F);
 		setmirror(MI_V);
 	}
 }
 
 static DECLFW(M297Mode) {
 	if (A & 0x100) {
-		mode = V;
+		m297.reg[0] = V;
 		Sync();
 	}
 }
 
 static DECLFW(M297Latch) {
-	if (mode & 0x01) {
+	if (m297.reg[0] & 0x01) {
 		MMC1_Write(A, V);
 	} else {
-		latch = V;
+		m297.reg[1] = V;
 		Sync();
 	}
 }
 
-static void M297Power(void) {
-	latch = 0;
-	mode = 0;
-	Sync();
+static void Power(void) {
+	memset(&m297, 0, sizeof(m297));
 	MMC1_Power();
 	SetWriteHandler(0x4100, 0x5FFF, M297Mode);
 	SetWriteHandler(0x8000, 0xFFFF, M297Latch);
@@ -86,9 +84,9 @@ static void StateRestore(int version) {
 
 void Mapper297_Init(CartInfo *info) {
 	MMC1_Init(info, MMC1B, 0, 0);
-	info->Power = M297Power;
-	MMC1_cwrap = M297CHR;
-	MMC1_pwrap = M297PRG;
+	info->Power = Power;
+	MMC1_cwrap = SetCHRBank_mmc1;
+	MMC1_pwrap = SetPRGBank_mmc1;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

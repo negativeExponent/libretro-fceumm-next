@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright (C) 2019 Libretro Team
- * Copyright (C) 2023
+ * Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,64 +26,66 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg[2], dipsw;
+static struct {
+	uint8 reg[2];
+} m332;
+
+static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
-	{ &dipsw, 1, "DPSW" },
+	{ m332.reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint32 prg = ((reg[0] >> 3) & 0x08) | (reg[0] & 0x07);
-	uint32 chr = ((reg[0] >> 3) & 0x08) | (reg[1] & 0x07);
-	uint32 mask = (reg[1] & 0x10) ? 0 : (reg[1] & 0x20) ? 1 : 3;
+	uint32 prg = ((m332.reg[0] >> 3) & 0x08) | (m332.reg[0] & 0x07);
+	uint32 chr = ((m332.reg[0] >> 3) & 0x08) | (m332.reg[1] & 0x07);
+	uint32 mask = (m332.reg[1] & 0x10) ? 0 : (m332.reg[1] & 0x20) ? 1 : 3;
 
-	if (reg[0] & 0x08) {
+	if (m332.reg[0] & 0x08) {
 		setprg16(0x8000, prg);
 		setprg16(0xc000, prg);
 	} else {
 		setprg32(0x8000, prg >> 1);
 	}
 	setchr8((chr & ~mask) | (latch.data & mask));
-	setmirror(((reg[0] >> 4) & 0x01) ^ 0x01);
+	setmirror(((m332.reg[0] >> 4) & 0x01) ^ 0x01);
 }
 
-static DECLFR(M332Read) {
-	if ((reg[1] >> 6) & (dipsw & 0x03)) {
+static DECLFR(ReadDIP) {
+	if ((m332.reg[1] >> 6) & (dipsw & 0x03)) {
 		return cpu.openbus;
 	}
 	return CartBR(A);
 }
 
-static DECLFW(M332Write) {
-	if (!(reg[0] & 0x20)) {
-		reg[A & 0x01] = V;
+static DECLFW(WriteReg) {
+	if (!(m332.reg[0] & 0x20)) {
+		m332.reg[A & 0x01] = V;
 		Sync();
 	}
 }
 
-static void M332Reset(void) {
+static void Reset(void) {
+	memset(&m332, 0, sizeof(m332));
 	dipsw++; /* Soft-resetting cycles through solder pad or DIP switch settings */
 	if (dipsw == 3) {
 		dipsw = 0; /* Only 00b, 01b and 10b settings are valid */
 	}
-	/* Always reset to menu */
-	reg[0] = reg[1] = 0;
 	Latch_RegReset();
 }
 
-static void M332Power(void) {
+static void Power(void) {
+	memset(&m332, 0, sizeof(m332));
 	dipsw = 0;
-	reg[0] = reg[1] = 0;
 	Latch_Power();
-	SetReadHandler(0x8000, 0xFFFF, M332Read);
-	SetWriteHandler(0x6000, 0x7FFF, M332Write);
+	SetReadHandler(0x8000, 0xFFFF, ReadDIP);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper332_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Reset = M332Reset;
-	info->Power = M332Power;
+	info->Reset = Reset;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -299,11 +299,11 @@ FCEUGI *FCEUI_LoadGame(const char *name, const uint8_t *databuf, size_t databufs
 		result = iNESLoad(name, fp);
 		break;
 	case FTYPE_UNIF:
-		result = UNIFLoad(NULL, fp);
+		result = UNIFLoad(name, fp);
 		break;
 	case FTYPE_FDS:
 	case FTYPE_RAWFDS:
-		result = FDSLoad(NULL, fp);
+		result = FDSLoad(name, fp);
 		break;
 	case FTYPE_NSF:
 	case FTYPE_NSFE:

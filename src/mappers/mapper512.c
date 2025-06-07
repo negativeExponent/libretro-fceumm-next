@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,54 +29,56 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m512;
 
-static void M512MIR(void) {
-	if (reg == 1) {
-		SetupCartMirroring(4, 0, &CHRRAM[4096]);
-	} else {
-		setmirror((mmc3.mirr & 0x01) ^ 0x01);
-	}
+static SFORMAT StateRegs[] = {
+	{ &m512.reg, 1, "EXPR" },
+	{ 0 }
+};
+
+static void SetPRG(uint16 A, uint16 V) {
+	setprg8(A, (V & 0x3F));
 }
 
-static void M512CW(uint16 A, uint16 V) {
-	if (reg & 0x02) {
+static void SetCHR(uint16 A, uint16 V) {
+	if (m512.reg & 0x02) {
 		setchr1r(0x10, A, (V & 0x03));
 	} else {
 		setchr1(A, V & 0xFF);
 	}
 }
 
-static void M512PW(uint16 A, uint16 V) {
-	setprg8(A, (V & 0x3F));
+static void SyncMirror(void) {
+	if (m512.reg == 1) {
+		SetupCartMirroring(4, 0, &CHRRAM[4096]);
+	} else {
+		setmirror((mmc3.mirr & 0x01) ^ 0x01);
+	}
 }
 
-static DECLFW(M512Write) {
+static DECLFW(WriteReg) {
 	if (A & 0x100) {
-		reg = V & 0x03;
+		m512.reg = V & 0x03;
 		MMC3_SyncCHR();
 		MMC3_SyncMirror();
 	}
 }
 
-static void M512Close(void) {
-	MMC3_Close();
-}
-
-static void M512Power(void) {
-	reg = 0;
+static void Power(void) {
+	m512.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x4100, 0x4FFF, M512Write);
+	SetWriteHandler(0x4100, 0x4FFF, WriteReg);
 }
 
 void Mapper512_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, info->battery);
-	MMC3_cwrap = M512CW;
-	MMC3_pwrap = M512PW;
-	MMC3_SyncMirror = M512MIR;
-	info->Power = M512Power;
-	info->Close = M512Close;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	MMC3_SyncMirror = SyncMirror;
+	info->Power = Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

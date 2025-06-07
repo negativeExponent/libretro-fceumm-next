@@ -18,9 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* NOTE: Duplicate of Mapper 61. */
+
 #include "mapinc.h"
 #include "latch.h"
 
+#if 0
 static void Sync(void) {
 	uint8 prg = (latch.addr << 1) | ((latch.addr >> 5) & 0x01);
 	uint8 chr = latch.addr >> 8;
@@ -34,7 +37,8 @@ static void Sync(void) {
 	setchr8(chr);
 	setmirror(((latch.addr >> 7) & 0x01) ^ 0x01);
 }
-
+#endif
 void Mapper461_Init(CartInfo *info) {
-	Latch_Init(info, Sync, NULL, FALSE, FALSE);
+	/* Latch_Init(info, Sync, NULL, FALSE, FALSE); */
+	Mapper061_Init(info);
 }

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,41 +25,47 @@
 #include "mapinc.h"
 #include "mmc1.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m404;
 
-static void M404PW(uint16 A, uint16 V) {
-	uint8 mask = (reg & 0x40) ? 0x07 : 0x0F;
-	setprg16(A, ((reg << 3) & ~mask) | (V & mask));
+static SFORMAT StateRegs[] = {
+	{ &m404.reg, 1, "EXPR" }
+};
+
+static void SetPRG(uint16 A, uint16 V) {
+	uint8 mask = (m404.reg & 0x40) ? 0x07 : 0x0F;
+	setprg16(A, ((m404.reg << 3) & ~mask) | (V & mask));
 }
 
-static void M404CW(uint16 A, uint16 V) {
-	setchr4(A, (reg << 5) | (V & 0x1F));
+static void SetCHR(uint16 A, uint16 V) {
+	setchr4(A, (m404.reg << 5) | (V & 0x1F));
 }
 
-static DECLFW(M404Write) {
-	if (!(reg & 0x80)) {
-		reg = V;
+static DECLFW(WriteReg) {
+	if (!(m404.reg & 0x80)) {
+		m404.reg = V;
 		MMC1_SyncPRG();
 		MMC1_SyncCHR();
 	}
 }
 
-static void M404Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m404, 0, sizeof(m404));
 	MMC1_Reset();
 }
 
-static void M404Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m404, 0, sizeof(m404));
 	MMC1_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M404Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper404_Init(CartInfo *info) {
 	MMC1_Init(info, MMC1B, 0, 0);
-	info->Power = M404Power;
-	info->Reset = M404Reset;
-	MMC1_cwrap = M404CW;
-	MMC1_pwrap = M404PW;
-	AddExState(&reg, 1, 0, "BANK");
+	info->Power = Power;
+	info->Reset = Reset;
+	MMC1_cwrap = SetCHR;
+	MMC1_pwrap = SetPRG;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

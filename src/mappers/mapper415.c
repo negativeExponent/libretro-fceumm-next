@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,12 +29,12 @@ static void Sync(void) {
 	setmirror(((latch.data >> 4) & 0x01) ^ 0x01);
 }
 
-static void M415Power(void) {
+static void Power(void) {
 	Latch_Power();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 }
 
 void Mapper415_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M415Power;
+	info->Power = Power;
 }

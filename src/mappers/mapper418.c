@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,17 +23,12 @@
 #include "mapinc.h"
 #include "n118.h"
 
-static void M418SyncCHR(void) {
-	setchr2(0x0000, (n118.reg[0] & 0x3F) >> 1);
-	setchr2(0x0800, (n118.reg[1] & 0x3F) >> 1);
-	setchr1(0x1000, n118.reg[2] & 0x3F);
-	setchr1(0x1400, n118.reg[3] & 0x3F);
-	setchr1(0x1800, n118.reg[4] & 0x3F);
-	setchr1(0x1C00, n118.reg[5] & 0x3F);
+static void SetCHR(void) {
+	setchr8(0);
 	setmirror((n118.reg[5] & 0x01) ^ 0x01);
 }
 
 void Mapper418_Init(CartInfo *info) {
 	N118_Init(info, 0, 0);
-	N118_SyncCHR = M418SyncCHR;
+	N118_SyncCHR = SetCHR;
 }

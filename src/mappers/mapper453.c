@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ static void Sync(void) {
 	setchr8(0);
 }
 
-static DECLFW(M453Write) {
+static DECLFW(WriteLatch) {
 	if (latch.data & 0xE0) {
 		latch.data = (latch.data & 0xE0) | (V & ~0xE0);
 	} else {
@@ -47,13 +47,13 @@ static DECLFW(M453Write) {
 	Sync();
 }
 
-static void M453Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M453Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper453_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M453Power;
+	info->Power = Power;
 	info->Reset = Latch_RegReset;
 }

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,14 +37,9 @@ static void Sync(void) {
 		setprg16(0xC000, prg | 0x07);
 	}
 
-	if (latch.addr & 0x800) {
-		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
-	} else {
-		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
-	}
-
-	setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, !(latch.addr & 0x800));
 	setchr8(0);
+	setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
 }
 
 void Mapper435_Init(CartInfo *info) {

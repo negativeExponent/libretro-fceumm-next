@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,42 +25,44 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 nt[4];
-static uint8 cpuC;
+static struct {
+	uint8 nt[4];
+	uint8 prg;
+} m559;
 
 static SFORMAT StateRegs[] = {
-	{ &cpuC, 1, "CPUC" },
-	{ nt, 4, "NTBL" },
+	{ &m559.prg, 1, "PRGC" },
+	{ m559.nt, 4, "NTBL" },
 	{ 0 }
 };
 
-static void M559PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	if (A == 0xC000) {
-		setprg8(A, cpuC & 0x1F);
+		setprg8(A, m559.prg & 0x1F);
 	} else {
 		setprg8(A, V & 0x1F);
 	}
 }
 
-static void M559CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, V & 0x1FF);
 }
 
-static void M559MIRR(void) {
-	setmirrorw(nt[0] & 0x01, nt[1] & 0x01, nt[2] & 0x01, nt[3] & 0x01);
+static void SyncMirror(void) {
+	setmirrorw(m559.nt[0] & 0x01, m559.nt[1] & 0x01, m559.nt[2] & 0x01, m559.nt[3] & 0x01);
 }
 
-static DECLFW(M559WriteMisc) {
+static DECLFW(WriteMisc) {
 	if (A & 0x04) {
-		nt[A & 0x03] = V;
+		m559.nt[A & 0x03] = V;
 		VRC24_SyncMirror();
 	} else {
-		cpuC = V;
+		m559.prg = V;
 		VRC24_SyncPRG();
 	}
 }
 
-static DECLFW(M559WriteNibble) {
+static DECLFW(WriteVRC4) {
 	/* nibblize address */
 	if (A & 0x400) {
 		V >>= 4;
@@ -68,22 +70,22 @@ static DECLFW(M559WriteNibble) {
 	VRC24_Write(A, V);
 }
 
-static void M559Power(void) {
-	nt[0] = 0;
-	nt[1] = 0;
-	nt[2] = 1;
-	nt[3] = 1;
-	cpuC = ~1;
+static void Power(void) {
+	m559.nt[0] = 0;
+	m559.nt[1] = 0;
+	m559.nt[2] = 1;
+	m559.nt[3] = 1;
+	m559.prg = ~1;
 	VRC24_Power();
-	SetWriteHandler(0xB000, 0xFFFF, M559WriteNibble);
+	SetWriteHandler(0xB000, 0xFFFF, WriteVRC4);
 }
 
 void Mapper559_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x400, 0x800, 1, 1);
-	info->Power = M559Power;
-	VRC24_SyncMirror = M559MIRR;
-	VRC24_pwrap = M559PW;
-	VRC24_cwrap = M559CW;
-	VRC24_WriteExtSelect = M559WriteMisc;
+	info->Power = Power;
+	VRC24_SyncMirror = SyncMirror;
+	VRC24_pwrap = SetPRG;
+	VRC24_cwrap = SetCHR;
+	VRC24_WriteExtSelect = WriteMisc;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

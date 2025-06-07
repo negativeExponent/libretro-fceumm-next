@@ -26,81 +26,69 @@
 #include "mapinc.h"
 #include "fdssound.h"
 
-static uint8 prg[4];
-static uint8 chr[8];
-static uint8 reg[4];
+static struct {
+	uint8 prg[4];
+	uint8 chr[8];
+	uint8 reg[4];
 
-static uint8 IRQReload;
-static uint8 IRQa;
-static uint8 irqPA12;
-static uint8 IRQAutoEnable;
-static uint8 IRQLatch;
-static uint8 IRQCount;
-static int16 IRQCount16;
+	uint8 IRQReload;
+	uint8 IRQa;
+	uint8 IRQPA12;
+	uint8 IRQAutoEnable;
+	uint8 IRQLatch;
+	uint8 IRQCount;
+	int16 IRQCount16;
+} m359;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 4, "PREG" },
-	{ chr, 8, "CREG" },
-	{ reg, 4, "EXPR" },
-	{ &IRQReload, 1, "IRQL" },
-	{ &IRQa, 1, "IRQa" },
-	{ &irqPA12, 1, "IRQp" },
-	{ &IRQAutoEnable, 1, "IRQe" },
-	{ &IRQLatch, 1, "IRQl" },
-	{ &IRQCount, 1, "IRQ8" },
-	{ &IRQCount16, 2, "IRQC" },
+	{ m359.prg, 4, "PREG" },
+	{ m359.chr, 8, "CREG" },
+	{ m359.reg, 4, "EXPR" },
+	{ &m359.IRQReload, 1, "IRQL" },
+	{ &m359.IRQa, 1, "IRQa" },
+	{ &m359.IRQPA12, 1, "IRQp" },
+	{ &m359.IRQAutoEnable, 1, "IRQe" },
+	{ &m359.IRQLatch, 1, "IRQL" },
+	{ &m359.IRQCount, 1, "IRQC" },
+	{ &m359.IRQCount16, 2, "IQ16" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	uint16 prgMask = 0x3F;
-	uint16 prgBase = (reg[0] & 0x38) << 1;
+static void SyncPRG(void) {
+	uint8 maskLut[] = { 0x3F, 0x1F, 0x2F, 0x0F };
+	uint16 mask = maskLut[m359.reg[1] & 0x03];
+	uint16 base = (m359.reg[0] & 0x38) << 1;
 
-	switch (reg[1] & 0x03) {
-	case 0:
-		prgMask = 0x3F;
-		break;
-	case 1:
-		prgMask = 0x1F;
-		break;
-	case 2:
-		prgMask = 0x2F;
-		break;
-	case 3:
-		prgMask = 0x0F;
-		break;
-	}
+	setprg8(0x6000, base | (m359.prg[3] & mask));
+	setprg8(0x8000, base | (m359.prg[0] & mask));
+	setprg8(0xA000, base | (m359.prg[1] & mask));
+	setprg8(0xC000, base | (m359.prg[2] & mask));
+	setprg8(0xE000, base | (0xFF & mask));
+}
 
-	setprg8(0x6000, prgBase | (prg[3] & prgMask));
-	setprg8(0x8000, prgBase | (prg[0] & prgMask));
-	setprg8(0xA000, prgBase | (prg[1] & prgMask));
-	setprg8(0xC000, prgBase | (prg[2] & prgMask));
-	setprg8(0xE000, prgBase | (~0 & prgMask));
-
+static void SyncCHR(void) {
 	if (!ROM.chr.size) {
 		setchr8(0);
 	} else {
 		if (iNESCart.mapper == 540) {
-			setchr2(0x0000, chr[0]);
-			setchr2(0x0800, chr[1]);
-			setchr2(0x1000, chr[6]);
-			setchr2(0x1800, chr[7]);
+			setchr2(0x0000, m359.chr[0]);
+			setchr2(0x0800, m359.chr[1]);
+			setchr2(0x1000, m359.chr[6]);
+			setchr2(0x1800, m359.chr[7]);
 		} else {
-			uint16 chrMask = (reg[1] & 0x40) ? 0xFF : 0x7F;
-			uint16 chrBase = (reg[3] << 7);
+			uint16 mask = (m359.reg[1] & 0x40) ? 0xFF : 0x7F;
+			uint16 base = (m359.reg[3] << 7);
+			int i;
 
-			setchr1(0x0000, chrBase | (chr[0] & chrMask));
-			setchr1(0x0400, chrBase | (chr[1] & chrMask));
-			setchr1(0x0800, chrBase | (chr[2] & chrMask));
-			setchr1(0x0C00, chrBase | (chr[3] & chrMask));
-			setchr1(0x1000, chrBase | (chr[4] & chrMask));
-			setchr1(0x1400, chrBase | (chr[5] & chrMask));
-			setchr1(0x1800, chrBase | (chr[6] & chrMask));
-			setchr1(0x1C00, chrBase | (chr[7] & chrMask));
+			for (i = 0; i < 8; i++) {
+				setchr1(i * 0x0400, base | (m359.chr[i] & mask));
+			}
 		}
 	}
+}
 
-	switch (reg[2] & 0x03) {
+static void SyncMirror(void) {
+	switch (m359.reg[2] & 0x03) {
 	case 0:
 		setmirror(MI_V);
 		break;
@@ -116,127 +104,136 @@ static void Sync(void) {
 	}
 }
 
-static DECLFW(M359Write) {
-	switch (A & 0xF000) {
-	case 0x8000:
-		prg[A & 0x03] = V;
-		Sync();
-		break;
-	case 0x9000:
-		reg[A & 0x03] = V;
-		Sync();
-		break;
-	case 0xA000:
-	case 0xB000:
-		chr[((A >> 10) & 0x04) | (A & 0x03)] = V;
-		Sync();
-		break;
-	case 0xC000:
-		switch (A & 0x03) {
-		case 0:
-			if (IRQAutoEnable) {
-				IRQa = FALSE;
-			}
-			IRQCount16 &= 0xFF00;
-			IRQCount16 |= V;
-			X6502_IRQEnd(FCEU_IQEXT);
-			break;
-		case 1:
-			if (IRQAutoEnable) {
-				IRQa = TRUE;
-			}
-			IRQCount16 &= 0x00FF;
-			IRQCount16 |= (V << 8);
-			IRQReload = TRUE;
-			IRQLatch = V;
-			X6502_IRQEnd(FCEU_IQEXT);
-			break;
-		case 2:
-			IRQa = (V & 0x01);
-			irqPA12 = (V & 0x02) >> 1;
-			IRQAutoEnable = (V & 0x04) >> 2;
-			X6502_IRQEnd(FCEU_IQEXT);
-			break;
-		case 3:
-			IRQa = (V & 0x01);
-			X6502_IRQEnd(FCEU_IQEXT);
-			break;
+static DECLFW(WritePRG) {
+	m359.prg[A & 0x03] = V;
+	SyncPRG();
+}
+
+static DECLFW(WriteReg) {
+	m359.reg[A & 0x03] = V;
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+}
+
+static DECLFW(WriteCHR) {
+	m359.chr[((A >> 10) & 0x04) | (A & 0x03)] = V;
+	SyncCHR();
+}
+
+static DECLFW(WriteIRQ) {
+	switch (A & 0x03) {
+	case 0:
+		if (m359.IRQAutoEnable) {
+			m359.IRQa = FALSE;
 		}
+		m359.IRQCount16 &= 0xFF00;
+		m359.IRQCount16 |= V;
+		X6502_IRQEnd(FCEU_IQEXT);
+		break;
+	case 1:
+		if (m359.IRQAutoEnable) {
+			m359.IRQa = TRUE;
+		}
+		m359.IRQCount16 &= 0x00FF;
+		m359.IRQCount16 |= (V << 8);
+		m359.IRQReload = TRUE;
+		m359.IRQLatch = V;
+		X6502_IRQEnd(FCEU_IQEXT);
+		break;
+	case 2:
+		m359.IRQa = (V & 0x01);
+		m359.IRQPA12 = (V & 0x02) >> 1;
+		m359.IRQAutoEnable = (V & 0x04) >> 2;
+		X6502_IRQEnd(FCEU_IQEXT);
+		break;
+	case 3:
+		m359.IRQa = (V & 0x01);
+		X6502_IRQEnd(FCEU_IQEXT);
+		break;
 	}
 }
 
-static void M359Power(void) {
-	prg[0] = ~3;
-	prg[1] = ~2;
-	prg[2] = ~1;
-	prg[3] = ~0;
-	chr[0] = 0;
-	chr[1] = 1;
-	chr[2] = 2;
-	chr[3] = 3;
-	chr[4] = 4;
-	chr[5] = 5;
-	chr[6] = 6;
-	chr[7] = 7;
-	reg[0] = 0;
-	reg[1] = 0x40;
-	reg[2] = 0;
-	reg[3] = 0;
-	IRQReload = IRQa = irqPA12 = IRQAutoEnable = 0;
-	IRQLatch = IRQCount = IRQCount16 = 0;
-	Sync();
-	FDSSound_Power();
-	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xCFFF, M359Write);
-}
-
-static void M359Reset(void) {
-	Sync();
-	FDSSoundRegReset();
-	FDSSound_SC();
-}
-
-static void M359CPUHook(int a) {
-	if (!irqPA12) {
-		if (IRQa && IRQCount16) {
-			IRQCount16 -= a;
-			if (IRQCount16 <= 0)
+static void CPUIRQHook(int a) {
+	if (!m359.IRQPA12) {
+		if (m359.IRQa && m359.IRQCount16) {
+			m359.IRQCount16 -= a;
+			if (m359.IRQCount16 <= 0)
 				X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
 }
 
-static void M359IRQHook(void) {
-	if (irqPA12) {
-		if (!IRQCount || IRQReload) {
-			IRQCount = IRQLatch;
+static void PPUIRQHook(void) {
+	if (m359.IRQPA12) {
+		if (!m359.IRQCount || m359.IRQReload) {
+			m359.IRQCount = m359.IRQLatch;
 		} else {
-			IRQCount--;
+			m359.IRQCount--;
 		}
-		if (!IRQCount && IRQa) {
+		if (!m359.IRQCount && m359.IRQa) {
 			X6502_IRQBegin(FCEU_IQEXT);
 		}
-		IRQReload = FALSE;
+		m359.IRQReload = FALSE;
 	}
 }
 
+static void Power(void) {
+	memset(&m359, 0, sizeof(m359));
+	m359.prg[0] = ~3;
+	m359.prg[1] = ~2;
+	m359.prg[2] = ~1;
+	m359.prg[3] = ~0;
+	m359.chr[0] = 0;
+	m359.chr[1] = 1;
+	m359.chr[2] = 2;
+	m359.chr[3] = 3;
+	m359.chr[4] = 4;
+	m359.chr[5] = 5;
+	m359.chr[6] = 6;
+	m359.chr[7] = 7;
+
+	m359.reg[1] = 0x40;
+
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+
+	FDSSound_Power();
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0x8FFF, WritePRG);
+	SetWriteHandler(0x9000, 0x9FFF, WriteReg);
+	SetWriteHandler(0xA000, 0xBFFF, WriteCHR);
+	SetWriteHandler(0xC000, 0xCFFF, WriteIRQ);
+}
+
+static void Reset(void) {
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+	FDSSoundRegReset();
+	FDSSound_SC();
+}
+
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper359_Init(CartInfo *info) {
-	info->Power = M359Power;
-	info->Reset = M359Reset;
-	MapIRQHook = M359CPUHook;
-	GameHBIRQHook = M359IRQHook;
+	info->Power = Power;
+	info->Reset = Reset;
+	MapIRQHook = CPUIRQHook;
+	GameHBIRQHook = PPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }
 
 void Mapper540_Init(CartInfo *info) {
-	info->Power = M359Power;
-	MapIRQHook = M359CPUHook;
-	GameHBIRQHook = M359IRQHook;
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
+	GameHBIRQHook = PPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

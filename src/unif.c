@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <file/file_path.h>
+
 #include "fceu-types.h"
 #include "fceu.h"
 #include "cart.h"
@@ -949,6 +951,7 @@ int UNIFLoad(const char *name, FCEUFILE *fp) {
 	}
 	FCEU_printf(" [UNIF] iNES Mapper: %d\n", iNESCart.mapper);
 	FCEU_printf(" [UNIF] SubMapper: %d\n", iNESCart.submapper);
+	FCEU_printf(" [UNIF] File: %s\n", path_remove_extension((char *)path_basename(name)));
 
 	GameInterface = UNIFGI;
 

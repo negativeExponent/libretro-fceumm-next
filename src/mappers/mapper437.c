@@ -3,7 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
  *  Copyright (C) 2002 Xodnizel
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,39 +20,46 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* NTDEC TH2348 circuit board. UNROM plus reg bank register at $5FFx. */
+/* NTDEC TH2348 circuit board. UNROM plus m437.outer bank register at $5FFx. */
 
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg;
+static struct {
+	uint8 outer;
+} m437;
+
+static SFORMAT StateRegs[] = {
+	{ &m437.outer, 1, "OUTB" },
+	{ 0 }
+};
 
 static void Sync(void) {
-	setprg16(0x8000, (reg << 3) | (latch.data & 0x07));
-	setprg16(0xC000, (reg << 3) | 0x07);
+	setprg16(0x8000, (m437.outer << 3) | (latch.data & 0x07));
+	setprg16(0xC000, (m437.outer << 3) | 0x07);
 	setchr8(0);
-	setmirror(((reg >> 3) & 0x01) ^ 0x01);
+	setmirror(((m437.outer >> 3) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M437Write) {
-	reg = A & 0x0F;
+static DECLFW(WriteOuter) {
+	m437.outer = A & 0x0F;
 	Sync();
 }
 
-static void M437_Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m437.outer = 0;
 	Sync();
 }
 
-static void M437_Power(void) {
-	reg = 0;
+static void Power(void) {
+	m437.outer = 0;
 	Latch_Power();
-	SetWriteHandler(0x5000, 0x5FFF, M437Write);
+	SetWriteHandler(0x5000, 0x5FFF, WriteOuter);
 }
 
 void Mapper437_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
-	info->Reset = M437_Reset;
-	info->Power = M437_Power;
-	AddExState(&reg, 1, 0, "OUTB");
+	info->Reset = Reset;
+	info->Power = Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

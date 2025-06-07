@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,27 +18,37 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* NES 2.0 Mapper 467 */
+/* some 72-in-1 (UNL) (47-2)*/
+
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m467;
 
-static void M467PW(uint16 A, uint16 V) {
-	if (reg & 0x20) {
-		uint8 mask = (reg & 0x40) ? 0x0F : 0x03;
-		uint8 base = reg << 1;
+static SFORMAT StateRegs[] = {
+	{ &m467.reg, 1, "EXPR" },
+	{ 0 }
+};
+
+static void SetPRG(uint16 A, uint16 V) {
+	if (m467.reg & 0x20) {
+		uint8 mask = (m467.reg & 0x40) ? 0x0F : 0x03;
+		uint8 base = m467.reg << 1;
 
 		setprg8(A, (base & ~mask) | (V & mask));
 	} else {
-		setprg16(0x8000, reg & 0x1F);
-		setprg16(0xC000, reg & 0x1F);
+		setprg16(0x8000, m467.reg & 0x1F);
+		setprg16(0xC000, m467.reg & 0x1F);
 	}
 }
 
-static void M467CHR(void) {
-	uint16 base = (reg << 2) & 0x100;
+static void SetCHR(void) {
+	uint16 base = (m467.reg << 2) & 0x100;
 
-	if (reg & 0x40) {
+	if (m467.reg & 0x40) {
 		setchr2(0x0000, base | (mmc3.reg[0] & ~0x01));
 		setchr2(0x0800, base | (mmc3.reg[0] | 0x01));
 		setchr2(0x1000, base | mmc3.reg[2]);
@@ -51,53 +61,61 @@ static void M467CHR(void) {
 	}
 }
 
-static void M467MIR(void) {
-	setmirror(((reg >> 7) & 0x01) ^ 0x01);
+static void SyncMirror(void) {
+	setmirror(((m467.reg >> 7) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M467Write) {
-	switch (A & 0xF000) {
-	case 0x9000:
-		reg = V;
+static DECLFW(WriteReg) {
+	if ((A & 0xF000) == 0x9000) {
+		m467.reg = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 		MMC3_SyncMirror();
-		break;
-	default:
+	} else {
 		switch (A & 0xE001) {
 		case 0x8000:
 			mmc3.cmd = V & 0x3F;
 			break;
 		case 0x8001:
-			mmc3.reg[mmc3.cmd & 0x07] = V;
-			if (mmc3.cmd < 6)
+			switch (mmc3.cmd & 0x07) {
+			case 0:
+			case 1:
+			case 2:
+			case 3:
+			case 4:
+			case 5:
+				mmc3.reg[mmc3.cmd & 0x07] = V;
 				MMC3_SyncCHR();
-			else
-				MMC3_SyncPRG();
+				break;
+			default:
+				MMC3_Write(A, V);
+				break;
+			}
 			break;
-		case 0xA000:
+		default:
+			MMC3_Write(A, V);
 			break;
 		}
 	}
 }
 
-static void M467Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m467, 0, sizeof(m467));
 	MMC3_Reset();
 }
 
-static void M467Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m467, 0, sizeof(m467));
 	MMC3_Power();
-	SetWriteHandler(0x8000, 0xBFFF, M467Write);
+	SetWriteHandler(0x8000, 0x9FFF, WriteReg);
 }
 
 void Mapper467_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_SyncCHR = M467CHR;
-	MMC3_SyncMirror = M467MIR;
-	MMC3_pwrap = M467PW;
-	info->Power = M467Power;
-	info->Reset = M467Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_SyncCHR = SetCHR;
+	MMC3_SyncMirror = SyncMirror;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

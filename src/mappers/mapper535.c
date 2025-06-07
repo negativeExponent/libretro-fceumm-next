@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * NES 2.0 Mapper 535 - UNL-M535
+ * NES 2.0 Mapper 535 - UNL-LH53
  * FDS Conversion - Nazo no Murasamejō
  *
  */
@@ -26,58 +26,57 @@
 #include "mapinc.h"
 #include "fdssound.h"
 
-static uint8 reg, IRQa;
-static int32 IRQCount;
+static struct {
+	uint8 reg, IRQa;
+	int32 IRQCount;
+} m535;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REG" },
-	{ &IRQa, 1, "IRQA" },
-	{ &IRQCount, 4, "IRQC" },
+	{ &m535.reg, 1, "REG" },
+	{ &m535.IRQa, 1, "IRQA" },
+	{ &m535.IRQCount, 4, "IRQC" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	setchr8(0);
-	setprg8(0x6000, reg);
+	setprg8(0x6000, m535.reg);
 	setprg32(0x8000, 0x03);
-	setprg8r(0x10, 0xB800, 0);
+	setprg2r(0x10, 0xB800, 0);
+	setprg2r(0x10, 0xC000, 1);
+	setprg2r(0x10, 0xC800, 2);
+	setprg2r(0x10, 0xD000, 3);
 }
 
-static DECLFW(M535RamWrite) {
-	WRAM[(A - 0xB800) & 0x1FFF] = V;
-}
-
-static DECLFW(M535Write) {
-	reg = V;
+static DECLFW(WriteReg) {
+	m535.reg = V;
 	Sync();
 }
 
-static DECLFW(M535IRQaWrite) {
-	IRQa = V & 0x02;
-	IRQCount = 0;
+static DECLFW(WriteIRQ) {
+	m535.IRQa = V & 0x02;
+	m535.IRQCount = 0;
 	X6502_IRQEnd(FCEU_IQEXT);
 }
 
-static void M535IRQHook(int a) {
-	if (IRQa) {
-		IRQCount += a;
-		if (IRQCount > 7560) {
+static void CPUIRQHook(int a) {
+	if (m535.IRQa) {
+		m535.IRQCount += a;
+		if (m535.IRQCount > 7560) {
 			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
 }
 
-static void M535Power(void) {
+static void Power(void) {
+	memset(&m535, 0, sizeof(m535));
 	FDSSound_Power();
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0xB800, 0xD7FF, M535RamWrite);
-	SetWriteHandler(0xE000, 0xEFFF, M535IRQaWrite);
-	SetWriteHandler(0xF000, 0xFFFF, M535Write);
+	SetWriteHandler(0xB800, 0xD7FF, CartBW);
+	SetWriteHandler(0xE000, 0xEFFF, WriteIRQ);
+	SetWriteHandler(0xF000, 0xFFFF, WriteReg);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
-}
-
-static void M535Close(void) {
 }
 
 static void StateRestore(int version) {
@@ -85,9 +84,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper535_Init(CartInfo *info) {
-	info->Power = M535Power;
-	info->Close = M535Close;
-	MapIRQHook = M535IRQHook;
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

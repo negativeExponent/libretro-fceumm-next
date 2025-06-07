@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,24 +29,31 @@
 #define MAPPER_MMC3 0x00
 #define MAPPER_VRC4 0x10
 
-static uint8 reg[4];
+static struct {
+	uint8 reg[4];
+} m445;
+
+static SFORMAT StateRegs[] = {
+	{ m445.reg, 4, "EXPR" },
+	{ 0 }
+};
 
 static uint8 GetPRGBase(void) {
-	return reg[0];
+	return m445.reg[0];
 }
 
 static uint8 GetPRGMask(void) {
-	return ((0x7F >> (reg[2] & 0x07)) & 0x1F);
+	return ((0x7F >> (m445.reg[2] & 0x07)) & 0x1F);
 }
 
-static void M445MMC3PW(uint16 A, uint16 V) {
+static void SetPRG_mmc3(uint16 A, uint16 V) {
 	uint16 mask = GetPRGMask();
 	uint16 base = GetPRGBase();
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M445VRC24PW(uint16 A, uint16 V) {
+static void SetPRG_vrc4(uint16 A, uint16 V) {
 	uint16 mask = GetPRGMask();
 	uint16 base = GetPRGBase();
 
@@ -54,21 +61,21 @@ static void M445VRC24PW(uint16 A, uint16 V) {
 }
 
 static uint8 GetCHRBase(void) {
-	return reg[1];
+	return m445.reg[1];
 }
 
 static uint8 GetCHRMask(void) {
-	return ((0x3FF >> ((reg[2] >> 3) & 0x07)) & 0xFF);
+	return ((0x3FF >> ((m445.reg[2] >> 3) & 0x07)) & 0xFF);
 }
 
-static void M445MMC3CW(uint16 A, uint16 V) {
+static void SetCHR_mmc3(uint16 A, uint16 V) {
 	uint16 mask = GetCHRMask();
 	uint16 base = GetCHRBase() << 3;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void M445VRC24CW(uint16 A, uint16 V) {
+static void SetCHR_vrc4(uint16 A, uint16 V) {
 	uint16 mask = GetCHRMask();
 	uint16 base = GetCHRBase() << 3;
 
@@ -76,7 +83,7 @@ static void M445VRC24CW(uint16 A, uint16 V) {
 }
 
 static void Sync(void) {
-	switch (reg[3] & 0x10) {
+	switch (m445.reg[3] & 0x10) {
 	case MAPPER_VRC4:
 		VRC24_SyncPRG();
 		VRC24_SyncCHR();
@@ -91,18 +98,18 @@ static void Sync(void) {
 	}
 }
 
-static DECLFW(M445WriteREG) {
-	if (!(reg[3] & 0x20)) {
-		reg[A & 0x03] = V;
+static DECLFW(WriteReg) {
+	if (!(m445.reg[3] & 0x20)) {
+		m445.reg[A & 0x03] = V;
 		Sync();
 	}
 }
 
-static DECLFW(M445WriteASIC) {
-	switch (reg[3] & 0x10) {
+static DECLFW(WriteASIC) {
+	switch (m445.reg[3] & 0x10) {
 	case MAPPER_VRC4:
-		vrc24.A0 = (reg[3] & 0x01) ? 0x0A : 0x05;
-		vrc24.A1 = (reg[3] & 0x01) ? 0x05 : 0x0A;
+		vrc24.A0 = (m445.reg[3] & 0x01) ? 0x0A : 0x05;
+		vrc24.A1 = (m445.reg[3] & 0x01) ? 0x05 : 0x0A;
 		VRC24_Write(A, V);
 		break;
 	case MAPPER_MMC3:
@@ -111,32 +118,8 @@ static DECLFW(M445WriteASIC) {
 	}
 }
 
-static void M445Reset(void) {
-	reg[0] = 0x00;
-	reg[1] = 0x00;
-	reg[2] = 0x00;
-	reg[3] = 0x00;
-	Sync();
-}
-
-static void M445Power(void) {
-	reg[0] = 0x00;
-	reg[1] = 0x00;
-	reg[2] = 0x00;
-	reg[3] = 0x00;
-	VRC24_Power();
-	MMC3_Power();
-	SetWriteHandler(0x5000, 0x5FFF, M445WriteREG);
-	SetWriteHandler(0x8000, 0xFFFF, M445WriteASIC);
-	Sync();
-}
-
-static void StateRestore(int version) {
-	Sync();
-}
-
 static void CPUIRQHook(int a) {
-	switch (reg[3] & 0x10) {
+	switch (m445.reg[3] & 0x10) {
 	case MAPPER_VRC4:
 		VRC24_IRQCPUHook(a);
 		break;
@@ -146,7 +129,7 @@ static void CPUIRQHook(int a) {
 }
 
 static void HBIRQHook(void) {
-	switch (reg[3] & 0x10) {
+	switch (m445.reg[3] & 0x10) {
 	case MAPPER_VRC4:
 		break;
 	case MAPPER_MMC3:
@@ -155,20 +138,38 @@ static void HBIRQHook(void) {
 	}
 }
 
+static void Reset(void) {
+	memset(&m445, 0, sizeof(m445));
+	Sync();
+}
+
+static void Power(void) {
+	memset(&m445, 0, sizeof(m445));
+	VRC24_Power();
+	MMC3_Power();
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
+	SetWriteHandler(0x8000, 0xFFFF, WriteASIC);
+	Sync();
+}
+
+static void StateRestore(int version) {
+	Sync();
+}
+
 void Mapper445_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, FALSE, FALSE);
-	MMC3_pwrap = M445MMC3PW;
-	MMC3_cwrap = M445MMC3CW;
+	MMC3_pwrap = SetPRG_mmc3;
+	MMC3_cwrap = SetCHR_mmc3;
 
 	VRC24_Init(info, VRC24_VRC4, 0x01, 0x02, FALSE, TRUE);
-	VRC24_pwrap = M445VRC24PW;
-	VRC24_cwrap = M445VRC24CW;
+	VRC24_pwrap = SetPRG_vrc4;
+	VRC24_cwrap = SetCHR_vrc4;
 
-	info->Power = M445Power;
-	info->Reset = M445Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 
 	GameStateRestore = StateRestore;
-	AddExState(reg, 4, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	MapIRQHook = CPUIRQHook;
 	GameHBIRQHook = HBIRQHook;

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,21 +25,23 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m447;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
-	{ &dipsw, 1, "DPSW" },
+	{ &m447.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M447PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	uint16 mask = 0x0F;
-	uint16 base = reg << 4;
+	uint16 base = m447.reg << 4;
 
-	if (reg & 0x04) {
-		if (!(reg & 0x02)) {
+	if (m447.reg & 0x04) {
+		if (!(m447.reg & 0x02)) {
 			V = A >> 13;
 			base = base | (vrc24.prg[V & 0x01] & mask);
 			mask = 0x03;
@@ -53,46 +55,46 @@ static void M447PW(uint16 A, uint16 V) {
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M447CW(uint16 A, uint16 V) {
-	setchr1(A, (reg << 7) | (V & 0x7F));
+static void SetCHR(uint16 A, uint16 V) {
+	setchr1(A, (m447.reg << 7) | (V & 0x7F));
 }
 
-static DECLFR(M447Read) {
-	if ((A & 0x8000) && (reg & 0x08)) {
+static DECLFR(ReadDIP) {
+	if ((A & 0x8000) && (m447.reg & 0x08)) {
 		return CartBR((A & ~0x03) | (dipsw & 0x03));
 	}
 	return CartBR(A);
 }
 
-static DECLFW(M447WriteReg) {
+static DECLFW(WriteReg) {
 	CartBW(A, V);
-	if ((vrc24.cmd & 0x01) && !(reg & 0x01)) {
-		reg = A & 0xFF;
+	if ((vrc24.cmd & 0x01) && !(m447.reg & 0x01)) {
+		m447.reg = A & 0xFF;
 		VRC24_SyncPRG();
 		VRC24_SyncCHR();
 	}
 }
 
-static void M447Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m447.reg = 0;
 	dipsw++;
 	VRC24_SyncPRG();
 	VRC24_SyncCHR();
 }
 
-static void M447Power(void) {
-	reg = 0;
+static void Power(void) {
+	m447.reg = 0;
 	dipsw = 0;
 	VRC24_Power();
-	SetReadHandler(0x8000, 0xFFFF, M447Read);
-	SetWriteHandler(0x6000, 0x7FFF, M447WriteReg);
+	SetReadHandler(0x8000, 0xFFFF, ReadDIP);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper447_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 1, 1);
-	info->Reset = M447Reset;
-	info->Power = M447Power;
-	VRC24_pwrap = M447PW;
-	VRC24_cwrap = M447CW;
+	info->Reset = Reset;
+	info->Power = Power;
+	VRC24_pwrap = SetPRG;
+	VRC24_cwrap = SetCHR;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

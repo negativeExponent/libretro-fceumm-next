@@ -25,9 +25,11 @@
 #include "latch.h"
 
 static void Sync(void) {
-	setprg16(0x8000, latch.addr >> 2);
-	setprg16(0xC000, latch.addr >> 2);
-	setchr8(latch.addr >> 2);
+	uint16 bank = latch.addr >> 2;
+
+	setprg16(0x8000, bank);
+	setprg16(0xC000, bank);
+	setchr8(bank);
 	setmirror((latch.addr & 0x01) ^ 0x01);
 }
 

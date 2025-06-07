@@ -31,48 +31,50 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m384;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m384.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M384PW(uint16 A, uint16 V) {
-	setprg8(A, (reg << 4) | (V & 0x0F));
+static void SetPRG(uint16 A, uint16 V) {
+	setprg8(A, (m384.reg << 4) | (V & 0x0F));
 }
 
-static void M384CW(uint16 A, uint16 V) {
-	setchr1(A, (reg << 7) | (V & 0x7F));
+static void SetCHR(uint16 A, uint16 V) {
+	setchr1(A, (m384.reg << 7) | (V & 0x7F));
 }
 
-static DECLFW(M384Write) {
+static DECLFW(WriteReg) {
 	CartBW(A, V);
-	if ((A & 0x800) && !(reg & 0x08)) {
-		reg = V;
+	if ((A & 0x800) && !(m384.reg & 0x08)) {
+		m384.reg = V;
 		VRC24_SyncPRG();
 		VRC24_SyncCHR();
 	}
 }
 
-static void M384Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m384, 0, sizeof(m384));
 	VRC24_SyncPRG();
 	VRC24_SyncCHR();
 	VRC24_SyncMirror();
 }
 
-static void M384Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m384, 0, sizeof(m384));
 	VRC24_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M384Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper384_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, TRUE, TRUE);
-	info->Power = M384Power;
-	info->Reset = M384Reset;
-	VRC24_pwrap = M384PW;
-	VRC24_cwrap = M384CW;
+	info->Power = Power;
+	info->Reset = Reset;
+	VRC24_pwrap = SetPRG;
+	VRC24_cwrap = SetCHR;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

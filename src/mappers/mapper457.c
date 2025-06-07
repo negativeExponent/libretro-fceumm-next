@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,47 +21,55 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m457;
 
-static void M457CW(uint16 A, uint16 V) {
-	uint32 mask = (reg & 0x08) ? 0xFF : 0x7F;
-	uint32 base = reg << 7;
+static SFORMAT StateRegs[] = {
+	{ &m457.reg, 1, "EXPR" },
+	{ 0 }
+};
+
+
+static void SetCHR(uint16 A, uint16 V) {
+	uint32 mask = (m457.reg & 0x08) ? 0xFF : 0x7F;
+	uint32 base = m457.reg << 7;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void M457PW(uint16 A, uint16 V) {
-	uint32 mask = (reg & 0x08) ? 0x1F : 0x0F;
-	uint32 base = reg << 4;
+static void SetPRG(uint16 A, uint16 V) {
+	uint32 mask = (m457.reg & 0x08) ? 0x1F : 0x0F;
+	uint32 base = m457.reg << 4;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M457Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
 		CartBW(A, V);
-		reg = V;
+		m457.reg = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M457Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m457, 0, sizeof(m457));
 	MMC3_Reset();
 }
 
-static void M457Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m457, 0, sizeof(m457));
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M457Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper457_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M457CW;
-	MMC3_pwrap = M457PW;
-	info->Reset = M457Reset;
-	info->Power = M457Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Reset = Reset;
+	info->Power = Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2011 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,62 +16,68 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * NES 2.0 Mapper 522 - UNL-LH10
- *
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ */
+
+/*
+ * NES 2.0 Mapper 522 is used for Whirlwind Manu's cartridge conversion of the
+ * Famicom Disk System game 風雲 少林拳 (Fūun Shōrinken).
+ * Its UNIF board name is UNL-LH10.
  */
 
 #include "mapinc.h"
-#include "fdssound.h"
 
-static uint8 reg[8], cmd;
+static struct {
+	uint8 reg[8], cmd;
+} m522;
 
 static SFORMAT StateRegs[] = {
-	{ &cmd, 1, "CMD" },
-	{ reg, 8, "REGS" },
+	{ &m522.cmd, 1, "CMD" },
+	{ m522.reg, 8, "REGS" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg8(0x6000, ~1);
-	setprg8(0x8000, reg[6]);
-	setprg8(0xA000, reg[7]);
-	setprg8r(0x10, 0xC000, 0);
-	setprg8(0xE000, ~0);
-	setchr8(0);
-	setmirror(0);
+static void SyncPRG(void) {
+	setprg8(0x8000, m522.reg[6]);
+	setprg8(0xA000, m522.reg[7]);
 }
 
-static DECLFW(M522Write) {
+static DECLFW(WriteReg) {
 	if (A & 0x0001) {
-		reg[cmd & 0x07] = V;
-		Sync();
+		m522.reg[m522.cmd & 0x07] = V;
+		switch (m522.cmd & 0x07) {
+		case 6:
+		case 7:
+			SyncPRG();
+			break;
+		default:
+			break;
+		}
 	} else {
-		cmd = V;
+		m522.cmd = V;
 	}
 }
 
-static void M522Power(void) {
-	FDSSound_Power();
-	reg[0] = reg[1] = reg[2] = reg[3] = reg[4] = reg[5] = reg[6] = reg[7] = 0;
-	Sync();
+static void Power(void) {
+	memset(&m522, 0, sizeof(m522));
+	setprg8(0x6000, 0xFE);
+	setprg8r(0x10, 0xC000, 0);
+	setprg8(0xE000, 0xFF);
+	setchr8(0);
+	setmirror(iNESCart.mirror);
+	SyncPRG();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0x9FFF, M522Write);
+	SetWriteHandler(0x8000, 0x9FFF, WriteReg);
 	SetWriteHandler(0xC000, 0xDFFF, CartBW);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M522Close(void) {
-}
-
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
 }
 
 void Mapper522_Init(CartInfo *info) {
-	info->Power = M522Power;
-	info->Close = M522Close;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

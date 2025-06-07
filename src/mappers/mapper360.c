@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,39 +23,48 @@
 
 #include "mapinc.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m360;
+
+static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "DPSW" },
+	{ &m360.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if ((~reg & 0x20) && (iNESCart.submapper == 1)) {
+	if (iNESCart.submapper == 0) {
+		m360.reg = (0x20 | dipsw);
+	}
+	if (!(m360.reg & 0x20)) {
 		setprg8(0x8000, 0x40);
 		setprg8(0xA000, 0x40);
 		setprg8(0xC000, 0x40);
 		setprg8(0xE000, 0x40);
 	} else {
+		uint8 bank = m360.reg & 0x1F;
 		/* dip 0 and 1 is the same game SMB) */
-		if (reg < 2) {
-			setprg32(0x8000, reg >> 1);
+		if (bank < 2) {
+			setprg32(0x8000, bank >> 1);
 		} else {
-			setprg16(0x8000, reg);
-			setprg16(0xC000, reg);
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
 		}
 	}
-	setchr8(reg);
-	setmirror(((reg & 0x10) >> 4) ^ 1);
+	setchr8(m360.reg);
+	setmirror(((m360.reg & 0x10) >> 4) ^ 1);
 }
 
 static DECLFW(M360Write4) {
-	reg = V;
+	m360.reg = V;
 	Sync();
 }
 
 static void M360Power(void) {
-	reg = 0;
+	memset(&m360, 0, sizeof(m360));
+	dipsw = 0;
 	Sync();
 	if (iNESCart.submapper == 1) {
 		SetWriteHandler(0x4100, 0x4FFF, M360Write4);
@@ -65,13 +74,14 @@ static void M360Power(void) {
 }
 
 static void M360Reset(void) {
+	memset(&m360, 0, sizeof(m360));
 	if (iNESCart.submapper == 0) {
-		reg = (reg + 1) & 31;
+		dipsw = (dipsw + 1) & 31;
 	} else {
-		reg = 0;
+		dipsw = 0;
 	}
 	Sync();
-	FCEU_printf("reg = %d\n", reg);
+	FCEU_printf("dipsw = %d\n", dipsw);
 }
 
 static void StateRestore(int version) {

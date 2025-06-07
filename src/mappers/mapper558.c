@@ -4,7 +4,7 @@
  *  Copyright (C) 2002 Xodnizel
  *  Copyright (C) 2005 CaH4e3
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,26 +27,67 @@
 
 #include "eeprom_93Cx6.h"
 
-static uint8 reg[4];
+static struct {
+	uint8 reg[4];
+} m558;
 
 static uint8 haveEEPROM;
 static uint8 eeprom_data[512];
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
+	{ m558.reg, 4, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg32(0x8000, (reg[1] << 4) | (reg[0] & 0xF) | ((reg[3] & 0x04) ? 0x00 : 0x03));
+	setprg32(0x8000, (m558.reg[1] << 4) | (m558.reg[0] & 0xF) | ((m558.reg[3] & 0x04) ? 0x00 : 0x03));
 	setprg8r(0x10, 0x6000, 0);
-	if (!(reg[0] & 0x80)) {
+	if (!(m558.reg[0] & 0x80)) {
 		setchr8(0);
 	}
 }
 
-static void M558HBIRQHook(void) {
-	if ((reg[0] & 0x80) && (scanline < 239)) { /* Actual hardware cannot look at the current scanline number, but instead latches PA09 on
+static DECLFR(Read5) {
+	if (haveEEPROM) {
+		return eeprom_93Cx6_read() ? 0x04 : 0x00;
+	}
+	return m558.reg[2] & 0x04;
+}
+
+static DECLFW(Write5) {
+	switch (A & 0xFF00) {
+	case 0x5000:
+		if (!(m558.reg[3] & 0x02)) {
+			V = (V & ~0x03) | ((V >> 1) & 0x01) | ((V << 1) & 0x02);
+		}
+		m558.reg[0] = V;
+		Sync();
+		break;
+	case 0x5100:
+		if (!(m558.reg[3] & 0x02)) {
+			V = (V & ~0x03) | ((V >> 1) & 0x01) | ((V << 1) & 0x02);
+		}
+		m558.reg[1] = V;
+		Sync();
+		break;
+	case 0x5200:
+		if ((ROM.prg.size != (1024 * 1024)) && !(m558.reg[3] & 0x02)) {
+			V = (V & ~0x03) | ((V >> 1) & 0x01) | ((V << 1) & 0x02);
+		}
+		m558.reg[2] = V;
+		if (haveEEPROM) {
+			eeprom_93Cx6_write((m558.reg[2] & 0x04), (m558.reg[2] & 0x02), (m558.reg[2] & 0x01));
+		}
+		break;
+	case 0x5300:
+		m558.reg[3] = V;
+		Sync();
+		break;
+	}
+}
+
+static void HBIRQHook(void) {
+	if ((m558.reg[0] & 0x80) && (scanline < 239)) { /* Actual hardware cannot look at the current scanline number, but instead latches PA09 on
 												PA13 rises. This does not seem possible with the current PPU emulation however. */
 		setchr4(0x0000, (scanline >= 127) ? 1 : 0);
 		setchr4(0x1000, (scanline >= 127) ? 1 : 0);
@@ -55,60 +96,18 @@ static void M558HBIRQHook(void) {
 	}
 }
 
-static DECLFR(readReg) {
-	if (haveEEPROM) {
-		return eeprom_93Cx6_read() ? 0x04 : 0x00;
-	}
-	return reg[2] & 0x04;
-}
-
-static DECLFW(writeReg) {
-	switch (A & 0xFF00) {
-	case 0x5000:
-		if (!(reg[3] & 0x02)) {
-			V = (V & ~0x03) | ((V >> 1) & 0x01) | ((V << 1) & 0x02);
-		}
-		reg[0] = V;
-		Sync();
-		break;
-	case 0x5100:
-		if (!(reg[3] & 0x02)) {
-			V = (V & ~0x03) | ((V >> 1) & 0x01) | ((V << 1) & 0x02);
-		}
-		reg[1] = V;
-		Sync();
-		break;
-	case 0x5200:
-		if ((ROM.prg.size != (1024 * 1024)) && !(reg[3] & 0x02)) {
-			V = (V & ~0x03) | ((V >> 1) & 0x01) | ((V << 1) & 0x02);
-		}
-		reg[2] = V;
-		if (haveEEPROM) {
-			eeprom_93Cx6_write((reg[2] & 0x04), (reg[2] & 0x02), (reg[2] & 0x01));
-		}
-		break;
-	case 0x5300:
-		reg[3] = V;
-		Sync();
-		break;
-	}
-}
-
-static void M558Power(void) {
-	memset(reg, 0, sizeof(reg));
+static void Reset(void) {
+	memset(m558.reg, 0, sizeof(m558.reg));
 	Sync();
-	SetReadHandler(0x5000, 0x57FF, readReg);
-	SetWriteHandler(0x5000, 0x57FF, writeReg);
+}
+
+static void Power(void) {
+	memset(&m558, 0, sizeof(m558));
+	Sync();
+	SetReadHandler(0x5000, 0x57FF, Read5);
+	SetWriteHandler(0x5000, 0x57FF, Write5);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-}
-
-static void M558Reset(void) {
-	memset(reg, 0, sizeof(reg));
-	Sync();
-}
-
-static void M558Close(void) {
 }
 
 static void StateRestore(int version) {
@@ -116,10 +115,9 @@ static void StateRestore(int version) {
 }
 
 void Mapper558_Init(CartInfo *info) {
-	info->Power = M558Power;
-	info->Reset = M558Reset;
-	info->Close = M558Close;
-	GameHBIRQHook = M558HBIRQHook;
+	info->Power = Power;
+	info->Reset = Reset;
+	GameHBIRQHook = HBIRQHook;
 
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);

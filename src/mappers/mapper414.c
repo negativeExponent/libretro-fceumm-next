@@ -1,8 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2022
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2022-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,34 +21,30 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static const uint8 dpswLut[5] = { 0, 0x10, 0x30, 0x70, 0xF0 };
+static const uint8 dipswlut[5] = {
+	0, 0x10, 0x30, 0x70, 0xF0
+};
 
 static uint8 dipsw;
 
-static SFORMAT StateRegs[] = {
-	{ &dipsw, 1, "DPSW" },
-	{ 0 }
-};
-
 static void Sync(void) {
-	if (latch.addr & 0x2000) { /* NROM-256 */
-		setprg32(0x8000, latch.addr >> 2);
-	} else { /* NROM-128 */
-		setprg16(0x8000, latch.addr >> 1);
-		setprg16(0xC000, latch.addr >> 1);
+	uint8 bank = latch.addr >> 1;
+
+	if (!(latch.addr & 0x100) && (latch.addr & dipswlut[dipsw])) {
+		unsetcpu16(0xC000);
+	} else {
+		if (latch.addr & 0x2000) { /* NROM-256 */
+			setprg32(0x8000, bank >> 1);
+		} else { /* NROM-128 */
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
+		}
 	}
 	setchr8(latch.data);
 	setmirror((latch.addr & 0x01) ^ 0x01);
 }
 
-static DECLFR(M414Read) {
-	if ((A >= 0xC000) && !(latch.addr & 0x100) && (latch.addr & dpswLut[dipsw])) {
-		return cpu.openbus;
-	}
-	return CartBR(A);
-}
-
-static void M414Reset(void) {
+static void Reset(void) {
 	dipsw++;
 	if (dipsw > 4) {
 		dipsw = 0;
@@ -57,9 +52,13 @@ static void M414Reset(void) {
 	Sync();
 }
 
-void Mapper414_Init(CartInfo *info) {
+static void Power(void) {
 	dipsw = 0;
-	Latch_Init(info, Sync, M414Read, FALSE, TRUE);
-	info->Reset = M414Reset;
-	AddExState(StateRegs, ~0, 0, NULL);
+	Latch_Power();
+}
+
+void Mapper414_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, FALSE, TRUE);
+	info->Reset = Reset;
+	info->Power = Power;
 }

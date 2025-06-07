@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,26 +27,28 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m350;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
+	{ m350.reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 bank = (reg[0] & 0x18) | (reg[1] & 0x07);
+	uint8 bank = (m350.reg[0] & 0x18) | (m350.reg[1] & 0x07);
 
 	setprg8(0x6000, 1);
-	if (reg[0] & 0x40) { /* UNROM */
-		if (reg[0] & 0x20) {
+	if (m350.reg[0] & 0x40) { /* UNROM */
+		if (m350.reg[0] & 0x20) {
 			/* 2nd chip only has 128K PRG */
 			bank &= 0x07;
 		}
-		setprg16(0x8000, (reg[0] & 0x20) | bank);
-		setprg16(0xC000, (reg[0] & 0x20) | bank | 0x07);
+		setprg16(0x8000, (m350.reg[0] & 0x20) | bank);
+		setprg16(0xC000, (m350.reg[0] & 0x20) | bank | 0x07);
 	} else {
-		if (reg[0] & 0x20) { /* NROM-256 */
+		if (m350.reg[0] & 0x20) { /* NROM-256 */
 			setprg32(0x8000, bank >> 1);
 		} else {
 			setprg16(0x8000, bank);
@@ -54,26 +56,26 @@ static void Sync(void) {
 		}
 	}
 	/* CHR-RAM Protect... kinda */
-	SetupCartCHRMapping(0, CHRptr[0], 0x2000, (reg[0] & 0x40) != 0);
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, (m350.reg[0] & 0x40) != 0);
 	setchr8(0);
-	setmirror(((reg[0] >> 7) & 0x01) ^ 0x01);
+	setmirror(((m350.reg[0] >> 7) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M350Write) {
-	reg[(A >> 14) & 0x01] = V;
+static DECLFW(WriteReg) {
+	m350.reg[(A >> 14) & 0x01] = V;
 	Sync();
 }
 
-static void M350Reset(void) {
-	reg[0] = reg[1] = 0;
+static void Reset(void) {
+	m350.reg[0] = m350.reg[1] = 0;
 	Sync();
 }
 
-static void M350Power(void) {
-	reg[0] = reg[1] = 0;
+static void Power(void) {
+	m350.reg[0] = m350.reg[1] = 0;
 	Sync();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M350Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
@@ -81,8 +83,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper350_Init(CartInfo *info) {
-	info->Power = M350Power;
-	info->Reset = M350Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

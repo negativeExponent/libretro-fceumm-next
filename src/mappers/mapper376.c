@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,51 +21,55 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m376;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
+	{ m376.reg, 2, "REGS" },
 	{ 0 }
 };
 
-static void M376CW(uint16 A, uint16 V) {
-	uint16 base = ((reg[1] << 8) & 0x100) | ((reg[0] << 1) & 0x80);
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 base = ((m376.reg[1] << 4) & 0x10) | ((m376.reg[0] >> 3) & 0x08) | (m376.reg[0] & 0x07);
+	uint16 mask = 0x0F;
 
-	setchr1(A, base | (V & 0x7F));
-}
-
-static void M376PW(uint16 A, uint16 V) {
-	uint16 base = ((reg[1] << 4) & 0x10) | ((reg[0] >> 3) & 0x08) | (reg[0] & 0x07);
-
-	if (reg[0] & 0x80) {
-		if (reg[0] & 0x20) {
+	if (m376.reg[0] & 0x80) {
+		if (m376.reg[0] & 0x20) {
 			setprg32(0x8000, base >> 1);
 		} else {
 			setprg16(0x8000, base);
 			setprg16(0xC000, base);
 		}
 	} else {
-		setprg8(A, ((base << 1) & ~0x0F) | (V & 0x0F));
+		base <<= 1;
+		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
-static DECLFW(M376Write) {
-	reg[A & 0x01] = V;
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 base = ((m376.reg[1] << 8) & 0x100) | ((m376.reg[0] << 1) & 0x80);
+	uint16 mask = 0x7F;
+
+	setchr1(A, (base & ~mask) | (V & mask));
+}
+
+static DECLFW(WriteReg) {
+	m376.reg[A & 0x01] = V;
 	MMC3_SyncPRG();
 	MMC3_SyncCHR();
 }
 
-static void M376Power(void) {
-	reg[0] = 0;
-	reg[1] = 0;
+static void Power(void) {
+	memset(&m376, 0, sizeof(m376));
 	MMC3_Power();
-	SetWriteHandler(0x7000, 0x7FFF, M376Write);
+	SetWriteHandler(0x7000, 0x7FFF, WriteReg);
 }
 
 void Mapper376_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M376PW;
-	MMC3_cwrap = M376CW;
-	info->Power = M376Power;
+	MMC3_pwrap = SetPRG;
+	MMC3_cwrap = SetCHR;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

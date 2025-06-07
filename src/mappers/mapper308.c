@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,55 +29,60 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 IRQLatch, IRQa;
-static uint16 IRQCount;
+static struct {
+	uint8 IRQCountHigh, IRQa;
+	uint16 IRQCountLow;
+} m308;
 
-static SFORMAT IRQStateRegs[] = {
-	{ &IRQCount, 2, "IRQC" },
-	{ &IRQLatch, 1, "IRQL" },
-	{ &IRQa, 1, "IRQA" },
+static SFORMAT StateRegs[] = {
+	{ &m308.IRQCountLow, 2, "IRQL" },
+	{ &m308.IRQCountHigh, 1, "IRQH" },
+	{ &m308.IRQa, 1, "IRQA" },
 	{ 0 }
 };
 
-static DECLFW(M308Write) {
+static DECLFW(WriteIRQ) {
 	switch (A & 0xF003) {
 	case 0xF000:
 		X6502_IRQEnd(FCEU_IQEXT);
-		IRQa = 0;
-		IRQCount = 0;
+		m308.IRQa = 0;
+		m308.IRQCountLow = 0;
 		break;
 	case 0xF001:
-		IRQa = 1;
+		m308.IRQa = 1;
 		break;
 	case 0xF003:
-		IRQLatch = (V & 0xF0) >> 4;
+		m308.IRQCountHigh = (V & 0xF0) >> 4;
 		break;
 	}
 }
 
-static void M308IRQHook(int a) {
-	if (IRQa) {
-		while (a--) {
-			IRQCount++;
-			if ((IRQCount & 0x0FFF) == 2048) {
-				IRQLatch--;
-			}
-			if (!IRQLatch && (IRQCount & 0x0FFF) < 2048) {
-				X6502_IRQBegin(FCEU_IQEXT);
-			}
+static void CPUIRQHook(int a) {
+	uint16 prev, curr;
+
+	if (m308.IRQa) {
+		prev = m308.IRQCountLow & 0x0FFF;
+		m308.IRQCountLow += a;
+		curr = m308.IRQCountLow & 0x0FFF;
+
+		if (!(prev & 0x800) && (curr & 0x800)) {
+			m308.IRQCountHigh--;
+		}
+		if ((m308.IRQCountHigh == 0) && !(curr & 0x800)) {
+			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
 }
 
-static void M308Power(void) {
-	IRQa = IRQCount = IRQLatch = 0;
+static void Power(void) {
+	memset(&m308, 0, sizeof(m308));
 	VRC24_Power();
-	SetWriteHandler(0xF000, 0xFFFF, M308Write);
+	SetWriteHandler(0xF000, 0xFFFF, WriteIRQ);
 }
 
 void Mapper308_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, 0, 1);
-	info->Power = M308Power;
-	MapIRQHook = M308IRQHook;
-	AddExState(IRQStateRegs, ~0, 0, NULL);
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

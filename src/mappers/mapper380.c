@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- * Copyright (C) 2023
+ * Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,22 +25,29 @@
 #include "latch.h"
 
 static uint8 dipsw;
+static uint32 temp;
 
 static SFORMAT StateRegs[] = {
-	{ &dipsw, 1, "DPSW" },
+	{ &temp, 4, "TEMP" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint32 prg = (latch.addr >> 2) & 0x1F;
-	uint32 cpuA14 = (latch.addr & 0x01) != 0x01;
-	uint32 ourom = (latch.addr >> 8) & 0x01;
-	uint32 nrom = (latch.addr >> 9) & 0x01;
+	uint8 bank = (latch.addr >> 2) & 0x1F;
+
+	if (latch.addr & 0x200) { /* NROM */
+		if (latch.addr & 0x01) {
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
+		} else {
+			setprg32(0x8000, bank >> 1);
+		}
+	} else {
+		setprg16(0x8000, bank);
+		setprg16(0xC000, bank | (((iNESCart.submapper == 1) && (latch.addr & 0x100)) ? 0x0F : 0x07));
+	}
 
 	SetupCartCHRMapping(0, CHRptr[0], 0x2000, !(latch.addr & 0x80));
-
-	setprg16(0x8000, prg & ~(cpuA14 * nrom));
-	setprg16(0xC000, (prg | (cpuA14 * nrom)) | (0x07 * !nrom) | (0x08 * (iNESCart.submapper == 1) * !nrom * ourom));
 
 	setchr8(0);
 	if (iNESCart.submapper == 2) {
@@ -50,20 +57,26 @@ static void Sync(void) {
 	}
 }
 
-static DECLFR(M380Read) {
+static DECLFR(ReadDIP) {
 	if ((iNESCart.submapper == 0) && (latch.addr & 0x100)) {
 		A |= dipsw;
 	}
 	return CartBR(A);
 }
 
-static void M380Reset(void) {
+static void Reset(void) {
 	dipsw = (dipsw + 1) & 0xF;
 	Latch_RegReset();
 }
 
+static void Power(void) {
+	dipsw = 0;
+	Latch_Power();
+}
+
 void Mapper380_Init(CartInfo *info) {
-	Latch_Init(info, Sync, M380Read, FALSE, FALSE);
-	info->Reset = M380Reset;
+	Latch_Init(info, Sync, ReadDIP, FALSE, FALSE);
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

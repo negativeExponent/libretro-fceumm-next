@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,61 +26,63 @@
 #include "mmc3.h"
 #include "vrc24.h"
 
-static uint8 cmd;
-static uint8 reg[4];
+static struct {
+	uint8 cmd;
+	uint8 reg[4];
+} m556;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 5, "REGS" },
-	{ &cmd, 1, "CMD0" },
+	{ m556.reg, 5, "REGS" },
+	{ &m556.cmd, 1, "CMD0" },
 	{ 0 }
 };
 
-static uint32 M556PRGMask(void) {
-	return (~reg[3] & 0x3F);
+static uint32 GetPRGMask(void) {
+	return (~m556.reg[3] & 0x3F);
 }
 
-static uint32 M556PRGBase(void) {
-	return (((reg[3] & 0x40) << 2) | reg[1]);
+static uint32 GetPRGBase(void) {
+	return (((m556.reg[3] & 0x40) << 2) | m556.reg[1]);
 }
 
-static uint32 M556CHRMask(void) {
-	return (0xFF >> (~reg[2] & 0x0F));
+static uint32 GetCHRMask(void) {
+	return (0xFF >> (~m556.reg[2] & 0x0F));
 }
 
-static uint32 M556CHRBase(void) {
-	return (((reg[3] & 0x40) << 6) | ((reg[2] & 0xF0) << 4) | reg[0]);
+static uint32 GetCHRBase(void) {
+	return (((m556.reg[3] & 0x40) << 6) | ((m556.reg[2] & 0xF0) << 4) | m556.reg[0]);
 }
 
-static void M556MMC3PW(uint16 A, uint16 V) {
-	uint32 mask = M556PRGMask();
-	uint32 base = M556PRGBase();
+static void SetPRG_mmc3(uint16 A, uint16 V) {
+	uint32 mask = GetPRGMask();
+	uint32 base = GetPRGBase();
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M556MMC3CW(uint16 A, uint16 V) {
-	uint32 mask = M556CHRMask();
-	uint32 base = M556CHRBase();
+static void SetCHR_mmc3(uint16 A, uint16 V) {
+	uint32 mask = GetCHRMask();
+	uint32 base = GetCHRBase();
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void M556VRC4PW(uint16 A, uint16 V) {
-	uint32 mask = M556PRGMask();
-	uint32 base = M556PRGBase();
+static void SetPRG_vrc4(uint16 A, uint16 V) {
+	uint32 mask = GetPRGMask();
+	uint32 base = GetPRGBase();
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M556VRC4CW(uint16 A, uint16 V) {
-	uint32 mask = M556CHRMask();
-	uint32 base = M556CHRBase();
+static void SetCHR_vrc4(uint16 A, uint16 V) {
+	uint32 mask = GetCHRMask();
+	uint32 base = GetCHRBase();
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void M556Sync(void) {
-	if (reg[2] & 0x80) {
+static void Sync(void) {
+	if (m556.reg[2] & 0x80) {
 		VRC24_SyncPRG();
 		VRC24_SyncCHR();
 		VRC24_SyncMirror();
@@ -91,50 +93,50 @@ static void M556Sync(void) {
 	}
 }
 
-static DECLFW(M556WriteREG) {
-	if (!(reg[3] & 0x80)) {
-		reg[cmd] = V;
-		cmd = (cmd + 1) & 0x03;
-		M556Sync();
+static DECLFW(WriteReg) {
+	if (!(m556.reg[3] & 0x80)) {
+		m556.reg[m556.cmd] = V;
+		m556.cmd = (m556.cmd + 1) & 0x03;
+		Sync();
 	}
 }
 
-static DECLFW(M556WriteASIC) {
-	if (reg[2] & 0x80) {
+static DECLFW(WriteASIC) {
+	if (m556.reg[2] & 0x80) {
 		VRC24_Write(A, V);
 	} else {
 		MMC3_Write(A, V);
 	}
 }
 
-static void M556CPUIRQHook(int a) {
-	if (reg[2] & 0x80) {
+static void CPUIRQHook(int a) {
+	if (m556.reg[2] & 0x80) {
 		VRC24_IRQCPUHook(a);
 	}
 }
 
-static void M556HBIRQHook(void) {
-	if (!(reg[2] & 0x80)) {
+static void HBIRQHook(void) {
+	if (!(m556.reg[2] & 0x80)) {
 		MMC3_IRQHBHook();
 	}
 }
 
-static void M556Reset(void) {
-	memset(reg, 0, sizeof(reg));
-	reg[2] = 0x0F;
-	M556Sync();
+static void Reset(void) {
+	memset(&m556, 0, sizeof(m556));
+	m556.reg[2] = 0x0F;
+	Sync();
 }
 
 static void M556Power(void) {
-	memset(reg, 0, sizeof(reg));
-	reg[2] = 0x0F;
+	memset(&m556, 0, sizeof(m556));
+	m556.reg[2] = 0x0F;
 
 	MMC3_Reset();
 	VRC24_Reset();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x5000, 0x5FFF, M556WriteREG);
-	SetWriteHandler(0x8000, 0xFFFF, M556WriteASIC);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
+	SetWriteHandler(0x8000, 0xFFFF, WriteASIC);
 
 	if (WRAM) {
 		setprg8r(0x10, 0x6000, 0);
@@ -143,27 +145,23 @@ static void M556Power(void) {
 	}
 }
 
-static void M556Close(void) {
-}
-
 static void StateRestore(int version) {
-	M556Sync();
+	Sync();
 }
 
 void Mapper556_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x05, 0x0A, 0, TRUE);
-	VRC24_pwrap = M556VRC4PW;
-	VRC24_cwrap = M556VRC4CW;
+	VRC24_pwrap = SetPRG_vrc4;
+	VRC24_cwrap = SetCHR_vrc4;
 
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M556MMC3PW;
-	MMC3_cwrap = M556MMC3CW;
+	MMC3_pwrap = SetPRG_mmc3;
+	MMC3_cwrap = SetCHR_mmc3;
 
-	info->Reset = M556Reset;
+	info->Reset = Reset;
 	info->Power = M556Power;
-	info->Close = M556Close;
-	MapIRQHook = M556CPUIRQHook;
-	GameHBIRQHook = M556HBIRQHook;
+	MapIRQHook = CPUIRQHook;
+	GameHBIRQHook = HBIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

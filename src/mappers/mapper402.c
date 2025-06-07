@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,25 +23,31 @@
 #include "latch.h"
 
 static void Sync(void) {
+	uint8 bank = latch.addr & 0x1F;
+
 	if (latch.addr & 0x800) {
-		setprg8(0x6000, ((latch.addr & 0x1F) << 1) | 3);
+		setprg8(0x6000, (bank << 1) | 0x03);
+	} else {
+		unsetcpu8(0x6000);
 	}
 	if ((latch.addr & 0x40)) {
-		setprg16(0x8000, latch.addr & 0x1F);
-		setprg16(0xC000, latch.addr & 0x1F);
+		setprg16(0x8000, bank);
+		setprg16(0xC000, bank);
 	} else {
-		setprg32(0x8000, (latch.addr & 0x1F) >> 1);
+		setprg32(0x8000, bank >> 1);
 	}
-	if ((latch.addr & 0x400) == 0) {
-		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
-	} else {
-		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
-	}
+	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], !!(latch.addr & 0x400));
 	setchr8(0);
 	setmirror(((latch.addr >> 7) & 0x01) ^ 0x01);
 }
 
+static void Power(void) {
+	Latch_Power();
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
+}
+
 void Mapper402_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
+	info->Power = Power;
 	info->Reset = Latch_RegReset;
 }

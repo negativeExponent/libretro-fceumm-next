@@ -3,7 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
  *  Copyright (C) 2002 Xodnizel
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,82 +26,89 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static void Sync(void) {
-	if (iNESCart.submapper == 1) {
-		switch (latch.addr & 0xF000) {
-		case 0xA000:
-			setprg16(0x8000, latch.addr >> 1);
-			setprg8(0xC000, 0);
-			setprg8r(0x10, 0x8000 | ((latch.addr << 4) & 0x6000), 0);
-			break;
-		case 0xC000:
-			setprg16(0x8000, (latch.addr >> 1) | 0);
-			setprg16(0xC000, (latch.addr >> 1) | 1);
-			setprg8r(0x10, 0x8000 | ((latch.addr << 4) & 0x6000), 0);
-			break;
-		case 0xD000:
-			setprg8(0x8000, latch.addr);
-			setprg8(0xA000, latch.addr);
-			setprg8(0xC000, latch.addr);
-			setprg8(0xE000, latch.addr);
-			setprg8r(0x10, 0x8000 | ((latch.addr << 4) & 0x2000), 0);
-			setprg8r(0x10, 0xC000 | ((latch.addr << 4) & 0x2000), 0);
-			break;
-		case 0xE000:
-			setprg16(0x8000, latch.addr >> 1);
-			setprg16(0xC000, (latch.addr & 0x100) ? ((latch.addr >> 1) | 0x07) : 0);
-			setprg8r(0x10, 0x8000 | ((latch.addr << 4) & 0x6000), 0);
-			break;
-		default:
-			setprg16(0x8000, latch.addr >> 1);
-			setprg16(0xC000, 0);
-			break;
-		}
-		setchr8(0);
-		setmirror(((latch.addr >> 11) & 1) ^ 1);
+static void Sync_sub0(void) {
+	if (latch.data & 0x02) {
+		setprg8(0x8000, latch.addr >> 1);
+		setprg8(0xA000, latch.addr >> 1);
+		setprg8(0xC000, latch.addr >> 1);
+		setprg8(0xE000, latch.addr >> 1);
+	} else if (latch.data & 0x08) {
+		setprg8(0x8000, ((latch.addr >> 1) & ~0x01) | 0);
+		setprg8(0xA000, ((latch.addr >> 1) & ~0x01) | 1);
+		setprg8(0xC000, ((latch.addr >> 1) & ~0x01) | 2);
+		setprg8(0xE000, ((latch.addr >> 1) & ~0x01) |
+			0x03 |
+			(latch.data & 0x04) |
+			(((latch.data & 0x04) && (latch.data & 0x40)) ? 0x08 : 0x00));
 	} else {
-		if (latch.data & 0x02) {
-			setprg8(0x8000, latch.addr >> 1);
-			setprg8(0xA000, latch.addr >> 1);
-			setprg8(0xC000, latch.addr >> 1);
-			setprg8(0xE000, latch.addr >> 1);
-		} else if (latch.data & 0x08) {
-			setprg8(0x8000, (latch.addr >> 1 & ~0x01) | 0);
-			setprg8(0xA000, (latch.addr >> 1 & ~0x01) | 1);
-			setprg8(0xC000, (latch.addr >> 1 & ~0x01) | 2);
-			setprg8(0xE000, (latch.addr >> 1 & ~0x01) | 3 |
-				(latch.data & 0x04) |
-				((latch.data & 0x04) && (latch.data & 0x40) ? 0x08 : 0x00));
-		} else {
-			setprg16(0x8000, latch.addr >> 2);
-			setprg16(0xC000, 0);
-		}
+		setprg16(0x8000, latch.addr >> 2);
+		setprg16(0xC000, 0);
+	}
 
-		setchr8(0);
-		setmirror((latch.data & 0x01) ^ 0x01);
+	setchr8(0);
+	setmirror((latch.data & 0x01) ^ 0x01);
 
-		setprg8r(0x10, 0x8000 | ((latch.data << 9) & 0x6000), 0);
-		if (latch.data & 0x02) {
-			setprg8r(0x10, 0x8000 | ((latch.data << 9) & 0x2000), 0);
-		}
+	setprg8r(0x10, 0x8000 | ((latch.data << 9) & 0x6000), 0);
+	if (latch.data & 0x02) {
+		setprg8r(0x10, (0x8000 | ((latch.data << 9) & 0x6000)) ^ 0x4000, 0);
 	}
 }
 
-static DECLFW(M452Write) {
+static void Sync_sub1(void) {
+	switch (latch.addr & 0xF000) {
+	case 0xA000:
+		setprg16(0x8000, latch.addr >> 1);
+		setprg8(0xC000, 0);
+		setprg8r(0x10, 0x8000 | ((latch.addr << 4) & 0x6000), 0);
+		break;
+	case 0xC000:
+		setprg16(0x8000, (latch.addr >> 1) | 0);
+		setprg16(0xC000, (latch.addr >> 1) | 1);
+		setprg8r(0x10, 0x8000 | ((latch.addr << 4) & 0x6000), 0);
+		break;
+	case 0xD000:
+		setprg8(0x8000, latch.addr);
+		setprg8(0xA000, latch.addr);
+		setprg8(0xC000, latch.addr);
+		setprg8(0xE000, latch.addr);
+		setprg8r(0x10, 0x8000 | ((latch.addr << 4) & 0x2000), 0);
+		setprg8r(0x10, 0xC000 | ((latch.addr << 4) & 0x2000), 0);
+		break;
+	case 0xE000:
+		setprg16(0x8000, latch.addr >> 1);
+		setprg16(0xC000, (latch.addr & 0x100) ? ((latch.addr >> 1) | 0x07) : 0);
+		setprg8r(0x10, 0x8000 | ((latch.addr << 4) & 0x6000), 0);
+		break;
+	default:
+		setprg16(0x8000, latch.addr >> 1);
+		setprg16(0xC000, 0);
+		break;
+	}
+	setchr8(0);
+	setmirror(((latch.addr >> 11) & 1) ^ 1);
+}
+
+static DECLFW(WriteLatch) {
+	CartBW(A, V);
+
+	if ((iNESCart.submapper == 1) && (A < 0xA000)) {
+		return;
+	}
+
 	if ((&Page[(A & 0xE000) >> 11][A & 0xE000]) == WRAM) {
-		CartBW(A, V);
-	} else {
-		Latch_Write(A, V);
+		return;
 	}
+
+	Latch_Write(A, V);
 }
 
-static void M452Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M452Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper452_Init(CartInfo *info) {
-	Latch_Init(info, Sync, NULL, TRUE, FALSE);
+	Latch_Init(info, (info->submapper == 1) ? Sync_sub1 : Sync_sub0, NULL, TRUE, FALSE);
 	info->Reset = Latch_RegReset;
-	info->Power = M452Power;
+	info->Power = Power;
 }

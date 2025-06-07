@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,26 +25,34 @@
 #include "latch.h"
 
 static void Sync(void) {
+	uint8 prg = latch.addr >> 2;
+
 	if (latch.addr & 2) { /* NROM-128 */
-		setprg16(0x8000, latch.addr >> 2);
-		setprg16(0xC000, latch.addr >> 2);
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg);
 	} else { /* NROM=256 */
-		setprg32(0x8000, latch.addr >> 3);
+		setprg32(0x8000, prg >> 1);
 	}
 	setchr8(0);
 	setmirror(latch.addr & 0x01);
 }
 
-static DECLFW(M541Write) {
-	if (A >= 0xC000) {
-		latch.addr = A;
-		Sync();
+static DECLFW(WriteLatch) {
+	switch (A & 0xF000) {
+	case 0xC000:
+	case 0xD000:
+	case 0xE000:
+	case 0xF000:
+		Latch_Write(A, V);
+		break;
+	default:
+		break;
 	}
 }
 
 static void M541Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M541Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper541_Init(CartInfo *info) {

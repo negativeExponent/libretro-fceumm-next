@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,30 +29,30 @@
 
 static uint8 eeprom_data[256];
 
-static void M529SyncPRG(void) {
+static void SyncPRG(void) {
 	setprg16(0x8000, vrc24.prg[1]);
 	setprg16(0xC000, ~0);
 }
 
-static DECLFR(M529EEPROMRead) {
+static DECLFR(ReadEEPROM) {
 	return eeprom_93Cx6_read() ? 0x01 : 0x00;
 }
 
-static DECLFW(M529EEPROMWrite) {
-	eeprom_93Cx6_write(A & 0x04, A & 0x02, A & 0x01);
+static DECLFW(WriteEEPROM) {
+	eeprom_93Cx6_write(!!(A & 0x04), !!(A & 0x02), !!(A & 0x01));
 }
 
-static void M529Power(void) {
+static void Power(void) {
 	VRC24_Power();
-	SetReadHandler(0x5000, 0x5FFF, M529EEPROMRead);
-	SetWriteHandler(0xF800, 0xFFFF, M529EEPROMWrite);
+	SetReadHandler(0x5000, 0x5FFF, ReadEEPROM);
+	SetWriteHandler(0xF800, 0xFFFF, WriteEEPROM);
 }
 
 void Mapper529_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 0, 1);
-	VRC24_SyncPRG = M529SyncPRG;
+	VRC24_SyncPRG = SyncPRG;
 	if (info->PRGRamSaveSize) {
-		info->Power = M529Power;
+		info->Power = Power;
 		eeprom_93Cx6_init(eeprom_data, 256, 16);
 		info->battery = 1;
 		info->SaveGame[0] = eeprom_data;

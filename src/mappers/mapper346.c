@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,45 +26,48 @@
 
 #include "mapinc.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m346;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m346.reg, 1, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
-	setprg32(0x8000, reg);
+	setprg32(0x8000, m346.reg);
 	setchr8(0);
 }
 
-static DECLFW(M346Write) {
+static DECLFW(WriteReg) {
 	/*	FCEU_printf("bs %04x %02x\n",A,V); */
 	switch (A) {
 	case 0xE0A0:
-		reg = 0;
+		m346.reg = 0;
 		Sync();
 		break;
 	case 0xEE36:
-		reg = 1;
+		m346.reg = 1;
 		Sync();
 		break;
 	}
 }
 
-static void M346Power(void) {
-	reg = 1;
+static void Power(void) {
+	m346.reg = 1;
 	Sync();
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0xE000, 0xEFFF, WriteReg);
+
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0xE000, 0xEFFF, M346Write);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M346Reset(void) {
-	reg = 1;
+static void Reset(void) {
+	m346.reg = 1;
 	Sync();
 }
 
@@ -72,13 +75,13 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-static void M346Close(void) {
+static void Close(void) {
 }
 
 void Mapper346_Init(CartInfo *info) {
-	info->Power = M346Power;
-	info->Reset = M346Reset;
-	info->Close = M346Close;
+	info->Power = Power;
+	info->Reset = Reset;
+	info->Close = Close;
 
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);

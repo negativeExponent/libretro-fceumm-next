@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,57 +21,60 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m430;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m430.reg, 1, "EXPR" },
 	{ 0 }
 };
 
-static void M430PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	uint8 mask = 0x0F;
-	uint8 base = (reg << 4) & 0x30;
+	uint8 base = m430.reg << 4;
 
-	if (reg & 0x08) {
-		setprg8(0x8000, (base | ((mmc3.reg[6] & 0xFD) & mask)));
-		setprg8(0xA000, (base | ((mmc3.reg[7] & 0xFD) & mask)));
-		setprg8(0xC000, (base | ((mmc3.reg[6] | 0x02) & mask)));
-		setprg8(0xE000, (base | ((mmc3.reg[7] | 0x02) & mask)));
+	if (m430.reg & 0x08) { /* GNROM-like*/
+		if (!(A & 0x4000)) {
+			setprg8(A, (base & ~mask) | ((V & mask) & 0xFD));
+			A += 0x4000;
+			setprg8(A, (base & ~mask) | ((V & mask) | 0x02));
+		}
 	} else {
-		setprg8(A, (base | (V & mask)));
+		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
-static void M430CW(uint16 A, uint16 V) {
-	uint8 mask = (reg & 0x04) ? 0x7F : 0xFF;
+static void SetCHR(uint16 A, uint16 V) {
+	uint8 mask = (m430.reg & 0x04) ? 0x7F : 0xFF;
 
-	setchr1(A, ((reg << 6) & ~mask) | (V & mask));
+	setchr1(A, ((m430.reg << 6) & ~mask) | (V & mask));
 }
 
-static DECLFW(M430Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		reg = A & 0xFF;
+		m430.reg = A & 0xFF;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M430Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m430, 0, sizeof(m430));
 	MMC3_Reset();
 }
 
-static void M430Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m430, 0, sizeof(m430));
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M430Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper430_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M430CW;
-	MMC3_pwrap = M430PW;
-	info->Reset = M430Reset;
-	info->Power = M430Power;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Reset = Reset;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

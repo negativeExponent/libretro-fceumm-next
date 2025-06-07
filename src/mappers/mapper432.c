@@ -22,75 +22,78 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m432;
+
 static uint8 dipsw;
 
-static void M432CW(uint16 A, uint16 V) {
-	uint16 mask = (reg[1] & 0x04) ? 0x7F : 0xFF;
-	uint16 base = ((reg[1] << 7) & 0x080) | ((reg[1] << 5) & 0x100) | ((reg[1] << 4) & 0x200);
+static SFORMAT StateRegs[] = {
+	{ m432.reg, 2, "EXPR" },
+	{ 0 }
+};
 
-	setchr1(A, (base & ~mask) | (V & mask));
-}
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = (m432.reg[1] & 0x02) ? 0x0F : 0x1F;
+	uint16 base = ((m432.reg[1] << 4) & 0x10) | ((m432.reg[1] << 1) & 0x60);
+	uint8 nrom256 = (iNESCart.submapper == 2) ? ((m432.reg[1] & 0x20) != 0) : ((m432.reg[1] & 0x80) != 0);
 
-static void M432PW(uint16 A, uint16 V) {
-	uint16 mask = (reg[1] & 0x02) ? 0x0F : 0x1F;
-	uint16 base = ((reg[1] << 4) & 0x10) | ((reg[1] << 1) & 0x60);
-	uint8 nrom256 = (iNESCart.submapper == 2) ? ((reg[1] & 0x20) != 0) : ((reg[1] & 0x80) != 0);
+	if (m432.reg[1] & 0x40) { /* NROM */
+		if (!(A & 0x4000)) { /* GNROM */
+			uint8 A14 = ((iNESCart.submapper == 2) ? ((m432.reg[1] & 0x20) != 0) : ((m432.reg[1] & 0x80) != 0)) ? 0x02 : 0;
 
-	if (reg[1] & 0x40) { /* NROM */
-		if (nrom256) { /* NROM-256 */
-			setprg8(0x8000, (base & ~mask) | ((mmc3.reg[6] & 0xFD) & mask));
-			setprg8(0xA000, (base & ~mask) | ((mmc3.reg[7] & 0xFD) & mask));
-			setprg8(0xC000, (base & ~mask) | ((mmc3.reg[6] | 0x02) & mask));
-			setprg8(0xE000, (base & ~mask) | ((mmc3.reg[7] | 0x02) & mask));
-		} else { /* NROM-128 */
-			setprg8(0x8000, (base & ~mask) | (mmc3.reg[6] & mask));
-			setprg8(0xA000, (base & ~mask) | (mmc3.reg[7] & mask));
-			setprg8(0xC000, (base & ~mask) | (mmc3.reg[6] & mask));
-			setprg8(0xE000, (base & ~mask) | (mmc3.reg[7] & mask));
+			setprg8(A, (base & ~mask) | ((V & mask) & ~A14));
+			A += 0x4000;
+			setprg8(A, (base & ~mask) | ((V & mask) |  A14));
 		}
 	} else { /* MMC3 */
 		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
-static DECLFR(M432Read) {
-	if ((iNESCart.submapper == 1) ? ((reg[1] & 0x20) != 0) : ((reg[0] & 0x01) != 0)) {
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = (m432.reg[1] & 0x04) ? 0x7F : 0xFF;
+	uint16 base = ((m432.reg[1] << 4) & 0x200) | ((m432.reg[1] << 5) & 0x100) | ((m432.reg[1] << 7) & 0x80);
+
+	setchr1(A, (base & ~mask) | (V & mask));
+}
+
+static DECLFR(ReadDIP) {
+	if ((iNESCart.submapper == 1) ? ((m432.reg[1] & 0x20) != 0) : ((m432.reg[0] & 0x01) != 0)) {
 		return dipsw;
 	}
 	return CartBR(A);
 }
 
-static DECLFW(M432Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		reg[A & 0x01] = V;
+		m432.reg[A & 0x01] = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M432Reset(void) {
-	reg[0] = 0;
-	reg[1] = 0;
+static void Reset(void) {
+	m432.reg[0] = 0;
+	m432.reg[1] = 0;
 	dipsw++;
 	MMC3_Reset();
 }
 
-static void M432Power(void) {
-	reg[0] = 0;
-	reg[1] = 0;
+static void Power(void) {
+	m432.reg[0] = 0;
+	m432.reg[1] = 0;
 	dipsw = 0;
 	MMC3_Power();
-	SetReadHandler(0x8000, 0xFFFF, M432Read);
-	SetWriteHandler(0x6000, 0x7FFF, M432Write);
+	SetReadHandler(0x8000, 0xFFFF, ReadDIP);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper432_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M432CW;
-	MMC3_pwrap = M432PW;
-	info->Power = M432Power;
-	info->Reset = M432Reset;
-	AddExState(reg, 2, 0, "EXPR");
-	AddExState(&dipsw, 1, 0, "CMD0");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

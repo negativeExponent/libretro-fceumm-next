@@ -41,7 +41,7 @@ static void Sync(void) {
 	}
 }
 
-static DECLFW(M564Write) {
+static DECLFW(WriteLatch) {
 	if (latch.data & 0x20) {
 		if (latch.data & 0x08) {
 			latch.data = (latch.data & ~0x17) | (V & 0x17);
@@ -54,13 +54,13 @@ static DECLFW(M564Write) {
 	Sync();
 }
 
-static void M564Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M564Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper564_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M564Power;
+	info->Power = Power;
 	info->Reset = Latch_RegReset;
 }

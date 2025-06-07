@@ -472,11 +472,12 @@ static void CheckHInfo(CartInfo *info, uint64 partialmd5) {
 			if (nesdb[x].chrram >= 0) {
 				int chrram = (nesdb[x].chrram & 0x0F) ? (64 << ((nesdb[x].chrram >> 0) & 0xF)) : 0;
 				int chrsaveram = (nesdb[x].chrram & 0xF0) ? (64 << ((nesdb[x].chrram >> 4) & 0xF)) : 0;
+
 				if (chrram != info->CHRRamSize || chrsaveram != info->CHRRamSaveSize) {
 					tofix |= 32;
 					info->iNES2          = 1;
-					info->CHRRamSize     = (nesdb[x].chrram & 0x0F) ? (64 << ((nesdb[x].chrram >> 0) & 0xF)) : 0;
-					info->CHRRamSaveSize = (nesdb[x].chrram & 0xF0) ? (64 << ((nesdb[x].chrram >> 4) & 0xF)) : 0;
+					info->CHRRamSize     = chrram;
+					info->CHRRamSaveSize = chrsaveram;
 				}
 			}
 
@@ -523,7 +524,7 @@ static void CheckHInfo(CartInfo *info, uint64 partialmd5) {
 			size_t CHRRAM = info->CHRRamSize + info->CHRRamSaveSize;
 			if (PRGRAM || CHRRAM) {
 				if (info->PRGRamSaveSize == 0) {
-					FCEU_printf(" [DB] PRG RAM: %d KB, ", PRGRAM / 1024);
+					FCEU_printf(" [DB] PRG RAM: %d KB\n", PRGRAM / 1024);
 				} else {
 					FCEU_printf(" [DB] PRG RAM: %d KB ( %dKB is battery-backed )\n", PRGRAM / 1024, info->PRGRamSaveSize / 1024);
 				}

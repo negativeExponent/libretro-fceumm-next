@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,27 +54,28 @@ static void Sync(void) {
 	setmirror(MI_V);
 }
 
-static DECLFW(M538Write) {
+static DECLFW(WriteLatch) {
 	switch (A & 0xF000) {
 	case 0xC000:
 	case 0xD000:
-		latch.data = V;
-		Sync();
+		/* Latch only responds from $C000-$DFFF*/
+		Latch_Write(A, V);
 		break;
 	}
 }
 
-static void M538Power(void) {
+static void Power(void) {
 	FDSSound_Power();
 	Latch_RegReset();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M538Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper538_Init(CartInfo *info) {
 	if (info->CRC32 == 0xA8C6D77D) {
 		Latch_Init(info, Sync_alt, NULL, 0, 0);
+	} else {
+		Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	}
-	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M538Power;
+	info->Power = Power;
 }

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,52 +23,54 @@
 #include "mapinc.h"
 #include "mmc1.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m323;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m323.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M323PW(uint16 A, uint16 V) {
+static void SetPRGBank(uint16 A, uint16 V) {
 	uint8 mask = 0x07;
-	uint8 base = reg >> 1;
+	uint8 base = m323.reg >> 1;
 
 	setprg16(A, (base & ~mask) | (V & mask));
 }
 
-static void M323CW(uint16 A, uint16 V) {
+static void SetCHRBank(uint16 A, uint16 V) {
 	uint16 mask = 0x1F;
-	uint16 base = reg << 1;
+	uint16 base = m323.reg << 1;
 
 	setchr4(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M323Write) {
-	if (!(mmc1.reg[3] & 0x10) && !(reg & 0x08)) {
-		reg = V;
+static DECLFW(WriteReg) {
+	if (!(mmc1.reg[3] & 0x10) && !(m323.reg & 0x08)) {
+		m323.reg = V;
 		MMC1_SyncCHR();
 		MMC1_SyncPRG();
 		MMC1_SyncMirror();
 	}
 }
 
-static void M323Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m323, 0, sizeof(m323));
 	MMC1_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M323Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
-static void M323Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m323, 0, sizeof(m323));
 	MMC1_Reset();
 }
 
 void Mapper323_Init(CartInfo *info) {
 	MMC1_Init(info, MMC1B, 0, 0);
-	MMC1_cwrap = M323CW;
-	MMC1_pwrap = M323PW;
-	info->Power = M323Power;
-	info->Reset = M323Reset;
+	MMC1_cwrap = SetCHRBank;
+	MMC1_pwrap = SetPRGBank;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

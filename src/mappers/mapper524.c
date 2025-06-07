@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,46 +28,48 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint16 IRQCount;
-static uint8 IRQa;
+static struct {
+	uint8 IRQa;
+	uint16 IRQCount;
+} m524;
 
-static SFORMAT IRQStateRegs[] = {
-	{ &IRQCount, 2, "IRQC" },
-	{ &IRQa, 1, "IRQA" },
+static SFORMAT StateRegs[] = {
+	{ &m524.IRQCount, 2, "IRQC" },
+	{ &m524.IRQa, 1, "IRQA" },
 	{ 0 }
 };
 
-static DECLFW(M524Write) {
+static DECLFW(WriteIRQ) {
 	switch (A & 0xF00C) {
 	case 0xF008:
-		IRQa = 1;
+		m524.IRQa = TRUE;
 		break;
 	case 0xF00C:
-		IRQa = 0;
-		IRQCount = 0;
+		m524.IRQa = FALSE;
+		m524.IRQCount = 0;
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	}
 }
 
-static void M524IRQHook(int a) {
-	if (!IRQa)
-		return;
-
-	IRQCount += a;
-	if (IRQCount & 1024)
-		X6502_IRQBegin(FCEU_IQEXT);
+static void CPUIRQHook(int a) {
+	if (m524.IRQa) {
+		m524.IRQCount += a;
+		if (m524.IRQCount & 1024) {
+			X6502_IRQBegin(FCEU_IQEXT);
+		}
+	}
 }
 
-static void M524Power(void) {
-	IRQa = IRQCount = 0;
+static void Power(void) {
+	memset(&m524, 0, sizeof(m524));
 	VRC24_Power();
-	SetWriteHandler(0xF000, 0xFFFF, M524Write);
+	SetWriteHandler(0xF000, 0xFFFF, WriteIRQ);
 }
 
 void Mapper524_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, 0, 1);
-	info->Power = M524Power;
-	MapIRQHook = M524IRQHook;
-	AddExState(IRQStateRegs, ~0, 0, NULL);
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

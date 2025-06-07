@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2016 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,46 +30,56 @@
 #include "mapinc.h"
 #include "fdssound.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m306;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m306.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg8(0x6000, reg);
+static void SyncPRG(void) {
 	setprg32(0x8000, 3);
+}
+
+static void SyncCHR(void) {
 	setchr8(0);
 }
 
-static DECLFW(M306Write) {
+static void SyncWRAM(void) {
+	setprg8(0x6000, m306.reg);
+}
+
+static DECLFW(WriteReg) {
 	if ((A & 0xD903) == 0xD903) {
 		if (A & 0x40) {
-			reg = (A >> 2) & 0x0F;
+			m306.reg = (A >> 2) & 0x0F;
 		} else {
-			reg = 0x08 | ((A >> 2) & 0x03);
+			m306.reg = 0x08 | ((A >> 2) & 0x03);
 		}
-		Sync();
+		SyncWRAM();
 	}
 }
 
-static void M306Power(void) {
+static void Power(void) {
+	memset(&m306, 0, sizeof(m306));
 	FDSSound_Power();
-
-	reg = 0;
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncWRAM();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0xD000, 0xDFFF, M306Write);
-	SetWriteHandler(0xF000, 0xFFFF, M306Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncWRAM();
 }
 
 void Mapper306_Init(CartInfo *info) {
-	info->Power = M306Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

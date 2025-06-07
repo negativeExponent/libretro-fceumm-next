@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,44 +26,53 @@
 
 #include "mapinc.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m335;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
+	{ m335.reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	if (reg[1] & 0x10) {
-		setprg16(0x8000, ((reg[1] & 0x07) << 1) | ((reg[1] >> 3) & 0x01));
-		setprg16(0xC000, ((reg[1] & 0x07) << 1) | ((reg[1] >> 3) & 0x01));
+	uint16 prg = (m335.reg[1] << 1) | ((m335.reg[1] >> 3) & 0x01);
+
+	if (m335.reg[1] & 0x10) {
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg);
 	} else {
-		setprg32(0x8000, reg[1] & 0x07);
+		setprg32(0x8000, prg >> 1);
 	}
-	setchr8(reg[0] & 0x0F);
-	setmirror(((reg[1] >> 5) & 0x01) ^ 0x01);
+	setchr8(m335.reg[0]);
+	setmirror(((m335.reg[1] >> 5) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M335Write) {
+static DECLFW(WriteReg) {
 	switch (A & 0xE000) {
 	case 0x8000:
 	case 0xA000:
-		reg[0] = V;
+		m335.reg[0] = V;
 		Sync();
 		break;
 	case 0xC000:
 	case 0xE000:
-		reg[1] = V;
+		m335.reg[1] = V;
 		Sync();
 		break;
 	}
 }
 
-static void M335Power(void) {
-	reg[0] = reg[1] = 0;
+static void Reset(void) {
+	memset(&m335, 0, sizeof(m335));
+	Sync();
+}
+
+static void Power(void) {
+	memset(&m335, 0, sizeof(m335));
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M335Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
@@ -71,7 +80,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper335_Init(CartInfo *info) {
-	info->Power = M335Power;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

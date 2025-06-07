@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,69 +25,71 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m448;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m448.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M448SyncPRG(void) {
-	if (reg & 0x08) { /* AOROM */
-		setprg32(0x8000, ((reg << 2) & ~0x07) | (vrc24.prg[0] & 0x07));
+static void SyncPRG(void) {
+	if (m448.reg & 0x08) { /* AOROM */
+		setprg32(0x8000, ((m448.reg << 2) & ~0x07) | (vrc24.prg[0] & 0x07));
 	} else {
-		if (reg & 0x04) { /* UOROM */
-			setprg16(0x8000, ((reg << 3) & ~0x0F) | (vrc24.prg[0] & 0x0F));
-			setprg16(0xC000, ((reg << 3) & ~0x0F) | 0x0F);
+		if (m448.reg & 0x04) { /* UOROM */
+			setprg16(0x8000, ((m448.reg << 3) & ~0x0F) | (vrc24.prg[0] & 0x0F));
+			setprg16(0xC000, ((m448.reg << 3) & ~0x0F) | 0x0F);
 		} else { /* UNROM */
-			setprg16(0x8000, (reg << 3) | (vrc24.prg[0] & 0x07));
-			setprg16(0xC000, (reg << 3) | 0x07);
+			setprg16(0x8000, (m448.reg << 3) | (vrc24.prg[0] & 0x07));
+			setprg16(0xC000, (m448.reg << 3) | 0x07);
 		}
 	}
 }
 
-static void M448SyncCHR(void) {
+static void SyncCHR(void) {
 	setchr8(0);
 }
 
-static void M448SyncMIRR(void) {
-	if (reg & 0x08) { /* AOROM */
+static void SyncMirror(void) {
+	if (m448.reg & 0x08) { /* AOROM */
 		setmirror(MI_0 + ((vrc24.prg[0] >> 4) & 0x01));
 	} else {
 		VRC24_SyncMirror_default();
 	}
 }
 
-static DECLFW(M448WriteReg) {
+static DECLFW(WriteReg) {
 	if (vrc24.cmd & 0x01) {
-		reg = A & 0xFF;
+		m448.reg = A & 0xFF;
 		VRC24_SyncPRG();
 		VRC24_SyncCHR();
 		VRC24_SyncMirror();
 	}
 }
 
-static DECLFW(M448WriteASIC) {
-	if (reg & 0x08) {
+static DECLFW(WriteVRC4) {
+	if (m448.reg & 0x08) {
 		VRC24_Write(0x8000, V);
-		M448SyncMIRR();
+		SyncMirror();
 	} else {
 		VRC24_Write(A, V);
 	}
 }
 
-static void M448Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m448, 0, sizeof(m448));
 	VRC24_Reset();
 }
 
-static void M448Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m448, 0, sizeof(m448));
 	VRC24_Power();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x6000, 0x7FFF, M448WriteReg);
-	SetWriteHandler(0x8000, 0xFFFF, M448WriteASIC);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
+	SetWriteHandler(0x8000, 0xFFFF, WriteVRC4);
 }
 
 static void StateRestore(int version) {
@@ -98,11 +100,11 @@ static void StateRestore(int version) {
 
 void Mapper448_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, 0, 1);
-	VRC24_SyncPRG = M448SyncPRG;
-	VRC24_SyncCHR = M448SyncCHR;
-	VRC24_SyncMirror = M448SyncMIRR;
-	info->Reset = M448Reset;
-	info->Power = M448Power;
+	VRC24_SyncPRG = SyncPRG;
+	VRC24_SyncCHR = SyncCHR;
+	VRC24_SyncMirror = SyncMirror;
+	info->Reset = Reset;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,35 +21,39 @@
 
 #include "mapinc.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m431;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
+	{ m431.reg, 2, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg16(0x8000, ((reg[0] >> 2) & ~0x07) | (reg[1] & 0x07));
-	setprg16(0xC000, ((reg[0] >> 2) & ~0x07) | 0x07);
+	uint8 bank = ((m431.reg[0] >> 2) & ~0x07) | (m431.reg[1] & 0x07);
+
+	setprg16(0x8000, bank);
+	setprg16(0xC000, bank | 0x07);
 	setchr8(0);
-	setmirror((reg[0] & 0x01) ^ 0x01);
+	setmirror((m431.reg[0] & 0x01) ^ 0x01);
 }
 
-static DECLFW(M431Write) {
-	reg[(A >> 14) & 0x01] = V;
+static DECLFW(WriteReg) {
+	m431.reg[(A >> 14) & 0x01] = V;
 	Sync();
 }
 
-static void M431Reset(void) {
-	reg[1] = reg[0] = 0;
+static void Reset(void) {
+	memset(&m431, 0, sizeof(m431));
 	Sync();
 }
 
-static void M431Power(void) {
-	reg[1] = reg[0] = 0;
+static void Power(void) {
+	memset(&m431, 0, sizeof(m431));
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M431Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
@@ -57,8 +61,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper431_Init(CartInfo *info) {
-	info->Power = M431Power;
-	info->Reset = M431Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

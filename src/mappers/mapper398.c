@@ -25,68 +25,73 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 reg;
-static uint8 PPUCHRBus;
+static struct {
+	uint8 reg;
+	uint8 ppuchrbus;
+} m398;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
-	{ &PPUCHRBus, 1, "PPUC" },
+	{ &m398.reg, 1, "REGS" },
+	{ &m398.ppuchrbus, 1, "PPUC" },
 	{ 0 }
 };
 
-static void M398PW(uint16 A, uint16 V) {
-	if (reg & 0x80) {
+static void SetPRG(uint16 A, uint16 V) {
+	if (m398.reg & 0x80) {
 		/* GNROM-like */
-		setprg32(0x8000, ((reg >> 5) & 0x06) | ((vrc24.chr[PPUCHRBus] >> 2) & 0x01));
+		setprg32(0x8000, ((m398.reg >> 5) & 0x06) | ((vrc24.chr[m398.ppuchrbus] >> 2) & 0x01));
 	} else {
 		setprg8(A, V & 0x0F);
 	}
 }
 
-static void M398CW(uint16 A, uint16 V) {
-	if (reg & 0x80) {
+static void SetCHR(uint16 A, uint16 V) {
+	if (m398.reg & 0x80) {
 		/* GNROM-like */
-		setchr8(0x40 | ((reg >> 3) & 0x08) | (vrc24.chr[PPUCHRBus] & 0x07));
+		setchr8(0x40 | ((m398.reg >> 3) & 0x08) | (vrc24.chr[m398.ppuchrbus] & 0x07));
 	} else {
 		setchr1(A, V & 0x1FF);
 	}
 }
 
-static DECLFW(M398WriteLatch) {
-	reg = A & 0xFF;
-	VRC24_SyncPRG();
-	VRC24_SyncCHR();
+static DECLFW(WriteLatch) {
+	uint8 reg = A & 0xFF;
+	if (reg != m398.reg) {
+		m398.reg = A & 0xFF;
+		VRC24_SyncPRG();
+		VRC24_SyncCHR();
+	}
 	VRC24_Write(A, V);
 }
 
-static void M398PPUHook(uint32 A) {
+static void PPUHook(uint32 A) {
 	uint8 bank = (A & 0x1FFF) >> 10;
-	if ((PPUCHRBus != bank) && ((A & 0x3000) != 0x2000)) {
-		PPUCHRBus = bank;
+	if ((m398.ppuchrbus != bank) && ((A & 0x3000) != 0x2000)) {
+		m398.ppuchrbus = bank;
 		VRC24_SyncPRG();
 		VRC24_SyncCHR();
 	}
 }
 
-static void M398Reset(void) {
-	reg = 0xC0;
+static void Reset(void) {
+	m398.reg = 0xC0;
 	VRC24_SyncPRG();
 	VRC24_SyncCHR();
 }
 
-static void M398Power(void) {
-	PPUCHRBus = 0;
-	reg = 0xC0;
+static void Power(void) {
+	m398.ppuchrbus = 0;
+	m398.reg = 0xC0;
 	VRC24_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M398WriteLatch);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper398_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC4, 0x01, 0x02, 0, 1);
-	info->Reset = M398Reset;
-	info->Power = M398Power;
-	PPU_hook = M398PPUHook;
-	VRC24_pwrap = M398PW;
-	VRC24_cwrap = M398CW;
+	info->Reset = Reset;
+	info->Power = Power;
+	PPU_hook = PPUHook;
+	VRC24_pwrap = SetPRG;
+	VRC24_cwrap = SetCHR;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

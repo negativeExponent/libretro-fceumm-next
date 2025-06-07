@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -48,21 +48,22 @@ static void Sync(void) {
 	}
 }
 
-static DECLFW(M336Write) {
+static DECLFW(WriteLatch) {
 	if (iNESCart.submapper == 1) {
 		uint8 ret = CartBR(A);
+		/* bus conflict */
 		V = ((V & ret) & ~0x08) | (ret & 0x08);
 	}
 	Latch_Write(A, V);
 }
 
-static void M336Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M336Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper336_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M336Power;
+	info->Power = Power;
 	info->Reset = Latch_RegReset;
 }

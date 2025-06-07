@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,55 +25,44 @@
  */
 
 #include "mapinc.h"
-
-static uint8 reg;
-
-static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
-	{ 0 }
-};
+#include "latch.h"
 
 static void Sync(void) {
-	uint8 bank = reg & 0x1F;
+	uint8 prg = latch.data & 0x1F;
 
 	setprg8(0x6000, 1);
-	if (reg & 0x80) { /* UNROM */
-		setprg16(0x8000, bank);
-		setprg16(0xC000, bank | 0x07);
+	if (latch.data & 0x80) { /* UNROM */
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg | 0x07);
 	} else {
-		if (reg & 0x40) { /* NROM-256 */
-			setprg32(0x8000, bank >> 1);
+		if (latch.data & 0x40) { /* NROM-256 */
+			setprg32(0x8000, prg >> 1);
 		} else { /* NROM-128 */
-			setprg16(0x8000, bank);
-			setprg16(0xC000, bank);
+			setprg16(0x8000, prg);
+			setprg16(0xC000, prg);
 		}
 	}
+	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], (latch.data >> 7) & 0x01);
 	setchr8(0);
-	setmirror(((reg >> 5) & 0x01) ^ 0x01);
+	setmirror(((latch.data >> 5) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M337Write) {
-	if (A < 0xC000) {
-		reg = (reg & 0x07) | (V & ~0x07);
+static DECLFW(WriteLatch) {
+	if (A & 0x4000) {
+		Latch_Write(A, (latch.data & ~0x07) | (V & 0x07));
 	} else {
-		reg = (reg & ~0x07) | (V & 0x07);
+		Latch_Write(A, (latch.data & 0x07) | (V & ~0x07));
 	}
-	Sync();
 }
 
-static void StateRestore(int version) {
-	Sync();
-}
-
-static void M337Power(void) {
-	reg = 0;
-	Sync();
-	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M337Write);
+static void Power(void) {
+	Latch_Power();
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper337_Init(CartInfo *info) {
-	info->Power = M337Power;
-	GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, NULL);
+	Latch_Init(info, Sync, NULL, FALSE, FALSE);
+	info->Power = Power;
+	info->Reset = Latch_RegReset;
 }

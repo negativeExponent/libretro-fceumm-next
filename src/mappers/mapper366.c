@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,41 +27,54 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m366;
 
-static void M366PW(uint16 A, uint16 V) {
-	setprg8(A, reg | (V & 0x0F));
+static SFORMAT StateRegs[] = {
+	{ &m366.reg, 1, "EXPR" },
+	{ 0 }
+};
+
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = 0x0F;
+	uint16 base = m366.reg;
+
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M366CW(uint16 A, uint16 V) {
-	setchr1(A, (reg << 3) | (V & 0x7F));
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = 0x7F;
+	uint16 base = m366.reg << 3;
+
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void M366Reset(void) {
-	reg = 0;
-	MMC3_Reset();
-}
-
-static DECLFW(M366Write) {
+static DECLFW(WriteReg) {
 	CartBW(A, V);
-	if (!(reg & 0x80)) {
-		reg = A & 0xF0;
+	if (!(m366.reg & 0x80)) {
+		m366.reg = A & 0xF0;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M366Power(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m366, 0, sizeof(m366));
+	MMC3_Reset();
+}
+
+static void Power(void) {
+	memset(&m366, 0, sizeof(m366));
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M366Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper366_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_pwrap = M366PW;
-	MMC3_cwrap = M366CW;
-	info->Power = M366Power;
-	info->Reset = M366Reset;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_pwrap = SetPRG;
+	MMC3_cwrap = SetCHR;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

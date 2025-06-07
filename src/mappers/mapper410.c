@@ -28,26 +28,28 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[4];
-static uint8 cmd;
+static struct {
+	uint8 reg[4];
+	uint8 cmd;
+} m410;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
-	{ &cmd, 1, "CMD0" },
+	{ m410.reg, 4, "REGS" },
+	{ &m410.cmd, 1, "CMD0" },
 	{ 0 }
 };
 
-static void M410PW(uint16 A, uint16 V) {
-	uint32 mask = ~reg[3] & 0x3F;
-	uint32 base = ((reg[2] << 2) & 0x300) | reg[1];
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = ~m410.reg[3] & 0x3F;
+	uint16 base = ((m410.reg[2] << 2) & 0x300) | m410.reg[1];
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M410CW(uint16 A, uint16 V) {
-	if (!(reg[2] & 0x40)) {
-		uint32 mask = 0xFF >> (~reg[2] & 0x0F);
-		uint32 base = ((reg[2] << 4) & 0xF00) | reg[0];
+static void SetCHR(uint16 A, uint16 V) {
+	if (!(m410.reg[2] & 0x40)) {
+		uint16 mask = 0xFF >> (~m410.reg[2] & 0x0F);
+		uint16 base = ((m410.reg[2] << 4) & 0xF00) | m410.reg[0];
 
 		setchr1(A, (base & ~mask) | (V & mask));
 	} else {
@@ -55,39 +57,34 @@ static void M410CW(uint16 A, uint16 V) {
 	}
 }
 
-static DECLFW(M410Write) {
-	if (!(reg[3] & 0x40)) {
-		reg[cmd] = V;
-		cmd = (cmd + 1) & 0x03;
+static DECLFW(WriteReg) {
+	if (!(m410.reg[3] & 0x40)) {
+		m410.reg[m410.cmd] = V;
+		m410.cmd = (m410.cmd + 1) & 0x03;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M410Close(void) {
-	MMC3_Close();
-}
-
-static void M410Reset(void) {
-	reg[0] = reg[1] = reg[3] = cmd = 0;
-	reg[2] = 0x0F;
+static void Reset(void) {
+	memset(&m410, 0, sizeof(m410));
+	m410.reg[2] = 0x0F;
 	MMC3_Reset();
 }
 
-static void M410Power(void) {
+static void Power(void) {
+	memset(&m410, 0, sizeof(m410));
+	m410.reg[2] = 0x0F;
 	MMC3_Power();
-	reg[0] = reg[1] = reg[3] = cmd = 0;
-	reg[2] = 0x0F;
-	SetWriteHandler(0x6000, 0x7FFF, M410Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper410_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M410CW;
-	MMC3_pwrap = M410PW;
-	info->Reset = M410Reset;
-	info->Power = M410Power;
-	info->Close = M410Close;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Reset = Reset;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAM = (uint8 *)FCEU_gmalloc(8192);

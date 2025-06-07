@@ -110,11 +110,11 @@ void setprg8r(int r, uint16 A, uint16 V);
 void setprg16r(int r, uint16 A, uint16 V);
 void setprg32r(int r, uint16 A, uint16 V);
 
-void setprg2_rw(uint16 A, uint16 V, uint8 rd, uint8 wr);
-void setprg4_rw(uint16 A, uint16 V, uint8 rd, uint8 wr);
-void setprg8_rw(uint16 A, uint16 V, uint8 rd, uint8 wr);
-void setprg16_rw(uint16 A, uint16 V, uint8 rd, uint8 wr);
-void setprg32_rw(uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg2_access(uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg4_access(uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg8_access(uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg16_access(uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg32_access(uint16 A, uint16 V, uint8 rd, uint8 wr);
 
 void setprg2r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr);
 void setprg4r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr);

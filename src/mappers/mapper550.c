@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,67 +23,68 @@
 #include "mapinc.h"
 #include "mmc1.h"
 
-static uint8 latch;
-static uint8 reg;
+static struct {
+	uint8 latch;
+	uint8 reg;
+} m550;
 
 static SFORMAT StateRegs[] = {
-	{ &latch, 1, "LATC" },
-	{ &reg, 1, "REGS" },
+	{ &m550.latch, 1, "LATC" },
+	{ &m550.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M550PW(uint16 A, uint16 V) {
-	if ((reg & 0x06) == 0x06) {
-		setprg16(A, (reg << 2) | (V & 0x07));
+static void SetPRG(uint16 A, uint16 V) {
+	if ((m550.reg & 0x06) == 0x06) {
+		setprg16(A, (m550.reg << 2) | (V & 0x07));
 	} else {
-		setprg32(0x8000, (reg << 1) | ((latch >> 4) & 0x01));
+		setprg32(0x8000, (m550.reg << 1) | ((m550.latch >> 4) & 0x01));
 	}
 }
 
-static void M550CW(uint16 A, uint16 V) {
-	if ((reg & 0x06) == 0x06) {
-		setchr4(A, ((reg << 2) & 0x18) | (V & 0x07));
+static void SetCHR(uint16 A, uint16 V) {
+	if ((m550.reg & 0x06) == 0x06) {
+		setchr4(A, ((m550.reg << 2) & 0x18) | (V & 0x07));
 	} else {
-		setchr8(((reg << 1) & 0x0C) | (latch & 0x03));
+		setchr8(((m550.reg << 1) & 0x0C) | (m550.latch & 0x03));
 	}
 }
 
-static DECLFW(M550Write7) {
-	if (!(reg & 0x08)) {
-		reg = A & 0x0F;
+static DECLFW(WriteReg) {
+	if (!(m550.reg & 0x08)) {
+		m550.reg = A & 0x0F;
 		MMC1_SyncPRG();
 		MMC1_SyncCHR();
 	}
+	CartBW(A, V);
 }
 
-static DECLFW(M550Write8) {
-	latch = V;
-	if ((reg & 0x06) == 0x06) {
+static DECLFW(WriteLatch) {
+	m550.latch = V;
+	if ((m550.reg & 0x06) == 0x06) {
 		MMC1_Write(A, V);
 	}
 	MMC1_SyncPRG();
 	MMC1_SyncCHR();
 }
 
-static void M550Reset(void) {
-	latch = 0;
-	reg = 0;
+static void Reset(void) {
+	memset(&m550, 0, sizeof(m550));
 	MMC1_Reset();
 }
 
-static void M550Power(void) {
-	latch = 0;
-	reg = 0;
+static void Power(void) {
+	memset(&m550, 0, sizeof(m550));
 	MMC1_Power();
-	SetWriteHandler(0x7000, 0x7FFF, M550Write7);
-	SetWriteHandler(0x8000, 0xFFFF, M550Write8);
+	SetWriteHandler(0x7000, 0x7FFF, WriteReg);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper550_Init(CartInfo *info) {
 	MMC1_Init(info, MMC1B, 8, 0);
-	info->Power = M550Power;
-	info->Reset = M550Reset;
-	MMC1_cwrap = M550CW;
-	MMC1_pwrap = M550PW;
+	info->Power = Power;
+	info->Reset = Reset;
+	MMC1_cwrap = SetCHR;
+	MMC1_pwrap = SetPRG;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

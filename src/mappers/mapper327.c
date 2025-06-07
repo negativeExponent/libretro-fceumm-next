@@ -23,11 +23,12 @@
  */
 
 /*
-	NES 2.0 mapper 327 is used for a 6-in-1 multicart. Its UNIF board name is BMC-10-24-C-A1.
+	NES 2.0 mapper 327 is used for a 6-in-1 multicart.
+	Its UNIF board name is BMC-10-24-C-A1.
 
 	MMC3-based multicart mapper with CHR RAM, CHR ROM and PRG RAM
 
-	$6000-7FFF:	A~[011xxxxx xxMRSBBB]	Multicart reg
+	$6000-7FFF:	A~[011xxxxx xxMRSBBB]	Multicart m327.reg
 		This register can only be written to if PRG-RAM is enabled and writable (see $A001)
 		and BBB = 000 (power on state)
 
@@ -45,61 +46,64 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m327;
 
-static void M327PW(uint16 A, uint16 V) {
-	uint8 base = (reg << 4) & 0x70;
-	uint8 mask = (reg & 0x08) ? 0x1F : 0x0F;
+static SFORMAT StateRegs[] = {
+	{ &m327.reg, 1, "EXPR" },
+	{ 0 }
+};
+
+static void SetPRGBank(uint16 A, uint16 V) {
+	uint8 base = (m327.reg << 4) & 0x70;
+	uint8 mask = (m327.reg & 0x08) ? 0x1F : 0x0F;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M327CW(uint16 A, uint16 V) {
-	if (reg & 0x10) {
+static void SetCHRBank(uint16 A, uint16 V) {
+	if (m327.reg & 0x10) {
 		setchr8r(0x10, 0);
 	} else {
-		uint16 base = (reg << 7) & 0x380;
-		uint16 mask = (reg & 0x20) ? 0xFF : 0x7F;
+		uint16 base = (m327.reg << 7) & 0x380;
+		uint16 mask = (m327.reg & 0x20) ? 0xFF : 0x7F;
 
 		setchr1(A, base | (V & mask));
 	}
 }
 
-static DECLFW(M327Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
 		CartBW(A, V);
-		if ((reg & 7) == 0) {
-			reg = A & 0x3F;
+		if ((m327.reg & 0x07) == 0) {
+			m327.reg = A & 0x3F;
 			MMC3_SyncPRG();
 			MMC3_SyncCHR();
 		}
 	}
 }
 
-static void M327Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m327.reg = 0;
 	MMC3_Reset();
 }
 
-static void M327Power(void) {
-	reg = 0;
+static void Power(void) {
+	m327.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M327Write);
-}
-
-static void M327Close(void) {
-	MMC3_Close();
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper327_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_pwrap = M327PW;
-	MMC3_cwrap = M327CW;
+	MMC3_pwrap = SetPRGBank;
+	MMC3_cwrap = SetCHRBank;
 
-	info->Power = M327Power;
-	info->Reset = M327Reset;
-	info->Close = M327Close;
-	AddExState(&reg, 1, 0, "EXPR");
+	info->Power = Power;
+	info->Reset = Reset;
+
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

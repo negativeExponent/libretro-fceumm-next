@@ -1,8 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2022
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2022-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,89 +21,93 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 smb2j_reg;
-static uint8 IRQa;
-static uint16 IRQCount;
+static struct {
+	uint8 smb2j_reg;
+	uint8 IRQa;
+	uint16 IRQCount;
+} m416;
 
 static SFORMAT StateRegs[] = {
-	{ &smb2j_reg, 1, "SMB2" },
-	{ &IRQa, 1, "IRQA" },
-	{ &IRQCount, 2, "IRQC" },
+	{ &m416.smb2j_reg, 1, "SMB2" },
+	{ &m416.IRQa, 1, "IRQA" },
+	{ &m416.IRQCount, 2, "IRQC" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 prg = ((latch.data >> 1) & 0x04) | ((latch.data >> 6) & 0x02) | ((latch.data >> 5) & 0x01);
-
-	if (latch.addr >= 0xA000) {
-		/* latch should not respond to $A000-$FFFF */
-		return;
-	}
+	uint8 bank = ((latch.data >> 1) & 0x04) | ((latch.data >> 6) & 0x02) | ((latch.data >> 5) & 0x01);
 
 	setprg8(0x6000, 0x07);
 	if (latch.data & 0x08) {
 		switch (latch.data & 0xC0) {
 		case 0x00:
-			setprg8(0x8000, prg << 1);
-			setprg8(0xA000, prg << 1);
-			setprg8(0xC000, prg << 1);
-			setprg8(0xE000, prg << 1);
+			setprg8(0x8000, bank << 1);
+			setprg8(0xA000, bank << 1);
+			setprg8(0xC000, bank << 1);
+			setprg8(0xE000, bank << 1);
 			break;
 		case 0x40:
-			setprg16(0x8000, prg);
-			setprg16(0xC000, prg);
+			setprg16(0x8000, bank);
+			setprg16(0xC000, bank);
 			break;
 		case 0x80:
 		case 0xC0:
-			setprg32(0x8000, prg >> 1);
+			setprg32(0x8000, bank >> 1);
 			break;
 		}
 	} else {
 		setprg8(0x8000, 0x00);
 		setprg8(0xA000, 0x01);
-		setprg8(0xC000, smb2j_reg);
+		setprg8(0xC000, (m416.smb2j_reg & ~0x07) | ((m416.smb2j_reg << 2) & 0x04) | ((m416.smb2j_reg >> 1) & 0x03));
 		setprg8(0xE000, 0x03);
 	}
 	setchr8((latch.data >> 1) & 0x03);
 	setmirror(((latch.data >> 2) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M416WriteReg) {
-	if ((A & 0x20) && !(A & 0x40)) {
-		if (A & 0x100) {
-			IRQa = V & 0x01;
-			if (!IRQa) {
-				IRQCount = 0;
-				X6502_IRQEnd(FCEU_IQEXT);
-			}
-		} else {
-			smb2j_reg = (V & ~0x07) | ((V << 2) & 0x04) | ((V >> 1) & 0x03);
-			Sync();
-		}
-	}
-}
-
-static void M416Power(void) {
-	smb2j_reg = IRQa = IRQCount = 0;
-	Latch_Power();
-	SetReadHandler(0x6000, 0x7FFF, CartBR);
-	SetWriteHandler(0x4020, 0x5FFF, M416WriteReg);
-}
-
-static void M416IRQHook(int a) {
-	if (IRQa & 0x01) {
-		IRQCount += a;
-		if (IRQCount & 0x1000) {
-			X6502_IRQBegin(FCEU_IQEXT);
-		} else {
+static DECLFW(WriteReg) {
+	switch (A & 0x4160) {
+	case 0x4120:
+		m416.IRQa = V;
+		if (!m416.IRQa) {
+			m416.IRQCount = 0;
 			X6502_IRQEnd(FCEU_IQEXT);
 		}
+		break;
+	case 0x4020:
+		m416.smb2j_reg = V;
+		Sync();
+		break;
 	}
+}
+
+static void CPUIRQHook(int a) {
+	if (m416.IRQa & 0x01) {
+		m416.IRQCount += a;
+		if (m416.IRQCount & 0x1000) {
+			X6502_IRQBegin(FCEU_IQEXT);
+		}
+	}
+}
+
+static void Reset(void) {
+	BWrite[0x0163](0x0163, 0);
+	memset(&m416, 0, sizeof(m416));
+	Latch_RegReset();
+}
+
+static void Power(void) {
+	memset(&m416, 0, sizeof(m416));
+	Latch_Power();
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
+	SetWriteHandler(0x4020, 0x5FFF, WriteReg);
+	SetWriteHandler(0xA000, 0xFFFF, 0);
 }
 
 void Mapper416_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M416Power;
-	MapIRQHook = M416IRQHook;
+	info->Power = Power;
+	info->Reset = Reset;
+	MapIRQHook = CPUIRQHook;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

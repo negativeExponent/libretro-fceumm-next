@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,42 +25,51 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m439;
+
+static SFORMAT StateRegs[] = {
+	{ m439.reg, 2, "REGS" },
+	{ 0 }
+};
 
 static void Sync(void) {
-	uint8 mask = ((~reg[1] >> 1) & 0x38) | 0x07;
-	uint8 base = reg[0] >> 1;
+	uint8 mask = ((~m439.reg[1] >> 1) & 0x38) | 0x07;
+	uint8 base = m439.reg[0] >> 1;
+
 	setprg16(0x8000, (base & ~mask) | (latch.data & mask));
 	setprg16(0xC000, (base & ~mask) | (0x3F & mask));
 	setchr8(0);
 	setmirror(((latch.data >> 7) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M439WriteReg) {
-	reg[A & 0x01] = V;
+static DECLFW(WriteReg) {
+	m439.reg[A & 0x01] = V;
 	Sync();
 }
 
-static DECLFW(M439WriteLatch) {
-	uint8 mask = (reg[1] & 0x80) | ((reg[1] >> 1) & 0x38);
+static DECLFW(WriteLatch) {
+	/* mask to protect mirroring and A19-A17 on latch from being updated depending on $6001 m439.reg */
+	uint8 mask = (m439.reg[1] & 0x80) | ((m439.reg[1] >> 1) & 0x38);
 	Latch_Write(A, (V & ~mask) | (latch.data & mask));
 }
 
 static void M439Reset(void) {
-	reg[0] = reg[1] = 0;
+	memset(&m439, 0, sizeof(m439));
 	Latch_RegReset();
 }
 
 static void M439Power(void) {
-	reg[0] = reg[1] = 0;
+	memset(&m439, 0, sizeof(m439));
 	Latch_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M439WriteReg);
-	SetWriteHandler(0x8000, 0xFFFF, M439WriteLatch);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper439_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Power = M439Power;
 	info->Reset = M439Reset;
-	AddExState(reg, 2, 0, "REGS");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

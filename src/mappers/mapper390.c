@@ -24,67 +24,87 @@
 
 #include "mapinc.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[2];
+} m390;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
-	{ &dipsw, 1, "DPSW" },
+	{ m390.reg, 2, "REGS" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	switch (reg[1] & 0x30) {
+static void SyncPRG(void) {
+	switch (m390.reg[1] & 0x30) {
 	case 0x00:
 	case 0x10: /* UNROM */
-		setprg16(0x8000, reg[1]);
-		setprg16(0xC000, reg[1] | 0x07);
+		setprg16(0x8000, m390.reg[1]);
+		setprg16(0xC000, m390.reg[1] | 0x07);
 		break;
 	case 0x20: /* Maybe unused, NROM-256? */
-		setprg32(0x8000, reg[1] >> 1);
+		setprg32(0x8000, m390.reg[1] >> 1);
 		break;
 	case 0x30: /* NROM-128 */
-		setprg16(0x8000, reg[1]);
-		setprg16(0xC000, reg[1]);
+		setprg16(0x8000, m390.reg[1]);
+		setprg16(0xC000, m390.reg[1]);
 		break;
 	}
-	setchr8(reg[0]);
-	setmirror(((reg[0] & 0x20) >> 5) ^ 1);
+}
+
+static void SyncCHR(void) {
+	setchr8(m390.reg[0]);
+}
+
+static void SyncMirror(void){
+	setmirror(((m390.reg[0] & 0x20) >> 5) ^ 1);
 }
 
 static DECLFR(M390Read) {
 	uint8 ret = CartBR(A);
-	if ((reg[1] & 0x30) == 0x10)
+	if ((m390.reg[1] & 0x30) == 0x10)
 		ret |= dipsw;
 	return ret;
 }
 
-static DECLFW(M390Write) {
-	reg[(A >> 14) & 0x01] = A & 0x3F;
-	Sync();
+static DECLFW(WriteCHRMirror) {
+	m390.reg[0] = A & 0x3F;
+	SyncCHR();
+	SyncMirror();
 }
 
-static void M390Power(void) {
-	reg[0] = 0;
-	reg[1] = 0;
+static DECLFW(WritePRG) {
+	m390.reg[1] = A & 0x3F;
+	SyncPRG();
+}
+
+static void Reset(void) {
 	dipsw = 11; /* hard-coded 150-in-1 menu */
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+}
+
+static void Power(void) {
+	memset(&m390, 0, sizeof(m390));
+	dipsw = 11; /* hard-coded 150-in-1 menu */
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 	SetReadHandler(0x8000, 0xFFFF, M390Read);
-	SetWriteHandler(0x8000, 0xFFFF, M390Write);
-}
-
-static void M390Reset(void) {
-	dipsw = 11; /* hard-coded 150-in-1 menu */
-	Sync();
+	SetWriteHandler(0x8000, 0xBFFF, WriteCHRMirror);
+	SetWriteHandler(0xC000, 0xFFFF, WritePRG);
 }
 
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper390_Init(CartInfo *info) {
-	info->Reset = M390Reset;
-	info->Power = M390Power;
+	info->Reset = Reset;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

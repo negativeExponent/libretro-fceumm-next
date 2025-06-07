@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,12 +29,12 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static void M527CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, V);
 	setmirrorw((vrc24.chr[0] >> 7) & 1, (vrc24.chr[0] >> 7) & 1, (vrc24.chr[1] >> 7) & 1, (vrc24.chr[1] >> 7) & 1);
 }
 
 void Mapper527_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, 0, 1);
-	VRC24_cwrap = M527CW;
+	VRC24_cwrap = SetCHR;
 }

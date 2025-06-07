@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,50 +21,57 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[4];
+static struct {
+	uint8 reg[4];
+} m420;
 
-static void M420CW(uint16 A, uint16 V) {
-	uint16 mask = (reg[1] & 0x80) ? 0x7F : 0xFF;
-	uint16 base = ((reg[1] << 1) & 0x100) | ((reg[1] << 5) & 0x80);
+static SFORMAT StateRegs[] = {
+	{ m420.reg, 4, "EXPR" },
+	{ 0 }
+};
 
-	setchr1(A, base | (V & mask));
-}
-
-static void M420PW(uint16 A, uint16 V) {
-	if (reg[0] & 0x80) {
-		setprg32(0x8000, ((reg[2] >> 2) & 0x08) | ((reg[0] >> 1) & 0x07));
+static void SetPRG(uint16 A, uint16 V) {
+	if (m420.reg[0] & 0x80) {
+		setprg32(0x8000, ((m420.reg[2] >> 2) & 0x08) | ((m420.reg[0] >> 1) & 0x07));
 	} else {
-		uint8 mask = (reg[0] & 0x20) ? 0x0F : ((reg[3] & 0x20) ? 0x1F : 0x3F);
-		uint8 base = (reg[3] << 3) & 0x20;
+		uint8 mask = (m420.reg[0] & 0x20) ? 0x0F : ((m420.reg[3] & 0x20) ? 0x1F : 0x3F);
+		uint8 base = (m420.reg[3] << 3) & 0x20;
 
 		setprg8(A, base | (V & mask));
 	}
 }
 
-static DECLFW(M420Write) {
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = (m420.reg[1] & 0x80) ? 0x7F : 0xFF;
+	uint16 base = ((m420.reg[1] << 1) & 0x100) | ((m420.reg[1] << 5) & 0x80);
+
+	setchr1(A, base | (V & mask));
+}
+
+static DECLFW(WriteReg) {
 	/* writes possible regardless of MMC3 wram state */
 	CartBW(A, V);
-	reg[A & 0x03] = V;
+	m420.reg[A & 0x03] = V;
 	MMC3_SyncPRG();
 	MMC3_SyncCHR();
 }
 
-static void M420Reset(void) {
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
+static void Reset(void) {
+	memset(&m420, 0, sizeof(m420));
 	MMC3_Reset();
 }
 
-static void M420Power(void) {
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
+static void Power(void) {
+	memset(&m420, 0, sizeof(m420));
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M420Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper420_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M420CW;
-	MMC3_pwrap = M420PW;
-	info->Reset = M420Reset;
-	info->Power = M420Power;
-	AddExState(reg, 4, 0, "EXPR");
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Reset = Reset;
+	info->Power = Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

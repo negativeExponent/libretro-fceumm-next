@@ -26,29 +26,31 @@
 #include "fme7.h"
 #include "vrcirq.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m528;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m528.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M528CW(uint16 A, uint16 V) {
-	uint16 mask = 0xFF;
-	uint16 base = reg << 4;
-
-	setchr1(A, (base | (V & mask)));
-}
-
-static void M528PW(uint16 A, uint16 V) {
-	uint16 base = reg;
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 base = m528.reg;
 	uint16 mask = base | 0x0F;
 
 	setprg8(A, base + (V & mask));
 }
 
-static void M528SyncWRAM(void) {
-	uint16 base = reg;
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = 0xFF;
+	uint16 base = m528.reg << 4;
+
+	setchr1(A, (base | (V & mask)));
+}
+
+static void SycnWRAM(void) {
+	uint16 base = m528.reg;
 	uint16 mask = base | 0x0F;
 
 	if (fme7.prg[0] == 1) {
@@ -58,7 +60,7 @@ static void M528SyncWRAM(void) {
 	}
 }
 
-static DECLFW(M528Write) {
+static DECLFW(WriteAC) {
 	switch (A & 0x0F) {
 	case 0x0B:
 		break;
@@ -73,30 +75,54 @@ static DECLFW(M528Write) {
 		break;
 	default:
 		FME7_WriteIndex(0x8000, A & 0x0F);
-		FME7_WriteReg(0xA000, V);
+		switch (fme7.cmd & 0x0F) {
+		case 0x00:
+		case 0x01:
+		case 0x02:
+		case 0x03:
+		case 0x04:
+		case 0x05:
+		case 0x06:
+		case 0x07:
+			fme7.chr[fme7.cmd] = V;
+			break;
+		case 0x08:
+		case 0x09:
+		case 0x0A:
+		case 0x0B:
+			fme7.prg[fme7.cmd & 0x03] = V;
+			break;
+		case 0x0C:
+			fme7.mirr = V;
+			break;
+		default:
+			FME7_WriteReg(0x9000, V);
+			break;
+		}
 		break;
 	}
-	reg = (A & 0x4000) >> 10;
+	m528.reg = (A & 0x4000) >> 10;
 	FME7_SyncPRG();
-	FME7_SyncCHR();
 	FME7_SyncWRAM();
+	FME7_SyncCHR();
+	FME7_SyncMirror();
 }
 
-static void M528Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m528, 0, sizeof(m528));
 	FME7_Power();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetWriteHandler(0xA000, 0xAFFF, M528Write);
-	SetWriteHandler(0xC000, 0xCFFF, M528Write);
+	SetWriteHandler(0xA000, 0xAFFF, WriteAC);
+	SetWriteHandler(0xC000, 0xCFFF, WriteAC);
 }
 
 void Mapper528_Init(CartInfo *info) {
 	FME7_Init(info, TRUE, info->battery);
-	FME7_SyncWRAM = M528SyncWRAM;
-	FME7_pwrap = M528PW;
-	FME7_cwrap = M528CW;
-	info->Power = M528Power;
+	FME7_SyncWRAM = SycnWRAM;
+	FME7_pwrap = SetPRG;
+	FME7_cwrap = SetCHR;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	VRCIRQ_Init(TRUE);

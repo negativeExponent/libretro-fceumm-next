@@ -27,18 +27,20 @@
 #include "mapinc.h"
 #include "fdssound.h"
 
-static uint8 reg[4];
+static struct {
+	uint8 reg[4];
+} m305;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
+	{ m305.reg, 4, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg2(0x6000, reg[0]);
-	setprg2(0x6800, reg[1]);
-	setprg2(0x7000, reg[2]);
-	setprg2(0x7800, reg[3]);
+	setprg2(0x6000, m305.reg[0]);
+	setprg2(0x6800, m305.reg[1]);
+	setprg2(0x7000, m305.reg[2]);
+	setprg2(0x7800, m305.reg[3]);
 
 	setprg2(0x8000, 15);
 	setprg2(0x8800, 14);
@@ -59,20 +61,20 @@ static void Sync(void) {
 	setprg2(0xf800, 0);
 
 	setchr8(0);
+	setmirror(MI_V);
 }
 
-static DECLFW(M305Write) {
-	reg[(A >> 11) & 0x03] = V;
+static DECLFW(WriteReg) {
+	m305.reg[(A >> 11) & 0x03] = V;
 	Sync();
 }
 
-static void M305Power(void) {
-	memset(reg, 0, sizeof(reg));
+static void Power(void) {
+	memset(m305.reg, 0, sizeof(m305.reg));
 	FDSSound_Power();
 	Sync();
-	setmirror(MI_V);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M305Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
@@ -80,7 +82,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper305_Init(CartInfo *info) {
-	info->Power = M305Power;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

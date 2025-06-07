@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,133 +27,113 @@
 #include "mapinc.h"
 #include "fdssound.h"
 
-static uint8 latch;
-static uint8 prg, mirr;
-static int32 IRQa, IRQCount, IRQLatch;
+static struct {
+	uint8 prg, mirror;
+	int32 IRQa, IRQCount, IRQLatch;
+} m303;
 
 static SFORMAT StateRegs[] = {
-	{ &mirr, 1, "MIRR" },
-	{ &prg, 1, "REGS" },
-	{ &latch, 1, "LATC" },
-	{ &IRQa, 4, "IRQA" },
-	{ &IRQCount, 4, "IRQC" },
-	{ &IRQLatch, 4, "IRQL" },
+	{ &m303.mirror, 1, "MIRR" },
+	{ &m303.prg, 1, "REGS" },
+	{ &m303.IRQa, 4, "IRQA" },
+	{ &m303.IRQCount, 4, "IRQC" },
+	{ &m303.IRQLatch, 4, "IRQL" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg16(0x8000, prg);
-	setprg16(0xC000, 2);
-	setchr8(0);
-	setprg8r(0x10, 0x6000, 0);
-	setmirror(mirr);
+static void SyncPRG(void) {
+	setprg16(0x8000, m303.prg);
+	setprg16(0xC000, 0x02);
 }
 
-static DECLFW(M303Write) {
-	/* FCEU_printf("bs %04x %02x\n",A,V); */
-	if ((A & 0xFF00) == 0x4A00) {
-		latch = ((A >> 2) & 0x03) | ((A >> 4) & 0x04);
-	} else if ((A & 0xFF00) == 0x5100) {
-		prg = latch;
-		Sync();
-	} else {
-		if (A == 0x4020) {
-			X6502_IRQEnd(FCEU_IQEXT);
-			IRQCount &= 0xFF00;
-			IRQCount |= V;
-		} else if (A == 0x4021) {
-			X6502_IRQEnd(FCEU_IQEXT);
-			IRQCount &= 0x00FF;
-			IRQCount |= V << 8;
-			IRQa = 1;
-		} else if (A == 0x4025) {
-			mirr = ((V & 8) >> 3) ^ 0x01;
-		}
-	}
-	if (A >= 0x4040 && A <= 0x407F) {
-		FDSWaveWrite(A, V);
-	}
-	switch (A) {
-	case 0x4080:
-		FDSSReg0Write(A, V);
-		break;
-	case 0x4082:
-		FDSSReg1Write(A, V);
-		break;
-	case 0x4083:
-		FDSSReg2Write(A, V);
-		break;
-	case 0x4084:
-		FDSSReg3Write(A, V);
-		break;
-	case 0x4085:
-		FDSSReg4Write(A, V);
-		break;
-	case 0x4086:
-		FDSSReg5Write(A, V);
-		break;
-	case 0x4087:
-		FDSSReg6Write(A, V);
-		break;
-	case 0x4088:
-		FDSSReg7Write(A, V);
-		break;
-	case 0x4089:
-		FDSSReg8Write(A, V);
-		break;
-	case 0x408A:
-		FDSSReg9Write(A, V);
-		break;
-	}
+static void SyncMirror(void) {
+	setmirror(((m303.mirror & 0x08) >> 3) ^ 0x01);
 }
 
-static DECLFR(FDSRead4030) {
+static DECLFR(ReadStatus) {
+	/* Identical to their respective equivalents on the Famicom Disk System. */
 	uint8 ret = (cpu.IRQlow & FCEU_IQEXT) ? 1 : 0;
-
 	X6502_IRQEnd(FCEU_IQEXT);
 	return ret;
 }
 
-static void UNL7017IRQ(int a) {
-	if (IRQa) {
-		IRQCount -= a;
-		if (IRQCount <= 0) {
-			IRQa = 0;
+static DECLFW(WritePRGLatch) {
+	/* The new PRG bank number is not applied until register $5100 is written to. */
+	m303.prg = ((A >> 4) & 0x04) | ((A >> 2) & 0x03);
+}
+
+static DECLFW(WritePRGLatchCommit) {
+	/* this is its intended purpose */
+	SyncPRG();
+}
+
+static DECLFW(WriteIRQLow) {
+	X6502_IRQEnd(FCEU_IQEXT);
+	m303.IRQCount &= 0xFF00;
+	m303.IRQCount |= V;
+}
+
+static DECLFW(WriteIRQHigh) {
+	X6502_IRQEnd(FCEU_IQEXT);
+	m303.IRQCount &= 0x00FF;
+	m303.IRQCount |= V << 8;
+	m303.IRQa = 1;
+}
+
+static DECLFW(WriteMirror) {
+	m303.mirror = V;
+	SyncMirror();
+}
+
+static void CPUIRQHook(int a) {
+	if (m303.IRQa) {
+		m303.IRQCount -= a;
+		if (m303.IRQCount <= 0) {
+			m303.IRQa = 0;
 			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
 }
 
-static void M303Power(void) {
-	latch = prg = mirr = IRQa = IRQCount = IRQLatch = 0;
+static void Power(void) {
+	memset(&m303, 0, sizeof(m303));
+
+	setprg8r(0x10, 0x6000, 0);
+	setchr8(0);
+
+	SyncPRG();
+	SyncMirror();
+
 	FDSSound_Power();
-	Sync();
-	SetReadHandler(0x6000, 0x7FFF, CartBR);
+
+	SetReadHandler(0x4030, 0x4030, ReadStatus);
+	SetWriteHandler(0x4A00, 0x4AFF, WritePRGLatch);
+	SetWriteHandler(0x5100, 0x51FF, WritePRGLatchCommit);
+	SetWriteHandler(0x4020, 0x4020, WriteIRQLow);
+	SetWriteHandler(0x4021, 0x4021, WriteIRQHigh);
+	SetWriteHandler(0x4025, 0x4025, WriteMirror);
+
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetReadHandler(0x4030, 0x4030, FDSRead4030);
-	SetWriteHandler(0x4020, 0x5FFF, M303Write);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void M303Reset(void) {
-	Sync();
+static void Reset(void) {
+	SyncPRG();
+	SyncMirror();
 	FDSSoundRegReset();
 	FDSSound_SC();
 }
 
-static void M303Close(void) {
-}
-
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncMirror();
 }
 
 void Mapper303_Init(CartInfo *info) {
-	info->Power = M303Power;
-	info->Close = M303Close;
-	info->Reset = M303Reset;
-	MapIRQHook = UNL7017IRQ;
+	info->Power = Power;
+	info->Reset = Reset;
+	MapIRQHook = CPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

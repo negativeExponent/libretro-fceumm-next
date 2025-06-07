@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,64 +21,59 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 reg[4];
+static struct {
+	uint8 reg[4];
+} m428;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ &dipsw, 1, "DPSW" },
-	{ reg, 4, "REGS" },
+	{ m428.reg, 4, "REGS" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	int mask = reg[2] >> 6; /* There is an CNROM mode that takes either two or four inner CHR banks from a CNROM-like
-	                            latch register at $8000-$FFFF. */
+	uint8 prg = m428.reg[1] >> 5;
+	uint8 chrmask = m428.reg[2] >> 6;
 
-	if (reg[1] & 0x10) {
-		setprg32(0x8000, reg[1] >> 6);
+	if (m428.reg[1] & 0x10) {
+		setprg32(0x8000, prg >> 1);
 	} else {
-		setprg16(0x8000, reg[1] >> 5);
-		setprg16(0xC000, reg[1] >> 5);
+		setprg16(0x8000, prg);
+		setprg16(0xC000, prg);
 	}
 
-	setchr8(((reg[1] & 0x07) & ~mask) | (latch.data & mask));
-
-	setmirror(((reg[1] >> 3) & 0x01) ^ 0x01);
+	setchr8(((m428.reg[1] & 0x07) & ~chrmask) | (latch.data & chrmask));
+	setmirror(((m428.reg[1] >> 3) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M428Write) {
-	reg[A & 0x03] = V;
-	Sync();
-}
-
-static DECLFR(M428Read) {
+static DECLFR(ReadDIP) {
 	return (cpu.openbus & ~0x03) | (dipsw & 0x03);
 }
 
-static void M428Power(void) {
-	dipsw = 0;
-	reg[0] = 0;
-	reg[1] = 0;
-	reg[2] = 0;
-	reg[3] = 0;
-	Latch_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M428Write);
-	SetReadHandler(0x6000, 0x7FFF, M428Read);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
+static DECLFW(WriteReg) {
+	m428.reg[A & 0x03] = V;
+	Sync();
 }
 
-static void M428Reset(void) {
+static void Reset(void) {
+	memset(&m428, 0, sizeof(m428));
 	dipsw++;
-	reg[0] = 0;
-	reg[1] = 0;
-	reg[2] = 0;
-	reg[3] = 0;
 	Sync();
+}
+
+static void Power(void) {
+	memset(&m428, 0, sizeof(m428));
+	dipsw = 0;
+	Latch_Power();
+	SetReadHandler(0x6000, 0x7FFF, ReadDIP);
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper428_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M428Power;
-	info->Reset = M428Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,26 +18,30 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/* NES 2.0 Mapper 557 is used for Kaiser's cartridge conversion of the Famicom Disk System game Moero TwinBee: Cinnamon-hakase o Sukue!. */
+/*
+ * NES 2.0 Mapper 557 denotes the NTDEC 2718 circuit board, used for the LG25
+ * cartridge conversion of the Famicom Disk System game Moero TwinBee:
+ * Cinnamon-hakase o Sukue!.
+ */
 
 #include "mapinc.h"
 #include "n118.h"
 
-static void M557SyncPRG(void) {
+static void SyncPRG(void) {
 	setprg8r(0x10, 0x6000, 0);
 	setprg8(0x8000, n118.reg[6] & 0x0F);
 	setprg8(0xA000, n118.reg[7] & 0x0F);
-	setprg8(0xC000, ~1);
-	setprg8(0xE000, ~0);
+	setprg8(0xC000, 0xFE);
+	setprg8(0xE000, 0xFF);
 }
 
-static void M557SyncCHR(void) {
+static void SyncCHR(void) {
 	setchr8(0);
 	setmirror(((n118.reg[5] >> 5) & 0x01) ^ 0x01);
 }
 
 void Mapper557_Init(CartInfo *info) {
 	N118_Init(info, 8, 0);
-	N118_SyncPRG = M557SyncPRG;
-	N118_SyncCHR = M557SyncCHR;
+	N118_SyncPRG = SyncPRG;
+	N118_SyncCHR = SyncCHR;
 }

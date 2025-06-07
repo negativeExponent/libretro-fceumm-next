@@ -30,34 +30,30 @@ static void Sync(void) {
 	uint8 nrom = (latch.addr >> 7) & 0x01;
 	uint8 unrom = (latch.addr >> 8) & 0x01;
 
-	if (nrom) {
-		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 0);
-	} else {
-		SetupCartCHRMapping(0, CHRptr[0], 0x2000, 1);
-	}
-
 	setprg16(0x8000, ((prg & ~cpuA14) & ~(0x07 * unrom)) | (latch.data * unrom));
 	setprg16(0xC000, ((prg | cpuA14) & ~(0x07 * !nrom * !unrom)) | (0x07 * !nrom * unrom));
+
+	SetupCartCHRMapping(0, CHRptr[0], 0x2000, nrom ? 0 : 1);
 	setchr8(0);
+
 	setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
 }
 
-static DECLFW(M454Write) {
+static DECLFW(WriteLatch) {
 	if (latch.addr & 0x100) {
 		latch.data = V & 0x07;
+		Sync();
 	} else {
-		latch.data = V;
-		latch.addr = A;
+		Latch_Write(A, V);
 	}
-	Sync();
 }
 
-static void M454Power(void) {
+static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M454Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper454_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
-	info->Power = M454Power;
+	info->Power = Power;
 }

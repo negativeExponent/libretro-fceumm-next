@@ -53,6 +53,6 @@ void MMC1_SyncMirror(void);
 extern void (*MMC1_pwrap)(uint16 A, uint16 V);
 extern void (*MMC1_cwrap)(uint16 A, uint16 V);
 extern void (*MMC1_mwrap)(uint8 V);
-extern void (*MMC1_wwrap)(void);
+extern void (*MMC1_SyncWRAM)(void);
 
 #endif /* _MMC1_H */

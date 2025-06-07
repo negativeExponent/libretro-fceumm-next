@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,69 +20,60 @@
 
 #include "mapinc.h"
 
-static uint8 regs[4];
+static struct {
+	uint8 reg[4];
+} m466;
 
 static SFORMAT StateRegs[] = {
-	{ regs, 4, "EXPR" },
+	{ m466.reg, 4, "EXPR" },
 	{ 0 }
 };
 
-static uint32 getPRGBank(void) {
-	return ((regs[1] << 5) | ((regs[0] << 1) & 0x1E) | ((regs[0] >> 5) & 0x01));
-}
-
 static void Sync(void) {
-	uint32 prg = getPRGBank();
+	uint16 prg = (m466.reg[1] << 5) | ((m466.reg[0] << 1) & 0x1E) | ((m466.reg[0] >> 5) & 0x01);
 
-	if (regs[0] & 0x40) {
-		if (regs[0] & 0x10) {
-			setprg16(0x8000, prg);
-			setprg16(0xC000, prg);
-		} else {
-			setprg32(0x8000, prg >> 1);
-		}
+	/* Return open bus when selecting unpopulated PRG chip */
+	if ((prg & 0x20) && (PRGsize[0] < (1024 * 1024))) {
+		unsetcpu32(0x8000);
 	} else {
-		setprg16(0x8000, (prg & ~0x07) | (regs[2] & 0x07));
-		setprg16(0xC000, (prg & ~0x07) | 0x07);
+		if (m466.reg[0] & 0x40) {
+			if (m466.reg[0] & 0x10) {
+				setprg16(0x8000, prg);
+				setprg16(0xC000, prg);
+			} else {
+				setprg32(0x8000, prg >> 1);
+			}
+		} else {
+			setprg16(0x8000, (prg & ~0x07) | (m466.reg[2] & 0x07));
+			setprg16(0xC000, (prg & ~0x07) | 0x07);
+		}
 	}
 	setprg8r(0x10, 0x6000, 0);
 	setchr8(0);
-	setmirror(((regs[0] >> 7) & 0x01) ^ 0x01);
+	setmirror(((m466.reg[0] >> 7) & 0x01) ^ 0x01);
 }
 
-static DECLFR(M466ReadLatch) {
-	/* Return open bus when selecting unpopulated PRG chip */
-	if ((getPRGBank() & 0x20) && (PRGsize[0] < (1024 * 1024))) {
-		return cpu.openbus;
-	}
-	return CartBR(A);
-}
-
-static DECLFW(M466Write5000) {
-	regs[(A >> 11) & 0x01] = A & 0xFF;
+static DECLFW(WriteReg) {
+	m466.reg[(A >> 11) & 0x01] = A & 0xFF;
 	Sync();
 }
 
-static DECLFW(M466WriteLatch) {
-	regs[2] = V;
+static DECLFW(WriteLatch) {
+	m466.reg[2] = V;
 	Sync();
 }
 
-static void M466Reset(void) {
-	regs[0] = regs[1] = 0;
+static void Reset(void) {
+	memset(&m466, 0, sizeof(m466));
 	Sync();
 }
 
-static void M466Close(void) {
-}
-
-static void M466Power(void) {
-	regs[0] = regs[1] = 0;
+static void Power(void) {
+	memset(&m466, 0, sizeof(m466));
 	Sync();
 
-	SetReadHandler(0x8000, 0xFFFF, M466ReadLatch);
-	SetWriteHandler(0x5000, 0x5FFF, M466Write5000);
-	SetWriteHandler(0x8000, 0xFFFF, M466WriteLatch);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
@@ -94,9 +85,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper466_Init(CartInfo *info) {
-	info->Power = M466Power;
-	info->Close = M466Close;
-	info->Reset = M466Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,100 +21,119 @@
 
 #include "mapinc.h"
 
-static uint8 prg[4];
-static uint8 chr[8];
-static uint8 nt[4];
-static uint8 IRQa;
-static uint16 IRQCount;
-static uint8 dipsw;
+static struct {
+	uint8 prg[4];
+	uint8 chr[8];
+	uint8 nt[4];
+	uint8 IRQa;
+	uint16 IRQCount;
+} m417;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 4, "PREG" },
-	{ chr, 8, "CREG" },
-	{ nt, 4, "NREG" },
-	{ &IRQa, 1, "IRQA" },
-	{ &IRQCount, 2, "IRQC" },
+	{ m417.prg, 4, "PREG" },
+	{ m417.chr, 8, "CREG" },
+	{ m417.nt, 4, "NREG" },
+	{ &m417.IRQa, 1, "IRQA" },
+	{ &m417.IRQCount, 2, "IRQC" },
 	{ 0 }
 };
 
-static void Sync(void) {
-	setprg8(0x8000, prg[0]);
-	setprg8(0xA000, prg[1]);
-	setprg8(0xC000, prg[2]);
-	setprg8(0xE000, ~0);
+static void SyncPRG(void) {
+	setprg8(0x8000, m417.prg[0]);
+	setprg8(0xA000, m417.prg[1]);
+	setprg8(0xC000, m417.prg[2]);
+	setprg8(0xE000, 0xFF);
+}
 
-	setchr1(0x0000, chr[0]);
-	setchr1(0x0400, chr[1]);
-	setchr1(0x0800, chr[2]);
-	setchr1(0x0C00, chr[3]);
-	setchr1(0x1000, chr[4]);
-	setchr1(0x1400, chr[5]);
-	setchr1(0x1800, chr[6]);
-	setchr1(0x1C00, chr[7]);
+static void SyncCHR(void) {
+	setchr1(0x0000, m417.chr[0]);
+	setchr1(0x0400, m417.chr[1]);
+	setchr1(0x0800, m417.chr[2]);
+	setchr1(0x0C00, m417.chr[3]);
+	setchr1(0x1000, m417.chr[4]);
+	setchr1(0x1400, m417.chr[5]);
+	setchr1(0x1800, m417.chr[6]);
+	setchr1(0x1C00, m417.chr[7]);
+}
 
-	setmirrorw(nt[0] & 0x01, nt[1] & 0x01, nt[2] & 0x01, nt[3] & 0x01);
+static void SyncMirror(void) {
+	if (iNESCart.submapper == 1) {
+		setmirrorw(m417.chr[0] >> 7, m417.chr[1] >> 7, m417.chr[2] >> 7, m417.chr[3] >> 7);
+	} else {
+		setmirrorw(m417.nt[0] & 0x01, m417.nt[1] & 0x01, m417.nt[2] & 0x01, m417.nt[3] & 0x01);
+	}
 }
 
 static DECLFW(M417Write) {
-	switch ((A >> 4) & 0x07) {
-	case 0:
-		prg[A & 0x03] = V;
-		Sync();
+	switch (A & 0x8073) {
+	case 0x8000:
+	case 0x8001:
+	case 0x8002:
+	case 0x8003:
+		m417.prg[A & 0x03] = V;
+		SyncPRG();
 		break;
-	case 1:
-		chr[0 | (A & 0x03)] = V;
-		if (iNESCart.submapper == 1) {
-			nt[A & 0x03] = V >> 7;
-		}
-		Sync();
+	case 0x8010:
+	case 0x8011:
+	case 0x8012:
+	case 0x8013:
+		m417.chr[0 | (A & 0x03)] = V;
+		SyncCHR();
+		SyncMirror();
 		break;
-	case 2:
-		chr[4 | (A & 0x03)] = V;
-		Sync();
+	case 0x8020:
+	case 0x8021:
+	case 0x8022:
+	case 0x8023:
+		m417.chr[0x04 | (A & 0x03)] = V;
+		SyncCHR();
 		break;
+	case 0x8030:
+		m417.IRQCount = 0;
+		m417.IRQa = TRUE;
 		break;
-	case 3:
-		IRQCount = 0;
-		IRQa = TRUE;
-		break;
-	case 4:
-		IRQa = FALSE;
+	case 0x8040:
+		m417.IRQa = FALSE;
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
-	case 5:
-		if (iNESCart.submapper == 0) {
-			nt[A & 0x03] = V & 0x01;
-		}
-		Sync();
+	case 0x8050:
+	case 0x8051:
+	case 0x8052:
+	case 0x8053:
+		m417.nt[A & 0x03] = V;
+		SyncMirror();
 		break;
 	}
 }
 
-static void M417Power(void) {
-	memset(prg, 0, sizeof(prg));
-	memset(chr, 0, sizeof(chr));
-	memset(nt, 0, sizeof(nt));
-	Sync();
+static void CPUIRQHook(int a) {
+	uint16 mask = (iNESCart.submapper == 1) ? 0x1000 : 0x400;
+
+	m417.IRQCount += a;
+	if (m417.IRQa && (m417.IRQCount & mask)) {
+		X6502_IRQBegin(FCEU_IQEXT);
+		m417.IRQCount = 0;
+	}
+}
+
+static void Power(void) {
+	memset(&m417, 0, sizeof(m417));
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, M417Write);
 }
 
-static void M417IRQHook(int a) {
-	uint16 mask = (iNESCart.submapper == 1) ? 0x1000 : 0x400;
-
-	IRQCount += a;
-	if (IRQa && (IRQCount > mask)) {
-		X6502_IRQBegin(FCEU_IQEXT);
-	}
-}
-
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
 }
 
 void Mapper417_Init(CartInfo *info) {
-	info->Power = M417Power;
-	MapIRQHook = M417IRQHook;
+	info->Power = Power;
+	MapIRQHook = CPUIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }
