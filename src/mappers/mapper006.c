@@ -25,78 +25,80 @@
 #include "mapinc.h"
 #include "mapper006.h"
 
-static uint8 mode_1m;
-static uint8 mode_2m;
-static uint8 mode_smc;
+static struct {
+	uint8 mc1mode;
+	uint8 mc2mode;
+	uint8 smcmode;
 
-static uint8 prg[4];
-static uint8 chr[8];
-static uint8 nt[4];
-static uint8 chr_mmc4latch[2];
-static uint8 latch;
-static uint8 chr_lock;
+	uint8 prg8K[4];
+	uint8 chr1K[8];
+	uint8 nt[4];
+	uint8 latchMMC4[2];
+	uint8 latch;
+	uint8 chrlock;
 
-static uint8 smc_irq_enabled;
-static uint32 smc_irq_counter;
+	uint8 smc_IRQa;
+	uint32 smc_IRQCount;
 
-static uint8 fds_control;
-static int16 fds_irq_counter;
+	uint8 fds_control;
+	int16 fds_IRQCount;
 
-static uint8 scratch[0x1000];
+	uint8 scratchRAM[0x2000];
+} m006;
 
-static writefunc writePPU;
+static writefunc writePPU2007;
 
 static SFORMAT StateRegs[] = {
-	{ &mode_1m, 1, "MC1M" },
-	{ &mode_2m, 1, "MC2M" },
-	{ &mode_smc, 1, "SMCM" },
+	{ &m006.mc1mode, 1, "MC1M" },
+	{ &m006.mc2mode, 1, "MC2M" },
+	{ &m006.smcmode, 1, "SMCM" },
 
-	{ prg, 4, "PREG" },
-	{ chr, 8, "CREG" },
-	{ nt, 4, "NTAR" },
-	{ chr_mmc4latch, 2, "MMC4" },
-	{ &latch, 1, "LATC" },
-	{ &chr_lock, 1, "CHRL" },
+	{ m006.prg8K, 4, "PRG8" },
+	{ m006.chr1K, 8, "CHR1" },
+	{ m006.nt, 4, "NTAR" },
+	{ m006.latchMMC4, 2, "MMC4" },
+	{ &m006.latch, 1, "LATC" },
+	{ &m006.chrlock, 1, "CHRL" },
 
-	{ &smc_irq_enabled, 1, "IRQA" },
-	{ &smc_irq_enabled, 4, "IRQC" },
+	{ &m006.smc_IRQa, 1, "IRQA" },
+	{ &m006.smc_IRQCount, sizeof(m006.smc_IRQCount), "IRQC" },
 
-	{ &fds_control, 1, "FDSI" },
-	{ &fds_irq_counter, 4, "FDSC" },
+	{ &m006.fds_control, 1, "FDSI" },
+	{ &m006.fds_IRQCount, sizeof(m006.fds_IRQCount), "FDSC" },
 
 	{ 0 }
 };
 
 static void SyncPRG(void) {
-	uint8 prg_writable = !(mode_1m & 0x02);
+	uint8 prg_writable = !(m006.mc1mode & 0x02);
 
 	SetupCartPRGMapping(0, PRGptr[0], PRGsize[0], prg_writable);
 
-	if (!(mode_2m & 0x01)) {
-		setprg8(0x8000, prg[0]);
-		setprg8(0xA000, prg[1]);
-		setprg8(0xC000, prg[2]);
-		setprg8(0xE000, prg[3]);
+	if (!(m006.mc2mode & 0x01)) {
+		setprg8(0x8000, m006.prg8K[0]);
+		setprg8(0xA000, m006.prg8K[1]);
+		setprg8(0xC000, m006.prg8K[2]);
+		setprg8(0xE000, m006.prg8K[3]);
 	} else {
-		switch (mode_1m >> 5) {
+		switch (m006.mc1mode >> 5) {
 		case 0:
-			setprg16(0x8000, latch & 0x07);
+			setprg16(0x8000, m006.latch & 0x07);
 			setprg16(0xC000, 0x07);
 			break;
 		case 1:
-			setprg16(0x8000, (latch >> 2) & 0x0F);
+			setprg16(0x8000, (m006.latch >> 2) & 0x0F);
 			setprg16(0xC000, 0x07);
 			break;
 		case 2:
-			setprg16(0x8000, latch & 0x0F);
+			setprg16(0x8000, m006.latch & 0x0F);
 			setprg16(0xC000, 0x0F);
 			break;
 		case 3:
 			setprg16(0x8000, 0x0F);
-			setprg16(0xC000, latch & 0x0F);
+			setprg16(0xC000, m006.latch & 0x0F);
 			break;
 		case 4:
-			setprg32(0x8000, (latch >> 4) & 0x03);
+			setprg32(0x8000, (m006.latch >> 4) & 0x03);
 			break;
 		case 5:
 		case 6:
@@ -108,26 +110,26 @@ static void SyncPRG(void) {
 }
 
 static void SyncCHR(void) {
-	uint8 chr_writable = !(((mode_1m & 0xE1) >= 0x81) || chr_lock);
+	uint8 chr_writable = !(((m006.mc1mode & 0xE1) >= 0x81) || m006.chrlock);
 
 	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], chr_writable);
 
-	if (mode_smc & 0x01) {
-		if (mode_smc & 0x04) {
-			setchr1(0x0000, chr[0]);
-			setchr1(0x0400, chr[1]);
-			setchr1(0x0800, chr[2]);
-			setchr1(0x0C00, chr[3]);
-			setchr1(0x1000, chr[4]);
-			setchr1(0x1400, chr[5]);
-			setchr1(0x1800, chr[6]);
-			setchr1(0x1C00, chr[7]);
+	if (m006.smcmode & 0x01) {
+		if (m006.smcmode & 0x04) {
+			setchr1(0x0000, m006.chr1K[0]);
+			setchr1(0x0400, m006.chr1K[1]);
+			setchr1(0x0800, m006.chr1K[2]);
+			setchr1(0x0C00, m006.chr1K[3]);
+			setchr1(0x1000, m006.chr1K[4]);
+			setchr1(0x1400, m006.chr1K[5]);
+			setchr1(0x1800, m006.chr1K[6]);
+			setchr1(0x1C00, m006.chr1K[7]);
 		} else {
-			setchr4(0x0000, chr[0 | chr_mmc4latch[0]] >> 2);
-			setchr4(0x1000, chr[4 | chr_mmc4latch[1]] >> 2);
+			setchr4(0x0000, m006.chr1K[0 | m006.latchMMC4[0]] >> 2);
+			setchr4(0x1000, m006.chr1K[4 | m006.latchMMC4[1]] >> 2);
 		}
 	} else {
-		switch (mode_1m >> 5) {
+		switch (m006.mc1mode >> 5) {
 		case 0:
 		case 2:
 			setchr8(0);
@@ -135,13 +137,13 @@ static void SyncCHR(void) {
 		case 1:
 		case 4:
 		case 5:
-			setchr8(latch & 0x03);
+			setchr8(m006.latch & 0x03);
 			break;
 		case 3:
-			setchr8((latch >> 4) & 0x03);
+			setchr8((m006.latch >> 4) & 0x03);
 			break;
 		case 6:
-			setchr8(latch & 0x01);
+			setchr8(m006.latch & 0x01);
 			break;
 		case 7:
 			setchr8(0x03);
@@ -150,9 +152,9 @@ static void SyncCHR(void) {
 	}
 }
 
-static void SyncMIR(void) {
-	if (mode_smc & 0x02) {
-		switch (mode_1m & 0x11) {
+static void SyncMirror(void) {
+	if (m006.smcmode & 0x02) {
+		switch (m006.mc1mode & 0x11) {
 		case 0x00:
 			setmirror(MI_0);
 			break;
@@ -167,37 +169,49 @@ static void SyncMIR(void) {
 			break;
 		}
 	} else {
-		setntamem(CHRptr[0] + 0x400 * (nt[0] & CHRmask1[0]), 1, 0);
-		setntamem(CHRptr[0] + 0x400 * (nt[1] & CHRmask1[0]), 1, 1);
-		setntamem(CHRptr[0] + 0x400 * (nt[2] & CHRmask1[0]), 1, 2);
-		setntamem(CHRptr[0] + 0x400 * (nt[3] & CHRmask1[0]), 1, 3);
+		setntamem(CHRptr[0] + 0x400 * (m006.nt[0] & CHRmask1[0]), 1, 0);
+		setntamem(CHRptr[0] + 0x400 * (m006.nt[1] & CHRmask1[0]), 1, 1);
+		setntamem(CHRptr[0] + 0x400 * (m006.nt[2] & CHRmask1[0]), 1, 2);
+		setntamem(CHRptr[0] + 0x400 * (m006.nt[3] & CHRmask1[0]), 1, 3);
 	}
 }
 
-static void Sync(void) {
-	setprg4r(0x11, 0x5000, 0);
-	setprg8r(0x10, 0x6000, 0);
-
-	SyncPRG();
-	SyncCHR();
-	SyncMIR();
+static void SyncWRAM(void) {
+	setprg4r(0x11, 0x5000, 0); /* m006.scratchRAM ram */
+	setprg8r(0x10, 0x6000, 0); /* wram */
 }
 
-static DECLFR(M006ReadREG) {
-	return mode_smc;
+extern uint32 RefreshAddr;
+static DECLFW(WritePPU2007) {
+	if (!(RefreshAddr & 0x2000)) {
+		if ((m006.mc1mode >= 0xA0) && !(m006.mc1mode & 0x01)) {
+			m006.chrlock = !!(m006.mc1mode & 0x10);
+		}
+	}
+	writePPU2007(A, V);
 }
 
-static DECLFW(M006WriteREG) {
+static DECLFR(ReadReg) {
+	switch (A) {
+	case 0x4500:
+		return m006.smcmode;
+	default:
+		break;
+	}
+	return cpu.openbus;
+}
+
+static DECLFW(WriteReg) {
 	switch (A) {
 	case 0x4024:
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	case 0x4025:
 		X6502_IRQEnd(FCEU_IQEXT);
-		if (!smc_irq_enabled) {
-			fds_control = V;
+		if (!m006.smc_IRQa) {
+			m006.fds_control = V;
 			if (V & 0x42) {
-				fds_irq_counter = 0;
+				m006.fds_IRQCount = 0;
 			}
 		}
 		break;
@@ -205,49 +219,49 @@ static DECLFW(M006WriteREG) {
 	case 0x42FD:
 	case 0x42FE:
 	case 0x42FF:
-		mode_1m = (V & 0xF0) | (A & 0x03);
-		if (mode_1m >= 0x80) {
-			chr_lock = FALSE;
+		m006.mc1mode = (V & 0xF0) | (A & 0x03);
+		if (m006.mc1mode >= 0x80) {
+			m006.chrlock = FALSE;
 		}
 		SyncPRG();
 		SyncCHR();
-		SyncMIR();
+		SyncMirror();
 		break;
 	case 0x43FC:
 	case 0x43FD:
 	case 0x43FE:
 	case 0x43FF:
-		mode_2m = (V & 0xF0) | (A & 0x03);
-		latch = V;
+		m006.mc2mode = (V & 0xF0) | (A & 0x03);
+		m006.latch = V;
 		SyncPRG();
 		SyncCHR();
 		break;
 	case 0x4500:
-		mode_smc = V;
+		m006.smcmode = V;
 		SyncCHR();
-		SyncMIR();
+		SyncMirror();
 		break;
 	case 0x4501:
-		smc_irq_enabled = FALSE;
+		m006.smc_IRQa = FALSE;
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	case 0x4502:
-		smc_irq_counter = (smc_irq_counter & 0xFF00) | V;
+		m006.smc_IRQCount = (m006.smc_IRQCount & 0xFF00) | V;
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	case 0x4503:
-		smc_irq_enabled = TRUE;
-		smc_irq_counter = (smc_irq_counter & 0x00FF) | (V << 8);
+		m006.smc_IRQa = TRUE;
+		m006.smc_IRQCount = (m006.smc_IRQCount & 0x00FF) | (V << 8);
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	case 0x4504:
 	case 0x4505:
 	case 0x4506:
 	case 0x4507:
-		if (mode_2m & 0x02) {
+		if (m006.mc2mode & 0x02) {
 			V >>= 2;
 		}
-		prg[A & 0x03] = V;
+		m006.prg8K[A & 0x03] = V;
 		SyncPRG();
 		break;
 	case 0x4510:
@@ -258,24 +272,27 @@ static DECLFW(M006WriteREG) {
 	case 0x4515:
 	case 0x4516:
 	case 0x4517:
-		chr[A & 0x07] = V;
+		m006.chr1K[A & 0x07] = V;
 		SyncCHR();
 		break;
 	case 0x4518:
 	case 0x4519:
 	case 0x451A:
 	case 0x451B:
-		nt[A & 0x03] = V;
-		SyncMIR();
+		m006.nt[A & 0x03] = V;
+		SyncMirror();
 		break;
+	}
+	if ((A >= 0x4500) && (A <= 0x451F)) {
+		m006.scratchRAM[A - 0x4000] = V;
 	}
 }
 
-static DECLFW(M006WriteLatch) {
-	if (mode_1m & 0x02) {
-		latch = V;
-		if (mode_2m & 0x03) {
-			prg[(A >> 13) & 0x03] = V >> 2;
+static DECLFW(WriteLatch) {
+	if (m006.mc1mode & 0x02) {
+		m006.latch = V;
+		if (m006.mc2mode & 0x03) {
+			m006.prg8K[(A >> 13) & 0x03] = V >> 2;
 		}
 		SyncPRG();
 		SyncCHR();
@@ -284,55 +301,100 @@ static DECLFW(M006WriteLatch) {
 	}
 }
 
-extern uint32 RefreshAddr;
-static DECLFW(M562PPUWrite2007) {
-	if (!(RefreshAddr & 0x2000)) {
-		if ((mode_1m >= 0xA0) && !(mode_1m & 0x01)) {
-			chr_lock = !!(mode_1m & 0x10);
+static void ClockFDSCounter (int a) {
+	m006.fds_IRQCount += 3 * a;
+	while ((m006.fds_IRQCount >= 448) && (m006.fds_control & 0x80)) {
+		X6502_IRQBegin(FCEU_IQEXT);
+		m006.fds_IRQCount -= 448;
+	}
+}
+
+static void ClockSMCCounter(int a) {
+	if (m006.smc_IRQa) {
+		m006.smc_IRQCount += a;
+		if (m006.smc_IRQCount >= 0x10000) {
+			m006.smc_IRQCount = 0;
+			m006.smc_IRQa = FALSE;
+			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
-	writePPU(A, V);
 }
 
-static void M006Reset(void) {
-	smc_irq_enabled = FALSE;
-	smc_irq_counter = 0;
-	fds_control = 0;
-	fds_irq_counter = 0;
-	Sync();
+static void CPUIRQHook(int a) {
+	ClockFDSCounter(a);
+	if (!(m006.smcmode & 0x08)) {
+		ClockSMCCounter(a);
+	}
 }
 
-static uint32 prg_size_8K = 0;
+static void HBIRQHook(void) {
+	if (m006.smcmode & 0x08) {
+		ClockSMCCounter(8);
+	}
+	
+}
+
+static void PPUIRQHook(uint32 A) {
+	if (!(A & 0x2000) && (m006.smcmode & 0x01) && !(m006.smcmode & 0x04)) {
+		uint8 value = (A >> 4) & 0x02;
+		uint8 bank = (A >> 12) & 0x01;
+
+		switch (A & 0x0FF0) {
+		case 0x0FD0:
+		case 0x0FE0:
+			if (m006.latchMMC4[bank] != value) {
+				m006.latchMMC4[bank] = value;
+				SyncCHR();
+			}
+			break;
+		default:
+			break;
+		}
+	}
+}
+
 static void SetTrainer(void) {
-	int nmiHandler;
-
 #define PRGPAGE_DMR(a)	  Page[(a) >> 11][(a)]
 #define PRGPAGE_DMW(a, d) Page[(a) >> 11][(a)] = (d)
+	int i, nmiHandler;
 
 	nmiHandler = PRGPAGE_DMR(0xFFFA) | (PRGPAGE_DMR(0xFFFB) << 8);
 	if (nmiHandler == 0x5032) {
-		PRGPAGE_DMW(0xFFFA, scratch[0x4F]);
-		PRGPAGE_DMW(0xFFFB, scratch[0x50]);
+		PRGPAGE_DMW(0xFFFA, m006.scratchRAM[0x4F]);
+		PRGPAGE_DMW(0xFFFB, m006.scratchRAM[0x50]);
 	}
-	memcpy(&scratch[0], &smc5000[0], sizeof(smc5000));
-	scratch[0x4F] = PRGPAGE_DMR(0xFFFA);
-	scratch[0x50] = PRGPAGE_DMR(0xFFFB);
+	for (i = 0; i < 4096; i++) {
+		m006.scratchRAM[i] = smc5000[i];
+	}
+	m006.scratchRAM[0x4F] = PRGPAGE_DMR(0xFFFA);
+	m006.scratchRAM[0x50] = PRGPAGE_DMR(0xFFFB);
 	if (iNESCart.mapper == 17) {
 		PRGPAGE_DMW(0xFFFA, 0x32);
 		PRGPAGE_DMW(0xFFFB, 0x50);
 	}
 	if (iNESCart.trainer && WRAM) {
-		int i;
 		uint8 *trainerData = 0;
-		uint16 trainerAddr =
-			iNESCart.mapper != 17   ? 0x7000 :
-			iNESCart.submapper == 0 ? 0x7000 :
-			iNESCart.submapper << 8 | 0x5C00;
+		uint32 trainerSize = ROM.misc.size;
+		uint16 trainerAddr = 0x7000;
 
-		for (i = 0; i < (int)ROM.misc.size; i++) {
-			PRGPAGE_DMW((trainerAddr & 0x7F00) + i, ROM.misc.data[i]);
+		if (iNESCart.mapper == 17) {
+			if (iNESCart.submapper == 0) {
+				trainerAddr = 0x7000;
+			} else {
+				trainerAddr = ((iNESCart.submapper << 8) & 0x0300) | 0x5C00;
+			}
 		}
-
+		if (trainerAddr < 0x6000) {
+			trainerData = &m006.scratchRAM[(trainerAddr & 0xF00)];
+		} else {
+			trainerData = &WRAM[trainerAddr & 0x1F00];
+		}
+		for (i = 0; i < (int)ROM.misc.size; i++) {
+			trainerData[i] = ROM.misc.data[i];
+		}
+		FCEU_printf(" load addr : %04x\n", trainerAddr);
+		FCEU_printf(" data size : %d\n", trainerSize);
+		FCEU_printf(" reset     : %04x\n", (iNESCart.mapper == 17) ? trainerAddr : 0x5000);
 		X6502_SetNewPC((iNESCart.mapper == 17) ? trainerAddr : 0x5000);
 	}
 	(GetWriteHandler(0x4017))(0x4017, 0x40);
@@ -341,150 +403,118 @@ static void SetTrainer(void) {
 #undef PRGPAGE_DMW
 }
 
-static void M006Power(void) {
-	mode_1m = (((iNESCart.mapper == 6) ? iNESCart.submapper : 1) << 5) |
-			  ((iNESCart.mirror & MI_V) ? 0x01 : 0x11) |
-			  0x02;
-	chr_lock = FALSE;
+static void Reset(void) {
+	m006.smc_IRQa = FALSE;
+	m006.smc_IRQCount = 0;
+	m006.fds_control = 0;
+	m006.fds_IRQCount = 0;
 
-	mode_2m = ((iNESCart.mapper == 12) ||
-		(iNESCart.mapper == 17)) ? 0x00 : 0x03;
-	mode_smc = (iNESCart.mapper == 17) ? 0x47 : 0x42;
-	latch = 0;
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+	SyncWRAM();
+}
 
-	prg[0] = prg_size_8K - 4;
-	prg[1] = prg_size_8K - 3;
-	prg[2] = prg_size_8K - 2;
-	prg[3] = prg_size_8K - 1;
+static void Power(void) {
+	m006.mc1mode = (((iNESCart.mapper == 6) ? iNESCart.submapper : 1) << 5) |
+	               ((iNESCart.mirror == MI_V) ? 0x01 : 0x11) | 0x02;
+	m006.mc2mode = ((iNESCart.mapper == 12) || (iNESCart.mapper == 17)) ? 0x00 : 0x03;
+	m006.smcmode = (iNESCart.mapper == 17) ? 0x47 : 0x42;
 
-	chr[0] = 0;
-	chr[1] = 1;
-	chr[2] = 2;
-	chr[3] = 3;
-	chr[4] = 4;
-	chr[5] = 5;
-	chr[6] = 6;
-	chr[7] = 7;
+	m006.latch = 0;
+	m006.chrlock = FALSE;
 
-	M006Reset();
+	m006.prg8K[0] = PRG_BANK_COUNT(8) - 4;
+	m006.prg8K[1] = PRG_BANK_COUNT(8) - 3;
+	m006.prg8K[2] = PRG_BANK_COUNT(8) - 2;
+	m006.prg8K[3] = PRG_BANK_COUNT(8) - 1;
 
-	writePPU = GetWriteHandler(0x2007);
-	SetWriteHandler(0x2007, 0x2007, M562PPUWrite2007);
+	m006.chr1K[0] = 0;
+	m006.chr1K[1] = 1;
+	m006.chr1K[2] = 2;
+	m006.chr1K[3] = 3;
+	m006.chr1K[4] = 4;
+	m006.chr1K[5] = 5;
+	m006.chr1K[6] = 6;
+	m006.chr1K[7] = 7;
 
-	SetReadHandler(0x5000, 0xFFFF, CartBR);
+	Reset();
+
+	writePPU2007 = GetWriteHandler(0x2007);
+	SetWriteHandler(0x2007, 0x2007, WritePPU2007);
+
+	SetReadHandler(0x4020, 0x47FF, ReadReg);
+	SetWriteHandler(0x4020, 0x47FF, WriteReg);
+
+	SetReadHandler(0x5000, 0x7FFF, CartBR);
 	SetWriteHandler(0x5000, 0x7FFF, CartBW);
+	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 
-	SetReadHandler(0x4500, 0x4500, M006ReadREG);
-	SetWriteHandler(0x4024, 0x451B, M006WriteREG);
-	SetWriteHandler(0x8000, 0xFFFF, M006WriteLatch);
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 
 	SetTrainer();
 }
 
-static void ClockSMCCounter(void) {
-	if (smc_irq_enabled) {
-		smc_irq_counter++;
-		if (smc_irq_counter >= 0x10000) {
-			smc_irq_counter = 0;
-			smc_irq_enabled = FALSE;
-			X6502_IRQBegin(FCEU_IQEXT);
-		}
-	}
-}
-
-static void M006CPUHook(int a) {
-	while (a--) {
-		fds_irq_counter += 3;
-		while ((fds_irq_counter >= 448) && (fds_control & 0x80)) {
-			X6502_IRQBegin(FCEU_IQEXT);
-			fds_irq_counter -= 448;
-		}
-
-		if (!(mode_smc & 0x08)) {
-			ClockSMCCounter();
-		}
-	}
-}
-
-static void M006HBHook(void) {
-	if (mode_smc & 0x08) {
-		int i;
-		for (i = 0; i < 8; i++) {
-			ClockSMCCounter();
-		}
-	}
-}
-
-static void M006PPUHook(uint32 A) {
-	if ((A & 0x3000) != 0x2000) {
-		if ((mode_smc & 0x05) == 0x01) {
-			uint8 value = (A >> 4) & 0x02;
-			uint8 bank = (A >> 12) & 0x01;
-
-			switch (A & 0x0FF0) {
-			case 0x0FD0:
-			case 0x0FE0:
-				if (chr_mmc4latch[bank] != value) {
-					chr_mmc4latch[bank] = value;
-					Sync();
-				}
-				break;
-			}
-		}
-	}
-}
-
-static void Close(void) {
-}
-
 static void StateRestore(int version) {
-	Sync();
+	SyncPRG();
+	SyncCHR();
+	SyncMirror();
+	SyncWRAM();
 }
 
 void Mapper006_Init(CartInfo *info) {
-	int ws = info->PRGRamSize + info->PRGRamSaveSize;
+	uint32 wramsize = info->PRGRamSize + info->PRGRamSaveSize;
+	uint32 prgsize = ROM.prg.size;
 
-	info->Power = M006Power;
-	info->Reset = M006Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 
-	MapIRQHook = M006CPUHook;
-	PPU_hook = M006PPUHook;
-	GameHBIRQHook2 = M006HBHook;
+	MapIRQHook = CPUIRQHook;
+	PPU_hook = PPUIRQHook;
+	GameHBIRQHook = HBIRQHook;
+
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 
-	WRAMSIZE = ws ? ws : 8192;
-	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
-		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, TRUE);
-		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-	}
+	WRAMSIZE = wramsize ? wramsize : 8192;
+	WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
+	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, TRUE);
+	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
-	SetupCartPRGMapping(0x11, scratch, 4096, TRUE);
-	AddExState(scratch, 4096, 0, "SRAM");
-
-	prg_size_8K = PRG_BANK_COUNT(8);
+	SetupCartPRGMapping(0x11, m006.scratchRAM, 4096, TRUE);
+	AddExState(m006.scratchRAM, sizeof(m006.scratchRAM), 0, "SRAM");
 
 	if (ROM.chr.size) {
-		if (info->mapper == 12) {
-			int i;
-			size_t ssize;
+		if ((info->mapper == 12) && (info->submapper == 1)) {
+			uint8 *newbuffer;
+			size_t prg_size = (ROM.prg.size > SIZE_256K) ? SIZE_256K : ROM.prg.size;
+			size_t chr_size = (ROM.chr.size > SIZE_256K) ? SIZE_256K : ROM.chr.size;
 
-			ROM.prg.size = (512 * 1024);
-			ROM.prg.data = realloc(ROM.prg.data, ROM.prg.size);
-			for (i = 0; i < ((ROM.chr.size < (256 * 1024)) ? ROM.chr.size : (256 * 1024)); i++) {
-				ROM.prg.data[(256 * 1024) + i] = ROM.chr.data[i];
-			}
-			SetupCartPRGMapping(0, ROM.prg.data, ROM.prg.size, TRUE);
+			newbuffer = (uint8 *)FCEU_malloc(SIZE_512K);
+			memset(newbuffer, 0xFF, SIZE_512K);
+			/* copy main PRG-ROM data */
+			memcpy(newbuffer, ROM.prg.data, prg_size);
+			/* Append CHR-ROM data at offset 0x40000 (256KB) */
+			memcpy(newbuffer + SIZE_256K, ROM.chr.data, chr_size);
 
-			memset(ROM.chr.data, 0, ROM.chr.size);
-			ssize = info->CHRRamSize ? info->CHRRamSize : (32 * 1024);
-			SetupCartCHRMapping(0, ROM.chr.data, ssize, TRUE);
-			AddExState(ROM.chr.data, ssize, 0, "CHRR");
-			ROM.chr.size = 0;
+			FCEU_free(ROM.prg.data);
+
+			/* setup and map new prg data */
+			ROM.prg.data = newbuffer;
+			SetupCartPRGMapping(0, ROM.prg.data, SIZE_512K, FALSE);
+
+			/* setup and map chr ram */
+			CHRRAMSIZE = info->CHRRamSize;
+			CHRRAM = (uint8 *)FCEU_malloc(CHRRAMSIZE);
+			SetupCartCHRMapping(0, CHRRAM, CHRRAMSIZE, TRUE);
+			AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
+
+			prgsize = SIZE_512K;
 		} else {
-			SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], TRUE);
-			AddExState(ROM.chr.data, ROM.chr.size, 0, "CHRR");
+			/* need data in CHR-RAM, not CHR-ROM */
+			SetupCartCHRMapping(0, ROM.chr.data, ROM.chr.size, TRUE);
+			AddExState(ROM.chr.data, ROM.chr.size, 0, "CRAM");
 		}
 	}
 
@@ -496,4 +526,7 @@ void Mapper006_Init(CartInfo *info) {
 		iNESCart.mapper = 6;
 		iNESCart.submapper = 4;
 	}
+
+	/* PRG memory can be writable, so add to states */
+	AddExState(ROM.prg.data, prgsize, 0, "PRAM");
 }

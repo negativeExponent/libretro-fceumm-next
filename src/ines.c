@@ -520,15 +520,15 @@ static void CheckHInfo(CartInfo *info, uint64 partialmd5) {
 			FCEU_printf(" [DB] Region: %s\n", tv_region_str[info->region]);
 		}
 		if (tofix & 32) {
-			size_t PRGRAM = info->PRGRamSize + info->PRGRamSaveSize;
-			size_t CHRRAM = info->CHRRamSize + info->CHRRamSaveSize;
-			if (PRGRAM || CHRRAM) {
+			size_t wramsize = info->PRGRamSize + info->PRGRamSaveSize;
+			size_t chrramsize = info->CHRRamSize + info->CHRRamSaveSize;
+			if (wramsize || chrramsize) {
 				if (info->PRGRamSaveSize == 0) {
-					FCEU_printf(" [DB] PRG RAM: %d KB\n", PRGRAM / 1024);
+					FCEU_printf(" [DB] PRG RAM: %d KB\n", wramsize / 1024);
 				} else {
-					FCEU_printf(" [DB] PRG RAM: %d KB ( %dKB is battery-backed )\n", PRGRAM / 1024, info->PRGRamSaveSize / 1024);
+					FCEU_printf(" [DB] PRG RAM: %d KB ( %dKB is battery-backed )\n", wramsize / 1024, info->PRGRamSaveSize / 1024);
 				}
-				FCEU_printf(" [DB] CHR RAM: %d KB\n", CHRRAM / 1024);
+				FCEU_printf(" [DB] CHR RAM: %d KB\n", chrramsize / 1024);
 			}
 		}
 	}
@@ -1349,25 +1349,25 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 	FCEU_printf(" System:        %s\n", tv_region_str[iNESCart.region]);
 	FCEU_printf(" Console:       %s\n", console_types_str[iNESCart.ConsoleType & 0x0F].name);
 	if (iNESCart.iNES2) {
-		size_t PRGRAM = iNESCart.PRGRamSize + iNESCart.PRGRamSaveSize;
-		size_t CHRRAM = iNESCart.CHRRamSize + iNESCart.CHRRamSaveSize;
+		size_t prgramsize = iNESCart.PRGRamSize + iNESCart.PRGRamSaveSize;
+		size_t chrramsize = iNESCart.CHRRamSize + iNESCart.CHRRamSaveSize;
 		if (iNESCart.InputTypes) {
 			FCEU_printf(" Input:         %s\n", input_type_str[iNESCart.InputTypes].name);
 		}
 		FCEU_printf(" Submapper:    %2d\n", iNESCart.submapper);
-		if (PRGRAM || CHRRAM) {
+		if (prgramsize || chrramsize) {
 			if (iNESCart.battery) {
-				int wramtotal_1k = (PRGRAM / 1024) != 0;
+				int wramtotal_1k = (prgramsize / 1024) != 0;
 				int savesize_1k = (iNESCart.PRGRamSaveSize / 1024) != 0;
 				FCEU_printf(" PRG RAM:       %-3d %s ( %2d %s battery-backed )\n",
-					(wramtotal_1k ? PRGRAM / 1024 : PRGRAM),
+					(wramtotal_1k ? prgramsize / 1024 : prgramsize),
 					(wramtotal_1k ? "KiB" : "bytes"),
 					(savesize_1k ? iNESCart.PRGRamSaveSize / 1024 : iNESCart.PRGRamSaveSize),
 					(savesize_1k ? "KiB" : "bytes"));
-				FCEU_printf(" CHR RAM:       %-3d KiB ( %2d KiB battery-backed)\n", CHRRAM / 1024, iNESCart.CHRRamSaveSize / 1024);
+				FCEU_printf(" CHR RAM:       %-3d KiB ( %2d KiB battery-backed)\n", chrramsize / 1024, iNESCart.CHRRamSaveSize / 1024);
 			} else {
-				FCEU_printf(" PRG RAM:       %-3d KiB\n", PRGRAM / 1024);
-				FCEU_printf(" CHR RAM:       %-3d KiB\n", CHRRAM / 1024);
+				FCEU_printf(" PRG RAM:       %-3d KiB\n", prgramsize / 1024);
+				FCEU_printf(" CHR RAM:       %-3d KiB\n", chrramsize / 1024);
 			}
 		}
 		if (!iNESCart.trainer && ROM.misc.size) {
