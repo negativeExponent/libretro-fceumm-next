@@ -32,58 +32,13 @@ static MMC1TYPE type = MMC1B;
 
 void (*MMC1_pwrap)(uint16 A, uint16 V);
 void (*MMC1_cwrap)(uint16 A, uint16 V);
-void (*MMC1_mwrap)(uint8 V);
+
+void (*MMC1_SyncPRG)(void);
+void (*MMC1_SyncCHR)(void);
+void (*MMC1_SyncMirror)(void);
 void (*MMC1_SyncWRAM)(void);
 
 MMC1 mmc1;
-
-static void GENWRAMWRAP(void) {
-	uint8 bank = 0;
-
-	if (!WRAMSIZE) {
-		return;
-	}
-	if (WRAMSIZE > 8192) {
-		if (WRAMSIZE > 16384) {
-			bank = (mmc1.reg[1] >> 2) & 3;
-		} else {
-			bank = (mmc1.reg[1] >> 3) & 1;
-		}
-	}
-	setprg8r(0x10, 0x6000, bank);
-}
-
-static void GENPWRAP(uint16 A, uint16 V) {
-	setprg16(A, V & 0x0F);
-}
-
-static void GENCWRAP(uint16 A, uint16 V) {
-	setchr4(A, V & 0x1F);
-}
-
-static uint8 MMC1WRAMEnabled(void) {
-	if ((mmc1.reg[3] & 0x10) && (type == MMC1B)) {
-		return FALSE;
-	}
-
-	return TRUE;
-}
-
-static DECLFW(MBWRAM) {
-	if (MMC1WRAMEnabled()) {
-		/* WRAM is enabled. */
-		CartBW(A, V);
-	}
-}
-
-static DECLFR(MAWRAM) {
-	if (!MMC1WRAMEnabled()) {
-		/* WRAM is disabled */
-		return cpu.openbus;
-	}
-
-	return CartBR(A);
-}
 
 uint32 MMC1_GetPRGBank(int index) {
 	uint32 bank;
@@ -118,21 +73,41 @@ uint32 MMC1_GetCHRBank(int index) {
 	return ((mmc1.reg[1] & ~1) | index);
 }
 
-void MMC1_SyncCHR(void) {
-	if (MMC1_SyncWRAM) {
-		MMC1_SyncWRAM();
+uint8 MMC1_WRAMEnabled(void) {
+	if ((mmc1.reg[3] & 0x10) && (type == MMC1B)) {
+		return FALSE;
 	}
 
-	MMC1_cwrap(0x0000, MMC1_GetCHRBank(0));
-	MMC1_cwrap(0x1000, MMC1_GetCHRBank(1));
+	return TRUE;
 }
 
-void MMC1_SyncPRG(void) {
+void MMC1_pwrap_default(uint16 A, uint16 V) {
+	setprg16(A, V & 0x0F);
+}
+
+void MMC1_cwrap_default(uint16 A, uint16 V) {
+	setchr4(A, V & 0x1F);
+}
+
+void MMC1_SyncWRAM_default(void) {
+	if (!WRAMSIZE || !MMC1_WRAMEnabled()) {
+		unsetcpu8(0x6000);
+	} else {
+		setprg8r(0x10, 0x6000, 0);
+	}
+}
+
+void MMC1_SyncPRG_default(void) {
 	MMC1_pwrap(0x8000, MMC1_GetPRGBank(0));
 	MMC1_pwrap(0xC000, MMC1_GetPRGBank(1));
 }
 
-void MMC1_SyncMirror(void) {
+void MMC1_SyncCHR_default(void) {
+	MMC1_cwrap(0x0000, MMC1_GetCHRBank(0));
+	MMC1_cwrap(0x1000, MMC1_GetCHRBank(1));
+}
+
+void MMC1_SyncMirror_default(void) {
 	switch (mmc1.reg[0] & 3) {
 	case 2:
 		setmirror(MI_V);
@@ -187,6 +162,7 @@ DECLFW(MMC1_Write) {
 		case 1:
 			MMC1_SyncCHR();
 			MMC1_SyncPRG();
+			MMC1_SyncWRAM();
 			break;
 		case 2:
 			MMC1_SyncCHR();
@@ -202,6 +178,7 @@ void MMC1_Restore(int version) {
 	MMC1_SyncMirror();
 	MMC1_SyncCHR();
 	MMC1_SyncPRG();
+	MMC1_SyncWRAM();
 	lreset = 0; /* timestamp(base) is not stored in save states. */
 }
 
@@ -216,6 +193,7 @@ void MMC1_Reset(void) {
 	MMC1_SyncPRG();
 	MMC1_SyncCHR();
 	MMC1_SyncMirror();
+	MMC1_SyncWRAM();
 
 	lreset = 0;
 }
@@ -233,21 +211,20 @@ void MMC1_Power(void) {
 			FCEU_MemoryRand(WRAM, NONSaveRAMSIZE);
 		}
 
-		SetReadHandler(0x6000, 0x7FFF, MAWRAM);
-		SetWriteHandler(0x6000, 0x7FFF, MBWRAM);
-		setprg8r(0x10, 0x6000, 0);
+		SetReadHandler(0x6000, 0x7FFF, CartBR);
+		SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	}
 
 	MMC1_Reset();
 }
 
-void MMC1_Close(void) {
-}
-
 void MMC1_Init(CartInfo *info, MMC1TYPE _type, int wram, int saveram) {
-	MMC1_pwrap = GENPWRAP;
-	MMC1_cwrap = GENCWRAP;
-	MMC1_SyncWRAM = GENWRAMWRAP;
+	MMC1_pwrap = MMC1_pwrap_default;
+	MMC1_cwrap = MMC1_cwrap_default;
+	MMC1_SyncPRG = MMC1_SyncPRG_default;
+	MMC1_SyncCHR = MMC1_SyncCHR_default;
+	MMC1_SyncWRAM = MMC1_SyncWRAM_default;
+	MMC1_SyncMirror = MMC1_SyncMirror_default;
 
 	WRAMSIZE = wram * 1024;
 	NONSaveRAMSIZE = (wram - saveram) * 1024;
@@ -267,7 +244,6 @@ void MMC1_Init(CartInfo *info, MMC1TYPE _type, int wram, int saveram) {
 	AddExState(mmc1.reg, 4, 0, "DREG");
 
 	info->Power = MMC1_Power;
-	info->Close = MMC1_Close;
 	GameStateRestore = MMC1_Restore;
 	AddExState(&mmc1.buffer, 1, 0, "BFFR");
 	AddExState(&mmc1.shift, 1, 0, "BFRS");

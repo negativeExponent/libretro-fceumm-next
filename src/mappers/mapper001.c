@@ -58,6 +58,14 @@ static void SetPRGBank_mmc1(uint16 A, uint16 V) {
 	}
 }
 
+static void SyncWRAM(void) {
+	if (!WRAMSIZE || !MMC1_WRAMEnabled) {
+		unsetcpu8(0x6000);
+	} else {
+		setprg8r(0x10, 0x6000, (MMC1_GetCHRBank(0) >> 2) & 0x03);
+	}
+}
+
 void Mapper001_Init(CartInfo *info) {
 	int bs = 0;
 	int ws = DetectMMC1WRAMSize(info, &bs);
@@ -67,4 +75,5 @@ void Mapper001_Init(CartInfo *info) {
 		MMC1_Init(info, MMC1B, ws, bs);
 	}
 	MMC1_pwrap = SetPRGBank_mmc1;
+	MMC1_SyncWRAM = SyncWRAM;
 }

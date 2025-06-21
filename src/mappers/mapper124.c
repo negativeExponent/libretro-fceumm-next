@@ -52,20 +52,26 @@ static uint32 GetCHRBase(void) {
 	return ((reg[0] << 7) & 0x780);
 }
 
-static void M124MMC1PW(uint16 A, uint16 V) {
+static void SetPRG_mmc1(uint16 A, uint16 V) {
 	setprg16(A, (GetPRGBase() >> 1) | (V & 0x07));
 }
 
-static void M124MMC1CW(uint16 A, uint16 V) {
+static void SetCHR_mmc1(uint16 A, uint16 V) {
 	setchr4(A, (GetCHRBase() >> 2) | (V & 0x1F));
 }
 
-static void M124MMC3PW(uint16 A, uint16 V) {
+static void SyncWRAM_mmc1(void) {
+	if (!(reg[1] & 0x20)) {
+		MMC1_SyncWRAM_default();
+	}
+}
+
+static void SetPRG_mmc3(uint16 A, uint16 V) {
 	uint16 mask = (reg[1] & 0x20) ? 0x0F : 0x1F;
 	setprg8(A, GetPRGBase() | (V & mask));
 }
 
-static void M124MMC3CW(uint16 A, uint16 V) {
+static void SetCHR_mmc3(uint16 A, uint16 V) {
 	uint16 mask = (reg[0] & 0x40) ? 0x7F : 0xFF;
 	setchr1(A, GetCHRBase() | (V & mask));
 }
@@ -84,13 +90,13 @@ static void Sync(void) {
 		setmirror(MI_0 + ((latch.data >> 4) & 1));
 		break;
 	case MAPPER_MMC1:
-		setprg16r(0x10, 0x6000, 0);
+		MMC1_SyncWRAM();
 		MMC1_SyncPRG();
 		MMC1_SyncCHR();
 		MMC1_SyncMirror();
 		break;
 	case MAPPER_MMC3:
-		setprg16r(0x10, 0x6000, 0);
+		setprg8r(0x10, 0x6000, 0);
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 		MMC3_SyncMirror();
@@ -121,7 +127,7 @@ static DECLFW(WriteRAM) {
 }
 
 #include "vsuni.h"
-static DECLFR(M124ReadCoinDIP) {
+static DECLFR(ReadDIP) {
 	if ((A & 0x0F) == 0x0F) {
 		/* TODO: Hack to use VS' coin insert map to use as mappers coin insert trigger */
 		return ((vsuni_system.coinon[0] ? 0x80 : 0x00) | (dipsw & 0x7F));
@@ -129,7 +135,7 @@ static DECLFR(M124ReadCoinDIP) {
 	return cpu.openbus;
 }
 
-static DECLFW(M124WriteReg) {
+static DECLFW(WriteReg) {
 	if (A & 0x10) {
 		audioEnable = V;
 	} else {
@@ -139,7 +145,7 @@ static DECLFW(M124WriteReg) {
 	}
 }
 
-static DECLFW(M124Write) {
+static DECLFW(WriteASIC) {
 	switch (mapper) {
 	case MAPPER_UNROM:
 	case MAPPER_AMROM:
@@ -154,19 +160,19 @@ static DECLFW(M124Write) {
 	}
 }
 
-static void M124Close(void) {
+static void Close(void) {
 	if (ExRAM) {
 		FCEU_gfree(ExRAM);
 		ExRAM = NULL;
 	}
 }
 
-static void M124Reset(void) {
+static void Reset(void) {
 	dipsw++;
 	Sync();
 }
 
-static void M124Power(void) {
+static void Power(void) {
 	memset(reg, 0, sizeof(reg));
 	mapper = 0;
 	dipsw = 0;
@@ -178,18 +184,20 @@ static void M124Power(void) {
 	SetReadHandler(0x0800, 0x0FFF, ReadRAM);
 	SetWriteHandler(0x800, 0x0FFF, WriteRAM);
 
-	SetReadHandler(0x4F00, 0x4FFF, M124ReadCoinDIP);
+	SetReadHandler(0x4F00, 0x4FFF, ReadDIP);
 
 	SetReadHandler(0x5000, 0xFFFF, CartBR);
-	SetWriteHandler(0x5000, 0x5FFF, M124WriteReg);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
+
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
-	SetWriteHandler(0x8000, 0xFFFF, M124Write);
+
+	SetWriteHandler(0x8000, 0xFFFF, WriteASIC);
 
 	applyMode();
 	Sync();
 }
 
-static void M124HBIRQHook(void) {
+static void HBIRQHook(void) {
 	if (mapper == MAPPER_MMC3) {
 		MMC3_IRQHBHook();
 	}
@@ -202,19 +210,20 @@ static void StateRestore(int version) {
 
 void Mapper124_Init(CartInfo *info) {
 	MMC1_Init(info, MMC1A, FALSE, FALSE);
-	MMC1_pwrap = M124MMC1PW;
-	MMC1_cwrap = M124MMC1CW;
+	MMC1_pwrap = SetPRG_mmc1;
+	MMC1_cwrap = SetCHR_mmc1;
+	MMC1_SyncWRAM = SyncWRAM_mmc1;
 
 	MMC3_Init(info, MMC3B, FALSE, FALSE);
-	MMC3_pwrap = M124MMC3PW;
-	MMC3_cwrap = M124MMC3CW;
+	MMC3_pwrap = SetPRG_mmc3;
+	MMC3_cwrap = SetCHR_mmc3;
 
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
 
-	info->Power = M124Power;
-	info->Reset = M124Reset;
-	info->Close = M124Close;
-	GameHBIRQHook = M124HBIRQHook;
+	info->Power = Power;
+	info->Reset = Reset;
+	info->Close = Close;
+	GameHBIRQHook = HBIRQHook;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 
@@ -229,5 +238,5 @@ void Mapper124_Init(CartInfo *info) {
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, TRUE);
-	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
+	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 }
