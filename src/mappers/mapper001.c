@@ -21,6 +21,8 @@
 #include "mapinc.h"
 #include "mmc1.h"
 
+static MMC1TYPE mmc1type;
+
 static int DetectMMC1WRAMSize(CartInfo *info, int *saveRAM) {
 	int workRAM = 8;
 
@@ -62,18 +64,28 @@ static void SyncWRAM(void) {
 	if (!WRAMSIZE || !MMC1_WRAMEnabled) {
 		unsetcpu8(0x6000);
 	} else {
-		setprg8r(0x10, 0x6000, (MMC1_GetCHRBank(0) >> 2) & 0x03);
+		int bank = 0;
+		if (ROM.prg.size == 16384) {
+			if (ROM.chr.size) {
+				bank = (~MMC1_GetCHRBank(0) >> 4) & 0x01;
+			} else {
+				bank = (~MMC1_GetCHRBank(0) >> 3) & 0x01;
+			}
+		} else if (ROM.prg.size == 32768) {
+			bank = (MMC1_GetCHRBank(0) >> 2) & 0x03;
+		} else if (mmc1type = MMC1A) {
+			bank = (MMC1_GetCHRBank(0) >> 3) & 0x01;
+		}
+		setprg8r(0x10, 0x6000, bank);
 	}
 }
 
 void Mapper001_Init(CartInfo *info) {
 	int bs = 0;
 	int ws = DetectMMC1WRAMSize(info, &bs);
-	if (info->submapper == 3) {
-		MMC1_Init(info, MMC1A, ws, bs);
-	} else {
-		MMC1_Init(info, MMC1B, ws, bs);
-	}
+	mmc1type = ((iNESCart.mapper == 155) || (iNESCart.submapper == 3)) ?
+		MMC1A : MMC1B;
+	MMC1_Init(info, mmc1type, ws, bs);
 	MMC1_pwrap = SetPRGBank_mmc1;
 	MMC1_SyncWRAM = SyncWRAM;
 }

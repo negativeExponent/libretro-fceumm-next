@@ -551,7 +551,7 @@ typedef struct {
 
 INES_BOARD_BEGIN()
 	INES_BOARD( "NROM",                       0, Mapper000_Init         )
-	INES_BOARD( "MMC1",                       1, Mapper001_Init         )
+	INES_BOARD( "MMC1B",                      1, Mapper001_Init         )
 	INES_BOARD( "UNROM",                      2, Mapper002_Init         )
 	INES_BOARD( "CNROM",                      3, Mapper003_Init         )
 	INES_BOARD( "MMC3",                       4, Mapper004_Init         )
@@ -705,7 +705,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                         152, Mapper152_Init         )
 	INES_BOARD( "BANDAI SRAM",              153, Mapper153_Init         ) /* Bandai board 16 with SRAM instead of EEPROM */
 	INES_BOARD( "",                         154, Mapper154_Init         )
-	INES_BOARD( "",                         155, Mapper155_Init         )
+	INES_BOARD( "SxROM (MMC1A)",            155, Mapper001_Init         )
 	INES_BOARD( "",                         156, Mapper156_Init         )
 	INES_BOARD( "BANDAI BARCODE",           157, Mapper157_Init         )
 	INES_BOARD( "TENGEN 800037",            158, Mapper064_Init         )

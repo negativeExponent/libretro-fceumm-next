@@ -31,25 +31,28 @@
 #define MAPPER_MMC1	 2
 #define MAPPER_MMC3	 3
 
-static uint8 reg[2];
-static uint8 mapper;
+static struct {
+	uint8 reg[2];
+	uint8 mapper;
+} m124;
+
 static uint8 dipsw;
 
 static uint8 audioEnable;
 static uint8 *ExRAM;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "MODE" },
-	{ &mapper, 1, "MAPR" },
+	{ m124.reg, 2, "EXPR" },
+	{ &m124.mapper, 1, "MAPR" },
 	{ 0 }
 };
 
 static uint32 GetPRGBase(void) {
-	return ((reg[1] << 4) & 0x1F0);
+	return ((m124.reg[1] << 4) & 0x1F0);
 }
 
 static uint32 GetCHRBase(void) {
-	return ((reg[0] << 7) & 0x780);
+	return ((m124.reg[0] << 7) & 0x780);
 }
 
 static void SetPRG_mmc1(uint16 A, uint16 V) {
@@ -61,23 +64,23 @@ static void SetCHR_mmc1(uint16 A, uint16 V) {
 }
 
 static void SyncWRAM_mmc1(void) {
-	if (!(reg[1] & 0x20)) {
+	if (!(m124.reg[1] & 0x20)) {
 		MMC1_SyncWRAM_default();
 	}
 }
 
 static void SetPRG_mmc3(uint16 A, uint16 V) {
-	uint16 mask = (reg[1] & 0x20) ? 0x0F : 0x1F;
+	uint16 mask = (m124.reg[1] & 0x20) ? 0x0F : 0x1F;
 	setprg8(A, GetPRGBase() | (V & mask));
 }
 
 static void SetCHR_mmc3(uint16 A, uint16 V) {
-	uint16 mask = (reg[0] & 0x40) ? 0x7F : 0xFF;
+	uint16 mask = (m124.reg[0] & 0x40) ? 0x7F : 0xFF;
 	setchr1(A, GetCHRBase() | (V & mask));
 }
 
 static void Sync(void) {
-	switch (mapper) {
+	switch (m124.mapper) {
 	case MAPPER_UNROM:
 		setprg16(0x8000, (GetPRGBase() >> 1) | (latch.data & 0x07));
 		setprg16(0xC000, (GetPRGBase() >> 1) | 0x07);
@@ -103,19 +106,19 @@ static void Sync(void) {
 		break;
 	}
 	setprg4(0x5000, 0x380 + 0x05);
-	if (reg[1] & 0x20) {
+	if (m124.reg[1] & 0x20) {
 		setprg8(0x6000, (0x380 + 0x06) >> 1);
 	}
-	if (!(reg[1] & 0x80)) {
+	if (!(m124.reg[1] & 0x80)) {
 		setprg32(0x8000, (0x380 + 0x08) >> 3);
 	}
-	if (!(reg[1] & 0x40)) {
+	if (!(m124.reg[1] & 0x40)) {
 		setchr8r(0x10, 0);
 	}
 }
 
 static void applyMode(void) {
-	mapper = (reg[0] >> 4) & 0x03;
+	m124.mapper = (m124.reg[0] >> 4) & 0x03;
 }
 
 static DECLFR(ReadRAM) {
@@ -139,14 +142,14 @@ static DECLFW(WriteReg) {
 	if (A & 0x10) {
 		audioEnable = V;
 	} else {
-		reg[A & 0x01] = V;
+		m124.reg[A & 0x01] = V;
 		applyMode();
 		Sync();
 	}
 }
 
 static DECLFW(WriteASIC) {
-	switch (mapper) {
+	switch (m124.mapper) {
 	case MAPPER_UNROM:
 	case MAPPER_AMROM:
 		Latch_Write(A, V);
@@ -157,6 +160,12 @@ static DECLFW(WriteASIC) {
 	case MAPPER_MMC1:
 		MMC1_Write(A, V);
 		break;
+	}
+}
+
+static void HBIRQHook(void) {
+	if (m124.mapper == MAPPER_MMC3) {
+		MMC3_IRQHBHook();
 	}
 }
 
@@ -173,8 +182,8 @@ static void Reset(void) {
 }
 
 static void Power(void) {
-	memset(reg, 0, sizeof(reg));
-	mapper = 0;
+	memset(m124.reg, 0, sizeof(m124.reg));
+	m124.mapper = 0;
 	dipsw = 0;
 
 	MMC1_Reset();
@@ -195,12 +204,6 @@ static void Power(void) {
 
 	applyMode();
 	Sync();
-}
-
-static void HBIRQHook(void) {
-	if (mapper == MAPPER_MMC3) {
-		MMC3_IRQHBHook();
-	}
 }
 
 static void StateRestore(int version) {
