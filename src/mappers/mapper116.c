@@ -39,15 +39,20 @@
 #include "mmc3.h"
 #include "mmc1.h"
 
-#define MODE_MMC1 mode & 0x02
-#define MODE_MMC3 mode & 0x01
+#define MAPPER_VRC2 0x00
+#define MAPPER_MMC3 0x01
+#define MAPPER_MMC1 0x02
 
-static uint8 mode = 0;
-static uint8 game = 0;
+static struct {
+	uint8 mapper;
+	uint8 mode;
+	uint8 game;
+} m116;
 
 static SFORMAT StateRegs[] = {
-	{ &mode, 1, "MODE" },
-	{ &game, 1, "GAME" },
+	{ &m116.mapper, 1, "MAPR" },
+	{ &m116.mode, 1, "MODE" },
+	{ &m116.game, 1, "GAME" },
 	{ 0 }
 };
 
@@ -55,41 +60,41 @@ static uint32 GetPRGMask(void) {
 	if (iNESCart.submapper != 3) {
 		return 0x3F;
 	}
-	return (game ? 0x0F : 0x1F);
+	return (m116.game ? 0x0F : 0x1F);
 }
 
 static uint32 GetPRGBase(void) {
-	if (game) {
-		return (game + 1) * 0x10;
+	if (m116.game) {
+		return (m116.game + 1) * 0x10;
 	}
 	return 0;
 }
 
 static uint32 GetCHRMask(void) {
-	return (game ? 0x7F : 0xFF);
+	return (m116.game ? 0x7F : 0xFF);
 }
 
 static uint32 GetCHRBase(void) {
-	return (game ? (game + 1) * 0x80 : 0);
+	return (m116.game ? (m116.game + 1) * 0x80 : 0);
 }
 
-static void M116VRC24PW(uint16 A, uint16 V) {
+static void SetPRG_vrc2(uint16 A, uint16 V) {
 	setprg8(A, GetPRGBase() | (V & GetPRGMask()));
 }
 
-static void M116VRC24CW(uint16 A, uint16 V) {
-	setchr1(A, ((mode << 6) & 0x100) | GetCHRBase() | (V & GetCHRMask()));
+static void SetCHR_vrc2(uint16 A, uint16 V) {
+	setchr1(A, ((m116.mode << 6) & 0x100) | GetCHRBase() | (V & GetCHRMask()));
 }
 
-static void M116MMC3PW(uint16 A, uint16 V) {
+static void SetPRG_mmc3(uint16 A, uint16 V) {
 	setprg8(A, GetPRGBase() | (V & GetPRGMask()));
 }
 
-static void M116MMC3CW(uint16 A, uint16 V) {
-	setchr1(A, ((mode << 6) & 0x100) | GetCHRBase() | (V & GetCHRMask()));
+static void SetCHR_mmc3(uint16 A, uint16 V) {
+	setchr1(A, ((m116.mode << 6) & 0x100) | GetCHRBase() | (V & GetCHRMask()));
 }
 
-static void M116MMC1PW(uint16 A, uint16 V) {
+static void SetPRG_mmc1(uint16 A, uint16 V) {
 	if (iNESCart.submapper == 2) {
 		setprg16(A, V >> 1);
 	} else {
@@ -97,20 +102,20 @@ static void M116MMC1PW(uint16 A, uint16 V) {
 	}
 }
 
-static void M116MMC1CW(uint16 A, uint16 V) {
+static void SetCHR_mmc1(uint16 A, uint16 V) {
 	setchr4(A, (GetCHRBase() >> 2) | (V & (GetCHRMask() >> 2)));
 }
 
 static void Sync(void) {
-	if (MODE_MMC1) {
+	if (m116.mapper == MAPPER_MMC1) {
 		MMC1_SyncPRG();
 		MMC1_SyncCHR();
 		MMC1_SyncMirror();
-	} else if (MODE_MMC3) {
+	} else if (m116.mapper == MAPPER_MMC3) {
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 		MMC3_SyncMirror();
-	} else {
+	} else if (m116.mapper == MAPPER_VRC2) {
 		VRC24_SyncPRG();
 		VRC24_SyncCHR();
 		VRC24_SyncMirror();
@@ -118,57 +123,58 @@ static void Sync(void) {
 }
 
 static void applyMode(void) {
-	if (MODE_MMC1) {
-		SetWriteHandler(0x8000, 0xFFFF, MMC1_Write);
-		if (iNESCart.submapper != 1) {
-			MMC1_Write(0x8000, 0x80);
-		}
-	} else if (MODE_MMC3) {
+	switch (m116.mode & 0x03) {
+	case 1:
+		m116.mapper = MAPPER_MMC3;
 		SetWriteHandler(0x8000, 0xFFFF, MMC3_Write);
-	} else {
+		break;
+	case 2:
+	case 3:
+		m116.mapper = MAPPER_MMC1;
+		SetWriteHandler(0x8000, 0xFFFF, MMC1_Write);
+		break;
+	case 0:
+		m116.mapper = MAPPER_VRC2;
 		SetWriteHandler(0x8000, 0xFFFF, VRC24_Write);
+		break;
 	}
 }
 
-static DECLFW(M116ModeWrite) {
+static DECLFW(WriteMode) {
 	if (A & 0x100) {
-		mode = V;
+		m116.mode = V;
 		applyMode();
 		Sync();
 	}
 }
 
-static void M116HBIRQ(void) {
-	if ((mode & 0x03) == 0x01) {
+static void HBIRQHook(void) {
+	if (m116.mapper == MAPPER_MMC3){
 		MMC3_IRQHBHook();
 	}
 }
 
-static void StateRestore(int version) {
-	Sync();
-}
-
-static void M116Reset(void) {
+static void Reset(void) {
 	if (iNESCart.submapper == 3) {
-		game = game + 1;
-		if (game > 4) {
-			game = 0;
+		m116.game = m116.game + 1;
+		if (m116.game > 4) {
+			m116.game = 0;
 		}
 	}
 	applyMode();
 	Sync();
 }
 
-static void M116Power(void) {
-	game = (iNESCart.submapper == 3) ? 4 : 0;
-	mode = 1;
+static void Power(void) {
+	m116.game = (iNESCart.submapper == 3) ? 4 : 0;
+	m116.mode = 1;
 
 	MMC3_Power();
 	MMC1_Reset();
 	VRC24_Power();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4100, 0x5FFF, M116ModeWrite);
+	SetWriteHandler(0x4100, 0x5FFF, WriteMode);
 
 	vrc24.chr[0] = ~0;
 	vrc24.chr[1] = ~0;
@@ -179,23 +185,27 @@ static void M116Power(void) {
 	Sync();
 }
 
+static void StateRestore(int version) {
+	Sync();
+}
+
 void Mapper116_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, FALSE, TRUE);
-	VRC24_pwrap = M116VRC24PW;
-	VRC24_cwrap = M116VRC24CW;
+	VRC24_pwrap = SetPRG_vrc2;
+	VRC24_cwrap = SetCHR_vrc2;
 
 	MMC3_Init(info, MMC3B, FALSE, FALSE);
-	MMC3_pwrap = M116MMC3PW;
-	MMC3_cwrap = M116MMC3CW;
+	MMC3_pwrap = SetPRG_mmc3;
+	MMC3_cwrap = SetCHR_mmc3;
 
 	MMC1_Init(info, MMC1A, FALSE, FALSE);
-	MMC1_pwrap = M116MMC1PW;
-	MMC1_cwrap = M116MMC1CW;
+	MMC1_pwrap = SetPRG_mmc1;
+	MMC1_cwrap = SetCHR_mmc1;
 
-	info->Power = M116Power;
-	info->Reset = M116Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 
-	GameHBIRQHook = M116HBIRQ;
+	GameHBIRQHook = HBIRQHook;
 
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);

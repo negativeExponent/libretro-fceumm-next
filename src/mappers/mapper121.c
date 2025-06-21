@@ -29,75 +29,76 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 prg[3];
-static uint8 reg;
-static uint8 readIndex;
-static uint8 protIndex;
-static uint8 protLatch;
+static struct {
+	uint8 prg[3];
+	uint8 reg;
+	uint8 readIndex;
+	uint8 protIndex;
+	uint8 protLatch;
+} m121;
 
 static SFORMAT StateRegs[] = {
-	{ prg, 3, "PREG" },
-	{ &reg, 2, "REGS" },
-	{ &readIndex, 1, "PRRD" },
-	{ &protIndex, 1, "PRID" },
-	{ &protLatch, 1, "PRLT" },
+	{ m121.prg, 3, "PREG" },
+	{ &m121.reg, 2, "REGS" },
+	{ &m121.readIndex, 1, "PRRD" },
+	{ &m121.protIndex, 1, "PRID" },
+	{ &m121.protLatch, 1, "PRLT" },
 	{ 0 }
 };
 
-static void M121CW(uint16 A, uint16 V) {
-	if (ROM.prg.size > (256 * 1024)) {
-		setchr1(A, ((reg & 0x80) << 1) | V);
-	} else {
-		if ((A & 0x1000) == (uint32)((mmc3.cmd & 0x80) << 5)) {
-			setchr1(A, 0x100 | V);
-		} else {
-			setchr1(A, V);
-		}
-	}
-}
-
-static void M121PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	uint8 mask = 0x1F;
-	uint8 base = ((reg & 0x80) >> 2);
+	uint8 base = ((m121.reg & 0x80) >> 2);
 
-	if ((protIndex & 0x20) && (A > 0x8000)) {
-		mask = 0xFF;
-		V = prg[((A >> 13) & 0x03) - 1];
+	if (m121.protIndex & 0x20) {
+		if ((A > 0x8000)) {
+			mask = 0xFF;
+			V = m121.prg[((A >> 13) & 0x03) - 1];
+		}
 	}
 
 	setprg8(A, base | (V & mask));
 }
 
-static const uint8 prot_array[] = { 0x83, 0x83, 0x42, 0x00, 0x00, 0x02, 0x02, 0x03 };
-static DECLFR(M121ReadLUT) {
-	return prot_array[readIndex];
+static void SetCHR(uint16 A, uint16 V) {
+	if (ROM.prg.size > SIZE_256K) {
+		setchr1(A, ((m121.reg & 0x80) << 1) | V);
+	} else {
+		uint16 base = ((A >> 4) & 0x100);
+		setchr1(A, base | V);
+	}
 }
 
-static DECLFW(M121WriteLUT) {
-	readIndex = ((A >> 6) & 0x04) | (V & 0x03);
+static const uint8 prot_array[] = { 0x83, 0x83, 0x42, 0x00, 0x00, 0x02, 0x02, 0x03 };
+static DECLFR(ReadProtection) {
+	return prot_array[m121.readIndex];
+}
+
+static DECLFW(WriteReg) {
+	m121.readIndex = ((A >> 6) & 0x04) | (V & 0x03);
 	if (A & 0x0100) {
-		reg = V;
+		m121.reg = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static DECLFW(M121Write) {
+static DECLFW(WriteProtectionLatch) {
 	switch (A & 0xE001) {
 	case 0x8001:
 		switch (A & 0x03) {
 		case 0x01:
-			protLatch = ((V & 0x01) << 5) | ((V & 0x02) << 3) |
+			m121.protLatch = ((V & 0x01) << 5) | ((V & 0x02) << 3) |
 			            ((V & 0x04) << 1) | ((V & 0x08) >> 1) |
 			            ((V & 0x10) >> 3) | ((V & 0x20) >> 5);
-			if ((protIndex == 0x26) || (protIndex == 0x28) || (protIndex == 0x2A)) {
-				prg[0x15 - (protIndex >> 1)] = protLatch;
+			if ((m121.protIndex == 0x26) || (m121.protIndex == 0x28) || (m121.protIndex == 0x2A)) {
+				m121.prg[0x15 - (m121.protIndex >> 1)] = m121.protLatch;
 			}
 			break;
 		case 0x03:
-			protIndex = V & 0x3F;
-			if ((protIndex & 0x20) && protLatch) {
-				prg[2] = protLatch;
+			m121.protIndex = V & 0x3F;
+			if ((m121.protIndex & 0x20) && m121.protLatch) {
+				m121.prg[2] = m121.protLatch;
 			}
 			break;
 		}
@@ -111,19 +112,18 @@ static DECLFW(M121Write) {
 	}
 }
 
-static void M121Power(void) {
-	memset(prg, 0, sizeof(prg));
-	reg = readIndex = protIndex = protLatch = 0;
+static void Power(void) {
+	memset(m121.prg, 0, sizeof(m121.prg));
 	MMC3_Power();
-	SetReadHandler(0x5000, 0x5FFF, M121ReadLUT);
-	SetWriteHandler(0x5000, 0x5FFF, M121WriteLUT);
-	SetWriteHandler(0x8000, 0x9FFF, M121Write);
+	SetReadHandler(0x5000, 0x5FFF, ReadProtection);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
+	SetWriteHandler(0x8000, 0x9FFF, WriteProtectionLatch);
 }
 
 void Mapper121_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M121PW;
-	MMC3_cwrap = M121CW;
-	info->Power = M121Power;
+	MMC3_pwrap = SetPRG;
+	MMC3_cwrap = SetCHR;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

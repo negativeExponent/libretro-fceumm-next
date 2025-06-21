@@ -120,6 +120,7 @@ Changelog:
 - Fixed mirroring in mapper 302
 - Add support for submapper 1 in mapper 396
 - Add support for submapper 1 in mapper 458
+- Add mapper 493
 
 25.04.25
 - moved to a standalone repo

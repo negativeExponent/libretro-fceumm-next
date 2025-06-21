@@ -21,22 +21,18 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M074CW(uint16 A, uint16 V) {
-	if ((V & ~0x01) == 0x08) { /* Di 4 Ci - Ji Qi Ren Dai Zhan (As).nes, Ji Jia Zhan Shi (As).nes */
+static void SetCHR(uint16 A, uint16 V) {
+	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], iNESCart.iNES2 ? FALSE : TRUE);
+	if (iNESCart.iNES2 && ((V & ~0x01) == 0x08)) { /* Di 4 Ci - Ji Qi Ren Dai Zhan (As).nes, Ji Jia Zhan Shi (As).nes */
 		setchr1r(0x10, A, V & 0x01);
 	} else {
 		setchr1(A, V);
 	}
 }
 
-static void M074Close(void) {
-	MMC3_Close();
-}
-
 void Mapper074_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, info->battery);
-	info->Close = M074Close;
-	MMC3_cwrap = M074CW;
+	MMC3_cwrap = SetCHR;
 
 	CHRRAMSIZE = 2048;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

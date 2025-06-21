@@ -20,14 +20,23 @@
  *
  */
 
+/*
+ * The Konami VRC7 is an ASIC mapper. It is assigned to iNES Mapper 085.
+ *
+ * Example games:
+ *
+ * Lagrange Point
+ * Tiny Toon Adventures 2
+ */
+
 #include "mapinc.h"
 #include "vrc7.h"
 
-static void M085PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, V & 0x3F);
 }
 
-static void M085CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, V & 0xFF);
 }
 
@@ -43,6 +52,6 @@ void Mapper085_Init(CartInfo *info) {
 		VRC7_Init(info, 0x18, 0x20);
 		break;
 	}
-	VRC7_pwrap = M085PW;
-	VRC7_cwrap = M085CW;
+	VRC7_pwrap = SetPRG;
+	VRC7_cwrap = SetCHR;
 }

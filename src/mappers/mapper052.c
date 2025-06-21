@@ -23,38 +23,49 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m052;
 
-static void M052PW(uint16 A, uint16 V) {
-	uint8 mask = (reg & 0x08) ? 0x0F : 0x1F;
-	uint8 base = (reg << 4) & 0x70;
+static SFORMAT StateRegs[] = {
+	{ &m052, 1, "EXPR" },
+	{ 0 }
+};
+
+static void SetPRG(uint16 A, uint16 V) {
+	uint8 mask = (m052.reg & 0x08) ? 0x0F : 0x1F;
+	uint8 base = (m052.reg << 4) & 0x70;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M052CW(uint16 A, uint16 V) {
-	uint16 mask = (reg & 0x40) ? 0x7F : 0xFF;
-	uint16 base = (((reg << 3) & 0x180) | ((reg << 7) & 0x200));
-	uint8 chrram = CHRRAM &&
-	               (((iNESCart.submapper == 13) && ((reg & 0x03) == 0x03)) ||
-                   ((iNESCart.submapper == 14) && (reg & 0x20)));
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = (m052.reg & 0x40) ? 0x7F : 0xFF;
+	uint16 base = (((m052.reg << 3) & 0x180) | ((m052.reg << 7) & 0x200));
+	uint8 chrram = CHRRAMSIZE &&
+	               (((iNESCart.submapper == 13) && ((m052.reg & 0x03) == 0x03)) ||
+                   ((iNESCart.submapper == 14) && (m052.reg & 0x20)));
 
 	if (iNESCart.CRC32 == 0x68FE207F) {
 		/* Mario 7-in-1 (YH-705) with wrong bank order */
-		base = ((reg & 0x20) << 4) | ((reg & 0x04) << 6) |
-		       (reg & 0x40 ? (reg & 0x10) << 3 : 0x00);
+		base = ((m052.reg & 0x20) << 4) | ((m052.reg & 0x04) << 6) |
+		       (m052.reg & 0x40 ? (m052.reg & 0x10) << 3 : 0x00);
 	} else if (iNESCart.submapper == 14) {
 		/* Well 8-in-1 (AB128) (Unl) (p1) */
-		base = ((reg << 3) & 0x080) | ((reg << 7) & 0x300);
+		base = ((m052.reg << 3) & 0x080) | ((m052.reg << 7) & 0x300);
 	}
 
-	setchr1r(chrram ? 0x10 : 0, A, (base & ~mask) | (V & mask));
+	if (chrram) {
+		setchr1r(0x10, A, (base & ~mask) | (V & mask));
+	} else {
+		setchr1(A, (base & ~mask) | (V & mask));
+	}
 }
 
-static DECLFW(M052Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		if (!(reg & 0x80)) {
-			reg = V;
+		if (!(m052.reg & 0x80)) {
+			m052.reg = V;
 			MMC3_SyncPRG();
 			MMC3_SyncCHR();
 		} else {
@@ -63,32 +74,27 @@ static DECLFW(M052Write) {
 	}
 }
 
-static void M052Close(void) {
-	MMC3_Close();
-}
-
-static void M052Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m052, 0, sizeof(m052));
 	MMC3_Reset();
 }
 
-static void M052Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m052, 0, sizeof(m052));
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M052Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper052_Init(CartInfo *info) {
 	uint8 ws = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8;
 
 	MMC3_Init(info, MMC3B, ws, info->battery);
-	MMC3_cwrap = M052CW;
-	MMC3_pwrap = M052PW;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
 
-	info->Reset = M052Reset;
-	info->Power = M052Power;
-	info->Close = M052Close;
-	AddExState(&reg, 1, 0, "EXPR");
+	info->Reset = Reset;
+	info->Power = Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	if (info->CRC32 == 0xA874E216 && info->submapper != 13) {
 		info->submapper = 13; /* (YH-430) 97-98 Four-in-One */

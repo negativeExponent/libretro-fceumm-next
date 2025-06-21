@@ -21,21 +21,15 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M118MIR(void) {
-	if (mmc3.cmd & 0x80) {
-		setntamem(NTARAM + 0x400 * ((mmc3.reg[2] >> 7) & 0x01), 1, 0);
-		setntamem(NTARAM + 0x400 * ((mmc3.reg[3] >> 7) & 0x01), 1, 1);
-		setntamem(NTARAM + 0x400 * ((mmc3.reg[4] >> 7) & 0x01), 1, 2);
-		setntamem(NTARAM + 0x400 * ((mmc3.reg[5] >> 7) & 0x01), 1, 3);
-	} else {
-		setntamem(NTARAM + 0x400 * ((mmc3.reg[0] >> 7) & 0x01), 1, 0);
-		setntamem(NTARAM + 0x400 * ((mmc3.reg[0] >> 7) & 0x01), 1, 1);
-		setntamem(NTARAM + 0x400 * ((mmc3.reg[1] >> 7) & 0x01), 1, 2);
-		setntamem(NTARAM + 0x400 * ((mmc3.reg[1] >> 7) & 0x01), 1, 3);
-	}
+static void SyncMirror(void) {
+	setmirrorw(
+		MMC3_GetCHRBank(0) >> 7,
+		MMC3_GetCHRBank(1) >> 7,
+		MMC3_GetCHRBank(2) >> 7,
+		MMC3_GetCHRBank(3) >> 7);
 }
 
-static DECLFW(M118Write) {
+static DECLFW(WriteMMC3) {
 	switch (A & 0xE001) {
 	case 0x8001:
 		switch (mmc3.cmd & 0x07) {
@@ -50,26 +44,24 @@ static DECLFW(M118Write) {
 			MMC3_SyncMirror();
 			break;
 		default:
-			MMC3_CMDWrite(A, V);
+			MMC3_Write(A, V);
 			break;
 		}
-	case 0xA000:
-		/* MMC3 mirroring not used in favor of nametable mirroring */
 		break;
 	default:
-		MMC3_CMDWrite(A, V);
+		MMC3_Write(A, V);
 		break;
 	}
 }
 
-static void M118Power(void) {
+static void Power(void) {
 	MMC3_Power();
-	SetWriteHandler(0x8000, 0xBFFF, M118Write);
+	SetWriteHandler(0x8000, 0xBFFF, WriteMMC3);
 }
 
 void Mapper118_Init(CartInfo *info) {
 	uint8 ws = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8;
 	MMC3_Init(info, MMC3B, ws, info->battery);
-	info->Power = M118Power;
-	MMC3_SyncMirror = M118MIR;
+	info->Power = Power;
+	MMC3_SyncMirror = SyncMirror;
 }

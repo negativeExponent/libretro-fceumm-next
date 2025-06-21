@@ -30,19 +30,19 @@
 #include "mapinc.h"
 #include "n118.h"
 
-static void M076PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, V & 0x1F); /* support for PRG bank for fan translations */
 }
 
-static void M076SyncCHR(void) {
-	setchr2(0x0000, n118.reg[2] & 0x3F);
-	setchr2(0x0800, n118.reg[3] & 0x3F);
-	setchr2(0x1000, n118.reg[4] & 0x3F);
-	setchr2(0x1800, n118.reg[5] & 0x3F);
+static void SyncCHR(void) {
+	setchr2(0x0000, n118.reg[2]);
+	setchr2(0x0800, n118.reg[3]);
+	setchr2(0x1000, n118.reg[4]);
+	setchr2(0x1800, n118.reg[5]);
 }
 
 void Mapper076_Init(CartInfo *info) {
 	N118_Init(info, 0, 0);
-	N118_pwrap = M076PW;
-	N118_SyncCHR = M076SyncCHR;
+	N118_pwrap = SetPRG;
+	N118_SyncCHR = SyncCHR;
 }

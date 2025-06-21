@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * Mapper 55 - UNL-MARIO1-M0552
+ * Mapper 55 - UNL-MARIO1-MALEE2
  * FDS Conversion
  *
  */

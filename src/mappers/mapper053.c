@@ -56,16 +56,16 @@ static DECLFW(WriteReg1) {
 	Sync();
 }
 
+static void Reset(void) {
+	memset(&m053, 0, sizeof(m053));
+	Sync();
+}
+
 static void Power(void) {
 	SetWriteHandler(0x6000, 0x7FFF, WriteReg0);
 	SetWriteHandler(0x8000, 0xFFFF, WriteReg1);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	m053.reg[0] = m053.reg[1] = 0;
-	Sync();
-}
-
-static void Reset(void) {
-	m053.reg[0] = m053.reg[1] = 0;
+	
 	Sync();
 }
 
@@ -74,33 +74,30 @@ static void StateRestore(int version) {
 }
 
 void Mapper053_Init(CartInfo *info) {
-	size_t ssize = ROM.prg.size - 32768;
-
-	if (ssize == (2048 * 1024)) { /* Supervision 16-in-1 */
-		uint8 *buffer = (uint8 *)FCEU_malloc(ssize);
-
-		ROM.misc.size = 32768;
-		ROM.misc.data = (uint8 *)FCEU_malloc(ROM.misc.size);
-
-		memcpy(ROM.misc.data, ROM.prg.data, ROM.misc.size);
-		memcpy(buffer, ROM.prg.data + ROM.misc.size, ssize);
-
-		FCEU_free(ROM.prg.data);
-
-		ROM.prg.size = ssize;
-		ROM.prg.data = (uint8 *)FCEU_malloc(ssize);
-
-		memcpy(ROM.prg.data, buffer, ssize);
-
-		/* mount new PRG-ROM and Misc ROM */
-		SetupCartPRGMapping(0, ROM.prg.data, ROM.prg.size, FALSE);
-		SetupCartPRGMapping(1, ROM.misc.data, ROM.misc.size, FALSE);
-
-		FCEU_free(buffer);
-	}
+	size_t ssize = ROM.prg.size - SIZE_32K;
 
 	info->Power = Power;
 	info->Reset = Reset;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
+
+	if (ssize == SIZE_2M) { /* Supervision 16-in-1 */
+		uint8 *newPRG = (uint8 *)FCEU_malloc(ssize);
+		uint8 *misc = (uint8 *)FCEU_malloc(SIZE_32K);
+
+		memcpy(misc, ROM.prg.data, SIZE_32K);
+		memcpy(newPRG, ROM.prg.data + SIZE_32K, ssize);
+
+		FCEU_free(ROM.prg.data);
+
+		ROM.prg.size = ssize;
+		ROM.prg.data = newPRG;
+
+		ROM.misc.size = SIZE_32K;
+		ROM.misc.data = misc;
+
+		/* mount new PRG-ROM and Misc ROM */
+		SetupCartPRGMapping(0, ROM.prg.data, ROM.prg.size, FALSE);
+		SetupCartPRGMapping(1, ROM.misc.data, ROM.misc.size, FALSE);
+	}
 }

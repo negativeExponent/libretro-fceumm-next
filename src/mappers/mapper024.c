@@ -23,11 +23,11 @@
 #include "mapinc.h"
 #include "vrc6.h"
 
-static void M024PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, V & 0x3F);
 }
 
-static void M024CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, V & 0xFF);
 }
 
@@ -39,6 +39,6 @@ void Mapper024_Init(CartInfo *info) {
 		wram = 1;
 	}
 	VRC6_Init(info, 0x01, 0x02, wram);
-	VRC6_pwrap = M024PW;
-	VRC6_cwrap = M024CW;
+	VRC6_pwrap = SetPRG;
+	VRC6_cwrap = SetCHR;
 }

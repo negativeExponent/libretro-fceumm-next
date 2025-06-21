@@ -21,7 +21,7 @@
 #include "mapinc.h"
 #include "n118.h"
 
-static void M088SyncCHR(void) {
+static void SyncCHR(void) {
 	setchr2(0x0000, (n118.reg[0] & 0x3F) >> 1);
 	setchr2(0x0800, (n118.reg[1] & 0x3F) >> 1);
 	setchr1(0x1000, 0x40 | (n118.reg[2] & 0x3F));
@@ -32,5 +32,5 @@ static void M088SyncCHR(void) {
 
 void Mapper088_Init(CartInfo *info) {
 	N118_Init(info, 0, 0);
-	N118_SyncCHR = M088SyncCHR;
+	N118_SyncCHR = SyncCHR;
 }

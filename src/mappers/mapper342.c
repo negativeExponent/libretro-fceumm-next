@@ -2238,9 +2238,9 @@ void Mapper342_Init(CartInfo *info) {
 	ExState(ppu_latch1, "PPU1");
 
 	ExState(lreset, "LRST");
-	ExState(mmc1_load_register, "M01R");
+	ExState(mmc1_load_register, "MC1R");
 
-	ExState(mmc3_internal, "M01I");
+	ExState(mmc3_internal, "MC3I");
 
 	ExState(mapper69_internal, "M69I");
 	ExState(mapper112_internal, "112I");

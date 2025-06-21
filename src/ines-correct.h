@@ -323,9 +323,12 @@ static struct CHINF nesdb[] = {
 	{ 0x6096f84e,  104, DEFAULT,    MI_V, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Pegasus 5-in-1 (Golden Five) (Unl).nes */
 	{ 0x3d3ff543,  113, DEFAULT,    MI_H, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Kazama Jun to Asama Yuuko no AV Dragon Mahjong (Japan) (Unl).nes */
 	{ 0x68379fdb,  113, DEFAULT,    MI_V, 1, DEFAULT, DEFAULT, NES_PAL, NOEXTRA }, /* Pipemania (Australia) (HES) (Unl).nes */
-	{ 0x6a03d3f3,  114, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Lion King, The (Unl) (Mapper 114).nes */
-	{ 0x0d98db53,  114, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Pocahontas (Unl).nes */
-	{ 0xf5676f0b,  114, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Super Donkey Kong (Unl) [b1].nes */
+/*	{ 0x6a03d3f3,  114, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, */ /* Lion King, The (Unl) (Mapper 114).nes */
+/*	{ 0x0d98db53,  114, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, */ /* Pocahontas (Unl).nes */
+/*	{ 0xf5676f0b,  114, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, */ /* Super Donkey Kong (Unl) [b1].nes */
+/*	{ 0xdb9d71b7,  114, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, */ /* Super Donkey Kong (Unl) [o1].nes */
+	{ 0x80eb1839,  114,       1, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Boogerman (Sugar Softec) (Unl) [!].nes */
+/*	{ 0x071e4ee8,  114, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, */ /* ?? m114,submapper 1 test rom */
 	{ 0xc5e5c5b2,  115, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Bao Qing Tian (Ch).nes */
 	{ 0xe40dfb7e,  116, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Somari (SOMARI-P) (NT-616) (Unl) [!].nes */
 	{ 0xc9371ebb,  116, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Somari (SOMARI-W) (Unl) [!].nes */
@@ -900,7 +903,6 @@ static struct CHINF nesdb[] = {
 	{ 0x6bea1235,  245, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Yong Zhe Dou E Long - Dragon Quest VI (Ch) [a1].nes */
 	{ 0x345ee51a,  245, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Yong Zhe Dou E Long - Dragon Quest VII (Ch).nes */
 	{ 0x57514c6c,  245, DEFAULT, DEFAULT, 1, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Yong Zhe Dou E Long - Dragon Quest VI (Ch).nes */
-	{ 0xdb9d71b7,  114, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Super Donkey Kong (Unl) [o1].nes */
 
 	/* KT-008 PCB. These require mapper 224 for having an outer bank register at $5xxx, but are usually found set to mapper 4. */
 	{ 0x61fc4d20,  224, DEFAULT,    MI_H, 1,    0x70,    0x07,   DENDY, NOEXTRA }, /* (KT-1062) 口袋怪兽꞉ 水晶版.nes */
@@ -948,8 +950,6 @@ static struct CHINF nesdb[] = {
 	{ 0x1a3320a3,  215, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Mortal Kombat 3 (SuperGame).nes */
 	{ 0xec70f8d8,  258, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* 1997 留念: 港-京 - Super Hang-On (protected version, CHR doubled) */
 	{ 0x224989d9,  258, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* 1997 留念: 港-京 - Super Hang-On (protected version) */
-	{ 0x80eb1839,  114,       1, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Boogerman (Sugar Softec) (Unl) [!].nes */
-	{ 0x071e4ee8,  114, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* ?? m114,submapper 1 test rom */
 	{ 0xfe3e03a1,  197, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Mortal Kombat III Special (YY-030) (Ch) [!].nes */
 	{ 0x9151d311,  197, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Mortal Kombat III 28 Peoples (NT-328) (Ch) [!].nes */
 	{ 0x272709b9,  237, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Teletubbies Y2K (420-in-1).nes */

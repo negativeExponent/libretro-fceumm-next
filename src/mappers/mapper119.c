@@ -21,7 +21,7 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M119CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	if (V & 0x40) {
 		setchr1r(0x10, A, V & 0x07);
 	} else {
@@ -29,14 +29,10 @@ static void M119CW(uint16 A, uint16 V) {
 	}
 }
 
-static void M119Close(void) {
-	MMC3_Close();
-}
-
 void Mapper119_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	info->Close = M119Close;
-	MMC3_cwrap = M119CW;
+	MMC3_cwrap = SetCHR;
+
 	CHRRAMSIZE = 8192;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);

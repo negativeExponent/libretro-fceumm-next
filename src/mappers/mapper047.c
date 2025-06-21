@@ -21,45 +21,47 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m047;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m047.reg, 1, "EXPR" },
 	{ 0 }
 };
 
-static void M047PW(uint16 A, uint16 V) {
-	setprg8(A, (reg << 4) | (V & 0x0F));
+static void SetPRG(uint16 A, uint16 V) {
+	setprg8(A, (m047.reg << 4) | (V & 0x0F));
 }
 
-static void M047CW(uint16 A, uint16 V) {
-	setchr1(A, (reg << 7) | (V & 0x7F));
+static void SetCHR(uint16 A, uint16 V) {
+	setchr1(A, (m047.reg << 7) | (V & 0x7F));
 }
 
-static DECLFW(M047Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		reg = V;
+		m047.reg = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M047Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	m047.reg = 0;
 	MMC3_Reset();
 }
 
-static void M047Power(void) {
-	reg = 0;
+static void Power(void) {
+	m047.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M047Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper047_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M047PW;
-	MMC3_cwrap = M047CW;
-	info->Power = M047Power;
-	info->Reset = M047Reset;
+	MMC3_pwrap = SetPRG;
+	MMC3_cwrap = SetCHR;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

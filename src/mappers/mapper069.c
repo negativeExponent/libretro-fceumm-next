@@ -22,16 +22,16 @@
 #include "s5bsound.h"
 #include "fme7.h"
 
-static void M069PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, V & 0x3F);
 }
 
-static void M069CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, V & 0xFF);
 }
 
 void Mapper069_Init(CartInfo *info) {
 	FME7_Init(info, TRUE, info->battery);
-	FME7_pwrap = M069PW;
-	FME7_cwrap = M069CW;
+	FME7_pwrap = SetPRG;
+	FME7_cwrap = SetCHR;
 }

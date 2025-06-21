@@ -19,40 +19,51 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* Mapper 99 is a simple mapper used by Vs. System games such as Vs. Super Mario
+ * Bros. It is comparable to CNROM, but without bus conflicts. */
+
 #include "mapinc.h"
 
-static uint8 latch;
-static writefunc old4016;
+static struct {
+	uint8 latch;
+} m099;
+static writefunc cpuwrite4016;
 
 static SFORMAT StateRegs[] = {
-	{ &latch, 1, "LATC" },
+	{ &m099.latch, 1, "LATC" },
 	{ 0 }
 };
 
 static void Sync(void) {
 	setprg8r(0x10, 0x6000, 0);
-	setprg32(0x8000, 0);
-	setprg8(0x8000, latch & 4); /* Special for VS Gumshoe */
-	setchr8((latch >> 2) & 1);
+	if (ROM.prg.size == SIZE_24K) { /* Vs. Tetris */
+		unsetcpu8(0x8000);
+		setprg8(0xA000, 0);
+		setprg8(0xC000, 1);
+		setprg8(0xE000, 2);
+	} else {
+		setprg32(0x8000, 0);
+	}
+	if (ROM.prg.size == (40 * 1024)) {
+		setprg8(0x8000, m099.latch & 4); /* Special for VS Gumshoe */
+	}
+	setchr8(m099.latch >> 2);
 }
 
-static DECLFW(M099Write) {
-	latch = V;
+static DECLFW(Write4016) {
+	m099.latch = V;
 	Sync();
-	old4016(A, V);
+	cpuwrite4016(A, V);
 }
 
-static void M099Power(void) {
-	latch = 0;
+static void Power(void) {
+	memset(&m099, 0, sizeof(m099));
 	Sync();
-	old4016 = GetWriteHandler(0x4016);
-	SetWriteHandler(0x4016, 0x4016, M099Write);
+	cpuwrite4016 = GetWriteHandler(0x4016);
+	SetWriteHandler(0x4016, 0x4016, Write4016);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
-}
-
-static void M099Close(void) {
 }
 
 static void StateRestore(int version) {
@@ -60,8 +71,7 @@ static void StateRestore(int version) {
 }
 
 void Mapper099_Init(CartInfo *info) {
-	info->Power = M099Power;
-	info->Close = M099Close;
+	info->Power = Power;
 
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);

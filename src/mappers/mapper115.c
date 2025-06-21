@@ -21,20 +21,23 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[2];
+static struct {
+	uint8 reg[4];
+} m115;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 2, "REGS" },
-	{ &dipsw, 1, "DPSW" },
+	{ m115.reg, 4, "EXPR" },
 	{ 0 }
 };
 
-static void M115PW(uint16 A, uint16 V) {
-	uint16 base = ((reg[0] >> 2) & 0x10) | (reg[0] & 0x0f);
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 base = ((m115.reg[0] >> 2) & 0x10) | (m115.reg[0] & 0x0F);
 	uint16 mask = 0x1F;
-	if (reg[0] & 0x80) {
-		if (reg[0] & 0x20) {
+
+	if (m115.reg[0] & 0x80) {
+		if (m115.reg[0] & 0x20) {
 			setprg32(0x8000, base >> 1);
 		} else {
 			setprg16(0x8000, base);
@@ -45,43 +48,54 @@ static void M115PW(uint16 A, uint16 V) {
 	}
 }
 
-static void M115CW(uint16 A, uint16 V) {
-	setchr1(A, (reg[1] << 8) | V);
+static void SetCHR(uint16 A, uint16 V) {
+	setchr1(A, (m115.reg[1] << 8) | V);
 }
 
-static DECLFR(M115Read) {
-	return ((A & 0x03) == 0x02) ? dipsw : cpu.openbus;
-}
+static DECLFR(ReadDIP) {
+	uint8 ret = cpu.openbus;
 
-static DECLFW(M115Write) {
-	switch (A & 3) {
-	case 0:
-	case 1:
-		reg[A & 0x01] = V;
-		MMC3_SyncPRG();
-		MMC3_SyncCHR();
-		break;
+	if ((A & 0x03) == 0x02) {
+		return ((ret & ~0x07) | (dipsw & 0x07));
 	}
+	return ret;
 }
 
-static void M115Reset(void) {
+static DECLFW(WriteReg) {
+	m115.reg[A & 0x03] = V;
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
+}
+
+static void Reset(void) {
+	memset(&m115, 0, sizeof(m115));
 	dipsw++;
 	MMC3_SyncPRG();
 	MMC3_SyncCHR();
 }
 
-static void M115Power(void) {
+static void Power(void) {
+	memset(&m115, 0, sizeof(m115));
 	dipsw = 0;
 	MMC3_Power();
-	SetReadHandler(0x6000, 0x7FFF, M115Read);
-	SetWriteHandler(0x6000, 0x7FFF, M115Write);
+	SetReadHandler(0x6000, 0x7FFF, ReadDIP);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper115_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M115CW;
-	MMC3_pwrap = M115PW;
-	info->Power = M115Power;
-	info->Reset = M115Reset;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
+}
+
+void Mapper248_Init(CartInfo *info) {
+	MMC3_Init(info, MMC3B, 0, 0);
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

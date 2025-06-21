@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2007 CaH4e3
+ *  Copyright (C) 2012 CaH4e3
  *  Copyright (C) 2023-2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,49 +16,48 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * FDS Conversion
- *
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
+/* NES 2.0 Mapper denotes the prototype board used for the Maxivision 30 Super
+ * Games prototype multicart. */
+
 #include "mapinc.h"
+#include "latch.h"
 
 static struct {
 	uint8 reg;
-} m120;
+} m493;
 
 static SFORMAT StateRegs[] = {
-	{ &m120.reg, 1, "REG" },
+	{ &m493.reg, 1, "EXPR" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	setprg8(0x6000, m120.reg);
-	setprg32(0x8000, 2);
-	setchr8(0);
+	setprg32(0x8000, ((m493.reg & 0x0F) << 1) | (latch.data & 0x01));
+	setchr8(((m493.reg & 0x0F) << 3) | ((latch.data >> 4) & 0x07));
 }
 
 static DECLFW(WriteReg) {
-	if ((A & 0xE1FF) == 0x41FF) {
-		m120.reg = V;
-		Sync();
-	}
+	m493.reg = V;
+	Sync();
+}
+
+static void Reset(void) {
+	memset(&m493, 0, sizeof(m493));
+	Latch_RegReset();
 }
 
 static void Power(void) {
-	memset(&m120, 0, sizeof(m120));
-	Sync();
-	SetReadHandler(0x6000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4100, 0x5FFF, WriteReg);
+	memset(&m493, 0, sizeof(m493));
+	Latch_Power();
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
-static void StateRestore(int version) {
-	Sync();
-}
-
-void Mapper120_Init(CartInfo *info) {
+void Mapper493_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, FALSE, TRUE);
 	info->Power = Power;
-	GameStateRestore = StateRestore;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

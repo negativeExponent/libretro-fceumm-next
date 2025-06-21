@@ -21,7 +21,7 @@
 /*
  * - Mapper 56 - UNL KS202
  *   FDS Conversion: Super Mario Bros. 3 (Pirate, Alt)
- *   similar to M142 but use WRAM instead? $D000 additional IRQ trigger
+ *   similar to mapper 142 but use WRAM instead? $D000 additional IRQ trigger
  * - fix IRQ counter, noticeable in status bars of both SMB2J(KS7032) and SMB3J(KS202)
  */
 

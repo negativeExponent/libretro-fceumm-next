@@ -24,13 +24,20 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m123;
 
-static void M123PW(uint16 A, uint16 V) {
-	if (reg & 0x40) {
-		uint8 bank = ((reg & 0x28) >> 2) | (reg & 0x05);
+static SFORMAT StateRegs[] = {
+	{ &m123.reg, 1, "EXPR" },
+	{ 0 }
+};
 
-		if (reg & 2) {
+static void SetPRG(uint16 A, uint16 V) {
+	if (m123.reg & 0x40) {
+		uint8 bank = ((m123.reg & 0x28) >> 2) | (m123.reg & 0x05);
+
+		if (m123.reg & 2) {
 			setprg32(0x8000, bank >> 1);
 		} else {
 			setprg16(0x8000, bank);
@@ -41,33 +48,33 @@ static void M123PW(uint16 A, uint16 V) {
 	}
 }
 
-static DECLFW(M123WriteHi) {
+static DECLFW(WriteReg) {
+	if (A & 0x800) {
+		m123.reg = V;
+		MMC3_SyncPRG();
+	}
+}
+
+static DECLFW(WriteMMC3) {
 	static const uint8 m114_perm[8] = { 0, 3, 1, 5, 6, 7, 2, 4 };
 
 	if (!(A & 0x01)) {
 		V = (V & 0xC0) | m114_perm[V & 0x07];
 	}
 
-	MMC3_CMDWrite(A, V);
+	MMC3_Write(A, V);
 }
 
-static DECLFW(M123WriteLo) {
-	if (A & 0x800) {
-		reg = V;
-		MMC3_SyncPRG();
-	}
-}
-
-static void M123Power(void) {
-	reg = 0;
+static void Power(void) {
+	m123.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x5000, 0x5FFF, M123WriteLo);
-	SetWriteHandler(0x8000, 0x9FFF, M123WriteHi);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
+	SetWriteHandler(0x8000, 0x9FFF, WriteMMC3);
 }
 
 void Mapper123_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M123PW;
-	info->Power = M123Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

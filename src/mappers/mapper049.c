@@ -24,55 +24,56 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m049;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m049.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M049PW(uint16 A, uint16 V) {
-	uint32 prg_offset = 0;
-	if (reg & 0x01) {
-		setprg8(A, ((reg >> 2) & ~0x0F) | (V & 0x0F));
+static void SetPRG(uint16 A, uint16 V) {
+	if (m049.reg & 0x01) {
+		setprg8(A, ((m049.reg >> 2) & ~0x0F) | (V & 0x0F));
 	} else {
 		uint8 mask = 0x0F;
 		if (iNESCart.submapper == 1) {
 			/* Street Fighter 2 of the UNIF variant */
 			mask = 0x03;
 		}
-		setprg32(0x8000, (reg >> 4) & mask);
+		setprg32(0x8000, (m049.reg >> 4) & mask);
 	}
 }
 
-static void M049CW(uint16 A, uint16 V) {
-	setchr1(A, ((reg << 1) & ~0x7F) | (V & 0x7F));
+static void SetCHR(uint16 A, uint16 V) {
+	setchr1(A, ((m049.reg << 1) & ~0x7F) | (V & 0x7F));
 }
 
-static DECLFW(M049Write) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		reg = V;
+		m049.reg = V;
 		MMC3_SyncPRG();
 		MMC3_SyncCHR();
 	}
 }
 
-static void M049Reset(void) {
-	reg = ((iNESCart.submapper == 1) || (iNESCart.PRGCRC32 == 0x408EA235)) ? 0x41 : 0x00; /* Street Fighter II Game 4-in-1 */
+static void Reset(void) {
+	m049.reg = ((iNESCart.submapper == 1) || (iNESCart.PRGCRC32 == 0x408EA235)) ? 0x41 : 0x00; /* Street Fighter II Game 4-in-1 */
 	MMC3_Reset();
 }
 
-static void M049Power(void) {
-	reg = ((iNESCart.submapper == 1) || (iNESCart.PRGCRC32 == 0x408EA235)) ? 0x41 : 0x00; /* Street Fighter II Game 4-in-1 */
+static void Power(void) {
+	m049.reg = ((iNESCart.submapper == 1) || (iNESCart.PRGCRC32 == 0x408EA235)) ? 0x41 : 0x00; /* Street Fighter II Game 4-in-1 */
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M049Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper049_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = M049CW;
-	MMC3_pwrap = M049PW;
-	info->Reset = M049Reset;
-	info->Power = M049Power;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Reset = Reset;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

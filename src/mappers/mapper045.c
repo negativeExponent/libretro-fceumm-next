@@ -21,21 +21,39 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[4];
-static uint8 cmd;
+static struct {
+	uint8 reg[4];
+	uint8 cmd;
+} m045;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
-	{ &cmd, 1, "CMD0" },
-	{ &dipsw, 1, "DPSW" },
+	{ m045.reg, 4, "EXPR" },
+	{ &m045.cmd, 1, "CMD0" },
 	{ 0 }
 };
 
-static void M045CW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
+	/* Some multicarts select between five different menus by connecting one of the higher address lines to PRG /CE.
+	The menu code selects between menus by checking which of the higher address lines disables PRG-ROM when set. */
+	if (dipsw &&
+	    (dipsw == 1 && m045.reg[1] & 0x80 ||
+	     dipsw == 2 && m045.reg[2] & 0x40 ||
+	     dipsw == 3 && m045.reg[1] & 0x40 ||
+	     dipsw == 4 && m045.reg[2] & 0x20)) {
+		unsetcpu8(A);
+	} else {
+		uint32 mask = ~m045.reg[3] & 0x3F;
+		uint32 base = ((m045.reg[2] << 2) & 0x300) | m045.reg[1];
+		setprg8(A, (base & ~mask) | (V & mask));
+	}
+}
+
+static void SetCHR(uint16 A, uint16 V) {
 	if (ROM.chr.size || (iNESCart.CHRRamSize > 8192)) {
-		uint32 mask = 0xFF >> (~reg[2] & 0x0F);
-		uint32 base = ((reg[2] << 4) & 0xF00) | reg[0];
+		uint32 mask = 0xFF >> (~m045.reg[2] & 0x0F);
+		uint32 base = ((m045.reg[2] << 4) & 0xF00) | m045.reg[0];
 
 		setchr1(A, (base & ~mask) | (V & mask));
 	} else {
@@ -44,65 +62,49 @@ static void M045CW(uint16 A, uint16 V) {
 	}
 }
 
-static void M045PW(uint16 A, uint16 V) {
-	uint32 mask = ~reg[3] & 0x3F;
-	uint32 base = ((reg[2] << 2) & 0x300) | reg[1];
-
-	setprg8(A, (base & ~mask) | (V & mask));
-}
-
-static DECLFR(M045ReadCart) {
-	/* Some multicarts select between five different menus by connecting one of the higher address lines to PRG /CE.
-	The menu code selects between menus by checking which of the higher address lines disables PRG-ROM when set. */
-	if (((PRGsize[0] < 0x200000) && (dipsw == 1) && (reg[1] & 0x80)) ||
-	    ((PRGsize[0] < 0x200000) && (dipsw == 2) && (reg[2] & 0x40)) ||
-	    ((PRGsize[0] < 0x100000) && (dipsw == 3) && (reg[1] & 0x40)) ||
-	    ((PRGsize[0] < 0x100000) && (dipsw == 4) && (reg[2] & 0x20))) {
-		return cpu.openbus;
-	}
-	return CartBR(A);
-}
-
-static DECLFW(M045WriteReg) {
-	CartBW(A, V);
-	if (!(reg[3] & 0x40)) {
-		reg[cmd] = V;
-		cmd = (cmd + 1) & 0x03;
-		MMC3_SyncPRG();
-		MMC3_SyncCHR();
-	}
-}
-
-static DECLFR(M045ReadDIP) {
+static DECLFR(ReadDIP) {
+	/* Solder pad for 超强年度新卡 15-in-1 (New Years 15-in-1 cartridge )*/
 	uint32 addr = 1 << (dipsw + 4);
+
 	if (A & (addr | (addr - 1))) {
 		return 0x01;
 	}
 	return 0x00;
 }
 
-static void M045Reset(void) {
-	reg[0] = reg[1] = reg[3] = cmd = 0;
-	reg[2] = 0x0F;
+static DECLFW(WriteReg) {
+	CartBW(A, V);
+	if (!(m045.reg[3] & 0x40)) {
+		m045.reg[m045.cmd] = V;
+		m045.cmd = (m045.cmd + 1) & 0x03;
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+	}
+}
+
+static void Reset(void) {
+	memset(&m045, 0, sizeof(m045));
+	m045.reg[2] = 0x0F;
 	dipsw++;
 	dipsw &= 7;
 	MMC3_Reset();
+	FCEU_printf(" dipsw = %d\n", dipsw);
 }
 
-static void M045Power(void) {
-	reg[0] = reg[1] = reg[3] = cmd = dipsw = 0;
-	reg[2] = 0x0F;
+static void Power(void) {
+	memset(&m045, 0, sizeof(m045));
+	m045.reg[2] = 0x0F;
+	dipsw = 0;
 	MMC3_Power();
-	SetReadHandler(0x8000, 0xFFFF, M045ReadCart);
-	SetWriteHandler(0x6000, 0x7FFF, M045WriteReg);
-	SetReadHandler(0x5000, 0x5FFF, M045ReadDIP);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
+	SetReadHandler(0x5000, 0x5FFF, ReadDIP);
 }
 
 void Mapper045_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, info->battery);
-	MMC3_cwrap = M045CW;
-	MMC3_pwrap = M045PW;
-	info->Reset = M045Reset;
-	info->Power = M045Power;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Reset = Reset;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

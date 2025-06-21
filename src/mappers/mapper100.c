@@ -112,10 +112,10 @@ static DECLFW(WriteReg) {
 			m100.chr[3] = V;
 			break;
 		}
-		MMC3_SyncPRG();
-		MMC3_SyncCHR();
 		break;
 	}
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static void ResetRegs(void) {

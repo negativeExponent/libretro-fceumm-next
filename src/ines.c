@@ -732,7 +732,7 @@ INES_BOARD_BEGIN()
 /*    INES_BOARD( "",                            179, Mapper179_Init ) */
 	INES_BOARD( "",                         180, Mapper180_Init         )
 /*	INES_BOARD( "",                         181, Mapper181_Init         ) */ /* fceux' exclusive mapper to handle Seicross V2, now moved to Mapper 185,sub 4 */
-/*    INES_BOARD( "",                            182, Mapper182_Init ) */    /* Deprecated, dupe of Mapper 114 */
+    INES_BOARD( "",                         182, Mapper182_Init         )    /* Deprecated, dupe of Mapper 114 */
 	INES_BOARD( "",                         183, Mapper183_Init         )
 	INES_BOARD( "",                         184, Mapper184_Init         )
 	INES_BOARD( "CNROM+CopyProtection",     185, Mapper185_Init         )
@@ -798,7 +798,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                         245, Mapper245_Init         )
 	INES_BOARD( "FONG SHEN BANG",           246, Mapper246_Init         )
 /*    INES_BOARD( "",                            247, Mapper247_Init ) */
-/*    INES_BOARD( "",                            248, Mapper248_Init ) */
+    INES_BOARD( "",                         248, Mapper248_Init         ) /* duplicate of mapper 115 */
 	INES_BOARD( "",                         249, Mapper249_Init         )
 	INES_BOARD( "",                         250, Mapper250_Init         )
 /*    INES_BOARD( "",                            251, Mapper251_Init ) */ /* No good dumps for this mapper, use UNIF version */
@@ -1006,6 +1006,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                         478, Mapper478_Init         )
 	INES_BOARD( "Subor 045N",               481, Mapper481_Init         )
 	INES_BOARD( "AVE NINA-08",              487, Mapper487_Init         )
+	INES_BOARD( "Maxivision 30 Super Games (proto)", 493, Mapper493_Init )
 	INES_BOARD( "Yhc-000",                  500, Mapper500_Init         )
 	INES_BOARD( "Yhc-001",                  501, Mapper501_Init         )
 	INES_BOARD( "Yhc-002",                  502, Mapper502_Init         )

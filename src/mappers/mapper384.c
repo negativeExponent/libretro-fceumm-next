@@ -59,9 +59,7 @@ static DECLFW(WriteReg) {
 
 static void Reset(void) {
 	memset(&m384, 0, sizeof(m384));
-	VRC24_SyncPRG();
-	VRC24_SyncCHR();
-	VRC24_SyncMirror();
+	VRC24_Reset();
 }
 
 static void Power(void) {

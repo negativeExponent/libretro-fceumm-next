@@ -41,15 +41,15 @@ static DECLFW(WriteReg) {
 	Sync();
 }
 
-static void Power(void) {
-	m046.reg = 0;
-	Latch_Power();
-	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
+static void Reset(void) {
+	memset(&m046, 0, sizeof(m046));
+	Latch_RegReset();
 }
 
-static void Reset(void) {
-	m046.reg = 0;
-	Sync();
+static void Power(void) {
+	memset(&m046, 0, sizeof(m046));
+	Latch_Power();
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper046_Init(CartInfo *info) {
