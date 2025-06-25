@@ -22,16 +22,16 @@
 #include "eeprom_x24c0x.h"
 #include "bandai.h"
 
-static void M159PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	setprg16(A, V & 0x1F); /* map upto 512K PRG for fan translations etc */
 }
 
-static void M159CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, V);
 }
 
 void Mapper159_Init(CartInfo *info) {
 	BANDAI_Init(info, EEPROM_X24C01, FALSE);
-	BANDAI_pwrap = M159PW;
-	BANDAI_cwrap = M159CW;
+	BANDAI_pwrap = SetPRG;
+	BANDAI_cwrap = SetCHR;
 }

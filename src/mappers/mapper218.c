@@ -29,27 +29,27 @@ static const uint8 mapping[4][8] = {
 	{ 0, 0, 0, 0, 0, 0, 0, 0 } /* MI_1 */
 };
 
-static void M218Power(void) {
+static void Power(void) {
 	setchr8(0);
 	setprg32(0x8000, 0);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 }
 
 void Mapper218_Init(CartInfo *info) {
-	info->Power = M218Power;
+	info->Power = Power;
 
 	/* similar to mapper 30, this mapper interprets the two bits in headers mirroring in idiosyncratic ways */
 	SetupCartMirroring(mirrorings[info->mirror2bits], 1, NULL);
 
 	/* cryptic logic to effect the CHR RAM mappings by mapping 1k blocks to NTARAM according to how the pins are wired
 	 this could be done by bit logic, but this is self-documenting */
-	VPageR[0] = &NTARAM[mapping[info->mirror2bits][0]];
-	VPageR[1] = &NTARAM[mapping[info->mirror2bits][1]];
-	VPageR[2] = &NTARAM[mapping[info->mirror2bits][2]];
-	VPageR[3] = &NTARAM[mapping[info->mirror2bits][3]];
-	VPageR[4] = &NTARAM[mapping[info->mirror2bits][4]];
-	VPageR[5] = &NTARAM[mapping[info->mirror2bits][5]];
-	VPageR[6] = &NTARAM[mapping[info->mirror2bits][6]];
-	VPageR[7] = &NTARAM[mapping[info->mirror2bits][7]];
+	VPageR[0] = &NTARAM[0x400 * mapping[info->mirror2bits][0]];
+	VPageR[1] = &NTARAM[0x400 * mapping[info->mirror2bits][1]];
+	VPageR[2] = &NTARAM[0x400 * mapping[info->mirror2bits][2]];
+	VPageR[3] = &NTARAM[0x400 * mapping[info->mirror2bits][3]];
+	VPageR[4] = &NTARAM[0x400 * mapping[info->mirror2bits][4]];
+	VPageR[5] = &NTARAM[0x400 * mapping[info->mirror2bits][5]];
+	VPageR[6] = &NTARAM[0x400 * mapping[info->mirror2bits][6]];
+	VPageR[7] = &NTARAM[0x400 * mapping[info->mirror2bits][7]];
 	PPUCHRRAM = 0xFF;
 }

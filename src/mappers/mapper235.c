@@ -61,7 +61,7 @@ static void Sync(void) {
 	}
 }
 
-static void M235Reset(void) {
+static void Reset(void) {
 	if (ROM.prg.size & 0x20000) {
 		m235.reg = (m235.reg + 1) & 1;
 	}
@@ -73,6 +73,6 @@ static void M235Reset(void) {
 void Mapper235_Init(CartInfo *info) {
 	memset(&m235, 0, sizeof(m235));
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Reset = M235Reset;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

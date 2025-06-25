@@ -21,22 +21,21 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M198PW(uint16 A, uint16 V) {
-	if (V >= 0x40) {
-		V = (0x40 | (V & 0x0F));
-	}
-	setprg8(A, V);
+static void SetPRG(uint16 A, uint16 V) {
+	uint8 mask = (V >= 0x40) ? 0x4F : 0xFF;
+
+	setprg8(A, V & mask);
 }
 
-static void M198Power(void) {
+static void Power(void) {
 	MMC3_Power();
 	setprg4r(0x10, 0x5000, 2);
-	SetWriteHandler(0x5000, 0x5fff, CartBW);
-	SetReadHandler(0x5000, 0x5fff, CartBR);
+	SetWriteHandler(0x5000, 0x5FFF, CartBW);
+	SetReadHandler(0x5000, 0x5FFF, CartBR);
 }
 
 void Mapper198_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 16, info->battery);
-	MMC3_pwrap = M198PW;
-	info->Power = M198Power;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
 }

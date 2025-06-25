@@ -33,9 +33,9 @@ static struct {
 } m210;
 
 static SFORMAT StateRegs[] = {
-	{ m210.prg, 3, "PRG" },
-	{ m210.chr, 8, "CHR" },
-	{ &m210.wram_enable, 1, "WREN" },
+	{ m210.prg, 4, "PREG" },
+	{ m210.chr, 8, "CREG" },
+	{ &m210.wram_enable, 1, "WRME" },
 	{ 0 }
 };
 
@@ -55,6 +55,13 @@ static void SyncCHR(void) {
 	setchr1(0x1400, m210.chr[5]);
 	setchr1(0x1800, m210.chr[6]);
 	setchr1(0x1C00, m210.chr[7]);
+}
+
+static void SyncWRAM(void) {
+	uint8 rd = WRAM ? TRUE : FALSE;
+	uint8 wr = (rd && m210.wram_enable) ? TRUE : FALSE;
+
+	setprg8r_access(0x10, 0x6000, 0, rd, wr);
 }
 
 static void SyncMirror(void) {
@@ -79,15 +86,11 @@ static void SyncMirror(void) {
 }
 
 static DECLFR(ReadWRAM) {
-	A = ((A - 0x6000) & (WRAMSIZE - 1));
-	return WRAM[A];
+	return WRAM[(A - 0x6000) & (WRAMSIZE - 1)];
 }
 
 static DECLFW(WriteWRAM) {
-	if (m210.wram_enable) {
-		A = ((A - 0x6000) & (WRAMSIZE - 1));
-		WRAM[A] = V;
-	}
+	WRAM[(A - 0x6000) & (WRAMSIZE - 1)] = V;
 }
 
 static DECLFW(WriteCHR) {
@@ -97,6 +100,7 @@ static DECLFW(WriteCHR) {
 
 static DECLFW(WriteWRAMEnable) {
 	m210.wram_enable = V & 0x01;
+	SyncWRAM();
 }
 
 static DECLFW(WritePRG) {
@@ -117,6 +121,7 @@ static void Power(void) {
 
 	SyncPRG();
 	SyncCHR();
+	SyncWRAM();
 	SyncMirror();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
@@ -138,6 +143,7 @@ static void Power(void) {
 static void StateRestore(int version) {
 	SyncPRG();
 	SyncCHR();
+	SyncWRAM();
 	SyncMirror();
 }
 

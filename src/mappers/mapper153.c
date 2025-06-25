@@ -18,12 +18,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "mapinc.h"
-#include "eeprom_x24c0x.h"
-#include "bandai.h"
-
-static uint8 outer;
-
 /* Famicom jump 2:
  * 0-7: Lower bit of data selects which 256KB PRG block is in use.
  * This seems to be a hack on the developers' part, so I'll make emulation
@@ -32,30 +26,38 @@ static uint8 outer;
  * last CHR address read).
  */
 
+ #include "mapinc.h"
+#include "eeprom_x24c0x.h"
+#include "bandai.h"
+
+ static struct {
+	uint8 reg;
+} m153;
+
 static SFORMAT StateRegs[] = {
-	{ &outer, 1, "OUTB" },
+	{ &m153.reg, 1, "EXPR" },
 	{ 0 }
 };
 
-static void M153PW(uint16 A, uint16 V) {
-	setprg16(A, ((outer << 4) & 0x10) | (V & 0x0F));
+static void SetPRG(uint16 A, uint16 V) {
+	setprg16(A, (m153.reg << 4) | (V & 0x0F));
 }
 
-static void M153CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr8(0);
 }
 
-static DECLFW(M153Write) {
+static DECLFW(WriteReg) {
 	if ((A & 0x0F) <= 0x03) {
-		outer = V;
+		m153.reg = V;
 		BANDAI_SyncPRG();
 	}
 	BANDAI_Write(A, V);
 }
 
-static void M153Power(void) {
+static void Power(void) {
 	BANDAI_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M153Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 	if (WRAMSIZE) {
 		setprg8r(0x10, 0x6000, 0);
 		SetReadHandler(0x6000, 0x7FFF, CartBR);
@@ -64,15 +66,11 @@ static void M153Power(void) {
 	}
 }
 
-static void M153Close(void) {
-}
-
 void Mapper153_Init(CartInfo *info) {
 	BANDAI_Init(info, EEPROM_NONE, FALSE);
-	info->Power = M153Power;
-	info->Close = M153Close;
-	BANDAI_pwrap = M153PW;
-	BANDAI_cwrap = M153CW;
+	info->Power = Power;
+	BANDAI_pwrap = SetPRG;
+	BANDAI_cwrap = SetCHR;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;

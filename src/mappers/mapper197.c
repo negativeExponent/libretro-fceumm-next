@@ -21,59 +21,71 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m197;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m197.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void M197PW(uint16 A, uint16 V) {
-	uint8 mask = (reg & 0x08) ? 0x0F : 0x1F;
+static void SetPRG(uint16 A, uint16 V) {
+	uint8 mask = (m197.reg & 0x08) ? 0x0F : 0x1F;
+	uint8 base = 0;
 
 	switch (iNESCart.submapper) {
-	case 3:
-		setprg8(A, (reg << 4) | (V & mask));
+	case 0:
+	case 1:
+	case 2:
+		mask = 0x3F;
 		break;
-	default:
-		setprg8(A, V & 0x3F);
+	case 3:
+		base = m197.reg << 4;
+		mask = (m197.reg & 0x08) ? 0x0F : 0x1F;
 		break;
 	}
+	setprg8(A, base | (V & mask));
 }
 
-static void M197CHR(void) {
+static void SyncCHR(void) {
 	switch (iNESCart.submapper) {
+	case 0:
+		setchr2(0x0000, MMC3_GetCHRBank(0));
+		setchr2(0x0800, MMC3_GetCHRBank(1));
+		setchr2(0x1000, MMC3_GetCHRBank(4));
+		setchr2(0x1800, MMC3_GetCHRBank(5));
+		break;
 	case 1:
-		setchr2(0x0000, mmc3.reg[1] & 0xFE);
-		setchr2(0x0800, mmc3.reg[1] | 0x01);
-		setchr2(0x1000, mmc3.reg[4]);
-		setchr2(0x1800, mmc3.reg[5]);
+		setchr2(0x0000, MMC3_GetCHRBank(2));
+		setchr2(0x0800, MMC3_GetCHRBank(3));
+		setchr2(0x1000, MMC3_GetCHRBank(6));
+		setchr2(0x1800, MMC3_GetCHRBank(7));
 		break;
 	case 2:
-		setchr2(0x0000, mmc3.reg[0] & 0xFE);
-		setchr2(0x0800, mmc3.reg[1] | 0x01);
-		setchr2(0x1000, mmc3.reg[2]);
-		setchr2(0x1800, mmc3.reg[5]);
+		setchr2(0x0000, MMC3_GetCHRBank(0));
+		setchr2(0x0800, MMC3_GetCHRBank(3));
+		setchr2(0x1000, MMC3_GetCHRBank(4));
+		setchr2(0x1800, MMC3_GetCHRBank(7));
 		break;
-	case 0:
 	case 3:
-	default:
-		setchr2(0x0000, mmc3.reg[0] & 0xFE);
-		setchr2(0x0800, mmc3.reg[0] | 0x01);
-		setchr2(0x1000, mmc3.reg[2]);
-		setchr2(0x1800, mmc3.reg[3]);
+		setchr2(0x0000, (m197.reg << 7) | MMC3_GetCHRBank(0));
+		setchr2(0x0800, (m197.reg << 7) | MMC3_GetCHRBank(1));
+		setchr2(0x1000, (m197.reg << 7) | MMC3_GetCHRBank(4));
+		setchr2(0x1800, (m197.reg << 7) | MMC3_GetCHRBank(5));
 		break;
 	}
 }
 
-static DECLFW(M197WriteReg) {
+static DECLFW(WriteReg) {
 	if (MMC3_WramIsWritable()) {
-		reg = V;
+		m197.reg = V;
 		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
 }
 
-static DECLFW(M197Write) {
+static DECLFW(WriteASIC) {
 	switch (A & 0xE001) {
 	case 0x8001:
 		switch (mmc3.cmd & 0x07) {
@@ -97,25 +109,25 @@ static DECLFW(M197Write) {
 	}
 }
 
-static void M197Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m197, 0, sizeof(m197));
 	MMC3_SyncCHR();
 	MMC3_SyncPRG();
 	MMC3_SyncMirror();
 }
 
-static void M197Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m197, 0, sizeof(m197));
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M197WriteReg);
-	SetWriteHandler(0x8000, 0x9FFF, M197Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
+	SetWriteHandler(0x8000, 0x9FFF, WriteASIC);
 }
 
 void Mapper197_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	info->Power = M197Power;
-	info->Reset = M197Reset;
-	MMC3_SyncCHR = M197CHR;
-	MMC3_pwrap = M197PW;
+	info->Power = Power;
+	info->Reset = Reset;
+	MMC3_SyncCHR = SyncCHR;
+	MMC3_pwrap = SetPRG;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -26,21 +26,20 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m187;
 
-static void M187CW(uint16 A, uint16 V) {
-	if ((A & 0x1000) == ((mmc3.cmd & 0x80) << 5)) {
-		setchr1(A, V | 0x100);
-	} else {
-		setchr1(A, V);
-	}
-}
+static SFORMAT StateRegs[] = {
+	{ &m187, 1, "EXPR" },
+	( 0 )
+};
 
-static void M187PW(uint16 A, uint16 V) {
-	if (reg & 0x80) {
-		uint8 bank = (reg >> 1) & 0x0F;
+static void SetPRG(uint16 A, uint16 V) {
+	if (m187.reg & 0x80) {
+		uint8 bank = m187.reg >> 1;
 
-		if (reg & 0x20) {
+		if (m187.reg & 0x20) {
 			setprg32(0x8000, bank >> 1);
 		} else {
 			setprg16(0x8000, bank);
@@ -51,28 +50,32 @@ static void M187PW(uint16 A, uint16 V) {
 	}
 }
 
-static DECLFW(M187Write) {
+static void SetCHR(uint16 A, uint16 V) {
+	setchr1(A, (A >> 4) & 0x100 | V);
+}
+
+static DECLFR(ReadProtection) {
+	return cpu.openbus | 0x80;
+}
+
+static DECLFW(WriteReg) {
 	if (!(A & 0x01)) {
-		reg = V;
+		m187.reg = V;
 		MMC3_SyncPRG();
 	}
 }
 
-static DECLFR(M187Read) {
-	return cpu.openbus | 0x80;
-}
-
-static void M187Power(void) {
-	reg = 0;
+static void Power(void) {
+	memset(&m187, 0, sizeof(m187));
 	MMC3_Power();
-	SetReadHandler(0x5000, 0x5FFF, M187Read);
-	SetWriteHandler(0x5000, 0x5FFF, M187Write);
+	SetReadHandler(0x5000, 0x5FFF, ReadProtection);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 }
 
 void Mapper187_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M187PW;
-	MMC3_cwrap = M187CW;
-	info->Power = M187Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_pwrap = SetPRG;
+	MMC3_cwrap = SetCHR;
+	info->Power = Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

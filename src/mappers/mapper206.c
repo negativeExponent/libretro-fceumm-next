@@ -22,7 +22,7 @@
 #include "mapinc.h"
 #include "n118.h"
 
-static void M206PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	if (iNESCart.submapper == 1) {
 		/* 3407, 3417 and 3451 PCBs */
 		setprg32(0x8000, 0);
@@ -33,5 +33,5 @@ static void M206PW(uint16 A, uint16 V) {
 
 void Mapper206_Init(CartInfo *info) {
 	N118_Init(info, 0, 0);
-	N118_pwrap = M206PW;
+	N118_pwrap = SetPRG;
 }

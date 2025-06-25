@@ -24,18 +24,20 @@
 #include "mapinc.h"
 #include "n118.h"
 
-static uint8 mirror;
+static struct {
+	uint8 mirror;
+} m154;
 
 static SFORMAT StateRegs[] = {
-	{ &mirror, 1, "MIRR" },
+	{ &m154.mirror, 1, "MIRR" },
 	{ 0 }
 };
 
-static void M154Mirroring(void) {
-	setmirror(MI_0 + ((mirror >> 6) & 0x01));
+static void SetPRG(uint16 A, uint16 V) {
+	setprg8(A, V & 0x0F);
 }
 
-static void M154SyncCHR(void) {
+static void SyncCHR(void) {
 	setchr2(0x0000, (n118.reg[0] & 0x3F) >> 1);
 	setchr2(0x0800, (n118.reg[1] & 0x3F) >> 1);
 	setchr1(0x1000, 0x40 | (n118.reg[2] & 0x3F));
@@ -44,33 +46,38 @@ static void M154SyncCHR(void) {
 	setchr1(0x1C00, 0x40 | (n118.reg[5] & 0x3F));
 }
 
-static DECLFW(M154Write) {
+static void SyncMirror(void) {
+	setmirror(MI_0 + ((m154.mirror >> 6) & 0x01));
+}
+
+static DECLFW(WriteReg) {
 	if (A <= 0x9FFF) {
 		N118_Write(A, V);
 	}
-	if ((mirror & 0x40) != (V & 0x40)) {
+	if ((m154.mirror & 0x40) != (V & 0x40)) {
 		/* mirroring bit is present over the entire 32KB reange */
-		mirror = V;
-		M154Mirroring();
+		m154.mirror = V;
+		SyncMirror();
 	}
 }
 
-static void M154Power(void) {
-	mirror = 0;
+static void Power(void) {
+	memset(&m154, 0, sizeof(m154));
 	N118_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M154Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {
 	N118_SyncPRG();
 	N118_SyncCHR();
-	M154Mirroring();
+	SyncMirror();
 }
 
 void Mapper154_Init(CartInfo *info) {
 	N118_Init(info, 0, 0);
-	info->Power = M154Power;
-	N118_SyncCHR = M154SyncCHR;
+	info->Power = Power;
+	N118_pwrap = SetPRG;
+	N118_SyncCHR = SyncCHR;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

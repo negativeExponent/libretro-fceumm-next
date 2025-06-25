@@ -19,39 +19,46 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* INES Mapper 189
+ * Thunder Warrior - 轰天至尊 from TXC Corporation with its variant Gluk the Thunder Warrior
+ * Street Fighter II: The World Warrior from Yoko Soft and its many variants named Super Fighter II´, Master Fighter II, Master Fighter III, Mario Fighter III'
+ */
+
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m189;
 
-static void M189PW(uint16 A, uint16 V) {
-	setprg32(0x8000, reg | (reg >> 4));
+static void SetPRG(uint16 A, uint16 V) {
+	setprg32(0x8000, m189.reg | (m189.reg >> 4));
 }
 
-static DECLFW(M189Write4) {
+static DECLFW(WriteReg45) {
 	if (A & 0x100) {
-		reg = V;
+		m189.reg = V;
 		MMC3_SyncPRG();
 	}
 }
 
-static DECLFW(M189Write6) {
+static DECLFW(WriteReg67) {
 	if (MMC3_WramIsWritable()) {
-		reg = V;
+		m189.reg = V;
 		MMC3_SyncPRG();
 	}
 }
 
-static void M189Power(void) {
-	reg = 0;
+static void Power(void) {
+	m189.reg = 3;
 	MMC3_Power();
-	SetWriteHandler(0x4120, 0x5FFF, M189Write4);
-	SetWriteHandler(0x6000, 0x7FFF, M189Write6);
+	SetWriteHandler(0x4120, 0x5FFF, WriteReg45);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg67);
 }
 
 void Mapper189_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M189PW;
-	info->Power = M189Power;
-	AddExState(&reg, 1, 0, "EXPR");
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	AddExState(&m189.reg, 1, 0, "EXPR");
 }

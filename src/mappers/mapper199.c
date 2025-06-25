@@ -21,20 +21,44 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M199CW(uint16 A, uint16 V) {
+static void SyncCHR(void) {
 	setchr8(0);
 }
 
-static void M199Power(void) {
+static DECLFW(WriteASIC) {
+	switch (A & 0xE001) {
+	case 0x8001:
+		switch (mmc3.cmd & 0x07) {
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			MMC3_SyncCHR();
+			break;
+		default:
+			MMC3_Write(A, V);
+			break;
+		}
+		break;
+	default:
+		MMC3_Write(A, V);
+		break;
+	}
+}
+
+static void Power(void) {
 	MMC3_Power();
 	setprg4r(0x10, 0x5000, 2);
 	SetReadHandler(0x5000, 0x5FFF, CartBR);
 	SetWriteHandler(0x5000, 0x5FFF, CartBW);
+	SetWriteHandler(0x8000, 0x9FFF, WriteASIC);
 }
 
 void Mapper199_Init(CartInfo *info) {
-	MMC3_Init(info, MMC3B, 16, info->battery);
-	MMC3_cwrap = M199CW;
-	info->Power = M199Power;
+	MMC3_Init(info, MMC3B, 16, info->battery); /* 8K WRAM, 4K */
+	MMC3_SyncCHR = SyncCHR;
+	info->Power = Power;
 	info->Reset = MMC3_Reset;
 }

@@ -19,6 +19,9 @@
  *
  */
 
+/* iNES Mapper 011 - The Color Dreams Mapper was a mapper used by the Color Dreams company. */
+/* iNES Mapper 144, allocated for the game Death Race, describes a intentionally defective variant of the Color Dreams board (mapper 11). */
+
 #include "mapinc.h"
 #include "latch.h"
 
@@ -27,6 +30,22 @@ static void Sync(void) {
 	setchr8(latch.data >> 4);
 }
 
+static DECLFW(WriteLatch) {
+	uint8 reg = CartBR(A);
+	latch.data = (reg & 0x01) | (V & reg & ~0x01);
+	Sync();
+}
+
+static void Power(void) {
+	Latch_Power();
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
+}
+
 void Mapper011_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
+}
+
+void Mapper144_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, FALSE, FALSE);
+	info->Power = Power;
 }

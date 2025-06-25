@@ -27,11 +27,7 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
-static uint8 protIndex;
-static uint8 protReg[4];
-
-static const uint8 lut[256] = {
+static const uint8 protectionXOR[256] = {
 	0x59, 0x59, 0x59, 0x59, 0x59, 0x59, 0x59, 0x59, 0x59, 0x49, 0x19, 0x09, 0x59, 0x49, 0x19, 0x09,
 	0x59, 0x59, 0x59, 0x59, 0x59, 0x59, 0x59, 0x59, 0x51, 0x41, 0x11, 0x01, 0x51, 0x41, 0x11, 0x01,
 	0x59, 0x59, 0x59, 0x59, 0x59, 0x59, 0x59, 0x59, 0x59, 0x49, 0x19, 0x09, 0x59, 0x49, 0x19, 0x09,
@@ -50,41 +46,54 @@ static const uint8 lut[256] = {
 	0x09, 0x19, 0x49, 0x59, 0x09, 0x19, 0x49, 0x59, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static void M208PRG(void) {
-	setprg32(0x8000, (reg & 0x01) | ((reg >> 3) & 0x02));
+static struct {
+	uint8 reg;
+	uint8 protectionIndex;
+	uint8 protectionData[4];
+} m208;
+
+static SFORMAT StateRegs[] = {
+	{ &m208.reg, 1, "EXPR" },
+	{ &m208.protectionIndex, 1, "PRID" },
+	{ &m208.protectionData, 1, "PRDT" },
+	{ 0 }
+};
+
+static void SyncPRG(void) {
+	if (iNESCart.submapper == 1) {
+		setprg32(0x8000, mmc3.reg[6] >> 2);
+	} else {
+		setprg32(0x8000, (m208.reg & 0x01) | ((m208.reg >> 3) & 0x02));
+	}
 }
 
-static void M208MIR(void) {
-	setmirror(((reg >> 5) & 0x01) ^ 0x01);
+static void SyncMirror(void) {
+	if (iNESCart.submapper == 1) {
+		setmirror((mmc3.mirr & 0x01) ^ 0x01);
+	} else {
+		setmirror(((m208.reg >> 5) & 0x01) ^ 0x01);
+	}
 }
 
-static void M208PRG_Sub1(void) {
-	setprg32(0x8000, mmc3.reg[6] >> 2);
-}
-
-static void M208MIR_Sub1(void) {
-	setmirror((mmc3.mirr & 0x01) ^ 0x01);
-}
-
-static DECLFW(M208Write) {
-	reg = V;
+static DECLFW(WriteReg) {
+	m208.reg = V;
 	MMC3_SyncPRG();
 	MMC3_SyncMirror();
 }
 
-static DECLFW(M208ProtWrite) {
+static DECLFR(ReadProtection) {
+	return (m208.protectionData[(A & 0x3)]);
+}
+
+static DECLFW(WriteProtection) {
 	if (A & 0x800) {
-		protReg[(A & 0x03)] = V ^ lut[protIndex];
+		m208.protectionData[(A & 0x03)] = V ^ protectionXOR[m208.protectionIndex];
 	} else {
-		protIndex = V;
+		m208.protectionIndex = V;
 	}
 }
 
-static DECLFR(M208ProtRead) {
-	return (protReg[(A & 0x3)]);
-}
-
-static DECLFW(M208WriteCMD) {
+static DECLFW(WriteASIC) {
 	switch (A & 0xE001) {
 	case 0x8001:
 		switch (mmc3.cmd & 0x07) {
@@ -94,39 +103,31 @@ static DECLFW(M208WriteCMD) {
 			MMC3_SyncPRG();
 			break;
 		default:
-			MMC3_CMDWrite(A, V);
+			MMC3_Write(A, V);
 			break;
 		}
 		break;
 	default:
-		MMC3_CMDWrite(A, V);
+		MMC3_Write(A, V);
 		break;
 	}
 }
 
-static void M208Power(void) {
-	reg = 0x11;
+static void Power(void) {
+	memset(&m208, 0, sizeof(m208));
+	m208.reg = 0;
 	MMC3_Power();
-	SetWriteHandler(0x4800, 0x4FFF, M208Write);
-	SetWriteHandler(0x6800, 0x6FFF, M208Write);
-	SetWriteHandler(0x5000, 0x5FFF, M208ProtWrite);
-	SetReadHandler(0x5800, 0x5FFF, M208ProtRead);
+	SetWriteHandler(0x4800, 0x4FFF, WriteReg);
+	SetWriteHandler(0x5000, 0x5FFF, WriteProtection);
+	SetReadHandler(0x5800, 0x5FFF, ReadProtection);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-
-	if (iNESCart.submapper == 1) {
-		SetWriteHandler(0x8000, 0x9FFF, M208WriteCMD);
-		MMC3_SyncPRG = M208PRG_Sub1;
-		MMC3_SyncMirror = M208MIR_Sub1;
-		MMC3_Reset();
-	}
+	SetWriteHandler(0x8000, 0x9FFF, WriteASIC);
 }
 
 void Mapper208_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_SyncPRG = M208PRG;
-	MMC3_SyncMirror = M208MIR;
-	info->Power = M208Power;
-	AddExState(&reg, 1, 0, "EXPR");
-	AddExState(&protIndex, 1, 0, "PRID");
-	AddExState(&protReg, 4, 0, "PRRG");
+	MMC3_SyncPRG = SyncPRG;
+	MMC3_SyncMirror = SyncMirror;
+	info->Power = Power;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

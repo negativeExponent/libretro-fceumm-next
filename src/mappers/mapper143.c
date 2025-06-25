@@ -22,20 +22,20 @@
 
 #include "mapinc.h"
 
-static DECLFR(ReadProtect) {
+static DECLFR(ReadCart) {
 	if ((A & 0x100) == 0x100) {
 		return (cpu.openbus & 0xC0) | ((~A) & 0x3F);
 	}
 	return cpu.openbus;
 }
 
-static void M143Power(void) {
+static void Power(void) {
 	setprg32(0x8000, 0);
 	setchr8(0);
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetReadHandler(0x4100, 0x5FFF, ReadProtect);
+	SetReadHandler(0x4100, 0x5FFF, ReadCart);
 }
 
 void Mapper143_Init(CartInfo *info) {
-	info->Power = M143Power;
+	info->Power = Power;
 }

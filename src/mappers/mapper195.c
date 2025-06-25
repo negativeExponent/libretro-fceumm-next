@@ -21,14 +21,22 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 chrRamMask;
-static uint8 chrRamBankSelect;
+static struct {
+	uint8 chrMask;
+	uint8 chrCompare;
+} m195;
 
-static writefunc writePPU;
+static writefunc writePPU2007;
 extern uint32 RefreshAddr;
 
-static void M195CW(uint16 A, uint16 V) {
-	if ((V & chrRamMask) == chrRamBankSelect) {
+static SFORMAT StateRegs[] = {
+	{ &m195.chrMask, 1, "CMSK" },
+	{ &m195.chrCompare, 1, "CCMP" },
+	{ 0 }
+};
+
+static void SetCHR(uint16 A, uint16 V) {
+	if ((V & m195.chrMask) == m195.chrCompare) {
 		setchr1r(0x10, A, V);
 	} else {
 		setchr1(A, V);
@@ -39,65 +47,48 @@ static const uint8 chrRamLut[8] = {
     0x28, 0x00, 0x4C, 0x64, 0x46, 0x7C, 0x04, 0xFF,
 };
 
-static DECLFW(M195PPUWrite) {
+static DECLFW(WritePPU2007) {
 	if (RefreshAddr < 0x2000) {
-		uint8 reg, chrBank;
-		uint32 addr = RefreshAddr;
+		uint8 reg = RefreshAddr >> 10;
+		uint8 chrBank = MMC3_GetCHRBank(reg);
 
-		if (mmc3.cmd & 0x80) {
-			addr ^= 0x1000;
-		}
-		if (addr & 0x1000) {
-			reg = (addr >> 10) - 2;
-		} else {
-			reg = addr >> 11;
-		}
-
-		chrBank = mmc3.reg[reg];
 		if (chrBank & 0x80) {
 			if (chrBank & 0x10) {
 				/* CHR-RAM disable */
-				chrRamMask = 0x00;
-				chrRamBankSelect = 0xFF;
+				m195.chrMask = 0x00;
+				m195.chrCompare = 0xFF;
 			} else {
 				uint8 index = ((chrBank >> 4) & 0x04) | ((chrBank >> 2) & 0x02) | ((chrBank >> 1) & 0x01);
 
-				chrRamMask = (chrBank & 0x40) ? 0xFE : 0xFC;
-				chrRamBankSelect = chrRamLut[index];
+				m195.chrMask = (chrBank & 0x40) ? 0xFE : 0xFC;
+				m195.chrCompare = chrRamLut[index];
 			}
 			MMC3_SyncCHR();
 		}
 	}
-	writePPU(A, V);
+	writePPU2007(A, V);
 }
 
-static void M195Power(void) {
-	chrRamMask = 0xFC;
-	chrRamBankSelect = 0x00;
+static void Power(void) {
+	m195.chrMask = 0xFC;
+	m195.chrCompare = 0x00;
 	MMC3_Power();
 	setprg4r(0x10, 0x5000, 2);
 	SetWriteHandler(0x5000, 0x5FFF, CartBW);
 	SetReadHandler(0x5000, 0x5FFF, CartBR);
 
-	writePPU = GetWriteHandler(0x2007);
-	SetWriteHandler(0x2007, 0x2007, M195PPUWrite);
-}
-
-static void M195Close(void) {
-	MMC3_Close();
+	writePPU2007 = GetWriteHandler(0x2007);
+	SetWriteHandler(0x2007, 0x2007, WritePPU2007);
 }
 
 void Mapper195_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 16, info->battery);
-	info->Power = M195Power;
-	info->Close = M195Close;
-	MMC3_cwrap = M195CW;
+	info->Power = Power;
+	MMC3_cwrap = SetCHR;
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 4096;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
-
-	AddExState(&chrRamMask, 1, 0, "CHRM");
-	AddExState(&chrRamBankSelect, 1, 0, "CHRB");
 }

@@ -62,7 +62,7 @@ static void SyncMirror(void) {
 	}
 }
 
-static DECLFW(M137Write) {
+static DECLFW(WriteReg) {
 	if ((A & 0x4000) && (A & 0x100)) {
 		if (A & 0x01) {
 			m137.reg[m137.cmd & 0x07] = V;
@@ -98,7 +98,7 @@ static void Power(void) {
 	SyncMirror();
 
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x4100, 0xFFFF, M137Write);
+	SetWriteHandler(0x4100, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {

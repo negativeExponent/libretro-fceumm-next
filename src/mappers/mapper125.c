@@ -18,8 +18,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * NES 2.0 Mapper 125 - UNL-M125
- * FDS Conversion - Monty no Doki Doki Daisassō, Monty on the Run, cartridge code M125
+ * NES 2.0 Mapper 125 - UNL-LH32
+ * FDS Conversion - Monty no Doki Doki Daisassō, Monty on the Run, cartridge code LH32
  *
  */
 
@@ -59,16 +59,12 @@ static void Power(void) {
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 }
 
-static void Close(void) {
-}
-
 static void StateRestore(int version) {
 	Sync();
 }
 
 void Mapper125_Init(CartInfo *info) {
 	info->Power = Power;
-	info->Close = Close;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 

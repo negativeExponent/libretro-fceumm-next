@@ -21,7 +21,7 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M194CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	if ((V & ~0x01) == 0x00) { /* Dai-2-Ji - Super Robot Taisen (As).nes */
 		setchr1r(0x10, A, V & 0x01);
 	} else {
@@ -29,14 +29,9 @@ static void M194CW(uint16 A, uint16 V) {
 	}
 }
 
-static void M194Close(void) {
-	MMC3_Close();
-}
-
 void Mapper194_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, info->battery);
-	info->Close = M194Close;
-	MMC3_cwrap = M194CW;
+	MMC3_cwrap = SetCHR;
 
 	CHRRAMSIZE = 2048;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

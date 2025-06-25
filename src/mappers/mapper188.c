@@ -36,12 +36,12 @@ static DECLFR(ExtDev) {
 	return (3);
 }
 
-static void M118Power(void) {
+static void Power(void) {
 	Latch_Power();
 	SetReadHandler(0x6000, 0x7FFF, ExtDev);
 }
 
 void Mapper188_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M118Power;
+	info->Power = Power;
 }

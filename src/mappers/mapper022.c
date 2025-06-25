@@ -21,12 +21,12 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static void M22CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, V >> 1);
 }
 
 void Mapper022_Init(CartInfo *info) {
 	/* Mapper 22 - VRC2a */
 	VRC24_Init(info, VRC24_VRC2, 0x02, 0x01, TRUE, FALSE);
-	VRC24_cwrap = M22CW;
+	VRC24_cwrap = SetCHR;
 }

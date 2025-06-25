@@ -22,42 +22,50 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static uint8 maskCHRCompare;
-static uint8 maskCHRBank;
+static struct {
+	uint8 chrMask;
+	uint8 chrCompare;
+} m252;
 
-static writefunc writePPU;
+static writefunc writePPU2007;
 extern uint32 RefreshAddr;
+
+static SFORMAT StateRegs[] = {
+	{ &m252.chrMask, 1, "CMSK" },
+	{ &m252.chrCompare, 1, "CCMP" },
+	{ 0 }
+};
 
 static void SetPRGBank_vrc24(uint16 A, uint16 V) {
 	setprg8(A, V & 0x1F);
 }
 
 static void SetCHRBank_vrc24(uint16 A, uint16 V) {
-	if ((V & maskCHRBank) == maskCHRCompare) {
+	if ((V & m252.chrMask) == m252.chrCompare) {
 		setchr1r(0x10, A, V);
 	} else {
 		setchr1(A, V);
 	}
 }
 
-static DECLFW(PPUWrite2007) {
+static DECLFW(WritePPU2007) {
 	if (RefreshAddr < 0x2000) {
 		switch (vrc24.chr[RefreshAddr >> 10]) {
 		case 0x88:
-			maskCHRBank = 0xFC;
-			maskCHRCompare = 0x4C;
+			m252.chrMask = 0xFC;
+			m252.chrCompare = 0x4C;
 			break;
 		case 0xC2:
-			maskCHRBank = 0xFE;
-			maskCHRCompare = 0x7C;
+			m252.chrMask = 0xFE;
+			m252.chrCompare = 0x7C;
 			break;
 		case 0xC8:
-			maskCHRBank = 0xFE;
-			maskCHRCompare = 0x04;
+			m252.chrMask = 0xFE;
+			m252.chrCompare = 0x04;
 			break;
 		}
 	}
-	writePPU(A, V);
+	writePPU2007(A, V);
 }
 
 static void Close(void) {
@@ -66,16 +74,16 @@ static void Close(void) {
 
 static void Power(void) {
 	if (iNESCart.mapper == 252) {
-		maskCHRBank = 0xFE;
-		maskCHRCompare = 0x06;
+		m252.chrMask = 0xFE;
+		m252.chrCompare = 0x06;
 	} else {
-		maskCHRBank = 0xFE;
-		maskCHRCompare = 0x04;
+		m252.chrMask = 0xFE;
+		m252.chrCompare = 0x04;
 	}
 	VRC24_Power();
 
-	writePPU = GetWriteHandler(0x2007);
-	SetWriteHandler(0x2007, 0x2007, PPUWrite2007);
+	writePPU2007 = GetWriteHandler(0x2007);
+	SetWriteHandler(0x2007, 0x2007, WritePPU2007);
 }
 
 void Mapper252_Init(CartInfo *info) {
@@ -85,6 +93,7 @@ void Mapper252_Init(CartInfo *info) {
 
 	info->Power = Power;
 	info->Close = Close;
+	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = info->iNES2 ? (info->CHRRamSize + info->CHRRamSaveSize) : 2048;
 	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);

@@ -27,34 +27,36 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg[4];
+static struct {
+	uint8 reg[4];
+} m126;
+
 static uint8 dipsw;
 static uint8 oldump = FALSE;
 
 static SFORMAT StateRegs[] = {
-	{ reg, 4, "REGS" },
-	{ &dipsw, 1, "DPSW" },
+	{ m126.reg, 4, "EXPR" },
 	{ 0 }
 };
 
-static void M126PW(uint16 A, uint16 V) {
-	uint8 reg0 = reg[0] ^ (oldump ? 0 : 0x20);
+static void SetPRG(uint16 A, uint16 V) {
+	uint8 reg0 = m126.reg[0] ^ (oldump ? 0 : 0x20);
 	uint16 mask = (reg0 & 0x40) ? 0x0F : 0x1F;
 	uint16 base = (((reg0 << 4) & 0x70) | ((reg0 << 3) & 0x180)) & ~mask;
 
 	switch (iNESCart.submapper) {
 	case 1:
-		base |= ((base & 0x100) >> 1);
+		base = ((base >> 1) & 0x80) | (base & 0x7F);
 		break;
 	case 2:
-		base |= ((reg[1] & 0x02) << 5);
+		base = ((m126.reg[1] << 5) & 0x80) | (base & 0x7F);
 		break;
 	}
 
-	if (reg[3] & 0x08) {
+	if (m126.reg[3] & 0x08) {
 		uint8 b = (A >> 13) & 0x03;
-		V = MMC3_GetPRGBank(b & (((reg[3] & 0x0D) == 0x0D) ? 0x02 : ((reg[3] & 0x01) ? 0 : 0x03)));
-		switch (reg[3] & 0x03) {
+		V = MMC3_GetPRGBank(b & (((m126.reg[3] & 0x0D) == 0x0D) ? 0x02 : ((m126.reg[3] & 0x01) ? 0 : 0x03)));
+		switch (m126.reg[3] & 0x03) {
 		case 0:
 			V = ((V << 1) & ~0x03) | (V & 0x03);
 			break;
@@ -69,7 +71,7 @@ static void M126PW(uint16 A, uint16 V) {
 			break;
 		}
 	} else {
-		switch (reg[3] & 0x03) {
+		switch (m126.reg[3] & 0x03) {
 		case 1:
 		case 2:
 			base = base | (mmc3.reg[6] & mask);
@@ -86,26 +88,26 @@ static void M126PW(uint16 A, uint16 V) {
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M126CW(uint16 A, uint16 V) {
-	uint8 reg0 = reg[0] ^ (oldump ? 0 : 0x20);
+static void SetCHR(uint16 A, uint16 V) {
+	uint8 reg0 = m126.reg[0] ^ (oldump ? 0 : 0x20);
 	uint16 mask = (reg0 & 0x80) ? 0x7F : 0xFF;
 	uint16 base = (reg0 << 4) & 0x380;
 
 	if (iNESCart.mapper == 126) {
 		base = ((reg0 << 4) & 0x080) | ((reg0 << 3) & 0x100) | ((reg0 << 5) & 0x200);
 	}
-	if (reg[3] & 0x10) {
-		base = (((base & ~mask) >> 3) | (reg[2] & (mask >> 3))) << 3;
+	if (m126.reg[3] & 0x10) {
+		base = (((base & ~mask) >> 3) | (m126.reg[2] & (mask >> 3))) << 3;
 		V = (A >> 10) & 0x07;
 		mask = 0x07;
 	}
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void M126MIR(void) {
-	if (reg[3] & 0x20) {
+static void SyncMirror(void) {
+	if (m126.reg[3] & 0x20) {
 		setmirror(MI_0 + ((mmc3.reg[6] & 0x10) >> 4));
-	} else if (reg[1] & 0x02) {
+	} else if (m126.reg[1] & 0x02) {
 		switch (mmc3.mirr & 0x03) {
 		case 0:
 			setmirror(MI_V);
@@ -125,55 +127,60 @@ static void M126MIR(void) {
 	}
 }
 
-static DECLFR(M126ReadDIP) {
-	if (reg[1] & 0x01) {
+static DECLFR(ReadDIP) {
+	if (m126.reg[1] & 0x01) {
 		return CartBR((A & ~0x01) | (dipsw & 0x01));
 	}
 	return CartBR(A);
 }
 
-static DECLFW(M126WriteWRAM) {
+static DECLFW(WriteReg) {
 	CartBW(A, V);
-	if (!(reg[3] & 0x80)) {
-		reg[A & 0x03] = V;
-		MMC3_SyncPRG();
+	if ((A & 0x03) == 0x02) {
+		const uint8 mask = 0xFF & (~((m126.reg[2] & 0x80) ? 0xF0 : 0x00)) & (~(((m126.reg[2]) >> 3) & 0x0E));
+		m126.reg[2] = (m126.reg[2] & ~mask) | (V & mask);
 		MMC3_SyncCHR();
-		MMC3_SyncMirror();
-	} else if ((A & 0x03) == 0x02) {
-		const uint8 mask = 0xFF & ~(reg[2] & 0x80 ? 0xF0 : 0x00) & ~((reg[2]) >> 3 & 0x0E);
-		reg[2] = (reg[2] & ~mask) | (V & mask);
-		MMC3_SyncCHR();
+	} else {
+		if (!(m126.reg[3] & 0x80)) {
+			m126.reg[A & 0x03] = V;
+			MMC3_SyncPRG();
+			MMC3_SyncCHR();
+			MMC3_SyncMirror();
+		}
 	}
 }
 
-static DECLFW(M534IRQWrite) {
+static DECLFW(WriteIRQ) {
 	V ^= 0xFF;
 	MMC3_IRQWrite(A, V);
 }
 
-static DECLFW(M126MMC3Write) {
-	if ((reg[3] & 0x09) == 0x09) {
-		MMC3_Write(0x8000 | (((reg[3] & 0x08) ? 0x01 : A) & 0x01), V);
+static DECLFW(WriteASIC) {
+	if (m126.reg[3] & 0x08) {
+		A = A & ~0x01 | 0x01;
+	}
+	if ((m126.reg[3] & 0x09) == 0x09) {
+		MMC3_Write(0x8000 | (A & 0x01), V);
 	} else {
 		MMC3_Write(A, V);
 	}
 }
 
-static void M126Reset(void) {
+static void Reset(void) {
+	memset(&m126, 0, sizeof(m126));
 	dipsw++;
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	MMC3_Reset();
 }
 
-static void M126Power(void) {
+static void Power(void) {
+	memset(&m126, 0, sizeof(m126));
 	dipsw = 0;
-	reg[0] = reg[1] = reg[2] = reg[3] = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M126WriteWRAM);
-	SetWriteHandler(0x8000, 0xFFFF, M126MMC3Write);
-	SetReadHandler(0x8000, 0xFFFF, M126ReadDIP);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
+	SetWriteHandler(0x8000, 0xFFFF, WriteASIC);
+	SetReadHandler(0x8000, 0xFFFF, ReadDIP);
 	if (iNESCart.mapper == 534) {
-		SetWriteHandler(0xC000, 0xDFFF, M534IRQWrite);
+		SetWriteHandler(0xC000, 0xDFFF, WriteIRQ);
 	}
 }
 
@@ -183,11 +190,11 @@ static void InitCommon(CartInfo *info) {
 		ws = (info->PRGRamSize + info->PRGRamSaveSize) / 1024;
 	}
 	MMC3_Init(info, MMC3B, ws, info->battery);
-	MMC3_SyncMirror = M126MIR;
-	MMC3_cwrap = M126CW;
-	MMC3_pwrap = M126PW;
-	info->Power = M126Power;
-	info->Reset = M126Reset;
+	MMC3_SyncMirror = SyncMirror;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	switch (iNESCart.CRC32) {

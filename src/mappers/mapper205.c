@@ -25,54 +25,60 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static struct {
+	uint8 reg;
+} m205;
+
 static uint8 dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ &reg, 1, "REGS" },
+	{ &m205.reg, 1, "REGS" },
 	{ &dipsw, 1, "DPSW" },
 	{ 0 }
 };
 
-static void M205PW(uint16 A, uint16 V) {
-	uint8 mask = (reg & 0x02) ? 0x0F : 0x1F;
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = (m205.reg & 0x02) ? 0x0F : 0x1F;
+	uint16 base = m205.reg << 4;
 
-	setprg8(A, (reg << 4) | (V & mask));
+	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void M205CW(uint16 A, uint16 V) {
-	uint8 mask = (reg & 0x02) ? 0x7F : 0xFF;
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = (m205.reg & 0x02) ? 0x7F : 0xFF;
+	uint16 base = m205.reg << 7;
 
-	setchr1(A, (reg << 7) | (V & mask));
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M205Write) {
+static DECLFW(WriteReg) {
 	CartBW(A, V);
-	reg = V & 0x03;
+	m205.reg = V;
 	if ((V & 0x01) && dipsw) {
-		reg |= 0x02;
+		m205.reg |= 0x02;
 	}
 	MMC3_SyncPRG();
 	MMC3_SyncCHR();
 }
 
-static void M205Reset(void) {
-	reg = 0;
+static void Reset(void) {
+	memset(&m205, 0, sizeof(m205));
 	dipsw = (dipsw + 1) & 0x01; /* solder pad */
 	MMC3_Reset();
 }
 
-static void M205Power(void) {
-	reg = dipsw = 0;
+static void Power(void) {
+	memset(&m205, 0, sizeof(m205));
+	dipsw = 0;
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M205Write);
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper205_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, 0);
-	MMC3_pwrap = M205PW;
-	MMC3_cwrap = M205CW;
-	info->Power = M205Power;
-	info->Reset = M205Reset;
+	MMC3_pwrap = SetPRG;
+	MMC3_cwrap = SetCHR;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

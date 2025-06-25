@@ -216,25 +216,25 @@ void setprg32(uint16 A, uint16 V) {
 	setprg32r(0, A, V);
 }
 
-void setprg2r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
+void setprg2r_access(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	V &= PRGmask2[r];
 	setpageptr(2, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 11]) : 0, (rd && wr) ? PRGram[r] : 0);
 }
 
 void setprg2_access(uint16 A, uint16 V, uint8 rd, uint8 wr) {
-	setprg2r_rw(0, A, V, rd, wr);
+	setprg2r_access(0, A, V, rd, wr);
 }
 
-void setprg4r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
+void setprg4r_access(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	V &= PRGmask4[r];
 	setpageptr(4, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 12]) : 0, (rd && wr) ? PRGram[r] : 0);
 }
 
 void setprg4_access(uint16 A, uint16 V, uint8 rd, uint8 wr) {
-	setprg4r_rw(0, A, V, rd, wr);
+	setprg4r_access(0, A, V, rd, wr);
 }
 
-void setprg8r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
+void setprg8r_access(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	if (PRGsize[r] >= 8192) {
 		V &= PRGmask8[r];
 		setpageptr(8, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 13]) : 0, (rd && wr) ? PRGram[r] : 0);
@@ -248,10 +248,10 @@ void setprg8r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 }
 
 void setprg8_access(uint16 A, uint16 V, uint8 rd, uint8 wr) {
-	setprg8r_rw(0, A, V, rd, wr);
+	setprg8r_access(0, A, V, rd, wr);
 }
 
-void setprg16r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
+void setprg16r_access(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 	if (PRGsize[r] >= 16384) {
 		V &= PRGmask16[r];
 		setpageptr(16, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 14]) : 0, (rd && wr) ? PRGram[r] : 0);
@@ -266,10 +266,10 @@ void setprg16r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 }
 
 void setprg16_access(uint16 A, uint16 V, uint8 rd, uint8 wr) {
-	setprg16r_rw(0, A, V, rd, wr);
+	setprg16r_access(0, A, V, rd, wr);
 }
 
-void setprg32r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
+void setprg32r_access(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 		if (PRGsize[r] >= 32768) {
 		V &= PRGmask16[r];
 		setpageptr(32, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 15]) : 0, (rd && wr) ? PRGram[r] : 0);
@@ -284,7 +284,7 @@ void setprg32r_rw(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 }
 
 void setprg32_access(uint16 A, uint16 V, uint8 rd, uint8 wr) {
-	setprg32r_rw(0, A, V, rd, wr);
+	setprg32r_access(0, A, V, rd, wr);
 }
 
 void unsetcpu2(uint16 A) {

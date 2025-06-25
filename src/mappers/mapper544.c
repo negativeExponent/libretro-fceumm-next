@@ -26,8 +26,8 @@
 static struct {
 	uint8 nt[4];
 	uint8 prg;
-	uint8 chrRamMask;
-	uint8 chrRamCompare;
+	uint8 chrMask;
+	uint8 chrCompare;
 } m544;
 
 static writefunc writePPU;
@@ -36,8 +36,8 @@ extern uint32 RefreshAddr;
 static SFORMAT StateRegs[] = {
 	{ m544.nt, 4, "NTBL" },
 	{ &m544.prg, 1, "PRGC" },
-	{ &m544.chrRamMask, 1, "CHRM" },
-	{ &m544.chrRamCompare, 1, "CHRB" },
+	{ &m544.chrMask, 1, "CMSK" },
+	{ &m544.chrCompare, 1, "CCMP" },
 	{ 0 }
 };
 
@@ -49,7 +49,7 @@ static void SetPRG(uint16 A, uint16 V) {
 }
 
 static void SetCHR(uint16 A, uint16 V) {
-	if ((V & m544.chrRamMask) == m544.chrRamCompare) {
+	if ((V & m544.chrMask) == m544.chrCompare) {
 		setchr1r(0x10, A, V);
 	} else {
 		setchr1(A, V);
@@ -76,11 +76,11 @@ static DECLFW(WritePPU2007) {
 		uint8 chrBank = vrc24.chr[reg];
 		if (chrBank & 0x80) {
 			if (chrBank & 0x10) {
-				m544.chrRamMask = 0x00;
-				m544.chrRamCompare = 0xFF;
+				m544.chrMask = 0x00;
+				m544.chrCompare = 0xFF;
 			} else {
-				m544.chrRamMask = (chrBank & 0x40) ? 0xFE : 0xFC;
-				m544.chrRamCompare = compareMasks[((chrBank >> 1) & 0x01) | ((chrBank >> 2) & 0x02) | ((chrBank >> 4) & 0x04)];
+				m544.chrMask = (chrBank & 0x40) ? 0xFE : 0xFC;
+				m544.chrCompare = compareMasks[((chrBank >> 1) & 0x01) | ((chrBank >> 2) & 0x02) | ((chrBank >> 4) & 0x04)];
 			}
 			VRC24_SyncCHR();
 		}
@@ -90,8 +90,8 @@ static DECLFW(WritePPU2007) {
 
 static void Power(void) {
 	memset(&m544, 0, sizeof(m544));
-	m544.chrRamMask = 0xFC;
-	m544.chrRamCompare = 0x28;
+	m544.chrMask = 0xFC;
+	m544.chrCompare = 0x28;
 	m544.nt[0] = 0;
 	m544.nt[1] = 0;
 	m544.nt[2] = 1;
