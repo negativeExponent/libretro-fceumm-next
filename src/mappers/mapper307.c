@@ -47,7 +47,7 @@ static void SyncCHR(void) {
 	);
 }
 
-static void M307Power(void) {
+static void Power(void) {
 	FDSSound_Power();
 	N118_Power();
 	SetWriteHandler(0xB000, 0xBFFF, CartBW);
@@ -55,7 +55,7 @@ static void M307Power(void) {
 
 void Mapper307_Init(CartInfo *info) {
 	N118_Init(info, 8, info->battery);
-	info->Power = M307Power;
+	info->Power = Power;
 	N118_SyncPRG = SyncPRG;
 	N118_SyncCHR = SyncCHR;
 }

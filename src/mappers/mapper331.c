@@ -40,23 +40,20 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 base = (m331.reg[2] & 0x03) << 3;
-	uint8 prg = base | (m331.reg[m331.ppuchrbus] & 0x07);
-
 	if (m331.reg[2] & 0x08) {
-		setprg32(0x8000, prg >> 1); /* actually, both 0 and 1 registers used,
+		setprg32(0x8000, ((m331.reg[2] << 3) | (m331.reg[m331.ppuchrbus] & 0x07)) >> 1); /* actually, both 0 and 1 registers used,
 		      but they will switch each PA12 transition if bits are different
 		      for both registers, so they must be programmed strongly the same! */
 	} else {
-		setprg16(0x8000, prg);
-		setprg16(0xc000, prg | 0x07);
+		setprg16(0x8000, (m331.reg[2] << 3) | (m331.reg[m331.ppuchrbus] & 0x07));
+		setprg16(0xc000, (m331.reg[2] << 3) | 0x07);
 	}
-	setchr4(0x0000, (base << 2) | (m331.reg[0] >> 3));
-	setchr4(0x1000, (base << 2) | (m331.reg[1] >> 3));
+	setchr4(0x0000, (m331.reg[2] << 5) | (m331.reg[0] >> 3));
+	setchr4(0x1000, (m331.reg[2] << 5) | (m331.reg[1] >> 3));
 	setmirror(((m331.reg[2] & 4) >> 2) ^ 1);
 }
 
-static DECLFW(M331Write) {
+static DECLFW(WriteReg) {
 	switch (A & 0xE000) {
 	case 0xA000:
 		m331.reg[0] = V;
@@ -82,7 +79,7 @@ static void Power(void) {
 	memset(&m331, 0, sizeof(m331));
 	Sync();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M331Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {

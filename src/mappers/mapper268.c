@@ -249,7 +249,7 @@ void COOLBOY_Init(CartInfo *info) {
 	Common_Init(info);
 }
 
-void MINDKIDS_Init(CartInfo *info) { /* M224 */
+void MINDKIDS_Init(CartInfo *info) { /* mapper 224 */
 	info->submapper = 1;
 	info->PRGRamSize = 8192;
 	Common_Init(info);

@@ -21,11 +21,11 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void M245PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, ((mmc3.reg[0] & 0x02) << 5) | (V & 0x3F));
 }
 
-static void M245CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr8(0);
 }
 
@@ -47,6 +47,6 @@ static void Power(void) {
 void Mapper245_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, info->battery);
 	info->Power = Power;
-	MMC3_pwrap = M245PW;
-	MMC3_cwrap = M245CW;
+	MMC3_pwrap = SetPRG;
+	MMC3_cwrap = SetCHR;
 }

@@ -29,9 +29,9 @@ static void Sync(void) {
 	uint32 cpuA14 = latch.addr & 0x01;
 	uint32 nrom = (latch.addr >> 7) & 0x01;
 	uint32 unrom = (latch.addr >> 9) & 0x01;
-	uint32 M242TwoChips = (ROM.prg.size & 0x20000) && (ROM.prg.size > 0x20000);
+	uint32 hasTwoChips = (ROM.prg.size & 0x20000) && (ROM.prg.size > 0x20000);
 
-	if (M242TwoChips) {
+	if (hasTwoChips) {
 		if (latch.addr & 0x600) { /* First chip */
 			prg &= ((PRG_BANK_COUNT(16) & ~0x08) - 1);
 		} else { /* Second chip */

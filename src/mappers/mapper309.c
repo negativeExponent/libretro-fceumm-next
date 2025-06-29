@@ -21,7 +21,7 @@
 
 /* FDS Conversion
  * NES 2.0 Mapper 309 is used for Whirlwind Manu's ROM cartridge conversion
- * of game 愛戦士ニコル (Ai Senshi Nicol, cartridge code M309).
+ * of game 愛戦士ニコル (Ai Senshi Nicol, cartridge code LH51).
  * Its UNIF board name is UNL-LH51.
  * https://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_309
  */

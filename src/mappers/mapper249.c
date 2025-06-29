@@ -25,6 +25,11 @@ static struct {
 	uint8 reg;
 } m249;
 
+static SFORMAT StateRegs[] = {
+	{ &m249.reg, 1, "EXPR" },
+	{ 0 }
+};
+
 static uint32 scrambleBankOrder(uint32 V, const uint8 *source, const uint8 *target, uint32 length) {
 	uint32 bank = 0;
 	uint32 bit = 0;
@@ -44,7 +49,7 @@ static uint32 scrambleBankOrder(uint32 V, const uint8 *source, const uint8 *targ
 	return bank;
 }
 
-static void M249PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	static const uint8 prg_pattern[4][4] = {
 		{ 3, 4, 2, 1 },
 		{ 4, 3, 1, 2 },
@@ -55,7 +60,7 @@ static void M249PW(uint16 A, uint16 V) {
 	setprg8(A, bank);
 }
 
-static void M249CW(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	static const uint8 chr_pattern[8][6] = {
 		{ 5, 2, 6, 7, 4, 3 },
 		{ 4, 5, 3, 2, 7, 6 },
@@ -70,22 +75,22 @@ static void M249CW(uint16 A, uint16 V) {
 	setchr1(A, bank);
 }
 
-static DECLFW(M249Write) {
+static DECLFW(WriteReg) {
 	m249.reg = V;
 	MMC3_SyncPRG();
 	MMC3_SyncCHR();
 }
 
 static void Power(void) {
-	m249.reg = 0;
+	memset(&m249, 0, sizeof(m249));
 	MMC3_Power();
-	SetWriteHandler(0x5000, 0x5FFF, M249Write);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 }
 
 void Mapper249_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 8, info->battery);
-	MMC3_cwrap = M249CW;
-	MMC3_pwrap = M249PW;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
 	info->Power = Power;
-	AddExState(&m249.reg, 1, 0, "EXPR");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

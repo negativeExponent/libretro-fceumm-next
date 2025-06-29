@@ -33,50 +33,100 @@
 
 static struct {
 	uint8 reg[3];
+	uint8 reglatch[2];
+	uint8 cpuLatch;
 } m292;
 
+static writefunc cpuwrite[0x10000];
+
 static SFORMAT StateRegs[] = {
-	{ m292.reg, 3, "REGS" },
+	{ m292.reg, 3, "EXPR" },
+	{ m292.reglatch, 2, "REGL" },
+	{ &m292.cpuLatch, 1, "CPUL" },
 	{ 0 }
 };
 
-static void M292PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, V);
-	setprg8(0x8000, m292.reg[0] & 0x1F);
 }
 
-static void M292CW(uint16 A, uint16 V) {
-	setchr2(0x0000, (m292.reg[0] >> 1) ^ m292.reg[1]);
-	setchr2(0x0800, (m292.reg[1] >> 1) ^ ((m292.reg[2] & 0x40) << 1));
+static void SyncCHR(void) {
+	setchr2(0x0000, m292.reg[1] ^ (MMC3_GetCHRBank(0) >> 1));
+	setchr2(0x0800, (m292.reg[2] << 1 & 0x80) ^ (MMC3_GetCHRBank(2) >> 1));
 	setchr4(0x1000, m292.reg[2] & 0x3F);
 }
 
-static DECLFW(M292ProtWrite) {
-	m292.reg[0] = V;
-	MMC3_SyncPRG();
+static DECLFW(WriteCPULatch) {
+	/*if (A == 0x4014) {
+		m292.reg[1] = m292.reglatch[0];
+		m292.reg[2] = m292.reglatch[1];
+		m292.reg[3] = m292.cpuLatch;
+		MMC3_SyncCHR();
+	}*/
+	m292.cpuLatch = V;
+	cpuwrite[A](A, V);
 }
 
-static DECLFR(M292ProtRead) {
-	if ((m292.reg[0] & 0xE0) == 0xC0) {
-		m292.reg[1] = ARead[0x6A](0x6A);
+static DECLFW(ProtectionWrite) {
+	m292.reg[0] = V;
+}
+
+static DECLFR(ProtectionRead) {
+	if (m292.reg[0] & 0x20) {
+		/* PPU 0800/1000 */
+		/* m292.reglatch[1] = m292.cpuLatch; */
+		m292.reg[2] = m292.cpuLatch;
+		MMC3_SyncCHR();
 	} else {
-		m292.reg[2] = ARead[0xFF](0xFF);
+		/* PPU 0000 */
+		/* m292.reglatch[0] = m292.cpuLatch; */
+		m292.reg[1] = m292.cpuLatch;
+		MMC3_SyncCHR();
 	}
-	MMC3_SyncCHR();
 	return cpu.openbus;
 }
 
-static void M292Power(void) {
+static DECLFW(WriteASIC) {
+	switch (A & 0xE001) {
+	case 0x8001:
+		switch (mmc3.cmd & 0x07) {
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			mmc3.reg[mmc3.cmd & 0x07] = V;
+			MMC3_SyncCHR();
+			break;
+		default:
+			MMC3_Write(A, V);
+			break;
+		}
+		break;
+	default:
+		MMC3_Write(A, V);
+		break;
+	}
+}
+
+static void Power(void) {
+	int i;
 	memset(&m292, 0x00, sizeof(m292));
 	MMC3_Power();
-	SetWriteHandler(0x6000, 0x7FFF, M292ProtWrite);
-	SetReadHandler(0x6000, 0x7FFF, M292ProtRead);
+	SetWriteHandler(0x6000, 0x7FFF, ProtectionWrite);
+	SetReadHandler(0x6000, 0x7FFF, ProtectionRead);
+	SetWriteHandler(0x8000, 0x9FFF, WriteASIC);
+	for (i = 0; i < 65536; i++) {
+		cpuwrite[i] = GetWriteHandler(i);
+	}
+	SetWriteHandler(0x0000, 0xFFFF, WriteCPULatch);
 }
 
 void Mapper292_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M292PW;
-	MMC3_cwrap = M292CW;
-	info->Power = M292Power;
+	MMC3_pwrap = SetPRG;
+	MMC3_SyncCHR = SyncCHR;
+	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -38,13 +38,13 @@ static void Sync(void) {
 	setchr8(0);
 }
 
-static DECLFW(M186Write) {
+static DECLFW(WriteReg) {
 	if (A & 0x4203)
 		reg[A & 3] = V;
 	Sync();
 }
 
-static DECLFR(M186Read) {
+static DECLFR(Read4) {
 	switch (A) {
 	case 0x4200:
 		return 0x00;
@@ -65,11 +65,11 @@ static DECLFW(BSWRAM) {
 	SWRAM[A - 0x4400] = V;
 }
 
-static void M186Power(void) {
+static void Power(void) {
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0xFFFF, CartBW);
-	SetReadHandler(0x4200, 0x43FF, M186Read);
-	SetWriteHandler(0x4200, 0x43FF, M186Write);
+	SetReadHandler(0x4200, 0x43FF, Read4);
+	SetWriteHandler(0x4200, 0x43FF, WriteReg);
 	SetReadHandler(0x4400, 0x4FFF, ASWRAM);
 	SetWriteHandler(0x4400, 0x4FFF, BSWRAM);
 	FCEU_CheatAddRAM(32, 0x6000, WRAM);
@@ -77,17 +77,13 @@ static void M186Power(void) {
 	Sync();
 }
 
-static void M186Close(void) {
-}
-
-static void M186Restore(int version) {
+static void StateRestore(int version) {
 	Sync();
 }
 
 void Mapper186_Init(CartInfo *info) {
-	info->Power = M186Power;
-	info->Close = M186Close;
-	GameStateRestore = M186Restore;
+	info->Power = Power;
+	GameStateRestore = StateRestore;
 	WRAM = (uint8 *)FCEU_gmalloc(32768);
 	SetupCartPRGMapping(0x10, WRAM, 32768, 1);
 	AddExState(WRAM, 32768, 0, "WRAM");

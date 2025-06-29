@@ -32,11 +32,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRGBank_mmc1(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	setprg16(A, 0x08 | (V & 0x07));
 }
 
-static void SetCHRBank_mmc1(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr4(A, 0x20 | (V & 0x1F));
 }
 
@@ -55,14 +55,14 @@ static void Sync(void) {
 	}
 }
 
-static DECLFW(M297Mode) {
+static DECLFW(WriteMode) {
 	if (A & 0x100) {
 		m297.reg[0] = V;
 		Sync();
 	}
 }
 
-static DECLFW(M297Latch) {
+static DECLFW(WriteLatch) {
 	if (m297.reg[0] & 0x01) {
 		MMC1_Write(A, V);
 	} else {
@@ -74,8 +74,8 @@ static DECLFW(M297Latch) {
 static void Power(void) {
 	memset(&m297, 0, sizeof(m297));
 	MMC1_Power();
-	SetWriteHandler(0x4100, 0x5FFF, M297Mode);
-	SetWriteHandler(0x8000, 0xFFFF, M297Latch);
+	SetWriteHandler(0x4100, 0x5FFF, WriteMode);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 static void StateRestore(int version) {
@@ -85,8 +85,8 @@ static void StateRestore(int version) {
 void Mapper297_Init(CartInfo *info) {
 	MMC1_Init(info, MMC1B, 0, 0);
 	info->Power = Power;
-	MMC1_cwrap = SetCHRBank_mmc1;
-	MMC1_pwrap = SetPRGBank_mmc1;
+	MMC1_cwrap = SetCHR;
+	MMC1_pwrap = SetPRG;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

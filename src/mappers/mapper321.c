@@ -33,19 +33,22 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRGBank(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	uint16 mask = 0x0F;
 	uint16 base = m321.reg << 2;
 
 	if (m321.reg & 0x08) { /* NROM */
 		setprg32(0x8000, (m321.reg & 0x04) | ((m321.reg >> 4) & 0x03));
 	} else { /*  MMC3 */
-		setprg8(A, ((m321.reg << 2) & ~0x0F) | (V & 0x0F));
+		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
-static void SetCHRBank(uint16 A, uint16 V) {
-	setchr1(A, ((m321.reg << 5) & ~0x7F) | (V & 0x7F));
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = 0x7F;
+	uint16 base = m321.reg << 5;
+
+	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(WriteReg) {
@@ -57,22 +60,22 @@ static DECLFW(WriteReg) {
 	}
 }
 
-static void M321Reset(void) {
-	m321.reg = 0;
+static void Reset(void) {
+	memset(&m321, 0, sizeof(m321));
 	MMC3_Reset();
 }
 
-static void M321Power(void) {
-	m321.reg = 0;
+static void Power(void) {
+	memset(&m321, 0, sizeof(m321));
 	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper321_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_cwrap = SetCHRBank;
-	MMC3_pwrap = SetPRGBank;
-	info->Power = M321Power;
-	info->Reset = M321Reset;
+	MMC3_cwrap = SetCHR;
+	MMC3_pwrap = SetPRG;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

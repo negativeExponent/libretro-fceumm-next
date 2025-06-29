@@ -50,14 +50,14 @@ static void SyncMirror(void) {
 	setmirror(vrc24.mirr & 0x01);
 }
 
-static void M302Power(void) {
+static void Power(void) {
 	VRC24_Power();
 	SetReadHandler(0x6000, 0x7FFF, CartBR);
 }
 
 void Mapper302_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC2, 0x01, 0x02, FALSE, TRUE);
-	info->Power = M302Power;
+	info->Power = Power;
 	VRC24_SyncPRG = SyncPRG;
 	VRC24_SyncCHR = SyncCHR;
 	VRC24_SyncMirror = SyncMirror;
