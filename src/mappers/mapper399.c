@@ -62,7 +62,7 @@ static DECLFW(WriteReg) {
 	}
 }
 
-static DECLFW(M399Write1) {
+static DECLFW(WriteReg_sub1) {
 	MMC3_Write(0x2000 + A, V);
 }
 
@@ -71,7 +71,7 @@ static void Power(void) {
 	MMC3_Power();
 	if (iNESCart.submapper == 1) {
 		SetReadHandler(0x6000, 0x7FFF, CartBR);
-		SetWriteHandler(0x8000, 0xDFFF, M399Write1);
+		SetWriteHandler(0x8000, 0xDFFF, WriteReg_sub1);
 		SetWriteHandler(0xE000, 0xFFFF, WriteReg);
 	} else {
 		SetWriteHandler(0x8000, 0x9FFF, WriteReg);

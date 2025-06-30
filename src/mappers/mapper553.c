@@ -32,7 +32,7 @@ static DECLFR(ReadProtection) {
 	return 0x3A;
 }
 
-static void M553Power(void) {
+static void Power(void) {
 	setprg16(0xC000, 0);
 	setchr8(0);
 	SetReadHandler(0x8000, 0xBFFF, ReadProtection);
@@ -40,5 +40,5 @@ static void M553Power(void) {
 }
 
 void Mapper553_Init(CartInfo *info) {
-	info->Power = M553Power;
+	info->Power = Power;
 }

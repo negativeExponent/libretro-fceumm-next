@@ -28,15 +28,15 @@
 static uint8 *FLASHROM_data = NULL;
 static uint32 FLASHROM_size = 0;
 
-static void M406PW(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	setprg8r(0x10, A, V & 0x3F);
 }
 
-static DECLFR(M406Read) {
+static DECLFR(ReadFlash) {
 	return FlashROM_Read(A);
 }
 
-static DECLFW(M406Write) {
+static DECLFW(WriteFlash) {
 	FlashROM_Write(A, V);
 	if (iNESCart.submapper == 0) {
 		A = (A & 0xFFFC) | ((A << 1) & 2) | ((A >> 1) & 1);
@@ -46,13 +46,13 @@ static DECLFW(M406Write) {
 	MMC3_Write(A, V);
 }
 
-static void M406Power(void) {
+static void Power(void) {
 	MMC3_Power();
-	SetReadHandler(0x8000, 0xFFFF, M406Read);
-	SetWriteHandler(0x8000, 0xFFFF, M406Write);
+	SetReadHandler(0x8000, 0xFFFF, ReadFlash);
+	SetWriteHandler(0x8000, 0xFFFF, WriteFlash);
 }
 
-static void M406Close(void) {
+static void Close(void) {
 	MMC3_Close();
 	if (FLASHROM_data) {
 		FCEU_free(FLASHROM_data);
@@ -64,9 +64,9 @@ void Mapper406_Init(CartInfo *info) {
 	uint32 w, r, id;
 
 	MMC3_Init(info, MMC3B, 0, 0);
-	info->Power = M406Power;
-	info->Close = M406Close;
-	MMC3_pwrap = M406PW;
+	info->Power = Power;
+	info->Close = Close;
+	MMC3_pwrap = SetPRG;
 	MapIRQHook = FlashROM_CPUCyle;
 
 	info->battery = 1;

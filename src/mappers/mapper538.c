@@ -29,14 +29,14 @@
 #include "fdssound.h"
 
 /* this code emulates rom dump with wrong bank order */
-static uint8 M538Banks[16] = {
+static uint8 prg_order_lut[16] = {
     0, 1, 2, 1, 3, 1, 4, 1,
     5, 5, 1, 1, 6, 6, 7, 7
 };
 
 static void Sync_alt(void) {
 	setprg8(0x6000, (latch.data >> 1) | 8);
-	setprg8(0x8000, M538Banks[latch.data & 0x0F]);
+	setprg8(0x8000, prg_order_lut[latch.data & 0x0F]);
 	setprg8(0xA000, 14);
 	setprg8(0xC000, 7);
 	setprg8(0xE000, 15);

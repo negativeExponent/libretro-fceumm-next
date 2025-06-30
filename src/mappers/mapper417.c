@@ -57,14 +57,10 @@ static void SyncCHR(void) {
 }
 
 static void SyncMirror(void) {
-	if (iNESCart.submapper == 1) {
-		setmirrorw(m417.chr[0] >> 7, m417.chr[1] >> 7, m417.chr[2] >> 7, m417.chr[3] >> 7);
-	} else {
-		setmirrorw(m417.nt[0] & 0x01, m417.nt[1] & 0x01, m417.nt[2] & 0x01, m417.nt[3] & 0x01);
-	}
+	setmirrorw(m417.nt[0] & 0x01, m417.nt[1] & 0x01, m417.nt[2] & 0x01, m417.nt[3] & 0x01);
 }
 
-static DECLFW(M417Write) {
+static DECLFW(WriteReg) {
 	switch (A & 0x8073) {
 	case 0x8000:
 	case 0x8001:
@@ -78,6 +74,9 @@ static DECLFW(M417Write) {
 	case 0x8012:
 	case 0x8013:
 		m417.chr[0 | (A & 0x03)] = V;
+		if (iNESCart.submapper == 1) {
+			m417.nt[A & 0x03] = V >> 7;
+		}
 		SyncCHR();
 		SyncMirror();
 		break;
@@ -100,8 +99,10 @@ static DECLFW(M417Write) {
 	case 0x8051:
 	case 0x8052:
 	case 0x8053:
-		m417.nt[A & 0x03] = V;
-		SyncMirror();
+		if (iNESCart.submapper == 0) {
+			m417.nt[A & 0x03] = V;
+			SyncMirror();
+		}
 		break;
 	}
 }
@@ -122,7 +123,7 @@ static void Power(void) {
 	SyncCHR();
 	SyncMirror();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0xFFFF, M417Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 static void StateRestore(int version) {

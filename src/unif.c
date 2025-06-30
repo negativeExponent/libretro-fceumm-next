@@ -405,8 +405,10 @@ struct _unif_db {
 
 static struct _unif_db unif_db[] = {
 	{ 0x03ed6963ca50e1d8ULL, "A65AS",          1, DEFAULT, DEFAULT },
+#if 0
 	{ 0x616851e56946893bULL, "RESETNROM-XIN1", 1, DEFAULT, DEFAULT }, /* Sheng Tian 2-in-1(Unl,ResetBase)[p1].unf */
 	{ 0x4cd729b5ae23a3cfULL, "RESETNROM-XIN1", 1, DEFAULT, DEFAULT }, /* Sheng Tian 2-in-1(Unl,ResetBase)[p2].unf */
+#endif
 
 	{ 0ULL, NULL, DEFAULT, DEFAULT, DEFAULT } /* end of the line */
 };

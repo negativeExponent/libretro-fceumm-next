@@ -57,23 +57,14 @@ static void Sync(void) {
 	setmirror(((m360.reg & 0x10) >> 4) ^ 1);
 }
 
-static DECLFW(M360Write4) {
-	m360.reg = V;
-	Sync();
-}
-
-static void M360Power(void) {
-	memset(&m360, 0, sizeof(m360));
-	dipsw = 0;
-	Sync();
-	if (iNESCart.submapper == 1) {
-		SetWriteHandler(0x4100, 0x4FFF, M360Write4);
+static DECLFW(WriteReg) {
+	if (A & 0x100) {
+		m360.reg = V;
+		Sync();
 	}
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0XFFFF, CartBW);
 }
 
-static void M360Reset(void) {
+static void Reset(void) {
 	memset(&m360, 0, sizeof(m360));
 	if (iNESCart.submapper == 0) {
 		dipsw = (dipsw + 1) & 31;
@@ -84,13 +75,24 @@ static void M360Reset(void) {
 	FCEU_printf("dipsw = %d\n", dipsw);
 }
 
+static void Power(void) {
+	memset(&m360, 0, sizeof(m360));
+	dipsw = 0;
+	Sync();
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0XFFFF, CartBW);
+	if (iNESCart.submapper == 1) {
+		SetWriteHandler(0x4100, 0x4FFF, WriteReg);
+	}
+}
+
 static void StateRestore(int version) {
 	Sync();
 }
 
 void Mapper360_Init(CartInfo *info) {
-	info->Reset = M360Reset;
-	info->Power = M360Power;
+	info->Reset = Reset;
+	info->Power = Power;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

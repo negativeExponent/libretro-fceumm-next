@@ -55,12 +55,12 @@ static DECLFW(WriteLatch) {
 	Latch_Write(A, (V & ~mask) | (latch.data & mask));
 }
 
-static void M439Reset(void) {
+static void Reset(void) {
 	memset(&m439, 0, sizeof(m439));
 	Latch_RegReset();
 }
 
-static void M439Power(void) {
+static void Power(void) {
 	memset(&m439, 0, sizeof(m439));
 	Latch_Power();
 	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
@@ -69,7 +69,7 @@ static void M439Power(void) {
 
 void Mapper439_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M439Power;
-	info->Reset = M439Reset;
+	info->Power = Power;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 }

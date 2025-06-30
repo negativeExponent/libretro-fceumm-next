@@ -60,7 +60,7 @@ static void SyncMirror(void){
 	setmirror(((m390.reg[0] & 0x20) >> 5) ^ 1);
 }
 
-static DECLFR(M390Read) {
+static DECLFR(ReadDIP) {
 	uint8 ret = CartBR(A);
 	if ((m390.reg[1] & 0x30) == 0x10)
 		ret |= dipsw;
@@ -91,7 +91,7 @@ static void Power(void) {
 	SyncPRG();
 	SyncCHR();
 	SyncMirror();
-	SetReadHandler(0x8000, 0xFFFF, M390Read);
+	SetReadHandler(0x8000, 0xFFFF, ReadDIP);
 	SetWriteHandler(0x8000, 0xBFFF, WriteCHRMirror);
 	SetWriteHandler(0xC000, 0xFFFF, WritePRG);
 }

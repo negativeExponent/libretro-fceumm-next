@@ -21,7 +21,7 @@
 /*
  * NES 2.0 Mapper 352
  * BMC-KS106C
- * - Kaiser 4-in-1(Unl,M352)[p1] - B-Wings, Kung Fu, 1942, SMB1
+ * - Kaiser 4-in-1(Unl,KS106C)[p1] - B-Wings, Kung Fu, 1942, SMB1
  */
 
 #include "mapinc.h"

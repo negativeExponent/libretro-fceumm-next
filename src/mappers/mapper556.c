@@ -127,7 +127,7 @@ static void Reset(void) {
 	Sync();
 }
 
-static void M556Power(void) {
+static void Power(void) {
 	memset(&m556, 0, sizeof(m556));
 	m556.reg[2] = 0x0F;
 
@@ -159,7 +159,7 @@ void Mapper556_Init(CartInfo *info) {
 	MMC3_cwrap = SetCHR_mmc3;
 
 	info->Reset = Reset;
-	info->Power = M556Power;
+	info->Power = Power;
 	MapIRQHook = CPUIRQHook;
 	GameHBIRQHook = HBIRQHook;
 	GameStateRestore = StateRestore;

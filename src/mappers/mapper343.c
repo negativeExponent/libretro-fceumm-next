@@ -39,16 +39,28 @@ static void Sync(void) {
 	setmirror((latch.data >> 7) & 0x01);
 }
 
-static DECLFW(M343Write) {
+static DECLFW(WriteLatch) {
 	Latch_Write(A, V ^ 0xFF);
+	Sync();
 }
 
-static void M343Power(void) {
+static void Reset(void) {
+	Sync();
+}
+
+static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, M343Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper343_Init(CartInfo *info) {
+	if (!info->iNES2) {
+		if (info->CRC32 == 0x3470F395 || /* Sheng Tian 2-in-1(Unl,ResetBase)[p1].unf */
+	    	info->CRC32 == 0x39F9140F) { /* Sheng Tian 2-in-1(Unl,ResetBase)[p2].unf */
+			info->submapper = 1;
+		}
+	}
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M343Power;
+	info->Power = Power;
+	info->Reset = Reset;
 }

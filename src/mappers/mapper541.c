@@ -50,13 +50,13 @@ static DECLFW(WriteLatch) {
 	}
 }
 
-static void M541Power(void) {
+static void Power(void) {
 	Latch_Power();
 	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper541_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Power = M541Power;
+	info->Power = Power;
 	info->Reset = Latch_RegReset;
 }

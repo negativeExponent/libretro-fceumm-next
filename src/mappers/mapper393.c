@@ -74,7 +74,7 @@ static void Power(void) {
 	SetWriteHandler(0x8000, 0xFFFF, WriteMMC3);
 }
 
-static void M393Reset(void) {
+static void Reset(void) {
 	m393.reg[0] = m393.reg[1] = 0;
 	MMC3_Reset();
 }
@@ -84,7 +84,7 @@ void Mapper393_Init(CartInfo *info) {
 	MMC3_pwrap = SetPRG;
 	MMC3_cwrap = SetCHR;
 	info->Power = Power;
-	info->Reset = M393Reset;
+	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8192;
