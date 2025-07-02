@@ -32,7 +32,7 @@ static struct {
 	uint8 chr[8];
 	uint8 nmt[4];
 	uint8 write_protect;
-	uint32 IRQCount;
+	uint16 IRQCount;
 	uint8 IRQa;
 } m019;
 
@@ -40,7 +40,7 @@ static SFORMAT StateRegs[] = {
 	{ m019.prg, 4, "PREG" },
 	{ m019.chr, 8, "CREG" },
 	{ m019.nmt, 4, "NMTR" },
-	{ &m019.IRQCount, 4, "IRQC" },
+	{ &m019.IRQCount, 2, "IRQC" },
 	{ &m019.IRQa, 1, "IRQA" },
 	{ &m019.write_protect, 1, "WPRT" },
 	{ 0 }
@@ -59,8 +59,15 @@ static void SyncPRG(void) {
 }
 
 static void DoCHRRAMROM(int x, uint8 V) {
+	uint8 force_chrrom = FALSE;
+
 	m019.chr[x] = V;
-	if (((m019.prg[1] >> ((x >> 2) + 6)) & 1) || (V < 0xE0)) {
+	if ((x < 4) && (m019.prg[1] & 0x40)) {
+		force_chrrom = TRUE;
+	} else if ((x < 8) && (m019.prg[1] & 0x80)) {
+		force_chrrom = TRUE;
+	}
+	if (force_chrrom || (V < 0xE0)) {
 		setchr1(x << 10, V);
 	}
 }
@@ -78,7 +85,7 @@ static void DoNMTRAMROM(int w, uint8 V) {
 		V &= CHRmask1[0];
 		setntamem(CHRptr[0] + (V << 10), 0, w);
 	} else {
-		setntamem(NTARAM + ((V & 1) << 10), 1, w);
+		setntamem(NTARAM + ((V & 0x01) << 10), 1, w);
 	}
 }
 
@@ -89,10 +96,18 @@ static void SyncNMT(void) {
 	}
 }
 
+static void SyncWRAM(void) {
+	setprg2r_access(0x10, 0x6000, 0, TRUE, ((m019.write_protect & 0xF1) == 0x40));
+	setprg2r_access(0x10, 0x6800, 1, TRUE, ((m019.write_protect & 0xF2) == 0x40));
+	setprg2r_access(0x10, 0x7000, 2, TRUE, ((m019.write_protect & 0xF4) == 0x40));
+	setprg2r_access(0x10, 0x7800, 3, TRUE, ((m019.write_protect & 0xF8) == 0x40));
+}
+
 static void CPUCycle(int a) {
-	if ((m019.IRQCount - 0x8000) < 0x7FFF) {
+	if (m019.IRQa) {
 		m019.IRQCount += a;
-		if (m019.IRQCount >= 0xFFFF) {
+		if (m019.IRQCount >= 0x7FFF) {
+			m019.IRQCount = 0x7FFF;
 			X6502_IRQBegin(FCEU_IQEXT);
 		}
 	}
@@ -116,22 +131,10 @@ static DECLFR(ReadIRQCount) {
 static DECLFW(WriteIRQCount) {
 	X6502_IRQEnd(FCEU_IQEXT);
 	if (A & 0x800) {
-		m019.IRQCount = (m019.IRQCount & 0x00FF) | (V << 8);
+		m019.IRQCount = (m019.IRQCount & 0x00FF) | ((V & 0x7F) << 8);
+		m019.IRQa = (V & 0x80) ? TRUE : FALSE;
 	} else {
-		m019.IRQCount = (m019.IRQCount & 0xFF00) | V;
-	}
-}
-
-static DECLFR(ReadWRAM) {
-	return WRAM[A - 0x6000];
-}
-
-static DECLFW(WriteProtectedWRAM) {
-	if (((A >= 0x6000) && (A <= 0x67FF) && ((m019.write_protect & 0xF1) == 0x40)) ||
-		((A >= 0x6800) && (A <= 0x6FFF) && ((m019.write_protect & 0xF2) == 0x40)) ||
-		((A >= 0x7000) && (A <= 0x77FF) && ((m019.write_protect & 0xF4) == 0x40)) ||
-		((A >= 0x7800) && (A <= 0x7FFF) && ((m019.write_protect & 0xF8) == 0x40))) {
-		WRAM[A - 0x6000] = V;
+		m019.IRQCount = (m019.IRQCount & 0x7F00) | (V & 0xFF);
 	}
 }
 
@@ -149,6 +152,7 @@ static DECLFW(WritePRG) {
 
 static DECLFW(WriteWRAMProtect) {
 	m019.write_protect = V;
+	SyncWRAM();
 	N163Sound_Write(A, V);
 }
 
@@ -156,6 +160,7 @@ static void StateRestore(int version) {
 	SyncPRG();
 	SyncCHR();
 	SyncNMT();
+	SyncWRAM();
 }
 
 static void Power(void) {
@@ -170,6 +175,7 @@ static void Power(void) {
 	SyncPRG();
 	SyncCHR();
 	SyncNMT();
+	SyncWRAM();
 
 	SetReadHandler(0x4800, 0x4FFF, ReadInternalRAM);
 	SetWriteHandler(0x4800, 0x4FFF, WriteInternalRAM);
@@ -178,8 +184,8 @@ static void Power(void) {
 	SetWriteHandler(0x5000, 0x5FFF, WriteIRQCount);
 
 	if (WRAMSIZE) {
-		SetReadHandler(0x6000, 0x7FFF, ReadWRAM);
-		SetWriteHandler(0x6000, 0x7FFF, WriteProtectedWRAM);
+		SetReadHandler(0x6000, 0x7FFF, CartBR);
+		SetWriteHandler(0x6000, 0x7FFF, CartBW);
 		FCEU_CheatAddRAM(8, 0x6000, WRAM);
 	}
 
