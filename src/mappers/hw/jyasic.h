@@ -45,7 +45,6 @@ extern uint8 JYASIC_CPUWriteHandlersSet;
 extern writefunc JYASIC_cpuWrite[0x10000];
 
 DECLFR(JYASIC_ReadALU_DIP);
-DECLFW(JYASIC_trapCPUWrite);
 DECLFW(JYASIC_WriteALU);
 DECLFW(JYASIC_WritePRG);
 DECLFW(JYASIC_WriteCHRLow);
@@ -53,6 +52,7 @@ DECLFW(JYASIC_WriteCHRHigh);
 DECLFW(JYASIC_WriteNT);
 DECLFW(JYASIC_WriteIRQ);
 DECLFW(JYASIC_WriteMode);
+DECLFW(JYASIC_trapCPUWrite);
 
 void JYASIC_restoreWriteHandlers(void);
 void JYASIC_RegReset(void);
@@ -63,6 +63,7 @@ void JYASIC_Init(CartInfo *info, int extended_mirr);
 
 void JYASIC_SyncPRG(void);
 void JYASIC_SyncCHR(void);
+void JYASIC_SyncWRAM(void);
 void JYASIC_SyncMirror(void);
 
 extern void (*JYASIC_pwrap)(uint16 A, uint32 V);

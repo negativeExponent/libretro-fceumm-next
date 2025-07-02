@@ -29,27 +29,27 @@ static uint32 GetCHRBank(uint32 V) {
 	return ((jyasic.mode[3] << 8) | (V & 0xFF));
 }
 
-static void M281PW(uint16 A, uint32 V) {
+static void SetPRG(uint16 A, uint32 V) {
 	setprg8(A, GetPRGBank(V));
 }
 
-static void M281CW(uint16 A, uint32 V) {
+static void SetCHR(uint16 A, uint32 V) {
 	setchr1(A, GetCHRBank(V));
 }
 
-static void M281WW(uint16 A, uint32 V) {
+static void SetWRAM(uint16 A, uint32 V) {
 	setprg8(A, GetPRGBank(V));
 }
 
-static void M281MW(uint16 A, uint32 V) {
+static void SetMirror(uint16 A, uint32 V) {
 	setntamem(CHRptr[0] + 0x400 * (GetCHRBank(V) & CHRmask1[0]), 0, A);
 }
 
 void Mapper281_Init(CartInfo *info) {
 	/* Multicart */
 	JYASIC_Init(info, TRUE);
-	JYASIC_pwrap = M281PW;
-	JYASIC_cwrap = M281CW;
-	JYASIC_wwrap = M281WW;
-	JYASIC_mwrap = M281MW;
+	JYASIC_pwrap = SetPRG;
+	JYASIC_cwrap = SetCHR;
+	JYASIC_wwrap = SetWRAM;
+	JYASIC_mwrap = SetMirror;
 }

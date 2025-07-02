@@ -26,71 +26,78 @@
 #include "jyasic.h"
 #include "mmc3.h"
 
-static uint8 reg[4];
+static struct {
+	uint8 reg[4];
+} m394;
+
+static SFORMAT StateRegs[] = {
+	{ m394.reg, 4, "EXPR" },
+	{ 0 }
+};
 
 static uint32 PRGBase(void) {
-	return ((reg[1] << 5) & 0x060) | ((reg[3] << 1) & 0x010);
+	return ((m394.reg[1] << 5) & 0x060) | ((m394.reg[3] << 1) & 0x010);
 }
 
 static uint32 CHRBase(void) {
-	return ((reg[1] << 8) & 0x200) | ((reg[1] << 6) & 0x100) | ((reg[3] << 1) & 0x080);
+	return ((m394.reg[1] << 8) & 0x200) | ((m394.reg[1] << 6) & 0x100) | ((m394.reg[3] << 1) & 0x080);
 }
 
-static uint32 M394_PRGBank_JY(uint32 V) {
+static uint32 PRGBank_JY(uint32 V) {
 	uint8 base = PRGBase();
 
 	return (base | (V & 0x1F));
 }
 
-static uint32 M394_CHRBank_JY(uint32 V) {
+static uint32 CHRBank_JY(uint32 V) {
 	uint16 base = CHRBase();
 
 	return (base | (V & 0x0FF));
 }
 
-static void M394JYPW(uint16 A, uint32 V) {
-	setprg8(A, M394_PRGBank_JY(V));
+static void SetPRG_jy(uint16 A, uint32 V) {
+	setprg8(A, PRGBank_JY(V));
 }
 
-static void M394JYCW(uint16 A, uint32 V) {
-	setchr1(A, M394_CHRBank_JY(V));
+static void SetCHR_jy(uint16 A, uint32 V) {
+	setchr1(A, CHRBank_JY(V));
 }
 
-static void M394JYWW(uint16 A, uint32 V) {
-	setprg8(A, M394_PRGBank_JY(V));
+static void SetWRAM_jy(uint16 A, uint32 V) {
+	setprg8(A, PRGBank_JY(V));
 }
 
-static void M394JYMW(uint16 A, uint32 V) {
-	setntamem(CHRptr[0] + 0x400 * (M394_CHRBank_JY(V) & CHRmask1[0]), 0, A);
+static void SetMirror_jy(uint16 A, uint32 V) {
+	setntamem(CHRptr[0] + 0x400 * (CHRBank_JY(V) & CHRmask1[0]), 0, A);
 }
 
-static void M394MMC3PW(uint16 A, uint16 V) {
-	uint8 mask = (reg[3] & 0x10) ? 0x1F : 0x0F;
+static void SetPRG_mmc3(uint16 A, uint16 V) {
+	uint8 mask = (m394.reg[3] & 0x10) ? 0x1F : 0x0F;
 	uint8 base = PRGBase();
 
-	if (reg[1] & 0x08) {
+	if (m394.reg[1] & 0x08) {
 		setprg8(A, base | (V & mask));
 	} else {
-		setprg32(0x8000, (base | ((reg[3] << 1) & 0x0F)) >> 2);
+		setprg32(0x8000, (base | ((m394.reg[3] << 1) & 0x0F)) >> 2);
 	}
 }
 
-static void M394MMC3CW(uint16 A, uint16 V) {
-	uint16 mask = (reg[3] & 0x80) ? 0xFF : 0x7F;
+static void SetCHR_mmc3(uint16 A, uint16 V) {
+	uint16 mask = (m394.reg[3] & 0x80) ? 0xFF : 0x7F;
 	uint16 base = CHRBase();
 
 	if (iNESCart.submapper != 1) {
-		base = (((reg[1] << 8) & 0x100) | ((reg[3] << 1) & 0x080));
+		base = (((m394.reg[1] << 8) & 0x100) | ((m394.reg[3] << 1) & 0x080));
 	}
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(M394WriteReg) {
-	uint8 oldMode = reg[1];
+static DECLFW(WriteReg) {
+	uint8 oldMode = m394.reg[1];
 
 	A &= 3;
-	reg[A] = V;
+	m394.reg[A] = V;
 	switch (A) {
 	case 1:
 		if (!(oldMode & 0x10) && (V & 0x10)) {
@@ -102,7 +109,7 @@ static DECLFW(M394WriteReg) {
 		}
 		break;
 	default:
-		if (reg[1] & 0x10) {
+		if (m394.reg[1] & 0x10) {
 			JYASIC_SyncPRG();
 			JYASIC_SyncCHR();
 			JYASIC_SyncMirror();
@@ -115,11 +122,11 @@ static DECLFW(M394WriteReg) {
 	}
 }
 
-static void M394StateRestore(int version) {
+static void StateRestore(int version) {
 	int i;
 
 	JYASIC_restoreWriteHandlers();
-	if (reg[1] & 0x10) {
+	if (m394.reg[1] & 0x10) {
 		SetWriteHandler(0x5000, 0x5FFF, JYASIC_WriteALU);
 		SetWriteHandler(0x6000, 0x7fff, CartBW);
 		SetWriteHandler(0x8000, 0x87FF, JYASIC_WritePRG); /* 8800-8FFF ignored */
@@ -139,7 +146,7 @@ static void M394StateRestore(int version) {
 		JYASIC_SyncCHR();
 		JYASIC_SyncMirror();
 	} else {
-		SetWriteHandler(0x5000, 0x5FFF, M394WriteReg);
+		SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 		SetWriteHandler(0x8000, 0xFFFF, MMC3_Write);
 		SetReadHandler(0x8000, 0xFFFF, CartBR);
 		MMC3_SyncPRG();
@@ -147,31 +154,30 @@ static void M394StateRestore(int version) {
 	}
 }
 
-static void M394Power(void) {
-	reg[0] = 0x00;
-	reg[1] = 0x0F; /* start in MMC3 mode */
-	reg[2] = 0x00;
-	reg[3] = 0x90; /* set default chr/prg mask */
+static void Power(void) {
+	memset(&m394, 0, sizeof(m394));
+	m394.reg[1] = 0x0F; /* start in MMC3 mode */
+	m394.reg[3] = 0x90; /* set default chr/prg mask */
 	JYASIC_RegReset();
 	MMC3_Power();
-	SetWriteHandler(0x5000, 0x5FFF, M394WriteReg);
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 }
 
 void Mapper394_Init(CartInfo *info) {
 	/* Multicart */
 	JYASIC_Init(info, TRUE);
-	JYASIC_pwrap = M394JYPW;
-	JYASIC_cwrap = M394JYCW;
-	JYASIC_wwrap = M394JYWW;
-	JYASIC_mwrap = M394JYMW;
+	JYASIC_pwrap = SetPRG_jy;
+	JYASIC_cwrap = SetCHR_jy;
+	JYASIC_wwrap = SetWRAM_jy;
+	JYASIC_mwrap = SetMirror_jy;
 
 	MMC3_Init(info, MMC3B, 0, 0);
-	MMC3_pwrap = M394MMC3PW;
-	MMC3_cwrap = M394MMC3CW;
+	MMC3_pwrap = SetPRG_mmc3;
+	MMC3_cwrap = SetCHR_mmc3;
 
-	info->Reset = M394Power;
-	info->Power = M394Power;
+	info->Reset = Power;
+	info->Power = Power;
 
-	AddExState(reg, 4, 0, "HSK");
-	GameStateRestore = M394StateRestore;
+	GameStateRestore = StateRestore;
+	AddExState(StateRegs, ~0, 0, NULL);
 }

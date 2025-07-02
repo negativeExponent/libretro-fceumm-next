@@ -30,33 +30,33 @@ static uint32 GetCHRBank(uint32 V) {
 	return ((jyasic.mode[3] << 7) | (V & 0x7F));
 }
 
-static void M295Power(void) {
-	JYASIC_Power();
-	FDSSound_Power();
-}
-
-static void M295PW(uint16 A, uint32 V) {
+static void SetPRG(uint16 A, uint32 V) {
 	setprg8(A, GetPRGBank(V));
 }
 
-static void M295CW(uint16 A, uint32 V) {
+static void SetCHR(uint16 A, uint32 V) {
 	setchr1(A, GetCHRBank(V));
 }
 
-static void M295WW(uint16 A, uint32 V) {
+static void SetWRAM(uint16 A, uint32 V) {
 	setprg8(A, GetPRGBank(V));
 }
 
-static void M295MW(uint16 A, uint32 V) {
+static void SetMirror(uint16 A, uint32 V) {
 	setntamem(CHRptr[0] + 0x400 * (GetCHRBank(V) & CHRmask1[0]), 0, A);
+}
+
+static void Power(void) {
+	JYASIC_Power();
+	FDSSound_Power();
 }
 
 void Mapper295_Init(CartInfo *info) {
 	/* Multicart */
 	JYASIC_Init(info, TRUE);
-	info->Power = M295Power;
-	JYASIC_pwrap = M295PW;
-	JYASIC_cwrap = M295CW;
-	JYASIC_wwrap = M295WW;
-	JYASIC_mwrap = M295MW;
+	info->Power = Power;
+	JYASIC_pwrap = SetPRG;
+	JYASIC_cwrap = SetCHR;
+	JYASIC_wwrap = SetWRAM;
+	JYASIC_mwrap = SetMirror;
 }

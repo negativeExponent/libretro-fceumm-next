@@ -33,27 +33,27 @@ static uint32 GetCHRBank(uint32 V) {
 	}
 }
 
-static void M387PW(uint16 A, uint32 V) {
+static void SetPRG(uint16 A, uint32 V) {
 	setprg8(A, GetPRGBank(V));
 }
 
-static void M387CW(uint16 A, uint32 V) {
+static void SetCHR(uint16 A, uint32 V) {
 	setchr1(A, GetCHRBank(V));
 }
 
-static void M387WW(uint16 A, uint32 V) {
+static void SetWRAM(uint16 A, uint32 V) {
 	setprg8(A, GetPRGBank(V));
 }
 
-static void M387MW(uint16 A, uint32 V) {
+static void SetMirror(uint16 A, uint32 V) {
 	setntamem(CHRptr[0] + 0x400 * (GetCHRBank(V) & CHRmask1[0]), 0, A);
 }
 
 void Mapper387_Init(CartInfo *info) {
 	/* Multicart */
 	JYASIC_Init(info, TRUE);
-	JYASIC_pwrap = M387PW;
-	JYASIC_cwrap = M387CW;
-	JYASIC_wwrap = M387WW;
-	JYASIC_mwrap = M387MW;
+	JYASIC_pwrap = SetPRG;
+	JYASIC_cwrap = SetCHR;
+	JYASIC_wwrap = SetWRAM;
+	JYASIC_mwrap = SetMirror;
 }

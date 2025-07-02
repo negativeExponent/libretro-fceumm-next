@@ -38,26 +38,26 @@ static uint32 GetCHRBank(uint32 V) {
 	}
 }
 
-static void M209PW(uint16 A, uint32 V) {
+static void SetPRG(uint16 A, uint32 V) {
 	setprg8(A, GetPRGBank(V));
 }
 
-static void M209CW(uint16 A, uint32 V) {
+static void SetCHR(uint16 A, uint32 V) {
 	setchr1(A, GetCHRBank(V));
 }
 
-static void M209WW(uint16 A, uint32 V) {
+static void SetWRAM(uint16 A, uint32 V) {
 	setprg8(A, GetPRGBank(V));
 }
 
-static void M209MW(uint16 A, uint32 V) {
+static void SetMirror(uint16 A, uint32 V) {
 	setntamem(CHRptr[0] + 0x400 * (GetCHRBank(V) & CHRmask1[0]), 0, A);
 }
 
 void Mapper209_Init(CartInfo *info) {
 	JYASIC_Init(info, (info->mapper != 90) ? TRUE : FALSE);
-	JYASIC_pwrap = M209PW;
-	JYASIC_cwrap = M209CW;
-	JYASIC_wwrap = M209WW;
-	JYASIC_mwrap = M209MW;
+	JYASIC_pwrap = SetPRG;
+	JYASIC_cwrap = SetCHR;
+	JYASIC_wwrap = SetWRAM;
+	JYASIC_mwrap = SetMirror;
 }

@@ -55,36 +55,41 @@ static SFORMAT JYASIC_StateRegs[] = {
 	{ 0 }
 };
 
-static uint8 rev(uint8 val) {
-	return (((val << 6) & 0x40) | ((val << 4) & 0x20) | ((val << 2) & 0x10) | ((val << 0) & 0x08) | ((val >> 2) & 0x04) | ((val >> 4) & 0x02) | ((val >> 6) & 0x01));
-}
-
-static uint32 GENPRGBANK(uint32 V) {
+static uint32 JYASIC_GetPRGBank_default(uint32 V) {
 	return 0;
 }
-static uint32 GENCHRBANK(uint32 V) {
+static uint32 JYASIC_GetCHRBank_default(uint32 V) {
 	return 0;
 }
 
-static void GENPWRAP(uint16 A, uint32 V) {
+static void SetPRG_default(uint16 A, uint32 V) {
 	setprg8(A, V);
 }
 
-static void GENCWRAP(uint16 A, uint32 V) {
+static void SetCHR_default(uint16 A, uint32 V) {
 	setchr1(A, V);
 }
 
-static void GENWWRAP(uint16 A, uint32 V) {
+static void SetWRAM_default(uint16 A, uint32 V) {
 	setprg8(A, V);
 }
 
-static void GENMWRAP(uint16 A, uint32 V) {
-	setntamem(CHRptr[0] + 0x400 * (V & CHRmask1[0]), 0, A & 3);
+static void SetNTMirror_default(uint16 A, uint32 V) {
+	setntamem(CHRptr[0] + 0x400 * (V & CHRmask1[0]), 0, A & 0x03);
+}
+
+static uint8 reverse_bits(uint8 val) {
+	return (((val << 6) & 0x40) |
+		((val << 4) & 0x20) |
+		((val << 2) & 0x10) |
+		((val << 0) & 0x08) |
+		((val >> 2) & 0x04) |
+		((val >> 4) & 0x02) |
+		((val >> 6) & 0x01));
 }
 
 void JYASIC_SyncPRG(void) {
 	uint8 prgLast = (jyasic.mode[0] & 0x04) ? jyasic.prg[3] : 0xFF;
-	uint8 prg6000 = 0;
 
 	switch (jyasic.mode[0] & 0x03) {
 	case 0:
@@ -92,28 +97,89 @@ void JYASIC_SyncPRG(void) {
 		JYASIC_pwrap(0xA000, (prgLast << 2) | 1);
 		JYASIC_pwrap(0xC000, (prgLast << 2) | 2);
 		JYASIC_pwrap(0xE000, (prgLast << 2) | 3);
-		prg6000 = (jyasic.prg[3] << 2) | 3;
 		break;
 	case 1:
 		JYASIC_pwrap(0x8000, (jyasic.prg[1] << 1) | 0);
 		JYASIC_pwrap(0xA000, (jyasic.prg[1] << 1) | 1);
 		JYASIC_pwrap(0xC000, (prgLast << 1) | 0);
 		JYASIC_pwrap(0xE000, (prgLast << 1) | 1);
-		prg6000 = (jyasic.prg[3] << 1) | 1;
 		break;
 	case 2:
 		JYASIC_pwrap(0x8000, jyasic.prg[0]);
 		JYASIC_pwrap(0xA000, jyasic.prg[1]);
 		JYASIC_pwrap(0xC000, jyasic.prg[2]);
 		JYASIC_pwrap(0xE000, prgLast);
-		prg6000 = jyasic.prg[3];
 		break;
 	case 3:
-		JYASIC_pwrap(0x8000, rev(jyasic.prg[0]));
-		JYASIC_pwrap(0xA000, rev(jyasic.prg[1]));
-		JYASIC_pwrap(0xC000, rev(jyasic.prg[2]));
-		JYASIC_pwrap(0xE000, rev(prgLast));
-		prg6000 = rev(jyasic.prg[3]);
+		JYASIC_pwrap(0x8000, reverse_bits(jyasic.prg[0]));
+		JYASIC_pwrap(0xA000, reverse_bits(jyasic.prg[1]));
+		JYASIC_pwrap(0xC000, reverse_bits(jyasic.prg[2]));
+		JYASIC_pwrap(0xE000, reverse_bits(prgLast));
+		break;
+	}
+}
+
+void JYASIC_SyncCHR(void) {
+	switch (jyasic.mode[0] & 0x18) {
+	case 0x00: /* 8 KiB CHR mode */
+		JYASIC_cwrap(0x0000, (jyasic.chr[0] << 3) | 0);
+		JYASIC_cwrap(0x0400, (jyasic.chr[0] << 3) | 1);
+		JYASIC_cwrap(0x0800, (jyasic.chr[0] << 3) | 2);
+		JYASIC_cwrap(0x0C00, (jyasic.chr[0] << 3) | 3);
+		JYASIC_cwrap(0x1000, (jyasic.chr[0] << 3) | 4);
+		JYASIC_cwrap(0x1400, (jyasic.chr[0] << 3) | 5);
+		JYASIC_cwrap(0x1800, (jyasic.chr[0] << 3) | 6);
+		JYASIC_cwrap(0x1C00, (jyasic.chr[0] << 3) | 7);
+		break;
+	case 0x08: /* 4 KiB CHR mode */
+		JYASIC_cwrap(0x0000, (jyasic.chr[(jyasic.latch[0] & 0x02) | 0] << 2) | 0);
+		JYASIC_cwrap(0x0400, (jyasic.chr[(jyasic.latch[0] & 0x02) | 0] << 2) | 1);
+		JYASIC_cwrap(0x0800, (jyasic.chr[(jyasic.latch[0] & 0x02) | 0] << 2) | 2);
+		JYASIC_cwrap(0x0C00, (jyasic.chr[(jyasic.latch[0] & 0x02) | 0] << 2) | 3);
+		JYASIC_cwrap(0x1000, (jyasic.chr[(jyasic.latch[1] & 0x02) | 4] << 2) | 0);
+		JYASIC_cwrap(0x1400, (jyasic.chr[(jyasic.latch[1] & 0x02) | 4] << 2) | 1);
+		JYASIC_cwrap(0x1800, (jyasic.chr[(jyasic.latch[1] & 0x02) | 4] << 2) | 2);
+		JYASIC_cwrap(0x1C00, (jyasic.chr[(jyasic.latch[1] & 0x02) | 4] << 2) | 3);
+		break;
+	case 0x10: /* 2 KiB CHR mode */
+		JYASIC_cwrap(0x0000, (jyasic.chr[0] << 1) | 0);
+		JYASIC_cwrap(0x0400, (jyasic.chr[0] << 1) | 1);
+		JYASIC_cwrap(0x0800, (jyasic.chr[2] << 1) | 0);
+		JYASIC_cwrap(0x0C00, (jyasic.chr[2] << 1) | 1);
+		JYASIC_cwrap(0x1000, (jyasic.chr[4] << 1) | 0);
+		JYASIC_cwrap(0x1400, (jyasic.chr[4] << 1) | 1);
+		JYASIC_cwrap(0x1800, (jyasic.chr[6] << 1) | 0);
+		JYASIC_cwrap(0x1C00, (jyasic.chr[6] << 1) | 1);
+		break;
+	case 0x18: /* 1 KiB CHR mode */
+		JYASIC_cwrap(0x0000, jyasic.chr[0]);
+		JYASIC_cwrap(0x0400, jyasic.chr[1]);
+		JYASIC_cwrap(0x0800, jyasic.chr[2]);
+		JYASIC_cwrap(0x0C00, jyasic.chr[3]);
+		JYASIC_cwrap(0x1000, jyasic.chr[4]);
+		JYASIC_cwrap(0x1400, jyasic.chr[5]);
+		JYASIC_cwrap(0x1800, jyasic.chr[6]);
+		JYASIC_cwrap(0x1C00, jyasic.chr[7]);
+		break;
+	}
+
+	PPUCHRRAM = (jyasic.mode[2] & 0x40) ? 0xFF : 0x00; /* Write-protect or write-enable CHR-RAM */
+}
+
+void JYASIC_SyncWRAM(void) {
+	uint8 prg6000 = jyasic.prg[3];
+
+	switch (jyasic.mode[0] & 0x03) {
+	case 0:
+		prg6000 = (prg6000 << 2) | 3;
+		break;
+	case 1:
+		prg6000 = (prg6000 << 1) | 1;
+		break;
+	case 2:
+		break;
+	case 3:
+		prg6000 = reverse_bits(prg6000);
 		break;
 	}
 	if (jyasic.mode[0] & 0x80) { /* Map ROM */
@@ -123,81 +189,20 @@ void JYASIC_SyncPRG(void) {
 	}
 }
 
-void JYASIC_SyncCHR(void) {
-	/* MMC4 jyasic.mode[0] with 4 KiB CHR jyasic.mode[0] */
-	if (jyasic.mode[3] & 0x80 && (jyasic.mode[0] & 0x18) == 0x08) {
-		JYASIC_cwrap(0x0000, (jyasic.chr[(jyasic.latch[0] & 2) | 0] << 2) | 0);
-		JYASIC_cwrap(0x0400, (jyasic.chr[(jyasic.latch[0] & 2) | 0] << 2) | 1);
-		JYASIC_cwrap(0x0800, (jyasic.chr[(jyasic.latch[0] & 2) | 0] << 2) | 2);
-		JYASIC_cwrap(0x0C00, (jyasic.chr[(jyasic.latch[0] & 2) | 0] << 2) | 3);
-		JYASIC_cwrap(0x1000, (jyasic.chr[(jyasic.latch[1] & 2) | 4] << 2) | 0);
-		JYASIC_cwrap(0x1400, (jyasic.chr[(jyasic.latch[1] & 2) | 4] << 2) | 1);
-		JYASIC_cwrap(0x1800, (jyasic.chr[(jyasic.latch[1] & 2) | 4] << 2) | 2);
-		JYASIC_cwrap(0x1C00, (jyasic.chr[(jyasic.latch[1] & 2) | 4] << 2) | 3);
-	} else {
-		switch (jyasic.mode[0] & 0x18) {
-		case 0x00: /* 8 KiB CHR mode */
-			JYASIC_cwrap(0x0000, (jyasic.chr[0] << 3) | 0);
-			JYASIC_cwrap(0x0400, (jyasic.chr[0] << 3) | 1);
-			JYASIC_cwrap(0x0800, (jyasic.chr[0] << 3) | 2);
-			JYASIC_cwrap(0x0C00, (jyasic.chr[0] << 3) | 3);
-			JYASIC_cwrap(0x1000, (jyasic.chr[0] << 3) | 4);
-			JYASIC_cwrap(0x1400, (jyasic.chr[0] << 3) | 5);
-			JYASIC_cwrap(0x1800, (jyasic.chr[0] << 3) | 6);
-			JYASIC_cwrap(0x1C00, (jyasic.chr[0] << 3) | 7);
-			break;
-		case 0x08: /* 4 KiB CHR mode */
-			JYASIC_cwrap(0x0000, (jyasic.chr[0] << 2) | 0);
-			JYASIC_cwrap(0x0400, (jyasic.chr[0] << 2) | 1);
-			JYASIC_cwrap(0x0800, (jyasic.chr[0] << 2) | 2);
-			JYASIC_cwrap(0x0C00, (jyasic.chr[0] << 2) | 3);
-			JYASIC_cwrap(0x1000, (jyasic.chr[4] << 2) | 0);
-			JYASIC_cwrap(0x1400, (jyasic.chr[4] << 2) | 1);
-			JYASIC_cwrap(0x1800, (jyasic.chr[4] << 2) | 2);
-			JYASIC_cwrap(0x1C00, (jyasic.chr[4] << 2) | 3);
-			break;
-		case 0x10: /* 2 KiB CHR mode */
-			JYASIC_cwrap(0x0000, (jyasic.chr[0] << 1) | 0);
-			JYASIC_cwrap(0x0400, (jyasic.chr[0] << 1) | 1);
-			JYASIC_cwrap(0x0800, (jyasic.chr[2] << 1) | 0);
-			JYASIC_cwrap(0x0C00, (jyasic.chr[2] << 1) | 1);
-			JYASIC_cwrap(0x1000, (jyasic.chr[4] << 1) | 0);
-			JYASIC_cwrap(0x1400, (jyasic.chr[4] << 1) | 1);
-			JYASIC_cwrap(0x1800, (jyasic.chr[6] << 1) | 0);
-			JYASIC_cwrap(0x1C00, (jyasic.chr[6] << 1) | 1);
-			break;
-		case 0x18: /* 1 KiB CHR mode */
-			JYASIC_cwrap(0x0000, jyasic.chr[0]);
-			JYASIC_cwrap(0x0400, jyasic.chr[1]);
-			JYASIC_cwrap(0x0800, jyasic.chr[2]);
-			JYASIC_cwrap(0x0C00, jyasic.chr[3]);
-			JYASIC_cwrap(0x1000, jyasic.chr[4]);
-			JYASIC_cwrap(0x1400, jyasic.chr[5]);
-			JYASIC_cwrap(0x1800, jyasic.chr[6]);
-			JYASIC_cwrap(0x1C00, jyasic.chr[7]);
-			break;
-		}
-	}
-
-	PPUCHRRAM = (jyasic.mode[2] & 0x40) ? 0xFF : 0x00; /* Write-protect or write-enable CHR-RAM */
-}
-
 void JYASIC_SyncMirror(void) {
-	if (jyasic.mode[0] & 0x20 || jyasic.mode[1] & 0x08) {
-		/* ROM nametables or extended mirroring */
-		/* First, set normal CIRAM pages using extended registers ... */
-		setmirrorw(jyasic.nt[0] & 1, jyasic.nt[1] & 1, jyasic.nt[2] & 1, jyasic.nt[3] & 1);
-
-		if (jyasic.mode[0] & 0x20) {
-			int i;
-			for (i = 0; i < 4; i++) {
-				/* Then replace with ROM nametables if such are generally enabled */
-				/* ROM nametables are used either when globally enabled via
-				 * D000.6 or per-bank via B00x.7 vs. D002.7 */
-				if (((jyasic.nt[i] & 0x80) ^ (jyasic.mode[2] & 0x80)) | (jyasic.mode[0] & 0x40)) {
-					JYASIC_mwrap(i, jyasic.nt[i]);
-				}
+	if (jyasic.mode[0] & 0x20) {
+		int i;
+		for (i = 0; i < 4; i++) {
+			if (((jyasic.nt[i] ^ jyasic.mode[2]) & 0x80) | (jyasic.mode[0] & 0x40)) {
+				JYASIC_mwrap(i, jyasic.nt[i]);
+			} else {
+				setntamem(NTARAM + (0x0400 * (jyasic.nt[i] & 0x01)), TRUE, i);
 			}
+		}
+	} else if (jyasic.mode[1] & 0x08) {
+		int i;
+		for (i = 0; i < 4; i++) {
+			setntamem(NTARAM + (0x0400 * (jyasic.nt[i] & 0x01)), TRUE, i);
 		}
 	} else {
 		switch (jyasic.mode[1] & 0x03) {
@@ -277,11 +282,26 @@ static void trapPPUAddressChange(uint32 A) {
 			clockIRQ(); /* Clock IRQ counter on PPU "reads" */
 		}
 	}
-	if ((jyasic.mode[3] & 0x80) && ((jyasic.mode[0] & 0x18) == 0x08) && (((A & 0x2FF0) == 0xFD0) || ((A & 0x2FF0) == 0xFE0))) {
-		/* If MMC4 jyasic.mode[0] is enabled, and CHR jyasic.mode[0] is 4 KiB, and tile FD or FE is being fetched ... */
-		jyasic.latch[(A >> 12) & 1] = ((A >> 10) & 4) | ((A >> 4) & 2); /* switch the left or right pattern table's latch to 0 (FD) or 2 (FE),
-		                                                                 * being used as an offset for the CHR register index. */
-		JYASIC_SyncCHR();
+	if (jyasic.mode[3] & 0x80) {
+		switch (A & 0x2FF0) {
+		case 0x0FD0:
+		case 0x0FE0:
+			/* If MMC4 jyasic.mode[0] is enabled, and CHR jyasic.mode[0] is
+			 * 4 KiB, and tile FD or FE is being fetched ... */
+			if ((jyasic.mode[0] & 0x18) == 0x08) {
+				/* switch the left or right pattern table's
+				 * latch to 0 (FD) or 2 (FE), being used as
+				 * an offset for the CHR register index. */
+				uint8 chr = (A >> 4) & (((A >> 10) & 0x04) | 0x02);
+				uint8 bank = (A >> 12) & 0x01;
+
+				if (jyasic.latch[bank] != chr) {
+					jyasic.latch[bank] = chr;
+					JYASIC_SyncCHR();
+				}
+			}
+			break;
+		}
 	}
 	lastPPUAddress = A;
 }
@@ -291,7 +311,7 @@ static void ppuScanline(void) {
 		int i;
 		for (i = 0; i < 8; i++) {
 			clockIRQ(); /* Clock IRQ counter on A12 rises (eight per scanline). This should be done in
-			               trapPPUAddressChange, but would require more accurate PPU emulation for that. */
+						   trapPPUAddressChange, but would require more accurate PPU emulation for that. */
 		}
 	}
 }
@@ -345,33 +365,34 @@ DECLFW(JYASIC_WriteALU) {
 }
 
 DECLFW(JYASIC_WritePRG) {
-	jyasic.prg[A & 3] = V;
+	jyasic.prg[A & 0x03] = V;
 	JYASIC_SyncPRG();
+	JYASIC_SyncWRAM();
 }
 
 DECLFW(JYASIC_WriteCHRLow) {
-	jyasic.chr[A & 7] = (jyasic.chr[A & 7] & 0xFF00) | V;
+	jyasic.chr[A & 0x07] = (jyasic.chr[A & 0x07] & 0xFF00) | V;
 	JYASIC_SyncCHR();
 }
 
 DECLFW(JYASIC_WriteCHRHigh) {
-	jyasic.chr[A & 7] = (jyasic.chr[A & 7] & 0x00FF) | V << 8;
+	jyasic.chr[A & 0x07] = (jyasic.chr[A & 0x07] & 0x00FF) | V << 8;
 	JYASIC_SyncCHR();
 }
 
 DECLFW(JYASIC_WriteNT) {
-	if (~A & 4) {
-		jyasic.nt[A & 3] = (jyasic.nt[A & 3] & 0xFF00) | V;
+	if (!(A & 0x04)) {
+		jyasic.nt[A & 0x03] = (jyasic.nt[A & 0x03] & 0xFF00) | V;
 	} else {
-		jyasic.nt[A & 3] = (jyasic.nt[A & 3] & 0x00FF) | V << 8;
+		jyasic.nt[A & 0x03] = (jyasic.nt[A & 0x03] & 0x00FF) | V << 8;
 	}
 	JYASIC_SyncMirror();
 }
 
 DECLFW(JYASIC_WriteIRQ) {
-	switch (A & 7) {
+	switch (A & 0x07) {
 	case 0:
-		jyasic.irq.enable = !!(V & 1);
+		jyasic.irq.enable = !!(V & 0x01);
 		if (!jyasic.irq.enable) {
 			jyasic.irq.prescaler = 0;
 			X6502_IRQEnd(FCEU_IQEXT);
@@ -381,12 +402,12 @@ DECLFW(JYASIC_WriteIRQ) {
 		jyasic.irq.control = V;
 		break;
 	case 2:
-		jyasic.irq.enable = 0;
+		jyasic.irq.enable = FALSE;
 		jyasic.irq.prescaler = 0;
 		X6502_IRQEnd(FCEU_IQEXT);
 		break;
 	case 3:
-		jyasic.irq.enable = 1;
+		jyasic.irq.enable = TRUE;
 		break;
 	case 4:
 		jyasic.irq.prescaler = V ^ jyasic.irq.xor ;
@@ -401,7 +422,7 @@ DECLFW(JYASIC_WriteIRQ) {
 }
 
 DECLFW(JYASIC_WriteMode) {
-	switch (A & 3) {
+	switch (A & 0x03) {
 	case 0:
 		jyasic.mode[0] = V;
 		if (!allow_extended_mirroring) {
@@ -423,6 +444,7 @@ DECLFW(JYASIC_WriteMode) {
 	}
 	JYASIC_SyncPRG();
 	JYASIC_SyncCHR();
+	JYASIC_SyncWRAM();
 	JYASIC_SyncMirror();
 }
 
@@ -437,22 +459,22 @@ void JYASIC_restoreWriteHandlers(void) {
 }
 
 void JYASIC_RegReset(void) {
-	memset(jyasic.mode, 0, sizeof(jyasic.mode));
-	memset(jyasic.prg, 0, sizeof(jyasic.prg));
-	memset(jyasic.chr, 0, sizeof(jyasic.chr));
-	memset(jyasic.nt, 0, sizeof(jyasic.nt));
-	memset(jyasic.mul, 0, sizeof(jyasic.mul));
+	memset(&jyasic, 0, sizeof(jyasic));
 
-	jyasic.adder = jyasic.test = dipSwitch = 0;
-	jyasic.irq.control = jyasic.irq.enable = 0;
-	jyasic.irq.prescaler = jyasic.irq.counter = 0;
-	jyasic.irq.xor = lastPPUAddress = 0;
-
-	jyasic.latch[0] = 0;
-	jyasic.latch[1] = 4;
+	jyasic.latch[0] = 0x00;
+	jyasic.latch[1] = 0x04;
 
 	JYASIC_SyncPRG();
 	JYASIC_SyncCHR();
+	JYASIC_SyncWRAM();
+	JYASIC_SyncMirror();
+}
+
+void JYASIC_Reset(void) {
+	dipSwitch = (dipSwitch + 0x40) & 0xC0;
+	JYASIC_SyncPRG();
+	JYASIC_SyncCHR();
+	JYASIC_SyncWRAM();
 	JYASIC_SyncMirror();
 }
 
@@ -481,34 +503,24 @@ void JYASIC_Power(void) {
 	JYASIC_RegReset();
 }
 
-void JYASIC_Reset(void) {
-	dipSwitch = (dipSwitch + 0x40) & 0xC0;
-	JYASIC_SyncPRG();
-	JYASIC_SyncCHR();
-	JYASIC_SyncMirror();
-}
-
-void JYASIC_Close(void) {
-}
-
 static void StateRestore(int version) {
 	JYASIC_SyncPRG();
 	JYASIC_SyncCHR();
+	JYASIC_SyncWRAM();
 	JYASIC_SyncMirror();
 }
 
 void JYASIC_Init(CartInfo *info, int extended_mirr) {
-	JYASIC_pwrap = GENPWRAP;
-	JYASIC_cwrap = GENCWRAP;
-	JYASIC_wwrap = GENWWRAP;
-	JYASIC_mwrap = GENMWRAP;
+	JYASIC_pwrap = SetPRG_default;
+	JYASIC_cwrap = SetCHR_default;
+	JYASIC_wwrap = SetWRAM_default;
+	JYASIC_mwrap = SetNTMirror_default;
 
 	allow_extended_mirroring = extended_mirr;
 
 	JYASIC_CPUWriteHandlersSet = 0;
 	info->Reset = JYASIC_Reset;
 	info->Power = JYASIC_Power;
-	info->Close = JYASIC_Close;
 
 	PPU_hook = trapPPUAddressChange;
 	MapIRQHook = cpuCycle;

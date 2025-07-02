@@ -30,23 +30,23 @@ static uint32 GetCHRBank(uint32 V) {
 	return ((jyasic.mode[3] << 7) | (V & 0x07F));
 }
 
-static void M397PW(uint16 A, uint32 V) {
+static void SetPRG(uint16 A, uint32 V) {
 	setprg8(A, GetPRGBank(V));
 }
 
-static void M397CW(uint16 A, uint32 V) {
+static void SetCHR(uint16 A, uint32 V) {
 	setchr1(A, GetCHRBank(V));
 }
 
-static void M397WW(uint16 A, uint32 V) {
+static void SetWRAM(uint16 A, uint32 V) {
 	setprg8(A, GetPRGBank(V));
 }
 
-static void M397MW(uint16 A, uint32 V) {
+static void SetMirror(uint16 A, uint32 V) {
 	setntamem(CHRptr[0] + 0x400 * (GetCHRBank(V) & CHRmask1[0]), 0, A);
 }
 
-static void M397Power(void) {
+static void Power(void) {
 	JYASIC_Power();
 	FDSSound_Power();
 }
@@ -54,9 +54,9 @@ static void M397Power(void) {
 void Mapper397_Init(CartInfo *info) {
 	/* Multicart */
 	JYASIC_Init(info, TRUE);
-	info->Power = M397Power;
-	JYASIC_pwrap = M397PW;
-	JYASIC_cwrap = M397CW;
-	JYASIC_wwrap = M397WW;
-	JYASIC_mwrap = M397MW;
+	info->Power = Power;
+	JYASIC_pwrap = SetPRG;
+	JYASIC_cwrap = SetCHR;
+	JYASIC_wwrap = SetWRAM;
+	JYASIC_mwrap = SetMirror;
 }
