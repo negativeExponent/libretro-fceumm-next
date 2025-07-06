@@ -21,8 +21,8 @@
 /* FIXME: Bar code input interface not attached yet */
 
 #include "mapinc.h"
-#include "eeprom_x24c0x.h"
-#include "bandai.h"
+#include "eeprom_24C0x.h"
+#include "fcg.h"
 
 /* Datach Barcode Battler */
 
@@ -203,6 +203,9 @@ static struct {
 	uint8 epromData[512];
 } m157;
 
+static X24C0X internalEeprom = { 0 };
+static X24C0X extraEeprom = { 0 };
+
 static uint8 hasExternalEEPROM = FALSE;
 
 static void SetPRG(uint16 A, uint16 V) {
@@ -214,34 +217,43 @@ static void SetCHR(uint16 A, uint16 V) {
 }
 
 static DECLFR(ReadEeprom) {
-	return ((cpu.openbus & 0xE7) | ((x24c02_read() | x24c01_read()) << 4) | BarcodeOut);
+	uint8 ret = 0x10;
+	ret &= eeprom_read(&internalEeprom);
+	if (hasExternalEEPROM) {
+		ret &= eeprom_read(&extraEeprom);
+	}
+	ret |= BarcodeOut & 0x08;
+	return ((cpu.openbus & ~0x18) | (ret & 0x18));
 }
 
 static DECLFW(WriteEepromReg) {
 	switch (A & 0x0F) {
 	case 0x00:
+		FCG_Write(A, V);
 		m157.epromLatch &= ~0x20;
 		m157.epromLatch |= (V << 2) & 0x20;
 		if (hasExternalEEPROM) {
-			x24c01_write(m157.epromLatch);
+			eeprom_i2c_step(&extraEeprom, (m157.epromLatch & 0x20) >> 5, (m157.epromLatch & 0x40) >> 6);
 		}
 		break;
 	case 0x0D:
 		m157.epromLatch &= ~0x40;
 		m157.epromLatch |= (V & 0x40);
 		if (hasExternalEEPROM) {
-			x24c01_write(m157.epromLatch);
+			eeprom_i2c_step(&extraEeprom, (m157.epromLatch & 0x20) >> 5, (m157.epromLatch & 0x40) >> 6);
 		}
-		x24c02_write(V);
+		eeprom_i2c_step(&internalEeprom,
+			(V & 0x80) ? TRUE : (V & 0x20) >> 5,
+			(V & 0x80) ? TRUE : (V & 0x40) >> 6);
 		break;
 	default:
-		BANDAI_Write(A, V);
+		FCG_Write(A, V);
 		break;
 	}
 }
 
 static void HBIRQHook(int a) {
-	BANDAI_IRQHook(a);
+	FCG_CPUIRQHook(a);
 
 	BarcodeCycleCount += a;
 	if (BarcodeCycleCount >= 1000) {
@@ -256,7 +268,7 @@ static void HBIRQHook(int a) {
 }
 
 static void Power(void) {
-	BANDAI_Reset();
+	FCG_Power();
 
 	BarcodeData[0] = 0xFF;
 	BarcodeReadPos = 0;
@@ -264,14 +276,13 @@ static void Power(void) {
 	BarcodeCycleCount = 0;
 
 	SetReadHandler(0x6000, 0x7FFF, ReadEeprom);
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0xFFFF, WriteEepromReg);
 }
 
 void Mapper157_Init(CartInfo *info) {
-	BANDAI_Init(info, EEPROM_NONE, FALSE);
-	BANDAI_pwrap = SetPRG;
-	BANDAI_cwrap = SetCHR;
+	FCG_Init(info, FCG_TYPE_LZ93D50);
+	FCG_pwrap = SetPRG;
+	FCG_cwrap = SetCHR;
 
 	info->Power = Power;
 	MapIRQHook = HBIRQHook;
@@ -281,22 +292,21 @@ void Mapper157_Init(CartInfo *info) {
 	/* internal eeprom.data shared among all games
 	and always enabled regardless of battery flag */
 	info->battery = 1;
-	x24c02_init(m157.epromData);
-	AddExState(&x24c02_StateRegs, ~0, 0, 0);
+	eeprom_24C02_init(&internalEeprom, &m157.epromData[0]);
+	eeprom_AddStateInfo(&internalEeprom);
 
-	if (info->iNES2 || (info->PRGRamSaveSize & 0xF0)) {
+	if (!info->iNES2 || (info->PRGRamSaveSize & 0xF0)) {
 		/* additional 128 external epromData */
-		x24c01_init(&m157.epromData[256]);
-		AddExState(&x24c01_StateRegs, ~0, 0, 0);
+		eeprom_24C01_init(&extraEeprom, &m157.epromData[256]);
+		eeprom_AddStateInfo(&extraEeprom);
 		AddExState(&m157.epromLatch, 1, 0, "LATC");
 		hasExternalEEPROM = TRUE;
 	}
 
+	info->SaveGame[0] = m157.epromData;
 	if (hasExternalEEPROM) {
-		info->SaveGame[0] = m157.epromData;
 		info->SaveGameLen[0] = 512;
 	} else {
-		info->SaveGame[0] = m157.epromData;
 		info->SaveGameLen[0] = 256;
 	}
 }

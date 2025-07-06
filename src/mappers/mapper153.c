@@ -27,8 +27,8 @@
  */
 
  #include "mapinc.h"
-#include "eeprom_x24c0x.h"
-#include "bandai.h"
+#include "eeprom_24C0x.h"
+#include "fcg.h"
 
  static struct {
 	uint8 reg;
@@ -50,16 +50,15 @@ static void SetCHR(uint16 A, uint16 V) {
 static DECLFW(WriteReg) {
 	if ((A & 0x0F) <= 0x03) {
 		m153.reg = V;
-		BANDAI_SyncPRG();
+		FCG_SyncPRG();
 	}
-	BANDAI_Write(A, V);
+	FCG_Write(A, V);
 }
 
 static void Power(void) {
-	BANDAI_Power();
+	FCG_Power();
 	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 	if (WRAMSIZE) {
-		setprg8r(0x10, 0x6000, 0);
 		SetReadHandler(0x6000, 0x7FFF, CartBR);
 		SetWriteHandler(0x6000, 0x7FFF, CartBW);
 		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
@@ -67,10 +66,10 @@ static void Power(void) {
 }
 
 void Mapper153_Init(CartInfo *info) {
-	BANDAI_Init(info, EEPROM_NONE, FALSE);
+	FCG_Init(info, FCG_TYPE_LZ93D50);
 	info->Power = Power;
-	BANDAI_pwrap = SetPRG;
-	BANDAI_cwrap = SetCHR;
+	FCG_pwrap = SetPRG;
+	FCG_cwrap = SetCHR;
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;

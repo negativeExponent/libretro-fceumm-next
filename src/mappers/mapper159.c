@@ -19,8 +19,10 @@
  */
 
 #include "mapinc.h"
-#include "eeprom_x24c0x.h"
-#include "bandai.h"
+#include "eeprom_24C0x.h"
+#include "fcg.h"
+
+static X24C0X eeprom = { 0 };
 
 static void SetPRG(uint16 A, uint16 V) {
 	setprg16(A, V & 0x1F); /* map upto 512K PRG for fan translations etc */
@@ -31,7 +33,21 @@ static void SetCHR(uint16 A, uint16 V) {
 }
 
 void Mapper159_Init(CartInfo *info) {
-	BANDAI_Init(info, EEPROM_X24C01, FALSE);
-	BANDAI_pwrap = SetPRG;
-	BANDAI_cwrap = SetCHR;
+	FCG_Init(info, FCG_TYPE_Unknown);
+	FCG_pwrap = SetPRG;
+	FCG_cwrap = SetCHR;
+
+	if (!info->iNES2 || info->PRGRamSaveSize) {
+		WRAMSIZE = info->PRGRamSaveSize ? info->PRGRamSaveSize : 128;
+		WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
+		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+
+		eeprom_24C01_init(&eeprom, WRAM);
+		eeprom_AddStateInfo(&eeprom);
+
+		FCG_SetEeprom(&eeprom);
+
+		info->SaveGame[0] = WRAM;
+		info->SaveGameLen[0] = WRAMSIZE;
+	}
 }

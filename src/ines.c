@@ -707,7 +707,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "",                         154, Mapper154_Init         )
 	INES_BOARD( "SxROM (MMC1A)",            155, Mapper001_Init         )
 	INES_BOARD( "",                         156, Mapper156_Init         )
-	INES_BOARD( "BANDAI BARCODE",           157, Mapper157_Init         )
+	INES_BOARD( "BANDAI DATACH/BARCODE",    157, Mapper157_Init         )
 	INES_BOARD( "TENGEN 800037",            158, Mapper064_Init         )
 	INES_BOARD( "BANDAI 24C01",             159, Mapper159_Init         ) /* Different type of EEPROM on the  bandai board */
 	INES_BOARD( "SA009/HUMMER/JY BOARD",    160, Mapper209_Init         ) /* iNES Mapper 160 appeared to describe variant behavior of iNES Mapper 090, but Mapper 90 fully encompasses the behavior Mapper 160 was intended to emulate. */

@@ -18,23 +18,46 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#ifndef _EEPROM_X24C0X_H
-#define _EEPROM_X24C0X_H
+#ifndef _FCG_H
+#define _FCG_H
 
-typedef enum {
-	EEPROM_NONE = 0,
-	EEPROM_X24C01,
-	EEPROM_X24C02
-} EEPROM_TYPE;
+typedef enum __FCGTypes {
+    FCG_TYPE_Unknown,
+    FCG_TYPE_FCG,
+    FCG_TYPE_LZ93D50
+} FCGTypes;
 
-void x24c01_init(uint8 *data);
-void x24c01_write(uint8 V);
-uint8 x24c01_read(void);
-extern SFORMAT x24c01_StateRegs[9];
+typedef enum __FCGEepromTypes {
+    FCG_EEPROM_NONE,
+    FCG_EEPROM_C01,
+    FCG_EEPROM_C02
+} FCGEepromTypes;
 
-void x24c02_init(uint8 *data);
-void x24c02_write(uint8 V);
-uint8 x24c02_read(void);
-extern SFORMAT x24c02_StateRegs[9];
+typedef struct __FCG {
+	uint8 prg;
+	uint8 chr[8];
+	uint8 mirror;
+	uint8 wramEnabled;
+	uint8 IRQa;
+	int16 IRQCount;
+	int16 IRQLatch;
+} FCG;
 
-#endif /* _EEPROM_X24C0X_H */
+DECLFW(FCG_Write);
+
+void FCG_Power(void);
+void FCG_CPUIRQHook(int a);
+void FCG_Reset(void);
+
+void FCG_Init(CartInfo *info, uint8 _FCGType);
+void FCG_SetEeprom(X24C0X *e);
+
+void FCG_SyncPRG(void);
+void FCG_SyncCHR(void);
+void FCG_SyncMirror(void);
+void SyncWRAM(void);
+
+extern void (*FCG_pwrap)(uint16 A, uint16 V);
+extern void (*FCG_cwrap)(uint16 A, uint16 V);
+
+#endif /* _FCG_H */

@@ -19,33 +19,45 @@
  */
 
 #include "mapinc.h"
-#include "eeprom_x24c0x.h"
-#include "bandai.h"
+#include "eeprom_24C0x.h"
+#include "fcg.h"
 
-static void SetPRGBank_bandai(uint16 A, uint16 V) {
+static X24C0X eeprom = { 0 };
+
+static void SetPRG(uint16 A, uint16 V) {
 	setprg16(A, V & 0x0F);
 }
 
-static void SetCHRBank_bandai(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, V);
 }
 
 void Mapper016_Init(CartInfo *info) {
 	switch (info->submapper) {
 	case 4:
-		BANDAI_Init(info, EEPROM_NONE, TRUE);
+		FCG_Init(info, FCG_TYPE_FCG);
 		break;
 	case 5:
-		if (info->battery || ((info->PRGRamSaveSize > 0) && (info->PRGRamSaveSize <= 256))) {
-			BANDAI_Init(info, EEPROM_X24C02, FALSE);
-		} else {
-			BANDAI_Init(info, EEPROM_NONE, FALSE);
-		}
+		FCG_Init(info, FCG_TYPE_LZ93D50);
 		break;
 	default:
-		BANDAI_Init(info, EEPROM_NONE, TRUE);
+		FCG_Init(info, FCG_TYPE_Unknown);
 		break;
 	}
-	BANDAI_pwrap = SetPRGBank_bandai;
-	BANDAI_cwrap = SetCHRBank_bandai;
+	FCG_pwrap = SetPRG;
+	FCG_cwrap = SetCHR;
+
+	if (!info->iNES2 || info->PRGRamSaveSize) {
+		WRAMSIZE = info->PRGRamSaveSize ? info->PRGRamSaveSize : 256;
+		WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
+		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+
+		eeprom_24C02_init(&eeprom, WRAM);
+		eeprom_AddStateInfo(&eeprom);
+
+		FCG_SetEeprom(&eeprom);
+
+		info->SaveGame[0] = WRAM;
+		info->SaveGameLen[0] = WRAMSIZE;
+	}
 }

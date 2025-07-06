@@ -21,11 +21,11 @@ SOURCES_C := $(foreach dir,$(FCEU_SRC_DIRS),$(wildcard $(dir)/*.c))
 
 # HW
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/eeprom_93Cx6.c
-SOURCES_C += $(SOURCE_DIR)/mappers/hw/eeprom_x24c0x.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/eeprom_24C0x.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/flashrom.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/pic16c5x.c
 
-SOURCES_C += $(SOURCE_DIR)/mappers/hw/bandai.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/fcg.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/fme7.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/jv001.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/jyasic.c
