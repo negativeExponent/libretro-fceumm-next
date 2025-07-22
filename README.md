@@ -108,6 +108,9 @@ emu2149 - https://github.com/digital-sound-antiques/emu2149
 
 Changelog:
 ----------
+25.07.22
+- FDS, support for QD format
+
 25.05.2x
 - Mapper rebuilds (start using structs, new naming scheme, etc)
 - Fixed mapper 48

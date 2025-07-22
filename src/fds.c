@@ -1,4 +1,4 @@
-/* FCE Ultra - NES/Famicom Emulator
+/* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
  *  Copyright (C) 2002 Xodnizel
@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <file/file_path.h>
+
 #include "fceu-types.h"
 #include "x6502.h"
 #include "fceu.h"
@@ -43,22 +45,26 @@
  *	when the virtual motor is on(mmm...virtual motor).
  */
 
-static DECLFR(FDSRead);
-static DECLFW(FDSWrite);
+#define DISK_EJECTED 255
+#define DISK_SEEK_IRQ_CYCLES 150
+
+#define BOOT_INSERT_DELAY (60 * 6) /* wait about 6 seconds before inserting disk */
+#define DISK_INSERT_DELAY (60 * 1) /* wait 1 second after inserting disks */
+
+#define FORMAT_FDS 0
+#define FORMAT_QD  1
+
+#define BYTES_PER_DISK_SIDE_FDS 65500
+#define BYTES_PER_DISK_SIDE_QD  65536
+
+static DECLFR(FDSReadReg);
+static DECLFW(FDSWriteReg);
 
 static void FDSPower(void);
 static void FDSReset(void);
 static void FDSClose(void);
 
 static void FDSFix(int a);
-
-static int32 IRQLatch, IRQCount;
-static uint8 IRQa;
-static uint8 IRQr;
-
-static uint32 TotalSides;
-static int32 DiskSeekIRQ;
-static uint8 SelectDisk, InDisk;
 
 enum FDS_DiskBlockIDs {
 	DSK_INIT = 0,
@@ -68,50 +74,201 @@ enum FDS_DiskBlockIDs {
 	DSK_FILEDATA
 };
 
-static uint8 DiskIOEnabled;
+static struct _FDS {
+	uint32 total_sides;
+	uint32 boot_delay;
+	uint32 disk_insert_delay;
 
-/*
-FDS Control ($4025)
-7  bit  0
----------
-IS1B MRTD
-|||| ||||
-|||| |||+- Drive Motor Control
-|||| |||     0: Stop motor
-|||| |||     1: Turn on motor
-|||| ||+-- Transfer Reset
-|||| ||        Set 1 to reset transfer timing to the initial state.
-|||| |+--- Read / Write mode
-|||| |     (0: write; 1: read)
-|||| +---- Mirroring (0: vertical; 1: horizontal)
-|||+------ CRC control (set during CRC calculation of transfer)
-||+------- Always set to '1'
-|+-------- Read/Write Start
-|            Turn on motor.  Set to 1 when the drive becomes ready for
-read/write
-+--------- Interrupt Transfer
-             0: Transfer without using IRQ
-             1: Enable IRQ when the drive becomes ready for
-*/
+	uint8  *current_disk_ptr;
 
-static uint8 mapperFDS_control;     /* 4025(w) control register */
-static uint16 mapperFDS_filesize;   /* size of file being read/written */
-static uint8 mapperFDS_blockID;     /* block-id of current block */
-static uint16 mapperFDS_blockstart; /* start-address of current block */
-static uint16 mapperFDS_blocklen;   /* length of current block */
-static uint16 mapperFDS_diskaddr;   /* current address relative to blockstart */
-static uint8 mapperFDS_diskaccess;  /* disk needs to be accessed at least once
-                                       before writing */
-static uint8 mapperFDS_transferflag;
+	int32  seek_irq_timer;
+	uint8  selected_disk, current_disk;
 
-#define BYTES_PER_SIDE 65500
+	int32  irq_latch, irq_count;
+	uint8  irq_enabled;
+	uint8  irq_repeat;
 
-static uint8 disk_read(uint32 A) {
-	return ROM.disk.data[(BYTES_PER_SIDE * InDisk) + A];
+	uint8  irq_timer;
+	uint8  transfer_flag;
+
+	uint8  disk_reg_enabled;
+	uint8  snd_reg_enabled;
+
+	uint8  control;       /* 4025(w) control register */
+	uint16 filesize;      /* size of file being read/written */
+	uint8  blockid;       /* block-id of current block */
+	uint16 blockstart;    /* start-address of current block */
+	uint16 blocklen;      /* length of current block */
+	uint16 blockpos;      /* current address relative to blockstart */
+	uint8  accessed;      /* disk needs to be accessed at least once before writing */
+
+	struct _disk {
+		uint8  format;
+		uint8  no_crc;
+		uint32 bytes_per_size;
+		uint8  *data[8];
+	} disk;
+} fds;
+
+typedef struct FDSBlock1 {
+	uint32 position;
+	uint8  game_name[3 + 1];
+	uint8  game_version;
+	uint8  side_number;
+	uint8  disk_number;
+} FDSBlock1;
+
+typedef struct FDSBlock2 {
+	uint32 position;
+	uint8  file_count; /* 0x01 */
+} FDSBlock2;
+
+typedef struct FDSBlock3 {
+	uint32 position;
+	uint8  file_number;   /* 0x01 */
+	uint8  file_id;       /* 0x02 */
+	uint8  file_name[9];  /* 0x03-0x0A */
+	uint16 load_address;  /* 0x0B-0x0C */
+	uint16 file_size;     /* 0x0D-0x0E */
+	uint8  file_type;     /* 0x0F */
+} FDSBlock3;
+
+typedef struct FDSBlock4 {
+	uint32 position;
+} FDSBlock4;
+
+typedef struct FDSFileEntry {
+	FDSBlock3 header_block;
+	FDSBlock4 data_block;
+} FDSFileEntry;
+
+#define MAX_FILES 64
+
+typedef struct FDSInfo {
+	FDSBlock1 volume_block;
+	FDSBlock2 count_block;
+	FDSFileEntry files[MAX_FILES];
+	uint32 total_files;
+	uint32 files_counted;
+	uint8  game_name[4];
+} FDSInfo;
+
+static INLINE void fds_memset(uint8 *dst, uint8 value, size_t len) {
+	int i;
+
+	for (i = 0; i < len; i++) {
+		(*dst++) = value;
+	}
 }
 
-static void disk_write(uint32 A, uint8 V) {
-	ROM.disk.data[(BYTES_PER_SIDE * InDisk) + A] = V;
+static INLINE void fds_memcpy(uint8 *dst, const uint8 *src, size_t len) {
+	int i;
+
+	for (i = 0; i < len; i++) {
+		(*dst++) = (*src++);
+	}
+}
+
+static INLINE void fds_memcpy_ascii(uint8 *dst, const uint8 *src, size_t len) {
+	int i;
+
+	fds_memset(dst, 0, len);
+	for (i = 0; i < (len - 1); i++ ) {
+		uint8 ch = src[i] & 0xFF;
+
+		dst[i] = ((ch >= 0x20) && (ch <= 0x7E)) ? ch : 0x20;
+	}
+}
+
+static void fds_info_side(uint8 side, FDSInfo *info) {
+	uint32 pos = 0, filesize = 0;
+	const uint8 *src = fds.disk.data[side];
+
+	fds_memset((uint8 *)info, 0x00, sizeof(FDSInfo));
+
+	for (pos = 0; pos < fds.disk.bytes_per_size;) {
+		uint8 blockid = src[pos], stop = FALSE;
+		uint32 blocklen = 1;
+
+		switch (blockid) {
+		case DSK_VOLUME:   blocklen = 0x38; break;
+		case DSK_FILECNT:  blocklen = 0x02; break;
+		case DSK_FILEHDR:  blocklen = 0x10; break;
+		case DSK_FILEDATA: blocklen = filesize + 1; break;
+		default: stop = TRUE; break;
+		}
+
+		if (stop) {
+			break;
+		}
+
+		if (pos + blocklen > fds.disk.bytes_per_size) {
+			break;
+		}
+
+		if (blockid) {
+			const uint32 file = info->files_counted;
+
+			switch (blockid) {
+			case DSK_VOLUME:
+				info->volume_block.position = pos;
+				fds_memcpy_ascii(&info->volume_block.game_name[0], &src[pos + 0x10], sizeof(info->volume_block.game_name));
+				info->volume_block.game_version = src[pos + 0x14];
+				info->volume_block.side_number = src[pos + 0x15];
+				info->volume_block.disk_number = src[pos + 0x16];
+				break;
+			case DSK_FILECNT:
+				info->count_block.position = pos;
+				info->count_block.file_count = src[pos + 1];
+				info->files_counted = 0;
+				break;
+			case DSK_FILEHDR:
+				info->files[file].header_block.position = pos;
+				info->files[file].header_block.load_address = (src[pos + 0x0C] << 8) | src[pos + 0xD];
+				info->files[file].header_block.file_size = (src[pos + 0x0E] << 8) | src[pos + 0x0D];
+				fds_memcpy_ascii(&info->files[file].header_block.file_name[0], &src[pos + 0x03], sizeof(info->files[file].header_block.file_name));
+				info->files[file].header_block.file_type = src[pos + 0x0F];
+				filesize = info->files[file].header_block.file_size;
+				break;
+			case DSK_FILEDATA:
+				info->files[file].data_block.position = pos;
+				info->files_counted++;
+				break;
+			default:
+				break;
+			}
+
+			pos += blocklen;
+			if (!fds.disk.no_crc) {
+				pos += 2;
+			}
+		}
+	}
+
+	/* Warn if file count doesn't match actual parsed count */
+	if (info->count_block.file_count != info->files_counted) {
+		FCEU_printf("[warning] File count mismatch on side %d: header = %d, parsed = %d\n",
+			side,
+			info->count_block.file_count,
+			info->files_counted);
+	}
+}
+
+static INLINE uint8 fds_disk_read_byte(uint32 A) {
+	return fds.current_disk_ptr[A];
+}
+
+static INLINE void fds_disk_write_byte(uint32 A, uint8 V) {
+	fds.current_disk_ptr[A] = V;
+}
+
+static INLINE void fds_insert_disk(int side) {
+	fds.current_disk = side;
+	fds.current_disk_ptr = &fds.disk.data[side][0];
+}
+
+static INLINE void fds_set_seek_irq_timer(void) {
+	fds.seek_irq_timer = DISK_SEEK_IRQ_CYCLES;
 }
 
 static void FDSGI(int h) {
@@ -125,54 +282,35 @@ static void FDSGI(int h) {
 static void FDSStateRestore(int version) {
 	uint32 x;
 
-	setmirror(((mapperFDS_control & 8) >> 3) ^ 1);
+	setmirror(((fds.control & 8) >> 3) ^ 1);
 
-	for (x = 0; x < TotalSides; x++) {
+	for (x = 0; x < fds.total_sides; x++) {
 		int b;
-		for (b = 0; b < BYTES_PER_SIDE; b++) {
-			ROM.disk.data[(BYTES_PER_SIDE * x) + b] ^=
-			    ROM.disko.data[(BYTES_PER_SIDE * x) + b];
+		for (b = 0; b < fds.disk.bytes_per_size; b++) {
+			ROM.disk.data[(fds.disk.bytes_per_size * x) + b] ^=
+				ROM.disko.data[(fds.disk.bytes_per_size * x) + b];
 		}
 	}
 }
 
-#define BOOT_DELAY (NTSC_CLOCK_SPEED * 6)
-static int32 disk_insert_at_boot_delay = BOOT_DELAY;
-
 static void FDSReset(void) {
-	disk_insert_at_boot_delay = BOOT_DELAY;
 }
 
 static void FDSPower(void) {
-	DiskIOEnabled = 0;
-	DiskSeekIRQ = 0;
+	setprg8r(0x10, 0x6000, 0);
+	setprg8r(0x10, 0x8000, 1);
+	setprg8r(0x10, 0xA000, 2);
+	setprg8r(0x10, 0xC000, 3); /* 32K WRAM */
+	setprg8(0xE000, 0);        /* BIOS */
+	setchr8(0);                /* 8KB CHR RAM */
 
 	setmirror(1);
-	setprg8(0xE000, 0);      /* BIOS */
-	setprg32r(1, 0x6000, 0); /* 32KB RAM */
-	setchr8(0);              /* 8KB CHR RAM */
 
 	MapIRQHook = FDSFix;
 	GameStateRestore = FDSStateRestore;
 
-	SetReadHandler(0x4030, 0x4033, FDSRead);
-	SetWriteHandler(0x4020, 0x4025, FDSWrite);
-
-	SetReadHandler(0x4040, 0x407F, FDSWaveRead);
-	SetReadHandler(0x4090, 0x4090, FDSEnvVolumeRead);
-	SetReadHandler(0x4092, 0x4092, FDSEnvModRead);
-
-	SetWriteHandler(0x4040, 0x407F, FDSWaveWrite);
-	SetWriteHandler(0x4080, 0x4080, FDSSReg0Write);
-	SetWriteHandler(0x4082, 0x4082, FDSSReg1Write);
-	SetWriteHandler(0x4083, 0x4083, FDSSReg2Write);
-	SetWriteHandler(0x4084, 0x4084, FDSSReg3Write);
-	SetWriteHandler(0x4085, 0x4085, FDSSReg4Write);
-	SetWriteHandler(0x4086, 0x4086, FDSSReg5Write);
-	SetWriteHandler(0x4087, 0x4087, FDSSReg6Write);
-	SetWriteHandler(0x4088, 0x4088, FDSSReg7Write);
-	SetWriteHandler(0x4089, 0x4089, FDSSReg8Write);
-	SetWriteHandler(0x408A, 0x408A, FDSSReg9Write);
+	SetReadHandler(0x4020, 0x5FFF, FDSReadReg);
+	SetWriteHandler(0x4020, 0x5FFF, FDSWriteReg);
 
 	SetWriteHandler(0x6000, 0xDFFF, CartBW);
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
@@ -180,247 +318,302 @@ static void FDSPower(void) {
 	FDSSoundRegReset();
 	FDSSound_SC();
 
-	IRQCount = IRQLatch = IRQa = 0;
+	fds.disk_reg_enabled = 0;
+	fds.seek_irq_timer = 0;
 
-	InDisk = 255;
-	SelectDisk = 0;
-	disk_insert_at_boot_delay = BOOT_DELAY;
+	fds.irq_count = fds.irq_latch = fds.irq_enabled = 0;
 
-	mapperFDS_control = 0;
-	mapperFDS_filesize = 0;
-	mapperFDS_blockID = 0;
-	mapperFDS_blockstart = 0;
-	mapperFDS_blocklen = 0;
-	mapperFDS_diskaddr = 0;
-	mapperFDS_diskaccess = 0;
-	mapperFDS_transferflag = FALSE;
+	fds.current_disk = DISK_EJECTED;
+	fds.selected_disk = 0;
+
+	fds.control = 0;
+	fds.filesize = 0;
+	fds.blockid = 0;
+	fds.blockstart = 0;
+	fds.blocklen = 0;
+	fds.blockpos = 0;
+	fds.accessed = 0;
+
+	fds.irq_timer = 0;
+	fds.transfer_flag = 0;
+
+	fds.boot_delay = BOOT_INSERT_DELAY;
 }
 
-static uint8 isDiskInserted(void) {
-	return (InDisk != 255);
+static INLINE uint8 FCEU_DiskReady(void) {
+	return (fds.current_disk != DISK_EJECTED);
 }
 
 void FCEU_FDSEject(void) {
-	InDisk = 255;
+	fds.current_disk = DISK_EJECTED;
 }
 
 void FCEU_FDSInsert(int oride) {
-	if (!isDiskInserted()) {
+	if (!FCEU_DiskReady()) {
 		FCEU_DispMessage(RETRO_LOG_INFO, 2000, "Disk %d of %d Side %s Inserted",
-		    1 + (SelectDisk >> 1), (TotalSides + 1) >> 1,
-		    (SelectDisk & 1) ? "B" : "A");
-		InDisk = SelectDisk;
+			1 + (fds.selected_disk >> 1), (fds.total_sides + 1) >> 1,
+			(fds.selected_disk & 1) ? "B" : "A");
+		fds.disk_insert_delay = DISK_INSERT_DELAY;
 	} else {
 		FCEU_DispMessage(RETRO_LOG_INFO, 2000, "Disk %d of %d Side %s Ejected",
-		    1 + (SelectDisk >> 1), (TotalSides + 1) >> 1,
-		    (SelectDisk & 1) ? "B" : "A");
+			1 + (fds.selected_disk >> 1), (fds.total_sides + 1) >> 1,
+			(fds.selected_disk & 1) ? "B" : "A");
 		FCEU_FDSEject();
 	}
 }
 
 void FCEU_FDSSelect(void) {
-	if (isDiskInserted()) {
+	if (FCEU_DiskReady()) {
 		FCEUD_DispMessage(RETRO_LOG_WARN, 2000, "Eject disk before selecting");
 		return;
 	}
-	SelectDisk = ((SelectDisk + 1) % TotalSides) & 3;
+	fds.selected_disk = ((fds.selected_disk + 1) % fds.total_sides) & 3;
 	FCEU_DispMessage(RETRO_LOG_INFO, 2000, "Disk %d of %d Side %s Selected",
-	    1 + (SelectDisk >> 1), (TotalSides + 1) >> 1,
-	    (SelectDisk & 1) ? "B" : "A");
+		1 + (fds.selected_disk >> 1), (fds.total_sides + 1) >> 1,
+		(fds.selected_disk & 1) ? "B" : "A");
 }
 
-/* 2018/12/15 - update irq timings */
+extern int scanline;
 static void FDSFix(int a) {
-	if (!isDiskInserted() && (disk_insert_at_boot_delay > 0)) {
-		disk_insert_at_boot_delay -= a;
-		if (disk_insert_at_boot_delay <= 0) {
-			disk_insert_at_boot_delay = 0;
-			FCEU_FDSInsert(0);
-		}
-	} else {
-		disk_insert_at_boot_delay = 0;
-	}
-
-	if (IRQa && (IRQCount > 0)) {
-		IRQCount -= a;
-		if (IRQCount <= 0) {
+	if (fds.irq_enabled && (fds.irq_count > 0)) {
+		fds.irq_count -= a;
+		if (fds.irq_count <= 0) {
+			fds.irq_timer = 0x01;
 			X6502_IRQBegin(FCEU_IQEXT);
-			if (IRQr) {
-				IRQCount = IRQLatch;
-			} else {
-				IRQa = 0; /* does not clear latch, fix Druid */
+			if (fds.irq_repeat) {
+				fds.irq_count = fds.irq_latch;
 			}
 		}
 	}
 
-	if (DiskSeekIRQ > 0) {
-		DiskSeekIRQ -= a;
-		if (DiskSeekIRQ <= 0) {
-			mapperFDS_transferflag = TRUE;
-			if (mapperFDS_control & 0x80) {
+	if (fds.seek_irq_timer > 0) {
+		fds.seek_irq_timer -= a;
+		if (fds.seek_irq_timer <= 0) {
+			if (scanline == 240) {
+				fds.transfer_flag = 0x02;
+			}
+			if (fds.control & 0x80) {
+				fds.transfer_flag = 0x02;
 				X6502_IRQBegin(FCEU_IQEXT2);
 			}
 		}
 	}
 }
 
-static DECLFR(FDSRead) {
-	uint8 ret = cpu.openbus;
+static DECLFR(FDSSndRead) {
+	if ((A >= 0x4040) && (A <= 0x407F)) {
+		return FDSWaveRead(A);
+	}
 
-	if (!DiskIOEnabled) {
-		return ret;
+	switch (A) {
+	case 0x4090: return FDSEnvVolumeRead(A);
+	case 0x4092: return FDSEnvModRead(A);
+	}
+
+	return cpu.openbus;
+}
+
+static DECLFW(FDSSndWrite) {
+	if ((A >= 0x4040) && (A <= 0x407F)) {
+		FDSWaveWrite(A, V);
+		return;
+	}
+
+	switch (A) {
+	case 0x4080: FDSSReg0Write(A, V); break;
+	case 0x4082: FDSSReg1Write(A, V); break;
+	case 0x4083: FDSSReg2Write(A, V); break;
+	case 0x4084: FDSSReg3Write(A, V); break;
+	case 0x4085: FDSSReg4Write(A, V); break;
+	case 0x4086: FDSSReg5Write(A, V); break;
+	case 0x4087: FDSSReg6Write(A, V); break;
+	case 0x4088: FDSSReg7Write(A, V); break;
+	case 0x4089: FDSSReg8Write(A, V); break;
+	case 0x408A: FDSSReg9Write(A, V); break;
+	}
+}
+
+static DECLFR(FDSReadReg) {
+	uint8 ret = cpu.openbus;
+	int i;
+
+	if (fds.snd_reg_enabled && (A >= 0x4040) && (A <= 0x4097)) {
+		return FDSSndRead(A);
+	}
+
+	if (!fds.disk_reg_enabled) {
+		return cpu.openbus;
 	}
 
 	switch (A) {
 	case 0x4030:
-		ret &= 0x24;
-		ret |= (cpu.IRQlow & FCEU_IQEXT) ? 0x01 : 0;
-		ret |= mapperFDS_transferflag ? 0x02 : 0;
-		ret |= mapperFDS_control & 0x08 ? 0x08 : 0;
-		ret |= 0x80; /* disk is readable/writeable */
+		ret  = fds.irq_timer;
+		ret |= fds.transfer_flag;
+		ret |= fds.control & 0x08;
+
+		fds.irq_timer = fds.transfer_flag = 0;
 		X6502_IRQEnd(FCEU_IQEXT);
 		X6502_IRQEnd(FCEU_IQEXT2);
-		mapperFDS_transferflag = FALSE;
+
 		return ret;
 
 	case 0x4031:
 		ret = 0xFF;
-		if (!isDiskInserted()) {
-			return ret;
-		}
-		if  (!(mapperFDS_control & 0x04)) {
-			return ret;
-		}
-		mapperFDS_diskaccess = 1;
-		if (mapperFDS_diskaddr < mapperFDS_blocklen) {
-			ret = disk_read(mapperFDS_blockstart + mapperFDS_diskaddr);
-			switch (mapperFDS_blockID) {
-			case DSK_FILEHDR:
-				switch (mapperFDS_diskaddr) {
-				case 13: mapperFDS_filesize = ret; break;
-				case 14: mapperFDS_filesize |= (ret << 8); break;
-				default: break;
+		if (FCEU_DiskReady() && (fds.control & 0x04)) {
+			fds.accessed = 1;
+
+			ret = 0;
+
+			if (fds.blockpos < fds.blocklen) {
+				ret = fds_disk_read_byte(fds.blockstart + fds.blockpos);
+				switch (fds.blockid) {
+				case DSK_FILEHDR:
+					switch (fds.blockpos) {
+					case 13: fds.filesize = ret; break;
+					case 14: fds.filesize |= (ret << 8); break;
+					}
+					break;
 				}
-				break;
+				fds.blockpos++;
 			}
-			mapperFDS_diskaddr++;
+			fds_set_seek_irq_timer();
+			fds.transfer_flag = 0;
+			X6502_IRQEnd(FCEU_IQEXT2);
 		}
-		DiskSeekIRQ = 150;
-		X6502_IRQEnd(FCEU_IQEXT2);
-		mapperFDS_transferflag = FALSE;
 		return ret;
 
 	case 0x4032:
 		ret &= 0xF8;
-		/* disk not inserted, not writable */
-		ret |= !isDiskInserted() ? 0x05 : 0;
-		/* disk not inserted, not motorOn, resettransfer */
-		ret |= (!isDiskInserted() || !(mapperFDS_control & 0x01) || (mapperFDS_control & 0x02)) ? 0x02 : 0;
+		if (!FCEU_DiskReady()) {
+			ret |= 0x07;
+		} else {
+			ret |= (!(fds.control & 0x01) || (fds.control & 0x02)) ? 0x02 : 0;
+		}
 		return ret;
 
 	case 0x4033:
-		return 0x80; /* battery */
+		return 0x80;
 	}
 
-	return ret;
+	return cpu.openbus;
 }
 
-static DECLFW(FDSWrite) {
+static DECLFW(FDSWriteReg) {
+	if (fds.snd_reg_enabled && (A >= 0x4040) && (A <= 0x4097)) {
+		FDSSndWrite(A, V);
+		return;
+	}
+
+	if (!fds.disk_reg_enabled && (A >= 0x4024)) {
+		return;
+	}
+
 	switch (A) {
 	case 0x4020:
-		IRQLatch &= 0xFF00;
-		IRQLatch |= V;
+		fds.irq_latch = (fds.irq_latch & 0xFF00) | (V & 0xFF);
 		break;
-
+	
 	case 0x4021:
-		IRQLatch &= 0xFF;
-		IRQLatch |= V << 8;
+		fds.irq_latch = (fds.irq_latch & 0x00FF) | (V << 8);
 		break;
-
+	
 	case 0x4022:
-		/* irq repeat */
-		IRQr = (V & 0x01);
-		/* irq enabled */
-		IRQa = DiskIOEnabled ? ((V >> 1) & 0x01) : 0x00;
-		if (IRQa) {
-			IRQCount = IRQLatch;
+		fds.irq_enabled = (fds.disk_reg_enabled && (V & 0x02) == 0x02);
+		fds.irq_repeat = ((V & 0x01) == 0x01);
+		if (fds.irq_enabled) {
+			fds.irq_count = fds.irq_latch;
 		} else {
+			fds.irq_timer = 0;
 			X6502_IRQEnd(FCEU_IQEXT);
 		}
 		break;
-
+	
 	case 0x4023:
-		DiskIOEnabled = V & 0x01;
-		if (!DiskIOEnabled) {
-			IRQa = 0;
+		fds.disk_reg_enabled = (V & 0x01) == 0x01;
+		fds.snd_reg_enabled = (V & 0x02) == 0x02;
+
+		if (!fds.disk_reg_enabled) {
+			fds.irq_enabled = 0;
+			fds.irq_timer = fds.transfer_flag = 0;
 			X6502_IRQEnd(FCEU_IQEXT);
 			X6502_IRQEnd(FCEU_IQEXT2);
 		}
 		break;
-
+	
 	case 0x4024:
-		if (isDiskInserted() && (~mapperFDS_control & 0x04)) {
-			if (mapperFDS_diskaccess == 0) {
-				mapperFDS_diskaccess = 1;
-			} else if (mapperFDS_diskaddr < mapperFDS_blocklen) {
-				disk_write(mapperFDS_blockstart + mapperFDS_diskaddr, V);
-				switch (mapperFDS_blockID) {
+		if (FCEU_DiskReady() && (~fds.control & 0x04)) {
+
+			if (fds.accessed == 0) {
+				fds.accessed = 1;
+				break;
+			}
+
+			if (fds.blockpos < fds.blocklen) {
+				fds_disk_write_byte(fds.blockstart + fds.blockpos, V);
+				switch (fds.blockid) {
 				case DSK_FILEHDR:
-					switch (mapperFDS_diskaddr) {
-					case 13: mapperFDS_filesize = V; break;
-					case 14: mapperFDS_filesize |= V << 8; break;
-					default: break;
+					switch (fds.blockpos) {
+					case 13: fds.filesize = V; break;
+					case 14: fds.filesize |= V << 8; break;
 					}
 					break;
 				}
-				mapperFDS_diskaddr++;
+				fds.blockpos++;
 			}
+			fds_set_seek_irq_timer();
+			fds.transfer_flag = 0;
+			X6502_IRQEnd(FCEU_IQEXT2);
 		}
-		DiskSeekIRQ = 150;
-		X6502_IRQEnd(FCEU_IQEXT2);
-		mapperFDS_transferflag = FALSE;
 		break;
 
 	case 0x4025:
-		if (isDiskInserted()) {
-			if ((V & 0x40) && (~mapperFDS_control & 0x40)) {
-				mapperFDS_diskaccess = 0;
-				DiskSeekIRQ = 150;
+		if (FCEU_DiskReady()) {
+			if ((V & 0x40) && !(fds.control & 0x40)) {
+				fds.accessed = 0;
 
-				/* blockstart  - address of block on disk
-				 * diskaddr    - address relative to blockstart
-				 * _block -> _blockID ?
-				 */
-				mapperFDS_blockstart += mapperFDS_diskaddr;
-				mapperFDS_diskaddr = 0;
+				fds_set_seek_irq_timer();
 
-				mapperFDS_blockID++;
-				if (mapperFDS_blockID > DSK_FILEDATA) {
-					mapperFDS_blockID = DSK_FILEHDR;
+				if (!fds.disk.no_crc && (fds.blockid >= DSK_VOLUME)) {
+					/* In QD format (when CRC is enabled), each block is
+					 * followed by a 2-byte CRC. After reading a block, we skip
+					 * these 2 bytes to align with the next block start. */
+					fds.blockpos += 2;
 				}
 
-				switch (mapperFDS_blockID) {
-				case DSK_VOLUME:   mapperFDS_blocklen = 0x38; break;
-				case DSK_FILECNT:  mapperFDS_blocklen = 0x02; break;
-				case DSK_FILEHDR:  mapperFDS_blocklen = 0x10; break;
-				case DSK_FILEDATA: mapperFDS_blocklen = mapperFDS_filesize + 1; break;
-				default: break;
+				/* blockstart  - address of block on disk */
+				/* diskaddr    - address relative to blockstart */
+				fds.blockstart += fds.blockpos;
+				fds.blockpos = 0;
+
+				fds.blockid++;
+				if (fds.blockid > DSK_FILEDATA) {
+					fds.blockid = DSK_FILEHDR;
+				}
+
+				switch (fds.blockid) {
+				case DSK_VOLUME: fds.blocklen = 0x38; break;
+				case DSK_FILECNT: fds.blocklen = 0x02; break;
+				case DSK_FILEHDR: fds.blocklen = 0x10; break;
+				case DSK_FILEDATA: fds.blocklen = fds.filesize + 1; break;
 				}
 			}
+			
 			if (V & 0x02) { /* transfer reset */
-				mapperFDS_blockID = DSK_INIT;
-				mapperFDS_blockstart = 0;
-				mapperFDS_blocklen = 0;
-				mapperFDS_diskaddr = 0;
-				DiskSeekIRQ = 150;
+				fds.blockid = DSK_INIT;
+				fds.blockstart = 0;
+				fds.blocklen = 0;
+				fds.blockpos = 0;
+				fds_set_seek_irq_timer();
 			}
-			if (V & 0x40) { /* turn on motor */
-				DiskSeekIRQ = 150;
+			if (V & 0x40) {
+				fds_set_seek_irq_timer();
 			}
 		}
+
+		fds.transfer_flag = 0;
 		X6502_IRQEnd(FCEU_IQEXT2);
-		mapperFDS_control = V;
-		setmirror(((V >> 3) & 1) ^ 1);
+		fds.control = V;
+		setmirror(((V >> 3) & 0x01) ^ 0x01);
 		break;
 	}
 }
@@ -638,6 +831,7 @@ static void FreeFDSMemory(void) {
 static int SubLoad(FCEUFILE *fp) {
 	struct md5_context md5;
 	uint8 header[16];
+	int i;
 
 	FCEU_fread(header, 16, 1, fp);
 
@@ -645,26 +839,40 @@ static int SubLoad(FCEUFILE *fp) {
 		if (!(memcmp(header, "\x1*NINTENDO-HVC*", 15))) {
 			long t;
 			t = FCEU_fgetsize(fp);
-			if (t < BYTES_PER_SIDE) {
-				t = BYTES_PER_SIDE;
+			if ((t >= BYTES_PER_DISK_SIDE_QD) && (t % BYTES_PER_DISK_SIDE_QD) == 0) { /* CRC present (.QD) */
+				fds.disk.format = FORMAT_QD;
+				fds.disk.bytes_per_size = BYTES_PER_DISK_SIDE_QD;
+			} else if ((t >= BYTES_PER_DISK_SIDE_FDS) && (t % BYTES_PER_DISK_SIDE_FDS) == 0) { /* normal FDS */
+				fds.disk.format = FORMAT_FDS;
+				fds.disk.bytes_per_size = BYTES_PER_DISK_SIDE_FDS;
+			} else {
+				/* fallback, assume normal FDS */
+				fds.disk.format = FORMAT_FDS;
+				fds.disk.bytes_per_size = BYTES_PER_DISK_SIDE_FDS;
+				if (t < fds.disk.bytes_per_size) {
+					t = fds.disk.bytes_per_size;
+				}
 			}
-			TotalSides = t / BYTES_PER_SIDE;
+			fds.total_sides = t / fds.disk.bytes_per_size;
 			FCEU_fseek(fp, 0, SEEK_SET);
 		} else {
 			return (0);
 		}
 	} else {
-		TotalSides = header[4];
+		/* Standard FDS with header, get disk count from header[4] */
+		fds.total_sides = header[4];
+		fds.disk.format = FORMAT_FDS;
+		fds.disk.bytes_per_size = BYTES_PER_DISK_SIDE_FDS;
 	}
 
-	if (TotalSides > 8) {
-		TotalSides = 8;
+	if (fds.total_sides > 8) {
+		fds.total_sides = 8;
 	}
-	if (TotalSides < 1) {
-		TotalSides = 1;
+	if (fds.total_sides < 1) {
+		fds.total_sides = 1;
 	}
 
-	ROM.disk.size = TotalSides * BYTES_PER_SIDE;
+	ROM.disk.size = fds.total_sides * fds.disk.bytes_per_size;
 	ROM.disk.data = (uint8 *)FCEU_malloc(ROM.disk.size);
 
 	if (!ROM.disk.data) {
@@ -678,25 +886,33 @@ static int SubLoad(FCEUFILE *fp) {
 	md5_update(&md5, ROM.disk.data, ROM.disk.size);
 	md5_finish(&md5, GameInfo->MD5);
 
+	/* Scan fixed locations on disk to check for presence of CRC blocks */
+	fds.disk.no_crc = (ROM.disk.data[0x38] == 0x02 && ROM.disk.data[0x3A] == 0x03 &&
+						ROM.disk.data[0x3A] != 0x02 && ROM.disk.data[0x3E] != 0x03);
+
+	for (i = 0; i < fds.total_sides; i++) {
+		fds.disk.data[i] = &ROM.disk.data[fds.disk.bytes_per_size * i];
+	}
+
 	return (1);
 }
 
 static void PreSave(void) {
 	uint32 x;
-	for (x = 0; x < TotalSides; x++) {
+	for (x = 0; x < fds.total_sides; x++) {
 		int b;
-		for (b = 0; b < BYTES_PER_SIDE; b++) {
-			ROM.disk.data[(BYTES_PER_SIDE * x) + b] ^= ROM.disko.data[(BYTES_PER_SIDE * x) + b];
+		for (b = 0; b < fds.disk.bytes_per_size; b++) {
+			ROM.disk.data[(fds.disk.bytes_per_size * x) + b] ^= ROM.disko.data[(fds.disk.bytes_per_size * x) + b];
 		}
 	}
 }
 
 static void PostSave(void) {
 	uint32 x;
-	for (x = 0; x < TotalSides; x++) {
+	for (x = 0; x < fds.total_sides; x++) {
 		int b;
-		for (b = 0; b < BYTES_PER_SIDE; b++) {
-			ROM.disk.data[(BYTES_PER_SIDE * x) + b] ^= ROM.disko.data[(BYTES_PER_SIDE * x) + b];
+		for (b = 0; b < fds.disk.bytes_per_size; b++) {
+			ROM.disk.data[(fds.disk.bytes_per_size * x) + b] ^= ROM.disko.data[(fds.disk.bytes_per_size * x) + b];
 		}
 	}
 }
@@ -708,7 +924,7 @@ static FCEUFILE *LoadBIOS(const char *name) {
 	if (!(tmp = FCEU_fopen(fn, NULL, 0))) {
 		FCEU_PrintError("FDS BIOS ROM image missing!\n");
 		FCEUD_DispMessage(
-		    RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing");
+			RETRO_LOG_ERROR, 3000, "FDS BIOS image (disksys.rom) missing");
 		FCEU_free(fn);
 		return FALSE;
 	}
@@ -728,6 +944,8 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 
 	ResetCartMapping();
 
+	fds_memset((uint8 *)&fds, 0, sizeof(fds));
+
 	ROM.prg.size = 8192;
 	ROM.prg.data = (uint8 *)FCEU_gmalloc(ROM.prg.size);
 	SetupCartPRGMapping(0, ROM.prg.data, ROM.prg.size, 0);
@@ -739,8 +957,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 		ROM.prg.data = NULL;
 		FCEU_fclose(biosfile);
 		FCEU_PrintError("Error reading FDS BIOS ROM image.\n");
-		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000,
-		    "Error reading FDS BIOS image (disksys.rom)");
+		FCEUD_DispMessage(RETRO_LOG_ERROR, 3000, "Error reading FDS BIOS image (disksys.rom)");
 		return FALSE;
 	}
 
@@ -759,33 +976,37 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 	/* Original disk data backup, to help in creating save states. */
 	ROM.disko.size = ROM.disk.size;
 	ROM.disko.data = (uint8 *)FCEU_malloc(ROM.disko.size);
-	memcpy(ROM.disko.data, ROM.disk.data, ROM.disk.size);
+	fds_memcpy(ROM.disko.data, ROM.disk.data, ROM.disk.size);
 
 	GameInfo->type = GIT_FDS;
 	GameInterface = FDSGI;
 
-	InDisk = 0;
-	SelectDisk = 0;
+	fds.current_disk = 0;
+	fds.selected_disk = 0;
 
 	ResetExState(PreSave, PostSave);
 
 	AddExState(ROM.disk.data, ROM.disk.size, 0, "DDTA");
 
-	AddExState(&DiskIOEnabled, 1, 0, "DREG");
-	AddExState(&IRQCount, 4 | FCEUSTATE_RLSB, 1, "IRQC");
-	AddExState(&IRQLatch, 4 | FCEUSTATE_RLSB, 1, "IQL1");
-	AddExState(&IRQa, 1, 0, "IRQA");
-	AddExState(&DiskSeekIRQ, 4 | FCEUSTATE_RLSB, 1, "DSIR");
-	AddExState(&SelectDisk, 1, 0, "SELD");
-	AddExState(&InDisk, 1, 0, "INDI");
+	AddExState(&fds.disk_reg_enabled, 1, 0, "DREG");
+	AddExState(&fds.snd_reg_enabled, 1, 0, "SREG");
+	AddExState(&fds.irq_count, 4 | FCEUSTATE_RLSB, 1, "IRQC");
+	AddExState(&fds.irq_latch, 4 | FCEUSTATE_RLSB, 1, "IQL1");
+	AddExState(&fds.irq_enabled, 1, 0, "IRQA");
+	AddExState(&fds.seek_irq_timer, 4 | FCEUSTATE_RLSB, 1, "DSIR");
+	AddExState(&fds.selected_disk, 1, 0, "SELD");
+	AddExState(&fds.current_disk, 1, 0, "INDI");
 
-	AddExState(&mapperFDS_control, 1, 0, "CTRG");
-	AddExState(&mapperFDS_filesize, 2 | FCEUSTATE_RLSB, 1, "FLSZ");
-	AddExState(&mapperFDS_blockID, 1, 0, "BLCK");
-	AddExState(&mapperFDS_blockstart, 2 | FCEUSTATE_RLSB, 1, "BLKS");
-	AddExState(&mapperFDS_blocklen, 2 | FCEUSTATE_RLSB, 1, "BLKL");
-	AddExState(&mapperFDS_diskaddr, 2 | FCEUSTATE_RLSB, 1, "DADR");
-	AddExState(&mapperFDS_diskaccess, 1, 0, "DACC");
+	AddExState(&fds.control, 1, 0, "CTRG");
+	AddExState(&fds.filesize, 2 | FCEUSTATE_RLSB, 1, "FLSZ");
+	AddExState(&fds.blockid, 1, 0, "BLCK");
+	AddExState(&fds.blockstart, 2 | FCEUSTATE_RLSB, 1, "BLKS");
+	AddExState(&fds.blocklen, 2 | FCEUSTATE_RLSB, 1, "BLKL");
+	AddExState(&fds.blockpos, 2 | FCEUSTATE_RLSB, 1, "DADR");
+	AddExState(&fds.accessed, 1, 0, "DACC");
+
+	AddExState(&fds.irq_timer, 1, 0, "IRQt");
+	AddExState(&fds.transfer_flag, 1, 0, "TFLG");
 
 	FDSSound_AddStateInfo();
 
@@ -796,17 +1017,67 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 
 	WRAMSIZE = 32768;
 	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
-	SetupCartPRGMapping(1, WRAM, WRAMSIZE, 1);
+	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "FDSR");
 
 	setmirror(MI_H);
 
-	FCEU_printf(" Code         : %02x\n", ROM.disk.data[0x0f]);
-	FCEU_printf(" Manufacturer : %s\n", GetCode(ROM.disk.data[0x0f]));
-	FCEU_printf(" # of Sides   : %d\n", TotalSides);
-	FCEU_printf(" ROM MD5      : 0x%s\n", md5_asciistr(GameInfo->MD5));
-
 	FCEUI_SetVidSystem(0);
+
+	{
+		int i;
+		int side;
+
+		FCEU_printf(" Code         : %02X\n", ROM.disk.data[0x0f]);
+		FCEU_printf(" Manufacturer : %s\n", GetCode(ROM.disk.data[0x0f]));
+		FCEU_printf(" Total Sides  : %d\n", fds.total_sides);
+		FCEU_printf(" ROM MD5      : 0x%s\n", md5_asciistr(GameInfo->MD5));
+		FCEU_printf(" Filename     : %s\n", path_remove_extension((char *)path_basename(name)));
+		FCEU_printf(" Disk Format  : %s\n", fds.disk.format == FORMAT_QD ? "QD" : "FDS");
+
+		for (side = 0; side < fds.total_sides; side++) {
+			FDSInfo info;
+
+			fds_info_side(side, &info);
+
+			FCEU_printf(" ===\n");
+			FCEU_printf(" Side  %c      : disk %d, side %c, name %-3s, version %d, files = %d\n",
+				side + 'A',
+				info.volume_block.disk_number,
+				info.volume_block.side_number + 'A',
+				info.volume_block.game_name,
+				info.volume_block.game_version,
+				info.files_counted);
+
+			FCEU_printf("  Block   1   : (0x%04X - 0x%04X)\n",
+				info.volume_block.position,
+				info.volume_block.position + 0x38 + (!fds.disk.no_crc * 2));
+
+			FCEU_printf("  Block   2   : (0x%04X - 0x%04X)\n",
+				info.count_block.position,
+				info.count_block.position + 0x02 + (!fds.disk.no_crc * 2));
+
+			for (i = 0; i < info.files_counted; i++) {
+				const char *ftype[3] = { "PRAM", "CRAM", "VRAM" };
+				int hdr_start = info.files[i].header_block.position;
+				int hdr_end   = hdr_start + 0x10 + (!fds.disk.no_crc * 2);
+				int data_start = info.files[i].data_block.position;
+				int data_end   = data_start + info.files[i].header_block.file_size + 1 + (!fds.disk.no_crc * 2);
+
+				FCEU_printf("  Header %2d   : (0x%04X - 0x%04X)  type: %-8s  load: $%04X\n",
+					i, hdr_start, hdr_end,
+					ftype[info.files[i].header_block.file_type],
+					info.files[i].header_block.load_address);
+
+				FCEU_printf("  File   %2d   : (0x%04X - 0x%04X)  name: %-8s  size: %d bytes\n",
+					i, data_start, data_end,
+					info.files[i].header_block.file_name,
+					info.files[i].header_block.file_size);
+			}
+
+		}
+		FCEU_printf(" ===\n");
+	}
 
 	return TRUE;
 }
@@ -825,4 +1096,21 @@ uint8 *FDSROM_ptr(void) {
 
 uint32 FDSROM_size(void) {
 	return (ROM.disk.size);
+}
+
+/* run on every frame */
+void FDSFrameCycle(void) {
+	if (!FCEU_DiskReady() && fds.boot_delay) {
+		fds.boot_delay--;
+		if (fds.boot_delay == 0) {
+			FCEU_FDSInsert(0);
+		}
+	}
+
+	if (!FCEU_DiskReady() && fds.disk_insert_delay) {
+		fds.disk_insert_delay--;
+		if (fds.disk_insert_delay == 0) {
+			fds_insert_disk(fds.selected_disk);
+		}
+	}
 }

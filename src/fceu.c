@@ -392,6 +392,7 @@ void FCEUI_Kill(void) {
 	FreeBuffers();
 }
 
+void FDSFrameCycle(void);
 void FCEUI_Emulate(uint8 **pXBuf, uint8 **pXDBuf, int32 **SoundBuf, int32 *SoundBufSize, int skip) {
 	int ssize;
 
@@ -415,6 +416,10 @@ void FCEUI_Emulate(uint8 **pXBuf, uint8 **pXDBuf, int32 **SoundBuf, int32 *Sound
 
 	*SoundBuf     = WaveFinal;
 	*SoundBufSize = ssize;
+
+	if (GameInfo->type == GIT_FDS) {
+		FDSFrameCycle();
+	}
 }
 
 void ResetNES(void) {
