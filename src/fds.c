@@ -244,14 +244,171 @@ static void fds_info_side(uint8 side, FDSInfo *info) {
 			}
 		}
 	}
+}
 
-	/* Warn if file count doesn't match actual parsed count */
-	if (info->count_block.file_count != info->files_counted) {
-		FCEU_printf("[warning] File count mismatch on side %d: header = %d, parsed = %d\n",
-			side,
-			info->count_block.file_count,
-			info->files_counted);
+static uint16 gen_qd_crc(uint8 *data, unsigned size) {
+	size_t byte_index, bit_index;
+	uint16 sum = 0x8000;
+
+	for (byte_index = 0; byte_index < size + 2; byte_index++) {
+		uint8 byte = byte_index < size ? data[byte_index] : 0x00;
+		for (bit_index = 0; bit_index < 8; bit_index++) {
+			uint16 bit = (byte >> bit_index) & 1;
+			uint16 carry = sum & 1;
+			sum = (sum >> 1) | (bit << 15);
+			if (carry)
+				sum ^= 0x8408;
+		}
 	}
+	return sum;
+}
+
+static int fds_build_image_qd(uint8 *dst, uint8 *src, int src_is_qd) {
+	size_t dest_pos = 0, source_pos = 0, file_count = 0;
+	uint16 crc_read = 0, crc_calc = 0;
+	size_t blockstart, blocklen;
+
+	if ((memcmp(&src[0], "\x1*NINTENDO-HVC*", 15))) {
+		FCEU_PrintError(" Bios string invalid. (block 1)\n");
+		return FALSE;
+	}
+
+	/* disk info block (block 1) */
+	blockstart = source_pos;
+	blocklen = 56;
+	fds_memcpy(&dst[dest_pos], &src[source_pos], blocklen);
+
+	dest_pos = blocklen;
+	source_pos = blocklen;
+
+	if (src_is_qd == FORMAT_QD) {
+		crc_read = (src[source_pos + 1] << 8) + src[source_pos];
+		crc_calc = gen_qd_crc(&src[blockstart], blocklen);
+		if (crc_read != crc_calc && crc_read != 0) {
+			FCEU_printf(" WARN: CRC mismatch at offset 0x%8X, read 0x%02X%02X, "
+			            "expected 0x%02X%02X\n",
+			            source_pos,
+			            crc_read % 256,
+			            crc_read / 256,
+			            crc_calc % 256,
+			            crc_calc / 256);
+		}
+		fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+		source_pos += 2;
+		dest_pos += 2;
+	} else {
+		crc_calc = gen_qd_crc(&src[blockstart], blocklen);
+		fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+		dest_pos += 2;
+	}
+
+	/* file count block (block 2) */
+	if (src[source_pos] != 2) {
+		FCEU_printf(" WARN: Invalid file amount block (block 2)\n");
+		return FALSE;
+	}
+
+	blockstart = source_pos;
+	blocklen = 2;
+	file_count = src[source_pos + 1];
+	fds_memcpy(&dst[dest_pos], &src[source_pos], blocklen);
+
+	dest_pos += blocklen;
+	source_pos += blocklen;
+
+	if (src_is_qd == FORMAT_QD) {
+		crc_read = (src[source_pos + 1] << 8) + src[source_pos];
+		crc_calc = gen_qd_crc(&src[blockstart], blocklen);
+		if (crc_read != crc_calc && crc_read != 0) {
+			FCEU_printf(" WARN: CRC mismatch at offset 0x%8X, read 0x%02X%02X, "
+			            "expected 0x%02X%02X\n",
+			            source_pos,
+			            crc_read % 256,
+			            crc_read / 256,
+			            crc_calc % 256,
+			            crc_calc / 256);
+		}
+		fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+		source_pos += 2;
+		dest_pos += 2;
+	} else {
+		crc_calc = gen_qd_crc(&src[blockstart], blocklen);
+		fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+		dest_pos += 2;
+	}
+
+	while (src[source_pos] == 3) {
+		size_t filesize = 0;
+
+		blockstart = source_pos;
+		blocklen = 16;
+		filesize = (src[source_pos + 14] << 8) | (src[source_pos + 13]);
+		fds_memcpy(&dst[dest_pos], &src[source_pos], blocklen);
+
+		dest_pos += blocklen;
+		source_pos += blocklen;
+
+		if (src_is_qd == FORMAT_QD) {
+			crc_read = (src[source_pos + 1] << 8) + src[source_pos];
+			crc_calc = gen_qd_crc(&src[blockstart], blocklen);
+			if (crc_read != crc_calc && crc_read != 0) {
+				FCEU_printf(
+				    " WARN: CRC mismatch at offset 0x%8X, read 0x%02X%02X, "
+				    "expected 0x%02X%02X\n",
+				    source_pos,
+				    crc_read % 256,
+				    crc_read / 256,
+				    crc_calc % 256,
+				    crc_calc / 256);
+			}
+			fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+			source_pos += 2;
+			dest_pos += 2;
+		} else {
+			crc_calc = gen_qd_crc(&src[blockstart], blocklen);
+			fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+			dest_pos += 2;
+		}
+
+		/* file data block (block 4) */
+		if (src[source_pos] != 4) {
+			FCEU_PrintError(" Error reading block 4\n");
+			return FALSE;
+		}
+
+		blockstart = source_pos;
+		blocklen = 1 + filesize;
+		fds_memcpy(&dst[dest_pos], &src[source_pos], blocklen);
+
+		dest_pos += blocklen;
+		source_pos += blocklen;
+
+		if (src_is_qd == FORMAT_QD) {
+			crc_read = (src[source_pos + 1] << 8) + src[source_pos];
+			crc_calc = gen_qd_crc(&src[blockstart], blocklen);
+			if (crc_read != crc_calc && crc_read != 0) {
+				FCEU_printf(
+				    " WARN: CRC mismatch at offset 0x%8X, read 0x%02X%02X, "
+				    "expected 0x%02X%02X\n",
+				    source_pos,
+				    crc_read % 256,
+				    crc_read / 256,
+				    crc_calc % 256,
+				    crc_calc / 256);
+			}
+			fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+			source_pos += 2;
+			dest_pos += 2;
+		} else {
+			crc_calc = gen_qd_crc(&src[blockstart], blocklen);
+			fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+			dest_pos += 2;
+		}
+	}
+
+	/* fill remainder with zeros */
+	fds_memset(&dst[dest_pos], 0, BYTES_PER_DISK_SIDE_QD - dest_pos);
+	return TRUE;
 }
 
 static INLINE uint8 fds_disk_read_byte(uint32 A) {
@@ -830,71 +987,83 @@ static void FreeFDSMemory(void) {
 
 static int SubLoad(FCEUFILE *fp) {
 	struct md5_context md5;
-	uint8 header[16];
+	int length = 0;
+	int format = 0;
+	int total_sides = 0;
 	int i;
+	uint8 buffer[BYTES_PER_DISK_SIDE_QD];
 
-	FCEU_fread(header, 16, 1, fp);
-
-	if (memcmp(header, "FDS\x1a", 4)) {
-		if (!(memcmp(header, "\x1*NINTENDO-HVC*", 15))) {
-			long t;
-			t = FCEU_fgetsize(fp);
-			if ((t >= BYTES_PER_DISK_SIDE_QD) && (t % BYTES_PER_DISK_SIDE_QD) == 0) { /* CRC present (.QD) */
-				fds.disk.format = FORMAT_QD;
-				fds.disk.bytes_per_size = BYTES_PER_DISK_SIDE_QD;
-			} else if ((t >= BYTES_PER_DISK_SIDE_FDS) && (t % BYTES_PER_DISK_SIDE_FDS) == 0) { /* normal FDS */
-				fds.disk.format = FORMAT_FDS;
-				fds.disk.bytes_per_size = BYTES_PER_DISK_SIDE_FDS;
-			} else {
-				/* fallback, assume normal FDS */
-				fds.disk.format = FORMAT_FDS;
-				fds.disk.bytes_per_size = BYTES_PER_DISK_SIDE_FDS;
-				if (t < fds.disk.bytes_per_size) {
-					t = fds.disk.bytes_per_size;
-				}
-			}
-			fds.total_sides = t / fds.disk.bytes_per_size;
-			FCEU_fseek(fp, 0, SEEK_SET);
-		} else {
-			return (0);
+	if (FCEU_fseek(fp, 0, SEEK_END) != 0) {
+		return FALSE;
+	}
+	length = FCEU_fgetsize(fp);
+	if (FCEU_fseek(fp, 0, SEEK_SET) != 0) {
+		return FALSE;
+	}
+	if ((length % BYTES_PER_DISK_SIDE_QD) == 0) {
+		format = FORMAT_QD;
+		total_sides = length / BYTES_PER_DISK_SIDE_QD;
+		FCEU_printf(" Disk Format  : QD\n");
+	} else if ((length % BYTES_PER_DISK_SIDE_FDS) == 0) {
+		format = FORMAT_FDS;
+		total_sides = length / BYTES_PER_DISK_SIDE_FDS;
+		FCEU_printf(" Disk Format  : FDS\n");
+	} else if ((length % BYTES_PER_DISK_SIDE_FDS) == 16) {
+		if (FCEU_fseek(fp, 16, SEEK_SET) != 0) {
+			return FALSE;
 		}
+		length = FCEU_fgetsize(fp);
+		format = FORMAT_FDS;
+		total_sides = length / BYTES_PER_DISK_SIDE_FDS;
+		FCEU_printf(" Disk Format  : fwNES FDS\n");
 	} else {
-		/* Standard FDS with header, get disk count from header[4] */
-		fds.total_sides = header[4];
-		fds.disk.format = FORMAT_FDS;
-		fds.disk.bytes_per_size = BYTES_PER_DISK_SIDE_FDS;
+		FCEU_PrintError(" Image is not in qd/fds format");
+		return FALSE;
 	}
 
-	if (fds.total_sides > 8) {
-		fds.total_sides = 8;
-	}
-	if (fds.total_sides < 1) {
-		fds.total_sides = 1;
-	}
-
-	ROM.disk.size = fds.total_sides * fds.disk.bytes_per_size;
+	ROM.disk.size = total_sides * BYTES_PER_DISK_SIDE_QD;
 	ROM.disk.data = (uint8 *)FCEU_malloc(ROM.disk.size);
 
-	if (!ROM.disk.data) {
-		return (0);
+	if (format == FORMAT_QD) {
+		for (i = 0; i < total_sides; i++) {
+			fds_memset(&buffer[0], 0, sizeof(buffer));
+			if (!FCEU_fread(buffer, BYTES_PER_DISK_SIDE_QD, 1, fp)) {
+				goto error;
+			}
+			if (!fds_build_image_qd(&ROM.disk.data[i * BYTES_PER_DISK_SIDE_QD], buffer, TRUE)) {
+				goto error;
+			}
+		}
+	} else if (format == FORMAT_FDS) {
+		for (i = 0; i < total_sides; i++) {
+			fds_memset(&buffer[0], 0, sizeof(buffer));
+			FCEU_fread(buffer, BYTES_PER_DISK_SIDE_FDS, 1, fp);
+			if (!fds_build_image_qd(&ROM.disk.data[i * BYTES_PER_DISK_SIDE_QD], buffer, FALSE)) {
+				goto error;
+			}
+		}
 	}
 
 	md5_starts(&md5);
-
-	FCEU_fread(ROM.disk.data, 1, ROM.disk.size, fp);
-
-	md5_update(&md5, ROM.disk.data, ROM.disk.size);
+	for (i = 0; i < total_sides; i++) {
+		fds.disk.data[i] = &ROM.disk.data[i * BYTES_PER_DISK_SIDE_QD];
+		md5_update(&md5, fds.disk.data[i], BYTES_PER_DISK_SIDE_QD);
+	}
 	md5_finish(&md5, GameInfo->MD5);
 
-	/* Scan fixed locations on disk to check for presence of CRC blocks */
-	fds.disk.no_crc = (ROM.disk.data[0x38] == 0x02 && ROM.disk.data[0x3A] == 0x03 &&
-						ROM.disk.data[0x3A] != 0x02 && ROM.disk.data[0x3E] != 0x03);
+	fds.disk.format = FORMAT_QD;
+	fds.total_sides = total_sides;
+	fds.disk.no_crc = 0;
+	fds.disk.bytes_per_size = BYTES_PER_DISK_SIDE_QD;
 
-	for (i = 0; i < fds.total_sides; i++) {
-		fds.disk.data[i] = &ROM.disk.data[fds.disk.bytes_per_size * i];
+	return TRUE;
+
+error:
+	if (ROM.disk.data) {
+		FCEU_free(ROM.disk.data);
 	}
-
-	return (1);
+	FCEU_PrintError(" An error has occured creating disk image!\n");
+	return FALSE;
 }
 
 static void PreSave(void) {
@@ -1033,7 +1202,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 		FCEU_printf(" Total Sides  : %d\n", fds.total_sides);
 		FCEU_printf(" ROM MD5      : 0x%s\n", md5_asciistr(GameInfo->MD5));
 		FCEU_printf(" Filename     : %s\n", path_remove_extension((char *)path_basename(name)));
-		FCEU_printf(" Disk Format  : %s\n", fds.disk.format == FORMAT_QD ? "QD" : "FDS");
+		/* FCEU_printf(" Disk Format  : %s\n", fds.disk.format == FORMAT_QD ? "QD" : "FDS"); */
 
 		for (side = 0; side < fds.total_sides; side++) {
 			FDSInfo info;
@@ -1047,22 +1216,22 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 				info.volume_block.side_number + 'A',
 				info.volume_block.game_name,
 				info.volume_block.game_version,
-				info.files_counted);
+				info.count_block.file_count);
 
 			FCEU_printf("  Block   1   : (0x%04X - 0x%04X)\n",
 				info.volume_block.position,
-				info.volume_block.position + 0x38 + (!fds.disk.no_crc * 2));
+				info.volume_block.position + 0x38 + (!fds.disk.no_crc * 2) - 1);
 
 			FCEU_printf("  Block   2   : (0x%04X - 0x%04X)\n",
 				info.count_block.position,
-				info.count_block.position + 0x02 + (!fds.disk.no_crc * 2));
+				info.count_block.position + 0x02 + (!fds.disk.no_crc * 2) - 1);
 
-			for (i = 0; i < info.files_counted; i++) {
+			for (i = 0; i < info.count_block.file_count; i++) {
 				const char *ftype[3] = { "PRAM", "CRAM", "VRAM" };
 				int hdr_start = info.files[i].header_block.position;
 				int hdr_end   = hdr_start + 0x10 + (!fds.disk.no_crc * 2);
 				int data_start = info.files[i].data_block.position;
-				int data_end   = data_start + info.files[i].header_block.file_size + 1 + (!fds.disk.no_crc * 2);
+				int data_end   = data_start + info.files[i].header_block.file_size + 1 + (!fds.disk.no_crc * 2) - 1;
 
 				FCEU_printf("  Header %2d   : (0x%04X - 0x%04X)  type: %-8s  load: $%04X\n",
 					i, hdr_start, hdr_end,

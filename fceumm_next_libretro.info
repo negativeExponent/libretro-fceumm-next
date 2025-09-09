@@ -1,7 +1,7 @@
 # Software Information
 display_name = "Nintendo - NES / Famicom (FCEUmm Next)"
 authors = "FCEU Team|CaH4e3"
-supported_extensions = "fds|nes|unif|unf|nsf|nsfe"
+supported_extensions = "fds|nes|unif|unf|nsf|nsfe|qd"
 corename = "FCEUmm Next"
 license = "GPLv2"
 permissions = ""
