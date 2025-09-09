@@ -53,6 +53,7 @@ void FDSSound_AddStateInfo(void) {
 	AddExState(&fdso.mod_freq, 2, 0, "MFRQ");
 	AddExState(&fdso.mod_pos, 4, 0, "MPOS");
 	AddExState(&fdso.mod_control, 1, 0, "MCTL");
+	AddExState(&fdso.carrier_mod, 4, 0, "MCRM");
 
 	AddExState(&fdso.sweep_bias, 4, 0, "SWBS");
 
@@ -195,99 +196,104 @@ DECLFR(FDSEnvModRead) {
 	return (OPENBUS | fdso.EnvUnits[EMOD].volume);
 }
 
-#define sign_x_to_s32(n, v) ((int32)((uint32)(v) << (32 - (n))) >> (32 - (n)))
+static INLINE int32 sign_x_to_s32(int n, int32 v) {
+	return ((int32)((uint32)v << (32 - n)) >> (32 - n));
+}
+
+static void FDSEnvStep(FDSENVUNIT *e) {
+	if ((e->control & ENV_CTRL_DISABLE)) {
+		return;
+	}
+	if (e->counter) {
+		e->counter--;
+	} else {
+		e->counter = e->speed + 1;
+		if ((e->control & ENV_CTRL_INCREASE)) {
+			if (e->volume < 0x20) {
+				e->volume++;
+			}
+		} else {
+			if (e->volume > 0) {
+				e->volume--;
+			}
+		}
+	}
+}
+
+static void FDSDoEnv(void) {
+	if ((fdso.cwave_control & ENVELOPES_DISABLE) || (fdso.master_env_speed == 0)) {
+		return;
+	}
+	if (fdso.envcount) {
+		fdso.envcount--;
+	} else {
+		fdso.envcount = fdso.master_env_speed * 3;
+		FDSEnvStep(&fdso.EnvUnits[EVOL]);
+		FDSEnvStep(&fdso.EnvUnits[EMOD]);
+	}
+}
+
+static int32 FDSModulator(void) {
+	uint32 prev_mod_pos = fdso.mod_pos;
+	int32 temp;
+
+	if (fdso.mod_control & MOD_WRITE_MODE) {
+		return 0;
+	}
+	fdso.mod_pos += fdso.mod_freq;
+	if ((fdso.mod_pos & (0x3F << 11)) != (prev_mod_pos & (0x3F << 11))) {
+		const int32 mw = fdso.mwave[((fdso.mod_pos >> 16) & 0x1F)];
+
+		fdso.sweep_bias = (fdso.sweep_bias + mw) & 0x7FF;
+		if (mw == 0x10) {
+			fdso.sweep_bias = 0;
+		}
+	}
+
+	temp =
+	    sign_x_to_s32(11, fdso.sweep_bias) *
+	    ((fdso.EnvUnits[EMOD].volume > 0x20) ? 0x20
+	                                         : fdso.EnvUnits[EMOD].volume);
+
+	if (temp & 0x0F0) {
+		temp /= 256;
+		if (fdso.sweep_bias & 0x400) {
+			temp--;
+		} else {
+			temp += 2;
+		}
+	} else {
+		temp /= 256;
+	}
+
+	if (temp >= 194) {
+		temp -= 258;
+	}
+	if (temp < -64) {
+		temp += 256;
+	}
+
+	return temp;
+}
 
 static INLINE int32 FDSDoSound(void) {
 	uint32 prev_cwave_pos = fdso.cwave_pos;
-	static int32 temp;
+	uint64 loops = 0;
 
 	fdso.count += fdso.cycles;
 	if (fdso.count >= ((int64)1 << 40)) {
 	dogk:
+		loops++;
 		fdso.count -= (int64)1 << 40;
 
-		if (!(fdso.cwave_control & ENVELOPES_DISABLE) && fdso.master_env_speed) {
-			if (fdso.envcount) {
-				fdso.envcount--;
-			} else {
-				fdso.envcount = fdso.master_env_speed * 3;
-				if (!(fdso.EnvUnits[EVOL].control & ENV_CTRL_DISABLE)) {
-					if (fdso.EnvUnits[EVOL].counter) {
-						fdso.EnvUnits[EVOL].counter--;
-					} else {
-						fdso.EnvUnits[EVOL].counter = fdso.EnvUnits[EVOL].speed + 1;
-						if ((fdso.EnvUnits[EVOL].control & ENV_CTRL_INCREASE)) {
-							if (fdso.EnvUnits[EVOL].volume < 0x20) {
-								fdso.EnvUnits[EVOL].volume++;
-							}
-						} else {
-							if (fdso.EnvUnits[EVOL].volume > 0) {
-								fdso.EnvUnits[EVOL].volume--;
-							}
-						}
-					}
-				}
-
-				if (!(fdso.EnvUnits[EMOD].control & ENV_CTRL_DISABLE)) {
-					if (fdso.EnvUnits[EMOD].counter) {
-						fdso.EnvUnits[EMOD].counter--;
-					} else {
-						fdso.EnvUnits[EMOD].counter = fdso.EnvUnits[EMOD].speed + 1;
-						if ((fdso.EnvUnits[EMOD].control & ENV_CTRL_INCREASE)) {
-							if (fdso.EnvUnits[EMOD].volume < 0x20) {
-								fdso.EnvUnits[EMOD].volume++;
-							}
-						} else {
-							if (fdso.EnvUnits[EMOD].volume > 0) {
-								fdso.EnvUnits[EMOD].volume--;
-							}
-						}
-					}
-				}
-			}
-		}
-
-		if (!(fdso.mod_control & MOD_WRITE_MODE)) {
-			uint32 prev_mod_pos = fdso.mod_pos;
-
-			fdso.mod_pos += fdso.mod_freq;
-			if ((fdso.mod_pos & (0x3F << 11)) !=
-			    (prev_mod_pos & (0x3F << 11))) {
-				const int32 mw = fdso.mwave[((fdso.mod_pos >> 16) & 0x1F)];
-
-				fdso.sweep_bias = (fdso.sweep_bias + mw) & 0x7FF;
-				if (mw == 0x10) {
-					fdso.sweep_bias = 0;
-				}
-			}
-
-			temp = sign_x_to_s32(11, fdso.sweep_bias) *
-			       ((fdso.EnvUnits[EMOD].volume > 0x20) ? 0x20 : fdso.EnvUnits[EMOD].volume);
-
-			if (temp & 0x0F0) {
-				temp /= 256;
-				if (fdso.sweep_bias & 0x400) {
-					temp--;
-				} else {
-					temp += 2;
-				}
-			} else {
-				temp /= 256;
-			}
-
-			if (temp >= 192) {
-				temp -= 256;
-			}
-			if (temp < -64) {
-				temp += 256;
-			}
-		}
+		FDSDoEnv();
+		fdso.carrier_mod = FDSModulator();
 
 		if (!(fdso.cwave_control & WAVE_DISABLE)) {
 			int32 cur_cwave_freq = (int32)(fdso.cwave_freq << 6);
 
 			if (!(fdso.mod_control & MOD_WRITE_MODE)) {
-				cur_cwave_freq += (int32)fdso.cwave_freq * temp;
+				cur_cwave_freq += (int32)fdso.cwave_freq * fdso.carrier_mod;
 				if (cur_cwave_freq < 0) {
 					cur_cwave_freq = 0;
 				}
@@ -305,7 +311,7 @@ static INLINE int32 FDSDoSound(void) {
 		if (k > 0x20) {
 			k = 0x20;
 		}
-		return (fdso.cwave[fdso.cwave_pos >> 21] * FSettings.volume[SND_FDS] * k * 4 / ((fdso.master_control & MASTER_VOLUME) + 2)) >> 8;
+		return (fdso.cwave[fdso.cwave_pos >> 21] * FSettings.volume[SND_FDS] * k * 4 / ((fdso.master_control & MASTER_VOLUME) + 2));
 	}
 }
 
@@ -324,8 +330,8 @@ static void RenderSound(void) {
 		for (x = start; x < end; x++) {
 			uint32 t = FDSDoSound();
 			t += t >> 1;
-			t >>= 4;
-			Wave[x >> 4] += t; /* (t>>2)-(t>>3); */ /* >>3; */
+			t >>= 12;
+			Wave[x >> 4] += t;
 		}
 	}
 }
@@ -337,7 +343,8 @@ static void RenderSoundHQ(void) {
 		for (x = FBC; x < SOUNDTS; x++) {
 			uint32 t = FDSDoSound();
 			t += t >> 1;
-			WaveHi[x] += t; /* (t<<2)-(t<<1); */
+			t >>= 8;
+			WaveHi[x] += t;
 		}
 	}
 	FBC = SOUNDTS;
