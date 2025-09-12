@@ -57,7 +57,6 @@ typedef struct __FDSSOUND {
 	uint16 mod_freq;   /* $4086 and lower 4 bits of $4087 */
 	uint32 mod_pos;    /* Should be named "mwave_pos", but "mod_pos" distinguishes it more. */
 	uint8 mod_control; /* $4087 bit7 */
-	int32 carrier_mod; /* output from modulation engine */
 
 	uint8 master_control;   /* $4089 with lower 6 bits masked */
 	uint8 master_env_speed; /* Master envelope speed controller($408A). */
@@ -67,6 +66,9 @@ typedef struct __FDSSOUND {
 	                   /* 0x4(reset sweep bias accumulator). */
 	uint8 cwave[0x40]; /* Game-defined waveform(carrier) */
 	uint32 sweep_bias;
+
+	int32 mod_output;  /* output from modulation engine */
+	int32 sample_out_cache; /* holds the last output from wave carrier */
 } FDSSOUND;
 
 DECLFR(FDSWaveRead);

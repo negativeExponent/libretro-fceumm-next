@@ -33,6 +33,8 @@ static FDSSOUND fdso = { 0 };
 static int32 FBC = 0;
 
 void FDSSound_AddStateInfo(void) {
+	AddExState(&fdso.sample_out_cache, 4, 0, "FDSO");
+
 	AddExState(&fdso.EnvUnits[EVOL].speed, 1, 0, "SPD0");
 	AddExState(&fdso.EnvUnits[EVOL].control, 1, 0, "CTL0");
 	AddExState(&fdso.EnvUnits[EVOL].volume, 1, 0, "VOL0");
@@ -53,7 +55,7 @@ void FDSSound_AddStateInfo(void) {
 	AddExState(&fdso.mod_freq, 2, 0, "MFRQ");
 	AddExState(&fdso.mod_pos, 4, 0, "MPOS");
 	AddExState(&fdso.mod_control, 1, 0, "MCTL");
-	AddExState(&fdso.carrier_mod, 4, 0, "MCRM");
+	AddExState(&fdso.mod_output, 4, 0, "MCRM");
 
 	AddExState(&fdso.sweep_bias, 4, 0, "SWBS");
 
@@ -196,65 +198,38 @@ DECLFR(FDSEnvModRead) {
 	return (OPENBUS | fdso.EnvUnits[EMOD].volume);
 }
 
-static INLINE int32 sign_x_to_s32(int n, int32 v) {
-	return ((int32)((uint32)v << (32 - n)) >> (32 - n));
-}
-
-static void FDSEnvStep(FDSENVUNIT *e) {
-	if ((e->control & ENV_CTRL_DISABLE)) {
-		return;
-	}
-	if (e->counter) {
-		e->counter--;
-	} else {
-		e->counter = e->speed + 1;
-		if ((e->control & ENV_CTRL_INCREASE)) {
-			if (e->volume < 0x20) {
-				e->volume++;
-			}
+static INLINE void FDSEnvStep(FDSENVUNIT *e) {
+	if (!(e->control & ENV_CTRL_DISABLE)) {
+		if (e->counter) {
+			e->counter--;
 		} else {
-			if (e->volume > 0) {
-				e->volume--;
+			e->counter = e->speed + 1;
+			if ((e->control & ENV_CTRL_INCREASE)) {
+				if (e->volume < 0x20) {
+					e->volume++;
+				}
+			} else {
+				if (e->volume > 0) {
+					e->volume--;
+				}
 			}
 		}
 	}
 }
 
 static void FDSDoEnv(void) {
-	if ((fdso.cwave_control & ENVELOPES_DISABLE) || (fdso.master_env_speed == 0)) {
-		return;
-	}
-	if (fdso.envcount) {
-		fdso.envcount--;
-	} else {
-		fdso.envcount = fdso.master_env_speed * 3;
-		FDSEnvStep(&fdso.EnvUnits[EVOL]);
-		FDSEnvStep(&fdso.EnvUnits[EMOD]);
-	}
+	FDSEnvStep(&fdso.EnvUnits[EVOL]);
+	FDSEnvStep(&fdso.EnvUnits[EMOD]);
 }
 
-static int32 FDSModulator(void) {
-	uint32 prev_mod_pos = fdso.mod_pos;
-	int32 temp;
+static INLINE int32 sign_x_to_s32(int n, int32 v) {
+	return ((int32)((uint32)v << (32 - n)) >> (32 - n));
+}
 
-	if (fdso.mod_control & MOD_WRITE_MODE) {
-		return 0;
-	}
-	fdso.mod_pos += fdso.mod_freq;
-	if ((fdso.mod_pos & (0x3F << 11)) != (prev_mod_pos & (0x3F << 11))) {
-		const int32 mw = fdso.mwave[((fdso.mod_pos >> 16) & 0x1F)];
-
-		fdso.sweep_bias = (fdso.sweep_bias + mw) & 0x7FF;
-		if (mw == 0x10) {
-			fdso.sweep_bias = 0;
-		}
-	}
-
-	temp =
+static void FDSModUpdateOutput(void) {
+	int32 temp =
 	    sign_x_to_s32(11, fdso.sweep_bias) *
-	    ((fdso.EnvUnits[EMOD].volume > 0x20) ? 0x20
-	                                         : fdso.EnvUnits[EMOD].volume);
-
+	    ((fdso.EnvUnits[EMOD].volume > 0x20) ? 0x20 : fdso.EnvUnits[EMOD].volume);
 	if (temp & 0x0F0) {
 		temp /= 256;
 		if (fdso.sweep_bias & 0x400) {
@@ -273,45 +248,95 @@ static int32 FDSModulator(void) {
 		temp += 256;
 	}
 
-	return temp;
+	fdso.mod_output = temp;
 }
 
-static INLINE int32 FDSDoSound(void) {
-	uint32 prev_cwave_pos = fdso.cwave_pos;
-	uint64 loops = 0;
+static int FDSModulator(void) {
+	uint32 prev_mod_pos = fdso.mod_pos;
+	int32 temp;
 
-	fdso.count += fdso.cycles;
-	if (fdso.count >= ((int64)1 << 40)) {
-	dogk:
-		loops++;
-		fdso.count -= (int64)1 << 40;
+	fdso.mod_pos += fdso.mod_freq;
+	if ((fdso.mod_pos & (0x3F << 11)) != (prev_mod_pos & (0x3F << 11))) {
+		const int32 mw = fdso.mwave[((fdso.mod_pos >> 16) & 0x1F)];
 
-		FDSDoEnv();
-		fdso.carrier_mod = FDSModulator();
+		fdso.sweep_bias = (fdso.sweep_bias + mw) & 0x7FF;
+		if (mw == 0x10) {
+			fdso.sweep_bias = 0;
+		}
 
-		if (!(fdso.cwave_control & WAVE_DISABLE)) {
-			int32 cur_cwave_freq = (int32)(fdso.cwave_freq << 6);
+		return TRUE;
+	}
 
-			if (!(fdso.mod_control & MOD_WRITE_MODE)) {
-				cur_cwave_freq += (int32)fdso.cwave_freq * fdso.carrier_mod;
-				if (cur_cwave_freq < 0) {
-					cur_cwave_freq = 0;
-				}
-			}
-			fdso.cwave_pos = (fdso.cwave_pos + cur_cwave_freq) & 0x7FFFFFF;
+	return FALSE;
+}
+
+static INLINE void FDSDoCarrier(void) {
+	int32 cur_cwave_freq = (int32)(fdso.cwave_freq << 6);
+
+	if (!(fdso.mod_control & MOD_WRITE_MODE)) {
+		cur_cwave_freq += (int32)fdso.cwave_freq * fdso.mod_output;
+		if (cur_cwave_freq < 0) {
+			cur_cwave_freq = 0;
 		}
 	}
-	if (fdso.count >= 32768) {
-		goto dogk;
+	fdso.cwave_pos += cur_cwave_freq;
+}
+
+static void FDSClockUnits(void) {
+	if (!(fdso.master_control & WAVE_WRITE_MODE) && !(fdso.cwave_control & WAVE_DISABLE)) {
+		FDSDoCarrier();
 	}
 
-	/* Might need to emulate applying the amplitude to the waveform a bit better... */
-	{
-		int k = fdso.EnvUnits[EVOL].volume;
+	if (!(fdso.mod_control & MOD_WRITE_MODE) && fdso.mod_freq) {
+		if (FDSModulator()) {
+			FDSModUpdateOutput();
+		}
+	}
+
+	if (fdso.master_env_speed) {
+		fdso.envcount--;
+		if (fdso.envcount <= 0) {
+			fdso.envcount += fdso.master_env_speed * 3;
+			if (!(fdso.cwave_control & ENVELOPES_DISABLE)) {
+				FDSDoEnv();
+			}
+		}
+	}
+}
+
+static int32 FDSDoSound(void) {
+	uint32 prev_cwave_pos = fdso.cwave_pos;
+
+	fdso.count += fdso.cycles;
+
+	if (fdso.count >= ((int64)1 << 40)) {
+		fdso.count -= (int64)1 << 40;
+		FDSClockUnits();
+	}
+
+	while (fdso.count >= 32768) {
+		fdso.count -= (int64)1 << 40;
+		FDSClockUnits();
+	}
+
+	if ((fdso.cwave_pos ^ prev_cwave_pos) & (1 << 21)) {
+		/* Precompute reciprocal table for master_volume */
+		static const uint32_t fds_div_lut[4] = {
+			(1U << 16) / 2, /* divisor 2 */
+			(1U << 16) / 3, /* divisor 3 */
+			(1U << 16) / 4, /* divisor 4 */
+			(1U << 16) / 5  /* divisor 5 */
+		};
+		int32 k = fdso.EnvUnits[EVOL].volume;
+		int32 idx = fdso.master_control & 0x03;
+		int32 sample;
 		if (k > 0x20) {
 			k = 0x20;
 		}
-		return (fdso.cwave[fdso.cwave_pos >> 21] * FSettings.volume[SND_FDS] * k * 4 / ((fdso.master_control & MASTER_VOLUME) + 2));
+		sample = fdso.cwave[(fdso.cwave_pos >> 21) & 0x3F] * k * 4;
+		/* fast divide replacement */
+		sample = (int32)(sample * fds_div_lut[idx]) >> 16;
+		fdso.sample_out_cache = GetOutput(SND_FDS, sample);
 	}
 }
 
@@ -326,26 +351,25 @@ static void RenderSound(void) {
 	}
 	FBC = end;
 
-	if (!(fdso.master_control & WAVE_WRITE_MODE)) {
-		for (x = start; x < end; x++) {
-			uint32 t = FDSDoSound();
-			t += t >> 1;
-			t >>= 12;
-			Wave[x >> 4] += t;
-		}
+	for (x = start; x < end; x++) {
+		uint32 t;
+		FDSDoSound();
+		t = fdso.sample_out_cache;
+		t += t >> 1;
+		t >>= 4;
+		Wave[x >> 4] += t;
 	}
 }
 
 static void RenderSoundHQ(void) {
 	uint32 x;
 
-	if (!(fdso.master_control & WAVE_WRITE_MODE)) {
-		for (x = FBC; x < SOUNDTS; x++) {
-			uint32 t = FDSDoSound();
-			t += t >> 1;
-			t >>= 8;
-			WaveHi[x] += t;
-		}
+	for (x = FBC; x < SOUNDTS; x++) {
+		uint32 t;
+		FDSDoSound();
+		t = fdso.sample_out_cache;
+		t += t >> 1;
+		WaveHi[x] += t;
 	}
 	FBC = SOUNDTS;
 }
