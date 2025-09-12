@@ -1177,6 +1177,9 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 	AddExState(&fds.irq_timer, 1, 0, "IRQt");
 	AddExState(&fds.transfer_flag, 1, 0, "TFLG");
 
+	AddExState(&fds.boot_delay, 4 | FCEUSTATE_RLSB, 1, "BDLY");
+	AddExState(&fds.disk_insert_delay, 4 | FCEUSTATE_RLSB, 1, "DDLY");
+
 	FDSSound_AddStateInfo();
 
 	CHRRAMSIZE = 8192;
