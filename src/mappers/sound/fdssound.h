@@ -34,12 +34,16 @@ enum {
 	MASTER_VOLUME     = 0x03,
 	WAVE_WRITE_MODE   = 0x80
 };
+enum {
+	VOLUME_MIN        = 0,
+	VOLUME_MAX        = 32
+};
 
 typedef struct __FDSENVUNIT {
 	uint8 speed;
 	uint8 volume;  /* Current volumes. */
 	uint8 control; /* $4080/$4084 with low 6bits masked */
-	uint8 counter; /**/
+	int32 counter; /**/
 } FDSENVUNIT;
 
 typedef struct __FDSSOUND {
@@ -48,7 +52,7 @@ typedef struct __FDSSOUND {
 
 	FDSENVUNIT EnvUnits[2];
 
-	uint16 envcount; /* Main envelope clock divider. */
+	int32 env_divider; /* Main envelope clock divider. */
 
 	uint16 cwave_freq;   /* $4082 and lower 4 bits of $4083 */
 	uint32 cwave_pos;    /* main phase */
@@ -56,7 +60,7 @@ typedef struct __FDSSOUND {
 
 	uint16 mod_freq;   /* $4086 and lower 4 bits of $4087 */
 	uint32 mod_pos;    /* Should be named "mwave_pos", but "mod_pos" distinguishes it more. */
-	uint8 mod_control; /* $4087 bit7 */
+	uint8 mod_disabled; /* $4087 bit7 */
 
 	uint8 master_control;   /* $4089 with lower 6 bits masked */
 	uint8 master_env_speed; /* Master envelope speed controller($408A). */
@@ -69,6 +73,11 @@ typedef struct __FDSSOUND {
 
 	int32 mod_output;  /* output from modulation engine */
 	int32 sample_out_cache; /* holds the last output from wave carrier */
+
+	uint8 cwave_pos_shift;
+	uint8 env_count_mul;
+	uint8 mod_pos_shift;
+	uint8 mod_overflow_shift;
 } FDSSOUND;
 
 DECLFR(FDSWaveRead);
