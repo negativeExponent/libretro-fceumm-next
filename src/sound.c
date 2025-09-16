@@ -31,6 +31,8 @@
 #include "state.h"
 #include "ppu.h"
 
+#include "cart.h"
+#include "nsf.h"
 #include "apu.h"
 
 static uint32 square_mix_table[32]; /* square channel mix table */
@@ -58,31 +60,6 @@ EXPSOUND GameExpSound[GAMEEXPSOUND_COUNT] = {
 	{ 0, 0, 0, 0, 0, 0 },
 	{ 0, 0, 0, 0, 0, 0 },
 	{ 0, 0, 0, 0, 0, 0 },
-};
-
-static const uint8 lengthtable[0x20] =
-{
-	0x0A, 0xFE, 0x14, 0x02, 0x28, 0x04, 0x50, 0x06,
-	0xa0, 0x08, 0x3c, 0x0a, 0x0e, 0x0c, 0x1a, 0x0e,
-	0x0c, 0x10, 0x18, 0x12, 0x30, 0x14, 0x60, 0x16,
-	0xc0, 0x18, 0x48, 0x1a, 0x10, 0x1c, 0x20, 0x1E
-};
-
-static const uint8 SquareWaveTable[2][4][8] = {
-	{
-		/* table for normal mode */
-		{ 0, 0, 0, 0, 0, 0, 0, 1 }, /* 12.5% */
-		{ 0, 0, 0, 0, 0, 0, 1, 1 }, /* 25.0% */
-		{ 0, 0, 0, 0, 1, 1, 1, 1 }, /* 50.0% */
-		{ 1, 1, 1, 1, 1, 1, 0, 0 }, /* 25.0% (negated) */
-	},
-	{
-		/* table for swapped-duty mode */
-		{ 0, 0, 0, 0, 0, 0, 0, 1 }, /* 12.5% */
-		{ 0, 0, 0, 0, 1, 1, 1, 1 }, /* 25.0% */
-		{ 0, 0, 0, 0, 0, 0, 1, 1 }, /* 50.0% */
-		{ 1, 1, 1, 1, 1, 1, 0, 0 }, /* 25.0% (negated) */
-	},
 };
 
 static const uint8 TriangleWaveTable[0x20] = {
@@ -203,7 +180,7 @@ static INLINE void ClockLengthCounter(LengthCount *length) {
 		if (!length->counter) {
 			length->counter = length->nextCounter;
 		}
-		length->nextCounter = FALSE;
+		length->nextCounter = 0;
 	}
 }
 
@@ -482,6 +459,10 @@ static INLINE int32 GetFramePeriodNext(void) {
 }
 
 static void FrameSoundStuff(enum FrameType type) {
+	SquareUnit *s;
+	uint8 loop_flag;
+	int P;
+
 	if (type == FrameNone) {
 		return;
 	}
@@ -1438,6 +1419,8 @@ SFORMAT FCEUSND_STATEINFO[] = {
 
 	{ 0 }
 };
+
+#undef state_var
 
 void FCEUSND_SaveState(void) {
 }

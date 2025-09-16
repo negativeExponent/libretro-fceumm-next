@@ -674,6 +674,7 @@ static void MMC5_Power(void) {
 	SetWriteHandler(0x6000, 0xFFFF, MMC5_WriteROMRAM);
 	SetReadHandler(0x6000, 0xFFFF, MMC5_ReadROMRAM);
 
+	SetReadHandler(0x5015, 0x5015, MMC5Sound_ReadStatus);
 	SetWriteHandler(0x5000, 0x5015, MMC5Sound_Write);
 	SetWriteHandler(0x5205, 0x5206, Mapper5_write);
 	SetReadHandler(0x5205, 0x5206, MMC5_read);

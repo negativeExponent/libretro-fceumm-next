@@ -447,6 +447,7 @@ void NSF_init(void) {
 	}
 	if (NSFInfo->SoundChip & NSFSOUND_MMC5) {
 		MMC5Sound_ESI();
+		SetReadHandler(0x5015, 0x5015, NSF_read);
 		SetReadHandler(0x5C00, 0x5fef, NSF_read);
 		SetReadHandler(0x5205, 0x5206, NSF_read);
 		SetWriteHandler(0x5000, 0x5015, NSF_write);
@@ -634,6 +635,9 @@ static DECLFR(NSF_read) {
 	}
 
 	if (NSFInfo->SoundChip & NSFSOUND_MMC5) {
+		if (A == 0x5015) {
+			return MMC5Sound_ReadStatus(A);
+		}
 		if ((A >= 0x5C00) && (A <= 0x5FEF)) {
 			return mmc5_exram[A & 0x3FF];
 		}

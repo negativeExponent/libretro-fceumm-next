@@ -19,20 +19,8 @@
  */
 
 #include "mapinc.h"
+#include "apu.h"
 #include "mmc5sound.h"
-
-typedef struct __MMC5SQUARE {
-	/* regs */
-	uint8 volume;
-	uint8 duty;
-	uint8 enabled;
-	int16 freq;
-
-	/* timers */
-	uint8 dcount;
-	int32 vcount;
-	int32 cvbc;
-} MMC5SQUARE;
 
 typedef struct __MMC5PCM {
 	uint8 rawdata;
@@ -41,13 +29,15 @@ typedef struct __MMC5PCM {
 } MMC5PCM;
 
 typedef struct __MMC5SOUND {
-	MMC5SQUARE square[2];
+	SquareUnit square[2]; /* use APU Square struct */
 	MMC5PCM pcm;
+	int32 fcnt;
 } MMC5SOUND;
 
+static uint32 fhinc = 14915;
 static MMC5SOUND MMC5Sound;
 
-static void (*sfun)(MMC5SQUARE *channel);
+static void (*sfun)(SquareUnit *s);
 static void (*psfun)(void);
 
 static void Do5PCM(void) {
@@ -83,74 +73,59 @@ static void Do5PCMHQ(void) {
 	MMC5Sound.pcm.cvbc = SOUNDTS;
 }
 
-static void Do5SQ(MMC5SQUARE *channel) {
-	static int tal[4] = { 1, 2, 4, 6 };
-	int32 V, amp, duty, freq;
+static INLINE int32 SquareOutput(SquareUnit *s) {
+	if (!s->length.counter) {
+		return 0; /* silence */
+	}
+	if (s->envelope.constant) {
+		return s->envelope.speed;
+	}
+	return s->envelope.decay_volume;
+}
+
+static void Do5SQHQ(SquareUnit *s) {
+	int32 V, amp, wl;
+	const uint8 *dutyTbl = &SquareWaveTable[0][s->duty][0];
+
+	amp = GetOutput(SND_MMC5, SquareOutput(s) << 8);
+	wl = (s->timer.period + 1) * 2;
+
+	for (V = s->cvbc; V < SOUNDTS; V++) {
+		WaveHi[V] += dutyTbl[s->step] * amp;
+		s->timer.counter--;
+		if (s->timer.counter <= 0) {
+			s->timer.counter += wl;
+			s->step = (s->step - 1) & 0x07;
+		}
+	}
+
+	s->cvbc = SOUNDTS;
+}
+
+static void Do5SQ(SquareUnit *s) {
+	int32 V, amp, wl;
+	const uint8 *dutyTbl = &SquareWaveTable[0][s->duty][0];
 	int32 start, end;
 
-	start = channel->cvbc;
+	amp = GetOutput(SND_MMC5, SquareOutput(s) << 4);
+	wl = (s->timer.period + 1) * 2;
+	wl <<= 17;
+
+	start = s->cvbc;
 	end = (SOUNDTS << 16) / soundtsinc;
 	if (end <= start) {
 		return;
 	}
-	channel->cvbc = end;
+	s->cvbc = end;
 
-	freq = channel->freq + 1;
-	amp = GetOutput(SND_MMC5, channel->volume << 4);
-	duty = tal[channel->duty];
-
-	if ((freq >= 8) && channel->enabled) {
-		int32 dc, vc;
-
-		freq <<= 18;
-		dc = channel->dcount;
-		vc = channel->vcount;
-
-		for (V = start; V < end; V++) {
-			if (dc < duty) {
-				Wave[V >> 4] += amp;
-			}
-			vc -= nesincsize;
-			while (vc <= 0) {
-				vc += freq;
-				dc = (dc + 1) & 0x07;
-			}
+	for (V = start; V < end; V++) {
+		Wave[V >> 4] += dutyTbl[s->step] * amp;
+		s->timer.count2 -= nesincsize;
+		while (s->timer.count2 <= 0) {
+			s->timer.count2 += wl;
+			s->step = (s->step - 1) & 0x07;
 		}
-		channel->dcount = dc;
-		channel->vcount = vc;
 	}
-}
-
-static void Do5SQHQ(MMC5SQUARE *channel) {
-	static int tal[4] = { 1, 2, 4, 6 };
-	int V, amp, duty, freq;
-
-	freq = channel->freq + 1;
-	amp = GetOutput(SND_MMC5, channel->volume << 8);
-	duty = tal[channel->duty];
-
-	if ((freq >= 8) && channel->enabled) {
-		int dc, vc;
-
-		freq <<= 1;
-
-		dc = channel->dcount;
-		vc = channel->vcount;
-
-		for (V = channel->cvbc; V < SOUNDTS; V++) {
-			if (dc < duty) {
-				WaveHi[V] += amp;
-			}
-			vc--;
-			if (vc <= 0) { /* Less than zero when first started. */
-				vc = freq;
-				dc = (dc + 1) & 0x07;
-			}
-		}
-		channel->dcount = dc;
-		channel->vcount = vc;
-	}
-	channel->cvbc = SOUNDTS;
 }
 
 static void MMC5RunSoundHQ(void) {
@@ -174,28 +149,52 @@ static void MMC5RunSound(int Count) {
 	MMC5Sound.pcm.cvbc = Count;
 }
 
-static void MMC5Square_Write(MMC5SQUARE *channel, uint8 reg, uint8 V) {
+static void MMC5Square_Write(SquareUnit *s, uint8 reg, uint8 V) {
 	switch (reg) {
 	case 0:
-		channel->volume = V & 0x0F;
-		channel->duty = (V & 0xC0) >> 6;
+		s->envelope.speed = V & 0x0F;
+		s->envelope.constant = (V & 0x10) ? TRUE : FALSE;
+		s->envelope.loop = (V & 0x20) ? TRUE : FALSE;
+		s->length.halt = (V & 0x20) ? TRUE : FALSE;
+		s->duty = (V & 0xC0) >> 6;
 		break;
 
 	case 1:
+		/* no sweep unit in MMC5 */
 		break;
 
 	case 2:
-		channel->freq = (channel->freq & ~0x00FF) | V;
+		s->timer.period = (s->timer.period & 0x0700) | V;
 		break;
 
 	case 3:
-		channel->freq = (channel->freq & ~0x0700) | ((V & 0x07) << 8);
+		s->timer.period = (s->timer.period & 0x00FF) | ((V & 0x07) << 8);
+		s->step = 0;
+		s->envelope.reload = TRUE;
+		if (s->length.enabled) {
+			s->length.counter = lengthtable[(V >> 3) & 0x1F];
+		}
 		break;
 
 	case 4:
-		channel->enabled = (V != 0);
+		s->length.enabled = V;
+		if (!s->length.enabled) {
+			s->length.counter = 0;
+		}
 		break;
 	}
+}
+
+DECLFR(MMC5Sound_ReadStatus) {
+	uint8 ret = 0;
+	if (MMC5Sound.square[0].length.counter) {
+		ret |= 0x01;
+	}
+	if (MMC5Sound.square[1].length.counter) {
+		ret |= 0x02;
+	}
+	return ret;
+
 }
 
 DECLFW(MMC5Sound_Write) {
@@ -248,11 +247,51 @@ DECLFW(MMC5Sound_Write) {
 	}
 }
 
+static void MMC5SoundCPUCycle(int a) {
+	MMC5Sound.fcnt -= a * 2;
+	if (MMC5Sound.fcnt <= 0) {
+		int P;
+
+		MMC5Sound.fcnt += fhinc;
+
+		sfun(&MMC5Sound.square[0]);
+		sfun(&MMC5Sound.square[1]);
+
+		for (P = 0; P < 2; P++) {
+			SquareUnit *s = &MMC5Sound.square[P];
+			int loop_flag = s->envelope.loop & 0x20;
+
+			/* length counter */
+			if (!s->length.halt && s->length.counter) {
+				s->length.counter--;
+			}
+
+			/* envelope */
+			if (s->envelope.reload) {
+				s->envelope.counter = s->envelope.speed + 1;
+				s->envelope.decay_volume = 0x0F;
+				s->envelope.reload = 0;
+			} else {
+				if (s->envelope.counter) {
+					s->envelope.counter--;
+				}
+				if (s->envelope.counter == 0) {
+					s->envelope.counter = s->envelope.speed + 1;
+					if (s->envelope.loop || s->envelope.decay_volume) {
+						s->envelope.decay_volume--;
+						s->envelope.decay_volume &= 0x0F;
+					}
+				}
+			}
+		}
+	}
+}
+
 static void MMC5SC(void) {
 	GameExpSound[SND_MMC5 - 6].HiSync = MMC5HiSync;
 
-	MMC5Sound.square[0].vcount = 0;
-	MMC5Sound.square[1].vcount = 0;
+	MMC5Sound.square[0].timer.counter = 0;
+	MMC5Sound.square[1].timer.count2 = 0;
 
 	MMC5Sound.square[0].cvbc = 0;
 	MMC5Sound.square[1].cvbc = 0;
@@ -270,6 +309,9 @@ static void MMC5SC(void) {
 		sfun = 0;
 		psfun = 0;
 	}
+	fhinc = isPAL ? 16626 : 14915;  /* *2 CPU clock rate */
+	MMC5Sound.fcnt = 0;
+	MapIRQHook = MMC5SoundCPUCycle;
 }
 
 void MMC5Sound_ESI(void) {
@@ -278,24 +320,49 @@ void MMC5Sound_ESI(void) {
 	MMC5SC();
 }
 
+#define RLSB FCEUSTATE_RLSB
+#define state_var(var, varname) AddExState( &var, sizeof(var) | RLSB, 0, varname)
+
 void MMC5Sound_AddStateInfo(void) {
-	AddExState(&MMC5Sound.square[0].enabled, 1, 0, "S0EN");
-	AddExState(&MMC5Sound.square[0].volume, 1, 0, "S0VL");
-	AddExState(&MMC5Sound.square[0].freq, 2, 0, "S0FQ");
-	AddExState(&MMC5Sound.square[0].duty, 1, 0, "S0DT");
-	AddExState(&MMC5Sound.square[0].dcount, 1, 0, "S0DC");
-	AddExState(&MMC5Sound.square[0].vcount, 4, 0, "S0VC");
-	AddExState(&MMC5Sound.square[0].cvbc, 4, 0, "S0BC");
+	state_var(MMC5Sound.square[0].length.halt, "M0LH");
+	state_var(MMC5Sound.square[0].length.counter, "M0LC");
+	state_var(MMC5Sound.square[0].length.enabled, "M0LE");
 
-	AddExState(&MMC5Sound.square[1].enabled, 1, 0, "S1EN");
-	AddExState(&MMC5Sound.square[1].volume, 1, 0, "S1VL");
-	AddExState(&MMC5Sound.square[1].freq, 2, 0, "S1FQ");
-	AddExState(&MMC5Sound.square[1].duty, 1, 0, "S1DT");
-	AddExState(&MMC5Sound.square[1].dcount, 1, 0, "S1DC");
-	AddExState(&MMC5Sound.square[1].vcount, 4, 0, "S1VC");
-	AddExState(&MMC5Sound.square[1].cvbc, 4, 0, "S1BC");
+	state_var(MMC5Sound.square[0].envelope.constant, "M0EC");
+	state_var(MMC5Sound.square[0].envelope.counter, "M0E2");
+	state_var(MMC5Sound.square[0].envelope.decay_volume, "M0DC");
+	state_var(MMC5Sound.square[0].envelope.loop, "M0EL");
+	state_var(MMC5Sound.square[0].envelope.reload, "M0RL");
+	state_var(MMC5Sound.square[0].envelope.speed, "M0SP");
 
-	AddExState(&MMC5Sound.pcm.control, 1, 0, "PCTL");
-	AddExState(&MMC5Sound.pcm.rawdata, 1, 0, "PRAW");
-	AddExState(&MMC5Sound.pcm.cvbc, 4, 0, "PCVB");
+	state_var(MMC5Sound.square[0].timer.counter, "M0TC");
+	state_var(MMC5Sound.square[0].timer.count2, "M0T2");
+	state_var(MMC5Sound.square[0].timer.period, "M0PD");
+
+	state_var(MMC5Sound.square[0].duty, "M0DT");
+	state_var(MMC5Sound.square[0].step, "M0ST");
+
+	state_var(MMC5Sound.square[1].length.halt, "M1LH");
+	state_var(MMC5Sound.square[1].length.counter, "M1LC");
+	state_var(MMC5Sound.square[1].length.enabled, "M1LE");
+
+	state_var(MMC5Sound.square[1].envelope.constant, "M1EC");
+	state_var(MMC5Sound.square[1].envelope.counter, "M1E2");
+	state_var(MMC5Sound.square[1].envelope.decay_volume, "M1DC");
+	state_var(MMC5Sound.square[1].envelope.loop, "M1EL");
+	state_var(MMC5Sound.square[1].envelope.reload, "M1RL");
+	state_var(MMC5Sound.square[1].envelope.speed, "M1SP");
+
+	state_var(MMC5Sound.square[1].timer.counter, "M1TC");
+	state_var(MMC5Sound.square[1].timer.count2, "M1T2");
+	state_var(MMC5Sound.square[1].timer.period, "M1PD");
+
+	state_var(MMC5Sound.square[1].duty, "M1DT");
+	state_var(MMC5Sound.square[1].step, "M1ST");
+
+	state_var(MMC5Sound.pcm.control, "PCTL");
+	state_var(MMC5Sound.pcm.rawdata, "PRAW");
+	state_var(MMC5Sound.pcm.cvbc, "PCVB");
+
+	state_var(MMC5Sound.fcnt, "ACNT");
 }

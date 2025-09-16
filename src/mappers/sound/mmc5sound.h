@@ -22,7 +22,9 @@
 #define _MMC5_AUDIO_H
 
 void MMC5Sound_ESI(void);
+DECLFR(MMC5Sound_ReadStatus);
 DECLFW(MMC5Sound_Write);
+void MMC5CPUCycle(int a);
 void MMC5Sound_AddStateInfo(void);
 
 #endif /* _MMC5_AUDIO_H */

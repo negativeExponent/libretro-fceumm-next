@@ -108,6 +108,9 @@ emu2149 - https://github.com/digital-sound-antiques/emu2149
 
 Changelog:
 ----------
+25.09.16
+- Improve MMC5 audio: implement length counters and envelope output for square channels, including $5015 status reads, to support Koei game effects and volume modulation and others that may need it.
+
 25.07.22
 - FDS, support for QD format
 
