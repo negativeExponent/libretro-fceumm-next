@@ -23,6 +23,8 @@ typedef struct Timer {
 	/* Internal */
 	int32       counter;       /* Counter tracking the square wave period (timing of cycles) */
 	int32       count2;        /* Shifted period timer for  low-quality mode */
+
+	uint32      cvbc;          /* base counter */
 } Timer;
 
 typedef struct LengthCount {
@@ -76,7 +78,6 @@ typedef struct SquareUnit {
 	Envelope    envelope;       /* Envelope to control volume for square wave */
 	Sweep       sweep;          /* Sweep to modify frequency of square wave */
 	Timer       timer;          /* Cycle counter and period to reload */
-	int32       cvbc;
 } SquareUnit;
 
 typedef struct TriangleUnit {
@@ -163,6 +164,20 @@ static const uint8 SquareWaveTable[2][4][8] = {
 		{ 1, 1, 1, 1, 1, 1, 0, 0 }, /* 25.0% (negated) */
 	},
 };
+
+/**
+ * MMC5SoundFrameTick
+ * ------------------
+ * Step the MMC5 audio unit’s frame-sequencer events. 
+ * This should be called once per APU frame tick (240 Hz NTSC / 192 Hz PAL).
+ * 
+ * Actions performed:
+ *  - Clock length counters for both MMC5 pulse channels
+ *  - Clock envelopes for both MMC5 pulse channels
+ * 
+ * Note: This function does NOT generate PCM samples; it only updates counters.
+ */
+void MMC5SoundFrameTick(void);
 
 extern uint8 isMMC5Audio;
 

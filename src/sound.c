@@ -49,8 +49,6 @@ int32 nesincsize = 0;
 uint32 soundtsinc = 0;
 /* LQ variables segment ends. */
 
-static uint32 ChannelBC[5];
-
 /* FIXME: Very ugly hack and only relevant in multichip NSF playback */
 /* Indexing is based on sound channel enum */
 EXPSOUND GameExpSound[GAMEEXPSOUND_COUNT] = {
@@ -500,6 +498,10 @@ static void FrameSoundStuff(enum FrameType type) {
 	ClockEnvelope(&square1.envelope);
 	ClockEnvelope(&square2.envelope);
 	ClockEnvelope(&noise.envelope);
+
+	if (isMMC5Audio) {
+		MMC5SoundFrameTick();
+	}
 }
 
 static void ClockFrameCounter(int cycles) {
@@ -746,12 +748,12 @@ void FCEU_SoundCPUHook(int cycles) {
 static void RDoPCM(void) {
 	uint32 V;
 
-	for (V = ChannelBC[4]; V < SOUNDTS; V++) {
+	for (V = dmc.timer.cvbc; V < SOUNDTS; V++) {
 		int32 pcmout = GetOutput(SND_DMC, dmc.rawDataLatch);
 		WaveHi[V] += ((pcmout << TRINPCM_SHIFT) & (~0xFFFF));
 	}
 
-	ChannelBC[4] = SOUNDTS;
+	dmc.timer.cvbc = SOUNDTS;
 }
 
 static INLINE void RDoSQ(int x) {
@@ -763,7 +765,7 @@ static INLINE void RDoSQ(int x) {
 	amp = GetOutput(SND_SQUARE1 + x, SquareOutput(square));
 	amp <<= SQ_SHIFT;
 
-	for (V = ChannelBC[x]; V < SOUNDTS; V++) {
+	for (V = square->timer.cvbc; V < SOUNDTS; V++) {
 		WaveHi[V] += dutyTbl[square->step] * amp;
 		square->timer.counter--;
 		if (square->timer.counter == 0) {
@@ -772,7 +774,7 @@ static INLINE void RDoSQ(int x) {
 		}
 	}
 
-	ChannelBC[x] = SOUNDTS;
+	square->timer.cvbc = SOUNDTS;
 }
 
 static void RDoSQ1(void) {
@@ -796,12 +798,12 @@ static void RDoSQLQ(void) {
 
 	int x;
 
-	start = ChannelBC[0];
+	start = square1.timer.cvbc;
 	end = (SOUNDTS << 16) / soundtsinc;
 	if (end <= start) {
 		return;
 	}
-	ChannelBC[0] = end;
+	square1.timer.cvbc = end;
 
 	for (x = 0; x < 2; x++) {
 		SquareUnit *square = x ? &square2 : &square1;
@@ -868,11 +870,11 @@ static void RDoTriangle(void) {
 
 	if ((triangle.length.counter == 0) || (triangle.linearCounter == 0) || triangle.timer.period <= 4) {
 		/* Counter is halted, but we still need to output. */
-		for (V = ChannelBC[2]; V < SOUNDTS; V++) {
+		for (V = triangle.timer.cvbc; V < SOUNDTS; V++) {
 			WaveHi[V] += triout;
 		}
 	} else {
-		for (V = ChannelBC[2]; V < SOUNDTS; V++) {
+		for (V = triangle.timer.cvbc; V < SOUNDTS; V++) {
 			WaveHi[V] += triout;
 			triangle.timer.counter--;
 			if (triangle.timer.counter == 0) {
@@ -884,7 +886,7 @@ static void RDoTriangle(void) {
 		}
 	}
 
-	ChannelBC[2] = SOUNDTS;
+	triangle.timer.cvbc = SOUNDTS;
 }
 
 static void RDoTriangleNoisePCMLQ(void) {
@@ -901,12 +903,12 @@ static void RDoTriangleNoisePCMLQ(void) {
 	int32 totalout;
 	int32 wl;
 
-	start = ChannelBC[2];
+	start = triangle.timer.cvbc;
 	end = (SOUNDTS << 16) / soundtsinc;
 	if (end <= start) {
 		return;
 	}
-	ChannelBC[2] = end;
+	triangle.timer.cvbc = end;
 
 	inie[0] = inie[1] = nesincsize;
 
@@ -1019,7 +1021,7 @@ static void RDoNoise(void) {
 
 	noiseout = amptab[noise.shiftRegister & 0x01];
 
-	for (V = ChannelBC[3]; V < SOUNDTS; V++) {
+	for (V = noise.timer.cvbc; V < SOUNDTS; V++) {
 		WaveHi[V] += noiseout;
 		noise.timer.counter--;
 		if (noise.timer.counter == 0) {
@@ -1031,7 +1033,7 @@ static void RDoNoise(void) {
 			noiseout = amptab[noise.shiftRegister & 0x01];
 		}
 	}
-	ChannelBC[3] = SOUNDTS;
+	noise.timer.cvbc = SOUNDTS;
 }
 
 static int32 inbuf = 0;
@@ -1084,9 +1086,11 @@ int FlushEmulateSound(void) {
 				GameExpSound[x].HiSync(left);
 			}
 		}
-		for (x = 0; x < 5; x++) {
-			ChannelBC[x] = left;
-		}
+		square1.timer.cvbc = left;
+		square2.timer.cvbc = left;
+		triangle.timer.cvbc = left;
+		noise.timer.cvbc = left;
+		dmc.timer.cvbc = left;
 	} else {
 		end = (SOUNDTS << 16) / soundtsinc;
 		for (x = 0; x < GAMEEXPSOUND_COUNT; x++) {
@@ -1111,9 +1115,11 @@ int FlushEmulateSound(void) {
 	if (FSettings.soundq >= 1) {
 		soundtsoffs = left;
 	} else {
-		for (x = 0; x < 5; x++) {
-			ChannelBC[x] = end & 0xF;
-		}
+		square1.timer.cvbc = end & 0xF;
+		square2.timer.cvbc = end & 0xF;
+		triangle.timer.cvbc = end & 0xF;
+		noise.timer.cvbc = end & 0xF;
+		dmc.timer.cvbc = end & 0xF;
 		soundtsoffs = (soundtsinc * (end & 0xF)) >> 16;
 		end >>= 4;
 	}
@@ -1144,7 +1150,6 @@ void FCEUSND_Power(void) {
 	soundtsoffs = 0;
 	memset(Wave, 0, sizeof(Wave));
 	memset(WaveHi, 0, sizeof(WaveHi));
-	memset(ChannelBC, 0, sizeof(ChannelBC));
 
 	APUReset(1);
 	
@@ -1203,7 +1208,11 @@ void SetSoundVariables(void) {
 	square1.timer.count2 = 0;
 	square2.timer.count2 = 0;
 
-	memset(ChannelBC, 0, sizeof(ChannelBC));
+	square1.timer.cvbc = 0;
+	square2.timer.cvbc = 0;
+	triangle.timer.cvbc = 0;
+	noise.timer.cvbc = 0;
+	dmc.timer.cvbc = 0;
 
 	LoadDMCPeriod(dmc.periodIndex);	/* For changing from PAL to NTSC */
 	LoadNoisePeriod(noise.periodIndex);
@@ -1403,11 +1412,11 @@ SFORMAT FCEUSND_STATEINFO[] = {
 	state_var(frame.newMode, "NMDF"),
 
 	/* less important but still necessary */
-	{ &ChannelBC[0], sizeof(ChannelBC[0]) | FCEUSTATE_RLSB, "CBC1" },
-	{ &ChannelBC[1], sizeof(ChannelBC[1]) | FCEUSTATE_RLSB, "CBC2" },
-	{ &ChannelBC[2], sizeof(ChannelBC[2]) | FCEUSTATE_RLSB, "CBC3" },
-	{ &ChannelBC[3], sizeof(ChannelBC[3]) | FCEUSTATE_RLSB, "CBC4" },
-	{ &ChannelBC[4], sizeof(ChannelBC[4]) | FCEUSTATE_RLSB, "CBC5" },
+	{ &square1.timer.cvbc, sizeof(square1.timer.cvbc) | FCEUSTATE_RLSB, "CBC1" },
+	{ &square2.timer.cvbc, sizeof(square2.timer.cvbc) | FCEUSTATE_RLSB, "CBC2" },
+	{ &triangle.timer.cvbc, sizeof(triangle.timer.cvbc) | FCEUSTATE_RLSB, "CBC3" },
+	{ &noise.timer.cvbc, sizeof(noise.timer.cvbc) | FCEUSTATE_RLSB, "CBC4" },
+	{ &dmc.timer.cvbc, sizeof(dmc.timer.cvbc) | FCEUSTATE_RLSB, "CBC5" },
 	{ &sound_timestamp, sizeof(sound_timestamp) | FCEUSTATE_RLSB, "SNTS" },
 	{ &soundtsoffs, sizeof(soundtsoffs) | FCEUSTATE_RLSB, "TSOF"},
 	{ &sexyfilter_acc1, sizeof(sexyfilter_acc1) | FCEUSTATE_RLSB, "FAC1" },
@@ -1442,9 +1451,11 @@ void FCEUSND_LoadState(int version) {
 		} else if (FSettings.soundq == 1) {
 			BC_max = 485;
 		}
-		if (/* ChannelBC[i] < 0 || */ ChannelBC[i] > BC_max) {
-			ChannelBC[i] = 0;
-		}
+		if (square1.timer.cvbc > BC_max) square1.timer.cvbc = 0;
+		if (square2.timer.cvbc > BC_max) square2.timer.cvbc = 0;
+		if (triangle.timer.cvbc > BC_max) triangle.timer.cvbc = 0;
+		if (noise.timer.cvbc > BC_max) noise.timer.cvbc = 0;
+		if (dmc.timer.cvbc > BC_max) dmc.timer.cvbc = 0;
 	}
 	if (dmc.timer.counter <= 0) {
 		dmc.timer.counter = 1;
