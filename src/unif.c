@@ -685,9 +685,8 @@ static BMAPPING bmap[] = {
 	{ "KONAMI-QTAI",                547, 0, Mapper547_Init, 0 },
 	{ "KN-20",                      577, 0, Mapper577_Init, 0 },
 	{ "820436-C",                   579, 0, Mapper579_Init, 0 },
+	{ "8203",                       583, 0, Mapper583_Init, 0 },
 	{ "K-3057",                     587, 0, Mapper587_Init, 0 },
-	
-	{ "8203",                       585, 0, Mapper585_Init, 0 },
 
 	{ "SSS-NROM-256",           NO_INES, 0, SSSNROM_Init,     0 }, /* famicombox - cant find similar cart */
 	{ "T-227-1",                NO_INES, 0, BMCT2271_Init,    0 }, /* cant find similar cart */

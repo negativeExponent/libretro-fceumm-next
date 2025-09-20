@@ -26,7 +26,7 @@ static void Sync(void) {
 
 	if (latch.addr & 0x20) {
 		setprg32(0x8000, ((bank >> 1) & ~0x07) | (latch.data & 0x07));
-		setmirror(MI_0 + ((latch.addr >> 4) & 0x01));
+		setmirror(MI_0 + ((latch.data >> 4) & 0x01));
 	} else {
 		if ((latch.addr & 0x10) && (latch.addr & 0x08)) {
 			setprg16(0x8000, (bank & ~0x03) | (latch.data & 0x03));
@@ -50,10 +50,11 @@ static DECLFW(WriteLatch) {
 
 static void Power(void) {
 	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, Latch_Write);
+	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
 void Mapper583_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, FALSE);
+	info->Power = Power;
 	info->Reset = Latch_RegReset;
 }
