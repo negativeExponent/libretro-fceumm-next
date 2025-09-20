@@ -23,7 +23,7 @@
 
 #define CHIP_ROM 0
 #define CHIP_WRAM 0x10
-#define CHIP_FLASHROM 0x11
+#define CHIP_FLASH 0x11
 
 static struct {
 	uint8 reg;
@@ -40,10 +40,16 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
+	int chip = flash_save ? CHIP_FLASH : CHIP_ROM;
+
 	setprg8r(CHIP_WRAM, 0x6000, 0);
-	setprg16r(flash_save ? CHIP_FLASHROM : CHIP_ROM, 0x8000, (m595.reg & 0x1F));
-	setprg16r(flash_save ? CHIP_FLASHROM : CHIP_ROM, 0xC000, 0xFF);
+	setprg16r(chip, 0x8000, (m595.reg & 0x1F));
+	setprg16r(chip, 0xC000, 0xFF);
 	setchr8(0);
+}
+
+static void CPUCycle(int a) {
+	FlashROM_CPUCyle(a);
 }
 
 static DECLFR(ReadFlash) {
@@ -73,12 +79,21 @@ static void Power(void) {
 	}
 }
 
+static void Close(void) {
+	if (flash_data) {
+		FCEU_gfree(flash_data);
+	}
+	flash_data = NULL;
+}
+
 static void StateRestore(int version) {
 	Sync();
 }
 
 void Mapper595_Init(CartInfo *info) {
+	flash_save = info->battery ? TRUE : FALSE;
 	info->Power = Power;
+	info->Close = Close;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 
@@ -96,12 +111,12 @@ void Mapper595_Init(CartInfo *info) {
 		for (i = 0; i < ssize; i++) {
 			flash_data[i] = ROM.prg.data[i % ssize];
 		}
-		SetupCartPRGMapping(CHIP_FLASHROM, flash_data, ssize, TRUE);
+		SetupCartPRGMapping(CHIP_FLASH, flash_data, ssize, TRUE);
 		AddExState(flash_data, ssize, 0, "FLSH");
 		info->SaveGame[0] = flash_data;
 		info->SaveGameLen[0] = ssize;
 
 		FlashROM_Init(flash_data, ssize, 0xBF, 0xB7, 4096, 0x5555, 0x2AAA);
-		MapIRQHook = FlashROM_CPUCyle;
+		MapIRQHook = CPUCycle;
 	}
 }
