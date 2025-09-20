@@ -37,7 +37,7 @@ static void SetPRG(uint16 A, uint16 V) {
 	setprg16(A, (base & ~mask) | (V & mask));
 }
 
-static SyncPRG(void) {
+static void SyncPRG(void) {
 	if (m498.reg & 0x20) {
 		MMC1_SyncPRG_default();
 	} else {

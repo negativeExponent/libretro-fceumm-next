@@ -681,6 +681,7 @@ static BMAPPING bmap[] = {
 	{ "T-230",                      529, 0, Mapper529_Init, 0 },
 	{ "AX5705",                     530, 0, Mapper530_Init, 0 },
 	{ "LH53",                       535, 0, Mapper535_Init, 0 },
+	{ "JY4M4",                      537, 0, Mapper537_Init, 0 },
 	{ "82112C",                     540, 0, Mapper540_Init, 0 },
 	{ "KONAMI-QTAI",                547, 0, Mapper547_Init, 0 },
 	{ "KN-20",                      577, 0, Mapper577_Init, 0 },
