@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,77 +18,96 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-/* iNES Mapper 205
- * UNIF boardname BMC-JC-016-2
- *
- * NES 2.0 Mapper 367 denotes a 7-in-1 multicart using an unknown PCB ID that
- * constitutes a variant of INES Mapper 205. It latches the address bits A0 and
- * A1 instead of the data bits D0 and D1 when address range $6000-$7FFF is
- * written to, and is otherwise identical to mapper 205.
- */
-
 #include "mapinc.h"
 #include "mmc3.h"
 
 static struct {
 	uint8 reg;
-} m205;
-
-static uint8 dipsw;
+} m569;
 
 static SFORMAT StateRegs[] = {
-	{ &m205.reg, 1, "REGS" },
-	{ &dipsw, 1, "DPSW" },
+	{ &m569.reg, 1, "EXPR" },
 	{ 0 }
 };
 
 static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = (m205.reg & 0x02) ? 0x0F : 0x1F;
-	uint16 base = m205.reg << 4;
+	uint16 mask = 0x0F;
+	uint16 base = (m569.reg << 4) & ~mask;
+	uint16 bank = (A >> 13) & 0x03;
+
+	if (m569.reg & 0x08) {
+		base = base | (MMC3_GetPRGBank(0) & mask);
+		mask = 0x03;
+		V = bank;
+	}
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (m205.reg & 0x02) ? 0x7F : 0xFF;
-	uint16 base = m205.reg << 7;
+	uint16 mask = ((m569.reg & 0x04) ? 0x1FF : ((m569.reg & 0x02) ? 0xFF : 0x7F));
+	uint16 base = (m569.reg << 7) & ~mask;
+	uint16 bank = (A >> 10) & 0x07;
+
+	if (m569.reg & 0x04) {
+		base = base | ((MMC3_GetCHRBank((bank & 0x06) | ((bank >> 1) & 0x01)) << 1) & mask);
+		mask = 0x01;
+		V = bank;
+	}
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(WriteReg) {
-	uint8 latch = (iNESCart.mapper == 367) ? (A & 0xFF) : V;
-	CartBW(A, V);
-	m205.reg = latch;
-	if ((V & 0x01) && dipsw) {
-		m205.reg |= 0x02;
+	if (MMC3_WramIsWritable()) {
+		m569.reg = A & 0xFF;
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
 	}
-	MMC3_SyncPRG();
-	MMC3_SyncCHR();
+}
+
+static DECLFW(WriteMMC3) {
+	switch (A & 0xE001) {
+	case 0x8001:
+		mmc3.reg[mmc3.cmd & 0x07] = V;
+		switch (mmc3.cmd & 0x07) {
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			MMC3_SyncCHR();
+			break;
+		case 6:
+		case 7:
+			MMC3_SyncPRG();
+			break;
+		}
+		break;
+	default:
+		MMC3_Write(A, V);
+		break;
+	}
 }
 
 static void Reset(void) {
-	memset(&m205, 0, sizeof(m205));
-	dipsw = (dipsw + 1) & 0x01; /* solder pad */
+	m569.reg = 0;
 	MMC3_Reset();
 }
 
 static void Power(void) {
-	memset(&m205, 0, sizeof(m205));
-	dipsw = 0;
+	m569.reg = 0;
 	MMC3_Power();
 	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
+	SetWriteHandler(0x8000, 0x9FFF, WriteMMC3);
 }
 
-void Mapper205_Init(CartInfo *info) {
-	MMC3_Init(info, MMC3B, 8, 0);
+void Mapper569_Init(CartInfo *info) {
+	MMC3_Init(info, MMC3B, 0, 0);
 	MMC3_pwrap = SetPRG;
 	MMC3_cwrap = SetCHR;
 	info->Power = Power;
 	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
-}
-
-void Mapper367_Init(CartInfo *info) {
-	Mapper205_Init(info);
 }

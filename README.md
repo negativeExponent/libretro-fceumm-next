@@ -108,6 +108,10 @@ emu2149 - https://github.com/digital-sound-antiques/emu2149
 
 Changelog:
 ----------
+25.09.20
+Add mappers 273, 367, 378, 474, 475, 476, 477, 478, 480, 482, 483, 484, 485, 486, 488, 489, 490, 491, 492, 494, 495, 498, 499, 503, 504, 505, 506, 507, 508, 509, 510, 511, 536, 537, 542, 545, 546, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 594, 595.
+(needs testing)
+
 25.09.16
 - Improve MMC5 audio: implement length counters and envelope output for square channels, including $5015 status reads, to support Koei game effects and volume modulation and others that may need it.
 

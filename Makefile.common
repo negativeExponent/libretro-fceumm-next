@@ -15,7 +15,8 @@ endif
 
 FCEU_SRC_DIRS := \
 	$(SOURCE_DIR)/input \
-	$(SOURCE_DIR)/mappers
+	$(SOURCE_DIR)/mappers \
+	$(SOURCE_DIR)/mappers_wip
 
 SOURCES_C := $(foreach dir,$(FCEU_SRC_DIRS),$(wildcard $(dir)/*.c))
 
