@@ -258,10 +258,22 @@ static INLINE void ClockEnvelope(Envelope *envelope) {
 
 /* Square */
 
+static int CheckFreq(SquareUnit *sq) {
+	uint32 mod;
+	uint32 period = sq->sweep.pulsePeriod;
+	if (!sq->sweep.negate) {
+		mod = period >> sq->sweep.shift;
+		if ((mod + period) & 0x800) {
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
 /* returns output from envelope, unless silenced by
  * sweeo unit overflow, or period < 8 or lengthcounter is 0 */
 static INLINE int32 SquareOutput(SquareUnit *square) {
-	if ((square->sweep.pulsePeriod < 8) || (!square->sweep.negate && ((square->sweep.pulsePeriod >> square->sweep.shift) & 0x800)) || (square->length.counter == 0)) {
+	if ((square->sweep.pulsePeriod < 8) || !CheckFreq(square) || (square->length.counter == 0)) {
 		return 0;
 	}
 	return EnvelopeVolume(&square->envelope);
