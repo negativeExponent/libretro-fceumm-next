@@ -1058,6 +1058,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "T-215",                    579, Mapper579_Init         )
 	INES_BOARD( "8203",                     583, Mapper583_Init         )
 	INES_BOARD( "K-3057,33/55",             587, Mapper587_Init         )
+	INES_BOARD( "Rinco FSG2",               594, Mapper594_Init         )
 
 	/* Rewritten Mappers — Clean Port, Needs Testing */
 	INES_BOARD( "",                         273, Mapper273_Init         )
@@ -1122,7 +1123,6 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "810430",                   590, Mapper590_Init         )
 	INES_BOARD( "07027/810543",             591, Mapper591_Init         )
 	INES_BOARD( "8-in-1 1991",              592, Mapper592_Init         )
-	INES_BOARD( "Rinco FSG2",               594, Mapper594_Init         )
 	INES_BOARD( "4MROM-512",                595, Mapper595_Init         )
 INES_BOARD_END()
 
