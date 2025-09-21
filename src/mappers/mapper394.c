@@ -87,7 +87,7 @@ static void SetCHR_mmc3(uint16 A, uint16 V) {
 	uint16 base = CHRBase();
 
 	if (iNESCart.submapper != 1) {
-		base = (((m394.reg[1] << 8) & 0x100) | ((m394.reg[3] << 1) & 0x080));
+		base = (((m394.reg[1] << 8) & 0x300) | ((m394.reg[3] << 1) & 0x080));
 	}
 
 	setchr1(A, (base & ~mask) | (V & mask));
