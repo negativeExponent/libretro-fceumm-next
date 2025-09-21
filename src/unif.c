@@ -665,6 +665,8 @@ static BMAPPING bmap[] = {
 	{ "GN-23",                      458, 0, Mapper458_Init, 0 },
 	{ "K-3102",                     458, 0, Mapper458_Init, 0 },
 	{ "971107-00G",                 462, 0, Mapper462_Init, 0 },
+	{ "K-3011",                     498, 0, Mapper498_Init, 0 },
+	{ "K-3011-25",                  498, 0, Mapper498_Init, 0 },
 	{ "Yhc-Unrom-Cart",             500, 0, Mapper500_Init, 0 },
 	{ "Yhc-Axrom-Cart",             501, 0, Mapper501_Init, 0 },
 	{ "Yhc-A/B/Uxrom-Cart",         502, 0, Mapper502_Init, 0 },
@@ -681,13 +683,15 @@ static BMAPPING bmap[] = {
 	{ "T-230",                      529, 0, Mapper529_Init, 0 },
 	{ "AX5705",                     530, 0, Mapper530_Init, 0 },
 	{ "LH53",                       535, 0, Mapper535_Init, 0 },
-	{ "JY4M4",                      537, 0, Mapper537_Init, 0 },
 	{ "82112C",                     540, 0, Mapper540_Init, 0 },
 	{ "KONAMI-QTAI",                547, 0, Mapper547_Init, 0 },
 	{ "KN-20",                      577, 0, Mapper577_Init, 0 },
 	{ "820436-C",                   579, 0, Mapper579_Init, 0 },
 	{ "8203",                       583, 0, Mapper583_Init, 0 },
 	{ "K-3057",                     587, 0, Mapper587_Init, 0 },
+
+	/* need dumps (needs testing) */
+	{ "JY4M4",                      537, 0, Mapper537_Init, 0 },
 
 	{ "SSS-NROM-256",           NO_INES, 0, SSSNROM_Init,     0 }, /* famicombox - cant find similar cart */
 	{ "T-227-1",                NO_INES, 0, BMCT2271_Init,    0 }, /* cant find similar cart */

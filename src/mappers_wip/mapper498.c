@@ -18,6 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
+/* NES 2.0 Mapper 498
+ - BMC-K-3011    (34-in-1)
+ - BMC-K-3011-25 (29-in-1)
+ */
+
 #include "mapinc.h"
 #include "mmc1.h"
 
@@ -62,7 +67,6 @@ static DECLFW(WriteReg) {
 	m498.reg = A & 0xFF;
 	MMC1_SyncPRG();
 	MMC1_SyncCHR();
-	MMC1_SyncMirror();
 }
 
 static void Reset(void) {
@@ -78,6 +82,9 @@ static void Power(void) {
 
 void Mapper498_Init(CartInfo *info) {
 	MMC1_Init(info, MMC1A, 0, 0);
+	MMC1_pwrap = SetPRG;
+	MMC1_cwrap = SetCHR;
+	MMC1_SyncPRG = SyncPRG;
 	info->Power = Power;
 	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
