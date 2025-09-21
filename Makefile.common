@@ -55,6 +55,8 @@ SOURCES_C += $(SOURCE_DIR)/mappers/sound/n163sound.c
 SOURCES_C += $(SOURCE_DIR)/mappers/sound/s5bsound.c
 SOURCES_C += $(SOURCE_DIR)/mappers/sound/vrc6sound.c
 SOURCES_C += $(SOURCE_DIR)/mappers/sound/vrc7sound.c
+SOURCES_C += $(SOURCE_DIR)/mappers/sound/fifo.c
+SOURCES_C += $(SOURCE_DIR)/mappers/sound/msm6585.c
 
 ifeq ($(HAVE_NTSC),1)
 	COREDEFINES += \
