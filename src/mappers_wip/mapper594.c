@@ -46,12 +46,11 @@ static void SetPRG(uint16 A, uint16 V) {
 }
 
 static void SetCHR(uint16 A, uint16 V) {
-	uint8  bank = (A >> 13) & 0x07;
 	uint16 mask = m594.reg[2] & 0xC0 ? 0x0FF : 0x1FF;
 	uint16 base = (m594.reg[2] & 0x40 ? 0x200 : 0x000) |
 	              (m594.reg[2] & 0x80 ? 0x300 : 0x000);
 
-	V |= ((bank << 6) & 0x100);
+	V |= ((A >> 4) & 0x100);
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
@@ -91,6 +90,7 @@ static void Power(void) {
 	FIFO_reset(&fifo);
 	MSM6585_reset(&adpcm);
 	SetReadHandler(0x5000, 0x5FFF, ReadADPCM);
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
 	SetWriteHandler(0x5000, 0x5FFF, WriteADPCM);
 	SetWriteHandler(0x9000, 0x9FFF, WriteReg);
 	SetWriteHandler(0xB000, 0xBFFF, WriteReg);
@@ -140,6 +140,8 @@ static void Close() {
 
 void Mapper594_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
+	MMC3_pwrap = SetPRG;
+	MMC3_cwrap = SetCHR;
 	info->Power = Power;
 	info->Reset = Reset;
 	info->Close = Close;
