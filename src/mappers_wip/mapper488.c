@@ -59,7 +59,6 @@ static void Power(void) {
 }
 
 void Mapper488_Init(CartInfo *info) {
-	m488.dipsw = 0;
     Latch_Init(info, Sync, Read, 0, 0);
     info->Power = Power;
 	info->Reset = Reset;

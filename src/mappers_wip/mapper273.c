@@ -38,11 +38,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRGBank_vrc2(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, (V & 0x1F));
 }
 
-static void SetCHRBank_vrc2(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, (V & 0x1FF));
 }
 
@@ -87,6 +87,8 @@ static void Power(void) {
 
 void Mapper273_Init(CartInfo *info) {
 	VRC24_Init(info, VRC24_VRC2, 0x04, 0x08, 0, 0);
+	VRC24_pwrap = SetPRG;
+	VRC24_cwrap = SetCHR;
 	info->Power = Power;
 	MapIRQHook = CPUCycle;
 	AddExState(StateRegs, ~0, 0, 0);

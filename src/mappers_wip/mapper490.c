@@ -32,13 +32,6 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = 0xFF;
-	uint16 base = (m490.reg << 4);
-
-	setchr1(A, ((base & ~mask) | (V & mask)));
-}
-
 static void SyncPRG(void) {
 	if (m490.reg & 0x20)
 		setprg32(0x8000, m490.reg >> 1);
@@ -46,6 +39,13 @@ static void SyncPRG(void) {
 		setprg16(0x8000, m490.reg);
 		setprg16(0xC000, m490.reg);
 	}
+}
+
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = 0xFF;
+	uint16 base = (m490.reg << 4);
+
+	setchr1(A, ((base & ~mask) | (V & mask)));
 }
 
 static DECLFR(ReadDIP) {

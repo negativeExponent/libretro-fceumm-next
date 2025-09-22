@@ -20,7 +20,7 @@
 
 /* NTDEC N625231*/
 
- #include "mapinc.h"
+#include "mapinc.h"
 #include "mmc3.h"
 
 static struct {
@@ -32,10 +32,6 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetCHR(uint16 A, uint16 V) {
-	setchr1(A, ((m474.reg << 7) & 0x100) | V);
-}
-
 static void SyncPRG(void) {
 	uint16 base = (m474.reg << 5) & 0x20;
 	uint16 bank = base | (m474.reg >> 3) & 0x1F;
@@ -46,6 +42,10 @@ static void SyncPRG(void) {
 	} else {
 		setprg32(0x8000, bank >> 1);
 	}
+}
+
+static void SetCHR(uint16 A, uint16 V) {
+	setchr1(A, ((m474.reg << 7) & 0x100) | V);
 }
 
 static DECLFW(WriteExtra) {

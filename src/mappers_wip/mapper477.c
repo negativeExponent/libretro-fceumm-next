@@ -35,12 +35,11 @@ static DECLFW(WriteLatch) {
 	/* Resistors placed on the first 128 KiB PRG ROM chip (banks 8-15) cause ROM
 	 * to always win D0..D3. Otherwise, normal AND-type bus conflicts. */
 	if (latch.data & 0x08) {
-		latch.data = ((CartBR(A) & 0x0F) | ((V & CartBR(A)) & ~0x0F));
-		Sync();
+		V = ((CartBR(A) & 0x0F) | ((V & CartBR(A)) & ~0x0F));
 	} else {
-		latch.data = (CartBR(A) & V);
-		Sync();
+		V = (CartBR(A) & V);
 	}
+	Latch_Write(A, V);
 }
 
 static void Power(void) {

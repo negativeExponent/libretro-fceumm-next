@@ -90,8 +90,13 @@ static void Power(void) {
 	SetWriteHandler(0x5000, 0x5FFF, writeReg);
 }
 
+static void StateRestore(int version) {
+	Sync();
+}
+
 void Mapper476_Init(CartInfo *info) {
 	info->Power = Power;
 	info->Reset = Reset;
+	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 }
