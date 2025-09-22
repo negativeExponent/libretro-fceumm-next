@@ -19,37 +19,52 @@ With no proper communication, or transparency, I decided to create FCEUmm Next t
 
 ------
 
-* additional mappers support
-* mapper fixes and updates
-* Refactored common mappers (MMC1, MMC3, VRC24 and others) into a modular and reusable interface
-* Refactored common expansion audio (FDS, MMC5, VRC-series and others) into a modular and reusable interface
-* additional input options (SNES Mouse, SNES Gamepad, PowerPad A/B, VirtualBoy Controller etc)
-* variable overscan cropping options, including separate top, bottom, left, right overscan cropping
-* replaced on/off audio options to volume controls
-* add volume controls for expansion audio (FDS, MMC5, VRC6, VRC7, Namco163, Sunsoft5B)
-* fix to audio controls not muting some channels when in low quality mode
-* Fix low volume issue
-* update VRC7 sound code (emu2413)
-* replace Sunsoft 5B sound code with emu2149 for better accuracy (including envelop and noise emulation)
-* rewrite Namco 163 sound code
-* rewrite VRC6 sound code
-* rewrite FDS sound code
-* add missing state variables, fixing runahead compatibility
-* Assign F12 as Hard Reset (PowerNES) hotkey
-* Write instructions now update the databus (backport https://github.com/TASEmulators/fceux/pull/659)
-* Apply bisqwit's deemphasis method
-* Add support for 512-palettes and apply bisqwit's deemphasis (fceux)
-* Fix possible buffer overflow caused by emphasis buffer not initialized to zero
-* Vs. System rework, fixes input issues and missing palettes, reworked inputs, update preexisting database and other updates.
+**Mapper Support**
 
+* Additional mappers supported
+* Mapper fixes and updates
+* Refactored common mappers (MMC1, MMC3, VRC2/4, others) into a modular, reusable interface
 * Use NES 2.0 info for supported input types (when available)
-* Propagate FCEU_MemoryRand() to initialize mapper WRAM,CHRRAM and other cartridge memory types.
-* FCEU_gmalloc default init state is based on FCEU_MemoryRand() settings.
-* NSF: Fix waveform visualizer
-* NSF: add support for multiple audio chip (wip)
-* Add NSFE support
-* use 32 bpp color format by default, with optional 16 if one desires on compile time. PSP/3DS targets by default uses 16 bpp. PS2 remains to use ARGB1555.
-* misc changes under the hood (libretro, sound, etc)
+* Propagate FCEU_MemoryRand() to initialize mapper WRAM, CHR RAM, and other cartridge memory types
+* FCEU_gmalloc default init state based on FCEU_MemoryRand()
+
+**Audio Improvements**
+
+* Refactored common expansion audio (FDS, MMC5, VRC-series, others) into a modular, reusable interface
+* Replaced on/off audio options with volume controls
+* Added volume controls for expansion audio (FDS, MMC5, VRC6, VRC7, Namco163, Sunsoft5B)
+* Fixed audio controls not muting some channels in low-quality mode
+* Fixed low volume issue
+* Updated VRC7 sound code (emu2413)
+* Replaced Sunsoft 5B sound code with emu2149 for improved accuracy (including envelope and noise emulation)
+* Rewrote Namco163, VRC6, and FDS sound codes
+* NSF: Fixed waveform visualizer
+* NSF: Added support for multiple audio chips (WIP)
+* Added NSFE support
+
+**Input Support**
+
+* Additional input options: SNES Mouse, SNES Gamepad, PowerPad A/B, VirtualBoy Controller, etc.
+* Vs. System input rework: fixes input issues, updates database, and reworked palettes
+
+**Video & Display**
+
+* Variable overscan cropping options (top, bottom, left, right)
+* 32-bit color format by default, with optional 16-bit (PSP/3DS default 16-bit, PS2 ARGB1555)
+
+**Hotkeys & State**
+
+* Assign F12 as Hard Reset (PowerNES) hotkey
+* Added missing state variables for runahead compatibility
+
+**Enhancements & Fixes**
+
+* Write instructions now update the databus (backport: PR #659
+)
+* ~~Applied bisqwit's deemphasis method~~
+* Added support for 512 palettes with bisqwit's deemphasis (FCEUX)
+* Fixed possible buffer overflow caused by uninitialized emphasis buffer
+* Miscellaneous under-the-hood improvements (Libretro, sound, etc.)
 
 
 **Button/Key Changes/Additions:**
@@ -108,8 +123,11 @@ emu2149 - https://github.com/digital-sound-antiques/emu2149
 
 Changelog:
 ----------
+25.09.22
+- Fixed issue in square audio not silencing when a sweep overflow has occured
+
 25.09.20
-Add mappers 273, 367, 378, 474, 475, 476, 477, 478, 480, 482, 483, 484, 485, 486, 488, 489, 490, 491, 492, 494, 495, 498, 499, 503, 504, 505, 506, 507, 508, 509, 510, 511, 536, 537, 542, 545, 546, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 594, 595.
+- Add mappers 273, 367, 378, 474, 475, 476, 477, 478, 480, 482, 483, 484, 485, 486, 488, 489, 490, 491, 492, 494, 495, 498, 499, 503, 504, 505, 506, 507, 508, 509, 510, 511, 536, 537, 542, 545, 546, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 594, 595.
 (needs testing)
 
 25.09.16
