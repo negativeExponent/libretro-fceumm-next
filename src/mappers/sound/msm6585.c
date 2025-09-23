@@ -57,6 +57,9 @@ static const int16_t index_shift[8] = { -1, -1, -1, -1, 2, 4, 6, 8 };
 void MSM6585_init (MSM6585* chip, int32 newHostClock, int (*newGetInput)(void)) {
 	chip->hostClock = newHostClock;
 	chip->getInput = newGetInput;
+}
+
+void MSM6585_AddStateInfo(MSM6585* chip) {
 	AddExState(&chip->whichNibble, 1, 0, "MSMW");
 	AddExState(&chip->input, 1, 0, "MSMI");
 	AddExState(&chip->signal, 2 | FCEUSTATE_RLSB, 0, "MSMO");

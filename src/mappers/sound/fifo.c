@@ -30,6 +30,9 @@ void FIFO_reset (FIFO *fifo) {
 void FIFO_init (FIFO *fifo, size_t newCapacity) {
 	fifo->capacity = newCapacity;
 	fifo->data = (uint8*)FCEU_gmalloc(newCapacity);
+}
+
+void FIFO_AddStateInfo(FIFO *fifo) {
 	AddExState(fifo->data, fifo->capacity, 0, "FIFD");
 	AddExState(&fifo->front, 2 | FCEUSTATE_RLSB, 0, "FIFF");
 	AddExState(&fifo->back, 2 | FCEUSTATE_RLSB, 0, "FIFB");

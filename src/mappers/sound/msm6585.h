@@ -12,7 +12,8 @@ typedef struct {
 } MSM6585;
 
 void MSM6585_init (MSM6585*, int32, int (*)(void));
-void MSM6585_reset (MSM6585*);
+void MSM6585_AddStateInfo(MSM6585 *chip);
+void MSM6585_reset(MSM6585 *);
 void MSM6585_setRate (MSM6585*, uint8);
 void MSM6585_run (MSM6585*);
 int32_t MSM6585_getOutput (MSM6585*);

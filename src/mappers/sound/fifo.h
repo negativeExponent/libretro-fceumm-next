@@ -15,5 +15,6 @@ void FIFO_add (FIFO *, uint8);
 void FIFO_reset (FIFO *);
 void FIFO_init (FIFO *, size_t);
 void FIFO_close (FIFO *);
+void FIFO_AddStateInfo(FIFO *fifo);
 
 #endif

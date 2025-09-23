@@ -148,4 +148,6 @@ void Mapper594_Init(CartInfo *info) {
 	FIFO_init(&fifo, 1024);
 	mapperSound_init();
 	AddExState(StateRegs, ~0, 0, NULL);
+	FIFO_AddStateInfo(&fifo);
+	MSM6585_AddStateInfo(&adpcm);
 }
