@@ -21,20 +21,28 @@
 #include "mapinc.h"
 #include "mmc1.h"
 
-static uint32 count;
+static struct {
+	uint32 count;
+} m105;
+
+static SFORMAT StateRegs[] = {
+	{ &m105.count, 4, "IRQC" },
+	{ 0 }
+};
+
 static uint32 count_target = 0x28000000;
 
 static void CPUIRQHook(int a) {
 	while (a--) {
 		if (mmc1.reg[1] & 0x10) {
-			count = 0;
+			m105.count = 0;
 			X6502_IRQEnd(FCEU_IQEXT);
 		} else {
-			if (++count == count_target) {
+			if (++m105.count == count_target) {
 				X6502_IRQBegin(FCEU_IQEXT);
 			}
-			if ((count % 1789773) == 0) {
-				uint32 seconds = (count_target - count) / 1789773;
+			if ((m105.count % 1789773) == 0) {
+				uint32 seconds = (count_target - m105.count) / 1789773;
 				FCEU_DispMessage(RETRO_LOG_INFO, 1000, "Time left: %02i:%02i\n", seconds / 60, seconds % 60);
 			}
 		}
@@ -70,5 +78,5 @@ void Mapper105_Init(CartInfo *info) {
 	MapIRQHook = CPUIRQHook;
 	info->Power = Power;
 	info->Reset = Reset;
-	AddExState(&count, 4, 0, "IRQC");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

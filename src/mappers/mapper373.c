@@ -19,6 +19,7 @@
  */
 
 /* NES 2.0 Mapper 373 - SFC-13 */
+/* FIXME: Poewer Ranges 5 freeze/lock (irq?) */
 
 #include "mapinc.h"
 #include "mmc3.h"

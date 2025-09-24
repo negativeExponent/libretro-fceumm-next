@@ -21,40 +21,47 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
-static uint8 dipsw;
+static struct {
+	uint8 reg;
+	uint8 dipsw;
+} m012;
+
+static SFORMAT StateRegs[] = {
+	{ &m012.reg, 1, "EXPR"},
+	{ 0 }
+};
 
 static void SetCHRBank_mmc3(uint16 A, uint16 V) {
-	uint16 base = reg << ((A & 0x1000) ? 4 : 8);
+	uint16 base = m012.reg << ((A & 0x1000) ? 4 : 8);
 
 	setchr1(A, (base & 0x100) | (V & 0xFF));
 }
 
 static DECLFW(WriteReg) {
 	if (A & 0x100) {
-		reg = V;
+		m012.reg = V;
 		MMC3_SyncCHR();
 	}
 }
 
 static DECLFR(ReadDIP) {
 	if (A & 0x100) {
-		return dipsw;
+		return m012.dipsw;
 	}
 	return CartBR(A);
 }
 
 static void Power(void) {
-	reg = 0;
-	dipsw = 1; /* chinese is default */
+	m012.reg = 0;
+	m012.dipsw = 1; /* chinese is default */
 	MMC3_Power();
 	SetWriteHandler(0x4100, 0x4FFF, WriteReg);
 	SetReadHandler(0x4100, 0x4FFF, ReadDIP);
 }
 
 static void Reset(void) {
-	reg = 0;
-	dipsw ^= 1;
+	m012.reg = 0;
+	m012.dipsw ^= 1;
 	MMC3_Reset();
 }
 
@@ -68,7 +75,6 @@ void Mapper012_Init(CartInfo *info) {
 
 		info->Power = Power;
 		info->Reset = Reset;
-		AddExState(&reg, 1, 0, "EXPR");
-		AddExState(&dipsw, 1, 0, "DPSW");
+		AddExState(StateRegs, ~0, 0, NULL);
 	}
 }

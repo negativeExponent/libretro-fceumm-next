@@ -28,8 +28,16 @@
 #include "mapinc.h"
 #include "onebus.h"
 
-static uint8 reg4242; /* $4242 */
-static uint8 dipsw; /* jumper */
+static struct {
+	uint8 reg; /* $4242 */
+	uint8 dipsw; /* jumper */
+} m270;
+
+static SFORMAT StateRegs[] = {
+	{ &m270.reg, 1, "EXPR" },
+	{ &m270.dipsw, 1, "DPSW" },
+	{ 0 }
+};
 
 static void Sync(void) {
 	uint16 mblock = 0;
@@ -51,7 +59,7 @@ static void Sync(void) {
 		break;
 	}
 	OneBus_SyncPRG(0x07FF, mblock);
-	if (reg4242 & 0x01) {
+	if (m270.reg & 0x01) {
 		/* CHR-RAM enabled, use 8K unbancked CHR RAM */
 		SetupCartCHRMapping(0, CHRRAM, CHRRAMSIZE, TRUE);
 		setchr8(0);
@@ -62,25 +70,25 @@ static void Sync(void) {
 }
 
 static DECLFR(ReadDIP) {
-	return dipsw << 3;
+	return m270.dipsw << 3;
 }
 
 static DECLFW(WriteCHREnable) {
-	reg4242 = V;
+	m270.reg = V;
 	Sync();
 }
 
 static void Power(void) {
-	dipsw = 0;
-	reg4242 = 0;
+	m270.dipsw = 0;
+	m270.reg = 0;
 	OneBus_Power();
 	SetReadHandler(0x412C, 0x412C, ReadDIP);
 	SetWriteHandler(0x4242, 0x4242, WriteCHREnable);
 }
 
 static void Reset(void) {
-	dipsw = !dipsw; /* toggle jumper */
-	reg4242 = 0;
+	m270.dipsw = !m270.dipsw; /* toggle jumper */
+	m270.reg = 0;
 	onebus.cpu41xx[0x2C] = 0;
 	OneBus_Reset();
 }
@@ -96,6 +104,5 @@ void Mapper270_Init(CartInfo *info) {
 	info->Power = Power;
 	info->Reset = Reset;
 
-	AddExState(&reg4242, 1, 0, "CHRM");
-	AddExState(&dipsw, 1, 0, "DPSW");
+	AddExState(StateRegs, ~0, 0, NULL);
 }

@@ -28,6 +28,7 @@ static uint8 dipsw;
 static uint32 temp;
 
 static SFORMAT StateRegs[] = {
+	{ &dipsw, 4, "DPSW" },
 	{ &temp, 4, "TEMP" },
 	{ 0 }
 };
