@@ -86,7 +86,7 @@ static uint8 GetWaveAddress(int P) {
 	return internalRAM[base + WAVEADDR];
 }
 
-static uint8 GetWaveLength(int P) {
+static uint16 GetWaveLength(int P) {
 	uint8 base = 0x40 + P * 0x08;
 	return 256 - (internalRAM[base + WAVELEN] & 0xFC);
 }
