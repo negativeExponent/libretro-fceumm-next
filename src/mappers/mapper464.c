@@ -36,7 +36,12 @@ static void Sync(void) {
 	setmirror(mirr);
 }
 
+static void Reset(void) {
+	GetWriteHandler(0x0133)(0x0133, 0);
+	Latch_RegReset();
+}
+
 void Mapper464_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
-	info->Reset = Latch_RegReset;
+	info->Reset = Reset;
 }
