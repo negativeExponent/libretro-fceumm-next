@@ -31,54 +31,38 @@
 
 static struct {
 	uint8 reg;
+	uint8 dipsw;
 } m460;
 
-static uint8 dipsw;
-
 static SFORMAT StateRegs[] = {
-	{ &m460.reg, 1, "REGS" },
+	{ &m460.reg, 1, "EXPR" },
+	{ &m460.dipsw, 1, "DPSW" },
 	{ 0 }
 };
 
 static void SetPRG(uint16 A, uint16 V) {
-	/* Menu selection by selectively connecting m460.reg's D7 to PRG /CE or not */
-	if ((m460.reg & 0x80) && (dipsw & 0x01)) {
-		unsetcpu8(A);
-	} else {
-		uint16 mask = 0x0F;
-		uint16 base = m460.reg << 4;
+	uint16 mask = 0x0F;
+	uint16 base = m460.reg << 4;
 
-		if (m460.reg & 0x38) {
-			if (!(A & 0x4000)) { /* GNROM */
-				uint8 A14 = (m460.reg >> 3) & 0x02;
+	if (m460.reg & 0x08) {
+		if (!(A & 0x4000)) { /* GNROM */
+			uint8 A14 = (m460.reg >> 3) & 0x02;
 
-				setprg8(A, (base & ~mask) | ((V & mask) & ~A14));
-				A += 0x4000;
-				setprg8(A, (base & ~mask) | ((V & mask) | A14));
-			}
-		} else {
-			setprg8(A, (base & ~mask) | (V & mask));
+			setprg8(A, (base & ~mask) | ((V & mask) & ~A14));
+			A += 0x4000;
+			setprg8(A, (base & ~mask) | ((V & mask) | A14));
 		}
-	}
-}
-
-static void SetCHR(uint16 A, uint16 V) {
-	if (m460.reg & 0x04) {
-		setchr2(0x0000, mmc3.reg[0] & 0xFE);
-		setchr2(0x0800, mmc3.reg[1] | 0x01);
-		setchr2(0x1000, mmc3.reg[2]);
-		setchr2(0x1800, mmc3.reg[5]);
 	} else {
-		setchr8r(0x10, 0);
+		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
 static void SyncCHR(void) {
 	if (m460.reg & 0x04) {
-		setchr2(0x0000, mmc3.reg[0] & 0xFE);
-		setchr2(0x0800, mmc3.reg[1] | 0x01);
-		setchr2(0x1000, mmc3.reg[2]);
-		setchr2(0x1800, mmc3.reg[5]);
+		setchr2(0x0000, MMC3_GetCHRBank(0));
+		setchr2(0x0800, MMC3_GetCHRBank(3));
+		setchr2(0x1000, MMC3_GetCHRBank(4));
+		setchr2(0x1800, MMC3_GetCHRBank(7));
 	} else {
 		setchr8r(0x10, 0);
 	}
@@ -92,9 +76,18 @@ static DECLFW(WriteReg) {
 	}
 }
 
+static DECLFR(ReadDIP) {
+	if (((iNESCart.submapper == 0) && (m460.reg & 0x80)) ||
+	    ((iNESCart.submapper == 1) && (m460.reg & 0x20))) {
+		A = (A & ~0x03) | (m460.dipsw & 0x03);
+	}
+	return CartBR(A);
+}
+
 static DECLFW(WriteMMC3) {
 	switch (A & 0xE001) {
 	case 0x8001:
+		mmc3.reg[mmc3.cmd & 0x07] = V;
 		switch (mmc3.cmd & 0x07) {
 		case 0:
 		case 1:
@@ -102,12 +95,11 @@ static DECLFW(WriteMMC3) {
 		case 3:
 		case 4:
 		case 5:
-			mmc3.reg[mmc3.cmd & 0x07] = V;
 			MMC3_SyncCHR();
 			break;
 		case 6:
 		case 7:
-			MMC3_Write(A, V);
+			MMC3_SyncPRG();
 			break;
 		}
 		break;
@@ -118,15 +110,15 @@ static DECLFW(WriteMMC3) {
 }
 
 static void Reset(void) {
-	memset(&m460, 0, sizeof(m460));
-	dipsw++;
+	memset(&m460.reg, 0, sizeof(m460.reg));
+	m460.dipsw++;
 	MMC3_Reset();
 }
 
 static void Power(void) {
 	memset(&m460, 0, sizeof(m460));
-	dipsw = 0;
 	MMC3_Power();
+	SetReadHandler(0x8000, 0xFFFF, ReadDIP);
 	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 	SetWriteHandler(0x8000, 0x9FFF, WriteMMC3);
 }
