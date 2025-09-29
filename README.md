@@ -123,6 +123,11 @@ emu2149 - https://github.com/digital-sound-antiques/emu2149
 
 Changelog:
 ----------
+25.09.29
+- m464 - Fixed reset to menu
+- m396 - Add submapper support
+- Add mapper 182,variant of mapper 114, (needs testing)
+
 25.09.22
 - Fixed issue in square audio not silencing when a sweep overflow has occured
 
