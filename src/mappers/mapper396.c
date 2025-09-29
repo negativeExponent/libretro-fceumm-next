@@ -21,50 +21,65 @@
  * 1995 Super 8-in-1 (JY-050 rev0)
  * Super 8-in-1 Gold Card Series (JY-085)
  * Super 8-in-1 Gold Card Series (JY-086)
- * 2-in-1 (GN-51)
- * 
- * Submapper 1:
- * 2-in-1 (QB003) (Unl)
+ * 2-in-1 (Realtec PG-07, GN-51 PCB)
+ *
+ * Submappers:
+ * Submapper 0: Outer Bank Register at $A000-$BFFF, Nametable Arrangement via D5 or D6 (combined submapper 1 and 2)
+ * Submapper 1: Outer Bank Register at $A000-$BFFF, Nametable Arrangement via D6 (J.Y. YY850437C PCB variant)
+ * Submapper 2: Outer Bank Register at $A000-$BFFF, Nametable Arrangement via D5 (Realtec GN-51 PCB variant)
+ * Submapper 3: Outer Bank Register at $8000-$BFFF, Nametable Arrangement via D5 (Realtec 8030 PCB variant)
  */
 
 #include "mapinc.h"
-#include "latch.h"
 
 static struct {
-	uint8 reg;
+	uint8 reg[2];
 } m396;
 
 static SFORMAT StateRegs[] = {
-	{ &m396.reg, 1, "REGS" },
+	{ &m396.reg, 2, "EXPR" },
 	{ 0 }
 };
 
 static void Sync(void) {
-	uint8 bank;
-	if ((latch.addr >= 0x8000) && (latch.addr <= 0xBFFF) && ((iNESCart.submapper == 1) || (latch.addr >= 0xA000))) {
-		m396.reg = latch.data;
-	}
-	bank = (m396.reg << 3) | (latch.data & 0x07);
+	uint16 bank = (m396.reg[0] << 3) | (m396.reg[1] & 0x07);
 	setprg16(0x8000, bank);
 	setprg16(0xC000, bank | 0x07);
 	setchr8(0);
-	setmirror((m396.reg & 0x60) ? MI_H : MI_V);
+	switch (iNESCart.submapper) {
+	case 1: setmirror(((m396.reg[0] >> 6) & 0x01) ^ 0x01); break;
+	case 2:
+	case 3: setmirror(((m396.reg[0] >> 5) & 0x01) ^ 0x01); break;
+	default: setmirror(((m396.reg[0] & 0x60) != 0) ^ 0x01); break;
+	}
+}
+
+static DECLFW(WriteReg) {
+	if (iNESCart.submapper == 3) {
+		m396.reg[(A >> 14) & 0x01] = V;
+		Sync();
+	} else {
+		if ((A & 0xE000) == 0xA000) {
+			m396.reg[0] = V;
+		} else {
+			m396.reg[1] = V;
+		}
+		Sync();
+	}
 }
 
 static void Reset(void) {
-	if (!iNESCart.submapper) {
-		m396.reg = 0;
-	}
-	Latch_RegReset();
+	memset(&m396, 0, sizeof(m396));
+	Sync();
 }
 
 static void Power(void) {
-	memset(&m396, 0, sizeof(m396));
-	Latch_Power();
+	Reset();
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, WriteReg);
 }
 
 void Mapper396_Init(CartInfo *info) {
-	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Power = Power;
 	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
