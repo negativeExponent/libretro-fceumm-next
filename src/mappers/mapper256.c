@@ -86,6 +86,8 @@ static const uint8 mmc3Mangle[16][8] = {
 	{ 0, 1, 2, 3, 4, 5, 6, 7 } /* Submapper F: Jungletac (CPU opcode encryption only) */
 };
 
+static uint8 dipsw;
+
 static void Sync(void) {
 	OneBus_SyncPRG(0x0FFF, 0);
 	OneBus_SyncCHR(0x7FFF, 0);
@@ -95,6 +97,19 @@ static void Sync(void) {
 static DECLFW(WritePPU201X) {
 	A = 0x2012 + ppuMangle[iNESCart.submapper][A - 0x2012];
 	OneBus_WritePPU20XX(A, V);
+}
+
+static DECLFR(ReadCPU4017) {
+	uint8 ret = OneBus_ReadAPU40XX(A);
+	switch (A & 0x3F) {
+	case 0x17:
+		if (onebus.cpu41xx[0x0B] == 0x14) {
+			/* 76000-in-1 (Fun Time) pad */
+			ret = (ret & ~0x04) | ((dipsw << 2) & 0x04);
+		}
+		break;
+	}
+	return ret;
 }
 
 static DECLFW(WriteCPU410X) {
@@ -117,7 +132,9 @@ static uint8 OpcodeCallback(uint8 opcode) {
 }
 
 static void Power(void) {
+	dipsw = 0;
 	OneBus_Power();
+	SetReadHandler(0x4017, 0x4017, ReadCPU4017);
 	SetWriteHandler(0x2012, 0x2017, WritePPU201X);
 	SetWriteHandler(0x4107, 0x410A, WriteCPU410X);
 	SetWriteHandler(0x8000, 0x9FFF, WriteMMC3);
@@ -128,6 +145,7 @@ static void Power(void) {
 }
 
 static void Reset(void) {
+	dipsw = !dipsw;
 	OneBus_Reset();
 	if (iNESCart.submapper == 14) {
 		onebus.cpu41xx[0x1C] = 0x40;
