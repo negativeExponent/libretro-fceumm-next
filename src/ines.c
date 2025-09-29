@@ -763,7 +763,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "Namco 175/340",            210, Mapper210_Init         )
 	INES_BOARD( "HUMMER/JY BOARD",          211, Mapper209_Init         )
 	INES_BOARD( "",                         212, Mapper212_Init         )
-	INES_BOARD( "",                         213, Mapper058_Init         ) /* in mapper 58 */
+	/* INES_BOARD( "",                         213, Mapper058_Init         ) */ /* in mapper 58 */
 	INES_BOARD( "",                         214, Mapper214_Init         )
 	INES_BOARD( "UNL-8237",                 215, Mapper215_Init         )
 	INES_BOARD( "Bonza",                    216, Mapper216_Init         )
@@ -1061,6 +1061,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "Rinco FSG2",               594, Mapper594_Init         )
 
 	/* Rewritten Mappers — Clean Port, Needs Testing */
+	INES_BOARD( "EJ-3003/820428-C",         213, Mapper213_Init         )
 	INES_BOARD( "",                         273, Mapper273_Init         )
 	INES_BOARD( "JC-016-2 (alt)",           367, Mapper367_Init         )
 	INES_BOARD( "8-in-1 AOROM+UNROM",       378, Mapper378_Init         )
