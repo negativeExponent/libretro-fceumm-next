@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
+/* NES 2.0 Mapper 537 - BMC-JY-103 */
 /* The UNIF dump of "(JY-103) 3-in-1" (JY4M4 MAPR) has a strange bank order and will not run with this emulation. */
 
 #include "mapinc.h"
