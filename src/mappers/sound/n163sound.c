@@ -50,11 +50,16 @@ typedef struct N163Channel {
 	int16 output;
 } N163Channel;
 
-static N163Channel N163Snd[8];
-static uint8 ramPos;
-static uint8 autoInc;
-static int32 CVBC;
-static uint8 *internalRAM; /* 128 bytes internal ram, to be provided externally on init */
+static struct N163Sound {
+	N163Channel channel[8];
+	uint8 soundAddr;
+	uint8 autoIncrement;
+
+	int32 cvcb;
+	int32 dwave;
+
+	uint8 *internalRAM;
+} N163Sound;
 
 #define VOLADJ            (576716)
 #define TOINDEX           (16 + 1)
@@ -62,57 +67,47 @@ static uint8 *internalRAM; /* 128 bytes internal ram, to be provided externally 
 
 static uint32 GetFrequency(int P) {
 	uint8 base = 0x40 + P * 0x08;
-	return ((internalRAM[base + FREQ_H] & 0x03) << 16) |
-	       (internalRAM[base + FREQ_M] << 8) |
-	       internalRAM[base + FREQ_L];
+	return ((N163Sound.internalRAM[base + FREQ_H] & 0x03) << 16) |
+	       (N163Sound.internalRAM[base + FREQ_M] << 8) |
+	       N163Sound.internalRAM[base + FREQ_L];
 }
 
 static uint32 GetPhase(int P) {
 	uint8 base = 0x40 + P * 0x08;
-	return (internalRAM[base + PHASE_H] << 16) |
-	       (internalRAM[base + PHASE_M] << 8) |
-	       internalRAM[base + PHASE_L];
+	return (N163Sound.internalRAM[base + PHASE_H] << 16) |
+	       (N163Sound.internalRAM[base + PHASE_M] << 8) |
+	       N163Sound.internalRAM[base + PHASE_L];
 }
 
 static void SetPhase(int P, uint32 phase) {
 	uint8 base = 0x40 + P * 0x08;
-	internalRAM[base + PHASE_H] = (phase >> 16) & 0xFF;
-	internalRAM[base + PHASE_M] = (phase >> 8) & 0xFF;
-	internalRAM[base + PHASE_L] = phase & 0xFF;
+	N163Sound.internalRAM[base + PHASE_H] = (phase >> 16) & 0xFF;
+	N163Sound.internalRAM[base + PHASE_M] = (phase >> 8) & 0xFF;
+	N163Sound.internalRAM[base + PHASE_L] = phase & 0xFF;
 }
 
 static uint8 GetWaveAddress(int P) {
 	uint8 base = 0x40 + P * 0x08;
-	return internalRAM[base + WAVEADDR];
+	return N163Sound.internalRAM[base + WAVEADDR];
 }
 
 static uint16 GetWaveLength(int P) {
 	uint8 base = 0x40 + P * 0x08;
-	return 256 - (internalRAM[base + WAVELEN] & 0xFC);
+	return 256 - (N163Sound.internalRAM[base + WAVELEN] & 0xFC);
 }
 
-static uint32 GetVolume(int P) {
+static uint8 GetVolume(int P) {
 	uint8 base = 0x40 + P * 0x08;
-	return (internalRAM[base + VOLUME] & 0x0F) * VOLADJ;
+	return (N163Sound.internalRAM[base + VOLUME] & 0x0F);
 }
 
 static uint8 GetNumberOfChannels() {
-	return (internalRAM[0x7F] >> 4) & 0x07;
-}
-
-static int16 GetSample(uint8 pos, int volume, int outshift) {
-	int8 sample;
-	if (pos & 0x01) {
-		sample = internalRAM[pos >> 1] >> 4;
-	} else {
-		sample = internalRAM[pos >> 1] & 0x0F;
-	}
-	return ((sample * volume) >> outshift);
+	return (N163Sound.internalRAM[0x7F] >> 4) & 0x07;
 }
 
 /* 16:15 */
 static void SyncHQ(int32 ts) {
-	CVBC = ts;
+	N163Sound.cvcb = ts;
 }
 
 static void DoN163SoundHQ(void) {
@@ -120,26 +115,32 @@ static void DoN163SoundHQ(void) {
 	int32 P, V;
 
 	for (P = 7; P >= (7 - GetNumberOfChannels()); P--) {
-		N163Channel *channel = &N163Snd[P];
+		N163Channel *channel = &N163Sound.channel[P];
 		int channelOffset = 0x40 + (P * 8);
 
-		if ((internalRAM[FREQ_H + channelOffset] & 0xE0) && (internalRAM[VOLUME + channelOffset] & 0xF)) {
+		if ((N163Sound.internalRAM[FREQ_H + channelOffset] & 0xE0) && (N163Sound.internalRAM[VOLUME + channelOffset] & 0xF)) {
 			int32 vco = channel->vcount;
-
-			uint32 phase = GetPhase(P);
 			uint32 freq = GetFrequency(P);
 			uint16 length = GetWaveLength(P);
 			uint8 offset = GetWaveAddress(P);
 			uint32 volume = GetVolume(P);
 
-			for (V = CVBC << 1; V < (int)SOUNDTS << 1; V++) {
+			for (V = N163Sound.cvcb << 1; V < (int)SOUNDTS << 1; V++) {
 				if (vco == 0) {
+					uint8 sample, samplePosition;
+
 					vco = cyclesuck;
 					channel->PlayIndex += freq;
 					while ((channel->PlayIndex >> TOINDEX) >= length) {
 						channel->PlayIndex -= length << TOINDEX;
 					}
-					channel->output = GetSample((channel->PlayIndex >> TOINDEX) + offset, volume, 16);
+					samplePosition = ((channel->PlayIndex >> TOINDEX) + offset) & 0xFF;
+					if (samplePosition & 0x01) {
+						sample = N163Sound.internalRAM[samplePosition >> 1] >> 4;
+					} else {
+						sample = N163Sound.internalRAM[samplePosition >> 1] & 0x0F;
+					}
+					channel->output = (sample * volume * VOLADJ) >> 16;
 				}
 				vco--;
 				WaveHi[V >> 1] += GetOutput(SND_N163, channel->output);
@@ -147,20 +148,18 @@ static void DoN163SoundHQ(void) {
 			channel->vcount = vco;
 		}
 	}
-	CVBC = SOUNDTS;
+	N163Sound.cvcb = SOUNDTS;
 }
 
 static void DoN163Sound(int32 *Wave, int Count) {
 	int P, V;
 
 	for (P = 7; P >= (7 - GetNumberOfChannels()); P--) {
-		N163Channel *channel = &N163Snd[P];
+		N163Channel *channel = &N163Sound.channel[P];
 		int channelOffset = 0x40 + (P * 8);
 
-		if ((internalRAM[FREQ_H + channelOffset] & 0xE0) && (internalRAM[VOLUME + channelOffset] & 0xF)) {
+		if ((N163Sound.internalRAM[FREQ_H + channelOffset] & 0xE0) && (N163Sound.internalRAM[VOLUME + channelOffset] & 0xF)) {
 			int32 vco = channel->vcount;
-
-			uint32 phase = GetPhase(P);
 			uint32 freq = GetFrequency(P);
 			uint16 length = GetWaveLength(P);
 			uint8 offset = GetWaveAddress(P);
@@ -178,14 +177,20 @@ static void DoN163Sound(int32 *Wave, int Count) {
 
 			for (V = 0; V < Count * 16; V++) {
 				if (vco >= inc) {
+					uint8 sample, samplePosition;
+
 					vco -= inc;
 					channel->PlayIndex++;
 					if (channel->PlayIndex >= length) {
 						channel->PlayIndex = 0;
 					}
-					channel->output = GetSample(
-						channel->PlayIndex + offset,
-						volume, 19);
+					samplePosition = (channel->PlayIndex + offset) & 0xFF;
+					if (samplePosition & 0x01) {
+						sample = N163Sound.internalRAM[samplePosition >> 1] >> 4;
+					} else {
+						sample = N163Sound.internalRAM[samplePosition >> 1] & 0x0F;
+					}
+					channel->output = (sample * volume * VOLADJ) >> 19;
 				}
 				vco += 0x8000;
 				Wave[V >> 4] += GetOutput(SND_N163, channel->output);
@@ -195,19 +200,17 @@ static void DoN163Sound(int32 *Wave, int Count) {
 	}
 }
 
-static int dwave = 0;
-
-static void N163Sound(int Count) {
+static void N163SoundFill(int Count) {
 	int32 z, a;
 
 	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
-	a = z - dwave;
+	a = z - N163Sound.dwave;
 
 	if (a) {
-		DoN163Sound(&Wave[dwave], a);
+		DoN163Sound(&Wave[N163Sound.dwave], a);
 	}
 
-	dwave = 0;
+	N163Sound.dwave = 0;
 }
 
 static void N163SoundHack(void) {
@@ -219,42 +222,42 @@ static void N163SoundHack(void) {
 	}
 
 	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
-	a = z - dwave;
+	a = z - N163Sound.dwave;
 
 	if (a) {
-		DoN163Sound(&Wave[dwave], a);
+		DoN163Sound(&Wave[N163Sound.dwave], a);
 	}
 
-	dwave += a;
+	N163Sound.dwave += a;
 }
 
 DECLFR(N163Sound_Read) {
-	uint8 ret = internalRAM[ramPos];
+	uint8 ret = N163Sound.internalRAM[N163Sound.soundAddr];
 /* Maybe I should call N163SoundHack() here? */
 #ifdef FCEUDEF_DEBUGGER
 	if (!fceuindbg)
 #endif
-		ramPos = (ramPos + autoInc) & 0x7F;
+		N163Sound.soundAddr = (N163Sound.soundAddr + N163Sound.autoIncrement) & 0x7F;
 	return ret;
 }
 
 DECLFW(N163Sound_Write) {
 	switch (A & 0xF800) {
 	case 0x4800:
-		if (ramPos & 0x40) {
+		if (N163Sound.soundAddr & 0x40) {
 			if (FSettings.SndRate) {
 				N163SoundHack();
-				GameExpSound[SND_N163 - 6].Fill = N163Sound;
+				GameExpSound[SND_N163 - 6].Fill = N163SoundFill;
 				GameExpSound[SND_N163 - 6].HiFill = DoN163SoundHQ;
 				GameExpSound[SND_N163 - 6].HiSync = SyncHQ;
 			}
 		}
-		internalRAM[ramPos] = V;
-		ramPos = (ramPos + autoInc) & 0x7F;
+		N163Sound.internalRAM[N163Sound.soundAddr] = V;
+		N163Sound.soundAddr = (N163Sound.soundAddr + N163Sound.autoIncrement) & 0x7F;
 		break;
 	case 0xF800:
-		ramPos = V & 0x7F;
-		autoInc = (V & 0x80) >> 7;
+		N163Sound.soundAddr = V & 0x7F;
+		N163Sound.autoIncrement = (V & 0x80) >> 7;
 		break;
 	}
 }
@@ -263,63 +266,64 @@ static void N163SC(void) {
 	if (FSettings.SndRate) {
 		int i;
 		for (i = 0; i < 8; i++) {
-			memset(&N163Snd[i].vcount, 0, sizeof(N163Snd[i].vcount));
-			memset(&N163Snd[i].PlayIndex, 0, sizeof(N163Snd[i].PlayIndex));
+			memset(&N163Sound.channel[i].vcount, 0, sizeof(N163Sound.channel[i].vcount));
+			memset(&N163Sound.channel[i].PlayIndex, 0, sizeof(N163Sound.channel[i].PlayIndex));
 		}
-		CVBC = 0;
-		ramPos = 0;
 	}
+	N163Sound.cvcb = 0;
+	N163Sound.soundAddr = 0;
 }
 
 void N163Sound_ESI(uint8 *ptr) {
-	internalRAM = ptr;
+	memset(&N163Sound, 0, sizeof(N163Sound));
+	N163Sound.internalRAM = ptr;
 	GameExpSound[SND_N163 - 6].RChange = N163SC;
 	N163SC();
-	memset(internalRAM, 0, INTERNAL_RAM_SIZE);
+	memset(N163Sound.internalRAM, 0, INTERNAL_RAM_SIZE);
 }
 
 void N163Sound_AddStateInfo(void) {
-	AddExState(internalRAM, 0x80, 0, "internalRAM");
-	AddExState(&CVBC, 4, 0, "BC00");
-	AddExState(&ramPos, 1, 0, "INDX");
-	AddExState(&autoInc, 1, 0, "INCR");
+	AddExState(N163Sound.internalRAM, 0x80, 0, "N163Sound.internalRAM");
+	AddExState(&N163Sound.cvcb, 4, 0, "BC00");
+	AddExState(&N163Sound.soundAddr, 1, 0, "INDX");
+	AddExState(&N163Sound.autoIncrement, 1, 0, "INCR");
 
-	AddExState(&N163Snd[0].vcount, 4, 0, "C0VC");
-	AddExState(&N163Snd[0].PlayIndex, 4, 0, "C0PI");
-	AddExState(&N163Snd[0].output, 2, 0, "C0OP");
+	AddExState(&N163Sound.channel[0].vcount, 4, 0, "C0VC");
+	AddExState(&N163Sound.channel[0].PlayIndex, 4, 0, "C0PI");
+	AddExState(&N163Sound.channel[0].output, 2, 0, "C0OP");
 
-	AddExState(&N163Snd[1].vcount, 4, 0, "C1VC");
-	AddExState(&N163Snd[1].PlayIndex, 4, 0, "C1PI");
-	AddExState(&N163Snd[1].output, 2, 0, "C1OP");
+	AddExState(&N163Sound.channel[1].vcount, 4, 0, "C1VC");
+	AddExState(&N163Sound.channel[1].PlayIndex, 4, 0, "C1PI");
+	AddExState(&N163Sound.channel[1].output, 2, 0, "C1OP");
 
-	AddExState(&N163Snd[2].vcount, 4, 0, "C2VC");
-	AddExState(&N163Snd[2].PlayIndex, 4, 0, "C2PI");
-	AddExState(&N163Snd[2].output, 2, 0, "C2OP");
+	AddExState(&N163Sound.channel[2].vcount, 4, 0, "C2VC");
+	AddExState(&N163Sound.channel[2].PlayIndex, 4, 0, "C2PI");
+	AddExState(&N163Sound.channel[2].output, 2, 0, "C2OP");
 
-	AddExState(&N163Snd[3].vcount, 4, 0, "C3VC");
-	AddExState(&N163Snd[3].PlayIndex, 4, 0, "C3PI");
-	AddExState(&N163Snd[3].output, 2, 0, "C3OP");
+	AddExState(&N163Sound.channel[3].vcount, 4, 0, "C3VC");
+	AddExState(&N163Sound.channel[3].PlayIndex, 4, 0, "C3PI");
+	AddExState(&N163Sound.channel[3].output, 2, 0, "C3OP");
 
-	AddExState(&N163Snd[4].vcount, 4, 0, "C4VC");
-	AddExState(&N163Snd[4].PlayIndex, 4, 0, "C4PI");
-	AddExState(&N163Snd[4].output, 2, 0, "C4OP");
+	AddExState(&N163Sound.channel[4].vcount, 4, 0, "C4VC");
+	AddExState(&N163Sound.channel[4].PlayIndex, 4, 0, "C4PI");
+	AddExState(&N163Sound.channel[4].output, 2, 0, "C4OP");
 
-	AddExState(&N163Snd[5].vcount, 4, 0, "C5VC");
-	AddExState(&N163Snd[5].PlayIndex, 4, 0, "C5PI");
-	AddExState(&N163Snd[5].output, 2, 0, "C5OP");
+	AddExState(&N163Sound.channel[5].vcount, 4, 0, "C5VC");
+	AddExState(&N163Sound.channel[5].PlayIndex, 4, 0, "C5PI");
+	AddExState(&N163Sound.channel[5].output, 2, 0, "C5OP");
 
-	AddExState(&N163Snd[6].vcount, 4, 0, "C6VC");
-	AddExState(&N163Snd[6].PlayIndex, 4, 0, "C6PI");
-	AddExState(&N163Snd[6].output, 2, 0, "C6OP");
+	AddExState(&N163Sound.channel[6].vcount, 4, 0, "C6VC");
+	AddExState(&N163Sound.channel[6].PlayIndex, 4, 0, "C6PI");
+	AddExState(&N163Sound.channel[6].output, 2, 0, "C6OP");
 
-	AddExState(&N163Snd[7].vcount, 4, 0, "C7VC");
-	AddExState(&N163Snd[7].PlayIndex, 4, 0, "C7PI");
-	AddExState(&N163Snd[7].output, 2, 0, "C7OP");
+	AddExState(&N163Sound.channel[7].vcount, 4, 0, "C7VC");
+	AddExState(&N163Sound.channel[7].PlayIndex, 4, 0, "C7PI");
+	AddExState(&N163Sound.channel[7].output, 2, 0, "C7OP");
 }
 
 #else /* OLD N163 SOUND CODE */
-static uint8 ramPos = 0;
-static uint8 *internalRAM;
+static uint8 N163Sound.soundAddr = 0;
+static uint8 *N163Sound.internalRAM;
 
 static uint32 FreqCache[8];
 static uint32 EnvCache[8];
@@ -353,7 +357,7 @@ static void DoNamcoSound(int32 *Wave, int Count);
 static void DoNamcoSoundHQ(void);
 static void SyncHQ(int32 ts);
 
-static int dwave = 0;
+static int N163Sound.dwave = 0;
 
 static void NamcoSoundHack(void) {
 	int32 z, a;
@@ -362,29 +366,29 @@ static void NamcoSoundHack(void) {
 		return;
 	}
 	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
-	a = z - dwave;
+	a = z - N163Sound.dwave;
 	if (a)
-		DoNamcoSound(&Wave[dwave], a);
-	dwave += a;
+		DoNamcoSound(&Wave[N163Sound.dwave], a);
+	N163Sound.dwave += a;
 }
 
 static void NamcoSound(int Count) {
 	int32 z, a;
 	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
-	a = z - dwave;
+	a = z - N163Sound.dwave;
 	if (a)
-		DoNamcoSound(&Wave[dwave], a);
-	dwave = 0;
+		DoNamcoSound(&Wave[N163Sound.dwave], a);
+	N163Sound.dwave = 0;
 }
 
 static uint32 PlayIndex[8];
 static int32 vcount[8];
-static int32 CVBC;
+static int32 N163Sound.cvcb;
 
 #define TOINDEX (16 + 1)
 
 static void SyncHQ(int32 ts) {
-	CVBC = ts;
+	N163Sound.cvcb = ts;
 }
 
 /* Things to do:
@@ -397,8 +401,8 @@ static void SyncHQ(int32 ts) {
 
 static INLINE uint32 FetchDuff(uint32 P, uint32 envelope) {
 	uint32 duff;
-	duff = internalRAM[((internalRAM[0x46 + (P << 3)] + (PlayIndex[P] >> TOINDEX)) & 0xFF) >> 1];
-	if ((internalRAM[0x46 + (P << 3)] + (PlayIndex[P] >> TOINDEX)) & 1)
+	duff = N163Sound.internalRAM[((N163Sound.internalRAM[0x46 + (P << 3)] + (PlayIndex[P] >> TOINDEX)) & 0xFF) >> 1];
+	if ((N163Sound.internalRAM[0x46 + (P << 3)] + (PlayIndex[P] >> TOINDEX)) & 1)
 		duff >>= 4;
 	duff &= 0xF;
 	duff = (duff * envelope) >> 16;
@@ -407,10 +411,10 @@ static INLINE uint32 FetchDuff(uint32 P, uint32 envelope) {
 
 static void DoNamcoSoundHQ(void) {
 	int32 P, V;
-	int32 cyclesuck = (((internalRAM[0x7F] >> 4) & 7) + 1) * 15;
+	int32 cyclesuck = (((N163Sound.internalRAM[0x7F] >> 4) & 7) + 1) * 15;
 
-	for (P = 7; P >= (7 - ((internalRAM[0x7F] >> 4) & 7)); P--) {
-		if ((internalRAM[0x44 + (P << 3)] & 0xE0) && (internalRAM[0x47 + (P << 3)] & 0xF)) {
+	for (P = 7; P >= (7 - ((N163Sound.internalRAM[0x7F] >> 4) & 7)); P--) {
+		if ((N163Sound.internalRAM[0x44 + (P << 3)] & 0xE0) && (N163Sound.internalRAM[0x47 + (P << 3)] & 0xF)) {
 			uint32 freq;
 			int32 vco;
 			uint32 duff2, lengo, envelope;
@@ -421,7 +425,7 @@ static void DoNamcoSoundHQ(void) {
 			lengo = LengthCache[P];
 
 			duff2 = FetchDuff(P, envelope);
-			for (V = CVBC << 1; V < (int)SOUNDTS << 1; V++) {
+			for (V = N163Sound.cvcb << 1; V < (int)SOUNDTS << 1; V++) {
 				WaveHi[V >> 1] += duff2;
 				if (!vco) {
 					PlayIndex[P] += freq;
@@ -435,13 +439,13 @@ static void DoNamcoSoundHQ(void) {
 			vcount[P] = vco;
 		}
 	}
-	CVBC = SOUNDTS;
+	N163Sound.cvcb = SOUNDTS;
 }
 
 static void DoNamcoSound(int32 *Wave, int Count) {
 	int P, V;
-	for (P = 7; P >= 7 - ((internalRAM[0x7F] >> 4) & 7); P--) {
-		if ((internalRAM[0x44 + (P << 3)] & 0xE0) && (internalRAM[0x47 + (P << 3)] & 0xF)) {
+	for (P = 7; P >= 7 - ((N163Sound.internalRAM[0x7F] >> 4) & 7); P--) {
+		if ((N163Sound.internalRAM[0x44 + (P << 3)] & 0xE0) && (N163Sound.internalRAM[0x47 + (P << 3)] & 0xF)) {
 			int32 inc;
 			uint32 freq;
 			int32 vco;
@@ -457,12 +461,12 @@ static void DoNamcoSound(int32 *Wave, int Count) {
 			}
 
 			{
-				int c = ((internalRAM[0x7F] >> 4) & 7) + 1;
+				int c = ((N163Sound.internalRAM[0x7F] >> 4) & 7) + 1;
 				inc = (long double)(FSettings.SndRate << 15) / ((long double)freq * 21477272 / ((long double)0x400000 * c * 45));
 			}
 
-			duff = internalRAM[(((internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
-			if ((internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
+			duff = N163Sound.internalRAM[(((N163Sound.internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
+			if ((N163Sound.internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
 				duff >>= 4;
 			duff &= 0xF;
 			duff2 = (duff * envelope) >> 19;
@@ -472,8 +476,8 @@ static void DoNamcoSound(int32 *Wave, int Count) {
 					if (PlayIndex[P] >= lengo)
 						PlayIndex[P] = 0;
 					vco -= inc;
-					duff = internalRAM[(((internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
-					if ((internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
+					duff = N163Sound.internalRAM[(((N163Sound.internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
+					if ((N163Sound.internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
 						duff >>= 4;
 					duff &= 0xF;
 					duff2 = (duff * envelope) >> 19;
@@ -487,33 +491,33 @@ static void DoNamcoSound(int32 *Wave, int Count) {
 }
 
 DECLFR(N163Sound_Read) {
-	uint8 ret = internalRAM[ramPos & 0x7f];
+	uint8 ret = N163Sound.internalRAM[N163Sound.soundAddr & 0x7f];
 
 	/* Maybe I should call DoNamcoSound() here? */
 	if (!fceuindbg)
-		if (ramPos & 0x80)
-			ramPos = (ramPos & 0x80) | ((ramPos + 1) & 0x7f);
+		if (N163Sound.soundAddr & 0x80)
+			N163Sound.soundAddr = (N163Sound.soundAddr & 0x80) | ((N163Sound.soundAddr + 1) & 0x7f);
 	return ret;
 }
 
 DECLFW(N163Sound_Write) {
 	switch (A & 0xF800) {
 	case 0x4800:
-		if (ramPos & 0x40) {
+		if (N163Sound.soundAddr & 0x40) {
 			if (FSettings.SndRate) {
 				NamcoSoundHack();
 				GameExpSound[SND_N163 - 6].Fill = NamcoSound;
 				GameExpSound[SND_N163 - 6].HiFill = DoNamcoSoundHQ;
 				GameExpSound[SND_N163 - 6].HiSync = SyncHQ;
 			}
-			SyncCache(ramPos, V);
+			SyncCache(N163Sound.soundAddr, V);
 		}
-		internalRAM[ramPos & 0x7f] = V;
-		if (ramPos & 0x80)
-			ramPos = (ramPos & 0x80) | ((ramPos + 1) & 0x7f);
+		N163Sound.internalRAM[N163Sound.soundAddr & 0x7f] = V;
+		if (N163Sound.soundAddr & 0x80)
+			N163Sound.soundAddr = (N163Sound.soundAddr & 0x80) | ((N163Sound.soundAddr + 1) & 0x7f);
 		break;
 	case 0xF800:
-		ramPos = V;
+		N163Sound.soundAddr = V;
 		break;
 	}
 }
@@ -522,12 +526,12 @@ static void M19SC(void) {
 	if (FSettings.SndRate) {
 		memset(vcount, 0, sizeof(vcount));
 		memset(PlayIndex, 0, sizeof(PlayIndex));
-		CVBC = 0;
+		N163Sound.cvcb = 0;
 	}
 }
 
 void N163Sound_ESI(uint8 *ptr) {
-	internalRAM = ptr;
+	N163Sound.internalRAM = ptr;
 	GameExpSound[SND_N163 - 6].RChange = M19SC;
 	M19SC();
 }
