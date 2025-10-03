@@ -33,24 +33,24 @@ static SFORMAT StateRegs[] = {
 };
 
 static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = m507.reg &0x20? 0x0F: 0x1F;
+	uint16 mask = (m507.reg & 0x20) ? 0x0F : 0x1F;
 	uint16 base = m507.reg;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
 static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = m507.reg &0x20? 0x7F: 0xFF;
-	uint16 base = m507.reg <<3;
+	uint16 mask = (m507.reg & 0x20) ? 0x7F : 0xFF;
+	uint16 base = m507.reg << 3;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFR (ReadDIP) {
+static DECLFR(ReadDIP) {
 	return m507.dipsw;
 }
 
-static DECLFW (WriteReg) {
+static DECLFW(WriteReg) {
 	m507.reg = V;
 	MMC3_SyncPRG();
 	MMC3_SyncCHR();
@@ -70,7 +70,7 @@ static void Power(void) {
 	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
-void Mapper507_Init (CartInfo *info) {
+void Mapper507_Init(CartInfo *info) {
 	MMC3_Init(info, MMC3B, 0, 0);
 	MMC3_pwrap = SetPRG;
 	MMC3_cwrap = SetCHR;
