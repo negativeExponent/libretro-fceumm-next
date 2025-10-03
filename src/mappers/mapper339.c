@@ -22,17 +22,27 @@
 /* NES 2.0 mapper 339 is used for a 21-in-1 multicart.
  * Its UNIF board name is BMC-K-3006.
  * http://wiki.nesdev.com/w/index.php/NES_2.0_Mapper_339
+ *
+ * NROM-256 selection
+ * Every multicart using this mapper has its own method of selecting NROM-256 mode, in which PRG A14 comes directly from CPU A14 rather than the "a" bit, that is denoted by NES 2.0 submapper:
+ *
+ * Submapper 0: NROM-256 if (Address AND $06) == $06 (K-3006 PCB, UNIF MAPR BMC-K-3006)
+ * Submapper 1: NROM-256 if (Address AND $04) != $00 (unmarked PCB)
+ * Submapper 2: NROM-256 if (Address AND $11) != $00 (Realtec 8058 PCB)
+ * Submapper 3: NROM-256 if (Address AND $18) != $00 (K-3091/GN-16 PCB)
+ * Submapper 4: NROM-256 if (Address AND $14) != $00 (GR-002-31 PCB)
  */
 
 #include "mapinc.h"
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint16 reg;
+	uint8 dipsw;
 } m339;
 
 static SFORMAT StateRegs[] = {
-	{ &m339.reg, 1, "EXPR" },
+	{ &m339.reg, 2, "EXPR" },
 	{ 0 }
 };
 
@@ -41,7 +51,15 @@ static void SetPRG(uint16 A, uint16 V) {
 	uint16 mask = 0x0F;
 
 	if (!(m339.reg & 0x20)) { /* NROM */
-		if ((m339.reg & 0x06) == 0x06) { /* NROM-256 */
+		uint8 nrom256 = FALSE;
+		switch (iNESCart.submapper) {
+		case 0: nrom256 = ((m339.reg & 0x06) == 0x06) ? TRUE : FALSE; break;
+		case 1: nrom256 = ((m339.reg & 0x04) != 0x00) ? TRUE : FALSE; break;
+		case 2: nrom256 = ((m339.reg & 0x11) != 0x00) ? TRUE : FALSE; break;
+		case 3: nrom256 = ((m339.reg & 0x18) != 0x00) ? TRUE : FALSE; break;
+		case 4: nrom256 = ((m339.reg & 0x14) != 0x00) ? TRUE : FALSE; break;
+		}
+		if (nrom256) { /* NROM-256 */
 			mask = 0x03;
 		} else { /* NROM-128 */
 			mask = 0x01;
@@ -59,23 +77,31 @@ static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static DECLFW(WriteReg) {
-	if (MMC3_WramIsWritable()) {
-		m339.reg = A & 0xFF;
-		MMC3_SyncPRG();
-		MMC3_SyncCHR();
+static DECLFR(ReadDIP) {
+	if (m339.reg & 0x80) {
+		A = (A & ~0x03) | (m339.dipsw & 0x03);
 	}
+	return CartBR(A);
+}
+
+static DECLFW(WriteReg) {
+	m339.reg = A;
+	MMC3_SyncPRG();
+	MMC3_SyncCHR();
 }
 
 static void Reset(void) {
-	memset(&m339, 0, sizeof(m339));
+	memset(&m339.reg, 0, sizeof(m339.reg));
+	m339.dipsw++;
 	MMC3_Reset();
 }
 
 static void Power(void) {
 	memset(&m339, 0, sizeof(m339));
 	MMC3_Power();
+	SetReadHandler(0x8000, 0xFFFF, ReadDIP);
 	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
+
 }
 
 void Mapper339_Init(CartInfo *info) {
