@@ -29,6 +29,9 @@ static void Sync(void) {
 	uint8 A14 = (latch.addr & 0x10) == 0;
 
 	/* FCEU_printf("%04x prg = %02x chr = %02x mirV = %d A14 = %d\n", latch.addr, prg, chr, mirrorV, A14); */
+	if (iNESCart.submapper == 1) {
+		chr = ((latch.addr >> 7) & ~0x01) | ((latch.addr >> 6) & 0x01);
+	}
 	
 	setprg16(0x8000, prg & ~A14);
 	setprg16(0xC000, prg | A14);
