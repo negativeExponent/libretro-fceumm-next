@@ -21,7 +21,7 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static void Sync () {
+static void Sync(void) {
 	uint16 bank = ((latch.addr >> 1) & ~0x01) | (latch.addr & 0x01);
 	if (latch.addr & 0x08) {
 		setprg16(0x8000, bank);
@@ -33,7 +33,7 @@ static void Sync () {
 	setmirror(((latch.addr >> 1) & 0x01) ^ 0x01);
 }
 
-void Mapper213_Init (CartInfo *info) {
+void Mapper213_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Reset = Latch_RegReset;
 }

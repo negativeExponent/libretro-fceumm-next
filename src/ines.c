@@ -1061,6 +1061,7 @@ INES_BOARD_BEGIN()
 
 	/* Rewritten Mappers — Clean Port, Needs Testing */
 	INES_BOARD( "EJ-3003/820428-C",         213, Mapper213_Init         )
+	INES_BOARD( "OK-043",                   239, Mapper239_Init         )
 	INES_BOARD( "",                         273, Mapper273_Init         )
 	INES_BOARD( "JC-016-2 (alt)",           367, Mapper367_Init         )
 	INES_BOARD( "8-in-1 AOROM+UNROM",       378, Mapper378_Init         )

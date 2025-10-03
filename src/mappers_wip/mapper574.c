@@ -49,7 +49,7 @@ static void Power(void) {
 	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
 }
 
-void Mapper574_Init (CartInfo *info) {
+void Mapper574_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, 0, 0);
 	info->Power = Power;
 	info->Reset = Latch_RegReset;

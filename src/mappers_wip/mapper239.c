@@ -22,35 +22,17 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 rd = ((latch.addr & 0x10) && (PRG_BANK_COUNT(16) > 8)) ? FALSE : TRUE;
-	uint8 wr = FALSE;
-
-	if (latch.addr & 0x02) {
-		setprg16_access(0x8000, ((latch.addr << 3) & 0x10) | (latch.data & 0x0F), rd, wr);
-		setprg16_access(0xC000, ((latch.addr << 3) & 0x10) | 0x0F, rd, wr);
-	} else {
-		setprg16_access(0x8000, ((latch.addr << 3) & 0x18) | (latch.data & 0x07), rd, wr);
-		setprg16_access(0xC000, ((latch.addr << 3) & 0x18) | 0x07, rd, wr);
+	if (latch.addr & 0x04) {
+		setprg32(0x8000, latch.addr >> 1);
+    } else {
+		setprg16(0x8000, latch.addr);
+		setprg16(0xC000, latch.addr);
 	}
-
-	setchr8(0);
+	setchr8(latch.addr);
+    setmirror(((latch.addr >> 4) & 0x01) ^ 0x01);
 }
 
-static DECLFW(WriteLatch) {
-	V &= CartBR(A);
-	if (latch.addr & 0x20) {
-		A = latch.addr;
-	}
-	Latch_Write(A, V);
-}
-
-static void Power(void) {
-	Latch_Power();
-	SetWriteHandler(0x8000, 0xFFFF, WriteLatch);
-}
-
-void Mapper573_Init(CartInfo *info) {
-	Latch_Init(info, Sync, NULL, 0, 0);
-	info->Power = Power;
-	info->Reset = Latch_RegReset;
+void Mapper239_Init(CartInfo *info) {
+	Latch_Init(info, Sync, NULL, FALSE, FALSE);
+	info->Reset = Latch_RegReset;;
 }
