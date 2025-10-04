@@ -34,7 +34,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint16 bank = ((m314.reg[1] << 1) & 0x7E)  | ((m314.reg[1] >> 6) & 0x01);
+	uint16 bank = ((m314.reg[0] << 7) & 0x80) | ((m314.reg[1] << 1) & 0x7E) | ((m314.reg[1] >> 6) & 0x01);
 
 	if (m314.reg[0] & 0x80) { /* NROM mode */
 		if (m314.reg[1] & 0x80) {
