@@ -41,71 +41,31 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint32 GetPRGMask(void) {
+static uint16 GetPRGMask(void) {
 	return ((m351.reg[2] & 0x04) ? 0x0F : 0x1F);
 }
 
-static uint32 GetPRGBase(void) {
+static uint16 GetPRGBase(void) {
 	return (m351.reg[1] >> 1);
 }
 
-static uint32 GetCHRMask(void) {
-	if ((m351.reg[2] & 0x10) && !(m351.reg[2] & 0x20)) {
+static uint16 GetCHRMask(void) {
+	if (m351.reg[2] & 0x20) {
+		return 0x7F;
+	}
+	if (m351.reg[2] & 0x10) {
 		return 0x1F;
 	}
-	return ((m351.reg[2] & 0x20) ? 0x7F : 0xFF);
+	return 0xFF;
 }
 
-static uint32 GetCHRBase(void) {
+static uint16 GetCHRBase(void) {
 	return (m351.reg[0] << 1);
 }
 
-static void SetPRG_mmc1(uint16 A, uint16 V) {
-	uint8 mask = GetPRGMask() >> 1;
-	uint8 bank = GetPRGBase() >> 1;
-
-	setprg16(A, (bank & ~mask) | (V & mask));
-}
-
-static void SetCHR_mmc1(uint16 A, uint16 V) {
-	uint16 mask = GetCHRMask() >> 2;
-	uint16 bank = GetCHRBase() >> 2;
-
-	setchr4(A, (bank & ~mask) | (V & mask));
-}
-
-static void SetPRG_mmc3(uint16 A, uint16 V) {
-	uint8 mask = GetPRGMask();
-	uint8 bank = GetPRGBase();
-
-	setprg8(A, (bank & ~mask) | (V & mask));
-}
-
-static void SetCHR_mmc3(uint16 A, uint16 V) {
-	uint16 mask = GetCHRMask();
-	uint16 bank = GetCHRBase();
-
-	setchr1(A, (bank & ~mask) | (V & mask));
-}
-
-static void SetPRG_vrc4(uint16 A, uint16 V) {
-	uint8 mask = GetPRGMask();
-	uint8 bank = GetPRGBase();
-
-	setprg8(A, (bank & ~mask) | (V & mask));
-}
-
-static void SetCHR_vrc4(uint16 A, uint16 V) {
-	uint16 mask = GetCHRMask();
-	uint16 bank = GetCHRBase();
-
-	setchr1(A, (bank & ~mask) | (V & mask));
-}
-
-static void SyncPRG(void) {
+static void SetPRG(uint16 A, uint16 V) {
 	if (m351.reg[2] & 0x10) { /* NROM mode */
-		uint32 bank = GetPRGBase();
-
+		uint16 bank = GetPRGBase();
 		if (m351.reg[2] & 0x08) { /* NROM-64 */
 			setprg8(0x8000, bank);
 			setprg8(0xA000, bank);
@@ -120,37 +80,37 @@ static void SyncPRG(void) {
 			}
 		}
 	} else {
+		uint16 mask = GetPRGMask();
+		uint16 base = GetPRGBase();
 		switch (m351.mapper) {
+		case MAPPER_MMC1:
+			setprg16(A, ((base & ~mask) >> 1) | (V & (mask >> 1)));
+			break;
 		default:
 		case MAPPER_MMC3:
-			MMC3_SyncPRG();
-			break;
-		case MAPPER_MMC1:
-			MMC1_SyncPRG();
-			break;
 		case MAPPER_VRC4:
-			VRC24_SyncPRG();
+			setprg8(A, (base & ~mask) | (V & mask));
 			break;
 		}
 	}
 }
 
-static void SyncCHR(void) {
+static void SetCHR(uint16 A, uint16 V) {
 	if (m351.reg[2] & 0x01) { /* CHR RAM mode */
 		setchr8r(0x10, 0);
 	} else if (m351.reg[2] & 0x40) { /* CNROM mode */
 		setchr8(GetCHRBase() >> 3);
 	} else {
+		uint16 mask = GetCHRMask();
+		uint16 bank = GetCHRBase();
 		switch (m351.mapper) {
+		case MAPPER_MMC1:
+			setchr4(A, ((bank & ~mask) >> 2) | (V & (mask >> 2)));
+			break;
 		default:
 		case MAPPER_MMC3:
-			MMC3_SyncCHR();
-			break;
-		case MAPPER_MMC1:
-			MMC1_SyncCHR();
-			break;
 		case MAPPER_VRC4:
-			VRC24_SyncCHR();
+			setchr1(A, (bank & ~mask) | (V & mask));
 			break;
 		}
 	}
@@ -172,22 +132,51 @@ static void SyncMirror(void) {
 }
 
 static void Sync(void) {
-	SyncPRG();
-	SyncCHR();
-	SyncMirror();
+	switch (m351.mapper) {
+	default:
+	case MAPPER_MMC3:
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
+		break;
+	case MAPPER_MMC1:
+		MMC1_SyncPRG();
+		MMC1_SyncCHR();
+		MMC1_SyncMirror();
+		break;
+	case MAPPER_VRC4:
+		VRC24_SyncPRG();
+		VRC24_SyncCHR();
+		VRC24_SyncMirror();
+		break;
+	}
+}
+
+static DECLFW(WriteVRC4) {
+	if (A & 0x800) {
+		A = (A & 0xFFF3) | ((A << 1) & 0x08) | ((A >> 1) & 0x04);
+	}
+	VRC24_Write(A, V);
 }
 
 static void SetMode(void) {
+	MapIRQHook = NULL;
+	GameHBIRQHook = NULL;
 	switch (m351.reg[0] & 0x03) {
 	default:
 	case MAPPER_MMC3:
 		m351.mapper = MAPPER_MMC3;
+		GameHBIRQHook = MMC3_IRQHBHook;
+		SetWriteHandler(0x8000, 0xFFFF, MMC3_Write);
 		break;
 	case MAPPER_MMC1:
 		m351.mapper = MAPPER_MMC1;
+		SetWriteHandler(0x8000, 0xFFFF, MMC1_Write);
 		break;
 	case MAPPER_VRC4:
 		m351.mapper = MAPPER_VRC4;
+		MapIRQHook = VRC24_IRQCPUHook;
+		SetWriteHandler(0x8000, 0xFFFF, VRC24_Write);
 		break;
 	}
 }
@@ -209,39 +198,6 @@ static DECLFW(WriteMirror) {
 	SyncMirror();
 }
 
-static DECLFW(WriteVRC4) {
-	if (A & 0x800) {
-		A = (A & 0xFFF3) | ((A << 1) & 0x08) | ((A >> 1) & 0x04);
-	}
-	VRC24_Write(A, V);
-}
-
-static DECLFW(WriteASIC) {
-	switch (m351.mapper) {
-	case MAPPER_MMC1:
-		MMC1_Write(A, V);
-		break;
-	case MAPPER_MMC3:
-		MMC3_Write(A, V);
-		break;
-	case MAPPER_VRC4:
-		WriteVRC4(A, V);
-		break;
-	}
-}
-
-static void CPUIRQHook(int a) {
-	if (m351.mapper == MAPPER_VRC4) {
-		VRC24_IRQCPUHook(a);
-	}
-}
-
-static void HBIRQHook(void) {
-	if (m351.mapper == MAPPER_MMC3) { /* MMC3 mode */
-		MMC3_IRQHBHook();
-	}
-}
-
 static void Power(void) {
 	memset(&m351, 0, sizeof(m351));
 
@@ -255,7 +211,6 @@ static void Power(void) {
 	SetReadHandler(0x5000, 0x5FFF, ReadDIP);
 	SetWriteHandler(0x4025, 0x4025, WriteMirror);
 	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
-	SetWriteHandler(0x8000, 0xFFFF, WriteASIC);
 
 	SetMode();
 	Sync();
@@ -287,29 +242,26 @@ void Mapper351_Init(CartInfo *info) {
 	int CHRRAMSIZE = info->CHRRamSize + info->CHRRamSaveSize;
 
 	VRC24_Init(info, VRC24_VRC4, 0x04, 0x08, FALSE, TRUE);
-	VRC24_pwrap = SetPRG_vrc4;
-	VRC24_cwrap = SetCHR_vrc4;
+	VRC24_pwrap = SetPRG;
+	VRC24_cwrap = SetCHR;
 
 	MMC1_Init(info, MMC1B, FALSE, FALSE);
-	MMC1_pwrap = SetPRG_mmc1;
-	MMC1_cwrap = SetCHR_mmc1;
+	MMC1_pwrap = SetPRG;
+	MMC1_cwrap = SetCHR;
 
 	MMC3_Init(info, MMC3B, FALSE, FALSE);
-	MMC3_pwrap = SetPRG_mmc3;
-	MMC3_cwrap = SetCHR_mmc3;
+	MMC3_pwrap = SetPRG;
+	MMC3_cwrap = SetCHR;
 
 	info->Reset = Reset;
 	info->Power = Power;
 	info->Close = Close;
 
-	MapIRQHook = CPUIRQHook;
-	GameHBIRQHook = HBIRQHook;
-
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, 0);
 
 	if (ROM.chr.size) {
-		uint32 newsize = ROM.prg.size + ROM.chr.size;
+		size_t newsize = ROM.prg.size + ROM.chr.size;
 		uint8 *buffer;
 		/* This crazy thing can map CHR-ROM into CPU address space. Allocate a
 		 * combined PRG+CHR address space and treat it a second "chip". */
