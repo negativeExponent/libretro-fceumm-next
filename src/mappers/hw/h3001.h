@@ -18,19 +18,35 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-#include "mapinc.h"
-#include "h3001.h"
+#ifndef _H3001_H
+#define _H3001_H
 
-static void SetPRG(uint16 A, uint16 V) {
-	setprg8(A, V & 0x1F);
-}
+typedef struct __H3001 {
+	uint8 prg[2], chr[8], mirror, cmd;
+	uint8 IRQa;
+	int16 IRQCount, IRQLatch;
+} H3001;
 
-static void SetCHR(uint16 A, uint16 V) {
-	setchr1(A, V & 0xFF);
-}
+void H3001_SetPRG_default(uint16 A, uint16 V);
+void H3001_SetCHR_default(uint16 A, uint16 V);
+void H3001_SyncPRG_default(void);
+void H3001_SyncCHR_default(void);
+void H3001_SyncMirror_default(void);
 
-void Mapper065_Init(CartInfo *info) {
-	H3001_Init(info);
-	H3001_pwrap = SetPRG;
-	H3001_cwrap = SetCHR;
-}
+void H3001_CPUIRQHook(int a);
+void H3001_Reset(void);
+void H3001_Power(void);
+void H3001_StateRestore(int version);
+void H3001_Init(CartInfo *info);
+
+DECLFW(H3001_WritePRG);
+DECLFW(H3001_WriteMisc);
+DECLFW(H3001_WriteCHR);
+
+extern void (*H3001_pwrap)(uint16 A, uint16 V);
+extern void (*H3001_cwrap)(uint16 A, uint16 V);
+
+extern void (*H3001_SyncPRG)(void);
+extern void (*H3001_SyncCHR)(void);
+
+#endif /* _H3001_H */

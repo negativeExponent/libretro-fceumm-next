@@ -28,6 +28,7 @@ SOURCES_C += $(SOURCE_DIR)/mappers/hw/pic16c5x.c
 
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/fcg.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/fme7.c
+SOURCES_C += $(SOURCE_DIR)/mappers/hw/h3001.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/jv001.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/jyasic.c
 SOURCES_C += $(SOURCE_DIR)/mappers/hw/ks202.c
