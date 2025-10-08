@@ -17,82 +17,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * Konami VRC-1
- *
  */
 
 #include "mapinc.h"
+#include "vrc1.h"
 
-static struct {
-	uint8 prg[3], chr[2], mode;
-} m075;
-
-static SFORMAT StateRegs[] = {
-	{ &m075.mode, 1, "MODE" },
-	{ m075.chr, 2, "CREG" },
-	{ m075.prg, 3, "PREG" },
-	{ 0 }
-};
-
-static void SyncPRG(void) {
-	setprg8(0x8000, m075.prg[0]);
-	setprg8(0xA000, m075.prg[1]);
-	setprg8(0xC000, m075.prg[2]);
-	setprg8(0xE000, ~0);
+static void SetPRG(uint16 A, uint16 V) {
+	setprg8(A, V & 0x1F);
 }
 
-static void SyncCHR(void) {
-	setchr4(0x0000, (m075.chr[0] & 0x0F) | ((m075.mode & 0x02) << 3));
-	setchr4(0x1000, (m075.chr[1] & 0x0F) | ((m075.mode & 0x04) << 2));
-}
-
-static void SyncMirror(void) {
-	if (iNESCart.mirror == MI_4) {
-		setmirror(MI_4);
-	} else {
-		setmirror((m075.mode & 1) ^ 1);
-	}
-}
-
-static DECLFW(WritePRG) {
-	m075.prg[(A >> 13) & 0x03] = V;
-	SyncPRG();
-}
-
-static DECLFW(WriteMode) {
-	m075.mode = V;
-	SyncCHR();
-	SyncMirror();
-}
-
-static DECLFW(WriteCHR) {
-	m075.chr[(A >> 12) & 0x01] = V;
-	SyncCHR();
-}
-
-static void Power(void) {
-	memset(&m075, 0, sizeof(m075));
-
-	SyncPRG();
-	SyncCHR();
-	SyncMirror();
-
-	SetReadHandler(0x8000, 0xFFFF, CartBR);
-	SetWriteHandler(0x8000, 0x8FFF, WritePRG);
-	SetWriteHandler(0x9000, 0x9FFF, WriteMode);
-	SetWriteHandler(0xA000, 0xDFFF, WritePRG);
-	SetWriteHandler(0xE000, 0xFFFF, WriteCHR);
-}
-
-static void StateRestore(int version) {
-	SyncPRG();
-	SyncCHR();
-	SyncMirror();
+static void SetCHR(uint16 A, uint16 V) {
+	setchr4(A, V & 0x1F);
 }
 
 void Mapper075_Init(CartInfo *info) {
-	info->Power = Power;
-	GameStateRestore = StateRestore;
-	AddExState(StateRegs, ~0, 0, NULL);
+	VRC1_Init(info);
+	VRC1_pwrap = SetPRG;
+	VRC1_cwrap = SetCHR;
 }

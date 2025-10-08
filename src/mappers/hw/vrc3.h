@@ -1,8 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2025 negativeExponent
+ *  Copyright (C) 2025 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,29 +16,37 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- *
- * Konami VRC-3
- *
  */
 
-#include "mapinc.h"
-#include "vrc3.h"
+#ifndef _VRC3_H
+#define _VRC3_H
 
-static void SetPRG(uint16 A, uint16 V) {
-	setprg16(A, V & 0xFF);
-}
+ typedef struct __VRC3 {
+	uint8 prg;
+	uint8 IRQx; /* autoenable */
+	uint8 IRQm; /* mode */
+	uint8 IRQa;
+	uint16 IRQLatch, IRQCount;
+} VRC3;
 
-static void SetCHR(uint16 V) {
-	setchr8(V & 0xFF);
-}
+void VRC3_SetPRG_default(uint16 A, uint16 V);
+void VRC3_SetCHR_default(uint16 V);
+void VRC3_SyncPRG_default(void);
+void VRC3_SyncCHR_default(void);
 
-void Mapper073_Init(CartInfo *info) {
-	VRC3_Init(info);
-	VRC3_pwrap = SetPRG;
-	VRC3_cwrap = SetCHR;
+DECLFW(VRC3_WriteReg);
 
-	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
-	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
-	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-}
+void VRC3_CPUIRQHook(int a);
+void VRC3_Power(void);
+void VRC3_StateRestore(int version);
+void VRC3_Init(CartInfo *info);
+
+extern VRC3 vrc3;
+
+extern void (*VRC3_SyncPRG)(void);
+extern void (*VRC3_SyncCHR)(void);
+
+extern void (*VRC3_pwrap)(uint16 A, uint16 V);
+extern void (*VRC3_cwrap)(uint16 V);
+
+#endif /* _VRC3_H */

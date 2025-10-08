@@ -172,6 +172,7 @@ void H3001_Init(CartInfo *info) {
 	H3001_SyncMirror = H3001_SyncMirror_default;
 
 	info->Power = H3001_Power;
+	info->Reset = H3001_Reset;
 	MapIRQHook = H3001_CPUIRQHook;
 	GameStateRestore = H3001_StateRestore;
 

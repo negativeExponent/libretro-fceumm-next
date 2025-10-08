@@ -27,6 +27,8 @@ typedef struct __H3001 {
 	int16 IRQCount, IRQLatch;
 } H3001;
 
+extern H3001 h3001;
+
 void H3001_SetPRG_default(uint16 A, uint16 V);
 void H3001_SetCHR_default(uint16 A, uint16 V);
 void H3001_SyncPRG_default(void);
