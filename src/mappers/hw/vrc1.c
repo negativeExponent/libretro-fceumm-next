@@ -85,6 +85,20 @@ DECLFW(VRC1_WriteCHR) {
 	VRC1_SyncCHR();
 }
 
+DECLFW(VRC1_Write) {
+	switch (A & 0xF000) {
+	case 0x8000: VRC1_WritePRG(A, V); break;
+	case 0x9000: VRC1_WriteMode(A, V); break;
+	case 0xA000:
+	case 0xB000:
+	case 0xC000:
+	case 0xD000: VRC1_WritePRG(A, V); break;
+	case 0xE000:
+	case 0xF000: VRC1_WriteCHR(A, V); break;
+	}
+}
+
+
 void VRC1_Reset(void) {
     VRC1_SyncPRG();
     VRC1_SyncCHR();

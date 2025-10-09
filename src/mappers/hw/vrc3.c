@@ -116,9 +116,12 @@ void VRC3_CPUIRQHook(int a) {
 	}
 }
 
-void VRC3_Power(void) {
-	memset(&vrc3, 0, sizeof(vrc3));
+void VRC3_Reset(void) {
+	VRC3_SyncPRG();
+	VRC3_SyncCHR();
+}
 
+void VRC3_Power(void) {
 	VRC3_SyncPRG();
 	VRC3_SyncCHR();
 	SetReadHandler(0x6000, 0xFFFF, CartBR);

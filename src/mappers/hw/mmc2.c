@@ -46,11 +46,6 @@ static void GENCWRAP(uint16 A, uint16 V) {
 	setchr4(A, V);
 }
 
-static void GENMWRAP(uint8 V) {
-	mmc2.mirr = V;
-	setmirror((mmc2.mirr & 1) ^ 1);
-}
-
 void MMC2_SyncPRG(void) {
 	MMC2_pwrap(0x8000, mmc2.prg);
 	MMC2_pwrap(0xA000, ~2);
@@ -67,6 +62,10 @@ void MMC2_SyncCHR(void) {
 	}
 }
 
+void MMC2_SyncMirror(void) {
+	setmirror((mmc2.mirr & 1) ^ 1);
+}
+
 DECLFW(MMC2_Write) {
 	switch (A & 0xF000) {
 	case 0xA000:
@@ -81,14 +80,13 @@ DECLFW(MMC2_Write) {
 		MMC2_SyncCHR();
 		break;
 	case 0xF000:
-		if (MMC2_mwrap) {
-			MMC2_mwrap(V);
-		}
+		mmc2.mirr = V;
+		MMC2_SyncMirror();
 		break;
 	}
 }
 
-static void MMC2PPUHook(uint32 A) {
+void MMC2_PPUHook(uint32 A) {
 	uint8 bank = (A >> 12) & 0x01;
 	if ((A & 0x2000) || (((A & 0xFF0) != 0xFD0) && ((A & 0xFF0) != 0xFE0))) {
 		return;
@@ -102,6 +100,7 @@ void MMC2_Reset(void) {
 	mmc2.latch[0] = mmc2.latch[1] = 0;
 	MMC2_SyncPRG();
 	MMC2_SyncCHR();
+	MMC2_SyncMirror();
 }
 
 void MMC2_Power(void) {
@@ -119,6 +118,7 @@ void MMC2_Power(void) {
 void MMC2_Restore(int version) {
 	MMC2_SyncPRG();
 	MMC2_SyncCHR();
+	MMC2_SyncMirror();
 }
 
 void MMC2_Close(void) {
@@ -127,11 +127,10 @@ void MMC2_Close(void) {
 void MMC2_Init(CartInfo *info, int wram, int battery) {
 	MMC2_pwrap = GENPWRAP;
 	MMC2_cwrap = GENCWRAP;
-	MMC2_mwrap = GENMWRAP;
 
 	info->Power = MMC2_Power;
 	info->Close = MMC2_Close;
-	PPU_hook = MMC2PPUHook;
+	PPU_hook = MMC2_PPUHook;
 
 	GameStateRestore = MMC2_Restore;
 	AddExState(StateRegs, ~0, 0, NULL);

@@ -142,7 +142,7 @@ void MMC3_Reset(void) {
 	MMC3_SyncMirror();
 }
 
-static DECLFW(MBWRAMMMC6) {
+DECLFW(MBWRAMMMC6) {
 	if (!(mmc3.cmd & 0x20)) {
 		/* wram disabled */
 		return;
@@ -162,7 +162,7 @@ static DECLFW(MBWRAMMMC6) {
 	}
 }
 
-static DECLFR(MAWRAMMMC6) {
+DECLFR(MAWRAMMMC6) {
 	if (!(mmc3.cmd & 0x20)) {
 		/* wram disabled */
 		return cpu.openbus;

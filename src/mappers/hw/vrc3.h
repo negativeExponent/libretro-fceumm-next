@@ -37,6 +37,7 @@ void VRC3_SyncCHR_default(void);
 DECLFW(VRC3_WriteReg);
 
 void VRC3_CPUIRQHook(int a);
+void VRC3_Reset(void);
 void VRC3_Power(void);
 void VRC3_StateRestore(int version);
 void VRC3_Init(CartInfo *info);

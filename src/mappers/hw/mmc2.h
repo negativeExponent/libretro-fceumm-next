@@ -32,6 +32,8 @@ extern MMC2 mmc2;
 
 DECLFW(MMC2_Write);
 
+void MMC2_PPUHook(uint32 A);
+
 void MMC2_Power(void);
 void MMC2_Close(void);
 void MMC2_Reset(void);
@@ -40,6 +42,7 @@ void MMC2_Init(CartInfo *info, int wram, int battery);
 
 void MMC2_SyncPRG(void);
 void MMC2_SyncCHR(void);
+void MMC2_SyncMirror(void);
 
 extern void (*MMC2_pwrap)(uint16 A, uint16 V);
 extern void (*MMC2_cwrap)(uint16 A, uint16 V);

@@ -35,6 +35,7 @@ void VRC1_SyncMirror_default(void);
 
 DECLFW(VRC1_WritePRG);
 DECLFW(VRC1_WriteCHR);
+DECLFW(VRC1_Write);
 
 void VRC1_Reset(void);
 void VRC1_Power(void);

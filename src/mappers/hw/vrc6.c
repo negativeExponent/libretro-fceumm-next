@@ -26,9 +26,6 @@
 #include "vrcirq.h"
 #include "vrc6sound.h"
 
-static uint32 vrc6_A0;
-static uint32 vrc6_A1;
-
 VRC6 vrc6;
 
 void (*VRC6_pwrap)(uint16 A, uint16 V);
@@ -38,6 +35,8 @@ static SFORMAT StateRegs[] = {
 	{ vrc6.prg, 2, "PRG" },
 	{ vrc6.chr, 8, "CHR" },
 	{ &vrc6.mirr, 1, "MIRR" },
+	{ &vrc6.A0, 2, "V6A0" },
+	{ &vrc6.A1, 2, "V6A1" },
 
 	{ 0 }
 };
@@ -85,7 +84,7 @@ void VRC6_SyncCHR(void) {
 DECLFW(VRC6_Write) {
 	int index;
 
-	A = (A & 0xF000) | ((A & vrc6_A1) ? 0x02 : 0x00) | ((A & vrc6_A0) ? 0x01 : 0x00);
+	A = (A & 0xF000) | ((A & vrc6.A1) ? 0x02 : 0x00) | ((A & vrc6.A0) ? 0x01 : 0x00);
 	switch (A & 0xF000) {
 	case 0x8000:
 		vrc6.prg[0] = V;
@@ -169,9 +168,6 @@ void VRC6_Power(void) {
 	}
 }
 
-void VRC6_Close(void) {
-}
-
 void VRC6_Restore(int version) {
 	VRC6_SyncPRG();
 	VRC6_SyncCHR();
@@ -179,11 +175,13 @@ void VRC6_Restore(int version) {
 }
 
 void VRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram) {
+	memset(&vrc6, 0, sizeof(vrc6));
+
 	VRC6_pwrap = GENPWRAP;
 	VRC6_cwrap = GENCWRAP;
 
-	vrc6_A0 = A0;
-	vrc6_A1 = A1;
+	vrc6.A0 = A0;
+	vrc6.A1 = A1;
 
 	if (wram) {
 		if (info->iNES2) {
@@ -204,7 +202,6 @@ void VRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	info->Power = VRC6_Power;
-	info->Close = VRC6_Close;
 	GameStateRestore = VRC6_Restore;
 
 	VRCIRQ_Init(TRUE);

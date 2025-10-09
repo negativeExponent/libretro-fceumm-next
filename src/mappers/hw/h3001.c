@@ -117,6 +117,15 @@ DECLFW(H3001_WriteCHR) {
 	H3001_SyncCHR();
 }
 
+DECLFW(H3001_Write) {
+	switch (A & 0xF000) {
+	case 0x8000: H3001_WritePRG(A, V); break;
+	case 0x9000: H3001_WriteMisc(A, V); break;
+	case 0xA000: H3001_WritePRG(A, V); break;
+	case 0xB000: H3001_WriteCHR(A, V); break;
+	}
+}
+
 void H3001_CPUIRQHook(int a) {
 	if (h3001.IRQa) {
 		h3001.IRQCount -= a;

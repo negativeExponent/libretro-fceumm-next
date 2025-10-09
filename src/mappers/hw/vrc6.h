@@ -25,6 +25,8 @@ typedef struct __VRC6 {
 	uint8 prg[2];
 	uint8 chr[8];
 	uint8 mirr;
+	uint16 A0;
+	uint16 A1;
 } VRC6;
 
 extern VRC6 vrc6;

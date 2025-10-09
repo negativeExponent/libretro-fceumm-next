@@ -43,6 +43,8 @@ uint8 MMC3_GetCHRBank(int V);
 DECLFW(MMC3_CMDWrite); /* $ 0x8000 - 0xBFFF */
 DECLFW(MMC3_IRQWrite); /* $ 0xC000 - 0xFFFF */
 DECLFW(MMC3_Write);    /* $ 0x8000 - 0xFFFF */
+DECLFW(MBWRAMMMC6);
+DECLFR(MAWRAMMMC6);
 
 void MMC3_Power(void);
 void MMC3_Reset(void);

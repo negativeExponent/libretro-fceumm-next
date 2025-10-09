@@ -44,11 +44,13 @@ void H3001_Init(CartInfo *info);
 DECLFW(H3001_WritePRG);
 DECLFW(H3001_WriteMisc);
 DECLFW(H3001_WriteCHR);
+DECLFW(H3001_Write);
 
 extern void (*H3001_pwrap)(uint16 A, uint16 V);
 extern void (*H3001_cwrap)(uint16 A, uint16 V);
 
 extern void (*H3001_SyncPRG)(void);
 extern void (*H3001_SyncCHR)(void);
+extern void (*H3001_SyncMirror)(void);
 
 #endif /* _H3001_H */
