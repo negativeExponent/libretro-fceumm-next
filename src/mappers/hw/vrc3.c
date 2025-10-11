@@ -148,3 +148,21 @@ void VRC3_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 	GameStateRestore = VRC3_StateRestore;
 }
+
+void VRC3_SetConfig(uint8 clear) {
+	SetReadHandler (0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x6000, 0x7FFF, CartBW);
+	SetWriteHandler(0x8000, 0xFFFF, VRC3_WriteReg);
+	MapIRQHook = VRC3_CPUIRQHook;
+	if (clear) {
+		vrc3.prg = 0;
+		vrc3.IRQa = 0;
+		vrc3.IRQCount = 0;
+		vrc3.IRQLatch = 0;
+		vrc3.IRQm = 0;
+		vrc3.IRQx = 0;
+		X6502_IRQEnd(FCEU_IQEXT);
+	}
+	VRC3_SyncPRG();
+	VRC3_SyncCHR();
+}

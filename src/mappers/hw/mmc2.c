@@ -26,7 +26,6 @@
 
 void (*MMC2_pwrap)(uint16 A, uint16 V);
 void (*MMC2_cwrap)(uint16 A, uint16 V);
-void (*MMC2_mwrap)(uint8 V);
 
 MMC2 mmc2;
 
@@ -38,11 +37,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void GENPWRAP(uint16 A, uint16 V) {
+void MMC2_SetPRG_default(uint16 A, uint16 V) {
 	setprg8(A, V);
 }
 
-static void GENCWRAP(uint16 A, uint16 V) {
+void MMC2_SetCHR_default(uint16 A, uint16 V) {
 	setchr4(A, V);
 }
 
@@ -56,10 +55,6 @@ void MMC2_SyncPRG(void) {
 void MMC2_SyncCHR(void) {
 	MMC2_cwrap(0x0000, mmc2.chr[mmc2.latch[0] | 0]);
 	MMC2_cwrap(0x1000, mmc2.chr[mmc2.latch[1] | 2]);
-
-	if (MMC2_mwrap) {
-		MMC2_mwrap(mmc2.mirr);
-	}
 }
 
 void MMC2_SyncMirror(void) {
@@ -125,8 +120,8 @@ void MMC2_Close(void) {
 }
 
 void MMC2_Init(CartInfo *info, int wram, int battery) {
-	MMC2_pwrap = GENPWRAP;
-	MMC2_cwrap = GENCWRAP;
+	MMC2_pwrap = MMC2_SetPRG_default;
+	MMC2_cwrap = MMC2_SetCHR_default;
 
 	info->Power = MMC2_Power;
 	info->Close = MMC2_Close;
@@ -145,4 +140,17 @@ void MMC2_Init(CartInfo *info, int wram, int battery) {
 			info->SaveGameLen[0] = WRAMSIZE;
 		}
 	}
+}
+
+void MMC2_SetConfig(uint8 clear) {
+	PPU_hook = MMC2_PPUHook;
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0xA000, 0xFFFF, MMC2_Write);
+	if (clear) {
+		mmc2.prg = mmc2.mirr = 0;
+		mmc2.latch[0] = mmc2.latch[1] = 0;
+	}
+	MMC2_SyncPRG();
+	MMC2_SyncCHR();
+	MMC2_SyncMirror();
 }

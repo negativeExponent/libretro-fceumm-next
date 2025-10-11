@@ -41,6 +41,8 @@ void VRC6_IRQCPUHook(int a);
 
 void VRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram);
 
+void VRC6_SetConfig(uint8 clear, int A0, int A1);
+
 void VRC6_SyncPRG(void);
 void VRC6_SyncCHR(void);
 void VRC6_SyncMirror(void);

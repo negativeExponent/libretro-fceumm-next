@@ -187,3 +187,33 @@ void H3001_Init(CartInfo *info) {
 
 	AddExState(StateRegs, ~0, 0, NULL);
 }
+
+void H3001_SetConfig(uint8 clear) {
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0x8FFF, H3001_WritePRG);
+	SetWriteHandler(0x9000, 0x9FFF, H3001_WriteMisc);
+	SetWriteHandler(0xA000, 0xAFFF, H3001_WritePRG);
+	SetWriteHandler(0xB000, 0xBFFF, H3001_WriteCHR);
+	if (clear) {
+		h3001.prg[0] = 0;
+		h3001.prg[1] = 1;
+
+		h3001.chr[0] = 0;
+		h3001.chr[1] = 1;
+		h3001.chr[2] = 2;
+		h3001.chr[3] = 3;
+		h3001.chr[4] = 4;
+		h3001.chr[5] = 5;
+		h3001.chr[6] = 6;
+		h3001.chr[7] = 7;
+
+		h3001.cmd = 0;
+		h3001.IRQa = 0;
+		h3001.IRQCount = 0;
+		h3001.IRQLatch = 0;
+		h3001.mirror = 0;
+	}
+	H3001_SyncPRG();
+	H3001_SyncCHR();
+	H3001_SyncMirror();
+}

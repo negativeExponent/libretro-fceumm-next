@@ -34,7 +34,9 @@ DECLFW(VRC7_Write);
 void VRC7_Power(void);
 void VRC7_Close(void);
 
-void VRC7_Init(CartInfo *info, uint32 A0, uint32 A1);
+void VRC7_Init(CartInfo *info, uint32 A0);
+
+void VRC7_SetConfig(uint8 clear, int A0);
 
 void VRC7_SyncPRG(void);
 void VRC7_SyncCHR(void);

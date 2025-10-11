@@ -42,6 +42,8 @@ void VRC3_Power(void);
 void VRC3_StateRestore(int version);
 void VRC3_Init(CartInfo *info);
 
+void VRC3_SetConfig(uint8 clear);
+
 extern VRC3 vrc3;
 
 extern void (*VRC3_SyncPRG)(void);

@@ -306,3 +306,39 @@ void VRC24_Init(CartInfo *info, VRC24TYPE _vrc4, uint32 _A0, uint32 _A1, int wra
 		AddExState(&VRCIRQ_StateRegs, ~0, 0, 0);
 	}
 }
+
+void VRC2_SetConfig(uint8 clear, uint32 _A0, uint32 _A1) {
+	vrc24.A0 = _A0;
+	vrc24.A1 = _A1;
+	vrc24.type = VRC24_VRC2;
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, VRC24_Write);
+	SetReadHandler(0x6000, 0x7FFF, VRC24_ReadWRAM);
+	SetWriteHandler(0x6000, 0x7FFF, VRC24_WriteWRAM);
+	if (clear) {
+		VRC24_Reset();
+	} else {
+		VRC24_SyncPRG();
+		VRC24_SyncCHR();
+		VRC24_SyncMirror();
+	}
+}
+
+void VRC4_SetConfig(uint8 clear, uint32 _A0, uint32 _A1, int irqRepeated) {
+	vrc24.A0 = _A0;
+	vrc24.A1 = _A1;
+	vrc24.type = VRC24_VRC4;
+	VRCIRQ_Init(irqRepeated);
+	MapIRQHook = VRCIRQ_CPUHook;
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, VRC24_Write);
+	SetReadHandler(0x6000, 0x7FFF, VRC24_ReadWRAM);
+	SetWriteHandler(0x6000, 0x7FFF, VRC24_WriteWRAM);
+	if (clear) {
+		VRC24_Reset();
+	} else {
+		VRC24_SyncPRG();
+		VRC24_SyncCHR();
+		VRC24_SyncMirror();
+	}
+}

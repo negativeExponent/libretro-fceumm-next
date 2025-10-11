@@ -26,7 +26,6 @@
 
 void (*MMC4_pwrap)(uint16 A, uint16 V);
 void (*MMC4_cwrap)(uint16 A, uint16 V);
-void (*MMC4_mwrap)(uint8 V);
 
 MMC4 mmc4;
 
@@ -38,17 +37,12 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void GENPWRAP(uint16 A, uint16 V) {
+static void MMC4_SetPRG_default(uint16 A, uint16 V) {
 	setprg16(A, V);
 }
 
-static void GENCWRAP(uint16 A, uint16 V) {
+static void MMC4_SetCHR_default(uint16 A, uint16 V) {
 	setchr4(A, V);
-}
-
-static void GENMWRAP(uint8 V) {
-	mmc4.mirr = V;
-	setmirror((mmc4.mirr & 1) ^ 1);
 }
 
 void MMC4_SyncPRG(void) {
@@ -59,10 +53,10 @@ void MMC4_SyncPRG(void) {
 void MMC4_SyncCHR(void) {
 	MMC4_cwrap(0x0000, mmc4.chr[mmc4.latch[0] | 0]);
 	MMC4_cwrap(0x1000, mmc4.chr[mmc4.latch[1] | 2]);
+}
 
-	if (MMC4_mwrap) {
-		MMC4_mwrap(mmc4.mirr);
-	}
+void MMC4_SyncMirror(void) {
+	setmirror((mmc4.mirr & 1) ^ 1);
 }
 
 DECLFW(MMC4_Write) {
@@ -79,9 +73,8 @@ DECLFW(MMC4_Write) {
 		MMC4_SyncCHR();
 		break;
 	case 0xF000:
-		if (MMC4_mwrap) {
-			MMC4_mwrap(V);
-		}
+		mmc4.mirr = V;
+		MMC4_SyncMirror();
 		break;
 	}
 }
@@ -100,6 +93,7 @@ void MMC4_Reset(void) {
 	mmc4.latch[0] = mmc4.latch[1] = 0;
 	MMC4_SyncPRG();
 	MMC4_SyncCHR();
+	MMC4_SyncMirror();
 }
 
 void MMC4_Power(void) {
@@ -117,15 +111,15 @@ void MMC4_Power(void) {
 void MMC4_Restore(int version) {
 	MMC4_SyncPRG();
 	MMC4_SyncCHR();
+	MMC4_SyncMirror();
 }
 
 void MMC4_Close(void) {
 }
 
 void MMC4_Init(CartInfo *info, int wram, int battery) {
-	MMC4_pwrap = GENPWRAP;
-	MMC4_cwrap = GENCWRAP;
-	MMC4_mwrap = GENMWRAP;
+	MMC4_pwrap = MMC4_SetPRG_default;
+	MMC4_cwrap = MMC4_SetCHR_default;
 
 	info->Power = MMC4_Power;
 	info->Close = MMC4_Close;
@@ -144,4 +138,19 @@ void MMC4_Init(CartInfo *info, int wram, int battery) {
 			info->SaveGameLen[0] = WRAMSIZE;
 		}
 	}
+}
+
+void MMC4_SetConfig(uint8 clear) {
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0xA000, 0xFFFF, MMC4_Write);
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
+	SetWriteHandler(0x6000, 0x7FFF, CartBW);
+	PPU_hook = MMC4PPUHook;
+	if (clear) {
+		mmc4.prg = mmc4.mirr = 0;
+		mmc4.latch[0] = mmc4.latch[1] = 0;
+	}
+	MMC4_SyncPRG();
+	MMC4_SyncCHR();
+	MMC4_SyncMirror();
 }

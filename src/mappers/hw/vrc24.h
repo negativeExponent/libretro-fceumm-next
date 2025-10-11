@@ -72,6 +72,8 @@ void VRC24_Power(void);
 void VRC24_Close(void);
 
 void VRC24_Init(CartInfo *info, VRC24TYPE vrc4, uint32 A0, uint32 A1, int wram, int irqRepeated);
+void VRC2_SetConfig(uint8 clear, uint32 _A0, uint32 _A1);
+void VRC4_SetConfig(uint8 clear, uint32 _A0, uint32 _A1, int irqRepeated);
 
 extern void (*VRC24_SyncPRG)(void);
 extern void (*VRC24_SyncCHR)(void);

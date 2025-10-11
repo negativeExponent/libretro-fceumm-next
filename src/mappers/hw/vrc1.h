@@ -42,6 +42,8 @@ void VRC1_Power(void);
 void VRC1_StateRestore(int version);
 void VRC1_Init(CartInfo *info);
 
+void VRC1_SetConfig(uint8 clear);
+
 extern void (*VRC1_SyncPRG)(void);
 extern void (*VRC1_SyncCHR)(void);
 extern void (*VRC1_SyncMirror)(void);

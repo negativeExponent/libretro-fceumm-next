@@ -89,3 +89,12 @@ void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint8 wram, u
 	AddExState(&latch.addr, 2, 0, "ADDR");
 	AddExState(&latch.data, 1, 0, "DATA");
 }
+
+void Latch_SetConfig(uint8 clear, void (*sync)(void)) {
+	WSync = sync;
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x6000, 0x7FFF, CartBW);
+	SetWriteHandler(0x8000, 0xFFFF, Latch_Write);
+	if (clear) Latch_RegReset();
+	else WSync();
+}

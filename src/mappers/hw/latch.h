@@ -35,5 +35,6 @@ void Latch_Close(void);
 void Latch_RegReset(void);
 
 void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint8 wram, uint8 busc);
+void Latch_SetConfig(uint8 clear, void(*sync)());
 
 #endif /* _FCEU_LATCH_H */

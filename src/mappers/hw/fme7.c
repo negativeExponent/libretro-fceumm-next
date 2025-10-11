@@ -250,3 +250,22 @@ void FME7_Init(CartInfo *info, int wram, int battery) {
 	S5BSound_ESI();
 	S5BSound_AddStateInfo();
 }
+
+void FME7_SetConfig(uint8 clear) {
+	S5BSound_ESI();
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0x9FFF, FME7_WriteIndex);
+	SetWriteHandler(0xA000, 0xBFFF, FME7_WriteReg);
+	SetReadHandler(0x6000, 0x7FFF, FME7_WRAMRead);
+	SetWriteHandler(0x6000, 0x7FFF, FME7_WRAMWrite);
+	SetWriteHandler(0xC000, 0xDFFF, S5BSound_Write);
+	SetWriteHandler(0xE000, 0xFFFF, S5BSound_Write);
+	if (clear) {
+		FME7_Reset();
+	} else {
+		FME7_SyncPRG();
+		FME7_SyncCHR();
+		FME7_SyncMirror();
+		FME7_SyncWRAM();
+	}
+}

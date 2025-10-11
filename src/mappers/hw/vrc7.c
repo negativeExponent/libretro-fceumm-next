@@ -25,7 +25,6 @@
 #include "vrc7.h"
 
 static uint32 vrc7_A0;
-static uint32 vrc7_A1;
 
 VRC7 vrc7;
 
@@ -170,13 +169,12 @@ static void StateRestore(int version) {
 	VRC7_SyncCHR();
 }
 
-void VRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {
+void VRC7_Init(CartInfo *info, uint32 A0) {
 	VRC7_pwrap = GENPWRAP;
 	VRC7_cwrap = GENCWRAP;
 	VRC7_mwrap = GENMWRAP;
 
 	vrc7_A0 = A0;
-	vrc7_A1 = A1;
 
 	WRAMSIZE = 8192;
 	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
@@ -198,4 +196,31 @@ void VRC7_Init(CartInfo *info, uint32 A0, uint32 A1) {
 
 	VRC7Sound_ESI(TONE_VRC7);
 	VRC7Sound_AddStateInfo();
+}
+
+void VRC7_SetConfig(uint8 clear, int A0) {
+	vrc7_A0 = A0;
+	MapIRQHook = VRCIRQ_CPUHook;
+	VRCIRQ_Init(TRUE);
+	VRC7Sound_ESI(TONE_VRC7);
+	SetWriteHandler(0x6000, 0x7FFF, CartBW);
+	SetReadHandler(0x6000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, VRC7_Write);
+	if (clear) {
+		vrc7.prg[0] = 0;
+		vrc7.prg[1] = 1;
+		vrc7.prg[2] = ~1;
+		vrc7.chr[0] = 0;
+		vrc7.chr[1] = 1;
+		vrc7.chr[2] = 2;
+		vrc7.chr[3] = 3;
+		vrc7.chr[4] = 4;
+		vrc7.chr[5] = 5;
+		vrc7.chr[6] = 6;
+		vrc7.chr[7] = 7;
+		vrc7.mirr = 0;
+	}
+	VRC7_SyncPRG();
+	VRC7_SyncCHR();
+	VRC7_mwrap(vrc7.mirr);
 }

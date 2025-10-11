@@ -53,6 +53,8 @@ void MMC3_IRQHBHook(void);
 int MMC3_WramIsWritable(void);
 void MMC3_Init(CartInfo *info, MMC3TYPE _type, int wram, int battery);
 
+void MMC3_SetConfig(uint8 clear, MMC3TYPE _type);
+
 extern void (*MMC3_SyncPRG)(void);
 extern void (*MMC3_SyncCHR)(void);
 extern void (*MMC3_SyncMirror)(void);

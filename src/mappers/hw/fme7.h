@@ -33,6 +33,7 @@ DECLFW(FME7_WriteIndex);
 DECLFW(FME7_WriteReg);
 
 void FME7_Init(CartInfo *info, int wram, int battery);
+void FME7_SetConfig(uint8 clear);
 void FME7_Power(void);
 void FME7_Reset(void);
 

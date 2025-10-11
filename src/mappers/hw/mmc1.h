@@ -46,6 +46,7 @@ void MMC1_Restore(int version);
 void MMC1_Reset(void);
 
 void MMC1_Init(CartInfo *info, MMC1TYPE _type, int wram, int saveram);
+void MMC1_SetConfig(uint8 clear, MMC1TYPE _type);
 
 void MMC1_SyncPRG_default(void);
 void MMC1_SyncCHR_default(void);

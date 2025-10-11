@@ -249,6 +249,29 @@ void MMC1_Init(CartInfo *info, MMC1TYPE _type, int wram, int saveram) {
 	AddExState(&mmc1.shift, 1, 0, "BFRS");
 }
 
+DECLFR(MMC1_readWRAM) {
+	if (type == MMC1A || ~mmc1.reg[3] & 0x10) {
+		return CartBR(A);
+	}
+	return A >> 8;
+}
+
+DECLFW(MMC1_writeWRAM) {
+	if (type == MMC1A || ~mmc1.reg[3] & 0x10) {
+		CartBW(A, V);
+	}
+}
+
+void MMC1_SetConfig(uint8 clear, MMC1TYPE _type) {
+	type = _type;
+	SetReadHandler (0x6000, 0x7FFF, MMC1_readWRAM);
+	SetWriteHandler(0x6000, 0x7FFF, MMC1_writeWRAM);
+	SetReadHandler (0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, MMC1_Write);
+	if (clear) MMC1_Reset();
+	else MMC1_Restore(0);
+}
+
 void SAROM_Init(CartInfo *info) {
 	MMC1_Init(info, MMC1B, 8, info->battery ? 8 : 0);
 }

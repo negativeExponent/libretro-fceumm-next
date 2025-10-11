@@ -137,5 +137,25 @@ void VRC1_Init(CartInfo *info) {
     info->Reset = VRC1_Reset;
 	GameStateRestore = VRC1_StateRestore;
 
-    AddExState(StateRegs, ~0, 0, NULL);
+	AddExState(StateRegs, ~0, 0, NULL);
 }
+
+void VRC1_SetConfig(uint8 clear) {
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0x8FFF, VRC1_WritePRG);
+	SetWriteHandler(0x9000, 0x9FFF, VRC1_WriteMode);
+	SetWriteHandler(0xA000, 0xDFFF, VRC1_WritePRG);
+	SetWriteHandler(0xE000, 0xFFFF, VRC1_WriteCHR);
+	if (clear) {
+		vrc1.chr[0] = 0;
+		vrc1.chr[1] = 0;
+		vrc1.prg[0] = 0;
+		vrc1.prg[1] = 0;
+		vrc1.prg[2] = 0;
+		vrc1.mode = 0;
+	}
+	VRC1_SyncPRG();
+	VRC1_SyncCHR();
+	VRC1_SyncMirror();
+}
+

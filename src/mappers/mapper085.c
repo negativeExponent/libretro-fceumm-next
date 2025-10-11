@@ -43,13 +43,13 @@ static void SetCHR(uint16 A, uint16 V) {
 void Mapper085_Init(CartInfo *info) {
 	switch (info->submapper) {
 	case 0x01:
-		VRC7_Init(info, 0x08, 0x20);
+		VRC7_Init(info, 0x08);
 		break;
 	case 0x02:
-		VRC7_Init(info, 0x10, 0x20);
+		VRC7_Init(info, 0x10);
 		break;
 	default:
-		VRC7_Init(info, 0x18, 0x20);
+		VRC7_Init(info, 0x18);
 		break;
 	}
 	VRC7_pwrap = SetPRG;

@@ -211,3 +211,21 @@ void VRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram) {
 	VRC6Sound_ESI();
 	VRC6Sound_AddStateInfo();
 }
+
+void VRC6_SetConfig(uint8 clear, int A0, int A1) {
+	vrc6.A0 = A0;
+	vrc6.A1 = A1;
+	SetReadHandler(0x6000, 0x7FFF, CartBR);
+	SetWriteHandler(0x6000, 0x7FFF, CartBW);
+	SetReadHandler(0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, VRC6_Write);
+	VRCIRQ_Init(TRUE);
+	MapIRQHook = VRC6_IRQCPUHook;
+	if (clear) {
+		VRC6_Reset();
+	} else {
+		VRC6_SyncPRG();
+		VRC6_SyncCHR();
+		VRC6_SyncMirror();
+	}
+}

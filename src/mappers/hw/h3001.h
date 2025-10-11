@@ -41,6 +41,8 @@ void H3001_Power(void);
 void H3001_StateRestore(int version);
 void H3001_Init(CartInfo *info);
 
+void H3001_SetConfig(uint8 clear);
+
 DECLFW(H3001_WritePRG);
 DECLFW(H3001_WriteMisc);
 DECLFW(H3001_WriteCHR);

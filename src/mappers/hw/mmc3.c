@@ -393,3 +393,26 @@ void MMC3_Init(CartInfo *info, MMC3TYPE _type, int wram, int battery) {
 	}
 	GameStateRestore = StateRestore;
 }
+
+void MMC3_SetConfig(uint8 clear, MMC3TYPE _type) {
+	type = _type;
+	GameHBIRQHook = MMC3_IRQHBHook;
+	SetReadHandler (0x8000, 0xFFFF, CartBR);
+	SetWriteHandler(0x8000, 0xFFFF, MMC3_Write);
+	if (type == MMC6B) {
+		FCEU_CheatAddRAM(1, 0x7000, WRAM);
+		SetReadHandler(0x7000, 0x7FFF, MAWRAMMMC6);
+		SetWriteHandler(0x7000, 0x7FFF, MBWRAMMMC6);
+	} else {
+		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
+		SetWriteHandler(0x6000, 0x6000 + ((WRAMSIZE - 1) & 0x1fff), CartBW);
+		SetReadHandler(0x6000, 0x6000 + ((WRAMSIZE - 1) & 0x1fff), CartBR);
+	}
+    if (clear) {
+		MMC3_Reset();
+	} else {
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
+	}
+}
