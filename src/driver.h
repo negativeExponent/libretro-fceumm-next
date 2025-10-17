@@ -60,14 +60,17 @@ void FCEUI_DisableSpriteLimitation(int a);
 void FCEUI_SetRenderPlanes(int sprites, int bg);
 void FCEUI_GetRenderPlanes(int *sprites, int *bg);
 
-/* frontend_post_load_init_cb() is called immediately
- * after loading the ROM, allowing any frontend
- * initialisation that is dependent on ROM type to
- * be performed before the regular internal post-load
- * initialisation */
-typedef void (*frontend_post_load_init_cb_t)(void);
-FCEUGI *FCEUI_LoadGame(const char *name, const uint8_t *databuf, size_t databufsize,
-      frontend_post_load_init_cb_t frontend_post_load_init_cb);
+/* Loads and identifies a ROM image.
+ * Returns a valid FCEUGI* on success, or NULL on failure.
+ */
+FCEUGI *FCEUI_LoadROM(const char *name, const uint8_t *databuf, size_t databufsize);
+
+/* Post load and prepares the emulator after a successful ROM load.
+ * Resets video system, applies Game Genie (if enabled),
+ * initializes cheat hooks, sets palettes, and powers on the system.
+ * Returns nonzero on success, 0 on failure.
+ */
+int FCEUI_PostLoad(void);
 
 /* allocates memory.  0 on failure, 1 on success. */
 int FCEUI_Initialize(void);

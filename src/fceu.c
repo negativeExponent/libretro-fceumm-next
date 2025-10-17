@@ -261,22 +261,21 @@ static int FCEU_GetFileType(FCEUFILE *fp) {
 	return (FTYPE_UNKNOWN);
 }
 
-FCEUGI *FCEUI_LoadGame(const char *name, const uint8_t *databuf, size_t databufsize,
-    frontend_post_load_init_cb_t frontend_post_load_init_cb) {
+FCEUGI *FCEUI_LoadROM(const char *name, const uint8_t *databuf, size_t databufsize) {
 	FCEUFILE *fp = FCEU_fopen(name, databuf, databufsize);
 	int type = FTYPE_UNKNOWN;
 	int result = 0;
 
 	if (!fp) {
 		FCEU_PrintError("Error opening \"%s\"!", name);
-		return FALSE;
+		return NULL;
 	}
 
 	type = FCEU_GetFileType(fp);
 	if (type == FTYPE_UNKNOWN) {
 		FCEU_PrintError( "Unknown file type: %d\n", type);
 		FCEU_fclose(fp);
-		return FALSE;
+		return NULL;
 	}
 
 	ResetGameLoaded();
@@ -284,7 +283,7 @@ FCEUGI *FCEUI_LoadGame(const char *name, const uint8_t *databuf, size_t databufs
 	if (!(GameInfo = FCEU_malloc(sizeof(FCEUGI)))) {
 		FCEU_PrintError( "Unable to allocate memory!\n");
 		FCEU_fclose(fp);
-		return FALSE;
+		return NULL;
 	};
 
 	GameInfo->type = GIT_CART;
@@ -327,27 +326,23 @@ FCEUGI *FCEUI_LoadGame(const char *name, const uint8_t *databuf, size_t databufs
 	}
 
 	FCEU_fclose(fp);
+	return (GameInfo);
+}
 
-	if (frontend_post_load_init_cb) {
-		(*frontend_post_load_init_cb)();
-	}
-
+int FCEUI_PostLoad(void) {
+	if (!GameInfo) return FALSE;
 	FCEU_ResetVidSys();
 	if (GameInfo->type != GIT_NSF) {
 		if (FSettings.GameGenie) {
 			FCEU_OpenGenie();
 		}
 	}
-
-	/* PowerNES(); */
-
+	PowerNES();
 	if (GameInfo->type != GIT_NSF) {
 		FCEU_LoadGameCheats();
 	}
-
 	FCEU_SetPalette();
-
-	return (GameInfo);
+	return TRUE;
 }
 
 int FCEUI_Initialize(void) {

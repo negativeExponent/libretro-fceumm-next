@@ -791,16 +791,6 @@ static void check_game_genie_variable(void) {
 	FCEUI_SetGameGenie(game_genie_enabled);
 }
 
-/* Callback passed to FCEUI_LoadGame()
- * > Required since we must set and check
- *   core options immediately after ROM
- *   is loaded, before FCEUI_LoadGame()
- *   returns */
-static void frontend_post_load_init(void) {
-	set_variables();
-	check_game_genie_variable();
-}
-
 static double get_aspect_ratio(void) {
 	if (aspect_ratio_par == 2) {
 		return (double)NES_4_3;
@@ -2059,9 +2049,12 @@ bool retro_load_game(const struct retro_game_info *info) {
 	FCEUI_SetSoundVolume(SND_MASTER, 100);
 	FCEUI_Sound(44100);
 
-	if (!(FCEUI_LoadGame(content_path, content_data, content_size, frontend_post_load_init))) {
-		return false;
-	}
+	if (!FCEUI_LoadROM(content_path, content_data, content_size)) return FALSE;
+
+	set_variables();
+	check_game_genie_variable();
+
+	if (!FCEUI_PostLoad()) return FALSE;
 
 	{
 		/* load custom palette file */
