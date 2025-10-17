@@ -801,6 +801,39 @@ static double get_aspect_ratio(void) {
 	}
 }
 
+static void load_custom_palette_from_file(void) {
+	uint8 ptmp[64 * 8 * 3];
+	RFILE *fp = NULL;
+	char *fn = NULL;
+
+	palette_game.exist = false;
+	palette_game.nEntries = 0;
+	palette_game.data = NULL;
+
+	fn = FCEU_MakeFName(FCEUMKF_PALETTE, 0, 0);
+
+	if (!string_is_empty(fn) && path_is_valid(fn)) {
+		fp = filestream_open(
+		    fn, RETRO_VFS_FILE_ACCESS_READ, RETRO_VFS_FILE_ACCESS_HINT_NONE);
+	}
+
+	if (fp) {
+		int x;
+		int ssize = filestream_read(fp, ptmp, (64 * 8 * 3));
+		int nEntries = ssize / 3;
+		filestream_close(fp);
+		palette_game.data = (pal *)FCEU_malloc(nEntries * sizeof(pal));
+		for (x = 0; x < nEntries; x++) {
+			palette_game.data[x].r = ptmp[x + x + x];
+			palette_game.data[x].g = ptmp[x + x + x + 1];
+			palette_game.data[x].b = ptmp[x + x + x + 2];
+		}
+		palette_game.exist = TRUE;
+		palette_game.nEntries = nEntries;
+	}
+	free(fn);
+}
+
 static void set_user_palette(void) {
 	unsigned i;
 
@@ -2056,40 +2089,8 @@ bool retro_load_game(const struct retro_game_info *info) {
 
 	if (!FCEUI_PostLoad()) return FALSE;
 
-	{
-		/* load custom palette file */
-		uint8 ptmp[64 * 8 * 3];
-		RFILE *fp = NULL;
-		char *fn = NULL;
-
-		palette_game.exist = false;
-		palette_game.nEntries = 0;
-		palette_game.data = NULL;
-
-		fn = FCEU_MakeFName(FCEUMKF_PALETTE, 0, 0);
-
-		if (!string_is_empty(fn) && path_is_valid(fn)) {
-			fp = filestream_open(fn,
-				RETRO_VFS_FILE_ACCESS_READ,
-				RETRO_VFS_FILE_ACCESS_HINT_NONE);
-		}
-
-		if (fp) {
-			int x;
-			int ssize = filestream_read(fp, ptmp, (64 * 8 * 3));
-			int nEntries = ssize / 3;
-			filestream_close(fp);
-			palette_game.data = (pal*)FCEU_malloc(nEntries * sizeof(pal));
-			for (x = 0; x < nEntries; x++) {
-				palette_game.data[x].r = ptmp[x + x + x];
-				palette_game.data[x].g = ptmp[x + x + x + 1];
-				palette_game.data[x].b = ptmp[x + x + x + 2];
-			}
-			palette_game.exist = TRUE;
-			palette_game.nEntries = nEntries;
-		}
-		free(fn);
-	}
+	/* load custom palette file */
+	load_custom_palette_from_file();
 
 	check_variables(true);
 	stereo_filter_init();
