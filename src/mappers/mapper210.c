@@ -59,10 +59,11 @@ static void SyncCHR(void) {
 
 static void SyncWRAM(void) {
 	/* Family Circuit '91 relies on its 2 KiB of WRAM being correctly mirrored throughout the $6000-$7FFF address range. */
-	setprg2r_access(0x10, 0x6000, 0, TRUE, m210.wram_enable);
+	/* setprg2r_access(0x10, 0x6000, 0, TRUE, m210.wram_enable);
 	setprg2r_access(0x10, 0x6800, 0, TRUE, m210.wram_enable);
 	setprg2r_access(0x10, 0x7000, 0, TRUE, m210.wram_enable);
-	setprg2r_access(0x10, 0x7800, 0, TRUE, m210.wram_enable);
+	setprg2r_access(0x10, 0x7800, 0, TRUE, m210.wram_enable); */
+	setprg8r(0x10, 0x6000, 0);
 }
 
 static void SyncMirror(void) {
@@ -84,6 +85,14 @@ static void SyncMirror(void) {
 			break;
 		}
 	}
+}
+
+static DECLFR(ReadWRAM) {
+	return WRAM[(A - 0x6000) & (WRAMSIZE - 1)];
+}
+
+static DECLFW(WriteWRAM) {
+	WRAM[(A - 0x6000) & (WRAMSIZE - 1)] = V;
 }
 
 static DECLFW(WriteCHR) {
@@ -123,8 +132,8 @@ static void Power(void) {
 	SetWriteHandler(0xE000, 0xF7FF, WritePRG);
 
 	if (WRAM) {
-		SetReadHandler(0x6000, 0x7FFF, CartBR);
-		SetWriteHandler(0x6000, 0x7FFF, CartBW);
+		SetReadHandler(0x6000, 0x7FFF, ReadWRAM);
+		SetWriteHandler(0x6000, 0x7FFF, WriteWRAM);
 		FCEU_CheatAddRAM(8, 0x6000, WRAM);
 	}
 
@@ -145,9 +154,14 @@ void Mapper210_Init(CartInfo *info) {
 	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 
-	WRAMSIZE = 2048;
 	if (info->iNES2) {
 		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
+	} else {
+		WRAMSIZE = 8192;
+	}
+
+	if (!WRAMSIZE && info->battery) {
+		WRAMSIZE = 8192;
 	}
 
 	if (WRAMSIZE) {
