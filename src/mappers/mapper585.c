@@ -31,7 +31,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 rd = (latch.addr & m585.dipsw & 0x60);
+	uint8 rd = !(latch.addr & m585.dipsw & 0x60);
 
 	if (latch.addr & 0x01)
 		setprg32_access(0x8000, latch.addr >> 2, rd, FALSE);
