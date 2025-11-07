@@ -271,13 +271,13 @@ void setprg16_access(uint16 A, uint16 V, uint8 rd, uint8 wr) {
 
 void setprg32r_access(int r, uint16 A, uint16 V, uint8 rd, uint8 wr) {
 		if (PRGsize[r] >= 32768) {
-		V &= PRGmask16[r];
+		V &= PRGmask32[r];
 		setpageptr(32, A, (rd && PRGptr[r]) ? (&PRGptr[r][V << 15]) : 0, (rd && wr) ? PRGram[r] : 0);
 	} else {
 		uint32 VA = V << 4;
 		int x;
 
-		for (x = 0; x < 8; x++) {
+		for (x = 0; x < 16; x++) {
 			setpageptr(2, A + (x << 11), (rd && PRGptr[r]) ? (&PRGptr[r][((VA + x) & PRGmask2[r]) << 11]) : 0, (rd && wr) ? PRGram[r] : 0);
 		}
 	}
