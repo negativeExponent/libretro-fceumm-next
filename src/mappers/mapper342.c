@@ -2170,6 +2170,7 @@ void Mapper342_Init(CartInfo *info) {
 	case 0x2986A65A: /* Super Game 5-in-1 */
 	case 0x25894753: /* MMK-02C-00 */
 	case 0x24A086E6: /* 524-in-1 */
+	case 0x2EE18D15: /* 4-in-1 (Contra by Rika) (Unl) */
 		vrc24_compatibility = 1;
 		FCEU_printf(" Mapper in compatibility mode.\n");
 		break;
