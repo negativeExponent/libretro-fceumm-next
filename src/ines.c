@@ -551,7 +551,7 @@ typedef struct {
 
 INES_BOARD_BEGIN()
 	INES_BOARD( "NROM",                       0, Mapper000_Init         )
-	INES_BOARD( "MMC1B",                      1, Mapper001_Init         )
+	INES_BOARD( "MMC1A/B, KS-7058",           1, Mapper001_Init         )
 	INES_BOARD( "UNROM",                      2, Mapper002_Init         )
 	INES_BOARD( "CNROM",                      3, Mapper003_Init         )
 	INES_BOARD( "MMC3",                       4, Mapper004_Init         )
@@ -672,7 +672,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "TQROM",                119, Mapper119_Init         )
 	INES_BOARD( "FDS TOBIDASE",             120, Mapper120_Init         )
 	INES_BOARD( "MMC3 PIRATE PROT. A",      121, Mapper121_Init         )
-/*    INES_BOARD( "",                            122, Mapper122_Init ) */
+    INES_BOARD( "JY043",                    122, Mapper122_Init )
 	INES_BOARD( "MMC3 PIRATE H2288",        123, Mapper123_Init         )
     INES_BOARD( "Super Game Mega Type III", 124, Mapper124_Init         )
 	INES_BOARD( "FDS LH32",                 125, Mapper125_Init         )
@@ -721,7 +721,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "Racermate Challenge 2",    168, Mapper168_Init         )
 /*    INES_BOARD( "",                            169, Mapper169_Init ) */
 	INES_BOARD( "",                         170, Mapper170_Init         )
-	INES_BOARD( "Kaiser 7058",              171, Mapper171_Init         )
+	INES_BOARD( "JY043",                    171, Mapper171_Init         ) /* duplicate of m122 */
 	INES_BOARD( "Super Mega P-4070",        172, Mapper172_Init         )
 	INES_BOARD( "Idea-Tek ET.xx",           173, Mapper173_Init         )
     INES_BOARD( "NTDec 5-in-1",             174, Mapper174_Init         )

@@ -18,6 +18,9 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+/* Submapper < 2 - MMC1 */
+/* Submapper = 7 - KS-7058 */
+
 #include "mapinc.h"
 #include "mmc1.h"
 
@@ -53,7 +56,7 @@ static int DetectMMC1WRAMSize(CartInfo *info, int *saveRAM) {
 }
 
 static void SetPRGBank_mmc1(uint16 A, uint16 V) {
-	if (iNESCart.submapper == 5) {
+	if (iNESCart.submapper == 5 || iNESCart.submapper == 7) {
 		setprg32(0x8000, 0);
 	} else {
 		setprg16(A, (MMC1_GetCHRBank(0) & 0x10) | (V & 0x0F));

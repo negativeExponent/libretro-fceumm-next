@@ -152,6 +152,7 @@ void Mapper118_Init(CartInfo *);
 void Mapper119_Init(CartInfo *);
 void Mapper120_Init(CartInfo *);
 void Mapper121_Init(CartInfo *);
+void Mapper122_Init(CartInfo *); /* JY043 - bootleg variant of KS-7058 */
 void Mapper123_Init(CartInfo *);
 void Mapper124_Init(CartInfo *);
 void Mapper125_Init(CartInfo *);
@@ -192,7 +193,7 @@ void Mapper166_Init(CartInfo *);
 void Mapper167_Init(CartInfo *);
 void Mapper168_Init(CartInfo *);
 void Mapper170_Init(CartInfo *);
-void Mapper171_Init(CartInfo *); /* Kaiser 7058 */
+void Mapper171_Init(CartInfo *); /* duplicate of m122 */
 void Mapper172_Init(CartInfo *);
 void Mapper173_Init(CartInfo *);
 void Mapper174_Init(CartInfo *);
