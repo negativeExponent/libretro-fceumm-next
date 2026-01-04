@@ -101,6 +101,7 @@ typedef struct {
 	int ReplaceP2StartWithMicrophone;
 	int PPUOverclockEnabled;
 	int SkipDMC7BitOverclock;
+	int RemoveTriangleNoise;
 	int ReduceDMCPopping;
 	int ReverseDMCBitOrder;
 	int VRC7ToneType; /*0: mapper dependenr, 1: 2413 2: vrcc7 3: 281B */

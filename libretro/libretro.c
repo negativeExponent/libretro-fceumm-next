@@ -1348,6 +1348,13 @@ static void check_variables(bool startup) {
 		FCEUI_SetLowPass(lowpass);
 	}
 
+	var.key = "fceumm_next_removetrianglenoise";
+
+	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
+		bool newval = (!strcmp(var.value, "enabled"));
+		FCEUI_RemoveTringleNoise(newval);
+	}
+
 	var.key = "fceumm_next_reducedmcpopping";
 
 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {

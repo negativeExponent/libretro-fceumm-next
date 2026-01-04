@@ -34,6 +34,7 @@
 #include "cart.h"
 #include "nsf.h"
 #include "apu.h"
+#include "driver.h"
 
 static uint32 square_mix_table[32]; /* square channel mix table */
 static uint32 tnd_mix_table[203];   /* triangle/noise/dmc channel mix table */
@@ -880,7 +881,7 @@ static void RDoTriangle(void) {
 	triout = GetOutput(SND_TRIANGLE, TriangleOutput());
 	triout = (triout << TRINPCM_SHIFT) & (~0xFFFF);
 
-	if ((triangle.length.counter == 0) || (triangle.linearCounter == 0) || triangle.timer.period <= 4) {
+	if ((triangle.length.counter == 0) || (triangle.linearCounter == 0) || (FSettings.RemoveTriangleNoise && (triangle.timer.period <= 4))) {
 		/* Counter is halted, but we still need to output. */
 		for (V = triangle.timer.cvbc; V < SOUNDTS; V++) {
 			WaveHi[V] += triout;
@@ -926,7 +927,7 @@ static void RDoTriangleNoisePCMLQ(void) {
 
 	/* setup triangle params */
 	freq[0] = (triangle.timer.period + 1) << 17;
-	if ((triangle.length.counter == 0) || (triangle.linearCounter == 0) || (triangle.timer.period <= 4)) {
+	if ((triangle.length.counter == 0) || (triangle.linearCounter == 0) || (FSettings.RemoveTriangleNoise && (triangle.timer.period <= 4))) {
 		inie[0] = 0;
 	}
 
@@ -1248,11 +1249,15 @@ void FCEUI_SetSoundQuality(int quality) {
 }
 
 void FCEUI_ReduceDmcPopping(int d) {
-	FSettings.ReduceDMCPopping = d;
+	FSettings.ReduceDMCPopping = d ? TRUE : FALSE;
 }
 
 void FCEUI_ReverseDMCBitOrder(int d) {
-	FSettings.ReverseDMCBitOrder = d;
+	FSettings.ReverseDMCBitOrder = d ? TRUE : FALSE;
+}
+
+void FCEUI_RemoveTringleNoise(int d) {
+	FSettings.RemoveTriangleNoise = d ? TRUE : FALSE;
 }
 
 void FCEUI_SetSoundVolume(int channel, int volume) {

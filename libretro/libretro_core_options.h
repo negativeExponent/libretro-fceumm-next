@@ -459,6 +459,20 @@ struct retro_core_option_v2_definition option_defs[] = {
       "disabled",
    },
    {
+      "fceumm_next_removetrianglenoise",
+      "Remove Triangle Noise",
+      NULL,
+      "Remove tringle channel ultrasonic frequencies.",
+      NULL,
+      "audio",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL },
+      },
+      "disabled",
+   },
+   {
       "fceumm_next_reducedmcpopping",
       "Reduce DMC Popping",
       NULL,

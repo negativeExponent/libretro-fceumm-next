@@ -165,6 +165,8 @@ void FCEUI_GetIVectors(uint16 *reset, uint16 *irq, uint16 *nmi);
 #endif
 
 void FCEUI_SetLowPass(int q);
+
+void FCEUI_RemoveTringleNoise(int d);
 void FCEUI_ReduceDmcPopping(int d);
 void FCEUI_ReverseDMCBitOrder(int d);
 
