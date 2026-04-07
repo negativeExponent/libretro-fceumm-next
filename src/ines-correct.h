@@ -1003,6 +1003,8 @@ static struct CHINF nesdb[] = {
 	{ 0x9335889E,   49,       0, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* (B-010) 1993 Super HiK 6-in-1 */
 	{ 0xC3B06986,   49,       1, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* Street Fighter 2 - 4-in-1 (Unl) */
 
+	{ 0x4AE9EE7D,  242, DEFAULT, DEFAULT, 0, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }, /* 2-in-1 - Mortal Kombat V Turbo 30 + Super Aladdin (Unl) [p1][!].nes */
+
 	{ 0x00000000, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, DEFAULT, NOEXTRA }
 };
 
