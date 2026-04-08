@@ -18,48 +18,52 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  *
- * GG1 boards, similar to T-262, with no Data latch
  *
  */
 
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 dipsw = 0;
+static struct {
+	uint8 half;
+	uint8 reg;
+} m301;
+
+static SFORMAT StateRegs[] = {
+	{ &m301.half, 1, "REG2" },
+	{ &m301.reg, 1, "REG1" },
+	{ 0 }
+};
 
 static void Sync(void) {
-	uint8 prg = (latch.addr >> 2) & 0x1F;
-	uint8 invert = (latch.addr & 0x80) != 0;
-	uint8 unrom = (latch.addr & 0x200) != 0;
-
-	setprg16(0x8000, prg);
-	setprg16(0xC000, (prg & ~(0x07 * invert)) | (0x07 * unrom));
+	setprg16(0x8000, ((m301.half << 5) & 0x20) | ((m301.reg << 3) & 0x18) | (latch.data & 0x07));
+	setprg16(0xC000, ((m301.half << 5) & 0x20) | ((m301.reg << 3) & 0x18) | 0x07);
 	setchr8(0);
-	setmirror(((latch.addr & 2) >> 1) ^ 1);
+	setmirror(((m301.reg >> 2) & 1) ^ 1);
 }
 
-static uint8 lastdip;
-
-static DECLFR(ReadDIP) {
-	if ((latch.addr & 0x100) && (PRGsize[0] <= (512 * 1024))) {
-		A = (A & 0xFFFE) + (dipsw & 0x01);
-	}
-
-	return CartBR(A);
+static DECLFW(WriteReg) {
+	m301.reg = V;
+	Sync();
 }
 
 static void Power(void) {
-	dipsw = 0x01;
+	m301.half = 0;
+	m301.reg = 0;
 	Latch_Power();
+	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 }
 
 static void Reset(void) {
-	dipsw++;
+	m301.half = (m301.half ^ 1);
+	m301.reg = 0;
+	RAM[0x100] = 0;
 	Latch_RegReset();
 }
 
 void Mapper301_Init(CartInfo *info) {
-	Latch_Init(info, Sync, ReadDIP, FALSE, FALSE);
+	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Power = Power;
 	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
 }
