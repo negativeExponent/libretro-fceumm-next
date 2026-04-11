@@ -1132,6 +1132,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "3936",                     598, Mapper598_Init         )
 	INES_BOARD( "ET-133A",                  599, Mapper599_Init         )
 	INES_BOARD( "J-2061",                   603, Mapper603_Init         )
+	INES_BOARD( "New Star TX5/8IN1",        605, Mapper605_Init         )
 INES_BOARD_END()
 
 #define NES_HEADER_SIZE 16
