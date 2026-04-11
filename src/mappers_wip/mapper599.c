@@ -67,10 +67,11 @@ static DECLFR(ReadCart) {
 }
 
 static DECLFW(WriteCart) {
-	if (!(A & 0x4000)) {
+	if (latch.addr & 0x4000) {
 		latch.addr = A;
 	}
 	latch.data = V;
+	Sync();
 }
 
 static void Power(void) {
