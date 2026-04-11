@@ -1130,6 +1130,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "FC-49",                    596, Mapper596_Init         )
 	INES_BOARD( "GN-27",                    597, Mapper597_Init         )
 	INES_BOARD( "3936",                     598, Mapper598_Init         )
+	INES_BOARD( "ET-133A",                  599, Mapper599_Init         )
 INES_BOARD_END()
 
 #define NES_HEADER_SIZE 16
