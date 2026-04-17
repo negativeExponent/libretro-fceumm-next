@@ -1138,6 +1138,7 @@ INES_BOARD_BEGIN()
 	INES_BOARD( "63-100",                   609, Mapper609_Init         )
 	INES_BOARD( "J-2042",                   610, Mapper610_Init         )
 	INES_BOARD( "T-124/43-117/831049",      611, Mapper611_Init         )
+	INES_BOARD( "K-3004",                   612, Mapper612_Init         )
 INES_BOARD_END()
 
 #define NES_HEADER_SIZE 16
