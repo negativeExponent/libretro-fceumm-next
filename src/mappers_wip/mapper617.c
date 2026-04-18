@@ -1,0 +1,73 @@
+/* FCEUmm - NES/Famicom Emulator
+ *
+ * Copyright notice for this file:
+ *  Copyright (C) 2026 negativeExponent
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ */
+
+#include "mapinc.h"
+#include "vrc24.h"
+
+static struct {
+	uint8 reg;
+} m617;
+
+static SFORMAT StateRegs[] = {
+	{ &m617.reg, 1, "EXPR" },
+	{ 0 }
+};
+
+static void SetPRG(uint16 A, uint16 V) {
+	uint16 mask = (m617.reg & 0x04) ? 0x1F : 0x0F;
+	uint16 base = m617.reg << 4;
+
+	setprg8(A, (base & ~mask) | (V & mask));
+}
+
+static void SetCHR(uint16 A, uint16 V) {
+	uint16 mask = (m617.reg & 0x02) ? 0x7F : 0xFF;
+	uint16 base = m617.reg << 7;
+
+	setchr1(A, (base & ~mask) | (V & mask));
+}
+
+static DECLFW(WriteReg) {
+	if (~m617.reg & 0x08) {
+		m617.reg = A & 0xFF;
+		VRC24_SyncPRG();
+		VRC24_SyncCHR();
+		VRC24_SyncMirror();
+	}
+}
+
+static void Reset(void) {
+	m617.reg = 0;
+	VRC24_Reset();
+}
+
+static void Power(void) {
+	m617.reg = 0;
+	VRC24_Power();
+}
+
+void Mapper617_Init(CartInfo *info) {
+	VRC24_Init(info, VRC24_VRC4, 0x05, 0x0A, FALSE, TRUE);
+	VRC24_pwrap = SetPRG;
+	VRC24_cwrap = SetCHR;
+	info->Power = Power;
+	info->Reset = Reset;
+	AddExState(StateRegs, ~0, 0, NULL);
+}
