@@ -30,14 +30,14 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16 A, uint16 V) {
 	uint16 mask = 0x0F;
 	uint16 base = m616.reg << 4;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16 A, uint16 V) {
 	uint16 mask = 0x7F;
 	uint16 base = m616.reg << 7;
 
