@@ -30,7 +30,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
  };
 
-static void Sync() {
+static void Sync(void) {
 	setprg16(0x8000, (m612.reg & 0x03) | (latch.data & 0x07));
 	setprg16(0xC000, m612.reg & 0x03);
 	setchr8(0);

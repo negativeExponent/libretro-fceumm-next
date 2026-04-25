@@ -61,6 +61,7 @@ static void Reset(void) {
 static void Power(void) {
 	m617.reg = 0;
 	VRC24_Power();
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper617_Init(CartInfo *info) {

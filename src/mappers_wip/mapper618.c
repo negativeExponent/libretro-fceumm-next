@@ -67,6 +67,7 @@ static void Reset(void) {
 static void Power(void) {
 	m618.reg = 0;
 	MMC3_Power();
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper618_Init(CartInfo *info) {
