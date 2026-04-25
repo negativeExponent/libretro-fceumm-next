@@ -21,7 +21,7 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static void Sync() {
+static void Sync(void) {
 	if (latch.addr & 0x0C) {
 		setprg32(0x8000, latch.addr >> 3);
 	} else {
