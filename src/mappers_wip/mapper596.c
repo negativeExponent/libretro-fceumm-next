@@ -44,6 +44,15 @@ static void SetCHR(uint16 A, uint16 V) {
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
+static DECLFW(WriteReg) {
+	if (~m596.reg &0x08) {
+		m596.reg = V;
+		MMC3_SyncPRG();
+		MMC3_SyncCHR();
+		MMC3_SyncMirror();
+	}
+}
+
 static void Reset(void) {
 	m596.reg = 0;
 	MMC3_Reset();
@@ -52,6 +61,7 @@ static void Reset(void) {
 static void Power(void) {
 	m596.reg = 0;
 	MMC3_Power();
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 void Mapper596_Init(CartInfo *info) {
