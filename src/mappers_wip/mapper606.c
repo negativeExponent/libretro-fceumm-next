@@ -57,6 +57,7 @@ static void Reset(void) {
 static void Power(void) {
 	memset(&m606, 0, sizeof(m606));
 	Latch_Power();
+	SetWriteHandler(0x6000, 0x7FFF, WriteReg);
 }
 
 static void StateRestore(int version) {
