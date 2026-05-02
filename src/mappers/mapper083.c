@@ -3,6 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
  *  Copyright (C) 2023-2025 negativeExponent
+ *  Copyright (C) 2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -82,6 +83,8 @@ static void SyncWRAM(void) {
 		setprg8r(0x10, 0x6000, (m083.outer >> 6));
 	} else if (m083.mode & 0x20) {
 		setprg8(0x6000, m083.prg[3]);
+	} else {
+		unsetcpu8(0x6000);
 	}
 }
 
@@ -231,12 +234,10 @@ static void Power(void) {
 		m083.chrMode = iNESCart.submapper;
 		m083.prgMask = 0x1F;
 		m083.dipMask = 0x100;
-		m083.dipsw = 0;
 	} else if (iNESCart.mapper == 264) {
 		m083.chrMode = 1;
 		m083.prgMask = 0x0F;
 		m083.dipMask = 0x400;
-		m083.dipsw = 0x01;
 	}
 
 	SyncPRG();
@@ -258,20 +259,13 @@ static void Power(void) {
 
 static void Reset(void) {
 	m083.mode = m083.outer = 0;
-
-	if (iNESCart.mapper == 264) {
-		m083.dipsw = (m083.dipsw + 1 ) & 0x03;
-	} else {
-		m083.dipsw = (m083.dipsw + 1 ) & 0x01;
-	}
+	m083.dipsw++;
+	FCEU_printf(" disswptch = %d\n", m083.dipMask);
 
 	SyncPRG();
 	SyncCHR();
 	SyncMirror();
 	SyncWRAM();
-}
-
-static void Close(void) {
 }
 
 static void CPUCycle(int a) {
@@ -298,25 +292,33 @@ static void StateRestore(int version) {
 void Mapper083_Init(CartInfo *info) {
 	info->Power = Power;
 	info->Reset = Reset;
-	info->Close = Close;
 	MapIRQHook = CPUCycle;
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 
-	if (info->mapper == 83) {
-		if (!info->iNES2) {
-			if (ROM.chr.size >= (1024 * 1024)) {
-				info->submapper = 2;
-			} else if (ROM.chr.size >= (512 * 1024)) {
-				info->submapper = 1;
-			}
+	if (!info->iNES2) {
+		if (ROM.chr.size == (512 * 1024)) {
+			info->submapper = 1;
+		} else if (ROM.prg.size == (1024 * 1024)) {
+			info->submapper = 2;
+		} else if (ROM.prg.size == (512 * 1024)) {
+			info->submapper = 3;
 		}
-
-		WRAMSIZE = (info->submapper == 2) ? 32768 : 0;
-		if (WRAMSIZE) {
-			WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
-			SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
-			AddExState(WRAM, WRAMSIZE, 0, "WRAM");
-		}
+		if (info->submapper) FCEU_printf(" Submapper (overrode) : %d\n", info->submapper);
 	}
+
+	WRAMSIZE = (info->submapper == 2) ? 32768 : 0;
+	if (WRAMSIZE) {
+		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
+		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
+	}
+}
+
+void Mapper264_Init(CartInfo *info) {
+	info->Power = Power;
+	info->Reset = Reset;
+	MapIRQHook = CPUCycle;
+	GameStateRestore = StateRestore;
+	AddExState(StateRegs, ~0, 0, NULL);
 }
