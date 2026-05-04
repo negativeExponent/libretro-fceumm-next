@@ -4,8 +4,8 @@ STATIC_LINKING=0
 ENDIANNESS_DEFINES=
 SIGNED_CHAR=0
 HAVE_NTSC=1
-C89_BUILD=1
-V=0
+C89_BUILD=0
+V=1
 WANT_32BPP=1
 
 SPACE :=
@@ -797,7 +797,7 @@ else ifneq (,$(findstring msvc,$(platform)))
 WARNING_DEFINES =
 LIBM :=
 else
-WARNING_DEFINES =
+WARNING_DEFINES = -Wno-write-strings -Wsign-compare
 endif
 
 CFLAGS += -D__LIBRETRO__ $(fpic)  $(WARNING_DEFINES) $(DEFINES) $(ENDIANNESS_DEFINES)
@@ -854,7 +854,7 @@ endif
 	$(Q)$(CXX) -c $(OBJOUT)$@ $< $(CXXFLAGS) $(INCFLAGS)
 
 %.o: %.c
-	@echo CC $<
+#	@echo CC $<
 	$(Q)$(CC) -c $(OBJOUT)$@ $< $(CFLAGS) $(INCFLAGS)
 
 clean-objs:

@@ -770,7 +770,7 @@ static void RDoPCM(void) {
 }
 
 static INLINE void RDoSQ(int x) {
-	int32 V;
+	uint32 V;
 	SquareUnit *square = x ? &square2 : &square1;
 	const uint8 *dutyTbl = &SquareWaveTable[FSettings.SwapDutyCycles][square->duty][0];
 	int32 amp;

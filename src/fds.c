@@ -154,7 +154,7 @@ typedef struct FDSInfo {
 } FDSInfo;
 
 static INLINE void fds_memset(uint8 *dst, uint8 value, size_t len) {
-	int i;
+	uint32 i;
 
 	for (i = 0; i < len; i++) {
 		(*dst++) = value;
@@ -162,7 +162,7 @@ static INLINE void fds_memset(uint8 *dst, uint8 value, size_t len) {
 }
 
 static INLINE void fds_memcpy(uint8 *dst, const uint8 *src, size_t len) {
-	int i;
+	uint32 i;
 
 	for (i = 0; i < len; i++) {
 		(*dst++) = (*src++);
@@ -170,7 +170,7 @@ static INLINE void fds_memcpy(uint8 *dst, const uint8 *src, size_t len) {
 }
 
 static INLINE void fds_memcpy_ascii(uint8 *dst, const uint8 *src, size_t len) {
-	int i;
+	uint32 i;
 
 	fds_memset(dst, 0, len);
 	for (i = 0; i < (len - 1); i++ ) {
@@ -442,7 +442,7 @@ static void FDSStateRestore(int version) {
 	setmirror(((fds.control & 8) >> 3) ^ 1);
 
 	for (x = 0; x < fds.total_sides; x++) {
-		int b;
+		uint32 b;
 		for (b = 0; b < fds.disk.bytes_per_size; b++) {
 			ROM.disk.data[(fds.disk.bytes_per_size * x) + b] ^=
 				ROM.disko.data[(fds.disk.bytes_per_size * x) + b];
@@ -1069,7 +1069,7 @@ error:
 static void PreSave(void) {
 	uint32 x;
 	for (x = 0; x < fds.total_sides; x++) {
-		int b;
+		uint32 b;
 		for (b = 0; b < fds.disk.bytes_per_size; b++) {
 			ROM.disk.data[(fds.disk.bytes_per_size * x) + b] ^= ROM.disko.data[(fds.disk.bytes_per_size * x) + b];
 		}
@@ -1079,7 +1079,7 @@ static void PreSave(void) {
 static void PostSave(void) {
 	uint32 x;
 	for (x = 0; x < fds.total_sides; x++) {
-		int b;
+		uint32 b;
 		for (b = 0; b < fds.disk.bytes_per_size; b++) {
 			ROM.disk.data[(fds.disk.bytes_per_size * x) + b] ^= ROM.disko.data[(fds.disk.bytes_per_size * x) + b];
 		}
@@ -1198,7 +1198,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 
 	{
 		int i;
-		int side;
+		uint32 side;
 
 		FCEU_printf(" Code         : %02X\n", ROM.disk.data[0x0f]);
 		FCEU_printf(" Manufacturer : %s\n", GetCode(ROM.disk.data[0x0f]));

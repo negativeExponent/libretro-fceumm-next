@@ -462,7 +462,7 @@ static void OneBus_Close(void) {
 }
 
 void OneBus_Init(CartInfo *info, void (*proc)(void), int wram, int battery) {
-	int i;
+	uint32 i;
 
 	WSync = proc;
 

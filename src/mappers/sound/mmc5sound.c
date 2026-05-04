@@ -63,7 +63,7 @@ static void Do5PCM(void) {
 }
 
 static void Do5PCMHQ(void) {
-	int32 V;
+	uint32 V;
 
 	if (!(MMC5Sound.pcm.control & 0x40) && MMC5Sound.pcm.rawdata) {
 		int32 amp = GetOutput(SND_MMC5, MMC5Sound.pcm.rawdata << 5);
@@ -86,7 +86,7 @@ static INLINE int32 SquareOutput(SquareUnit *s) {
 }
 
 static void Do5SQHQ(SquareUnit *s) {
-	int32 V, amp, wl;
+	uint32 V, amp, wl;
 	const uint8 *dutyTbl = &SquareWaveTable[0][s->duty][0];
 
 	amp = GetOutput(SND_MMC5, SquareOutput(s) << 8);

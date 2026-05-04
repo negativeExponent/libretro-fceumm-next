@@ -330,7 +330,7 @@ static void SetTrainer(void) {
 		uint32 trainerSize = 512;
 		uint8 *trainerSource = ROM.misc.data;
 		uint8 *trainerData;
-		int i;
+		uint32 i;
 
 		if (ROM.misc.size != 512) {
 			trainerLoadAddr = (ROM.misc.data[1] << 8) | ROM.misc.data[0];

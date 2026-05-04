@@ -90,7 +90,7 @@ static void GenerateEmphasis(pal out[512], const pal base[64]) {
 }
 
 void FCEU_SetPaletteUser(const pal *palette, const unsigned nEntries) {
-	int x;
+	uint32 x;
 
 	for (x = 0; x < nEntries; x++) {
 		palo[x].r = palette[x].r;
