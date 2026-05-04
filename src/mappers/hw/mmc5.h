@@ -51,6 +51,9 @@ typedef struct __MMC5 {
 
 extern MMC5 mmc5;
 
+DECLFW(Mapper5_write);
+DECLFW(MMC5_ExRAMWr);
+
 void MMC5_Init(CartInfo *info, int wsize, int battery);
 
 #endif /* _MMC5_H */

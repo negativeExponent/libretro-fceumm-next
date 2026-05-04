@@ -19,6 +19,7 @@
  */
 
 #include "mapinc.h"
+#include "dripsound.h"
 
 #define TIMER_SHIFT ((FSettings.soundq >= 1) ? 0 : 17)
 

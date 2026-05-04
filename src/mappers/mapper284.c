@@ -153,7 +153,7 @@ static DECLFW(WriteH) {
 	m284.extattrib[idx][A & 0x3FF] = V & 0x03;
 }
 
-uint8 newppu_PPUNMTRead(uint32 A) {
+static uint8 newppu_PPUNMTRead(uint32 A) {
 	if ((A > 0x2000) && (A < 0x3F00)) {
 		if (m284.control & 0x04) {
 			if ((A & 0x3FF) < 0x3C0) {

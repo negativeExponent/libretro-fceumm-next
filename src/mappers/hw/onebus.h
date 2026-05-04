@@ -60,5 +60,8 @@ void OneBus_Init(CartInfo *info, void (*proc)(void), int wram, int battery);
 void OneBus_SyncPRG(uint16 mmask, uint16 mblock);
 void OneBus_SyncCHR(uint16 mmask, uint16 mblock);
 void OneBus_SyncMirror(void);
+void OneBus_SyncPRG16(uint16 bank0, uint16 bank1, uint16 mmask, uint16 mblock);
+
+void OneBus_SetCHR(uint8 **banks, uint8_t *base, uint8 bit4pp, uint8 extended, uint16 EVA, uint16 mmask, uint16 mblock);
 
 #endif /* _ONEBUS_H */

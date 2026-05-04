@@ -167,7 +167,7 @@ void DrawTextTrans(uint8 *dest, uint32 width, uint8 *textmsg, uint8 fgcolor) {
 				if ((fontdata2[(textmsg[x] << 3) + y] >> z) & 1) dest[y * width + (x << 3) + z] = fgcolor;
 }
 
-void FCEU_DrawNumberRow(uint8 *target, int *nstatus, int cur) {
+static void FCEU_DrawNumberRow(uint8 *target, int *nstatus, int cur) {
 	uint8 *XBaf;
 	int z, x, y;
 

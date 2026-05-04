@@ -107,7 +107,6 @@ static void StateRestore(int version) {
 	SyncMirror();
 }
 
-void Mapper137_Init_alt(CartInfo *info);
 void Mapper137_Init(CartInfo *info) {
 	if (info->CRC32 == 0x3B4F48D0) {
 		Mapper137_Init_alt(info);

@@ -42,7 +42,6 @@ static void Power(void) {
 	SetWriteHandler(0x4100, 0xFFFF, WriteTXC);
 }
 
-extern void UNL22211_Init(CartInfo *info);
 void Mapper132_Init(CartInfo *info) {
 	if (info->CRC32 == 0x2A5F4C5A) {
 		/* Jin Gwok Sei Chuen Saang (Ch) [U][!] */

@@ -96,13 +96,13 @@ typedef struct SPRITE_READ {
 	int32 mode;
 } SPRITE_READ;
 
-void spr_read_reset(SPRITE_READ *spr) {
+static void spr_read_reset(SPRITE_READ *spr) {
 	spr->num = spr->count = spr->fetch = spr->found = spr->ret = spr->last = spr->mode = 0;
 	spr->found_pos[0] = spr->found_pos[1] = spr->found_pos[2] = spr->found_pos[3] = 0;
 	spr->found_pos[4] = spr->found_pos[5] = spr->found_pos[6] = spr->found_pos[7] = 0;
 }
 
-void spr_read_start_scanline(SPRITE_READ *spr) {
+static void spr_read_start_scanline(SPRITE_READ *spr) {
 	spr->num = 1;
 	spr->found = 0;
 	spr->fetch = 1;
@@ -148,7 +148,7 @@ typedef struct PPUREGS {
 
 PPUREGS ppur;
 
-void newppu_regs_reset(PPUREGS *reg) {
+static void newppu_regs_reset(PPUREGS *reg) {
 	reg->fv = reg->v = reg->h = reg->vt = reg->ht = 0;
 	reg->fh = reg->par = reg->s = 0;
 	reg->_fv = reg->_v = reg->_h = reg->_vt = reg->_ht = 0;
@@ -157,7 +157,7 @@ void newppu_regs_reset(PPUREGS *reg) {
 	reg->status.sl = 241;
 }
 
-void newppu_regs_install_latches(PPUREGS *reg) {
+static void newppu_regs_install_latches(PPUREGS *reg) {
 	reg->fv = reg->_fv;
 	reg->v = reg->_v;
 	reg->h = reg->_h;
@@ -165,17 +165,17 @@ void newppu_regs_install_latches(PPUREGS *reg) {
 	reg->ht = reg->_ht;
 }
 
-void newppu_regs_install_h_latches(PPUREGS *reg) {
+static void newppu_regs_install_h_latches(PPUREGS *reg) {
 	reg->ht = reg->_ht;
 	reg->h = reg->_h;
 }
 
-void clear_latches(PPUREGS *reg) {
+static void clear_latches(PPUREGS *reg) {
 	reg->_fv = reg->_v = reg->_h = reg->_vt = reg->_ht = 0;
 	reg->fh = 0;
 }
 
-void newppu_regs_increment_hsc(PPUREGS *reg) {
+static void newppu_regs_increment_hsc(PPUREGS *reg) {
 	/* The first one, the horizontal scroll counter, consists of 6 bits, and is
 	   made up by daisy-chaining the HT counter to the H counter. The HT counter
 	   is then clocked every 8 pixel dot clocks (or every 8/3 CPU clock cycles). */
@@ -185,7 +185,7 @@ void newppu_regs_increment_hsc(PPUREGS *reg) {
 	reg->h &= 1;
 }
 
-void newppu_regs_increment_vs(PPUREGS *reg) {
+static void newppu_regs_increment_vs(PPUREGS *reg) {
 	int fv_overflow;
 
 	reg->fv++;
@@ -200,11 +200,11 @@ void newppu_regs_increment_vs(PPUREGS *reg) {
 	reg->v &= 1;
 }
 
-uint32 newppu_regs_get_ntread(PPUREGS *reg) {
+static uint32 newppu_regs_get_ntread(PPUREGS *reg) {
 	return 0x2000 | (reg->v << 0xB) | (reg->h << 0xA) | (reg->vt << 5) | reg->ht;
 }
 
-uint32 newppu_regs_get_2007access(PPUREGS *reg) {
+static uint32 newppu_regs_get_2007access(PPUREGS *reg) {
 	return ((reg->fv & 3) << 0xC) | (reg->v << 0xB) | (reg->h << 0xA) | (reg->vt << 5) | reg->ht;
 }
 
@@ -215,17 +215,17 @@ uint32 newppu_regs_get_2007access(PPUREGS *reg) {
  * apply to the data read from the attribute data (a is always 0). This is why
  * you only see bits 0 and 1 used off the read attribute data in the diagram.
  */
-uint32 newppu_regs_get_atread(PPUREGS *reg) {
+static uint32 newppu_regs_get_atread(PPUREGS *reg) {
 	return 0x2000 | (reg->v << 0xB) | (reg->h << 0xA) | 0x3C0 | ((reg->vt & 0x1C) << 1) |
 	       ((reg->ht & 0x1C) >> 2);
 }
 
 /* address line 3 relates to the pattern table fetch occuring (the PPU always makes them in pairs). */
-uint32 newppu_regs_get_ptread(PPUREGS *reg) {
+static uint32 newppu_regs_get_ptread(PPUREGS *reg) {
 	return (reg->s << 0xC) | (reg->par << 0x4) | reg->fv;
 }
 
-void newppu_regs_increment2007(PPUREGS *reg, bool rendering, bool by32) {
+static void newppu_regs_increment2007(PPUREGS *reg, bool rendering, bool by32) {
 	if (rendering) {
 		/* don't do this:
 		 * if (by32) increment_vs();
@@ -368,7 +368,7 @@ uint8 NTARAM[0x1000], PALRAM[0x20], SPRAM[0x100], SPRBUF[0x100];
 uint8 UPALRAM[0x03];/* for 0x4/0x8/0xC addresses in palette, the ones in
 					 * 0x20 are 0 to not break fceu rendering.
 					 */
-uint8 READPAL_MOTHEROFALL(uint32 A)
+static uint8 READPAL_MOTHEROFALL(uint32 A)
 {
 	if(!(A & 3)) {
 		if(!(A & 0xC))
@@ -1910,7 +1910,7 @@ int totpputime = 0;
 const int kLineTime = 341;
 const int kFetchTime = 2;
 
-void runppu(int x) {
+static void runppu(int x) {
 	ppur.status.cycle = (ppur.status.cycle + x) % ppur.status.end_cycle;
 	if (!new_ppu_reset) { /* if resetting, suspend CPU until the first frame */
 		X6502_Run(x);

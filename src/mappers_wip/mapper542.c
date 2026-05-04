@@ -52,7 +52,7 @@ static void SetCHR(uint16 A, uint16 V) {
 	}
 }
 
-DECLFW(WriteReg) {
+static DECLFW(WriteReg) {
 	if (A & 0x800) {
 		m542.reg = A >> 12;
 		VRC24_SyncCHR();

@@ -45,5 +45,6 @@ void MINDKIDS_Init(CartInfo *);			/* m268 */
 void BMC810131C_Init(CartInfo *);
 void KG256_Init(CartInfo *);
 void WAIXINGFS005_Init(CartInfo *);
+void UNL22211_Init(CartInfo *info);
 
 #endif

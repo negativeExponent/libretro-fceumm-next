@@ -78,7 +78,7 @@ uint16 VRC24_GetPRGBank(int bank) {
 	return (vrc24.prg[bank & 0x01]);
 }
 
-void GENPWRAP(uint16 A, uint16 V) {
+static void GENPWRAP(uint16 A, uint16 V) {
 	setprg8(A, V & PRGMASK_DEFAULT);
 }
 
@@ -93,7 +93,7 @@ uint16 VRC24_GetCHRBank(int bank) {
 	return vrc24.chr[bank];
 }
 
-void GENCWRAP(uint16 A, uint16 V) {
+static void GENCWRAP(uint16 A, uint16 V) {
 	setchr1(A, V & CHRMASK_DEFAULT);
 }
 

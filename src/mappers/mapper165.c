@@ -46,7 +46,7 @@ static void SetCHR(uint16 A, uint16 V) {
 	}
 }
 
-void SyncCHR(void) {
+static void SyncCHR(void) {
 	SetCHR(0x0000, MMC3_GetCHRBank(m165.latch[0] ? 2 : 0));
 	SetCHR(0x1000, MMC3_GetCHRBank(m165.latch[1] ? 6 : 4));
 }

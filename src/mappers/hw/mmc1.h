@@ -39,6 +39,8 @@ uint32 MMC1_GetCHRBank(int index);
 uint8 MMC1_WRAMEnabled(void);
 
 DECLFW(MMC1_Write);
+DECLFR(MMC1_readWRAM);
+DECLFW(MMC1_writeWRAM);
 
 void MMC1_Power(void);
 void MMC1_Close(void);
@@ -52,6 +54,9 @@ void MMC1_SyncPRG_default(void);
 void MMC1_SyncCHR_default(void);
 void MMC1_SyncMirror_default(void);
 void MMC1_SyncWRAM_default(void);
+
+void MMC1_pwrap_default(uint16 A, uint16 V);
+void MMC1_cwrap_default(uint16 A, uint16 V);
 
 extern void (*MMC1_pwrap)(uint16 A, uint16 V);
 extern void (*MMC1_cwrap)(uint16 A, uint16 V);

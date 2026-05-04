@@ -55,7 +55,10 @@ void FCG_SetEeprom(X24C0X *e);
 void FCG_SyncPRG(void);
 void FCG_SyncCHR(void);
 void FCG_SyncMirror(void);
-void SyncWRAM(void);
+void FCG_SyncWRAM(void);
+
+DECLFR(FCG_Read);
+DECLFW(FCG_Write);
 
 extern void (*FCG_pwrap)(uint16 A, uint16 V);
 extern void (*FCG_cwrap)(uint16 A, uint16 V);
