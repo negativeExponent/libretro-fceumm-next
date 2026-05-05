@@ -22,8 +22,8 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 rd = ((latch.addr & 0x10) && (PRG_BANK_COUNT(16) > 8)) ? FALSE : TRUE;
-	uint8 wr = FALSE;
+	uint8_t rd = ((latch.addr & 0x10) && (PRG_BANK_COUNT(16) > 8)) ? FALSE : TRUE;
+	uint8_t wr = FALSE;
 
 	if (latch.addr & 0x02) {
 		setprg16_access(0x8000, ((latch.addr << 3) & 0x10) | (latch.data & 0x0F), rd, wr);

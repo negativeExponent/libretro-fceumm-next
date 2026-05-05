@@ -36,18 +36,18 @@
 #include "apu.h"
 #include "driver.h"
 
-static uint32 square_mix_table[32]; /* square channel mix table */
-static uint32 tnd_mix_table[203];   /* triangle/noise/dmc channel mix table */
+static uint32_t square_mix_table[32]; /* square channel mix table */
+static uint32_t tnd_mix_table[203];   /* triangle/noise/dmc channel mix table */
 
-int32 Wave[8192 + 512];
-int32 WaveHi[40000];
-int32 WaveFinal[8192 + 512];
+int32_t Wave[8192 + 512];
+int32_t WaveHi[40000];
+int32_t WaveFinal[8192 + 512];
 
-uint32 soundtsoffs = 0;
+uint32_t soundtsoffs = 0;
 
 /* Variables exclusively for low-quality sound. */
-int32 nesincsize = 0;
-uint32 soundtsinc = 0;
+int32_t nesincsize = 0;
+uint32_t soundtsinc = 0;
 /* LQ variables segment ends. */
 
 /* FIXME: Very ugly hack and only relevant in multichip NSF playback */
@@ -61,48 +61,48 @@ EXPSOUND GameExpSound[GAMEEXPSOUND_COUNT] = {
 	{ 0, 0, 0, 0, 0, 0 },
 };
 
-static const uint8 TriangleWaveTable[0x20] = {
+static const uint8_t TriangleWaveTable[0x20] = {
 	0x0F, 0x0E, 0x0D, 0x0C, 0x0B, 0x0A, 0x09, 0x08,
 	0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00,
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 	0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
 };
 
-static const uint16 NTSCNoiseFreqTable[0x10] =
+static const uint16_t NTSCNoiseFreqTable[0x10] =
 {
 	0x004, 0x008, 0x010, 0x020, 0x040, 0x060, 0x080, 0x0A0,
 	0x0CA, 0x0FE, 0x17C, 0x1FC, 0x2FA, 0x3F8, 0x7F2, 0xFE4
 };
 
-static const uint16 PALNoiseFreqTable[0x10] =
+static const uint16_t PALNoiseFreqTable[0x10] =
 {
 	0x004, 0x008, 0x00E, 0x01E, 0x03C, 0x058, 0x076, 0x094,
 	0x0BC, 0x0EC, 0x162, 0x1D8, 0x2C4, 0x3B0, 0x762, 0xEC2
 };
 
-static const uint16 NTSCDMCTable[0x10] =
+static const uint16_t NTSCDMCTable[0x10] =
 {
 	0x1AC, 0x17C, 0x154, 0x140, 0x11E, 0x0FE, 0x0E2, 0x0D6,
 	0x0BE, 0x0A0, 0x08E, 0x080, 0x06A, 0x054, 0x048, 0x036
 };
 
-static const uint16 PALDMCTable[0x10] =
+static const uint16_t PALDMCTable[0x10] =
 {
 	0x18E, 0x162, 0x13C, 0x12A, 0x114, 0x0EC, 0x0D2, 0x0C6,
 	0x0B0, 0x094, 0x084, 0x076, 0x062, 0x04E, 0x042, 0x032
 };
 
-static const uint16 NTSCFramePeriodTable[2][6] = {
+static const uint16_t NTSCFramePeriodTable[2][6] = {
 	{ 7457, 7456, 7458, 7457,    1, 1, },
 	{ 7457, 7456, 7458, 7458, 7452, 1, },
 };
 
-static const uint16 PALFramePeriodTable[2][6] = {
+static const uint16_t PALFramePeriodTable[2][6] = {
 	{ 8313, 8314, 8312, 8313,    1, 1, },
 	{ 8313, 8314, 8312, 8320, 8312, 1,},
 };
 
-static const uint8 frametype[6] = {
+static const uint8_t frametype[6] = {
 	FrameQuarter,
 	FrameHalf,
 	FrameQuarter,
@@ -127,7 +127,7 @@ static FrameCounter frame;
 
 /* Lenght Counter */
 
-static void LengthCounterReset(LengthCount *length, uint8 hard, uint8 isTriangle) {
+static void LengthCounterReset(LengthCount *length, uint8_t hard, uint8_t isTriangle) {
 	length->enabled = FALSE;
 	if (hard || !isTriangle) {
 		length->counter = 0;
@@ -139,7 +139,7 @@ static void LengthCounterReset(LengthCount *length, uint8 hard, uint8 isTriangle
 	}
 }
 
-static INLINE void LengthCounterSetHalt(LengthCount *length, int isLengthClocking, uint8 V) {
+static INLINE void LengthCounterSetHalt(LengthCount *length, int isLengthClocking, uint8_t V) {
 	if (!isLengthClocking) {
 		length->halt = V;
 	} else {
@@ -148,9 +148,9 @@ static INLINE void LengthCounterSetHalt(LengthCount *length, int isLengthClockin
 	}
 }
 
-static INLINE void LengthCounterSet(LengthCount *length, int isLengthClocking, uint8 V) {
+static INLINE void LengthCounterSet(LengthCount *length, int isLengthClocking, uint8_t V) {
 	if (length->enabled) {
-		uint8 period = lengthtable[V];
+		uint8_t period = lengthtable[V];
 		if (!isLengthClocking) {
 			length->counter = period;
 		} else {
@@ -160,7 +160,7 @@ static INLINE void LengthCounterSet(LengthCount *length, int isLengthClocking, u
 	}
 }
 
-static INLINE void LengthCounterSetEnabled(LengthCount *length, uint8 enable) {
+static INLINE void LengthCounterSetEnabled(LengthCount *length, uint8_t enable) {
 	length->enabled = enable;
 	if (!length->enabled) {
 		length->counter = 0;
@@ -203,7 +203,7 @@ static INLINE void ClockSweep(Sweep *sweep) {
 	if (sweep->counter == 0) {
 		sweep->counter = sweep->period + 1;
 		if (sweep->enabled && sweep->shift && sweep->pulsePeriod >= 0x08) {
-			int32 delta = sweep->pulsePeriod >> sweep->shift;
+			int32_t delta = sweep->pulsePeriod >> sweep->shift;
 			if (sweep->negate) {
 				sweep->pulsePeriod -= delta;
 				if (sweep->id == 0) {
@@ -231,7 +231,7 @@ static void EnvelopeReset(Envelope *envelope) {
 	envelope->speed = 0;
 }
 
-static INLINE int32 EnvelopeVolume(Envelope *envelope) {
+static INLINE int32_t EnvelopeVolume(Envelope *envelope) {
 	if (envelope->constant) {
 		return envelope->speed;
 	}
@@ -260,8 +260,8 @@ static INLINE void ClockEnvelope(Envelope *envelope) {
 /* Square */
 
 static int CheckFreq(SquareUnit *sq) {
-	uint32 mod;
-	uint32 period = sq->sweep.pulsePeriod;
+	uint32_t mod;
+	uint32_t period = sq->sweep.pulsePeriod;
 	if (!sq->sweep.negate) {
 		mod = period >> sq->sweep.shift;
 		if ((mod + period) & 0x800) {
@@ -273,7 +273,7 @@ static int CheckFreq(SquareUnit *sq) {
 
 /* returns output from envelope, unless silenced by
  * sweeo unit overflow, or period < 8 or lengthcounter is 0 */
-static INLINE int32 SquareOutput(SquareUnit *square) {
+static INLINE int32_t SquareOutput(SquareUnit *square) {
 	if ((square->sweep.pulsePeriod < 8) || !CheckFreq(square) || (square->length.counter == 0)) {
 		return 0;
 	}
@@ -286,7 +286,7 @@ static void SquareReset(SquareUnit *square, int id, int hard) {
 	SweepReset(&square->sweep, id);
 
     square->timer.counter = 2048;
-	square->timer.count2 = nesincsize ? (((uint32)2048 << 17) / nesincsize) : 1;
+	square->timer.count2 = nesincsize ? (((uint32_t)2048 << 17) / nesincsize) : 1;
 	square->timer.period = 0;
 
 	square->duty = 0;
@@ -308,13 +308,13 @@ static void TriangleReset(int hard) {
 	triangle.stepCounter = 0;
 }
 
-static INLINE uint16 TriangleOutput(void) {
+static INLINE uint16_t TriangleOutput(void) {
 	return TriangleWaveTable[triangle.stepCounter & 0x1F] * 3;
 }
 
 /* Noise */
 
-static INLINE void LoadNoisePeriod(uint8 V) {
+static INLINE void LoadNoisePeriod(uint8_t V) {
 	if (isPAL) {
 		noise.timer.period = PALNoiseFreqTable[V];
 	} else {
@@ -323,7 +323,7 @@ static INLINE void LoadNoisePeriod(uint8 V) {
 }
 
 /* returns output from envelope, unless lengcounter is 0 */
-static INLINE int32 NoiseOutput(void) {
+static INLINE int32_t NoiseOutput(void) {
 	if (noise.length.counter == 0) {
 		return 0;
 	}
@@ -335,7 +335,7 @@ static void NoiseReset(int hard) {
 	EnvelopeReset(&noise.envelope);
 
 	noise.timer.counter = 2048;
-	noise.timer.count2 = nesincsize ? (((uint32)2048 << 17) / nesincsize) : 1;
+	noise.timer.count2 = nesincsize ? (((uint32_t)2048 << 17) / nesincsize) : 1;
 	noise.timer.period = 0;
 
 	noise.periodIndex = 0;
@@ -347,7 +347,7 @@ static void NoiseReset(int hard) {
 
 /* DMC */
 
-static INLINE void LoadDMCPeriod(uint8 V) {
+static INLINE void LoadDMCPeriod(uint8_t V) {
 	if (isPAL) {
 		dmc.timer.period = PALDMCTable[V];
 	} else {
@@ -387,7 +387,7 @@ static void ClockDMCDMA(int cycles) {
 		if (dmc.sampleValid) {
 			/* Unbelievably ugly hack */
 			if (FSettings.SndRate) {
-				const uint32 fudge = MIN((uint32)(-dmc.timer.counter), (uint32)(soundtsoffs + timestamp));
+				const uint32_t fudge = MIN((uint32_t)(-dmc.timer.counter), (uint32_t)(soundtsoffs + timestamp));
 
 				soundtsoffs -= fudge;
 				DoPCM();
@@ -458,11 +458,11 @@ static void DMCReset(int hard) {
 
 /* Frame Counter */
 
-static INLINE uint8 lengthClocking(void) {
+static INLINE uint8_t lengthClocking(void) {
 	return ((frame.counter == 1) && ((frame.step == 1) || (frame.step == 4))) ? TRUE : FALSE;
 }
 
-static INLINE int32 GetFramePeriodNext(void) {
+static INLINE int32_t GetFramePeriodNext(void) {
 	if (isPAL) {
 		return PALFramePeriodTable[frame.mode][frame.step];
 	}
@@ -471,7 +471,7 @@ static INLINE int32 GetFramePeriodNext(void) {
 
 static void FrameSoundStuff(enum FrameType type) {
 	SquareUnit *s;
-	uint8 loop_flag;
+	uint8_t loop_flag;
 	int P;
 
 	if (type == FrameNone) {
@@ -569,7 +569,7 @@ static void FrameCounterReset(int hard) {
 	frame.newMode = (frame.mode == FrameFiveStepMode) ? 0x80 : 0;
 }
 
-static INLINE void SquareWrite(SquareUnit *square, uint8 reg, uint8 V) {
+static INLINE void SquareWrite(SquareUnit *square, uint8_t reg, uint8_t V) {
 	switch (reg) {
 	case 0:
 		square->envelope.speed = V & 0x0F;
@@ -602,7 +602,7 @@ static INLINE void SquareWrite(SquareUnit *square, uint8 reg, uint8 V) {
 	}
 }
 
-static INLINE void TriangleWrite(uint8 reg, uint8 V) {
+static INLINE void TriangleWrite(uint8_t reg, uint8_t V) {
 	switch (reg) {
 	case 0:
 		triangle.linearPeriod = V & 0x7F;
@@ -621,7 +621,7 @@ static INLINE void TriangleWrite(uint8 reg, uint8 V) {
 	}
 }
 
-static INLINE void NoiseWrite(uint8 reg, uint8 V) {
+static INLINE void NoiseWrite(uint8_t reg, uint8_t V) {
 	switch (reg) {
 	case 0:
 		noise.envelope.speed = V & 0x0F;
@@ -643,7 +643,7 @@ static INLINE void NoiseWrite(uint8 reg, uint8 V) {
 	}
 }
 
-static INLINE void DMCWrite(uint8 reg, uint8 V) {
+static INLINE void DMCWrite(uint8_t reg, uint8_t V) {
 	switch (reg) {
 	case 0:
 		LoadDMCPeriod(V & 0xF);
@@ -659,8 +659,8 @@ static INLINE void DMCWrite(uint8 reg, uint8 V) {
 		break;
 
 	case 1: {
-		uint8 newval = V & 0x07F;
-		uint8 lastval = dmc.rawDataLatch;
+		uint8_t newval = V & 0x07F;
+		uint8_t lastval = dmc.rawDataLatch;
 		dmc.rawDataLatch = newval;
 		if (FSettings.ReduceDMCPopping) {
 			dmc.rawDataLatch -= (dmc.rawDataLatch - lastval) / 2;
@@ -724,7 +724,7 @@ static DECLFW(StatusWrite) {
 }
 
 static DECLFR(StatusRead) {
-	uint8 ret = 0;
+	uint8_t ret = 0;
 	ret |= square1.length.counter ? 0x01 : 0;
 	ret |= square2.length.counter ? 0x02 : 0;
 	ret |= triangle.length.counter ? 0x04 : 0;
@@ -759,10 +759,10 @@ void FCEU_SoundCPUHook(int cycles) {
 }
 
 static void RDoPCM(void) {
-	uint32 V;
+	uint32_t V;
 
 	for (V = dmc.timer.cvbc; V < SOUNDTS; V++) {
-		int32 pcmout = GetOutput(SND_DMC, dmc.rawDataLatch);
+		int32_t pcmout = GetOutput(SND_DMC, dmc.rawDataLatch);
 		WaveHi[V] += ((pcmout << TRINPCM_SHIFT) & (~0xFFFF));
 	}
 
@@ -770,10 +770,10 @@ static void RDoPCM(void) {
 }
 
 static INLINE void RDoSQ(int x) {
-	uint32 V;
+	uint32_t V;
 	SquareUnit *square = x ? &square2 : &square1;
-	const uint8 *dutyTbl = &SquareWaveTable[FSettings.SwapDutyCycles][square->duty][0];
-	int32 amp;
+	const uint8_t *dutyTbl = &SquareWaveTable[FSettings.SwapDutyCycles][square->duty][0];
+	int32_t amp;
 
 	amp = GetOutput(SND_SQUARE1 + x, SquareOutput(square));
 	amp <<= SQ_SHIFT;
@@ -799,15 +799,15 @@ static void RDoSQ2(void) {
 }
 
 static void RDoSQLQ(void) {
-	int32 start, end;
-	int32 V;
-	int32 inie[2];
+	int32_t start, end;
+	int32_t V;
+	int32_t inie[2];
 
-	int32 amp[2];		/* channel volume */
-	int32 ttable[2][8]; /* volume table based on duty */
-	int32 totalout; /* output taken from pulse table, from sq1 + sq2 outputs */
+	int32_t amp[2];		/* channel volume */
+	int32_t ttable[2][8]; /* volume table based on duty */
+	int32_t totalout; /* output taken from pulse table, from sq1 + sq2 outputs */
 
-	int32 freq[2]; /* shifted period value */
+	int32_t freq[2]; /* shifted period value */
 
 	int x;
 
@@ -823,7 +823,7 @@ static void RDoSQLQ(void) {
 
 		int y;
 		int dutyCycle;
-		const uint8 *dutyTbl = &SquareWaveTable[FSettings.SwapDutyCycles][square->duty][0];
+		const uint8_t *dutyTbl = &SquareWaveTable[FSettings.SwapDutyCycles][square->duty][0];
 
 		inie[x] = nesincsize;
 
@@ -875,8 +875,8 @@ rea2:
 }
 
 static void RDoTriangle(void) {
-	uint32 V;
-	int32 triout;
+	uint32_t V;
+	int32_t triout;
 
 	triout = GetOutput(SND_TRIANGLE, TriangleOutput());
 	triout = (triout << TRINPCM_SHIFT) & (~0xFFFF);
@@ -903,18 +903,18 @@ static void RDoTriangle(void) {
 }
 
 static void RDoTriangleNoisePCMLQ(void) {
-	int32 V;
-	int32 start, end;
-	int32 freq[2];
-	int32 inie[2];
-	uint32 amptab[2];
-	uint32 triout;
-	uint32 noiseout;
-	uint32 pcmout;
+	int32_t V;
+	int32_t start, end;
+	int32_t freq[2];
+	int32_t inie[2];
+	uint32_t amptab[2];
+	uint32_t triout;
+	uint32_t noiseout;
+	uint32_t pcmout;
 	int nshift;
 
-	int32 totalout;
-	int32 wl;
+	int32_t totalout;
+	int32_t wl;
 
 	start = triangle.timer.cvbc;
 	end = (SOUNDTS << 16) / soundtsinc;
@@ -966,7 +966,7 @@ static void RDoTriangleNoisePCMLQ(void) {
 			}
 
 			if (noise.timer.count2 <= 0) {
-				uint32 feedback;
+				uint32_t feedback;
  rea2:
 				noise.timer.count2 += wl;
 				feedback = ((noise.shiftRegister >> 0) & 0x01) ^ ((noise.shiftRegister >> (noise.shortMode ? 6 : 1)) & 0x01);
@@ -1000,7 +1000,7 @@ static void RDoTriangleNoisePCMLQ(void) {
 			Wave[V >> 4] += totalout;
 			noise.timer.count2 -= inie[1];
 			if (noise.timer.count2 <= 0) {
-				uint32 feedback;
+				uint32_t feedback;
  area2:
 				noise.timer.count2 += wl;
 				feedback = ((noise.shiftRegister >> 0) & 0x01) ^ ((noise.shiftRegister >> (noise.shortMode ? 6 : 1)) & 0x01);
@@ -1020,9 +1020,9 @@ static void RDoTriangleNoisePCMLQ(void) {
 }
 
 static void RDoNoise(void) {
-	uint32 V;
-	int32 noiseout;
-	uint32 amptab[2];
+	uint32_t V;
+	int32_t noiseout;
+	uint32_t amptab[2];
 
 	amptab[0] = GetOutput(SND_NOISE, NoiseOutput() * 2);
 	amptab[0] <<= TRINPCM_SHIFT;
@@ -1038,7 +1038,7 @@ static void RDoNoise(void) {
 		WaveHi[V] += noiseout;
 		noise.timer.counter--;
 		if (noise.timer.counter == 0) {
-			uint32 feedback;
+			uint32_t feedback;
 
 			noise.timer.counter = noise.timer.period;
 			feedback = ((noise.shiftRegister >> 0) & 0x01) ^ ((noise.shiftRegister >> (noise.shortMode ? 6 : 1)) & 0x01);
@@ -1049,10 +1049,10 @@ static void RDoNoise(void) {
 	noise.timer.cvbc = SOUNDTS;
 }
 
-static int32 inbuf = 0;
+static int32_t inbuf = 0;
 int FlushEmulateSound(void) {
 	int x;
-	int32 end, left;
+	int32_t end, left;
 
 	if (!sound_timestamp) {
 		return(0);
@@ -1071,7 +1071,7 @@ int FlushEmulateSound(void) {
 	DoPCM();
 
 	if (FSettings.soundq >= 1) {
-		int32 *tmpo = &WaveHi[soundtsoffs];
+		int32_t *tmpo = &WaveHi[soundtsoffs];
 
 		for (x = 0; x < GAMEEXPSOUND_COUNT; x++) {
 			if (GameExpSound[x].HiFill) {
@@ -1080,10 +1080,10 @@ int FlushEmulateSound(void) {
 		}
 
 		for (x = sound_timestamp; x; x--) {
-			uint32 b = *tmpo;
-			int32 square_out = square_mix_table[(b >> SQ_SHIFT) & 0x1F];
-			int32 tnd_out = tnd_mix_table[(b >> TRINPCM_SHIFT) & 0xFF];
-			int32 exp_out = (b & 0xFFFF);
+			uint32_t b = *tmpo;
+			int32_t square_out = square_mix_table[(b >> SQ_SHIFT) & 0x1F];
+			int32_t tnd_out = tnd_mix_table[(b >> TRINPCM_SHIFT) & 0xFF];
+			int32_t exp_out = (b & 0xFFFF);
 
 			*tmpo = square_out + tnd_out + exp_out;
 			tmpo++;
@@ -1091,8 +1091,8 @@ int FlushEmulateSound(void) {
 
 		end = NeoFilterSound(WaveHi, WaveFinal, SOUNDTS, &left);
 
-		memmove(WaveHi, WaveHi + SOUNDTS - left, left * sizeof(uint32));
-		memset(WaveHi + left, 0, sizeof(WaveHi) - left * sizeof(uint32));
+		memmove(WaveHi, WaveHi + SOUNDTS - left, left * sizeof(uint32_t));
+		memset(WaveHi + left, 0, sizeof(WaveHi) - left * sizeof(uint32_t));
 
 		for (x = 0; x < GAMEEXPSOUND_COUNT; x++) {
 			if (GameExpSound[x].HiSync) {
@@ -1141,7 +1141,7 @@ int FlushEmulateSound(void) {
 	return(end);
 }
 
-int GetSoundBuffer(int32 **W) {
+int GetSoundBuffer(int32_t **W) {
 	*W = WaveFinal;
 	return(inbuf);
 }
@@ -1179,14 +1179,14 @@ void SetSoundVariables(void) {
 	if (FSettings.SndRate) {
 		square_mix_table[0] = 0;
 		for (x = 1; x < 32; x++) {
-			square_mix_table[x] = (uint32)(16384.0 * 95.52 / (8128.0 / (double)x + 100.0));
+			square_mix_table[x] = (uint32_t)(16384.0 * 95.52 / (8128.0 / (double)x + 100.0));
 			if (!FSettings.soundq) {
 				square_mix_table[x] >>= 4;
 			}
 		}
 		tnd_mix_table[0] = 0;
 		for (x = 1; x < 203; x++) {
-			tnd_mix_table[x] = (uint32)(16384.0 * 163.67 / (24329.0 / (double)x + 100.0));
+			tnd_mix_table[x] = (uint32_t)(16384.0 * 163.67 / (24329.0 / (double)x + 100.0));
 			if (!FSettings.soundq) {
 				tnd_mix_table[x] >>= 4;
 			}
@@ -1230,8 +1230,8 @@ void SetSoundVariables(void) {
 	LoadDMCPeriod(dmc.periodIndex);	/* For changing from PAL to NTSC */
 	LoadNoisePeriod(noise.periodIndex);
 
-	nesincsize = (int64)(((int64)1 << 17) * (double)(isPAL ? PAL_CPU : NTSC_CPU) / (FSettings.SndRate * 16));
-	soundtsinc = (uint32)((uint64)(isPAL ? (long double)PAL_CPU * 65536 : (long double)NTSC_CPU * 65536) / (FSettings.SndRate * 16));
+	nesincsize = (int64_t)(((int64_t)1 << 17) * (double)(isPAL ? PAL_CPU : NTSC_CPU) / (FSettings.SndRate * 16));
+	soundtsinc = (uint32_t)((uint64_t)(isPAL ? (long double)PAL_CPU * 65536 : (long double)NTSC_CPU * 65536) / (FSettings.SndRate * 16));
 }
 
 void FCEUI_Sound(int Rate) {
@@ -1279,7 +1279,7 @@ int FCEUI_GetSoundVolume(int channel) {
 	return 0;
 }
 
-int32 GetOutput(int channel, int32 in) {
+int32_t GetOutput(int channel, int32_t in) {
 	if ((channel > SND_MASTER) && (channel < SND_LAST)) {
 		int mod = FCEUI_GetSoundVolume(channel);
 
@@ -1287,7 +1287,7 @@ int32 GetOutput(int channel, int32 in) {
 			return 0; /* silence */
 		}
 		if (mod != 256) {
-			return (int32)((in * mod) / 256);
+			return (int32_t)((in * mod) / 256);
 		}
 	}
 	return in;
@@ -1441,7 +1441,7 @@ SFORMAT FCEUSND_STATEINFO[] = {
 	{ &sexyfilter_acc3, sizeof(sexyfilter_acc3) | FCEUSTATE_RLSB, "FAC3" },
 
 	/* wave buffer is used for filtering, only need first 17 values from it */
-	{ &Wave, 32 * sizeof(int32), "WAVE"},
+	{ &Wave, 32 * sizeof(int32_t), "WAVE"},
 
 	{ 0 }
 };
@@ -1461,7 +1461,7 @@ void FCEUSND_LoadState(int version) {
 
 	/* minimal validation */
 	for (i = 0; i < 5; i++) {
-		uint32 BC_max = 15;
+		uint32_t BC_max = 15;
 
 		if (FSettings.soundq == 2) {
 			BC_max = 1025;
@@ -1477,10 +1477,10 @@ void FCEUSND_LoadState(int version) {
 	if (dmc.timer.counter <= 0) {
 		dmc.timer.counter = 1;
 	}
-	triangle.timer.counter = MAX((int32)(1), (int32)MIN((int32)(0xFFFF), (int32)(triangle.timer.counter)));
-	noise.timer.counter    = MAX((int32)(1), (int32)MIN((int32)(0xFFFF), (int32)(noise.timer.counter)));
+	triangle.timer.counter = MAX((int32_t)(1), (int32_t)MIN((int32_t)(0xFFFF), (int32_t)(triangle.timer.counter)));
+	noise.timer.counter    = MAX((int32_t)(1), (int32_t)MIN((int32_t)(0xFFFF), (int32_t)(noise.timer.counter)));
 
-	square1.timer.counter = MAX((int32) (1), (int32) MIN((int32) (0xFFFF), (int32) (square1.timer.counter)));
+	square1.timer.counter = MAX((int32_t) (1), (int32_t) MIN((int32_t) (0xFFFF), (int32_t) (square1.timer.counter)));
 	square1.step &= 0x07;
 	square1.timer.period &= 0xFFFF;
 	square1.sweep.pulsePeriod &= 0xFFFF;
@@ -1489,7 +1489,7 @@ void FCEUSND_LoadState(int version) {
 		square1.sweep.enabled = FALSE;
 	}
 
-	square2.timer.counter = MAX((int32) (1), (int32) MIN((int32) (0xFFFF), (int32) (square2.timer.counter)));
+	square2.timer.counter = MAX((int32_t) (1), (int32_t) MIN((int32_t) (0xFFFF), (int32_t) (square2.timer.counter)));
 	square2.step &= 0x07;
 	square2.timer.period &= 0xFFFF;
 	square2.sweep.pulsePeriod &= 0xFFFF;

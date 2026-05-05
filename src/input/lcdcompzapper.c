@@ -17,10 +17,10 @@
 
 #include "share.h"
 
-static uint32 lcdCompZapperStrobe[2];
-static uint32 lcdCompZapperData[2];
+static uint32_t lcdCompZapperStrobe[2];
+static uint32_t lcdCompZapperData[2];
 
-static uint8 ReadLCDCompZapper(int w) {
+static uint8_t ReadLCDCompZapper(int w) {
 	return lcdCompZapperData[w];
 }
 
@@ -29,12 +29,12 @@ static void StrobeLCDCompZapper(int w) {
 }
 
 static void UpdateLCDCompZapper(int w, void *data, int arg) {
-	/* In the '(*(uint32*)data)' variable, bit 0 holds the trigger value and bit 1 holds the light sense value.
+	/* In the '(*(uint32_t*)data)' variable, bit 0 holds the trigger value and bit 1 holds the light sense value.
 	 * Ultimately this needs to be converted from 0000 00lt to 000t l000 where l is the light bit and t
 	 * is the trigger bit.
 	 * l must be inverted because 0: detected; 1: not detected
 	 */
-	lcdCompZapperData[w] = ((((*(uint32 *)data) & 1) << 4) | ((((*(uint32 *)data) & 2) ^ 2) << 2));
+	lcdCompZapperData[w] = ((((*(uint32_t *)data) & 1) << 4) | ((((*(uint32_t *)data) & 2) ^ 2) << 2));
 }
 
 static INPUTC LCDCompZapperCtrl = { ReadLCDCompZapper, 0, StrobeLCDCompZapper, UpdateLCDCompZapper, 0, 0 };

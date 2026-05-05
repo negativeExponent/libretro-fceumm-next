@@ -33,8 +33,8 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg[3], chr[6], mirror;
-	uint8 internalRAM[128];
+	uint8_t prg[3], chr[6], mirror;
+	uint8_t internalRAM[128];
 } m080;
 
 static SFORMAT StateRegs[] = {

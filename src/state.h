@@ -35,12 +35,12 @@ void FCEUSS_Save_Mem(void);
 
 typedef struct {
 	void *v;
-	uint32 s;
+	uint32_t s;
 	char desc[5];
 } SFORMAT;
 
 void ResetExState(void (*PreSave)(void), void (*PostSave)(void));
-void AddExState(void *v, uint32 s, int type, char *desc);
+void AddExState(void *v, uint32_t s, int type, char *desc);
 
 /* indicates that the value is a multibyte integer that needs to be put in the correct byte order */
 #define FCEUSTATE_RLSB 0x80000000

@@ -22,9 +22,9 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 prg = latch.addr >> 7;
-	uint8 chr = latch.addr & 0x1F;
-	uint8 mirr = ((latch.addr >> 5) & 0x01) ^ 0x01;
+	uint8_t prg = latch.addr >> 7;
+	uint8_t chr = latch.addr & 0x1F;
+	uint8_t mirr = ((latch.addr >> 5) & 0x01) ^ 0x01;
 
 	if (latch.addr & 0x40) {
 		setprg32(0x8000, prg >> 1);

@@ -33,7 +33,7 @@ CIRAM into CHR address space.
 #include "vrc24.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m542;
 
 static SFORMAT StateRegs[] = {
@@ -41,11 +41,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg8(A, V & 0x1F);
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr1(A, V & 0x1FF);
 	if (m542.reg & 0x01) {
 		setchr1r(0x10, 0x0C00, 1);

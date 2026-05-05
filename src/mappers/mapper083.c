@@ -52,19 +52,19 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg[4];
-	uint8 chr[8];
-	uint8 low[4];
-	uint8 mode;
-	uint8 outer;
-	uint8 IRQa;
-	int32 IRQCount;
+	uint8_t prg[4];
+	uint8_t chr[8];
+	uint8_t low[4];
+	uint8_t mode;
+	uint8_t outer;
+	uint8_t IRQa;
+	int32_t IRQCount;
 
-	uint8 prgMask;
-	uint8 chrMode;
-	uint16 dipMask;
+	uint8_t prgMask;
+	uint8_t chrMode;
+	uint16_t dipMask;
 
-	uint8 dipsw;
+	uint8_t dipsw;
 } m083;
 
 static SFORMAT StateRegs[] = {
@@ -99,7 +99,7 @@ static void SyncPRG(void) {
 		break;
 	case 2:
 	case 3: {
-		uint16 base = (m083.outer << 1) & ~m083.prgMask;
+		uint16_t base = (m083.outer << 1) & ~m083.prgMask;
 		setprg8(0x8000, base | (m083.prg[0] & m083.prgMask));
 		setprg8(0xA000, base | (m083.prg[1] & m083.prgMask));
 		setprg8(0xC000, base | (m083.prg[2] & m083.prgMask));
@@ -128,7 +128,7 @@ static void SyncCHR(void) {
 		setchr2(0x1800, m083.chr[7]);
 		break;
 	case 2: {
-		uint16 base = (m083.outer << 4) & 0x300;
+		uint16_t base = (m083.outer << 4) & 0x300;
 		setchr1(0x0000, base | m083.chr[0]);
 		setchr1(0x0400, base | m083.chr[1]);
 		setchr1(0x0800, base | m083.chr[2]);
@@ -309,7 +309,7 @@ void Mapper083_Init(CartInfo *info) {
 
 	WRAMSIZE = (info->submapper == 2) ? 32768 : 0;
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}

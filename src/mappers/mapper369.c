@@ -24,10 +24,10 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
-	uint8 smb2j;
-	uint8 IRQa;
-	uint16 IRQCount;
+	uint8_t reg;
+	uint8_t smb2j;
+	uint8_t IRQa;
+	uint16_t IRQCount;
 } m369;
 
 static SFORMAT StateRegs[] = {
@@ -38,16 +38,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint8 mask = (m369.reg == 0xFF) ? 0x1F : 0x0F;
-	uint8 base = (m369.reg == 0xFF) ? 0x20 : 0x10;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint8_t mask = (m369.reg == 0xFF) ? 0x1F : 0x0F;
+	uint8_t base = (m369.reg == 0xFF) ? 0x20 : 0x10;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (m369.reg == 0xFF) ? 0xFF : 0x7F;
-	uint16 base = (m369.reg == 0xFF) ? 0x100 : 0x80;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (m369.reg == 0xFF) ? 0xFF : 0x7F;
+	uint16_t base = (m369.reg == 0xFF) ? 0x100 : 0x80;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

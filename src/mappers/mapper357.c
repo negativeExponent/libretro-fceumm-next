@@ -29,12 +29,12 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[4];
-	uint8 IRQa;
-	uint16 IRQCount;
+	uint8_t reg[4];
+	uint8_t IRQa;
+	uint16_t IRQCount;
 } m357;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m357.reg, 4, "REG" },
@@ -45,7 +45,7 @@ static SFORMAT StateRegs[] = {
 
 static void Sync(void) {
 	if (dipsw == 0) {
-		static const uint8 banks[2][8] = {
+		static const uint8_t banks[2][8] = {
 			{ 4, 3, 5, 3, 6, 3, 7, 3 },
 			{ 1, 1, 5, 1, 4, 1, 5, 1 }
 		};

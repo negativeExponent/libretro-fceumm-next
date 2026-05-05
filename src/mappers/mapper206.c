@@ -22,7 +22,7 @@
 #include "mapinc.h"
 #include "n118.h"
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	if (iNESCart.submapper == 1) {
 		/* 3407, 3417 and 3451 PCBs */
 		setprg32(0x8000, 0);

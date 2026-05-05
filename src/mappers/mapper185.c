@@ -23,7 +23,7 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 *DummyCHR = NULL;
+static uint8_t *DummyCHR = NULL;
 
 static void Sync(void) {
 	/*   on    off
@@ -34,7 +34,7 @@ static void Sync(void) {
 	5  0xFF, 0x00 - Sansuu 3 Nen
 	6  0x21, 0x13 - Spy vs Spy
 	7  0x20, 0x21 - Seicross */
-	uint8 chrEnable = (
+	uint8_t chrEnable = (
 		((iNESCart.submapper != 4) && ((latch.data & 3) != 0) && (latch.data != 0x13)) || /* 1, 2, 3, 4, 5, 6 */
 		((iNESCart.submapper == 4) && ((latch.data & 1) == 0)) /* 7 */
 	) ? 0 : 0x10;
@@ -55,7 +55,7 @@ void Mapper185_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, FALSE);
 	info->Close = Close;
 
-	DummyCHR = (uint8 *)FCEU_gmalloc(8192);
+	DummyCHR = (uint8_t *)FCEU_gmalloc(8192);
 	SetupCartCHRMapping(0x10, DummyCHR, 8192, 0);
 	for (x = 0; x < 8192; x++) {
 		DummyCHR[x] = 0xff;

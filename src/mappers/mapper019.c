@@ -24,16 +24,16 @@
 
 /* libretro saveram workaround, since there is no easy way to save more than 1 save index, so */
 /* packed both wram (if enabled) and internal ram into 1 memory block */
-static uint8 libretro_save_ram[8192 + 128]; /* wram 8k + 128 bytes internal ram */
-static uint8 *internalRAM = NULL;
+static uint8_t libretro_save_ram[8192 + 128]; /* wram 8k + 128 bytes internal ram */
+static uint8_t *internalRAM = NULL;
 
 static struct {
-	uint8 prg[4];
-	uint8 chr[8];
-	uint8 nmt[4];
-	uint8 write_protect;
-	uint16 IRQCount;
-	uint8 IRQa;
+	uint8_t prg[4];
+	uint8_t chr[8];
+	uint8_t nmt[4];
+	uint8_t write_protect;
+	uint16_t IRQCount;
+	uint8_t IRQa;
 } m019;
 
 static SFORMAT StateRegs[] = {
@@ -46,7 +46,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void DoPRG(int x, uint8 V) {
+static void DoPRG(int x, uint8_t V) {
 	m019.prg[x] = V;
 	setprg8(0x8000 + (x << 13), V);
 }
@@ -58,8 +58,8 @@ static void SyncPRG(void) {
 	DoPRG(3, m019.prg[3] & 0x3F);
 }
 
-static void DoCHRRAMROM(int x, uint8 V) {
-	uint8 force_chrrom = FALSE;
+static void DoCHRRAMROM(int x, uint8_t V) {
+	uint8_t force_chrrom = FALSE;
 
 	m019.chr[x] = V;
 	if ((x < 4) && (m019.prg[1] & 0x40)) {
@@ -79,7 +79,7 @@ static void SyncCHR(void) {
 	}
 }
 
-static void DoNMTRAMROM(int w, uint8 V) {
+static void DoNMTRAMROM(int w, uint8_t V) {
 	m019.nmt[w] = V;
 	if (V < 0xE0) {
 		V &= CHRmask1[0];

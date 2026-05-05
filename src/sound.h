@@ -52,9 +52,9 @@ typedef struct {
 		often) in lq mode than in high-quality mode.  Maybe that
 		should be fixed. :)
 	*/
-	void (*NeoFill)(int32 *Wave, int Count);
+	void (*NeoFill)(int32_t *Wave, int Count);
 	void (*HiFill)(void);
-	void (*HiSync)(int32 ts);
+	void (*HiSync)(int32_t ts);
 
 	void (*RChange)(void);
 	void (*Kill)(void);
@@ -63,18 +63,18 @@ typedef struct {
 #define GAMEEXPSOUND_COUNT 6
 extern EXPSOUND GameExpSound[GAMEEXPSOUND_COUNT];
 
-extern int32 nesincsize;
+extern int32_t nesincsize;
 
 void SetSoundVariables(void);
 
-int GetSoundBuffer(int32 **W);
+int GetSoundBuffer(int32_t **W);
 int FlushEmulateSound(void);
-extern int32 Wave[8192 + 512];
-extern int32 WaveFinal[8192 + 512];
-extern int32 WaveHi[];
-extern uint32 soundtsinc;
+extern int32_t Wave[8192 + 512];
+extern int32_t WaveFinal[8192 + 512];
+extern int32_t WaveHi[];
+extern uint32_t soundtsinc;
 
-extern uint32 soundtsoffs;
+extern uint32_t soundtsoffs;
 #define SOUNDTS (sound_timestamp + soundtsoffs)
 
 void FCEUSND_Power(void);
@@ -89,6 +89,6 @@ void FCEU_SoundCPUHook(int);
  * but is "close enough" and avoids the need for using double values
  * or implicit cohersion which are slower (we need speed here) */
 /* TODO: Optimize this. */
-int32 GetOutput(int channel, int32 in);
+int32_t GetOutput(int channel, int32_t in);
 
 #endif

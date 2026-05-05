@@ -21,10 +21,10 @@
 #include <string.h>
 #include "share.h"
 
-static uint8 HSVal, HSValR;
+static uint8_t HSVal, HSValR;
 
 
-static uint8 HS_Read(int w, uint8 ret) {
+static uint8_t HS_Read(int w, uint8_t ret) {
 	if (w) ret |= HSValR;
 
 	return(ret);
@@ -35,7 +35,7 @@ static void HS_Strobe(void) {
 }
 
 static void HS_Update(void *data, int arg) {
-	HSVal = *(uint8*)data;
+	HSVal = *(uint8_t*)data;
 }
 
 static INPUTCFC HyperShot = { HS_Read, 0, HS_Strobe, HS_Update, 0, 0 };

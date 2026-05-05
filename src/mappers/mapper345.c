@@ -28,7 +28,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m345;
 
 static SFORMAT StateRegs[] = {
@@ -36,9 +36,9 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 base = m345.reg >> 2;
-	uint16 mask = 0x0F;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t base = m345.reg >> 2;
+	uint16_t mask = 0x0F;
 
 	if (!(m345.reg & 0x0C)) { /* NROM-256 */
 		V = ((m345.reg << 2) & ~0x03) | ((A >> 13) & 0x03);

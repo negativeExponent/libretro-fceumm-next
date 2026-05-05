@@ -32,7 +32,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m392;
 
 static SFORMAT StateRegs[] = {
@@ -40,9 +40,9 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint8 mask = 0x0F;
-	uint8 base = m392.reg << 4;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint8_t mask = 0x0F;
+	uint8_t base = m392.reg << 4;
 
 	if (m392.reg & 0x10) {
 		setprg8(A, (base & ~mask) | (V & mask));
@@ -51,9 +51,9 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = 0x7F;
-	uint16 base = m392.reg << 7;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x7F;
+	uint16_t base = m392.reg << 7;
 
 	if (m392.reg & 0x10) {
 		setchr1(A, (base & ~mask) | (V & mask));
@@ -101,7 +101,7 @@ void Mapper392_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8 * 1024;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRM");
 }

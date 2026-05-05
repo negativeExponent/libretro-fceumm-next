@@ -21,10 +21,10 @@
 #ifndef _FME7_H
 #define _FME7_H
 typedef struct __FME7 {
-	uint8 prg[4];
-	uint8 chr[8];
-	uint8 cmd;
-	uint8 mirr;
+	uint8_t prg[4];
+	uint8_t chr[8];
+	uint8_t cmd;
+	uint8_t mirr;
 } FME7;
 
 extern FME7 fme7;
@@ -33,7 +33,7 @@ DECLFW(FME7_WriteIndex);
 DECLFW(FME7_WriteReg);
 
 void FME7_Init(CartInfo *info, int wram, int battery);
-void FME7_SetConfig(uint8 clear);
+void FME7_SetConfig(uint8_t clear);
 void FME7_Power(void);
 void FME7_Reset(void);
 
@@ -42,7 +42,7 @@ extern void (*FME7_SyncCHR)(void);
 extern void (*FME7_SyncMirror)(void);
 extern void (*FME7_SyncWRAM)(void);
 
-extern void (*FME7_pwrap)(uint16 A, uint16 V);
-extern void (*FME7_cwrap)(uint16 A, uint16 V);
+extern void (*FME7_pwrap)(uint16_t A, uint16_t V);
+extern void (*FME7_cwrap)(uint16_t A, uint16_t V);
 
 #endif /* _FME7_H */

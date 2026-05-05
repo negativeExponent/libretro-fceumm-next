@@ -25,13 +25,13 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg;
-	uint8 IRQa;
-	uint16 IRQCount;
+	uint8_t reg;
+	uint8_t IRQa;
+	uint16_t IRQCount;
 } m043;
 
 static int prgBankOrder[8] = { 4, 3, 4, 4, 4, 7, 5, 6 };
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &m043.IRQCount, 2, "IRQC" },

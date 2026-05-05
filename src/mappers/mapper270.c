@@ -29,8 +29,8 @@
 #include "onebus.h"
 
 static struct {
-	uint8 reg; /* $4242 */
-	uint8 dipsw; /* jumper */
+	uint8_t reg; /* $4242 */
+	uint8_t dipsw; /* jumper */
 } m270;
 
 static SFORMAT StateRegs[] = {
@@ -40,7 +40,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint16 mblock = 0;
+	uint16_t mblock = 0;
 	switch (iNESCart.submapper) {
 	case 1:
 		mblock |= (onebus.cpu41xx[0x2C] & 0x02) << 10; /* PRG/CHR A24 */

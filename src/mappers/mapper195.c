@@ -22,12 +22,12 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 chrMask;
-	uint8 chrCompare;
+	uint8_t chrMask;
+	uint8_t chrCompare;
 } m195;
 
 static writefunc writePPU2007;
-extern uint32 RefreshAddr;
+extern uint32_t RefreshAddr;
 
 static SFORMAT StateRegs[] = {
 	{ &m195.chrMask, 1, "CMSK" },
@@ -35,7 +35,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	if ((V & m195.chrMask) == m195.chrCompare) {
 		setchr1r(0x10, A, V);
 	} else {
@@ -43,14 +43,14 @@ static void SetCHR(uint16 A, uint16 V) {
 	}
 }
 
-static const uint8 chrRamLut[8] = {
+static const uint8_t chrRamLut[8] = {
     0x28, 0x00, 0x4C, 0x64, 0x46, 0x7C, 0x04, 0xFF,
 };
 
 static DECLFW(WritePPU2007) {
 	if (RefreshAddr < 0x2000) {
-		uint8 reg = RefreshAddr >> 10;
-		uint8 chrBank = MMC3_GetCHRBank(reg);
+		uint8_t reg = RefreshAddr >> 10;
+		uint8_t chrBank = MMC3_GetCHRBank(reg);
 
 		if (chrBank & 0x80) {
 			if (chrBank & 0x10) {
@@ -58,7 +58,7 @@ static DECLFW(WritePPU2007) {
 				m195.chrMask = 0x00;
 				m195.chrCompare = 0xFF;
 			} else {
-				uint8 index = ((chrBank >> 4) & 0x04) | ((chrBank >> 2) & 0x02) | ((chrBank >> 1) & 0x01);
+				uint8_t index = ((chrBank >> 4) & 0x04) | ((chrBank >> 2) & 0x02) | ((chrBank >> 1) & 0x01);
 
 				m195.chrMask = (chrBank & 0x40) ? 0xFE : 0xFC;
 				m195.chrCompare = chrRamLut[index];
@@ -88,7 +88,7 @@ void Mapper195_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 4096;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

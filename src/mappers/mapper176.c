@@ -44,23 +44,23 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 latch; /* CNROM/UNROM latch @ $8xxx writes */
-	uint8 reg4800;
-	uint8 fk23_regs[8];  /* JX9003B has eight registers, all others have four */
-	uint8 mmc3_regs[16]; /* only 12 registers are used here */
-	uint8 mmc3_ctrl;
-	uint8 mmc3_mirr;
-	uint8 mmc3_wram;
+	uint8_t latch; /* CNROM/UNROM latch @ $8xxx writes */
+	uint8_t reg4800;
+	uint8_t fk23_regs[8];  /* JX9003B has eight registers, all others have four */
+	uint8_t mmc3_regs[16]; /* only 12 registers are used here */
+	uint8_t mmc3_ctrl;
+	uint8_t mmc3_mirr;
+	uint8_t mmc3_wram;
 
-	uint8 irq_count;
-	uint8 irq_latch;
-	uint8 irq_enabled;
-	uint8 irq_reload;
+	uint8_t irq_count;
+	uint8_t irq_latch;
+	uint8_t irq_enabled;
+	uint8_t irq_reload;
 } m176;
 
-static uint8 dipswitch = 0;
-static uint8 dipsw_enable = 0; /* Change the address mask on every reset? */
-static uint8 after_power = 0;  /* Used for detecting whether a DIP switch is used or not (see above) */
+static uint8_t dipswitch = 0;
+static uint8_t dipsw_enable = 0; /* Change the address mask on every reset? */
+static uint8_t after_power = 0;  /* Used for detecting whether a DIP switch is used or not (see above) */
 
 static SFORMAT StateRegs[] = {
 	{ m176.fk23_regs, 8, "EXPR" },
@@ -91,7 +91,7 @@ static SFORMAT StateRegs[] = {
 #define CHR_MIXED           (WRAM_EXTENDED && (m176.mmc3_wram & 0x04))                                                /* First 8 KiB of CHR address space are RAM, then ROM */
 
 static void SyncPRG(void) {
-	const static uint16 mask_lut[8] = {
+	const static uint16_t mask_lut[8] = {
 		0x3F, 0x1F, 0x0F, 0x00,
 		0x00, 0x00, 0x7F, 0xFF
 	};
@@ -99,10 +99,10 @@ static void SyncPRG(void) {
 	/* For PRG modes 0-2, the mode# decides how many bits of the inner 8 KiB
 	 * bank are used. This is greatly relevant to map the correct bank that
 	 * contains the reset vectors. */
-	uint16 mask = mask_lut[PRG_MODE];
+	uint16_t mask = mask_lut[PRG_MODE];
 
 	/* The bits for the first 2 MiB are the same between all the variants. */
-	uint16 base = m176.fk23_regs[1] & 0x7F;
+	uint16_t base = m176.fk23_regs[1] & 0x7F;
 
 	switch (iNESCart.submapper) {
 	case 1: /* FK-xxx */
@@ -136,7 +136,7 @@ static void SyncPRG(void) {
 		/* 7: MMC3 with   2  MB addressable. Used byc at least on 2 games:
 			- 最终幻想 2 - 光明篇 (Final Fantasy 2 - Arc of Light)
 			- 梦幻仙境 - (Fantasy Wonderworld) */
-		uint16 swap = (INVERT_PRG ? 0x4000 : 0);
+		uint16_t swap = (INVERT_PRG ? 0x4000 : 0);
 
 		/* from 16 to 8 KiB. Address bits are never OR'd; they either come from
 		 * the outer bank or from the MMC3.  */
@@ -169,8 +169,8 @@ static void SyncPRG(void) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint8 bank = 0;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint8_t bank = 0;
 
 	/* some workaround for chr rom / ram access */
 	if (ROM.chr.size && CHRRAMSIZE) {
@@ -187,14 +187,14 @@ static void SetCHR(uint16 A, uint16 V) {
 }
 
 static void SyncCHR(void) {
-	uint16 mask = (CHR_OUTER_BANK_SIZE ? 0x7F : 0xFF);
-	uint16 swap = (INVERT_CHR ? 0x1000 : 0);
+	uint16_t mask = (CHR_OUTER_BANK_SIZE ? 0x7F : 0xFF);
+	uint16_t swap = (INVERT_CHR ? 0x1000 : 0);
 
 	/* From 8 KiB to 1 KiB banks. Address bits are never OR'd; they either
 	 * come from the outer bank or from the MMC3. */
-	uint16 base = m176.fk23_regs[2] << 3;
+	uint16_t base = m176.fk23_regs[2] << 3;
 
-	uint16 chrBank[8];
+	uint16_t chrBank[8];
 
 	if (iNESCart.submapper == 3) {
 		base |= (m176.fk23_regs[6] << 11); /* Outer 8 KiB CHR bank. Subtype 3 has an MSB register providing more bits. */
@@ -320,10 +320,10 @@ static DECLFW(Write5000) {
 }
 
 static DECLFW(Write8000) {
-	uint8 old_ctrl = 0;
-	uint8 ctrl_mask = 0;
-	uint8 updatePRG = FALSE;
-	uint8 updateCHR = FALSE;
+	uint8_t old_ctrl = 0;
+	uint8_t ctrl_mask = 0;
+	uint8_t updatePRG = FALSE;
+	uint8_t updateCHR = FALSE;
 
 	if (m176.latch != V) {
 		m176.latch = V;
@@ -517,13 +517,13 @@ static void InitCommon(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	if (CHRRAMSIZE) {
-		CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+		CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 		SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 		AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 	}
 
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

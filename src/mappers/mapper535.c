@@ -27,8 +27,8 @@
 #include "fdssound.h"
 
 static struct {
-	uint8 reg, IRQa;
-	int32 IRQCount;
+	uint8_t reg, IRQa;
+	int32_t IRQCount;
 } m535;
 
 static SFORMAT StateRegs[] = {
@@ -90,7 +90,7 @@ void Mapper535_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

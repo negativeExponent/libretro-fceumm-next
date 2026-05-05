@@ -22,7 +22,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m536;
 
 static SFORMAT StateRegs[] = {
@@ -30,8 +30,8 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 base = ((m536.reg[0] >> 1) & 0x20) | (m536.reg[0] & 0x1F);
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t base = ((m536.reg[0] >> 1) & 0x20) | (m536.reg[0] & 0x1F);
 
 	if (m536.reg[0] & 0x80) {
 		setprg8(A, (base << 2) | (V & 0x0F));
@@ -45,7 +45,7 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr8(0);
 }
 

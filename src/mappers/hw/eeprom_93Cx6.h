@@ -21,8 +21,8 @@
 #ifndef _EEPROM_93Cx6_H
 #define _EEPROM_93Cx6_H
 
-void eeprom_93Cx6_init(uint8 *data, uint32 capacity, uint8 wordsize);
-uint8 eeprom_93Cx6_read(void);
-void eeprom_93Cx6_write(uint8 CS, uint8 CLK, uint8 DAT);
+void eeprom_93Cx6_init(uint8_t *data, uint32_t capacity, uint8_t wordsize);
+uint8_t eeprom_93Cx6_read(void);
+void eeprom_93Cx6_write(uint8_t CS, uint8_t CLK, uint8_t DAT);
 
 #endif

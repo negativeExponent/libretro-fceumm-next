@@ -22,31 +22,31 @@
 #define _MMC5_H
 
 typedef struct __MMC5 {
-	uint8 prgMode;
-	uint8 chrMode;
-	uint8 extMode;
+	uint8_t prgMode;
+	uint8_t chrMode;
+	uint8_t extMode;
 
-	uint8 prg[5];
-	uint16 chr[12];
-	uint8 chrLast;
-	uint8 wramProtect[2];
-	uint8 nmt;
+	uint8_t prg[5];
+	uint16_t chr[12];
+	uint8_t chrLast;
+	uint8_t wramProtect[2];
+	uint8_t nmt;
 
 	struct {
-		uint8 enabled;
-		uint8 pending;
-		uint8 scanlineCounter;
-		uint8 scanlineTarget;
-		uint8 inFrame;
+		uint8_t enabled;
+		uint8_t pending;
+		uint8_t scanlineCounter;
+		uint8_t scanlineTarget;
+		uint8_t inFrame;
 	} irq;
 
-	uint8 mul[2];
+	uint8_t mul[2];
 
-	uint8 fillTable[1024];
-	uint8 exRam[1024];
-	uint8 fillTile;
-	uint8 fillColor;
-	uint8 batteryFlag;
+	uint8_t fillTable[1024];
+	uint8_t exRam[1024];
+	uint8_t fillTile;
+	uint8_t fillColor;
+	uint8_t batteryFlag;
 } MMC5;
 
 extern MMC5 mmc5;

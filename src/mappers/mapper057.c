@@ -22,9 +22,9 @@
 
 #include "mapinc.h"
 
-static uint8 dipsw;
+static uint8_t dipsw;
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m057;
 
 static SFORMAT StateRegs[] = {
@@ -34,8 +34,8 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 prg = (m057.reg[1] >> 5) & 0x07;
-	uint8 chr = ((m057.reg[0] >> 3) & 0x08) | (m057.reg[1] & 0x07);
+	uint8_t prg = (m057.reg[1] >> 5) & 0x07;
+	uint8_t chr = ((m057.reg[0] >> 3) & 0x08) | (m057.reg[1] & 0x07);
 
 	if (m057.reg[1] & 0x10) {
 		setprg32(0x8000, prg >> 1);

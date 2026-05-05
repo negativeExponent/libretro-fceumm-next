@@ -22,13 +22,13 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static void Sync(void) {
-	uint32 prg = ((latch.addr >> 3) & 0x20) | ((latch.addr >> 2) & 0x1F);
-	uint32 cpuA14 = latch.addr & 0x01;
-	uint32 nrom = (latch.addr >> 7) & 0x01;
-	uint32 unrom = (latch.addr >> 9) & 0x01;
+	uint32_t prg = ((latch.addr >> 3) & 0x20) | ((latch.addr >> 2) & 0x1F);
+	uint32_t cpuA14 = latch.addr & 0x01;
+	uint32_t nrom = (latch.addr >> 7) & 0x01;
+	uint32_t unrom = (latch.addr >> 9) & 0x01;
 
 	setprg8r(0x10, 0x6000, 0);
 	setprg16(0x8000, prg & ~cpuA14);

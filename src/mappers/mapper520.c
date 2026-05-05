@@ -26,7 +26,7 @@
 #include "vrc24.h"
 
 static struct {
-	uint8 ppuchrbus;
+	uint8_t ppuchrbus;
 } m520;
 
 static SFORMAT StateRegs[] = {
@@ -34,16 +34,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg8(A, ((VRC24_GetCHRBank(m520.ppuchrbus) << 2) & 0x20) | (V & 0x1F));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr1(A, V & 0x07);
 }
 
-static void PPUIRQHook(uint32 A) {
-	uint8 bank = (A & 0x1FFF) >> 10;
+static void PPUIRQHook(uint32_t A) {
+	uint8_t bank = (A & 0x1FFF) >> 10;
 	if ((m520.ppuchrbus != bank) && ((A & 0x3000) != 0x2000)) {
 		m520.ppuchrbus = bank;
 		VRC24_SyncPRG();

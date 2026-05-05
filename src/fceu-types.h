@@ -23,31 +23,6 @@
 #define __FCEU_TYPES_H
 
 #include <stdint.h>
-#ifdef __LIBRETRO__
-#include <retro_inline.h>
-#include <streams/file_stream_transforms.h>
-#else
-#include <stdio.h>
-#endif
-
-typedef int8_t int8;
-typedef int16_t int16;
-typedef int32_t int32;
-
-typedef uint8_t uint8;
-typedef uint16_t uint16;
-typedef uint32_t uint32;
-
-#ifdef __GNUC__
-typedef unsigned long long uint64;
-typedef long long int64;
-#elif MSVC | _MSC_VER
-typedef __int64 int64;
-typedef unsigned __int64 uint64;
-#else
-typedef unsigned long long uint64;
-typedef long long int64;
-#endif
 
 #define FCEU_UNUSED(x)    (void)(x)
 #define FCEU_MAYBE_UNUSED __attribute__((unused))
@@ -68,7 +43,20 @@ typedef long long int64;
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-typedef void (*writefunc)(uint16 A, uint8 V);
-typedef uint8 (*readfunc)(uint16 A);
+#ifndef INLINE
+
+#if defined(_MSC_VER)
+#define INLINE __forceinline
+#elif defined(__GNUC__)
+#define INLINE __inline__
+#elif defined(_MWERKS_)
+#define INLINE inline
+#else
+#define INLINE
+#endif
+#endif
+
+typedef void (*writefunc)(uint16_t A, uint8_t V);
+typedef uint8_t (*readfunc)(uint16_t A);
 
 #endif

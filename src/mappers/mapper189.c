@@ -28,10 +28,10 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m189;
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg32(0x8000, m189.reg | (m189.reg >> 4));
 }
 

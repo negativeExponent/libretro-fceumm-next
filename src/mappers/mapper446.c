@@ -35,7 +35,7 @@
 /* TODO: Only PNROM was tested */
 
 static struct {
-	uint8 reg[8];
+	uint8_t reg[8];
 } m446;
 
 static SFORMAT StateRegs[] = {
@@ -44,7 +44,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void (*mapperSync_cb)(void) = NULL;
-static void SetMode(uint8);
+static void SetMode(uint8_t);
 static DECLFW(WriteReg);
 static DECLFR(ReadFlash);
 static DECLFW(WriteFlash);
@@ -77,10 +77,10 @@ static void Sync(void) {
 }
 
 static void Sync_152(void) {
-	uint16 prgMask = Mapper_GetPRGMask() >> 1;
-	uint16 chrMask = Mapper_GetCHRMask() >> 3;
-	uint16 prgBase = Mapper_GetPRGBase() >> 1;
-	uint16 chrBase = Mapper_GetCHRBase() >> 3;
+	uint16_t prgMask = Mapper_GetPRGMask() >> 1;
+	uint16_t chrMask = Mapper_GetCHRMask() >> 3;
+	uint16_t prgBase = Mapper_GetPRGBase() >> 1;
+	uint16_t chrBase = Mapper_GetCHRBase() >> 3;
 	setprg16r(CHIP_FLASH, 0x8000, ((latch.data >> 4) & prgMask) | (prgBase & ~prgMask));
 	setprg16r(CHIP_FLASH, 0xC000, prgBase | prgMask);
 	setchr8((latch.data & chrMask) | (chrBase & ~chrMask));
@@ -88,19 +88,19 @@ static void Sync_152(void) {
 }
 
 static void Sync_AxROM(void) {
-	uint16 prgMask = Mapper_GetPRGMask() >> 2;
-	uint16 prgBase = Mapper_GetPRGBase() >> 2;
-	uint16 chrBase = Mapper_GetCHRBase();
+	uint16_t prgMask = Mapper_GetPRGMask() >> 2;
+	uint16_t prgBase = Mapper_GetPRGBase() >> 2;
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setprg32r(CHIP_FLASH, 0x8000, (latch.data & prgMask) | (prgBase & ~prgMask));
 	setchr8(chrBase);
 	setmirror((latch.data & 0x10) ? MI_1 : MI_0);
 }
 
 static void Sync_BNROM(void) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 prgBase = Mapper_GetPRGBase();
-	uint16 chrBase = Mapper_GetCHRBase();
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t prgBase = Mapper_GetPRGBase();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setprg8r(CHIP_FLASH, 0x8000, (((latch.data << 2) | 0) & prgMask) | prgBase);
 	setprg8r(CHIP_FLASH, 0xA000, (((latch.data << 2) | 1) & prgMask) | prgBase);
 	setprg8r(CHIP_FLASH, 0xC000, (((latch.data << 2) | 2) & prgMask) | prgBase);
@@ -110,10 +110,10 @@ static void Sync_BNROM(void) {
 }
 
 static void Sync_CNROM(void) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 chrMask = Mapper_GetCHRMask() >> 3;
-	uint16 prgBase = Mapper_GetPRGBase();
-	uint16 chrBase = Mapper_GetCHRBase() >> 3;
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t chrMask = Mapper_GetCHRMask() >> 3;
+	uint16_t prgBase = Mapper_GetPRGBase();
+	uint16_t chrBase = Mapper_GetCHRBase() >> 3;
 	setprg8r(CHIP_FLASH, 0x8000, (0 & prgMask) | prgBase);
 	setprg8r(CHIP_FLASH, 0xA000, (1 & prgMask) | prgBase);
 	setprg8r(CHIP_FLASH, 0xC000, (2 & prgMask) | prgBase);
@@ -123,10 +123,10 @@ static void Sync_CNROM(void) {
 }
 
 static void Sync_CNROM_Konami(void) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 chrMask = Mapper_GetCHRMask() >> 3;
-	uint16 prgBase = Mapper_GetPRGBase();
-	uint16 chrBase = Mapper_GetCHRBase() >> 3;
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t chrMask = Mapper_GetCHRMask() >> 3;
+	uint16_t prgBase = Mapper_GetPRGBase();
+	uint16_t chrBase = Mapper_GetCHRBase() >> 3;
 	setprg8r(CHIP_FLASH, 0x8000, (0 & prgMask) | prgBase);
 	setprg8r(CHIP_FLASH, 0xA000, (1 & prgMask) | prgBase);
 	setprg8r(CHIP_FLASH, 0xC000, (2 & prgMask) | prgBase);
@@ -136,24 +136,24 @@ static void Sync_CNROM_Konami(void) {
 }
 
 static void Sync_GNROM(void) {
-	uint16 prgMask = Mapper_GetPRGMask() >> 2;
-	uint16 chrMask = Mapper_GetCHRMask() >> 3;
-	uint16 prgBase = Mapper_GetPRGBase() >> 2;
-	uint16 chrBase = Mapper_GetCHRBase() >> 3;
+	uint16_t prgMask = Mapper_GetPRGMask() >> 2;
+	uint16_t chrMask = Mapper_GetCHRMask() >> 3;
+	uint16_t prgBase = Mapper_GetPRGBase() >> 2;
+	uint16_t chrBase = Mapper_GetCHRBase() >> 3;
 	setprg32r(CHIP_FLASH, 0x8000, ((latch.data >> 4) & prgMask) | (prgBase & ~prgMask));
 	setchr8(latch.data & 0x03);
 	setmirror((m446.reg[4] & 0x01) ? MI_V : MI_H);
 }
 
-static void SetPRG_H3001(uint16 A, uint16 V) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 prgBase = Mapper_GetPRGBase();
+static void SetPRG_H3001(uint16_t A, uint16_t V) {
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t prgBase = Mapper_GetPRGBase();
 	setprg8r(CHIP_FLASH, A, (prgBase & ~prgMask) | (V & prgMask));
 }
 
-static void SetCHR_H3001(uint16 A, uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 chrBase = Mapper_GetCHRBase();
+static void SetCHR_H3001(uint16_t A, uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setchr1(A, (chrBase & ~chrMask) | (V & chrMask));
 }
 
@@ -165,15 +165,15 @@ static void Sync_H3001(void) {
 	H3001_SyncMirror();
 }
 
-static void SetPRG_PNROM(uint16 A, uint16 V) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 prgBase = Mapper_GetPRGBase();
+static void SetPRG_PNROM(uint16_t A, uint16_t V) {
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t prgBase = Mapper_GetPRGBase();
 	setprg8r(CHIP_FLASH, A, (prgBase & ~prgMask) | (V & prgMask));
 }
 
-static void SetCHR_PNROM(uint16 A, uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 chrBase = Mapper_GetCHRBase();
+static void SetCHR_PNROM(uint16_t A, uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setchr4(A, (chrBase & ~chrMask) | (V & chrMask));
 }
 
@@ -185,15 +185,15 @@ static void Sync_PNROM(void) {
 	MMC2_SyncMirror();
 }
 
-static void SetPRG_SKROM(uint16 A, uint16 V) {
-	uint16 prgMask = Mapper_GetPRGMask() >> 1;
-	uint16 prgBase = Mapper_GetPRGBase() >> 1;
+static void SetPRG_SKROM(uint16_t A, uint16_t V) {
+	uint16_t prgMask = Mapper_GetPRGMask() >> 1;
+	uint16_t prgBase = Mapper_GetPRGBase() >> 1;
 	setprg16r(CHIP_FLASH, A, (prgBase & ~prgMask) | (V & prgMask));
 }
 
-static void SetCHR_SKROM(uint16 A, uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask() >> 2;
-	uint16 chrBase = Mapper_GetCHRBase() >> 2;
+static void SetCHR_SKROM(uint16_t A, uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask() >> 2;
+	uint16_t chrBase = Mapper_GetCHRBase() >> 2;
 	setchr4(A, (chrBase & ~chrMask) | (V & chrMask));
 }
 
@@ -205,15 +205,15 @@ static void Sync_SKROM(void) {
 	MMC1_SyncMirror();
 }
 
-static void SetPRG_SNROM(uint16 A, uint16 V) {
-	uint16 prgMask = Mapper_GetPRGMask() >> 1;
-	uint16 prgBase = Mapper_GetPRGBase() >> 1;
+static void SetPRG_SNROM(uint16_t A, uint16_t V) {
+	uint16_t prgMask = Mapper_GetPRGMask() >> 1;
+	uint16_t prgBase = Mapper_GetPRGBase() >> 1;
 	setprg8r(CHIP_FLASH, A, (prgBase & ~prgMask) | (V & prgMask));
 }
 
-static void SetCHR_SNROM(uint16 A, uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask() >> 2;
-	uint16 chrBase = Mapper_GetCHRBase() >> 2;
+static void SetCHR_SNROM(uint16_t A, uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask() >> 2;
+	uint16_t chrBase = Mapper_GetCHRBase() >> 2;
 	setchr4(A, (chrBase & ~chrMask) | (V & chrMask));
 }
 
@@ -225,15 +225,15 @@ static void Sync_SNROM(void) {
 	MMC1_SyncMirror();
 }
 
-static void SetPRG_SUROM(uint16 A, uint16 V) {
-	uint16 prgMask = Mapper_GetPRGMask() >> 1;
-	uint16 prgBase = Mapper_GetPRGBase() >> 1;
+static void SetPRG_SUROM(uint16_t A, uint16_t V) {
+	uint16_t prgMask = Mapper_GetPRGMask() >> 1;
+	uint16_t prgBase = Mapper_GetPRGBase() >> 1;
 	setprg8r(CHIP_FLASH, A, (prgBase & ~prgMask) | ((MMC1_GetCHRBank(0) & 0x10 | V) & prgMask));
 }
 
-static void SetCHR_SUROM(uint16 A, uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask() >> 2;
-	uint16 chrBase = Mapper_GetCHRBase() >> 2;
+static void SetCHR_SUROM(uint16_t A, uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask() >> 2;
+	uint16_t chrBase = Mapper_GetCHRBase() >> 2;
 	setchr4(A, (chrBase & ~chrMask) | (V & chrMask & 0x0F));
 }
 
@@ -270,15 +270,15 @@ static void Sync_TC3294(void) {
 }
 */
 
-static void SetPRG_TxROM(uint16 A, uint16 V) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 prgBase = Mapper_GetPRGBase();
+static void SetPRG_TxROM(uint16_t A, uint16_t V) {
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t prgBase = Mapper_GetPRGBase();
 	setprg8r(CHIP_FLASH, A, (prgBase & ~prgMask) | (V & prgMask));
 }
 
-static void SetCHR_TxROM(uint16 A, uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 chrBase = Mapper_GetCHRBase();
+static void SetCHR_TxROM(uint16_t A, uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setchr1(A, (chrBase & ~chrMask) | (V & chrMask));
 }
 
@@ -290,15 +290,15 @@ static void Sync_TxROM(void) {
 	MMC3_SyncMirror();
 }
 
-static void SetPRG_TxSROM(uint16 A, uint16 V) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 prgBase = Mapper_GetPRGBase();
+static void SetPRG_TxSROM(uint16_t A, uint16_t V) {
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t prgBase = Mapper_GetPRGBase();
 	setprg8r(CHIP_FLASH, A, (prgBase & ~prgMask) | (V & prgMask));
 }
 
-static void SetCHR_TxSROM(uint16 A, uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 chrBase = Mapper_GetCHRBase();
+static void SetCHR_TxSROM(uint16_t A, uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setchr1(A, (chrBase & ~chrMask) | (V & chrMask & 0x7F));
 	setmirror(MMC3_GetCHRBank(0) & 0x80 ? MI_1 : MI_0);
 }
@@ -312,25 +312,25 @@ static void Sync_TxSROM(void) {
 }
 
 static void Sync_UxROM(void) {
-	uint16 prgMask = Mapper_GetPRGMask() >> 1;
-	uint16 prgBase = Mapper_GetCHRBase() >> 1;
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 chrBase = Mapper_GetCHRBase();
+	uint16_t prgMask = Mapper_GetPRGMask() >> 1;
+	uint16_t prgBase = Mapper_GetCHRBase() >> 1;
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setprg16r(CHIP_FLASH, 0x8000, (latch.data & prgMask) | (prgBase & ~prgMask));
 	setprg16r(CHIP_FLASH, 0xC000, prgBase | prgMask);
 	setchr8(chrBase);
 	setmirror((m446.reg[4] & 0x01) ? MI_V : MI_H);
 }
 
-static void SetPRG_VRC1(uint16 A, uint16 V) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 prgBase = Mapper_GetPRGBase();
+static void SetPRG_VRC1(uint16_t A, uint16_t V) {
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t prgBase = Mapper_GetPRGBase();
 	setprg8r(CHIP_FLASH, A, (prgBase & ~prgMask) | (V & prgMask));
 }
 
-static void SetCHR_VRC1(uint16 A, uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 chrBase = Mapper_GetCHRBase();
+static void SetCHR_VRC1(uint16_t A, uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setchr1(A, (chrBase & ~chrMask) | (V & chrMask));
 }
 
@@ -342,15 +342,15 @@ static void Sync_VRC1(void) {
 	VRC1_SyncMirror();
 }
 
-static void SetPRG_VRC3(uint16 A, uint16 V) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 prgBase = Mapper_GetPRGBase();
+static void SetPRG_VRC3(uint16_t A, uint16_t V) {
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t prgBase = Mapper_GetPRGBase();
 	setprg16r(CHIP_FLASH, A, (prgBase & ~prgMask) | (V & prgMask));
 }
 
-static void SetCHR_VRC3(uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 chrBase = Mapper_GetCHRBase();
+static void SetCHR_VRC3(uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setchr8(chrBase);
 }
 
@@ -362,21 +362,21 @@ static void Sync_VRC3(void) {
 	setmirror((m446.reg[4] & 0x01) ? MI_V : MI_H);
 }
 
-static void SetPRG_VRC4(uint16 A, uint16 V) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 prgBase = Mapper_GetPRGBase();
+static void SetPRG_VRC4(uint16_t A, uint16_t V) {
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t prgBase = Mapper_GetPRGBase();
 	setprg8r(CHIP_FLASH, A, (prgBase & ~prgMask) | (V & prgMask));
 }
 
-static void SetCHR_VRC4(uint16 A, uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 chrBase = Mapper_GetCHRBase();
+static void SetCHR_VRC4(uint16_t A, uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setchr1(A, (chrBase & ~chrMask) | (V & chrMask));
 }
 
-static void SetCHR_VRC4_22(uint16 A, uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 chrBase = Mapper_GetCHRBase();
+static void SetCHR_VRC4_22(uint16_t A, uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	V >>= 1;
 	setchr1(A, (chrBase & ~chrMask) | (V & chrMask));
 }
@@ -397,15 +397,15 @@ static void Sync_VRC4_22(void) {
 	VRC24_SyncMirror();
 }
 
-static void SetPRG_VRC6(uint16 A, uint16 V) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 prgBase = Mapper_GetPRGBase();
+static void SetPRG_VRC6(uint16_t A, uint16_t V) {
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t prgBase = Mapper_GetPRGBase();
 	setprg8r(CHIP_FLASH, A, (prgBase & ~prgMask) | (V & prgMask));
 }
 
-static void SetCHR_VRC6(uint16 A, uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 chrBase = Mapper_GetCHRBase();
+static void SetCHR_VRC6(uint16_t A, uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setchr1(A, (chrBase & ~chrMask) | (V & chrMask));
 }
 
@@ -417,15 +417,15 @@ static void Sync_VRC6(void) {
 	VRC6_SyncMirror();
 }
 
-static void SetPRG_VRC7(uint16 A, uint16 V) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 prgBase = Mapper_GetPRGBase();
+static void SetPRG_VRC7(uint16_t A, uint16_t V) {
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t prgBase = Mapper_GetPRGBase();
 	setprg8r(CHIP_FLASH, A, (prgBase & ~prgMask) | (V & prgMask));
 }
 
-static void SetCHR_VRC7(uint16 A, uint16 V) {
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 chrBase = Mapper_GetCHRBase();
+static void SetCHR_VRC7(uint16_t A, uint16_t V) {
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setchr1(A, (chrBase & ~chrMask) | (V & chrMask));
 }
 
@@ -438,10 +438,10 @@ static void Sync_VRC7(void) {
 }
 
 static void Sync_supervisor(void) {
-	uint16 prgMask = Mapper_GetPRGMask();
-	uint16 prgBase = Mapper_GetPRGBase();
-	uint16 chrMask = Mapper_GetCHRMask();
-	uint16 chrBase = Mapper_GetCHRBase();
+	uint16_t prgMask = Mapper_GetPRGMask();
+	uint16_t prgBase = Mapper_GetPRGBase();
+	uint16_t chrMask = Mapper_GetCHRMask();
+	uint16_t chrBase = Mapper_GetCHRBase();
 	setprg8r(CHIP_FLASH, 0x8000, prgBase);
 	setprg8r(CHIP_FLASH, 0xA000, prgBase + 1);
 	setprg8r(CHIP_FLASH, 0xC000, (iNESCart.submapper == 3) ? 0x1E : 0x3E);
@@ -450,13 +450,13 @@ static void Sync_supervisor(void) {
 	setmirror((m446.reg[4] & 0x01) ? MI_V : MI_H);
 }
 
-static void Mapper_SyncWRAM(uint8 bank) {
+static void Mapper_SyncWRAM(uint8_t bank) {
 	if (PRGsize[CHIP_WRAM]) {
 		setprg8r(0x10, 0x6000, bank);
 	}
 }
 
-static void SetMode(uint8 clear) {
+static void SetMode(uint8_t clear) {
 	if (m446.reg[0] & 0x80) {
 		int code = (iNESCart.submapper << 8) | (m446.reg[0] & 0x1F);
 		MapIRQHook = NULL;
@@ -702,7 +702,7 @@ void Mapper446_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 	WRAMSIZE = ws;
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_malloc(WRAMSIZE);
 		SetupCartPRGMapping(CHIP_WRAM, WRAM, WRAMSIZE, TRUE);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}

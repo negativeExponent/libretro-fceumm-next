@@ -22,7 +22,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m197;
 
 static SFORMAT StateRegs[] = {
@@ -30,9 +30,9 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint8 mask = (m197.reg & 0x08) ? 0x0F : 0x1F;
-	uint8 base = 0;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint8_t mask = (m197.reg & 0x08) ? 0x0F : 0x1F;
+	uint8_t base = 0;
 
 	switch (iNESCart.submapper) {
 	case 0:

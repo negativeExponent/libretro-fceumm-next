@@ -20,7 +20,7 @@
 
 #include "mapinc.h"
 
-static uint8 regs[8];
+static uint8_t regs[8];
 
 static SFORMAT StateRegs[] = {
 	{ regs, 8, "REGS" },
@@ -112,7 +112,7 @@ void SSSNROM_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 16384;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	AddExState(StateRegs, ~0, 0, NULL);

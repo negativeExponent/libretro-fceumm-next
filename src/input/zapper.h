@@ -4,11 +4,11 @@
 #include "../fceu-types.h"
 
 typedef struct ZAPPER {
-	uint32 mzx, mzy, mzb, mzs;
+	uint32_t mzx, mzy, mzb, mzs;
 	int zap_readbit;
-	uint8 bogo;
+	uint8_t bogo;
 	int zappo;
-	uint64 zaphit;
+	uint64_t zaphit;
 } ZAPPER;
 
 extern ZAPPER ZD[2];

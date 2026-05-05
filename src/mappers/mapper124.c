@@ -32,14 +32,14 @@
 #define MAPPER_MMC3	 3
 
 static struct {
-	uint8 reg[2];
-	uint8 mapper;
+	uint8_t reg[2];
+	uint8_t mapper;
 } m124;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
-static uint8 audioEnable;
-static uint8 *ExRAM;
+static uint8_t audioEnable;
+static uint8_t *ExRAM;
 
 static SFORMAT StateRegs[] = {
 	{ m124.reg, 2, "EXPR" },
@@ -47,19 +47,19 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint32 GetPRGBase(void) {
+static uint32_t GetPRGBase(void) {
 	return ((m124.reg[1] << 4) & 0x1F0);
 }
 
-static uint32 GetCHRBase(void) {
+static uint32_t GetCHRBase(void) {
 	return ((m124.reg[0] << 7) & 0x780);
 }
 
-static void SetPRG_mmc1(uint16 A, uint16 V) {
+static void SetPRG_mmc1(uint16_t A, uint16_t V) {
 	setprg16(A, (GetPRGBase() >> 1) | (V & 0x07));
 }
 
-static void SetCHR_mmc1(uint16 A, uint16 V) {
+static void SetCHR_mmc1(uint16_t A, uint16_t V) {
 	setchr4(A, (GetCHRBase() >> 2) | (V & 0x1F));
 }
 
@@ -69,13 +69,13 @@ static void SyncWRAM_mmc1(void) {
 	}
 }
 
-static void SetPRG_mmc3(uint16 A, uint16 V) {
-	uint16 mask = (m124.reg[1] & 0x20) ? 0x0F : 0x1F;
+static void SetPRG_mmc3(uint16_t A, uint16_t V) {
+	uint16_t mask = (m124.reg[1] & 0x20) ? 0x0F : 0x1F;
 	setprg8(A, GetPRGBase() | (V & mask));
 }
 
-static void SetCHR_mmc3(uint16 A, uint16 V) {
-	uint16 mask = (m124.reg[0] & 0x40) ? 0x7F : 0xFF;
+static void SetCHR_mmc3(uint16_t A, uint16_t V) {
+	uint16_t mask = (m124.reg[0] & 0x40) ? 0x7F : 0xFF;
 	setchr1(A, GetCHRBase() | (V & mask));
 }
 
@@ -231,15 +231,15 @@ void Mapper124_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, TRUE);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
-	ExRAM = (uint8 *)FCEU_gmalloc(4096);
+	ExRAM = (uint8_t *)FCEU_gmalloc(4096);
 	AddExState(ExRAM, 4096, 0, "ExRAM");
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, TRUE);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 }

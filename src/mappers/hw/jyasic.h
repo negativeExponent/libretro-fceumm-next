@@ -22,26 +22,26 @@
 #define _JYASIC_H
 
 typedef struct __JYASIC {
-	uint8 mode[4];
-	uint8 prg[4];
-	uint8 mul[2];
-	uint8 adder;
-	uint8 test;
-	uint8 latch[2];
-	uint16 chr[8];
-	uint16 nt[4];
+	uint8_t mode[4];
+	uint8_t prg[4];
+	uint8_t mul[2];
+	uint8_t adder;
+	uint8_t test;
+	uint8_t latch[2];
+	uint16_t chr[8];
+	uint16_t nt[4];
 	struct irq {
-		uint8 control;
-		uint8 enable;
-		uint8 prescaler;
-		uint8 counter;
-		uint8 xor;
+		uint8_t control;
+		uint8_t enable;
+		uint8_t prescaler;
+		uint8_t counter;
+		uint8_t xor;
 	} irq;
 } JYASIC;
 
 extern JYASIC jyasic;
 
-extern uint8 JYASIC_CPUWriteHandlersSet;
+extern uint8_t JYASIC_CPUWriteHandlersSet;
 extern writefunc JYASIC_cpuWrite[0x10000];
 
 DECLFR(JYASIC_ReadALU_DIP);
@@ -66,9 +66,9 @@ void JYASIC_SyncCHR(void);
 void JYASIC_SyncWRAM(void);
 void JYASIC_SyncMirror(void);
 
-extern void (*JYASIC_pwrap)(uint16 A, uint32 V);
-extern void (*JYASIC_wwrap)(uint16 A, uint32 V);
-extern void (*JYASIC_cwrap)(uint16 A, uint32 V);
-extern void (*JYASIC_mwrap)(uint16 A, uint32 V);
+extern void (*JYASIC_pwrap)(uint16_t A, uint32_t V);
+extern void (*JYASIC_wwrap)(uint16_t A, uint32_t V);
+extern void (*JYASIC_cwrap)(uint16_t A, uint32_t V);
+extern void (*JYASIC_mwrap)(uint16_t A, uint32_t V);
 
 #endif /* _JYASIC_H */

@@ -30,10 +30,10 @@
 #include "eeprom_93Cx6.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m164;
 
-static uint8 eeprom_data[512];
+static uint8_t eeprom_data[512];
 
 static SFORMAT StateRegs[] = {
 	{ m164.reg, 4, "REGS" },
@@ -60,9 +60,9 @@ static void Sync(void) {
 	 *             1: CHR A3=PPU A0, CHR A12=PPU A9, both latched on
 	 *               last rise of PPU A13 (enable 1 bpp mode)
 	 */
-	uint8 prgHigh = m164.reg[1] << 5;
- 	uint8 prgLow = ((m164.reg[0] >> 1) & 0x10) | (m164.reg[0] & 0x0F);
-	uint8 mirrorH = ((m164.reg[0] & 0x10) && !(m164.reg[3] & 0x80)) ? MI_H : MI_V;
+	uint8_t prgHigh = m164.reg[1] << 5;
+ 	uint8_t prgLow = ((m164.reg[0] >> 1) & 0x10) | (m164.reg[0] & 0x0F);
+	uint8_t mirrorH = ((m164.reg[0] & 0x10) && !(m164.reg[3] & 0x80)) ? MI_H : MI_V;
 
 	if (m164.reg[0] & 0x10) {
 		if (m164.reg[0] & 0x20) {
@@ -149,7 +149,7 @@ void Mapper164_Init(CartInfo *info) {
 		WRAMSIZE = info->iNES2 ? (info->PRGRamSize + (info->PRGRamSaveSize & ~0x7FF)) : 8192;
 	}
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}

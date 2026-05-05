@@ -22,7 +22,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg[2], chr[8], mode;
+	uint8_t prg[2], chr[8], mode;
 } m032;
 
 static SFORMAT StateRegs[] = {
@@ -33,7 +33,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void SyncPRG(void) {
-	uint16 pswap = (m032.mode & 0x02) ? 0x4000 : 0;
+	uint16_t pswap = (m032.mode & 0x02) ? 0x4000 : 0;
 
 	setprg8(0x8000 ^ pswap, m032.prg[0]);
 	setprg8(0xA000, m032.prg[1]);
@@ -130,7 +130,7 @@ void Mapper032_Init(CartInfo *info) {
 		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
 	}
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}

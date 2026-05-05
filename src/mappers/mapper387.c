@@ -21,11 +21,11 @@
 #include "mapinc.h"
 #include "jyasic.h"
 
-static uint32 GetPRGBank(uint32 V) {
+static uint32_t GetPRGBank(uint32_t V) {
 	return (((jyasic.mode[3] << 2) & 0x20) | ((jyasic.mode[3] << 3) & 0x10) | (V & 0x0F));
 }
 
-static uint32 GetCHRBank(uint32 V) {
+static uint32_t GetCHRBank(uint32_t V) {
 	if (jyasic.mode[3] & 0x20) {
 		return (((jyasic.mode[3] << 7) & 0x600) | (V & 0x1FF));
 	} else {
@@ -33,19 +33,19 @@ static uint32 GetCHRBank(uint32 V) {
 	}
 }
 
-static void SetPRG(uint16 A, uint32 V) {
+static void SetPRG(uint16_t A, uint32_t V) {
 	setprg8(A, GetPRGBank(V));
 }
 
-static void SetCHR(uint16 A, uint32 V) {
+static void SetCHR(uint16_t A, uint32_t V) {
 	setchr1(A, GetCHRBank(V));
 }
 
-static void SetWRAM(uint16 A, uint32 V) {
+static void SetWRAM(uint16_t A, uint32_t V) {
 	setprg8(A, GetPRGBank(V));
 }
 
-static void SetMirror(uint16 A, uint32 V) {
+static void SetMirror(uint16_t A, uint32_t V) {
 	setntamem(CHRptr[0] + 0x400 * (GetCHRBank(V) & CHRmask1[0]), 0, A);
 }
 

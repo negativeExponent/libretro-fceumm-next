@@ -38,24 +38,24 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m287;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &m287.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void SetCHRBank(uint16 A, uint16 V) {
-	uint16 base = m287.reg << 7;
-	uint16 mask = 0x7F;
+static void SetCHRBank(uint16_t A, uint16_t V) {
+	uint16_t base = m287.reg << 7;
+	uint16_t mask = 0x7F;
 
 	setchr1(A, ((base & ~mask) | (V & mask)));
 }
 
-static void SetPRGBank(uint16 A, uint16 V) {
+static void SetPRGBank(uint16_t A, uint16_t V) {
 	if ((m287.reg & 0x04) && dipsw && ROM.prg.size < (1024 * 1024)) {
 		unsetcpu32(0x8000);
 	} else {
@@ -65,8 +65,8 @@ static void SetPRGBank(uint16 A, uint16 V) {
 			/* FCEU_printf("32K mode: bank:%02x\n", ((m287.reg >> 4) & 3) | ((m287.reg & 7) << 2)); */
 		} else {
 			/* MMC3 Mode */
-			uint8 base = m287.reg << 4;
-			uint8 mask = 0x0F;
+			uint8_t base = m287.reg << 4;
+			uint8_t mask = 0x0F;
 
 			setprg8(A, ((base & ~mask) | (V & mask)));
 			/* FCEU_printf("MMC3: %04x:%02x\n", A, (V & 0x0F) | ((m287.reg & 7) << 4)); */

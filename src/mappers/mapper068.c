@@ -33,12 +33,12 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 chr[4];
-	uint8 nt[2];
-	uint8 mirror;
-	uint8 prg;
-	uint8 access;
-	int32 timer;
+	uint8_t chr[4];
+	uint8_t nt[2];
+	uint8_t mirror;
+	uint8_t prg;
+	uint8_t access;
+	int32_t timer;
 } m068;
 
 static SFORMAT StateRegs[] = {
@@ -220,7 +220,7 @@ void Mapper068_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

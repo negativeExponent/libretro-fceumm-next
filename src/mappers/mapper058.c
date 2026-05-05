@@ -23,10 +23,10 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 prg = latch.addr & 0x07;
-	uint8 chr = (latch.addr >> 3) & 0x07;
-	uint8 mirrorV = ((latch.addr & 0x80) >> 7) ^ 0x01;
-	uint8 A14 = (latch.addr & 0x40) == 0;
+	uint8_t prg = latch.addr & 0x07;
+	uint8_t chr = (latch.addr >> 3) & 0x07;
+	uint8_t mirrorV = ((latch.addr & 0x80) >> 7) ^ 0x01;
+	uint8_t A14 = (latch.addr & 0x40) == 0;
 
 	setprg16(0x8000, prg & ~A14);
 	setprg16(0xC000, prg | A14);

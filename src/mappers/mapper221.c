@@ -26,7 +26,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint16 reg[2];
+	uint16_t reg[2];
 } m221;
 
 static SFORMAT StateRegs[] = {
@@ -34,15 +34,15 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint16 GetPRGBase(void) {
-	uint32 rshift = (iNESCart.submapper == 1) ? 2 : 3;
+static uint16_t GetPRGBase(void) {
+	uint32_t rshift = (iNESCart.submapper == 1) ? 2 : 3;
 	return (((m221.reg[0] >> rshift) & 0x40) | ((m221.reg[0] >> 2) & 0x38));
 }
 
 static void Sync(void) {
-	uint16 prg = GetPRGBase() | (m221.reg[1] & 0x07);
-	uint16 unrom_mask = (iNESCart.submapper == 1) ? 0x200 : 0x100;
-	uint8 prot = (iNESCart.submapper == 1) ? (m221.reg[0] & 0x0400) : (m221.reg[1] & 0x0008);
+	uint16_t prg = GetPRGBase() | (m221.reg[1] & 0x07);
+	uint16_t unrom_mask = (iNESCart.submapper == 1) ? 0x200 : 0x100;
+	uint8_t prot = (iNESCart.submapper == 1) ? (m221.reg[0] & 0x0400) : (m221.reg[1] & 0x0008);
 
 	if (m221.reg[0] & unrom_mask) { /* UNROM */
 		setprg16(0x8000, prg);

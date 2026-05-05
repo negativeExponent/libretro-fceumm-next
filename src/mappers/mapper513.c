@@ -25,7 +25,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 ppuchrbus;
+	uint8_t ppuchrbus;
 } m513;
 
 static SFORMAT StateRegs[] = {
@@ -42,7 +42,7 @@ static void SyncPRG(void) {
 }
 
 
-static void PPUIRQHook(uint32 A) {
+static void PPUIRQHook(uint32_t A) {
 	if ((A & 0x3000) != 0x2000) {
 		m513.ppuchrbus = A >> 10;
 	}

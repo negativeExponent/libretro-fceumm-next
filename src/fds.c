@@ -75,66 +75,66 @@ enum FDS_DiskBlockIDs {
 };
 
 static struct _FDS {
-	uint32 total_sides;
-	uint32 boot_delay;
-	uint32 disk_insert_delay;
+	uint32_t total_sides;
+	uint32_t boot_delay;
+	uint32_t disk_insert_delay;
 
-	uint8  *current_disk_ptr;
+	uint8_t  *current_disk_ptr;
 
-	int32  seek_irq_timer;
-	uint8  selected_disk, current_disk;
+	int32_t  seek_irq_timer;
+	uint8_t  selected_disk, current_disk;
 
-	int32  irq_latch, irq_count;
-	uint8  irq_enabled;
-	uint8  irq_repeat;
+	int32_t  irq_latch, irq_count;
+	uint8_t  irq_enabled;
+	uint8_t  irq_repeat;
 
-	uint8  irq_timer;
-	uint8  transfer_flag;
+	uint8_t  irq_timer;
+	uint8_t  transfer_flag;
 
-	uint8  disk_reg_enabled;
-	uint8  snd_reg_enabled;
+	uint8_t  disk_reg_enabled;
+	uint8_t  snd_reg_enabled;
 
-	uint8  control;       /* 4025(w) control register */
-	uint16 filesize;      /* size of file being read/written */
-	uint8  blockid;       /* block-id of current block */
-	uint16 blockstart;    /* start-address of current block */
-	uint16 blocklen;      /* length of current block */
-	uint16 blockpos;      /* current address relative to blockstart */
-	uint8  accessed;      /* disk needs to be accessed at least once before writing */
+	uint8_t  control;       /* 4025(w) control register */
+	uint16_t filesize;      /* size of file being read/written */
+	uint8_t  blockid;       /* block-id of current block */
+	uint16_t blockstart;    /* start-address of current block */
+	uint16_t blocklen;      /* length of current block */
+	uint16_t blockpos;      /* current address relative to blockstart */
+	uint8_t  accessed;      /* disk needs to be accessed at least once before writing */
 
 	struct _disk {
-		uint8  format;
-		uint8  no_crc;
-		uint32 bytes_per_size;
-		uint8  *data[8];
+		uint8_t  format;
+		uint8_t  no_crc;
+		uint32_t bytes_per_size;
+		uint8_t  *data[8];
 	} disk;
 } fds;
 
 typedef struct FDSBlock1 {
-	uint32 position;
-	uint8  game_name[3 + 1];
-	uint8  game_version;
-	uint8  side_number;
-	uint8  disk_number;
+	uint32_t position;
+	uint8_t  game_name[3 + 1];
+	uint8_t  game_version;
+	uint8_t  side_number;
+	uint8_t  disk_number;
 } FDSBlock1;
 
 typedef struct FDSBlock2 {
-	uint32 position;
-	uint8  file_count; /* 0x01 */
+	uint32_t position;
+	uint8_t  file_count; /* 0x01 */
 } FDSBlock2;
 
 typedef struct FDSBlock3 {
-	uint32 position;
-	uint8  file_number;   /* 0x01 */
-	uint8  file_id;       /* 0x02 */
-	uint8  file_name[9];  /* 0x03-0x0A */
-	uint16 load_address;  /* 0x0B-0x0C */
-	uint16 file_size;     /* 0x0D-0x0E */
-	uint8  file_type;     /* 0x0F */
+	uint32_t position;
+	uint8_t  file_number;   /* 0x01 */
+	uint8_t  file_id;       /* 0x02 */
+	uint8_t  file_name[9];  /* 0x03-0x0A */
+	uint16_t load_address;  /* 0x0B-0x0C */
+	uint16_t file_size;     /* 0x0D-0x0E */
+	uint8_t  file_type;     /* 0x0F */
 } FDSBlock3;
 
 typedef struct FDSBlock4 {
-	uint32 position;
+	uint32_t position;
 } FDSBlock4;
 
 typedef struct FDSFileEntry {
@@ -148,47 +148,47 @@ typedef struct FDSInfo {
 	FDSBlock1 volume_block;
 	FDSBlock2 count_block;
 	FDSFileEntry files[MAX_FILES];
-	uint32 total_files;
-	uint32 files_counted;
-	uint8  game_name[4];
+	uint32_t total_files;
+	uint32_t files_counted;
+	uint8_t  game_name[4];
 } FDSInfo;
 
-static INLINE void fds_memset(uint8 *dst, uint8 value, size_t len) {
-	uint32 i;
+static INLINE void fds_memset(uint8_t *dst, uint8_t value, size_t len) {
+	uint32_t i;
 
 	for (i = 0; i < len; i++) {
 		(*dst++) = value;
 	}
 }
 
-static INLINE void fds_memcpy(uint8 *dst, const uint8 *src, size_t len) {
-	uint32 i;
+static INLINE void fds_memcpy(uint8_t *dst, const uint8_t *src, size_t len) {
+	uint32_t i;
 
 	for (i = 0; i < len; i++) {
 		(*dst++) = (*src++);
 	}
 }
 
-static INLINE void fds_memcpy_ascii(uint8 *dst, const uint8 *src, size_t len) {
-	uint32 i;
+static INLINE void fds_memcpy_ascii(uint8_t *dst, const uint8_t *src, size_t len) {
+	uint32_t i;
 
 	fds_memset(dst, 0, len);
 	for (i = 0; i < (len - 1); i++ ) {
-		uint8 ch = src[i] & 0xFF;
+		uint8_t ch = src[i] & 0xFF;
 
 		dst[i] = ((ch >= 0x20) && (ch <= 0x7E)) ? ch : 0x20;
 	}
 }
 
-static void fds_info_side(uint8 side, FDSInfo *info) {
-	uint32 pos = 0, filesize = 0;
-	const uint8 *src = fds.disk.data[side];
+static void fds_info_side(uint8_t side, FDSInfo *info) {
+	uint32_t pos = 0, filesize = 0;
+	const uint8_t *src = fds.disk.data[side];
 
-	fds_memset((uint8 *)info, 0x00, sizeof(FDSInfo));
+	fds_memset((uint8_t *)info, 0x00, sizeof(FDSInfo));
 
 	for (pos = 0; pos < fds.disk.bytes_per_size;) {
-		uint8 blockid = src[pos], stop = FALSE;
-		uint32 blocklen = 1;
+		uint8_t blockid = src[pos], stop = FALSE;
+		uint32_t blocklen = 1;
 
 		switch (blockid) {
 		case DSK_VOLUME:   blocklen = 0x38; break;
@@ -207,7 +207,7 @@ static void fds_info_side(uint8 side, FDSInfo *info) {
 		}
 
 		if (blockid) {
-			const uint32 file = info->files_counted;
+			const uint32_t file = info->files_counted;
 
 			switch (blockid) {
 			case DSK_VOLUME:
@@ -246,15 +246,15 @@ static void fds_info_side(uint8 side, FDSInfo *info) {
 	}
 }
 
-static uint16 gen_qd_crc(uint8 *data, unsigned size) {
+static uint16_t gen_qd_crc(uint8_t *data, unsigned size) {
 	size_t byte_index, bit_index;
-	uint16 sum = 0x8000;
+	uint16_t sum = 0x8000;
 
 	for (byte_index = 0; byte_index < size + 2; byte_index++) {
-		uint8 byte = byte_index < size ? data[byte_index] : 0x00;
+		uint8_t byte = byte_index < size ? data[byte_index] : 0x00;
 		for (bit_index = 0; bit_index < 8; bit_index++) {
-			uint16 bit = (byte >> bit_index) & 1;
-			uint16 carry = sum & 1;
+			uint16_t bit = (byte >> bit_index) & 1;
+			uint16_t carry = sum & 1;
 			sum = (sum >> 1) | (bit << 15);
 			if (carry)
 				sum ^= 0x8408;
@@ -263,9 +263,9 @@ static uint16 gen_qd_crc(uint8 *data, unsigned size) {
 	return sum;
 }
 
-static int fds_build_image_qd(uint8 *dst, uint8 *src, int src_is_qd) {
+static int fds_build_image_qd(uint8_t *dst, uint8_t *src, int src_is_qd) {
 	size_t dest_pos = 0, source_pos = 0, file_count = 0;
-	uint16 crc_read = 0, crc_calc = 0;
+	uint16_t crc_read = 0, crc_calc = 0;
 	size_t blockstart, blocklen;
 
 	if ((memcmp(&src[0], "\x1*NINTENDO-HVC*", 15))) {
@@ -293,12 +293,12 @@ static int fds_build_image_qd(uint8 *dst, uint8 *src, int src_is_qd) {
 			            crc_calc % 256,
 			            crc_calc / 256);
 		}
-		fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+		fds_memcpy(&dst[dest_pos], (const uint8_t *)&crc_calc, 2);
 		source_pos += 2;
 		dest_pos += 2;
 	} else {
 		crc_calc = gen_qd_crc(&src[blockstart], blocklen);
-		fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+		fds_memcpy(&dst[dest_pos], (const uint8_t *)&crc_calc, 2);
 		dest_pos += 2;
 	}
 
@@ -328,12 +328,12 @@ static int fds_build_image_qd(uint8 *dst, uint8 *src, int src_is_qd) {
 			            crc_calc % 256,
 			            crc_calc / 256);
 		}
-		fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+		fds_memcpy(&dst[dest_pos], (const uint8_t *)&crc_calc, 2);
 		source_pos += 2;
 		dest_pos += 2;
 	} else {
 		crc_calc = gen_qd_crc(&src[blockstart], blocklen);
-		fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+		fds_memcpy(&dst[dest_pos], (const uint8_t *)&crc_calc, 2);
 		dest_pos += 2;
 	}
 
@@ -361,12 +361,12 @@ static int fds_build_image_qd(uint8 *dst, uint8 *src, int src_is_qd) {
 				    crc_calc % 256,
 				    crc_calc / 256);
 			}
-			fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+			fds_memcpy(&dst[dest_pos], (const uint8_t *)&crc_calc, 2);
 			source_pos += 2;
 			dest_pos += 2;
 		} else {
 			crc_calc = gen_qd_crc(&src[blockstart], blocklen);
-			fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+			fds_memcpy(&dst[dest_pos], (const uint8_t *)&crc_calc, 2);
 			dest_pos += 2;
 		}
 
@@ -396,12 +396,12 @@ static int fds_build_image_qd(uint8 *dst, uint8 *src, int src_is_qd) {
 				    crc_calc % 256,
 				    crc_calc / 256);
 			}
-			fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+			fds_memcpy(&dst[dest_pos], (const uint8_t *)&crc_calc, 2);
 			source_pos += 2;
 			dest_pos += 2;
 		} else {
 			crc_calc = gen_qd_crc(&src[blockstart], blocklen);
-			fds_memcpy(&dst[dest_pos], (const uint8 *)&crc_calc, 2);
+			fds_memcpy(&dst[dest_pos], (const uint8_t *)&crc_calc, 2);
 			dest_pos += 2;
 		}
 	}
@@ -411,11 +411,11 @@ static int fds_build_image_qd(uint8 *dst, uint8 *src, int src_is_qd) {
 	return TRUE;
 }
 
-static INLINE uint8 fds_disk_read_byte(uint32 A) {
+static INLINE uint8_t fds_disk_read_byte(uint32_t A) {
 	return fds.current_disk_ptr[A];
 }
 
-static INLINE void fds_disk_write_byte(uint32 A, uint8 V) {
+static INLINE void fds_disk_write_byte(uint32_t A, uint8_t V) {
 	fds.current_disk_ptr[A] = V;
 }
 
@@ -437,12 +437,12 @@ static void FDSGI(int h) {
 }
 
 static void FDSStateRestore(int version) {
-	uint32 x;
+	uint32_t x;
 
 	setmirror(((fds.control & 8) >> 3) ^ 1);
 
 	for (x = 0; x < fds.total_sides; x++) {
-		uint32 b;
+		uint32_t b;
 		for (b = 0; b < fds.disk.bytes_per_size; b++) {
 			ROM.disk.data[(fds.disk.bytes_per_size * x) + b] ^=
 				ROM.disko.data[(fds.disk.bytes_per_size * x) + b];
@@ -497,7 +497,7 @@ static void FDSPower(void) {
 	fds.boot_delay = BOOT_INSERT_DELAY;
 }
 
-static INLINE uint8 FCEU_DiskReady(void) {
+static INLINE uint8_t FCEU_DiskReady(void) {
 	return (fds.current_disk != DISK_EJECTED);
 }
 
@@ -591,7 +591,7 @@ static DECLFW(FDSSndWrite) {
 }
 
 static DECLFR(FDSReadReg) {
-	uint8 ret = cpu.openbus;
+	uint8_t ret = cpu.openbus;
 	int i;
 
 	if (fds.snd_reg_enabled && (A >= 0x4040) && (A <= 0x4097)) {
@@ -776,7 +776,7 @@ static DECLFW(FDSWriteReg) {
 }
 
 struct codes_t {
-	uint8 code;
+	uint8_t code;
 	char name[50];
 } list[] = {
 	{ 0x01, "Nintendo" },
@@ -951,7 +951,7 @@ struct codes_t {
 	{ 0 },
 };
 
-static const char *GetCode(uint8 code) {
+static const char *GetCode(uint8_t code) {
 	int x = 0;
 	char *ret = "unlicensed";
 
@@ -991,7 +991,7 @@ static int SubLoad(FCEUFILE *fp) {
 	int format = 0;
 	int total_sides = 0;
 	int i;
-	uint8 buffer[BYTES_PER_DISK_SIDE_QD];
+	uint8_t buffer[BYTES_PER_DISK_SIDE_QD];
 
 	if (FCEU_fseek(fp, 0, SEEK_END) != 0) {
 		return FALSE;
@@ -1022,7 +1022,7 @@ static int SubLoad(FCEUFILE *fp) {
 	}
 
 	ROM.disk.size = total_sides * BYTES_PER_DISK_SIDE_QD;
-	ROM.disk.data = (uint8 *)FCEU_malloc(ROM.disk.size);
+	ROM.disk.data = (uint8_t *)FCEU_malloc(ROM.disk.size);
 
 	if (format == FORMAT_QD) {
 		for (i = 0; i < total_sides; i++) {
@@ -1067,9 +1067,9 @@ error:
 }
 
 static void PreSave(void) {
-	uint32 x;
+	uint32_t x;
 	for (x = 0; x < fds.total_sides; x++) {
-		uint32 b;
+		uint32_t b;
 		for (b = 0; b < fds.disk.bytes_per_size; b++) {
 			ROM.disk.data[(fds.disk.bytes_per_size * x) + b] ^= ROM.disko.data[(fds.disk.bytes_per_size * x) + b];
 		}
@@ -1077,9 +1077,9 @@ static void PreSave(void) {
 }
 
 static void PostSave(void) {
-	uint32 x;
+	uint32_t x;
 	for (x = 0; x < fds.total_sides; x++) {
-		uint32 b;
+		uint32_t b;
 		for (b = 0; b < fds.disk.bytes_per_size; b++) {
 			ROM.disk.data[(fds.disk.bytes_per_size * x) + b] ^= ROM.disko.data[(fds.disk.bytes_per_size * x) + b];
 		}
@@ -1113,10 +1113,10 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 
 	ResetCartMapping();
 
-	fds_memset((uint8 *)&fds, 0, sizeof(fds));
+	fds_memset((uint8_t *)&fds, 0, sizeof(fds));
 
 	ROM.prg.size = 8192;
-	ROM.prg.data = (uint8 *)FCEU_gmalloc(ROM.prg.size);
+	ROM.prg.data = (uint8_t *)FCEU_gmalloc(ROM.prg.size);
 	SetupCartPRGMapping(0, ROM.prg.data, ROM.prg.size, 0);
 
 	if (FCEU_fread(ROM.prg.data, 1, ROM.prg.size, biosfile) != ROM.prg.size) {
@@ -1144,7 +1144,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 
 	/* Original disk data backup, to help in creating save states. */
 	ROM.disko.size = ROM.disk.size;
-	ROM.disko.data = (uint8 *)FCEU_malloc(ROM.disko.size);
+	ROM.disko.data = (uint8_t *)FCEU_malloc(ROM.disko.size);
 	fds_memcpy(ROM.disko.data, ROM.disk.data, ROM.disk.size);
 
 	GameInfo->type = GIT_FDS;
@@ -1183,12 +1183,12 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 	FDSSound_AddStateInfo();
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 
 	WRAMSIZE = 32768;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "FDSR");
 
@@ -1198,7 +1198,7 @@ int FDSLoad(const char *name, FCEUFILE *fp) {
 
 	{
 		int i;
-		uint32 side;
+		uint32_t side;
 
 		FCEU_printf(" Code         : %02X\n", ROM.disk.data[0x0f]);
 		FCEU_printf(" Manufacturer : %s\n", GetCode(ROM.disk.data[0x0f]));
@@ -1262,11 +1262,11 @@ void FDSClose(void) {
 	FreeFDSMemory();
 }
 
-uint8 *FDSROM_ptr(void) {
+uint8_t *FDSROM_ptr(void) {
 	return (ROM.disk.data);
 }
 
-uint32 FDSROM_size(void) {
+uint32_t FDSROM_size(void) {
 	return (ROM.disk.size);
 }
 

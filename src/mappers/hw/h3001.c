@@ -24,8 +24,8 @@
 
 H3001 h3001;
 
-void (*H3001_pwrap)(uint16 A, uint16 V);
-void (*H3001_cwrap)(uint16 A, uint16 V);
+void (*H3001_pwrap)(uint16_t A, uint16_t V);
+void (*H3001_cwrap)(uint16_t A, uint16_t V);
 
 void (*H3001_SyncPRG)(void);
 void (*H3001_SyncCHR)(void);
@@ -42,16 +42,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-void H3001_SetPRG_default(uint16 A, uint16 V) {
+void H3001_SetPRG_default(uint16_t A, uint16_t V) {
 	setprg8(A, V);
 }
 
-void H3001_SetCHR_default(uint16 A, uint16 V) {
+void H3001_SetCHR_default(uint16_t A, uint16_t V) {
 	setchr1(A, V);
 }
 
 void H3001_SyncPRG_default(void) {
-	uint16 pswap = (h3001.cmd & 0x80) ? 0x4000 : 0;
+	uint16_t pswap = (h3001.cmd & 0x80) ? 0x4000 : 0;
 
 	H3001_pwrap(0x8000 ^ pswap, h3001.prg[0]);
 	H3001_pwrap(0xA000,         h3001.prg[1]);
@@ -188,7 +188,7 @@ void H3001_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 }
 
-void H3001_SetConfig(uint8 clear) {
+void H3001_SetConfig(uint8_t clear) {
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0x8FFF, H3001_WritePRG);
 	SetWriteHandler(0x9000, 0x9FFF, H3001_WriteMisc);

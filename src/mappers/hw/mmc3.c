@@ -30,8 +30,8 @@
 
 MMC3 mmc3;
 
-static uint8 IRQCount, IRQLatch, IRQa;
-static uint8 IRQReload;
+static uint8_t IRQCount, IRQLatch, IRQa;
+static uint8_t IRQReload;
 static MMC3TYPE type;
 
 static SFORMAT MMC3_StateRegs[] = {
@@ -50,21 +50,21 @@ static SFORMAT MMC3_StateRegs[] = {
 static void GENFIXPRG(void);
 static void GENFIXCHR(void);
 
-static void GENPWRAP(uint16 A, uint16 V);
-static void GENCWRAP(uint16 A, uint16 V);
+static void GENPWRAP(uint16_t A, uint16_t V);
+static void GENCWRAP(uint16_t A, uint16_t V);
 
 void (*MMC3_SyncPRG)(void);
 void (*MMC3_SyncCHR)(void);
 void (*MMC3_SyncMirror)(void);
 
-void (*MMC3_pwrap)(uint16 A, uint16 V);
-void (*MMC3_cwrap)(uint16 A, uint16 V);
+void (*MMC3_pwrap)(uint16_t A, uint16_t V);
+void (*MMC3_cwrap)(uint16_t A, uint16_t V);
 
-static void GENCWRAP(uint16 A, uint16 V) {
+static void GENCWRAP(uint16_t A, uint16_t V) {
 	setchr1(A, V & 0xFF);
 }
 
-static void GENPWRAP(uint16 A, uint16 V) {
+static void GENPWRAP(uint16_t A, uint16_t V) {
 	setprg8(A, (V & 0x7F));
 }
 
@@ -73,7 +73,7 @@ static void GENPWRAP(uint16 A, uint16 V) {
  * ----------------------------------------------------------------------
  */
 
-uint8 MMC3_GetPRGBank(int V) {
+uint8_t MMC3_GetPRGBank(int V) {
 	if ((~V & 0x01) && (mmc3.cmd & 0x40)) {
 		V ^= 0x02;
 	}
@@ -83,7 +83,7 @@ uint8 MMC3_GetPRGBank(int V) {
 	return mmc3.reg[6 | (V & 0x01)];
 }
 
-uint8 MMC3_GetCHRBank(int V) {
+uint8_t MMC3_GetCHRBank(int V) {
 	if (mmc3.cmd & 0x80) {
 		V ^= 0x04;
 	}
@@ -190,7 +190,7 @@ DECLFR(MAWRAMMMC6) {
 }
 
 DECLFW(MMC3_CMDWrite) {
-	uint8 oldcmd = mmc3.cmd;
+	uint8_t oldcmd = mmc3.cmd;
 	/*	FCEU_printf("bs %04x %02x\n",A,V); */
 	switch (A & 0xE001) {
 	case 0x8000:
@@ -365,7 +365,7 @@ void MMC3_Init(CartInfo *info, MMC3TYPE _type, int wram, int battery) {
 
 	if (wram) {
 		mmc3.opts |= 1;
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}
@@ -394,7 +394,7 @@ void MMC3_Init(CartInfo *info, MMC3TYPE _type, int wram, int battery) {
 	GameStateRestore = StateRestore;
 }
 
-void MMC3_SetConfig(uint8 clear, MMC3TYPE _type) {
+void MMC3_SetConfig(uint8_t clear, MMC3TYPE _type) {
 	type = _type;
 	GameHBIRQHook = MMC3_IRQHBHook;
 	SetReadHandler (0x8000, 0xFFFF, CartBR);

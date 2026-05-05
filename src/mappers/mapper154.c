@@ -25,7 +25,7 @@
 #include "n118.h"
 
 static struct {
-	uint8 mirror;
+	uint8_t mirror;
 } m154;
 
 static SFORMAT StateRegs[] = {
@@ -33,7 +33,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg8(A, V & 0x0F);
 }
 

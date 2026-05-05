@@ -26,17 +26,17 @@
 
 JYASIC jyasic = { 0 };
 
-static uint8 dipSwitch;
-static uint8 allow_extended_mirroring;
-static uint32 lastPPUAddress;
+static uint8_t dipSwitch;
+static uint8_t allow_extended_mirroring;
+static uint32_t lastPPUAddress;
 
-uint8 JYASIC_CPUWriteHandlersSet;
+uint8_t JYASIC_CPUWriteHandlersSet;
 writefunc JYASIC_cpuWrite[0x10000]; /* Actual write handlers for CPU write trapping as a method fo IRQ clocking */
 
-void (*JYASIC_pwrap)(uint16 A, uint32 V);
-void (*JYASIC_wwrap)(uint16 A, uint32 V);
-void (*JYASIC_cwrap)(uint16 A, uint32 V);
-void (*JYASIC_mwrap)(uint16 A, uint32 V);
+void (*JYASIC_pwrap)(uint16_t A, uint32_t V);
+void (*JYASIC_wwrap)(uint16_t A, uint32_t V);
+void (*JYASIC_cwrap)(uint16_t A, uint32_t V);
+void (*JYASIC_mwrap)(uint16_t A, uint32_t V);
 
 static SFORMAT JYASIC_StateRegs[] = {
 	{ jyasic.mode, 4, "TKCO" },
@@ -55,30 +55,30 @@ static SFORMAT JYASIC_StateRegs[] = {
 	{ 0 }
 };
 
-static uint32 JYASIC_GetPRGBank_default(uint32 V) {
+static uint32_t JYASIC_GetPRGBank_default(uint32_t V) {
 	return 0;
 }
-static uint32 JYASIC_GetCHRBank_default(uint32 V) {
+static uint32_t JYASIC_GetCHRBank_default(uint32_t V) {
 	return 0;
 }
 
-static void SetPRG_default(uint16 A, uint32 V) {
+static void SetPRG_default(uint16_t A, uint32_t V) {
 	setprg8(A, V);
 }
 
-static void SetCHR_default(uint16 A, uint32 V) {
+static void SetCHR_default(uint16_t A, uint32_t V) {
 	setchr1(A, V);
 }
 
-static void SetWRAM_default(uint16 A, uint32 V) {
+static void SetWRAM_default(uint16_t A, uint32_t V) {
 	setprg8(A, V);
 }
 
-static void SetNTMirror_default(uint16 A, uint32 V) {
+static void SetNTMirror_default(uint16_t A, uint32_t V) {
 	setntamem(CHRptr[0] + 0x400 * (V & CHRmask1[0]), 0, A & 0x03);
 }
 
-static uint8 reverse_bits(uint8 val) {
+static uint8_t reverse_bits(uint8_t val) {
 	return (((val << 6) & 0x40) |
 		((val << 4) & 0x20) |
 		((val << 2) & 0x10) |
@@ -89,7 +89,7 @@ static uint8 reverse_bits(uint8 val) {
 }
 
 void JYASIC_SyncPRG(void) {
-	uint8 prgLast = (jyasic.mode[0] & 0x04) ? jyasic.prg[3] : 0xFF;
+	uint8_t prgLast = (jyasic.mode[0] & 0x04) ? jyasic.prg[3] : 0xFF;
 
 	switch (jyasic.mode[0] & 0x03) {
 	case 0:
@@ -167,7 +167,7 @@ void JYASIC_SyncCHR(void) {
 }
 
 void JYASIC_SyncWRAM(void) {
-	uint8 prg6000 = jyasic.prg[3];
+	uint8_t prg6000 = jyasic.prg[3];
 
 	switch (jyasic.mode[0] & 0x03) {
 	case 0:
@@ -224,9 +224,9 @@ void JYASIC_SyncMirror(void) {
 }
 
 static void clockIRQ(void) {
-	uint8 mask = jyasic.irq.control & 0x04 ? 0x07 : 0xFF;
-	uint8 prescaler = jyasic.irq.prescaler & mask;
-	uint8 clockIrqCounter = FALSE;
+	uint8_t mask = jyasic.irq.control & 0x04 ? 0x07 : 0xFF;
+	uint8_t prescaler = jyasic.irq.prescaler & mask;
+	uint8_t clockIrqCounter = FALSE;
 
 	if (jyasic.irq.enable) {
 		switch (jyasic.irq.control & 0xC0) {
@@ -275,7 +275,7 @@ DECLFW(JYASIC_trapCPUWrite) {
 	JYASIC_cpuWrite[A](A, V);
 }
 
-static void trapPPUAddressChange(uint32 A) {
+static void trapPPUAddressChange(uint32_t A) {
 	if (((jyasic.irq.control & 0x03) == 0x02) && (lastPPUAddress != A)) {
 		int i;
 		for (i = 0; i < 2; i++) {
@@ -292,8 +292,8 @@ static void trapPPUAddressChange(uint32 A) {
 				/* switch the left or right pattern table's
 				 * latch to 0 (FD) or 2 (FE), being used as
 				 * an offset for the CHR register index. */
-				uint8 chr = (A >> 4) & (((A >> 10) & 0x04) | 0x02);
-				uint8 bank = (A >> 12) & 0x01;
+				uint8_t chr = (A >> 4) & (((A >> 10) & 0x04) | 0x02);
+				uint8_t bank = (A >> 12) & 0x01;
 
 				if (jyasic.latch[bank] != chr) {
 					jyasic.latch[bank] = chr;
@@ -538,7 +538,7 @@ void JYASIC_Init(CartInfo *info, int extended_mirr) {
 	}
 
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");

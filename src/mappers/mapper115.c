@@ -22,19 +22,19 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m115;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m115.reg, 4, "EXPR" },
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 base = ((m115.reg[0] >> 2) & 0x10) | (m115.reg[0] & 0x0F);
-	uint16 mask = 0x1F;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t base = ((m115.reg[0] >> 2) & 0x10) | (m115.reg[0] & 0x0F);
+	uint16_t mask = 0x1F;
 
 	if (m115.reg[0] & 0x80) {
 		if (m115.reg[0] & 0x20) {
@@ -48,12 +48,12 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr1(A, (m115.reg[1] << 8) | V);
 }
 
 static DECLFR(ReadDIP) {
-	uint8 ret = cpu.openbus;
+	uint8_t ret = cpu.openbus;
 
 	if ((A & 0x03) == 0x02) {
 		return ((ret & ~0x07) | (dipsw & 0x07));

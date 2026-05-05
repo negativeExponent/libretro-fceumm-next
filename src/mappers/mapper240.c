@@ -21,7 +21,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m240;
 
 static SFORMAT StateRegs[] = {
@@ -64,7 +64,7 @@ void Mapper240_Init(CartInfo *info) {
 		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
 	}
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (info->battery) {

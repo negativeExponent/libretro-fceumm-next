@@ -29,7 +29,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m313;
 
 static SFORMAT StateRegs[] = {
@@ -37,7 +37,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRGBank(uint16 A, uint16 V) {
+static void SetPRGBank(uint16_t A, uint16_t V) {
 	switch (iNESCart.submapper) {
 	default:
 		setprg8(A, (m313.reg << 4) | (V & 0x0F));
@@ -61,7 +61,7 @@ static void SetPRGBank(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHRBank(uint16 A, uint16 V) {
+static void SetCHRBank(uint16_t A, uint16_t V) {
 	switch (iNESCart.submapper) {
 	default:
 		setchr1(A, (m313.reg << 7) | (V & 0x7F));
@@ -94,7 +94,7 @@ static void Power(void) {
 
 /* NES 2.0 313, UNIF BMC-RESET-TXROM */
 void Mapper313_Init(CartInfo *info) {
-	uint32 ws = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) : (info->battery ? 8192 : 0);
+	uint32_t ws = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) : (info->battery ? 8192 : 0);
 
 	MMC3_Init(info, MMC3B, ws / 1024, info->battery);
 	MMC3_cwrap = SetCHRBank;

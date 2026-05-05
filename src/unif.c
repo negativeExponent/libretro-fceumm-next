@@ -45,7 +45,7 @@
 
 typedef struct {
 	char ID[4];
-	uint32 info;
+	uint32_t info;
 } UNIF_HEADER;
 
 typedef struct {
@@ -60,25 +60,25 @@ static int vramo;
 static int mirrortodo;
 static int submapper;
 static int cspecial;
-static uint8 *boardname;
-static uint8 *sboardname;
+static uint8_t *boardname;
+static uint8_t *sboardname;
 
 static UNIF_HEADER uchead;
 
-static uint8 *malloced[32];
-static uint32 mallocedsizes[32];
+static uint8_t *malloced[32];
+static uint32_t mallocedsizes[32];
 /* used to preserve the rom order as found in the rom file
  * at least one mapper has bank 4 at the beginning for e.g. */
-static uint32 prg_idx[16];
-static uint32 chr_idx[16];
+static uint32_t prg_idx[16];
+static uint32_t chr_idx[16];
 
-static uint32 prg_chip_count;
-static uint32 chr_chip_count;
+static uint32_t prg_chip_count;
+static uint32_t chr_chip_count;
 
-static uint64 UNIF_PRGROMSize, UNIF_CHRROMSize;
+static uint64_t UNIF_PRGROMSize, UNIF_CHRROMSize;
 
-static int FixRomSize(uint32 size, uint32 minimum) {
-	uint32 x = 1;
+static int FixRomSize(uint32_t size, uint32_t minimum) {
+	uint32_t x = 1;
 
 	if (size < minimum) {
 		return minimum;
@@ -159,9 +159,9 @@ static void MooMirroring(void) {
 	}
 }
 
-static uint8 unif_MIRR(FCEUFILE *fp) {
+static uint8_t unif_MIRR(FCEUFILE *fp) {
 	int t;
-	uint32 i;
+	uint32_t i;
 	if (uchead.info == 1) {
 		if ((t = FCEU_fgetc(fp)) == EOF) {
 			return (0);
@@ -194,7 +194,7 @@ static uint8 unif_MIRR(FCEUFILE *fp) {
 	return (1);
 }
 
-static uint8 unif_NAME(FCEUFILE *fp) {
+static uint8_t unif_NAME(FCEUFILE *fp) {
 	char namebuf[100];
 	int index;
 	int t;
@@ -218,10 +218,10 @@ static uint8 unif_NAME(FCEUFILE *fp) {
 	return (1);
 }
 
-static uint8 unif_DINF(FCEUFILE *fp) {
+static uint8_t unif_DINF(FCEUFILE *fp) {
 	char name[100], method[100];
-	uint8 d, m;
-	uint16 y;
+	uint8_t d, m;
+	uint16_t y;
 	int t;
 
 	if (FCEU_fread(name, 1, 100, fp) != 100) {
@@ -259,9 +259,9 @@ static uint8 unif_DINF(FCEUFILE *fp) {
 	return (1);
 }
 
-static uint8 unif_CTRL(FCEUFILE *fp) {
+static uint8_t unif_CTRL(FCEUFILE *fp) {
 	int t;
-	uint32 i;
+	uint32_t i;
 	if (uchead.info == 1) {
 		if ((t = FCEU_fgetc(fp)) == EOF) {
 			return (0);
@@ -290,7 +290,7 @@ static uint8 unif_CTRL(FCEUFILE *fp) {
 	return (1);
 }
 
-static uint8 unif_TVCI(FCEUFILE *fp) {
+static uint8_t unif_TVCI(FCEUFILE *fp) {
 	int t;
 	if ((t = FCEU_fgetc(fp)) == EOF) {
 		return (0);
@@ -307,7 +307,7 @@ static uint8 unif_TVCI(FCEUFILE *fp) {
 	return (1);
 }
 
-static uint8 unif_BATR(FCEUFILE *fp) {
+static uint8_t unif_BATR(FCEUFILE *fp) {
 	int ret = FCEU_fgetc(fp);
 	iNESCart.battery = (ret > 0) ? 1 : 0;
 	if (iNESCart.battery) {
@@ -316,7 +316,7 @@ static uint8 unif_BATR(FCEUFILE *fp) {
 	return (1);
 }
 
-static uint8 unif_PRG(FCEUFILE *fp) {
+static uint8_t unif_PRG(FCEUFILE *fp) {
 	int z, t;
 
 	z = uchead.ID[3] - '0';
@@ -328,7 +328,7 @@ static uint8 unif_PRG(FCEUFILE *fp) {
 		FCEU_free(malloced[z]);
 	}
 	t = uchead.info;
-	if (!(malloced[z] = (uint8 *)FCEU_malloc(t))) {
+	if (!(malloced[z] = (uint8_t *)FCEU_malloc(t))) {
 		return (0);
 	}
 	mallocedsizes[z] = t;
@@ -345,14 +345,14 @@ static uint8 unif_PRG(FCEUFILE *fp) {
 	return (1);
 }
 
-static uint8 unif_MAPR(FCEUFILE *fp) {
-	if (!(boardname = (uint8 *)FCEU_malloc(uchead.info + 1))) {
+static uint8_t unif_MAPR(FCEUFILE *fp) {
+	if (!(boardname = (uint8_t *)FCEU_malloc(uchead.info + 1))) {
 		return (0);
 	}
 	FCEU_fread(boardname, 1, uchead.info, fp);
 	boardname[uchead.info] = 0;
 	/* strip whitespaces */
-	boardname = (uint8 *)string_trim_whitespace((char *const)boardname);
+	boardname = (uint8_t *)string_trim_whitespace((char *const)boardname);
 	FCEU_printf(" Board name: %s\n", boardname);
 	sboardname = boardname;
 	if (!memcmp(boardname, "NES-", 4) ||
@@ -365,7 +365,7 @@ static uint8 unif_MAPR(FCEUFILE *fp) {
 	return (1);
 }
 
-static uint8 unif_CHR(FCEUFILE *fp) {
+static uint8_t unif_CHR(FCEUFILE *fp) {
 	int z, t;
 	z = uchead.ID[3] - '0';
 	if (z < 0 || z > 15) {
@@ -376,7 +376,7 @@ static uint8 unif_CHR(FCEUFILE *fp) {
 		FCEU_free(malloced[16 + z]);
 	}
 	t = uchead.info;
-	if (!(malloced[16 + z] = (uint8 *)FCEU_malloc(t))) {
+	if (!(malloced[16 + z] = (uint8_t *)FCEU_malloc(t))) {
 		return (0);
 	}
 	mallocedsizes[16 + z] = t;
@@ -396,7 +396,7 @@ static uint8 unif_CHR(FCEUFILE *fp) {
 #define NO_BUSC 1
 
 struct _unif_db {
-	uint64 partialMD5;
+	uint64_t partialMD5;
 	char *boardname;
 	int submapper;
 	int mirroring;
@@ -415,10 +415,10 @@ static struct _unif_db unif_db[] = {
 
 static void CheckHashInfo(void) {
 	unsigned x = 0;
-	uint64 partialMD5 = 0;
+	uint64_t partialMD5 = 0;
 
 	for (x = 0; x < 8; x++) {
-		partialMD5 |= (uint64)iNESCart.MD5[15 - x] << (x * 8);
+		partialMD5 |= (uint64_t)iNESCart.MD5[15 - x] << (x * 8);
 	}
 
 	x = 0;
@@ -429,7 +429,7 @@ static void CheckHashInfo(void) {
 			FCEU_PrintError(" For now, the information will be corrected in RAM.\n");
 			if (unif_db[x].boardname != NULL && strcmp((char *)unif_db[x].boardname, (char *)sboardname) != 0) {
 				FCEU_printf(" Boardname should be set to %s\n", unif_db[x].boardname);
-				sboardname = (uint8 *)unif_db[x].boardname;
+				sboardname = (uint8_t *)unif_db[x].boardname;
 			}
 			if (unif_db[x].submapper >= 0 && unif_db[x].submapper != submapper) {
 				FCEU_PrintError(" Submapper should be set to %d\n", unif_db[x].submapper);
@@ -786,7 +786,7 @@ static int InitializeBoard(void) {
 					CHRRAMSIZE = 8;
 				}
 				CHRRAMSIZE <<= 10;
-				if ((CHRRAM = (uint8 *)FCEU_malloc(CHRRAMSIZE))) {
+				if ((CHRRAM = (uint8_t *)FCEU_malloc(CHRRAMSIZE))) {
 					SetupCartCHRMapping(0, CHRRAM, CHRRAMSIZE, 1);
 					AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 					ROM.chr.data = CHRRAM;
@@ -803,7 +803,7 @@ static int InitializeBoard(void) {
 				iNESCart.mapper = tmp->mapper;
 			}
 			if (submapper >= 0) {
-				iNESCart.submapper = (uint8)submapper;
+				iNESCart.submapper = (uint8_t)submapper;
 			} else if (tmp->submapper >= 0) {
 				iNESCart.submapper = tmp->submapper;
 			}
@@ -849,7 +849,7 @@ static void UNIFGI(int h) {
 
 int UNIFLoad(const char *name, FCEUFILE *fp) {
 	struct md5_context md5;
-	uint64 prg_size_bytes = 0, chr_size_bytes = 0;
+	uint64_t prg_size_bytes = 0, chr_size_bytes = 0;
 	int x = 0;
 
 	FCEU_fseek(fp, 0, SEEK_SET);
@@ -889,12 +889,12 @@ int UNIFLoad(const char *name, FCEUFILE *fp) {
 
 	/* Note: Use rounded size for memory allocations and board mapping */
 
-	if (!(ROM.prg.data = (uint8 *)FCEU_malloc(UNIF_PRGROMSize))) {
+	if (!(ROM.prg.data = (uint8_t *)FCEU_malloc(UNIF_PRGROMSize))) {
 		Cleanup();
 		return 0;
 	}
 	if (UNIF_CHRROMSize) {
-		if (!(ROM.chr.data = (uint8 *)FCEU_malloc(UNIF_CHRROMSize))) {
+		if (!(ROM.chr.data = (uint8_t *)FCEU_malloc(UNIF_CHRROMSize))) {
 			Cleanup();
 			return 0;
 		}

@@ -26,19 +26,19 @@
 #include "mmc1.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m404;
 
 static SFORMAT StateRegs[] = {
 	{ &m404.reg, 1, "EXPR" }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint8 mask = (m404.reg & 0x40) ? 0x07 : 0x0F;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint8_t mask = (m404.reg & 0x40) ? 0x07 : 0x0F;
 	setprg16(A, ((m404.reg << 3) & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr4(A, (m404.reg << 5) | (V & 0x1F));
 }
 

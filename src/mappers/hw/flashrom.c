@@ -21,15 +21,15 @@
 #include "mapinc.h"
 #include "flashrom.h"
 
-static uint8 *flash_data;
-static uint32 flash_size;
+static uint8_t *flash_data;
+static uint32_t flash_size;
 
-static uint8 flash_id[2];
-static uint8 flash_state;
-static uint32 flash_addr1;
-static uint32 flash_addr2;
-static uint32 flash_sect_size;
-static int32 time_out;
+static uint8_t flash_id[2];
+static uint8_t flash_state;
+static uint32_t flash_addr1;
+static uint32_t flash_addr2;
+static uint32_t flash_sect_size;
+static int32_t time_out;
 
 static SFORMAT FlashStateRegs[] = {
 	{ &flash_state, 1, "STAT" },
@@ -51,8 +51,8 @@ DECLFR(FlashROM_Read) {
 }
 
 DECLFW(FlashROM_Write) {
-	uint32 chip_address = PRG_OFFSET(A);
-	uint32 cmd = chip_address & 0x7FFF;
+	uint32_t chip_address = PRG_OFFSET(A);
+	uint32_t cmd = chip_address & 0x7FFF;
 
 	switch (flash_state) {
 	default:
@@ -77,7 +77,7 @@ DECLFW(FlashROM_Write) {
 		if (V == 0x30) {
 			/* sector erase */
 			if (chip_address < flash_size) {
-				uint32 i;
+				uint32_t i;
 				chip_address &= ~(flash_sect_size - 1);
 				for (i = 0; i < flash_sect_size; i++) {
 					flash_data[chip_address + i] = 0xFF;
@@ -122,7 +122,7 @@ void FlashROM_CPUCyle(int a) {
 	}
 }
 
-void FlashROM_Init(uint8 *data, uint32 size, uint8 manufacter_id, uint8 model_id, uint32 sector_size, uint32 adr1, uint32 adr2) {
+void FlashROM_Init(uint8_t *data, uint32_t size, uint8_t manufacter_id, uint8_t model_id, uint32_t sector_size, uint32_t adr1, uint32_t adr2) {
 	flash_data = data;
 	flash_size = size;
 	flash_id[0] = manufacter_id;

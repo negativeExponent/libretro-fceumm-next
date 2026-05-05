@@ -26,8 +26,8 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[4];
-	uint8 dipsw;
+	uint8_t reg[4];
+	uint8_t dipsw;
 } m134;
 
 static SFORMAT StateRegs[] = {
@@ -35,12 +35,12 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRGBank_mmc3(uint16 A, uint16 V) {
-	uint16 mask = (m134.reg[1] & 0x04) ? 0x0F : 0x1F;
-	uint16 base = ((m134.reg[1] << 4) & 0x30) | ((m134.reg[0] << 2) & 0x40);
+static void SetPRGBank_mmc3(uint16_t A, uint16_t V) {
+	uint16_t mask = (m134.reg[1] & 0x04) ? 0x0F : 0x1F;
+	uint16_t base = ((m134.reg[1] << 4) & 0x30) | ((m134.reg[0] << 2) & 0x40);
 
 	if (m134.reg[1] & 0x80) { /* NROM mode */
-		uint8 nrom_mask = (m134.reg[1] & 0x08) ? 0x01 : 0x03;
+		uint8_t nrom_mask = (m134.reg[1] & 0x08) ? 0x01 : 0x03;
 		V = MMC3_GetPRGBank(0) & ~nrom_mask;
 		V |= (A >> 13) & nrom_mask;
 	}
@@ -48,9 +48,9 @@ static void SetPRGBank_mmc3(uint16 A, uint16 V) {
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHRBank_mmc3(uint16 A, uint16 V) {
-	uint16 mask = (m134.reg[1] & 0x40) ? 0x7F : 0xFF;
-	uint16 base = ((m134.reg[1] << 3) & 0x180) | ((m134.reg[0] << 4) & 0x200);
+static void SetCHRBank_mmc3(uint16_t A, uint16_t V) {
+	uint16_t mask = (m134.reg[1] & 0x40) ? 0x7F : 0xFF;
+	uint16_t base = ((m134.reg[1] << 3) & 0x180) | ((m134.reg[0] << 4) & 0x200);
 
 	if (m134.reg[0] & 0x08) { /* In CNROM mode, outer bank register 2 replaces the MMC3's CHR registers, and CHR A10-A12 are PPU A10-A12. */
 		V = ((m134.reg[2] & mask) << 3) | ((A >> 10) & 0x07);

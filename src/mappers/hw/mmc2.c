@@ -24,8 +24,8 @@
 #include "mapinc.h"
 #include "mmc2.h"
 
-void (*MMC2_pwrap)(uint16 A, uint16 V);
-void (*MMC2_cwrap)(uint16 A, uint16 V);
+void (*MMC2_pwrap)(uint16_t A, uint16_t V);
+void (*MMC2_cwrap)(uint16_t A, uint16_t V);
 
 MMC2 mmc2;
 
@@ -37,11 +37,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-void MMC2_SetPRG_default(uint16 A, uint16 V) {
+void MMC2_SetPRG_default(uint16_t A, uint16_t V) {
 	setprg8(A, V);
 }
 
-void MMC2_SetCHR_default(uint16 A, uint16 V) {
+void MMC2_SetCHR_default(uint16_t A, uint16_t V) {
 	setchr4(A, V);
 }
 
@@ -81,8 +81,8 @@ DECLFW(MMC2_Write) {
 	}
 }
 
-void MMC2_PPUHook(uint32 A) {
-	uint8 bank = (A >> 12) & 0x01;
+void MMC2_PPUHook(uint32_t A) {
+	uint8_t bank = (A >> 12) & 0x01;
 	if ((A & 0x2000) || (((A & 0xFF0) != 0xFD0) && ((A & 0xFF0) != 0xFE0))) {
 		return;
 	}
@@ -132,7 +132,7 @@ void MMC2_Init(CartInfo *info, int wram, int battery) {
 
 	if (wram) {
 		WRAMSIZE = wram * 1024;
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (battery) {
@@ -142,7 +142,7 @@ void MMC2_Init(CartInfo *info, int wram, int battery) {
 	}
 }
 
-void MMC2_SetConfig(uint8 clear) {
+void MMC2_SetConfig(uint8_t clear) {
 	PPU_hook = MMC2_PPUHook;
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0xA000, 0xFFFF, MMC2_Write);

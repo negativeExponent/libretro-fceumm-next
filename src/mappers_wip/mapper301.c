@@ -24,8 +24,8 @@
 #include "latch.h"
 
 static struct {
-	uint8 half;
-	uint8 reg;
+	uint8_t half;
+	uint8_t reg;
 } m301;
 
 static SFORMAT StateRegs[] = {

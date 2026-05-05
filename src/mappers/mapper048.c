@@ -24,13 +24,13 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg[2], chr[6], mirror;
-	uint8 IRQCount, IRQLatch, IRQa;
-	uint8 IRQReload;
-	int8 IRQDelay;
+	uint8_t prg[2], chr[6], mirror;
+	uint8_t IRQCount, IRQLatch, IRQa;
+	uint8_t IRQReload;
+	int8_t IRQDelay;
 } m048;
 
-static uint8 isFlintStones = FALSE;
+static uint8_t isFlintStones = FALSE;
 
 static SFORMAT StateRegs[] = {
 	{ m048.prg, 2, "PREG" },

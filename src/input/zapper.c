@@ -27,17 +27,17 @@
 #define ROUNDED_TARGET
 #ifdef ROUNDED_TARGET
 #define MAX_TOLERANCE 20
-static uint32 targetExpansion[MAX_TOLERANCE + 1];
+static uint32_t targetExpansion[MAX_TOLERANCE + 1];
 #endif
 static int tolerance;
 
-static uint8 stmode = FALSE;
-static uint8 invert_trigger = TRUE;
-static uint8 invert_sensor = TRUE;
+static uint8_t stmode = FALSE;
+static uint8_t invert_trigger = TRUE;
+static uint8_t invert_sensor = TRUE;
 
 ZAPPER ZD[2];
 
-static void ZapperFrapper(int w, uint8 * bg, uint8 * spr, uint32 linets, int final) {
+static void ZapperFrapper(int w, uint8_t * bg, uint8_t * spr, uint32_t linets, int final) {
 	int xs, xe;
 	int zx, zy;
 
@@ -69,8 +69,8 @@ static void ZapperFrapper(int w, uint8 * bg, uint8 * spr, uint32 linets, int fin
 		int spread = tolerance;
 #endif
 		while (xs < xe) {
-			uint8 a1, a2;
-			uint32 sum;
+			uint8_t a1, a2;
+			uint32_t sum;
 			if (xs <= (zx + spread) && xs >= (zx - spread)) {
 				a1 = bg[xs];
 				if (spr) {
@@ -84,7 +84,7 @@ static void ZapperFrapper(int w, uint8 * bg, uint8 * spr, uint32 linets, int fin
 
 				sum = palo[a1].r + palo[a1].g + palo[a1].b;
 				if (sum >= 100 * 3) {
-					ZD[w].zaphit = ((uint64)linets + (uint64)(xs + 16) * (isPAL ? 15 : 16)) / 48 + timestampbase;
+					ZD[w].zaphit = ((uint64_t)linets + (uint64_t)(xs + 16) * (isPAL ? 15 : 16)) / 48 + timestampbase;
 					goto endo;
 				}
 			}
@@ -112,10 +112,10 @@ static INLINE int CheckColor(int w) {
 		int nowtime = scanline * 256 + g_rasterpos;
 
 		if (!block && mousetime < nowtime && mousetime >= nowtime - 384) {
-			extern uint8 *XBuf;
-			uint8 *pix = XBuf + (ZD[w].mzy << 8);
-			uint8 a1 = (pix[ZD[w].mzx]) & 63;
-			uint32 sum = palo[a1].r + palo[a1].g + palo[a1].b;
+			extern uint8_t *XBuf;
+			uint8_t *pix = XBuf + (ZD[w].mzy << 8);
+			uint8_t a1 = (pix[ZD[w].mzx]) & 63;
+			uint32_t sum = palo[a1].r + palo[a1].g + palo[a1].b;
 			/* return ZD[w].zaphit = sum != 0; */
 			ZD[w].zaphit = (sum >= 100 * 3) ? 1 : 0;
 		} else {
@@ -132,8 +132,8 @@ static INLINE int CheckColor(int w) {
 	return(1);
 }
 
-static uint8 ReadZapperVS(int w) {
-	uint8 ret = 0;
+static uint8_t ReadZapperVS(int w) {
+	uint8_t ret = 0;
 
 	if (ZD[w].zap_readbit == 4) ret = 1;
 
@@ -161,8 +161,8 @@ static void StrobeZapperVS(int w) {
 	ZD[w].zap_readbit = 0;
 }
 
-static uint8 ReadZapper(int w) {
-	uint8 ret = 0;
+static uint8_t ReadZapper(int w) {
+	uint8_t ret = 0;
 	if (ZD[w].bogo)
 		ret |= 0x10;
 	if (stmode) {
@@ -175,7 +175,7 @@ static uint8 ReadZapper(int w) {
 	return ret;
 }
 
-static void DrawZapper(int w, uint8 * buf, int arg) {
+static void DrawZapper(int w, uint8_t * buf, int arg) {
 	if (stmode)
 		return;
 
@@ -184,7 +184,7 @@ static void DrawZapper(int w, uint8 * buf, int arg) {
 }
 
 static void UpdateZapper(int w, void *data, int arg) {
-	uint32 *ptr = (uint32*)data;
+	uint32_t *ptr = (uint32_t*)data;
 
 	if (ZD[w].bogo)
 		ZD[w].bogo--;
@@ -209,8 +209,8 @@ static INPUTC ZAPC = { ReadZapper, 0, 0, UpdateZapper, ZapperFrapper, DrawZapper
 static INPUTC ZAPVSC = { ReadZapperVS, 0, StrobeZapperVS, UpdateZapper, ZapperFrapper, DrawZapper };
 
 #ifdef ROUNDED_TARGET
-static uint32 InefficientSqrt(uint32 z) {
-	uint32 i;
+static uint32_t InefficientSqrt(uint32_t z) {
+	uint32_t i;
 	for (i = 0 ; i * i <= z ; i++) ;
 	return i-1;
 }

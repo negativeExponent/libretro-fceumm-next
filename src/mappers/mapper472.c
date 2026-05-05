@@ -26,27 +26,27 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m472;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &m472.reg, 1, "EXPR" },
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = 0x0F;
-	uint16 base = m472.reg & 0xF0;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x0F;
+	uint16_t base = m472.reg & 0xF0;
 
 	/* FCEU_printf("PRG: A:%04x V:%02x R0:%02x\n", A, V, m472.reg); */
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (m472.reg & 0x20) ? 0x7F : 0xFF;
-	uint16 base = m472.reg << 3;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (m472.reg & 0x20) ? 0x7F : 0xFF;
+	uint16_t base = m472.reg << 3;
 
 	/* FCEU_printf("CHR: A:%04x V:%02x R0:%02x\n", A, V, m472.reg); */
 	setchr1(A, (base & ~mask) | (V & mask));

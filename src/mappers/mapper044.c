@@ -21,16 +21,16 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint8 base = (mmc3.wram << 4) & 0x70;
-	uint8 mask = ((mmc3.wram & 0x06) == 0x06) ? 0x1F : 0x0F;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint8_t base = (mmc3.wram << 4) & 0x70;
+	uint8_t mask = ((mmc3.wram & 0x06) == 0x06) ? 0x1F : 0x0F;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 base = (mmc3.wram << 7) & 0x380;
-	uint16 mask = ((mmc3.wram & 0x06) == 0x06) ? 0xFF : 0x7F;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t base = (mmc3.wram << 7) & 0x380;
+	uint16_t mask = ((mmc3.wram & 0x06) == 0x06) ? 0xFF : 0x7F;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

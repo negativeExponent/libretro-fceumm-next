@@ -26,24 +26,24 @@
 #include "mapper006.h"
 
 static struct {
-	uint8 mc1mode;
-	uint8 mc2mode;
-	uint8 smcmode;
+	uint8_t mc1mode;
+	uint8_t mc2mode;
+	uint8_t smcmode;
 
-	uint8 prg8K[4];
-	uint8 chr1K[8];
-	uint8 nt[4];
-	uint8 latchMMC4[2];
-	uint8 latch;
-	uint8 chrlock;
+	uint8_t prg8K[4];
+	uint8_t chr1K[8];
+	uint8_t nt[4];
+	uint8_t latchMMC4[2];
+	uint8_t latch;
+	uint8_t chrlock;
 
-	uint8 smc_IRQa;
-	uint32 smc_IRQCount;
+	uint8_t smc_IRQa;
+	uint32_t smc_IRQCount;
 
-	uint8 fds_control;
-	int16 fds_IRQCount;
+	uint8_t fds_control;
+	int16_t fds_IRQCount;
 
-	uint8 scratchRAM[0x2000];
+	uint8_t scratchRAM[0x2000];
 } m006;
 
 static writefunc writePPU2007;
@@ -70,7 +70,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void SyncPRG(void) {
-	uint8 prg_writable = !(m006.mc1mode & 0x02);
+	uint8_t prg_writable = !(m006.mc1mode & 0x02);
 
 	SetupCartPRGMapping(0, PRGptr[0], PRGsize[0], prg_writable);
 
@@ -110,7 +110,7 @@ static void SyncPRG(void) {
 }
 
 static void SyncCHR(void) {
-	uint8 chr_writable = !(((m006.mc1mode & 0xE1) >= 0x81) || m006.chrlock);
+	uint8_t chr_writable = !(((m006.mc1mode & 0xE1) >= 0x81) || m006.chrlock);
 
 	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], chr_writable);
 
@@ -181,7 +181,7 @@ static void SyncWRAM(void) {
 	setprg8r(0x10, 0x6000, 0); /* wram */
 }
 
-extern uint32 RefreshAddr;
+extern uint32_t RefreshAddr;
 static DECLFW(WritePPU2007) {
 	if (!(RefreshAddr & 0x2000)) {
 		if ((m006.mc1mode >= 0xA0) && !(m006.mc1mode & 0x01)) {
@@ -334,10 +334,10 @@ static void HBIRQHook(void) {
 	
 }
 
-static void PPUIRQHook(uint32 A) {
+static void PPUIRQHook(uint32_t A) {
 	if (!(A & 0x2000) && (m006.smcmode & 0x01) && !(m006.smcmode & 0x04)) {
-		uint8 value = (A >> 4) & 0x02;
-		uint8 bank = (A >> 12) & 0x01;
+		uint8_t value = (A >> 4) & 0x02;
+		uint8_t bank = (A >> 12) & 0x01;
 
 		switch (A & 0x0FF0) {
 		case 0x0FD0:
@@ -373,9 +373,9 @@ static void SetTrainer(void) {
 		PRGPAGE_DMW(0xFFFB, 0x50);
 	}
 	if (iNESCart.trainer && WRAM) {
-		uint8 *trainerData = 0;
-		uint32 trainerSize = ROM.misc.size;
-		uint16 trainerAddr = 0x7000;
+		uint8_t *trainerData = 0;
+		uint32_t trainerSize = ROM.misc.size;
+		uint16_t trainerAddr = 0x7000;
 
 		if (iNESCart.mapper == 17) {
 			if (iNESCart.submapper == 0) {
@@ -464,8 +464,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper006_Init(CartInfo *info) {
-	uint32 wramsize = info->PRGRamSize + info->PRGRamSaveSize;
-	uint32 prgsize = ROM.prg.size;
+	uint32_t wramsize = info->PRGRamSize + info->PRGRamSaveSize;
+	uint32_t prgsize = ROM.prg.size;
 
 	info->Power = Power;
 	info->Reset = Reset;
@@ -478,7 +478,7 @@ void Mapper006_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = wramsize ? wramsize : 8192;
-	WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_malloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, TRUE);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
@@ -487,11 +487,11 @@ void Mapper006_Init(CartInfo *info) {
 
 	if (ROM.chr.size) {
 		if ((info->mapper == 12) && (info->submapper == 1)) {
-			uint8 *newbuffer;
+			uint8_t *newbuffer;
 			size_t prg_size = (ROM.prg.size > SIZE_256K) ? SIZE_256K : ROM.prg.size;
 			size_t chr_size = (ROM.chr.size > SIZE_256K) ? SIZE_256K : ROM.chr.size;
 
-			newbuffer = (uint8 *)FCEU_malloc(SIZE_512K);
+			newbuffer = (uint8_t *)FCEU_malloc(SIZE_512K);
 			memset(newbuffer, 0xFF, SIZE_512K);
 			/* copy main PRG-ROM data */
 			memcpy(newbuffer, ROM.prg.data, prg_size);
@@ -506,7 +506,7 @@ void Mapper006_Init(CartInfo *info) {
 
 			/* setup and map chr ram */
 			CHRRAMSIZE = info->CHRRamSize;
-			CHRRAM = (uint8 *)FCEU_malloc(CHRRAMSIZE);
+			CHRRAM = (uint8_t *)FCEU_malloc(CHRRAMSIZE);
 			SetupCartCHRMapping(0, CHRRAM, CHRRAMSIZE, TRUE);
 			AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 

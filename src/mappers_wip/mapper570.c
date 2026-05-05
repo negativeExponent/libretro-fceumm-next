@@ -22,7 +22,7 @@
 #include "vrc24.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m570;
 
 static SFORMAT StateRegs[] = {
@@ -30,16 +30,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = 0x0F;
-	uint16 base = m570.reg << 4;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x0F;
+	uint16_t base = m570.reg << 4;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (m570.reg & 0x03) ? 0x0FF : 0x1FF;
-	uint16 base = !!(m570.reg & 0x03) * 0x200 | !!(m570.reg & 0x02) * 0x100;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (m570.reg & 0x03) ? 0x0FF : 0x1FF;
+	uint16_t base = !!(m570.reg & 0x03) * 0x200 | !!(m570.reg & 0x02) * 0x100;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

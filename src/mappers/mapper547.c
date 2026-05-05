@@ -31,11 +31,11 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[16];
-	uint8 IRQa;
-	uint8 IRQr;
-	uint32 IRQLatch;
-	uint32 IRQCount;
+	uint8_t reg[16];
+	uint8_t IRQa;
+	uint8_t IRQr;
+	uint32_t IRQLatch;
+	uint32_t IRQCount;
 } m547;
 
 static SFORMAT StateRegs[] = {
@@ -94,7 +94,7 @@ static void Sync(void) {
 	SyncMirror();
 }
 
-static const uint8 pageTable[0x24] = {
+static const uint8_t pageTable[0x24] = {
 	/* JIS X 0208 rows $20-$4F. $20 is not a valid row number. */
 	0x0, 0x0, 0x2, 0x2, 0x1, 0x1, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF,
 	/* JIS X 0208 rows $50-$7F. $7F is not a valid row number. */
@@ -102,17 +102,17 @@ static const uint8 pageTable[0x24] = {
 };
 
 static DECLFR(ReadReg) {
-	uint8 row = m547.reg[13] - 0x20;
-	uint8 col = m547.reg[12] - 0x20;
+	uint8_t row = m547.reg[13] - 0x20;
+	uint8_t col = m547.reg[12] - 0x20;
 
 	if ((row < 0x60) && (col < 0x60)) {
 		/* "row" and "col" are the first and second 7-bit JIS X 0208 code byte, respectively, each minus the $21 offset. */
-		uint16 code = (col % 32) +    /* First, go through 32 columns of a column-third. */
+		uint16_t code = (col % 32) +    /* First, go through 32 columns of a column-third. */
 		    (row % 16) * 32 +         /* Then, through 16 rows of a row-third. */
 		    (col / 32) * 32 * 16 +    /* Then, through three column-thirds. */
 		    (row / 16) * 32 * 16 * 3; /* Finally, through three row-thirds. */
-		uint16 glyph = (code & 0xFF) | (pageTable[code >> 8] << 8);
-		uint32 tile = glyph * 4; /* four tiles per glyph */
+		uint16_t glyph = (code & 0xFF) | (pageTable[code >> 8] << 8);
+		uint32_t tile = glyph * 4; /* four tiles per glyph */
 
 		if (A == 0xDC00) {
 			/* tile number */
@@ -220,11 +220,11 @@ void Mapper547_Init(CartInfo *info) {
 		WRAMSIZE = 8192 + 8192; /* 8K external + 8K internal RAM */
 	}
 
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

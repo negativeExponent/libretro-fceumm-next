@@ -16,8 +16,8 @@ typedef struct {
 	void (*Reset)(void);
 	void (*Close)(void);
 
-	uint8 *SaveGame[4];    /* Pointers to memory to save/load. */
-	uint32 SaveGameLen[4]; /* How much memory to save/load. */
+	uint8_t *SaveGame[4];    /* Pointers to memory to save/load. */
+	uint32_t SaveGameLen[4]; /* How much memory to save/load. */
 
 	/* Set by iNES/UNIF loading code. */
 	int format;
@@ -48,18 +48,18 @@ typedef struct {
 	int PRGRamSaveSize; /* prg ram size in bytes (non-volatile or battery backed) */
 	int CHRRamSaveSize; /* chr ram size in bytes (non-volatile or battery backed) */
 
-	uint8 MD5[16];
-	uint32 PRGCRC32;
-	uint32 CHRCRC32;
-	uint32 CRC32; /* Should be set by the iNES/UNIF loading
+	uint8_t MD5[16];
+	uint32_t PRGCRC32;
+	uint32_t CHRCRC32;
+	uint32_t CRC32; /* Should be set by the iNES/UNIF loading
 	               * code, used by mapper/board code, maybe
 	               * other code in the future.
 	               */
 } CartInfo;
 
 typedef struct mem_t {
-	uint8 *data;
-	uint32 size;
+	uint8_t *data;
+	uint32_t size;
 } mem_t;
 
 typedef struct romData_t {
@@ -70,77 +70,77 @@ typedef struct romData_t {
 	mem_t disko;
 } romData_t;
 
-extern uint8 *Page[32], *VPage[8], *MMC5SPRVPage[8], *MMC5BGVPage[8];
+extern uint8_t *Page[32], *VPage[8], *MMC5SPRVPage[8], *MMC5BGVPage[8];
 
 void ResetCartMapping(void);
-void SetupCartPRGMapping(int chip, uint8 *p, uint32 size, uint8 ram);
-void SetupCartCHRMapping(int chip, uint8 *p, uint32 size, uint8 ram);
-void SetupCartMirroring(int m, int hard, uint8 *extra);
+void SetupCartPRGMapping(int chip, uint8_t *p, uint32_t size, uint8_t ram);
+void SetupCartCHRMapping(int chip, uint8_t *p, uint32_t size, uint8_t ram);
+void SetupCartMirroring(int m, int hard, uint8_t *extra);
 
 DECLFR(CartBROB);
 DECLFR(CartBR);
 DECLFW(CartBW);
 
-extern uint8 *PRGptr[32];
-extern uint8 *CHRptr[32];
+extern uint8_t *PRGptr[32];
+extern uint8_t *CHRptr[32];
 
-extern uint32 PRGsize[32];
-extern uint32 CHRsize[32];
+extern uint32_t PRGsize[32];
+extern uint32_t CHRsize[32];
 
-extern uint32 PRGmask2[32];
-extern uint32 PRGmask4[32];
-extern uint32 PRGmask8[32];
-extern uint32 PRGmask16[32];
-extern uint32 PRGmask32[32];
+extern uint32_t PRGmask2[32];
+extern uint32_t PRGmask4[32];
+extern uint32_t PRGmask8[32];
+extern uint32_t PRGmask16[32];
+extern uint32_t PRGmask32[32];
 
-extern uint32 CHRmask1[32];
-extern uint32 CHRmask2[32];
-extern uint32 CHRmask4[32];
-extern uint32 CHRmask8[32];
+extern uint32_t CHRmask1[32];
+extern uint32_t CHRmask2[32];
+extern uint32_t CHRmask4[32];
+extern uint32_t CHRmask8[32];
 
-void setprg2(uint16 A, uint16 V);
-void setprg4(uint16 A, uint16 V);
-void setprg8(uint16 A, uint16 V);
-void setprg16(uint16 A, uint16 V);
-void setprg32(uint16 A, uint16 V);
+void setprg2(uint16_t A, uint16_t V);
+void setprg4(uint16_t A, uint16_t V);
+void setprg8(uint16_t A, uint16_t V);
+void setprg16(uint16_t A, uint16_t V);
+void setprg32(uint16_t A, uint16_t V);
 
-void setprg2r(int r, uint16 A, uint16 V);
-void setprg4r(int r, uint16 A, uint16 V);
-void setprg8r(int r, uint16 A, uint16 V);
-void setprg16r(int r, uint16 A, uint16 V);
-void setprg32r(int r, uint16 A, uint16 V);
+void setprg2r(int r, uint16_t A, uint16_t V);
+void setprg4r(int r, uint16_t A, uint16_t V);
+void setprg8r(int r, uint16_t A, uint16_t V);
+void setprg16r(int r, uint16_t A, uint16_t V);
+void setprg32r(int r, uint16_t A, uint16_t V);
 
-void setprg2_access(uint16 A, uint16 V, uint8 rd, uint8 wr);
-void setprg4_access(uint16 A, uint16 V, uint8 rd, uint8 wr);
-void setprg8_access(uint16 A, uint16 V, uint8 rd, uint8 wr);
-void setprg16_access(uint16 A, uint16 V, uint8 rd, uint8 wr);
-void setprg32_access(uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg2_access(uint16_t A, uint16_t V, uint8_t rd, uint8_t wr);
+void setprg4_access(uint16_t A, uint16_t V, uint8_t rd, uint8_t wr);
+void setprg8_access(uint16_t A, uint16_t V, uint8_t rd, uint8_t wr);
+void setprg16_access(uint16_t A, uint16_t V, uint8_t rd, uint8_t wr);
+void setprg32_access(uint16_t A, uint16_t V, uint8_t rd, uint8_t wr);
 
-void setprg2r_access(int r, uint16 A, uint16 V, uint8 rd, uint8 wr);
-void setprg4r_access(int r, uint16 A, uint16 V, uint8 rd, uint8 wr);
-void setprg8r_access(int r, uint16 A, uint16 V, uint8 rd, uint8 wr);
-void setprg16r_access(int r, uint16 A, uint16 V, uint8 rd, uint8 wr);
-void setprg32r_access(int r, uint16 A, uint16 V, uint8 rd, uint8 wr);
+void setprg2r_access(int r, uint16_t A, uint16_t V, uint8_t rd, uint8_t wr);
+void setprg4r_access(int r, uint16_t A, uint16_t V, uint8_t rd, uint8_t wr);
+void setprg8r_access(int r, uint16_t A, uint16_t V, uint8_t rd, uint8_t wr);
+void setprg16r_access(int r, uint16_t A, uint16_t V, uint8_t rd, uint8_t wr);
+void setprg32r_access(int r, uint16_t A, uint16_t V, uint8_t rd, uint8_t wr);
 
-void unsetcpu2(uint16 A);
-void unsetcpu4(uint16 A);
-void unsetcpu8(uint16 A);
-void unsetcpu16(uint16 A);
-void unsetcpu32(uint16 A);
+void unsetcpu2(uint16_t A);
+void unsetcpu4(uint16_t A);
+void unsetcpu8(uint16_t A);
+void unsetcpu16(uint16_t A);
+void unsetcpu32(uint16_t A);
 
-void setchr1r(int r, uint16 A, uint16 V);
-void setchr2r(int r, uint16 A, uint16 V);
-void setchr4r(int r, uint16 A, uint16 V);
-void setchr8r(int r, uint16 V);
+void setchr1r(int r, uint16_t A, uint16_t V);
+void setchr2r(int r, uint16_t A, uint16_t V);
+void setchr4r(int r, uint16_t A, uint16_t V);
+void setchr8r(int r, uint16_t V);
 
-void setchr1(uint16 A, uint16 V);
-void setchr2(uint16 A, uint16 V);
-void setchr4(uint16 A, uint16 V);
-void setchr8(uint16 V);
+void setchr1(uint16_t A, uint16_t V);
+void setchr2(uint16_t A, uint16_t V);
+void setchr4(uint16_t A, uint16_t V);
+void setchr8(uint16_t V);
 
 void setmirror(int t);
 void setmirrorw(int a, int b, int c, int d);
-void setntamem(uint8 *p, int ram, int b);
+void setntamem(uint8_t *p, int ram, int b);
 
 enum MirroringType {
 	MI_H = 0, /* horizontal */
@@ -152,11 +152,11 @@ enum MirroringType {
 
 extern CartInfo iNESCart;
 
-extern uint8 *CHRRAM;
-extern uint32 CHRRAMSIZE;
+extern uint8_t *CHRRAM;
+extern uint32_t CHRRAMSIZE;
 
-extern uint8 *WRAM;
-extern uint32 WRAMSIZE;
+extern uint8_t *WRAM;
+extern uint32_t WRAMSIZE;
 
 extern romData_t ROM;
 

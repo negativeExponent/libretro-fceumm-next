@@ -30,8 +30,8 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
-	uint8 dipsw;
+	uint8_t reg;
+	uint8_t dipsw;
 } m460;
 
 static SFORMAT StateRegs[] = {
@@ -40,13 +40,13 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = 0x0F;
-	uint16 base = m460.reg << 4;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x0F;
+	uint16_t base = m460.reg << 4;
 
 	if (m460.reg & 0x08) {
 		if (!(A & 0x4000)) { /* GNROM */
-			uint8 A14 = (m460.reg >> 3) & 0x02;
+			uint8_t A14 = (m460.reg >> 3) & 0x02;
 
 			setprg8(A, (base & ~mask) | ((V & mask) & ~A14));
 			A += 0x4000;
@@ -131,7 +131,7 @@ void Mapper460_Init(CartInfo *info) {
 	info->Reset = Reset;
 	AddExState(StateRegs, ~0, 0, NULL);
 
-	CHRRAM = (uint8 *)FCEU_gmalloc(8192);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(8192);
 	SetupCartCHRMapping(0x10, CHRRAM, 8192, 1);
 	AddExState(CHRRAM, 8192, 0, "CRAM");
 }

@@ -22,13 +22,13 @@
 #include "latch.h"
 
 static struct {
-	uint8 unrom;
+	uint8_t unrom;
 } m280;
 
 static void Sync(void) {
-	uint8 nrom = (latch.addr & 0x80) != 0;
-	uint8 A14 = (latch.addr & 0x01) != 0;
-	uint16 prg = (latch.addr >> 2) & 0x1F;
+	uint8_t nrom = (latch.addr & 0x80) != 0;
+	uint8_t A14 = (latch.addr & 0x01) != 0;
+	uint16_t prg = (latch.addr >> 2) & 0x1F;
 
 	if (!m280.unrom && nrom)
 		SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], 0);

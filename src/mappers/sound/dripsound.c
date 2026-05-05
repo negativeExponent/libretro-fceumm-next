@@ -24,16 +24,16 @@
 #define TIMER_SHIFT ((FSettings.soundq >= 1) ? 0 : 17)
 
 typedef struct DRIPSOUND {
-	uint8 buffer[256], readPos, writePos;
-	uint8 bufferFull, bufferEmpty;
-	uint8 volume;
-	uint16 freq;
-	int32 timer;
-	int16 out;
+	uint8_t buffer[256], readPos, writePos;
+	uint8_t bufferFull, bufferEmpty;
+	uint8_t volume;
+	uint16_t freq;
+	int32_t timer;
+	int16_t out;
 } DRIPSOUND;
 
 static DRIPSOUND drip[2];
-static int32 cvbc = 0;
+static int32_t cvbc = 0;
 
 static void ChannelReset(DRIPSOUND *ds) {
 	memset(ds->buffer, 0, 256);
@@ -43,8 +43,8 @@ static void ChannelReset(DRIPSOUND *ds) {
 	ds->bufferEmpty = TRUE;
 }
 
-static uint8 ChannelRead(DRIPSOUND *ds) {
-	uint8 result = 0;
+static uint8_t ChannelRead(DRIPSOUND *ds) {
+	uint8_t result = 0;
 
 	if (ds->bufferFull) {
 		result |= 0x80;
@@ -57,7 +57,7 @@ static uint8 ChannelRead(DRIPSOUND *ds) {
 	return result;
 }
 
-static void ChannelWrite(DRIPSOUND *ds, uint16 A, uint8 V) {
+static void ChannelWrite(DRIPSOUND *ds, uint16_t A, uint8_t V) {
 	switch (A & 0x03) {
 	case 0:
 		ChannelReset(ds);
@@ -92,11 +92,11 @@ static void ChannelWrite(DRIPSOUND *ds, uint16 A, uint8 V) {
 	}
 }
 
-static void SyncHQ(int32 ts) {
+static void SyncHQ(int32_t ts) {
 	cvbc = ts;
 }
 
-static int32 GenerateWaveHQ(DRIPSOUND *ds) {
+static int32_t GenerateWaveHQ(DRIPSOUND *ds) {
 	if (!ds->bufferEmpty) {
 		ds->timer--;
 		if (ds->timer <= 0) {
@@ -117,7 +117,7 @@ static int32 GenerateWaveHQ(DRIPSOUND *ds) {
 	return ds->out;
 }
 
-static int32 GenerateWaveLQ(DRIPSOUND *ds) {
+static int32_t GenerateWaveLQ(DRIPSOUND *ds) {
 	if (!ds->bufferEmpty) {
 		ds->timer -= nesincsize;
 
@@ -144,7 +144,7 @@ static void DoDRIPSoundHQ(void) {
 	int V;
 
 	for (V = cvbc; V < (int)SOUNDTS; V++) {
-		int32 out = 0;
+		int32_t out = 0;
 
 		out += GenerateWaveHQ(&drip[0]);
 		out += GenerateWaveHQ(&drip[1]);
@@ -165,7 +165,7 @@ static void DRIPSound(void) {
 	}
 
 	for (V = start; V < end; V++) {
-		int32 out = 0;
+		int32_t out = 0;
 
 		out += GenerateWaveLQ(&drip[0]) >> 4;
 		out += GenerateWaveLQ(&drip[1]) >> 4;

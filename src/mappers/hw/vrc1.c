@@ -31,8 +31,8 @@ void (*VRC1_SyncPRG)(void);
 void (*VRC1_SyncCHR)(void);
 void (*VRC1_SyncMirror)(void);
 
-void (*VRC1_pwrap)(uint16 A, uint16 V);
-void (*VRC1_cwrap)(uint16 A, uint16 V);
+void (*VRC1_pwrap)(uint16_t A, uint16_t V);
+void (*VRC1_cwrap)(uint16_t A, uint16_t V);
 
 static SFORMAT StateRegs[] = {
 	{ &vrc1.mode, 1, "MODE" },
@@ -41,11 +41,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-void VRC1_SetPRG_default(uint16 A, uint16 V) {
+void VRC1_SetPRG_default(uint16_t A, uint16_t V) {
     setprg8(A, V);
 }
 
-void VRC1_SetCHR_default(uint16 A, uint16 V) {
+void VRC1_SetCHR_default(uint16_t A, uint16_t V) {
     setchr4(A, V);
 }
 
@@ -140,7 +140,7 @@ void VRC1_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 }
 
-void VRC1_SetConfig(uint8 clear) {
+void VRC1_SetConfig(uint8_t clear) {
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0x8FFF, VRC1_WritePRG);
 	SetWriteHandler(0x9000, 0x9FFF, VRC1_WriteMode);

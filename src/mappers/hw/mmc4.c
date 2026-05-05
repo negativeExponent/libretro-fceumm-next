@@ -24,8 +24,8 @@
 #include "mapinc.h"
 #include "mmc4.h"
 
-void (*MMC4_pwrap)(uint16 A, uint16 V);
-void (*MMC4_cwrap)(uint16 A, uint16 V);
+void (*MMC4_pwrap)(uint16_t A, uint16_t V);
+void (*MMC4_cwrap)(uint16_t A, uint16_t V);
 
 MMC4 mmc4;
 
@@ -37,11 +37,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void MMC4_SetPRG_default(uint16 A, uint16 V) {
+static void MMC4_SetPRG_default(uint16_t A, uint16_t V) {
 	setprg16(A, V);
 }
 
-static void MMC4_SetCHR_default(uint16 A, uint16 V) {
+static void MMC4_SetCHR_default(uint16_t A, uint16_t V) {
 	setchr4(A, V);
 }
 
@@ -79,8 +79,8 @@ DECLFW(MMC4_Write) {
 	}
 }
 
-static void MMC4PPUHook(uint32 A) {
-	uint8 bank = (A >> 12) & 0x01;
+static void MMC4PPUHook(uint32_t A) {
+	uint8_t bank = (A >> 12) & 0x01;
 	if ((A & 0x2000) || (((A & 0xFF0) != 0xFD0) && ((A & 0xFF0) != 0xFE0))) {
 		return;
 	}
@@ -130,7 +130,7 @@ void MMC4_Init(CartInfo *info, int wram, int battery) {
 
 	if (wram) {
 		WRAMSIZE = wram * 1024;
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (battery) {
@@ -140,7 +140,7 @@ void MMC4_Init(CartInfo *info, int wram, int battery) {
 	}
 }
 
-void MMC4_SetConfig(uint8 clear) {
+void MMC4_SetConfig(uint8_t clear) {
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0xA000, 0xFFFF, MMC4_Write);
 	SetReadHandler(0x6000, 0x7FFF, CartBR);

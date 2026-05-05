@@ -26,8 +26,8 @@
 #include "vrc24.h"
 
 static struct {
-	uint8 reg;
-	uint8 ppuchrbus;
+	uint8_t reg;
+	uint8_t ppuchrbus;
 } m398;
 
 static SFORMAT StateRegs[] = {
@@ -36,7 +36,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	if (m398.reg & 0x80) {
 		/* GNROM-like */
 		setprg32(0x8000, ((m398.reg >> 5) & 0x06) | ((vrc24.chr[m398.ppuchrbus] >> 2) & 0x01));
@@ -45,7 +45,7 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	if (m398.reg & 0x80) {
 		/* GNROM-like */
 		setchr8(0x40 | ((m398.reg >> 3) & 0x08) | (vrc24.chr[m398.ppuchrbus] & 0x07));
@@ -55,7 +55,7 @@ static void SetCHR(uint16 A, uint16 V) {
 }
 
 static DECLFW(WriteLatch) {
-	uint8 reg = A & 0xFF;
+	uint8_t reg = A & 0xFF;
 	if (reg != m398.reg) {
 		m398.reg = A & 0xFF;
 		VRC24_SyncPRG();
@@ -64,8 +64,8 @@ static DECLFW(WriteLatch) {
 	VRC24_Write(A, V);
 }
 
-static void PPUHook(uint32 A) {
-	uint8 bank = (A & 0x1FFF) >> 10;
+static void PPUHook(uint32_t A) {
+	uint8_t bank = (A & 0x1FFF) >> 10;
 	if ((m398.ppuchrbus != bank) && ((A & 0x3000) != 0x2000)) {
 		m398.ppuchrbus = bank;
 		VRC24_SyncPRG();

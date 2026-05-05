@@ -24,13 +24,13 @@
 #include "fme7.h"
 #include "s5bsound.h"
 
-static uint8 IRQa;
-static int32 IRQCount;
+static uint8_t IRQa;
+static int32_t IRQCount;
 
 FME7 fme7;
 
-void (*FME7_pwrap)(uint16 A, uint16 V);
-void (*FME7_cwrap)(uint16 A, uint16 V);
+void (*FME7_pwrap)(uint16_t A, uint16_t V);
+void (*FME7_cwrap)(uint16_t A, uint16_t V);
 
 void (*FME7_SyncWRAM)(void);
 void (*FME7_SyncPRG)(void);
@@ -47,11 +47,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void GENPWRAP(uint16 A, uint16 V) {
+static void GENPWRAP(uint16_t A, uint16_t V) {
 	setprg8(A, V);
 }
 
-static void GENCWRAP(uint16 A, uint16 V) {
+static void GENCWRAP(uint16_t A, uint16_t V) {
 	setchr1(A, V);
 }
 
@@ -232,7 +232,7 @@ void FME7_Init(CartInfo *info, int wram, int battery) {
 		}
 	}
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (battery) {
@@ -251,7 +251,7 @@ void FME7_Init(CartInfo *info, int wram, int battery) {
 	S5BSound_AddStateInfo();
 }
 
-void FME7_SetConfig(uint8 clear) {
+void FME7_SetConfig(uint8_t clear) {
 	S5BSound_ESI();
 	SetReadHandler(0x8000, 0xFFFF, CartBR);
 	SetWriteHandler(0x8000, 0x9FFF, FME7_WriteIndex);

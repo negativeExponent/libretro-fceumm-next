@@ -22,7 +22,7 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint16 bank = latch.addr >> 1 & 0x20 | latch.addr & 0x1F;
+	uint16_t bank = latch.addr >> 1 & 0x20 | latch.addr & 0x1F;
 
 	if (latch.addr & 0x20) {
 		if (latch.addr & 0x01) {

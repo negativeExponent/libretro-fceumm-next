@@ -25,7 +25,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m049;
 
 static SFORMAT StateRegs[] = {
@@ -33,11 +33,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	if (m049.reg & 0x01) {
 		setprg8(A, ((m049.reg >> 2) & ~0x0F) | (V & 0x0F));
 	} else {
-		uint8 mask = 0x0F;
+		uint8_t mask = 0x0F;
 		if (iNESCart.submapper == 1) {
 			/* Street Fighter 2 of the UNIF variant */
 			mask = 0x03;
@@ -46,7 +46,7 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr1(A, ((m049.reg << 1) & ~0x7F) | (V & 0x7F));
 }
 

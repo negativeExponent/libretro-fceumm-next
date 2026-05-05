@@ -25,7 +25,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 latch;
+	uint8_t latch;
 } m099;
 static writefunc cpuwrite4016;
 
@@ -77,7 +77,7 @@ void Mapper099_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

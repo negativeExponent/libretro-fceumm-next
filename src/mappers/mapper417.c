@@ -22,11 +22,11 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg[4];
-	uint8 chr[8];
-	uint8 nt[4];
-	uint8 IRQa;
-	uint16 IRQCount;
+	uint8_t prg[4];
+	uint8_t chr[8];
+	uint8_t nt[4];
+	uint8_t IRQa;
+	uint16_t IRQCount;
 } m417;
 
 static SFORMAT StateRegs[] = {
@@ -108,7 +108,7 @@ static DECLFW(WriteReg) {
 }
 
 static void CPUIRQHook(int a) {
-	uint16 mask = (iNESCart.submapper == 1) ? 0x1000 : 0x400;
+	uint16_t mask = (iNESCart.submapper == 1) ? 0x1000 : 0x400;
 
 	m417.IRQCount += a;
 	if (m417.IRQa && (m417.IRQCount & mask)) {

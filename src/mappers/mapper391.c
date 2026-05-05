@@ -24,7 +24,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m391;
 
 static SFORMAT StateRegs[] = {
@@ -32,13 +32,13 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint8 mask = (m391.reg[0] & 0x08) ? 0x0F : 0x1F;
-	uint8 base = (m391.reg[0] << 4) & 0x30;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint8_t mask = (m391.reg[0] & 0x08) ? 0x0F : 0x1F;
+	uint8_t base = (m391.reg[0] << 4) & 0x30;
 
 	if (m391.reg[0] & 0x20) {
 		if (!(A & 0x4000)) { /* GNROM */
-			uint8 A14 = (m391.reg[0] >> 1) & 0x02;
+			uint8_t A14 = (m391.reg[0] >> 1) & 0x02;
 
 			setprg8(A, (base & ~mask) | ((V & mask) & ~A14));
 			A += 0x4000;
@@ -49,9 +49,9 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (m391.reg[0] & 0x40) ? 0x7F : 0xFF;
-	uint16 base = ((m391.reg[0] << 3) & 0x80) | ((m391.reg[1] << 8) & 0x100);
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (m391.reg[0] & 0x40) ? 0x7F : 0xFF;
+	uint16_t base = ((m391.reg[0] << 3) & 0x80) | ((m391.reg[1] << 8) & 0x100);
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

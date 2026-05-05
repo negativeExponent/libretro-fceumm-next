@@ -2,18 +2,18 @@
 #include "eeprom_93Cx6.h"
 
 struct EEPROM_93Cx6 {
-	uint8 *storage;
-	uint8 opcode;
-	uint16 data;
-	uint16 address;
-	uint8 state;
-	uint8 lastCLK;
-	uint8 writeEnabled;
-	uint8 output;
-	uint8 capacity;
-	uint8 wordsize;
-	uint8 state_address;
-	uint8 state_data;
+	uint8_t *storage;
+	uint8_t opcode;
+	uint16_t data;
+	uint16_t address;
+	uint8_t state;
+	uint8_t lastCLK;
+	uint8_t writeEnabled;
+	uint8_t output;
+	uint8_t capacity;
+	uint8_t wordsize;
+	uint8_t state_address;
+	uint8_t state_data;
 } EEPROM_93Cx6;
 
 #define OPCODE_MISC         0
@@ -36,7 +36,7 @@ struct EEPROM_93Cx6 {
 
 static struct EEPROM_93Cx6 eeprom_93Cx6 = { 0 };
 
-void eeprom_93Cx6_init(uint8 *data, uint32 capacity, uint8 wordsize) {
+void eeprom_93Cx6_init(uint8_t *data, uint32_t capacity, uint8_t wordsize) {
 	eeprom_93Cx6.storage = data;
 	eeprom_93Cx6.address = 0;
 	eeprom_93Cx6.state = STATE_STANDBY;
@@ -49,11 +49,11 @@ void eeprom_93Cx6_init(uint8 *data, uint32 capacity, uint8 wordsize) {
 	eeprom_93Cx6.state_data = (wordsize == 16) ? STATE_DATA16 : STATE_DATA8;
 }
 
-uint8 eeprom_93Cx6_read(void) {
+uint8_t eeprom_93Cx6_read(void) {
 	return eeprom_93Cx6.output;
 }
 
-void eeprom_93Cx6_write(uint8 CS, uint8 CLK, uint8 DAT) {
+void eeprom_93Cx6_write(uint8_t CS, uint8_t CLK, uint8_t DAT) {
 	if (!CS && (eeprom_93Cx6.state <= eeprom_93Cx6.state_address)) {
 		eeprom_93Cx6.state = STATE_STANDBY;
 	} else if ((eeprom_93Cx6.state == STATE_STANDBY) && CS && CLK && !eeprom_93Cx6.lastCLK) {

@@ -25,7 +25,7 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 prg = ((latch.addr >> 2) & 0x1F) | ((latch.addr >> 5) & 0x20);
+	uint8_t prg = ((latch.addr >> 2) & 0x1F) | ((latch.addr >> 5) & 0x20);
 
 	if (latch.addr & 0x200) {
 		/* unrom */

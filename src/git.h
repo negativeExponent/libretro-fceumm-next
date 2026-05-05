@@ -115,7 +115,7 @@ enum SIFC {
 };
 
 typedef struct {
-	uint8 *name; /* Game name, UTF8 encoding */
+	uint8_t *name; /* Game name, UTF8 encoding */
 
 	int type;     /* GIT_* */
 	int vidsys;   /* Current emulated video system; GIV_* */
@@ -125,7 +125,7 @@ typedef struct {
 	              desired input. */
 	int cspecial; /* Special cart expansion: DIP switches, barcode
 	              reader, etc. */
-	uint8 MD5[16];
+	uint8_t MD5[16];
 	int soundrate; /* For Ogg Vorbis expansion sound wacky support.  0 for default. */
 	int soundchan; /* Number of sound channels. */
 } FCEUGI;

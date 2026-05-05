@@ -29,10 +29,10 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m226;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &dipsw, 1, "RST" },
@@ -41,8 +41,8 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint16 bank = ((m226.reg[1] & 0x01) << 1) | ((m226.reg[0] >> 7) & 0x01);
-	uint8 prg = m226.reg[0] & 0x1F;
+	uint16_t bank = ((m226.reg[1] & 0x01) << 1) | ((m226.reg[0] >> 7) & 0x01);
+	uint8_t prg = m226.reg[0] & 0x1F;
 
 	/* 1536KiB PRG roms have different bank order */
 	if ((ROM.prg.size == (1536 * 1024)) && (bank > 0)) {

@@ -25,56 +25,56 @@
 #include "mmc5.h"
 #include "mmc5sound.h"
 
-static INLINE void MMC5SPRVROM_BANK1(uint32 A, uint32 V) {
+static INLINE void MMC5SPRVROM_BANK1(uint32_t A, uint32_t V) {
 	if (CHRptr[0]) {
 		V &= CHRmask1[0];
 		MMC5SPRVPage[A >> 10] = &CHRptr[0][V << 10] - A;
 	}
 }
 
-static INLINE void MMC5BGVROM_BANK1(uint32 A, uint32 V) {
+static INLINE void MMC5BGVROM_BANK1(uint32_t A, uint32_t V) {
 	if (CHRptr[0]) {
 		V &= CHRmask1[0];
 		MMC5BGVPage[A >> 10] = &CHRptr[0][V << 10] - A;
 	}
 }
 
-static INLINE void MMC5SPRVROM_BANK2(uint32 A, uint32 V) {
+static INLINE void MMC5SPRVROM_BANK2(uint32_t A, uint32_t V) {
 	if (CHRptr[0]) {
 		V &= CHRmask2[0];
 		MMC5SPRVPage[A >> 10] = MMC5SPRVPage[(A >> 10) + 1] = &CHRptr[0][V << 11] - A;
 	}
 }
 
-static INLINE void MMC5BGVROM_BANK2(uint32 A, uint32 V) {
+static INLINE void MMC5BGVROM_BANK2(uint32_t A, uint32_t V) {
 	if (CHRptr[0]) {
 		V &= CHRmask2[0];
 		MMC5BGVPage[A >> 10] = MMC5BGVPage[(A >> 10) + 1] = &CHRptr[0][V << 11] - A;
 	}
 }
 
-static INLINE void MMC5SPRVROM_BANK4(uint32 A, uint32 V) {
+static INLINE void MMC5SPRVROM_BANK4(uint32_t A, uint32_t V) {
 	if (CHRptr[0]) {
 		V &= CHRmask4[0];
 		MMC5SPRVPage[A >> 10] = MMC5SPRVPage[(A >> 10) + 1] = MMC5SPRVPage[(A >> 10) + 2] = MMC5SPRVPage[(A >> 10) + 3] = &CHRptr[0][V << 12] - A;
 	}
 }
 
-static INLINE void MMC5BGVROM_BANK4(uint32 A, uint32 V) {
+static INLINE void MMC5BGVROM_BANK4(uint32_t A, uint32_t V) {
 	if (CHRptr[0]) {
 		V &= CHRmask4[0];
 		MMC5BGVPage[A >> 10] = MMC5BGVPage[(A >> 10) + 1] = MMC5BGVPage[(A >> 10) + 2] = MMC5BGVPage[(A >> 10) + 3] = &CHRptr[0][V << 12] - A;
 	}
 }
 
-static INLINE void MMC5SPRVROM_BANK8(uint32 V) {
+static INLINE void MMC5SPRVROM_BANK8(uint32_t V) {
 	if (CHRptr[0]) {
 		V &= CHRmask8[0];
 		MMC5SPRVPage[0] = MMC5SPRVPage[1] = MMC5SPRVPage[2] = MMC5SPRVPage[3] = MMC5SPRVPage[4] = MMC5SPRVPage[5] = MMC5SPRVPage[6] = MMC5SPRVPage[7] = &CHRptr[0][V << 13];
 	}
 }
 
-static INLINE void MMC5BGVROM_BANK8(uint32 V) {
+static INLINE void MMC5BGVROM_BANK8(uint32_t V) {
 	if (CHRptr[0]) {
 		V &= CHRmask8[0];
 		MMC5BGVPage[0] = MMC5BGVPage[1] = MMC5BGVPage[2] = MMC5BGVPage[3] = MMC5BGVPage[4] = MMC5BGVPage[5] = MMC5BGVPage[6] = MMC5BGVPage[7] = &CHRptr[0][V << 13];
@@ -109,7 +109,7 @@ static SFORMAT MMC5_StateRegs[] = {
 	{ 0 }
 };
 
-uint8 *MMC5BGVRAMADR(uint32 A) {
+uint8_t *MMC5BGVRAMADR(uint32_t A) {
 	if (newppu) {
 		if (Sprite16) {
 			bool isPattern = PPUON != 0;
@@ -139,12 +139,12 @@ uint8 *MMC5BGVRAMADR(uint32 A) {
 	}
 }
 
-extern uint8 PALRAM[0x20];
-extern uint8 UPALRAM[0x03];
-extern uint32 NTRefreshAddr;
+extern uint8_t PALRAM[0x20];
+extern uint8_t UPALRAM[0x03];
+extern uint32_t NTRefreshAddr;
 
-static void mmc5_PPUWrite(uint32 A, uint8 V) {
-	uint32 tmp = A;
+static void mmc5_PPUWrite(uint32_t A, uint8_t V) {
+	uint32_t tmp = A;
 
 	if (tmp >= 0x3F00) {
 		if (!(tmp & 0x03)) {
@@ -168,7 +168,7 @@ static void mmc5_PPUWrite(uint32 A, uint8 V) {
 	}
 }
 
-static uint8 mmc5_PPURead(uint32 A) {
+static uint8_t mmc5_PPURead(uint32_t A) {
 	bool split = false;
 
 	if (newppu) {
@@ -256,7 +256,7 @@ static uint8 mmc5_PPURead(uint32 A) {
 
 		if (MMC5HackCHRMode == MODE1) {
 			if ((A & 0x03FF) >= 0x3C0) {
-				uint8 byte = mmc5.exRam[NTRefreshAddr & 0x03FF];
+				uint8_t byte = mmc5.exRam[NTRefreshAddr & 0x03FF];
 
 				/* get attribute part and paste it 4x across the byte */
 				byte >>= 6;
@@ -367,7 +367,7 @@ static void MMC5_SyncCHR(void) {
 	}
 }
 
-static void MMC5PWRAP(uint16 A, uint16 V) {
+static void MMC5PWRAP(uint16_t A, uint16_t V) {
 	int chip = (V & 0x80) ? 0 : 0x10; /*wrom : wram */
 	setprg8r(chip, A, V);
 }
@@ -531,7 +531,7 @@ static DECLFR(MMC5_ExRAMRd) {
 }
 
 static DECLFR(MMC5_read) {
-	uint8 ret = cpu.openbus;
+	uint8_t ret = cpu.openbus;
 	switch (A) {
 	case 0x5204:
 		X6502_IRQEnd(FCEU_IQEXT);
@@ -543,15 +543,15 @@ static DECLFR(MMC5_read) {
 			mmc5.irq.pending = 0;
 		return ret;
 	case 0x5205:
-		return ((uint32)(mmc5.mul[0] * mmc5.mul[1]) & 0xFF);
+		return ((uint32_t)(mmc5.mul[0] * mmc5.mul[1]) & 0xFF);
 	case 0x5206:
-		return ((uint32)(mmc5.mul[0] * mmc5.mul[1]) >> 8);
+		return ((uint32_t)(mmc5.mul[0] * mmc5.mul[1]) >> 8);
 	}
 	return ret;
 }
 
 static void Sync(void) {
-	uint8 moop;
+	uint8_t moop;
 
 	MMC5_SyncPRG();
 	MMC5_SyncCHR();
@@ -608,8 +608,8 @@ static void StateRestore(int version) {
 
 static void MMC5_Reset(void) {
 	int x;
-	uint8 nval;
-	uint8 aval;
+	uint8_t nval;
+	uint8_t aval;
 
 	for (x = 0; x < 5; x++) {
 		mmc5.prg[x] = ((~4) + x);
@@ -688,7 +688,7 @@ static void MMC5_Power(void) {
 
 void MMC5_Init(CartInfo *info, int wsize, int battery) {
 	if (wsize) {
-		WRAM = (uint8 *)FCEU_gmalloc(wsize * 1024);
+		WRAM = (uint8_t *)FCEU_gmalloc(wsize * 1024);
 		memset(WRAM, 0, wsize * 1024);
 		SetupCartPRGMapping(0x10, WRAM, wsize * 1024, 1);
 		AddExState(WRAM, wsize * 1024, 0, "WRAM");
@@ -708,7 +708,7 @@ void MMC5_Init(CartInfo *info, int wsize, int battery) {
 
 	mmc5.batteryFlag = battery;
 	if (battery) {
-		uint32 saveramsize;
+		uint32_t saveramsize;
 		if (info->iNES2) {
 			saveramsize = info->PRGRamSaveSize;
 		} else {

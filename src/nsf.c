@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -56,7 +57,7 @@ static DECLFR(NSF_read);
 
 static int vismode = 1;
 
-static uint8 NSFROM[0x30 + 6] =
+static uint8_t NSFROM[0x30 + 6] =
 {
 /* 0x00 - NMI */
 	0x8D, 0xF4, 0x3F,	/* Stop play routine NMIs. */
@@ -90,16 +91,16 @@ static int lastJoy;
 static int doreset = 0;
 static int NSFNMIFlags;
 
-static uint8 BSon;
+static uint8_t BSon;
 static int special = 0;
-static uint8 *ExWRAM = 0;
+static uint8_t *ExWRAM = 0;
 
-static uint8 SongReload;
+static uint8_t SongReload;
 
-static uint8 *mmc5_exram;
-static uint8 mmc5_mul[2];
+static uint8_t *mmc5_exram;
+static uint8_t mmc5_mul[2];
 
-static uint8 namco163RAM[128];
+static uint8_t namco163RAM[128];
 
 NSFINFO *NSFInfo;
 
@@ -147,7 +148,7 @@ static void NSFGI(int h) {
 
 /* First 32KB is reserved for sound chip emulation in the iNES mapper code. */
 
-static INLINE void BANKSET(uint32 A, uint32 bank) {
+static INLINE void BANKSET(uint32_t A, uint32_t bank) {
 	bank &= NSFInfo->NSFMaxBank;
 	if (NSFInfo->SoundChip & NSFSOUND_FDS) {
 		memcpy(ExWRAM + (A - 0x6000), NSFInfo->NSFDATA + (bank << 12), 4096);
@@ -183,7 +184,7 @@ static int LoadNSF(FCEUFILE *fp) {
 	NSFInfo->NSFMaxBank = ((NSFInfo->NSFSize + (NSFInfo->LoadAddr & 0xfff) + 4095) / 4096);
 	NSFInfo->NSFMaxBank = PRGsize[0] = uppow2(NSFInfo->NSFMaxBank);
 
-	if (!(NSFInfo->NSFDATA = (uint8 *)FCEU_malloc(NSFInfo->NSFMaxBank * 4096))) {
+	if (!(NSFInfo->NSFDATA = (uint8_t *)FCEU_malloc(NSFInfo->NSFMaxBank * 4096))) {
 		return FALSE;
 	}
 
@@ -250,7 +251,7 @@ int NSFLoad(FCEUFILE *fp) {
 	}
 
 	if (BSon == 0) {
-		uint8 BankCounter = 0x00;
+		uint8_t BankCounter = 0x00;
 
 		if (((NSFInfo->LoadAddr >> 8) & 0x70) >= 0x70) {
 			BSon = 0xFF; /* Ice Climber, and other F000 base address tunes need this */
@@ -328,7 +329,7 @@ int NSFLoad(FCEUFILE *fp) {
 	FCEU_printf(" %s\n", (NSFInfo->VideoSystem & 1) ? "PAL" : "NTSC");
 	FCEU_printf(" Starting song:  %d / %d\n\n", NSFInfo->StartingSong + 1, NSFInfo->TotalSongs);
 
-	ExWRAM = (uint8 *)FCEU_gmalloc(FIXED_EXWRAM_SIZE);
+	ExWRAM = (uint8_t *)FCEU_gmalloc(FIXED_EXWRAM_SIZE);
 
 	FCEUI_SetVidSystem(NSFInfo->VideoSystem != 0);
 	lastJoy = 0;
@@ -456,7 +457,7 @@ void NSF_init(void) {
 		if (mmc5_exram) {
 			FCEU_free(mmc5_exram);
 		}
-		mmc5_exram = (uint8 *)FCEU_malloc(1024);
+		mmc5_exram = (uint8_t *)FCEU_malloc(1024);
 	}
 	if (NSFInfo->SoundChip & NSFSOUND_N163) {
 		N163Sound_ESI(namco163RAM);
@@ -642,10 +643,10 @@ static DECLFR(NSF_read) {
 			return mmc5_exram[A & 0x3FF];
 		}
 		if (A == 0x5205) {
-			return (uint8)(uint32)(mmc5_mul[0] * mmc5_mul[1]);
+			return (uint8_t)(uint32_t)(mmc5_mul[0] * mmc5_mul[1]);
 		}
 		if (A == 0x5206) {
-			return (uint8)((uint32)(mmc5_mul[0] * mmc5_mul[1]) >> 8);
+			return (uint8_t)((uint32_t)(mmc5_mul[0] * mmc5_mul[1]) >> 8);
 		}
 	}
 
@@ -702,15 +703,15 @@ static DECLFR(NSF_read) {
 	return cpu.openbus;
 }
 
-void DrawNSF(uint8 *target) {
+void DrawNSF(uint8_t *target) {
 	char snbuf[16];
-	int32 *Bufpl;
-	int32 mul = 0;
+	int32_t *Bufpl;
+	int32_t mul = 0;
 	int len = GetSoundBuffer(&Bufpl);
 	int x;
-	uint8 bgFill = 0;
-	uint8 textColor = 0x06;
-	uint8 waveFormColor = 0x03;
+	uint8_t bgFill = 0;
+	uint8_t textColor = 0x06;
+	uint8_t waveFormColor = 0x03;
 
 	if (vismode == 0) {
 		return;
@@ -724,7 +725,7 @@ void DrawNSF(uint8 *target) {
 			mul = 8192 * 240 / (16384 * FSettings.volume[SND_MASTER] / 50);
 		}
 		for (x = 0; x < 256; x++) {
-			uint32 y = 142 + ((((int32)(int16)Bufpl[(x * len) >> 8]) * mul) >> 14);
+			uint32_t y = 142 + ((((int32_t)(int16_t)Bufpl[(x * len) >> 8]) * mul) >> 14);
 			if (y < 240) {
 				target[x + y * 256] = waveFormColor;
 			}
@@ -734,9 +735,9 @@ void DrawNSF(uint8 *target) {
 			mul = 8192 * 240 / (8192 * FSettings.volume[SND_MASTER] / 50);
 		}
 		for (x = 0; x < 256; x++) {
-			double r = (((int32)(int16)Bufpl[(x * len) >> 8]) * mul) >> 14;
-			uint32 xp = 128 + r * cos(x * M_PI * 2 / 256);
-			uint32 yp = 120 + r * sin(x * M_PI * 2 / 256);
+			double r = (((int32_t)(int16_t)Bufpl[(x * len) >> 8]) * mul) >> 14;
+			uint32_t xp = 128 + r * cos(x * M_PI * 2 / 256);
+			uint32_t yp = 120 + r * sin(x * M_PI * 2 / 256);
 
 			xp &= 255;
 			yp %= 240;
@@ -750,11 +751,11 @@ void DrawNSF(uint8 *target) {
 		}
 		for (x = 0; x < 128; x++) {
 			double xc = (double)128 - x;
-			double yc = 0.0 - ((double)((((int32)(int16)Bufpl[(x * len) >> 8]) * mul) >> 14));
+			double yc = 0.0 - ((double)((((int32_t)(int16_t)Bufpl[(x * len) >> 8]) * mul) >> 14));
 			double t = (M_PI + atan(yc / xc)) + theta;
 			double r = sqrt(xc * xc + yc * yc);
-			uint32 m = 128 + r * cos(t);
-			uint32 n = 120 + r * sin(t);
+			uint32_t m = 128 + r * cos(t);
+			uint32_t n = 120 + r * sin(t);
 
 			if (m < 256 && n < 240) {
 				target[m + n * 256] = waveFormColor;
@@ -762,11 +763,11 @@ void DrawNSF(uint8 *target) {
 		}
 		for (x = 128; x < 256; x++) {
 			double xc = (double)x - 128;
-			double yc = (double)((((int32)(int16)Bufpl[(x * len) >> 8]) * mul) >> 14);
+			double yc = (double)((((int32_t)(int16_t)Bufpl[(x * len) >> 8]) * mul) >> 14);
 			double t = (atan(yc / xc)) + theta;
 			double r = sqrt(xc * xc + yc * yc);
-			uint32 m = 128 + r * cos(t);
-			uint32 n = 120 + r * sin(t);
+			uint32_t m = 128 + r * cos(t);
+			uint32_t n = 120 + r * sin(t);
 
 			if (m < 256 && n < 240) {
 				target[m + n * 256] = waveFormColor;
@@ -775,21 +776,21 @@ void DrawNSF(uint8 *target) {
 		theta += (double)M_PI / 256;
 	}
 
-	DrawTextTrans(target + 10 * 256 + 4 + (((31 - strlen((char *)NSFInfo->SongName)) << 2)), 256, (uint8*)NSFInfo->SongName, textColor);
-	DrawTextTrans(target + 26 * 256 + 4 + (((31 - strlen((char *)NSFInfo->Artist)) << 2)), 256, (uint8*)NSFInfo->Artist, textColor);
-	DrawTextTrans( target + 42 * 256 + 4 + (((31 - strlen((char *)NSFInfo->Copyright)) << 2)), 256, (uint8*)NSFInfo->Copyright, textColor);
+	DrawTextTrans(target + 10 * 256 + 4 + (((31 - strlen((char *)NSFInfo->SongName)) << 2)), 256, (uint8_t*)NSFInfo->SongName, textColor);
+	DrawTextTrans(target + 26 * 256 + 4 + (((31 - strlen((char *)NSFInfo->Artist)) << 2)), 256, (uint8_t*)NSFInfo->Artist, textColor);
+	DrawTextTrans( target + 42 * 256 + 4 + (((31 - strlen((char *)NSFInfo->Copyright)) << 2)), 256, (uint8_t*)NSFInfo->Copyright, textColor);
 
 	if (NSFInfo->SongNames[0][0]) {
-		DrawTextTrans(target + 70 * 256 + 4 + (((31 - strlen((char *)NSFInfo->SongNames[NSFInfo->CurrentSong])) << 2)), 256, (uint8 *)NSFInfo->SongNames[NSFInfo->CurrentSong], textColor);
+		DrawTextTrans(target + 70 * 256 + 4 + (((31 - strlen((char *)NSFInfo->SongNames[NSFInfo->CurrentSong])) << 2)), 256, (uint8_t *)NSFInfo->SongNames[NSFInfo->CurrentSong], textColor);
 	} else  {
-		DrawTextTrans(target + 70 * 256 + 4 + (((31 - strlen("Song:")) << 2)), 256, (uint8 *)"Song:", textColor);
+		DrawTextTrans(target + 70 * 256 + 4 + (((31 - strlen("Song:")) << 2)), 256, (uint8_t *)"Song:", textColor);
 	}
 	sprintf(snbuf, "<%d/%d>", NSFInfo->CurrentSong + 1, NSFInfo->TotalSongs);
-	DrawTextTrans(target + 82 * 256 + 4 + (((31 - strlen(snbuf)) << 2)), 256, (uint8 *)snbuf, textColor);
+	DrawTextTrans(target + 82 * 256 + 4 + (((31 - strlen(snbuf)) << 2)), 256, (uint8_t *)snbuf, textColor);
 }
 
 void DoNSFFrame(void) {
-	uint8 tmp = FCEU_GetJoyJoy();
+	uint8_t tmp = FCEU_GetJoyJoy();
 
 	if (((NSFNMIFlags & 1) && SongReload) || (NSFNMIFlags & 2)) {
 		TriggerNMI();
@@ -810,13 +811,13 @@ void DoNSFFrame(void) {
 		}
 		SongReload = 0xFF;
 	} else if ((tmp & JOY_UP) && !(lastJoy & JOY_UP)) {
-		uint32 ns = NSFInfo->CurrentSong + (uint32)MIN(NSFInfo->TotalSongs - 1 - NSFInfo->CurrentSong, 10);
+		uint32_t ns = NSFInfo->CurrentSong + (uint32_t)MIN(NSFInfo->TotalSongs - 1 - NSFInfo->CurrentSong, 10);
 		if (NSFInfo->CurrentSong != ns) {
 			NSFInfo->CurrentSong = ns;
 			SongReload = 0xFF;
 		}
 	} else if ((tmp & JOY_DOWN) && !(lastJoy & JOY_DOWN)) {
-		unsigned ns = NSFInfo->CurrentSong - (uint32)MIN(NSFInfo->CurrentSong, (uint32)10);
+		unsigned ns = NSFInfo->CurrentSong - (uint32_t)MIN(NSFInfo->CurrentSong, (uint32_t)10);
 
 		if (NSFInfo->CurrentSong != ns) {
 			NSFInfo->CurrentSong = ns;
@@ -850,7 +851,7 @@ int FCEUI_NSFChange(int amount) {
 }
 
 /* Returns total songs */
-int FCEUI_NSFGetInfo(uint8 *name, uint8 *artist, uint8 *copyright, int maxlen) {
+int FCEUI_NSFGetInfo(uint8_t *name, uint8_t *artist, uint8_t *copyright, int maxlen) {
 	strncpy((char *)name, (const char *)NSFInfo->SongName, (size_t)maxlen);
 	strncpy((char *)artist, (const char *)NSFInfo->Artist, (size_t)maxlen);
 	strncpy((char *)copyright, (const char *)NSFInfo->Copyright, (size_t)maxlen);

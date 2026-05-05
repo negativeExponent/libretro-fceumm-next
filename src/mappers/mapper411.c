@@ -33,10 +33,10 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m411;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m411.reg, 4, "EXPR" },
@@ -44,8 +44,8 @@ static SFORMAT StateRegs[] = {
 };
 
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 base, mask;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t base, mask;
 
 	switch (iNESCart.submapper) {
 	default:
@@ -64,7 +64,7 @@ static void SetPRG(uint16 A, uint16 V) {
 
 	/* NROM Mode */
 	if ((m411.reg[0] & 0x40) && !(m411.reg[0] & 0x20)) { /* NOTE: $5xx0 bit 5 check required for JY-212 */
-		uint16 bank = (base >> 1) | (m411.reg[0] & 0x05) | ((m411.reg[0] >> 2) & 0x02);
+		uint16_t bank = (base >> 1) | (m411.reg[0] & 0x05) | ((m411.reg[0] >> 2) & 0x02);
 		if (m411.reg[0] & 0x02) { /* NROM-256 */
 			setprg32(0x8000, bank >> 1);
 		} else { /* NROM-128 */
@@ -76,8 +76,8 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 base, mask;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t base, mask;
 
 	switch (iNESCart.submapper) {
 	default:

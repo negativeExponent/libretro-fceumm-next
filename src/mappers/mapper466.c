@@ -21,7 +21,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m466;
 
 static SFORMAT StateRegs[] = {
@@ -30,7 +30,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint16 prg = (m466.reg[1] << 5) | ((m466.reg[0] << 1) & 0x1E) | ((m466.reg[0] >> 5) & 0x01);
+	uint16_t prg = (m466.reg[1] << 5) | ((m466.reg[0] << 1) & 0x1E) | ((m466.reg[0] >> 5) & 0x01);
 
 	/* Return open bus when selecting unpopulated PRG chip */
 	if ((prg & 0x20) && (PRGsize[0] < (1024 * 1024))) {
@@ -90,7 +90,7 @@ void Mapper466_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	AddExState(StateRegs, ~0, 0, NULL);

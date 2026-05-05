@@ -25,7 +25,7 @@
 #include "vrc24.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m266;
 
 static writefunc writepcm4011;

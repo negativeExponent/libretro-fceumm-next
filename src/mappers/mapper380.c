@@ -24,8 +24,8 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 dipsw;
-static uint32 temp;
+static uint8_t dipsw;
+static uint32_t temp;
 
 static SFORMAT StateRegs[] = {
 	{ &dipsw, 4, "DPSW" },
@@ -34,7 +34,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 bank = (latch.addr >> 2) & 0x1F;
+	uint8_t bank = (latch.addr >> 2) & 0x1F;
 
 	if (latch.addr & 0x200) { /* NROM */
 		if (latch.addr & 0x01) {

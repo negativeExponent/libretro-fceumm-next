@@ -73,11 +73,11 @@
 #include "fdssound.h"
 
 static struct {
-	uint8 reg[2];
-	uint32 pageOffset[3];
+	uint8_t reg[2];
+	uint32_t pageOffset[3];
 } m347;
 
-static uint8 old_rombank = FALSE;
+static uint8_t old_rombank = FALSE;
 
 static SFORMAT StateRegs[] = {
 	{ m347.reg, 2, "REGS" },
@@ -157,6 +157,6 @@ void Mapper347_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

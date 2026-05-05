@@ -29,7 +29,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m178;
 
 static SFORMAT StateRegs[] = {
@@ -38,7 +38,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint16 base = (m178.reg[1] & 0x07) | (m178.reg[2] << 3);
+	uint16_t base = (m178.reg[1] & 0x07) | (m178.reg[2] << 3);
 
 	if ((m178.reg[0] & 0x02)) {
 		setprg16(0x8000, base);
@@ -99,7 +99,7 @@ void Mapper178_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

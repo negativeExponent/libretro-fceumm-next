@@ -28,11 +28,11 @@
 #define MAPPER_VRC4 3
 
 static struct {
-	uint8 reg[4];
-	uint8 mapper;
+	uint8_t reg[4];
+	uint8_t mapper;
 } m351;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m351.reg, 4, "EXPR" },
@@ -41,15 +41,15 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint16 GetPRGMask(void) {
+static uint16_t GetPRGMask(void) {
 	return ((m351.reg[2] & 0x04) ? 0x0F : 0x1F);
 }
 
-static uint16 GetPRGBase(void) {
+static uint16_t GetPRGBase(void) {
 	return (m351.reg[1] >> 1);
 }
 
-static uint16 GetCHRMask(void) {
+static uint16_t GetCHRMask(void) {
 	if (m351.reg[2] & 0x20) {
 		return 0x7F;
 	}
@@ -59,13 +59,13 @@ static uint16 GetCHRMask(void) {
 	return 0xFF;
 }
 
-static uint16 GetCHRBase(void) {
+static uint16_t GetCHRBase(void) {
 	return (m351.reg[0] << 1);
 }
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	if (m351.reg[2] & 0x10) { /* NROM mode */
-		uint16 bank = GetPRGBase();
+		uint16_t bank = GetPRGBase();
 		if (m351.reg[2] & 0x08) { /* NROM-64 */
 			setprg8(0x8000, bank);
 			setprg8(0xA000, bank);
@@ -80,8 +80,8 @@ static void SetPRG(uint16 A, uint16 V) {
 			}
 		}
 	} else {
-		uint16 mask = GetPRGMask();
-		uint16 base = GetPRGBase();
+		uint16_t mask = GetPRGMask();
+		uint16_t base = GetPRGBase();
 		switch (m351.mapper) {
 		case MAPPER_MMC1:
 			setprg16(A, ((base & ~mask) >> 1) | (V & (mask >> 1)));
@@ -95,14 +95,14 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	if (m351.reg[2] & 0x01) { /* CHR RAM mode */
 		setchr8r(0x10, 0);
 	} else if (m351.reg[2] & 0x40) { /* CNROM mode */
 		setchr8(GetCHRBase() >> 3);
 	} else {
-		uint16 mask = GetCHRMask();
-		uint16 bank = GetCHRBase();
+		uint16_t mask = GetCHRMask();
+		uint16_t bank = GetCHRBase();
 		switch (m351.mapper) {
 		case MAPPER_MMC1:
 			setchr4(A, ((bank & ~mask) >> 2) | (V & (mask >> 2)));
@@ -262,16 +262,16 @@ void Mapper351_Init(CartInfo *info) {
 
 	if (ROM.chr.size) {
 		size_t newsize = ROM.prg.size + ROM.chr.size;
-		uint8 *buffer;
+		uint8_t *buffer;
 		/* This crazy thing can map CHR-ROM into CPU address space. Allocate a
 		 * combined PRG+CHR address space and treat it a second "chip". */
-		buffer = (uint8 *)FCEU_malloc(newsize);
+		buffer = (uint8_t *)FCEU_malloc(newsize);
 		memcpy(buffer, ROM.prg.data, ROM.prg.size);
 		memcpy(&buffer[ROM.prg.size], ROM.chr.data, ROM.chr.size);
 
 		FCEU_free(ROM.prg.data);
 		ROM.prg.size = newsize;
-		ROM.prg.data = (uint8 *)FCEU_malloc(ROM.prg.size);
+		ROM.prg.data = (uint8_t *)FCEU_malloc(ROM.prg.size);
 		memcpy(ROM.prg.data, buffer, ROM.prg.size);
 		SetupCartPRGMapping(0, ROM.prg.data, ROM.prg.size, 0);
 
@@ -279,7 +279,7 @@ void Mapper351_Init(CartInfo *info) {
 	}
 
 	if (ROM.chr.size && CHRRAMSIZE) {
-		CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+		CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 		SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 		AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 	}

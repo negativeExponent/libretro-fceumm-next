@@ -28,11 +28,11 @@ enum POWERPAD {
 };
 
 static enum POWERPAD side = POWERPAD_A;
-static uint32 pprsb[2];
-static uint32 pprdata[2];
+static uint32_t pprsb[2];
+static uint32_t pprdata[2];
 
-static uint8 ReadPP(int w) {
-	uint8 ret = 0;
+static uint8_t ReadPP(int w) {
+	uint8_t ret = 0;
 	ret |= ((pprdata[w] >> pprsb[w]) & 1) << 3;
 	ret |= ((pprdata[w] >> (pprsb[w] + 8)) & 1) << 4;
 	if (pprsb[w] >= 4) {
@@ -52,7 +52,7 @@ static void StrobePP(int w) {
 }
 
 static void UpdatePP(int w, void *data, int arg) {
-	static const uint8 shifttable[2][12] = {
+	static const uint8_t shifttable[2][12] = {
 		{ 8, 9, 0, 1, 11, 7, 4, 2, 10, 6, 5, 3 },
 		{ 1, 0, 9, 8, 2, 4, 7, 11, 3, 5, 6, 10 }
 	};
@@ -60,7 +60,7 @@ static void UpdatePP(int w, void *data, int arg) {
 
 	pprdata[w] = 0;
 	for (x = 0; x < 12; x++) {
-		pprdata[w] |= (((*(uint32*)data) >> x) & 1) << shifttable[side == POWERPAD_A][x];
+		pprdata[w] |= (((*(uint32_t*)data) >> x) & 1) << shifttable[side == POWERPAD_A][x];
 	}
 }
 

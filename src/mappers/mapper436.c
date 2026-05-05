@@ -32,7 +32,7 @@
 #include "mapinc.h"
 #include "onebus.h"
 
-static uint8 reg;
+static uint8_t reg;
 
 static void Sync(void) {
 	OneBus_SyncPRG(0xF3FF, ((onebus.cpu41xx[0x0F] << 5) & 0x0400) | ((onebus.cpu41xx[0x00] << 5) & 0x0800));

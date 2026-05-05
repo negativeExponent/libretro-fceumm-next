@@ -27,7 +27,7 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static void Sync(void) {
 	setprg32(0x8000, latch.addr >> 3);

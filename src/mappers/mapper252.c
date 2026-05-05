@@ -23,12 +23,12 @@
 #include "vrc24.h"
 
 static struct {
-	uint8 chrMask;
-	uint8 chrCompare;
+	uint8_t chrMask;
+	uint8_t chrCompare;
 } m252;
 
 static writefunc writePPU2007;
-extern uint32 RefreshAddr;
+extern uint32_t RefreshAddr;
 
 static SFORMAT StateRegs[] = {
 	{ &m252.chrMask, 1, "CMSK" },
@@ -36,11 +36,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRGBank_vrc24(uint16 A, uint16 V) {
+static void SetPRGBank_vrc24(uint16_t A, uint16_t V) {
 	setprg8(A, V & 0x1F);
 }
 
-static void SetCHRBank_vrc24(uint16 A, uint16 V) {
+static void SetCHRBank_vrc24(uint16_t A, uint16_t V) {
 	if ((V & m252.chrMask) == m252.chrCompare) {
 		setchr1r(0x10, A, V);
 	} else {
@@ -96,7 +96,7 @@ void Mapper252_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = info->iNES2 ? (info->CHRRamSize + info->CHRRamSaveSize) : 2048;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 }

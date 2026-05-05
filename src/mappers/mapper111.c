@@ -50,21 +50,21 @@
 #include "mmc1.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m111;
 
-static uint8 *FLASHROM = NULL;
+static uint8_t *FLASHROM = NULL;
 
 static SFORMAT StateRegs[] = {
 	{ &m111.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void SetPRGBank_mmc1(uint16 A, uint16 V) {
+static void SetPRGBank_mmc1(uint16_t A, uint16_t V) {
 	setprg16(A, V & 0x0F);
 }
 
-static void SetCHRBank_mmc1(uint16 A, uint16 V) {
+static void SetCHRBank_mmc1(uint16_t A, uint16_t V) {
 	setchr4(A, V & 0x3F);
 }
 
@@ -167,7 +167,7 @@ void Mapper111_Init(CartInfo *info) {
 	if (info->battery) {
 		int fsize = PRGsize[0];
 
-		FLASHROM = (uint8 *)FCEU_malloc(fsize);
+		FLASHROM = (uint8_t *)FCEU_malloc(fsize);
 		info->SaveGame[0] = FLASHROM;
 		info->SaveGameLen[0] = fsize;
 		AddExState(FLASHROM, fsize, 0, "FROM");

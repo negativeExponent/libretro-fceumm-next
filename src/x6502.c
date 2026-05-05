@@ -26,8 +26,8 @@
 #include "ppu.h"
 
 X6502 cpu;
-uint32 timestamp;
-uint32 sound_timestamp;
+uint32_t timestamp;
+uint32_t sound_timestamp;
 
 void (*MapIRQHook)(int a);
 
@@ -49,14 +49,14 @@ static INLINE DECLFR(RdRAM);
 
 #if 1
 #define POP() RdRAM(0x100 + (++cpu.S))
-#define PUSH(V) { uint8 VTMP = V; WrRAM(0x100 + (cpu.S--), VTMP); }
+#define PUSH(V) { uint8_t VTMP = V; WrRAM(0x100 + (cpu.S--), VTMP); }
 #else
-static INLINE uint8 POP(void) {
+static INLINE uint8_t POP(void) {
 	cpu.S++;
 	return RdRAM(0x100 + cpu.S);
 }
 
-static INLINE void PUSH(uint8 V) {
+static INLINE void PUSH(uint8_t V) {
 	WrRAM(0x100 + cpu.S, V);
 	cpu.S--;
 }
@@ -70,12 +70,12 @@ static INLINE void PUSH(uint8 V) {
 #define JR(cond)                                                               \
 	{                                                                          \
 		if ((cond) != 0) {                                                     \
-			uint16 tmp;                                                        \
-			uint8 disp = RdMem(cpu.PC);                                        \
+			uint16_t tmp;                                                        \
+			uint8_t disp = RdMem(cpu.PC);                                        \
 			cpu.PC++;                                                          \
 			ADDCYC(1);                                                         \
 			tmp = cpu.PC;                                                      \
-			cpu.PC += (int8)disp;                                              \
+			cpu.PC += (int8_t)disp;                                              \
 			if ((tmp ^ cpu.PC) & 0x100) {                                      \
 				ADDCYC(1);                                                     \
 			}                                                                  \
@@ -96,27 +96,27 @@ static INLINE void PUSH(uint8 V) {
 
 #define ADC                                                                    \
 	{                                                                          \
-		uint16 l = cpu.A + x + (cpu.P & 1);                                    \
+		uint16_t l = cpu.A + x + (cpu.P & 1);                                    \
 		cpu.P &= ~(Z_FLAG | C_FLAG | N_FLAG | V_FLAG);                         \
 		cpu.P |= ((((cpu.A ^ x) & 0x80) ^ 0x80) & ((cpu.A ^ l) & 0x80)) >> 1;  \
 		cpu.P |= (l >> 8) & C_FLAG;                                            \
-		cpu.A = (uint8)l;                                                             \
+		cpu.A = (uint8_t)l;                                                             \
 		X_ZNT(cpu.A);                                                          \
 	}
 
 #define SBC                                                                    \
 	{                                                                          \
-		uint16 l = cpu.A - x - ((cpu.P & 1) ^ 1);                              \
+		uint16_t l = cpu.A - x - ((cpu.P & 1) ^ 1);                              \
 		cpu.P &= ~(Z_FLAG | C_FLAG | N_FLAG | V_FLAG);                         \
 		cpu.P |= ((cpu.A ^ l) & (cpu.A ^ x) & 0x80) >> 1;                      \
 		cpu.P |= ((l >> 8) & C_FLAG) ^ C_FLAG;                                 \
-		cpu.A = (uint8)l;                                                      \
+		cpu.A = (uint8_t)l;                                                      \
 		X_ZNT(cpu.A);                                                          \
 	}
 
 #define CMPL(a1, a2)                                                           \
 	{                                                                          \
-		uint16 t = a1 - a2;                                                    \
+		uint16_t t = a1 - a2;                                                    \
 		X_ZN(t & 0xFF);                                                        \
 		cpu.P &= ~C_FLAG;                                                      \
 		cpu.P |= ((t >> 8) & C_FLAG) ^ C_FLAG;                                 \
@@ -125,11 +125,11 @@ static INLINE void PUSH(uint8 V) {
 /* Special undocumented operation.  Very similar to CMP. */
 #define AXS                                                                    \
 	{                                                                          \
-		uint16 t = (cpu.A & cpu.X) - x;                                        \
+		uint16_t t = (cpu.A & cpu.X) - x;                                        \
 		X_ZN(t & 0xFF);                                                        \
 		cpu.P &= ~C_FLAG;                                                      \
 		cpu.P |= ((t >> 8) & C_FLAG) ^ C_FLAG;                                 \
-		cpu.X = (uint8)t;                                                      \
+		cpu.X = (uint8_t)t;                                                      \
 	}
 
 #define CMP     CMPL(cpu.A, x)
@@ -148,7 +148,7 @@ static INLINE void PUSH(uint8 V) {
 
 #define ROL                                                                    \
 	{                                                                          \
-		uint8 l = x >> 7;                                                      \
+		uint8_t l = x >> 7;                                                      \
 		x <<= 1;                                                               \
 		x |= cpu.P & C_FLAG;                                                   \
 		cpu.P &= ~(Z_FLAG | N_FLAG | C_FLAG);                                  \
@@ -158,7 +158,7 @@ static INLINE void PUSH(uint8 V) {
 
 #define ROR                                                                    \
 	{                                                                          \
-		uint8 l = x & 1;                                                       \
+		uint8_t l = x & 1;                                                       \
 		x >>= 1;                                                               \
 		x |= (cpu.P & C_FLAG) << 7;                                            \
 		cpu.P &= ~(Z_FLAG | N_FLAG | C_FLAG);                                  \
@@ -182,7 +182,7 @@ static INLINE void PUSH(uint8 V) {
 /* Absolute Indexed(for reads) */
 #define GetABIRD(target, i)                                                    \
 	{                                                                          \
-		uint16 tmp;                                                            \
+		uint16_t tmp;                                                            \
 		GetAB(tmp);                                                            \
 		target = tmp;                                                          \
 		target += i;                                                           \
@@ -195,7 +195,7 @@ static INLINE void PUSH(uint8 V) {
 /* Absolute Indexed(for writes and rmws) */
 #define GetABIWR(target, i)                                                    \
 	{                                                                          \
-		uint16 rt;                                                             \
+		uint16_t rt;                                                             \
 		GetAB(rt);                                                             \
 		target = rt;                                                           \
 		target += i;                                                           \
@@ -219,7 +219,7 @@ static INLINE void PUSH(uint8 V) {
 /* Indexed Indirect */
 #define GetIX(target)                                                          \
 	{                                                                          \
-		uint8 tmp = RdMem(cpu.PC);                                             \
+		uint8_t tmp = RdMem(cpu.PC);                                             \
 		cpu.PC++;                                                              \
 		tmp += cpu.X;                                                          \
 		target = RdRAM(tmp);                                                   \
@@ -230,8 +230,8 @@ static INLINE void PUSH(uint8 V) {
 /* Indirect Indexed(for reads) */
 #define GetIYRD(target)                                                        \
 	{                                                                          \
-		uint16 rt;                                                             \
-		uint8 tmp = RdMem(cpu.PC);                                             \
+		uint16_t rt;                                                             \
+		uint8_t tmp = RdMem(cpu.PC);                                             \
 		cpu.PC++;                                                              \
 		rt = RdRAM(tmp);                                                       \
 		tmp++;                                                                 \
@@ -247,8 +247,8 @@ static INLINE void PUSH(uint8 V) {
 /* Indirect Indexed(for writes and rmws) */
 #define GetIYWR(target)                                                        \
 	{                                                                          \
-		uint16 rt;                                                             \
-		uint8 tmp = RdMem(cpu.PC);                                             \
+		uint16_t rt;                                                             \
+		uint8_t tmp = RdMem(cpu.PC);                                             \
 		cpu.PC++;                                                              \
 		rt = RdRAM(tmp);                                                       \
 		tmp++;                                                                 \
@@ -263,38 +263,38 @@ and operation macros.  Note that operation macros will always operate(redundant
 redundant) on the variable "x".
 */
 
-#define RMW_A(op)       { uint8 x = cpu.A; op; cpu.A = x; break; }	/* Meh... */
-#define RMW_AB(op)      { uint16 A; uint8 x; GetAB(A); x = RdMem(A); WrMem(A, x); op; WrMem(A, x); break; }
-#define RMW_ABI(reg, op) { uint16 A; uint8 x; GetABIWR(A, reg); x = RdMem(A); WrMem(A, x); op; WrMem(A, x); break; }
+#define RMW_A(op)       { uint8_t x = cpu.A; op; cpu.A = x; break; }	/* Meh... */
+#define RMW_AB(op)      { uint16_t A; uint8_t x; GetAB(A); x = RdMem(A); WrMem(A, x); op; WrMem(A, x); break; }
+#define RMW_ABI(reg, op) { uint16_t A; uint8_t x; GetABIWR(A, reg); x = RdMem(A); WrMem(A, x); op; WrMem(A, x); break; }
 #define RMW_ABX(op)     RMW_ABI(cpu.X, op)
 #define RMW_ABY(op)     RMW_ABI(cpu.Y, op)
-#define RMW_IX(op)      { uint16 A; uint8 x; GetIX(A); x = RdMem(A); WrMem(A, x); op; WrMem(A, x); break; }
-#define RMW_IY(op)      { uint16 A; uint8 x; GetIYWR(A); x = RdMem(A); WrMem(A, x); op; WrMem(A, x); break; }
-#define RMW_ZP(op)      { uint8 A; uint8 x; GetZP(A); x = RdRAM(A); op; WrRAM(A, x); break; }
-#define RMW_ZPX(op)     { uint8 A; uint8 x; GetZPI(A, cpu.X); x = RdRAM(A); op; WrRAM(A, x); break; }
+#define RMW_IX(op)      { uint16_t A; uint8_t x; GetIX(A); x = RdMem(A); WrMem(A, x); op; WrMem(A, x); break; }
+#define RMW_IY(op)      { uint16_t A; uint8_t x; GetIYWR(A); x = RdMem(A); WrMem(A, x); op; WrMem(A, x); break; }
+#define RMW_ZP(op)      { uint8_t A; uint8_t x; GetZP(A); x = RdRAM(A); op; WrRAM(A, x); break; }
+#define RMW_ZPX(op)     { uint8_t A; uint8_t x; GetZPI(A, cpu.X); x = RdRAM(A); op; WrRAM(A, x); break; }
 
-#define LD_IM(op)       { uint8 x; x = RdMem(cpu.PC); cpu.PC++; op; break; }
-#define LD_ZP(op)       { uint8 A; uint8 x; GetZP(A); x = RdRAM(A); op; break; }
-#define LD_ZPX(op)      { uint8 A; uint8 x; GetZPI(A, cpu.X); x = RdRAM(A); op; break; }
-#define LD_ZPY(op)      { uint8 A; uint8 x; GetZPI(A, cpu.Y); x = RdRAM(A); op; break; }
-#define LD_AB(op)       { uint16 A; uint8 x; FCEU_UNUSED(x); GetAB(A); x = RdMem(A); op; break; }
-#define LD_ABI(reg, op) { uint16 A; uint8 x; FCEU_UNUSED(x); GetABIRD(A, reg); x = RdMem(A); op; break; }
+#define LD_IM(op)       { uint8_t x; x = RdMem(cpu.PC); cpu.PC++; op; break; }
+#define LD_ZP(op)       { uint8_t A; uint8_t x; GetZP(A); x = RdRAM(A); op; break; }
+#define LD_ZPX(op)      { uint8_t A; uint8_t x; GetZPI(A, cpu.X); x = RdRAM(A); op; break; }
+#define LD_ZPY(op)      { uint8_t A; uint8_t x; GetZPI(A, cpu.Y); x = RdRAM(A); op; break; }
+#define LD_AB(op)       { uint16_t A; uint8_t x; FCEU_UNUSED(x); GetAB(A); x = RdMem(A); op; break; }
+#define LD_ABI(reg, op) { uint16_t A; uint8_t x; FCEU_UNUSED(x); GetABIRD(A, reg); x = RdMem(A); op; break; }
 #define LD_ABX(op)      LD_ABI(cpu.X, op)
 #define LD_ABY(op)      LD_ABI(cpu.Y, op)
-#define LD_IX(op)       { uint16 A; uint8 x; GetIX(A); x = RdMem(A); op; break; }
-#define LD_IY(op)       { uint16 A; uint8 x; GetIYRD(A); x = RdMem(A); op; break; }
+#define LD_IX(op)       { uint16_t A; uint8_t x; GetIX(A); x = RdMem(A); op; break; }
+#define LD_IY(op)       { uint16_t A; uint8_t x; GetIYRD(A); x = RdMem(A); op; break; }
 
-#define ST_ZP(r)        { uint8 A; GetZP(A); WrRAM(A, r); break; }
-#define ST_ZPX(r)       { uint8 A; GetZPI(A, cpu.X); WrRAM(A, r); break; }
-#define ST_ZPY(r)       { uint8 A; GetZPI(A, cpu.Y); WrRAM(A, r); break; }
-#define ST_AB(r)        { uint16 A; GetAB(A); WrMem(A, r); break; }
-#define ST_ABI(reg, r)  { uint16 A; GetABIWR(A, reg); WrMem(A, r); break; }
+#define ST_ZP(r)        { uint8_t A; GetZP(A); WrRAM(A, r); break; }
+#define ST_ZPX(r)       { uint8_t A; GetZPI(A, cpu.X); WrRAM(A, r); break; }
+#define ST_ZPY(r)       { uint8_t A; GetZPI(A, cpu.Y); WrRAM(A, r); break; }
+#define ST_AB(r)        { uint16_t A; GetAB(A); WrMem(A, r); break; }
+#define ST_ABI(reg, r)  { uint16_t A; GetABIWR(A, reg); WrMem(A, r); break; }
 #define ST_ABX(r)       ST_ABI(cpu.X, r)
 #define ST_ABY(r)       ST_ABI(cpu.Y, r)
-#define ST_IX(r)        { uint16 A; GetIX(A); WrMem(A, r); break; }
-#define ST_IY(r)        { uint16 A; GetIYWR(A); WrMem(A, r); break; }
+#define ST_IX(r)        { uint16_t A; GetIX(A); WrMem(A, r); break; }
+#define ST_IY(r)        { uint16_t A; GetIYWR(A); WrMem(A, r); break; }
 
-static const uint8 ZNTable[256] = {
+static const uint8_t ZNTable[256] = {
 /*0x00*/ Z_FLAG,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,
 /*0x10*/      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,
 /*0x20*/      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,      0,
@@ -313,7 +313,7 @@ static const uint8 ZNTable[256] = {
 /*0xF0*/ N_FLAG, N_FLAG, N_FLAG, N_FLAG, N_FLAG, N_FLAG, N_FLAG, N_FLAG, N_FLAG, N_FLAG, N_FLAG, N_FLAG, N_FLAG, N_FLAG, N_FLAG, N_FLAG
 };
 
-static const uint8 CycTable[256] = {
+static const uint8_t CycTable[256] = {
 /*0x00*/ 7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6,
 /*0x10*/ 2, 5, 2, 8, 4, 4, 6, 6, 2, 4, 2, 7, 4, 4, 7, 7,
 /*0x20*/ 6, 6, 2, 8, 3, 3, 5, 5, 4, 2, 2, 2, 4, 4, 6, 6,
@@ -396,15 +396,15 @@ void X6502_Power(void) {
 	X6502_Reset();
 }
 
-void X6502_SetNewPC(uint16 newPC) {
+void X6502_SetNewPC(uint16_t newPC) {
 	cpu.newPC = newPC;
 }
 
-void X6502_SetOpcodeEncryptCB(uint8 (*callback)(uint8 opcode)) {
+void X6502_SetOpcodeEncryptCB(uint8_t (*callback)(uint8_t opcode)) {
 	cpu.encryptOpcodeCB = callback;
 }
 
-void X6502_Run(int32 cycles) {
+void X6502_Run(int32_t cycles) {
 	if (isPAL) {
 		cycles *= 15;	/* 15*4=60 */
 	} else {
@@ -414,7 +414,7 @@ void X6502_Run(int32 cycles) {
 	cpu.count += cycles;
 
 	while (cpu.count > 0) {
-		int32 temp;
+		int32_t temp;
 
 		if (cpu.IRQlow) {
 			if (cpu.IRQlow & FCEU_IQRESET) {
@@ -518,8 +518,8 @@ void X6502_Run(int32 cycles) {
 
 		/* JUMP ABSOLUTE */
 		case 0x4C: {
-			uint16 ptmp = cpu.PC;
-			uint16 npc = RdMem(ptmp);
+			uint16_t ptmp = cpu.PC;
+			uint16_t npc = RdMem(ptmp);
 			ptmp++;
 			npc |= RdMem(ptmp) << 8;
 			cpu.PC = npc;
@@ -527,7 +527,7 @@ void X6502_Run(int32 cycles) {
 		}
 
 		case 0x6C: {
-			uint16 tmp;
+			uint16_t tmp;
 			GetAB(tmp);
 			cpu.PC = RdMem(tmp);
 			cpu.PC |= RdMem(((tmp + 1) & 0x00FF) | (tmp & 0xFF00)) << 8;
@@ -535,7 +535,7 @@ void X6502_Run(int32 cycles) {
 		}
 		/* JSR */
 		case 0x20: {
-			uint8 npc = RdMem(cpu.PC);
+			uint8_t npc = RdMem(cpu.PC);
 			cpu.PC++;
 			PUSH(cpu.PC >> 8);
 			PUSH(cpu.PC);
@@ -798,7 +798,7 @@ void X6502_Run(int32 cycles) {
 
 		/* ARR - ARGH, MATEY! */
 		case 0x6B: {
-			uint8 arrtmp;
+			uint8_t arrtmp;
 			LD_IM(AND; cpu.P &= ~V_FLAG; cpu.P |= (cpu.A ^ (cpu.A >> 1)) & 0x40;
 			      arrtmp = cpu.A >> 7; cpu.A >>= 1;
 			      cpu.A |= (cpu.P & C_FLAG) << 7; cpu.P &= ~C_FLAG;
@@ -945,7 +945,7 @@ void X6502_Run(int32 cycles) {
 		case 0x9C: {
 			/* Can't reuse existing ST_ABI macro here, due to addressing
 			 * weirdness. */
-			uint16 A;
+			uint16_t A;
 			GetABIWR(A, cpu.X);
 			A = ((cpu.Y & ((A >> 8) + 1)) << 8) | (A & 0xff);
 			WrMem(A, A >> 8);
@@ -956,7 +956,7 @@ void X6502_Run(int32 cycles) {
 		case 0x9E: {
 			/* Can't reuse existing ST_ABI macro here, due to addressing
 			 * weirdness. */
-			uint16 A;
+			uint16_t A;
 			GetABIWR(A, cpu.Y);
 			A = ((cpu.X & ((A >> 8) + 1)) << 8) | (A & 0xff);
 			WrMem(A, A >> 8);
@@ -1001,14 +1001,14 @@ void X6502_Run(int32 cycles) {
 #ifdef FCEUDEF_DEBUGGER
 X6502 XSave;	/* This is getting ugly. */
 
-static INLINE uint8 RdMemHook(uint16 A) {
+static INLINE uint8_t RdMemHook(uint16_t A) {
 	if (cpu.ReadHook)
 		return(cpu.openbus = cpu.ReadHook(&X, A));
 	else
 		return(cpu.openbus = ARead[A](A));
 }
 
-static INLINE void WrMemHook(uint16 A, uint8 V) {
+static INLINE void WrMemHook(uint16_t A, uint8_t V) {
 	if (cpu.WriteHook)
 		cpu.WriteHook(&X, A, V);
 	else
@@ -1024,7 +1024,7 @@ void FCEUI_IRQ(void) {
 	cpu.IRQlow |= FCEU_IQTEMP;
 }
 
-void FCEUI_GetIVectors(uint16 *reset, uint16 *irq, uint16 *nmi) {
+void FCEUI_GetIVectors(uint16_t *reset, uint16_t *irq, uint16_t *nmi) {
 	fceuindbg = 1;
 
 	*reset = RdMemNorm(0xFFFC);
@@ -1037,7 +1037,7 @@ void FCEUI_GetIVectors(uint16 *reset, uint16 *irq, uint16 *nmi) {
 }
 static int debugmode;
 
-void X6502_Debug(void (*CPUHook)(X6502 *), uint8 (*ReadHook)(X6502 *, uint32), void (*WriteHook)(X6502 *, uint32, uint8)) {
+void X6502_Debug(void (*CPUHook)(X6502 *), uint8_t (*ReadHook)(X6502 *, uint32_t), void (*WriteHook)(X6502 *, uint32_t, uint8_t)) {
 	debugmode = (ReadHook || WriteHook || CPUHook) ? 1 : 0;
 	cpu.ReadHook = ReadHook;
 	cpu.WriteHook = WriteHook;

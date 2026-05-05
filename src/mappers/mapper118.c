@@ -60,7 +60,7 @@ static void Power(void) {
 }
 
 void Mapper118_Init(CartInfo *info) {
-	uint8 ws = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8;
+	uint8_t ws = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8;
 	MMC3_Init(info, MMC3B, ws, info->battery);
 	info->Power = Power;
 	MMC3_SyncMirror = SyncMirror;

@@ -21,11 +21,11 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg8(A, ((mmc3.reg[0] & 0x02) << 5) | (V & 0x3F));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr8(0);
 }
 

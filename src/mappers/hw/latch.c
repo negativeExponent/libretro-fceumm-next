@@ -21,7 +21,7 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 bus_conflict;
+static uint8_t bus_conflict;
 static void (*WSync)(void);
 static readfunc defread;
 
@@ -65,7 +65,7 @@ static void StateRestore(int version) {
 	WSync();
 }
 
-void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint8 wram, uint8 busc) {
+void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint8_t wram, uint8_t busc) {
 	bus_conflict = busc;
 	WSync = proc;
 	if (func != NULL)
@@ -78,7 +78,7 @@ void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint8 wram, u
 	GameStateRestore = StateRestore;
 	if (wram) {
 		WRAMSIZE = 8192;
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		if (info->battery) {
 			info->SaveGame[0] = WRAM;
@@ -90,7 +90,7 @@ void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint8 wram, u
 	AddExState(&latch.data, 1, 0, "DATA");
 }
 
-void Latch_SetConfig(uint8 clear, void (*sync)(void)) {
+void Latch_SetConfig(uint8_t clear, void (*sync)(void)) {
 	WSync = sync;
 	SetReadHandler(0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);

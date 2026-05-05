@@ -37,8 +37,8 @@
 #include "mmc3.h"
 
 static struct {
-	uint16 reg;
-	uint8 dipsw;
+	uint16_t reg;
+	uint8_t dipsw;
 } m339;
 
 static SFORMAT StateRegs[] = {
@@ -46,12 +46,12 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 base = m339.reg << 1;
-	uint16 mask = 0x0F;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t base = m339.reg << 1;
+	uint16_t mask = 0x0F;
 
 	if (!(m339.reg & 0x20)) { /* NROM */
-		uint8 nrom256 = FALSE;
+		uint8_t nrom256 = FALSE;
 		switch (iNESCart.submapper) {
 		case 0: nrom256 = ((m339.reg & 0x06) == 0x06) ? TRUE : FALSE; break;
 		case 1: nrom256 = ((m339.reg & 0x04) != 0x00) ? TRUE : FALSE; break;
@@ -70,9 +70,9 @@ static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 base = m339.reg << 4;
-	uint16 mask = 0x7F; 
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t base = m339.reg << 4;
+	uint16_t mask = 0x7F; 
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

@@ -49,7 +49,7 @@ void Mapper228_Init(CartInfo *info) {
 	if (ROM.prg.size == 0x180000) {
 		int i;
 		size_t ssize = 0x200000;
-		uint8 *tmp = (uint8 *)FCEU_malloc(ssize);
+		uint8_t *tmp = (uint8_t *)FCEU_malloc(ssize);
 
 		for (i = 0; i < (int)ROM.prg.size; i++) {
 			tmp[i] = ROM.prg.data[i];
@@ -63,7 +63,7 @@ void Mapper228_Init(CartInfo *info) {
 		if (ROM.prg.data) {
 			FCEU_free(ROM.prg.data);
 		}
-		ROM.prg.data = (uint8 *)FCEU_malloc(ssize);
+		ROM.prg.data = (uint8_t *)FCEU_malloc(ssize);
 		for (i = 0; i < (int)ROM.prg.size; i++) {
 			ROM.prg.data[i] = tmp[i];
 		}

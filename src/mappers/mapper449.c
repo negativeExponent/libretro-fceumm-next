@@ -21,10 +21,10 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static void Sync(void) {
-	uint32 prg = ((latch.addr >> 3) & 0x20) | ((latch.addr >> 2) & 0x1F);
+	uint32_t prg = ((latch.addr >> 3) & 0x20) | ((latch.addr >> 2) & 0x1F);
 
 	if (latch.addr & 0x80) { /* NROM */
 		if (latch.addr & 0x01) { /* NROM-256 */

@@ -24,7 +24,7 @@
 /**** LEGACY MAPPER IMPLEMENTATION for Mapper 132 (UNL-22211) ****/
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } UNL22211;
 
 static SFORMAT StateRegs[] = {

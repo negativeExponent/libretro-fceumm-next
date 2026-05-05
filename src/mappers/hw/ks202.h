@@ -22,8 +22,8 @@
 #define _KS202_H
 
 typedef struct __KS202 {
-	uint8 reg[8];
-	uint8 cmd;
+	uint8_t reg[8];
+	uint8_t cmd;
 } KS202;
 
 extern KS202 ks202;

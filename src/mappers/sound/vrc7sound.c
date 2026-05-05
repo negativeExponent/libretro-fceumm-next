@@ -22,11 +22,11 @@
 #include "emu2413.h"
 #include "vrc7sound.h"
 
-static int32 dwave = 0;
+static int32_t dwave = 0;
 
 static OPLL *chip = NULL;
 
-static void OPLL_fillbuf(OPLL *opll, int32 *buf, int32 len, int shift) {
+static void OPLL_fillbuf(OPLL *opll, int32_t *buf, int32_t len, int shift) {
 	if (chip) {
 		while (len > 0) {
 			*buf += GetOutput(SND_VRC7, (OPLL_calc(chip) + 32768)) << shift;
@@ -36,7 +36,7 @@ static void OPLL_fillbuf(OPLL *opll, int32 *buf, int32 len, int shift) {
 	}
 }
 
-static void UpdateOPLNEO(int32 *buf, int Count) {
+static void UpdateOPLNEO(int32_t *buf, int Count) {
 	if (chip) {
 		OPLL_fillbuf(chip, buf, Count, 4);
 	}
@@ -44,7 +44,7 @@ static void UpdateOPLNEO(int32 *buf, int Count) {
 
 static void UpdateOPL(int Count) {
 	if (chip) {
-		int32 z, a;
+		int32_t z, a;
 		z = ((SOUNDTS << 16) / soundtsinc) >> 4;
 		a = z - dwave;
 		if (a) {

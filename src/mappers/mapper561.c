@@ -28,17 +28,17 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 mc1mode; /* 1M Mode register */
-	uint8 mc2mode; /* 2M/4M Mode register */
+	uint8_t mc1mode; /* 1M Mode register */
+	uint8_t mc2mode; /* 2M/4M Mode register */
 
-	uint8 prg8K[4];
-	uint8 chr8K;
-	uint8 latch;
+	uint8_t prg8K[4];
+	uint8_t chr8K;
+	uint8_t latch;
 
-	uint8 fds_control;
-	int16 fds_IRQCount;
+	uint8_t fds_control;
+	int16_t fds_IRQCount;
 
-	int16 sgd_IRQCount;
+	int16_t sgd_IRQCount;
 } m561;
 
 static SFORMAT StateRegs[] = {
@@ -58,7 +58,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void SyncPRG(void) {
-	uint8 prg_writable = !(m561.mc1mode & 0x02);
+	uint8_t prg_writable = !(m561.mc1mode & 0x02);
 
 	SetupCartPRGMapping(0, PRGptr[0], PRGsize[0], prg_writable);
 
@@ -106,7 +106,7 @@ static void SyncPRG(void) {
 }
 
 static void SyncCHR(void) {
-	uint8 chr_writable = !((m561.mc1mode & 0xE0) & 0x80);
+	uint8_t chr_writable = !((m561.mc1mode & 0xE0) & 0x80);
 
 	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], chr_writable);
 
@@ -148,14 +148,14 @@ static DECLFW(WriteReg) {
 		break;
 	case 0x4100:
 		X6502_IRQEnd(FCEU_IQEXT);
-		m561.sgd_IRQCount = (int16)((m561.sgd_IRQCount & 0xFF00) | V);
+		m561.sgd_IRQCount = (int16_t)((m561.sgd_IRQCount & 0xFF00) | V);
 		if (!V) {
 			m561.sgd_IRQCount = V;
 		}
 		break;
 	case 0x4101:
 		X6502_IRQEnd(FCEU_IQEXT);
-		m561.sgd_IRQCount = (int16)((m561.sgd_IRQCount & 0x00FF) | (V << 8));
+		m561.sgd_IRQCount = (int16_t)((m561.sgd_IRQCount & 0x00FF) | (V << 8));
 		break;
 	case 0x42FC:
 	case 0x42FD:
@@ -226,11 +226,11 @@ static void CPUIRQHook(int a) {
 
 static void SetTrainer(void) {
 	if (ROM.misc.data && (ROM.misc.size >= 4)) {
-		uint16 trainerLoadAddr = 0x7000;
-		uint16 trainerInitAddr = 0x7003;
-		uint32 trainerSize = 512;
-		uint8 *trainerData = ROM.misc.data;
-		uint32 i;
+		uint16_t trainerLoadAddr = 0x7000;
+		uint16_t trainerInitAddr = 0x7003;
+		uint32_t trainerSize = 512;
+		uint8_t *trainerData = ROM.misc.data;
+		uint32_t i;
 
 		if (ROM.misc.size != 512) {
 			trainerLoadAddr = (ROM.misc.data[1] << 8) | ROM.misc.data[0];
@@ -304,8 +304,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper561_Init(CartInfo *info) {
-	uint32 wramsize = info->PRGRamSize + info->PRGRamSaveSize;
-	uint32 prgsize = ROM.prg.size;
+	uint32_t wramsize = info->PRGRamSize + info->PRGRamSaveSize;
+	uint32_t prgsize = ROM.prg.size;
 
 	info->Power = Power;
 	info->Reset = Reset;
@@ -316,15 +316,15 @@ void Mapper561_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = wramsize ? wramsize : 8192;
-	WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_malloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, TRUE);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
 	if ((info->submapper == 3) && (prgsize == SIZE_128K)) {
-		uint8 *newbuffer;
+		uint8_t *newbuffer;
 
 		prgsize = SIZE_256K;
-		newbuffer = (uint8 *)FCEU_malloc(prgsize);
+		newbuffer = (uint8_t *)FCEU_malloc(prgsize);
 		memset(newbuffer, 0xFF, prgsize);
 		memcpy(newbuffer, ROM.prg.data, SIZE_128K);
 

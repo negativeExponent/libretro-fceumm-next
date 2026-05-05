@@ -24,11 +24,11 @@
 
 static X24C0X eeprom = { 0 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg16(A, V & 0x1F); /* map upto 512K PRG for fan translations etc */
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr1(A, V);
 }
 
@@ -39,7 +39,7 @@ void Mapper159_Init(CartInfo *info) {
 
 	if (!info->iNES2 || info->PRGRamSaveSize) {
 		WRAMSIZE = info->PRGRamSaveSize ? info->PRGRamSaveSize : 128;
-		WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_malloc(WRAMSIZE);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
 		eeprom_24C01_init(&eeprom, WRAM);

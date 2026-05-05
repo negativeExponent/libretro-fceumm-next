@@ -60,12 +60,12 @@ typedef struct VSUNISYSTEM {
 extern VSUNISYSTEM vsuni_system;
 
 void FCEU_VSUniPower(void);
-void FCEU_VSUniCheck(uint64 md5partial, int *, int *);
-void FCEU_VSUniDraw(uint8 *target);
+void FCEU_VSUniCheck(uint64_t md5partial, int *, int *);
+void FCEU_VSUniDraw(uint8_t *target);
 
 void FCEU_VSUniToggleDIP(int);	/* For movies and netplay */
 void FCEU_VSUniCoin(int slot);
 void FCEU_VSUniService(void);
-void FCEU_VSUniSwap(uint8 *j0, uint8 *j1);
+void FCEU_VSUniSwap(uint8_t *j0, uint8_t *j1);
 
 #endif

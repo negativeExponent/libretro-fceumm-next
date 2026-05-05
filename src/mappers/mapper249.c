@@ -22,7 +22,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m249;
 
 static SFORMAT StateRegs[] = {
@@ -30,13 +30,13 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint32 scrambleBankOrder(uint32 V, const uint8 *source, const uint8 *target, uint32 length) {
-	uint32 bank = 0;
-	uint32 bit = 0;
+static uint32_t scrambleBankOrder(uint32_t V, const uint8_t *source, const uint8_t *target, uint32_t length) {
+	uint32_t bank = 0;
+	uint32_t bit = 0;
 
 	for (bit = 0; bit < 8; bit++) {
 		if (V & (0x01 << bit)) {
-			uint32 index = 0;
+			uint32_t index = 0;
 
 			for (index = 0; index < length; index++) {
 				if (source[index] == bit) {
@@ -49,19 +49,19 @@ static uint32 scrambleBankOrder(uint32 V, const uint8 *source, const uint8 *targ
 	return bank;
 }
 
-static void SetPRG(uint16 A, uint16 V) {
-	static const uint8 prg_pattern[4][4] = {
+static void SetPRG(uint16_t A, uint16_t V) {
+	static const uint8_t prg_pattern[4][4] = {
 		{ 3, 4, 2, 1 },
 		{ 4, 3, 1, 2 },
 		{ 1, 2, 3, 4 },
 		{ 2, 1, 4, 3 },
 	};
-	uint32 bank = scrambleBankOrder(V, prg_pattern[m249.reg & 0x03], prg_pattern[(iNESCart.mapper == 249) ? 0 : 2], 4);
+	uint32_t bank = scrambleBankOrder(V, prg_pattern[m249.reg & 0x03], prg_pattern[(iNESCart.mapper == 249) ? 0 : 2], 4);
 	setprg8(A, bank);
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	static const uint8 chr_pattern[8][6] = {
+static void SetCHR(uint16_t A, uint16_t V) {
+	static const uint8_t chr_pattern[8][6] = {
 		{ 5, 2, 6, 7, 4, 3 },
 		{ 4, 5, 3, 2, 7, 6 },
 		{ 2, 3, 4, 5, 6, 7 },
@@ -71,7 +71,7 @@ static void SetCHR(uint16 A, uint16 V) {
 		{ 3, 6, 4, 5, 2, 7 },
 		{ 2, 5, 6, 7, 3, 4 },
 	};
-	uint32 bank = scrambleBankOrder(V, chr_pattern[m249.reg & 0x07], chr_pattern[(iNESCart.mapper == 249) ? 0 : 2], 6);
+	uint32_t bank = scrambleBankOrder(V, chr_pattern[m249.reg & 0x07], chr_pattern[(iNESCart.mapper == 249) ? 0 : 2], 6);
 	setchr1(A, bank);
 }
 

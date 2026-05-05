@@ -27,19 +27,19 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m444;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &m444.reg, 1, "EXPR" },
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = ((iNESCart.submapper & 0x04) && (m444.reg & 0x02)) ? 0x1F : 0x0F;
-	uint16 base = m444.reg << 4;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = ((iNESCart.submapper & 0x04) && (m444.reg & 0x02)) ? 0x1F : 0x0F;
+	uint16_t base = m444.reg << 4;
 
 	if (m444.reg & 0x04) { /* NROM */
 		V = (mmc3.reg[6] & ~((m444.reg & 0x08) ? 0x01 : 0x03)) | ((A >> 13) & ((m444.reg & 0x08) ? 0x01 : 0x03));
@@ -48,9 +48,9 @@ static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (iNESCart.submapper & 0x01) ? 0xFF : 0x7F;
-	uint16 base = ((m444.reg << 7) & ((iNESCart.submapper & 0x01) ? 0x00 : 0x80)) | ((m444.reg << ((iNESCart.submapper & 0x02) ? 4 : 7)) & 0x100);
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (iNESCart.submapper & 0x01) ? 0xFF : 0x7F;
+	uint16_t base = ((m444.reg << 7) & ((iNESCart.submapper & 0x01) ? 0x00 : 0x80)) | ((m444.reg << ((iNESCart.submapper & 0x02) ? 4 : 7)) & 0x100);
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

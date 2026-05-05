@@ -25,7 +25,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 prg[2], chr[6], mirror;
+	uint8_t prg[2], chr[6], mirror;
 } m033;
 
 static SFORMAT StateRegs[] = {

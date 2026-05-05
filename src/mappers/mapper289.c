@@ -26,10 +26,10 @@
 #include "latch.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m289;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m289.reg, 2, "REGS" },
@@ -37,13 +37,13 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint16 base = m289.reg[1] & ~0x07;
+	uint16_t base = m289.reg[1] & ~0x07;
 
 	if (m289.reg[0] & 0x02) {
 		setprg16(0x8000, base | (latch.data & 0x07));
 		setprg16(0xC000, base | 0x07);
 	} else {
-		uint16 bank = base | (m289.reg[1] & 0x07);
+		uint16_t bank = base | (m289.reg[1] & 0x07);
 
 		if (m289.reg[0] & 0x01) {
 			setprg32(0x8000, bank >> 1);

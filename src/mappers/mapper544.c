@@ -24,14 +24,14 @@
 #include "vrc24.h"
 
 static struct {
-	uint8 nt[4];
-	uint8 prg;
-	uint8 chrMask;
-	uint8 chrCompare;
+	uint8_t nt[4];
+	uint8_t prg;
+	uint8_t chrMask;
+	uint8_t chrCompare;
 } m544;
 
 static writefunc writePPU;
-extern uint32 RefreshAddr;
+extern uint32_t RefreshAddr;
 
 static SFORMAT StateRegs[] = {
 	{ m544.nt, 4, "NTBL" },
@@ -41,14 +41,14 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	if (A == 0xC000) {
 		V = m544.prg;
 	}
 	setprg8(A, V & 0x1F);
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	if ((V & m544.chrMask) == m544.chrCompare) {
 		setchr1r(0x10, A, V);
 	} else {
@@ -66,14 +66,14 @@ static DECLFW(WriteMisc) {
 	}
 }
 
-static const uint8 compareMasks[8] = {
+static const uint8_t compareMasks[8] = {
     0x28, 0x00, 0x4C, 0x64, 0x46, 0x7C, 0x04, 0xFF
 };
 
 static DECLFW(WritePPU2007) {
 	if (RefreshAddr < 0x2000) {
-		uint8 reg = RefreshAddr >> 10;
-		uint8 chrBank = vrc24.chr[reg];
+		uint8_t reg = RefreshAddr >> 10;
+		uint8_t chrBank = vrc24.chr[reg];
 		if (chrBank & 0x80) {
 			if (chrBank & 0x10) {
 				m544.chrMask = 0x00;
@@ -111,7 +111,7 @@ void Mapper544_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 2048;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

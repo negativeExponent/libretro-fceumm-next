@@ -24,7 +24,7 @@
 #include "mmc1.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m323;
 
 static SFORMAT StateRegs[] = {
@@ -32,16 +32,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRGBank(uint16 A, uint16 V) {
-	uint8 mask = 0x07;
-	uint8 base = m323.reg >> 1;
+static void SetPRGBank(uint16_t A, uint16_t V) {
+	uint8_t mask = 0x07;
+	uint8_t base = m323.reg >> 1;
 
 	setprg16(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHRBank(uint16 A, uint16 V) {
-	uint16 mask = 0x1F;
-	uint16 base = m323.reg << 1;
+static void SetCHRBank(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x1F;
+	uint16_t base = m323.reg << 1;
 
 	setchr4(A, (base & ~mask) | (V & mask));
 }

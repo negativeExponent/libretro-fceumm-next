@@ -50,7 +50,7 @@ static void Sync(void) {
 
 static DECLFW(WriteLatch) {
 	if (iNESCart.submapper == 1) {
-		uint8 ret = CartBR(A);
+		uint8_t ret = CartBR(A);
 		/* bus conflict */
 		V = ((V & ret) & ~0x08) | (ret & 0x08);
 	}

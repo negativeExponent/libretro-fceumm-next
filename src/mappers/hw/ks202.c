@@ -26,8 +26,8 @@
 #include "mapinc.h"
 #include "ks202.h"
 
-static uint8 IRQa = 0;
-static int32 IRQCount, IRQLatch;
+static uint8_t IRQa = 0;
+static int32_t IRQCount, IRQLatch;
 
 static void (*WSync)(void);
 
@@ -125,7 +125,7 @@ void KS202_Init(CartInfo *info, void (*proc)(void), int wram, int battery) {
 
 	if (wram) {
 		WRAMSIZE = 8 * 1024;
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		if (battery) {
 			info->SaveGame[0] = WRAM;

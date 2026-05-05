@@ -30,25 +30,25 @@
 
 typedef struct NSF_HEADER {
 	char ID[5];				/* NESM^Z */
-	uint8 Version;
-	uint8 TotalSongs;
-	uint8 StartingSong;
-	uint8 LoadAddressLow;
-	uint8 LoadAddressHigh;
-	uint8 InitAddressLow;
-	uint8 InitAddressHigh;
-	uint8 PlayAddressLow;
-	uint8 PlayAddressHigh;
-	uint8 GameName[32];
-	uint8 Artist[32];
-	uint8 Copyright[32];
-	uint8 NTSCspeed[2];		/* Unused */
-	uint8 BankSwitch[8];
-	uint8 PALspeed[2];		/* Unused */
-	uint8 VideoSystem;
-	uint8 SoundChip;
-	uint8 Expansion[4];
-	uint8 reserve[8];
+	uint8_t Version;
+	uint8_t TotalSongs;
+	uint8_t StartingSong;
+	uint8_t LoadAddressLow;
+	uint8_t LoadAddressHigh;
+	uint8_t InitAddressLow;
+	uint8_t InitAddressHigh;
+	uint8_t PlayAddressLow;
+	uint8_t PlayAddressHigh;
+	uint8_t GameName[32];
+	uint8_t Artist[32];
+	uint8_t Copyright[32];
+	uint8_t NTSCspeed[2];		/* Unused */
+	uint8_t BankSwitch[8];
+	uint8_t PALspeed[2];		/* Unused */
+	uint8_t VideoSystem;
+	uint8_t SoundChip;
+	uint8_t Expansion[4];
+	uint8_t reserve[8];
 } NSF_HEADER;
 
 typedef struct NSFINFO {
@@ -58,16 +58,16 @@ typedef struct NSFINFO {
 	char Dumper[256];
 	char SongNames[100][256];
 
-	uint8 TotalSongs;
-	uint8 StartingSong;
-	uint8 CurrentSong;
-	uint8 VideoSystem;
+	uint8_t TotalSongs;
+	uint8_t StartingSong;
+	uint8_t CurrentSong;
+	uint8_t VideoSystem;
 
-	uint16 PlayAddr, InitAddr, LoadAddr;
-	uint8 BankSwitch[8];
-	uint8 SoundChip;
+	uint16_t PlayAddr, InitAddr, LoadAddr;
+	uint8_t BankSwitch[8];
+	uint8_t SoundChip;
 
-	uint8 *NSFDATA;
+	uint8_t *NSFDATA;
 	size_t NSFMaxBank;
 	size_t NSFSize;
 } NSFINFO;
@@ -75,10 +75,10 @@ typedef struct NSFINFO {
 extern NSFINFO *NSFInfo;
 
 void NSF_init(void);
-void DrawNSF(uint8 *target);
+void DrawNSF(uint8_t *target);
 void DoNSFFrame(void);
 
 /* NSF Expansion Chip Set Write Handler for mappers */
-void NFSSetWriteHandler(int chip, int32 start, int32 end, writefunc func);
+void NFSSetWriteHandler(int chip, int32_t start, int32_t end, writefunc func);
 
 #endif

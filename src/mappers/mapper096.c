@@ -32,8 +32,8 @@
 #include "latch.h"
 
 static struct {
-	uint8 latch;
-	uint16 lastPPUAddr;
+	uint8_t latch;
+	uint16_t lastPPUAddr;
 } m096;
 
 static SFORMAT StateRegs[] = {
@@ -49,10 +49,10 @@ static void Sync(void) {
 	setchr4(0x1000, (latch.data & 0x04) | 0x03);
 }
 
-static void PPUIRQHook(uint32 A) {
-	uint16 addr = A & 0x3000;
+static void PPUIRQHook(uint32_t A) {
+	uint16_t addr = A & 0x3000;
 	if (!(m096.lastPPUAddr & 0x2000) && (addr & 0x2000)) {
-		uint8 bank = A >> 8;
+		uint8_t bank = A >> 8;
 		if (m096.latch != bank) {
 			m096.latch = bank;
 			setchr4(0x0000, (latch.data & 0x04) | (m096.latch & 0x03));

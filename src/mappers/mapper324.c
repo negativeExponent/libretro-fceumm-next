@@ -28,7 +28,7 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 bank = ((latch.data >> 1) & ~0x07) | (latch.data & 0x07);
+	uint8_t bank = ((latch.data >> 1) & ~0x07) | (latch.data & 0x07);
 
 	setprg16(0x8000, bank);
 	setprg16(0xC000, bank | 0x07);

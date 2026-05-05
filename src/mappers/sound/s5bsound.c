@@ -35,10 +35,10 @@
 #ifdef USE_EMU2149
 #include "emu2149.h"
 
-static int32 dwave = 0;
+static int32_t dwave = 0;
 static PSG *psg_chip = NULL;
 
-static void PSG_fillbuf(PSG *ssg, int32 *buf, int32 len, int shift) {
+static void PSG_fillbuf(PSG *ssg, int32_t *buf, int32_t len, int shift) {
 	while (len > 0) {
 		*buf += (GetOutput(SND_S5B, PSG_calc(psg_chip) << shift));
 		buf++;
@@ -46,12 +46,12 @@ static void PSG_fillbuf(PSG *ssg, int32 *buf, int32 len, int shift) {
 	}
 }
 
-static void UpdatePSGNEO(int32 *buf, int Count) {
+static void UpdatePSGNEO(int32_t *buf, int Count) {
 	PSG_fillbuf(psg_chip, buf, Count, 4);
 }
 
 static void UpdatePSG(int Count) {
-	int32 z, a;
+	int32_t z, a;
 	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
 	a = z - dwave;
 	if (a) {
@@ -138,11 +138,11 @@ void S5BSound_AddStateInfo(void) {
 
 #else /* !USE_EMU2149 */
 static void (*sfun[3])(void);
-static uint8 sndcmd, sreg[14];
+static uint8_t sndcmd, sreg[14];
 
-static int32 vcount[3];
-static int32 dcount[3];
-static int32 CAYBC[3];
+static int32_t vcount[3];
+static int32_t dcount[3];
+static int32_t CAYBC[3];
 
 static void AYSound(int Count);
 static void AYSoundHQ(void);
@@ -151,9 +151,9 @@ static void DoAYSQ(int x);
 static void DoAYSQHQ(int x);
 
 static void DoAYSQ(int x) {
-	int32 freq = ((sreg[x << 1] | ((sreg[(x << 1) + 1] & 15) << 8)) + 1) << (4 + 17);
-	int32 amp = (sreg[0x8 + x] & 15) << 2;
-	int32 start, end;
+	int32_t freq = ((sreg[x << 1] | ((sreg[(x << 1) + 1] & 15) << 8)) + 1) << (4 + 17);
+	int32_t amp = (sreg[0x8 + x] & 15) << 2;
+	int32_t start, end;
 	int V;
 
 	amp += amp >> 1;
@@ -179,9 +179,9 @@ static void DoAYSQ(int x) {
 }
 
 static void DoAYSQHQ(int x) {
-	uint32 V;
-	int32 freq = ((sreg[x << 1] | ((sreg[(x << 1) + 1] & 15) << 8)) + 1) << 4;
-	int32 amp = (sreg[0x8 + x] & 15) << 6;
+	uint32_t V;
+	int32_t freq = ((sreg[x << 1] | ((sreg[(x << 1) + 1] & 15) << 8)) + 1) << 4;
+	int32_t amp = (sreg[0x8 + x] & 15) << 6;
 
 	amp += amp >> 1;
 	amp = GetOutput(SND_S5B, amp);
@@ -239,7 +239,7 @@ static void AYSoundHQ(void) {
 	DoAYSQ3HQ();
 }
 
-static void AYHiSync(int32 ts) {
+static void AYHiSync(int32_t ts) {
 	CAYBC[0] = ts;
 	CAYBC[1] = ts;
 	CAYBC[2] = ts;

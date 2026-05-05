@@ -34,11 +34,11 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[4];
-	uint8 cmd;
+	uint8_t reg[4];
+	uint8_t cmd;
 } m401;
 
-static uint8 dipsw = 0;
+static uint8_t dipsw = 0;
 
 static SFORMAT StateRegs[] = {
 	{ m401.reg, 4, "EXPR" },
@@ -46,12 +46,12 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	if ((dipsw & 0x01)  && (m401.reg[1] & 0x80)) {
 		unsetcpu8(A);
 	} else {
-		uint16 mask = (~m401.reg[3] & 0x1F);
-		uint16 base = (m401.reg[1] & 0x1F) | (m401.reg[2] & 0x80) |
+		uint16_t mask = (~m401.reg[3] & 0x1F);
+		uint16_t base = (m401.reg[1] & 0x1F) | (m401.reg[2] & 0x80) |
 		    ((dipsw & 0x02) ? (m401.reg[2] & 0x20) : ((m401.reg[1] >> 1) & 0x20)) |
 		    ((dipsw & 0x04) ? (m401.reg[2] & 0x40) : ((m401.reg[1] << 1) & 0x40));
 
@@ -59,9 +59,9 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (0xFF >> (~m401.reg[2] & 0xF));
-	uint16 base = (m401.reg[0] | ((m401.reg[2] << 4) & 0xF00));
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (0xFF >> (~m401.reg[2] & 0xF));
+	uint16_t base = (m401.reg[0] | ((m401.reg[2] << 4) & 0xF00));
 
 	setchr1(A, base | (V & mask));
 }

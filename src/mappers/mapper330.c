@@ -26,12 +26,12 @@
 #include "n163sound.h"
 
 static struct {
-	uint8 prg[4], chr[8], nmt[4];
-	uint8 IRQa;
-	uint16 IRQCount;
+	uint8_t prg[4], chr[8], nmt[4];
+	uint8_t IRQa;
+	uint16_t IRQCount;
 } m330;
 
-static uint8 internalRAM[128];
+static uint8_t internalRAM[128];
 
 static SFORMAT StateRegs[] = {
 	{ m330.prg, 4, "PREG" },
@@ -155,7 +155,7 @@ void Mapper330_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 
-	WRAM = (uint8 *)FCEU_gmalloc(8192);
+	WRAM = (uint8_t *)FCEU_gmalloc(8192);
 	SetupCartPRGMapping(0x10, WRAM, 8192, 1);
 	AddExState(WRAM, 8192, 0, "WRAM");
 

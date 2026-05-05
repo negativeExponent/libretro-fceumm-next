@@ -22,7 +22,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[8];
+	uint8_t reg[8];
 } m371;
 
 static SFORMAT StateRegs[] = {
@@ -31,7 +31,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void SyncPRG(void) {
-	uint32 bank = ((m371.reg[1] << 4) & 0x10) | (m371.reg[0] & 0x0F);
+	uint32_t bank = ((m371.reg[1] << 4) & 0x10) | (m371.reg[0] & 0x0F);
 
 	if ((m371.reg[0] & 0x70) == 0x50) {
 		setprg16(0x8000, 4 + bank);
@@ -47,7 +47,7 @@ static void SyncMirror(void) {
 }
 
 static DECLFW(WriteReg) {
-	uint8 index = (A & 0x700) >> 8;
+	uint8_t index = (A & 0x700) >> 8;
 
 	m371.reg[index] = V;
 	switch (index) {
@@ -86,7 +86,7 @@ void Mapper371_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

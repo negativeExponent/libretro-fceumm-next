@@ -23,7 +23,7 @@
 #include "txc.h"
 
 static struct {
-	uint8 chr;
+	uint8_t chr;
 } m036;
 
 static void Sync(void) {

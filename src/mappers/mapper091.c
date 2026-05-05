@@ -30,17 +30,17 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 chr[4], prg[2];
-	uint8 outer;
-	uint8 mirror;
+	uint8_t chr[4], prg[2];
+	uint8_t outer;
+	uint8_t mirror;
 
-	uint8 IRQa;
+	uint8_t IRQa;
 	struct {
-		uint8 IRQCount;
+		uint8_t IRQCount;
 	} pa12;
 	struct {
-		uint8 IRQPrescaler;
-		int16 IRQCount;
+		uint8_t IRQPrescaler;
+		int16_t IRQCount;
 	} m2;
 } m091;
 
@@ -57,7 +57,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void SyncPRG(void) {
-	uint16 base = (m091.outer << 3) & ~0x0F;
+	uint16_t base = (m091.outer << 3) & ~0x0F;
 
 	setprg8(0x8000, (base | (m091.prg[0] & 0x0F)));
 	setprg8(0xA000, (base | (m091.prg[1] & 0x0F)));
@@ -66,7 +66,7 @@ static void SyncPRG(void) {
 }
 
 static void SyncCHR(void) {
-	uint16 base = (m091.outer << 8);
+	uint16_t base = (m091.outer << 8);
 
 	setchr2(0x0000, (base | m091.chr[0]));
 	setchr2(0x0800, (base | m091.chr[1]));

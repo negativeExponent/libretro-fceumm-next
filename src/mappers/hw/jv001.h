@@ -22,15 +22,15 @@
 #define _JV001_H
 
 typedef struct __JV001 {
-	uint8 accumulator;
-	uint8 inverter;
-	uint8 staging;
-	uint8 output;
-	uint8 increase;
-	uint8 invert;
-	uint8 A;
-	uint8 B;
-	uint8 X;
+	uint8_t accumulator;
+	uint8_t inverter;
+	uint8_t staging;
+	uint8_t output;
+	uint8_t increase;
+	uint8_t invert;
+	uint8_t A;
+	uint8_t B;
+	uint8_t X;
 } JV001;
 
 extern JV001 jv001;

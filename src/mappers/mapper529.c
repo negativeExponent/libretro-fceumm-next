@@ -27,7 +27,7 @@
 #include "vrc24.h"
 #include "eeprom_93Cx6.h"
 
-static uint8 eeprom_data[256];
+static uint8_t eeprom_data[256];
 
 static void SyncPRG(void) {
 	setprg16(0x8000, vrc24.prg[1]);

@@ -22,31 +22,31 @@ typedef struct X24C0X {
     Model model;
 
     struct {
-        uint8 scl;
-        uint8 sda;
+        uint8_t scl;
+        uint8_t sda;
     } line;
 
     Mode mode;
     Mode next;
 
     struct {
-        uint8 bit;
-        uint8 address;
-        uint8 data;
+        uint8_t bit;
+        uint8_t address;
+        uint8_t data;
     } latch;
 
-    uint8 rw;
-    uint8 output;
+    uint8_t rw;
+    uint8_t output;
 
-    uint8 *mem;
+    uint8_t *mem;
 } X24C0X;
 
-void eeprom_24C01_init(X24C0X *e, uint8 *_rom);
-void eeprom_24C02_init(X24C0X *e, uint8 *_rom);
+void eeprom_24C01_init(X24C0X *e, uint8_t *_rom);
+void eeprom_24C02_init(X24C0X *e, uint8_t *_rom);
 
-void eeprom_init(X24C0X *e, uint8 model, uint8 *_data);
+void eeprom_init(X24C0X *e, uint8_t model, uint8_t *_data);
 void eeprom_AddStateInfo(X24C0X *e);
-void eeprom_i2c_step(X24C0X *e, uint8 scl, uint8 sda_in);
-uint8 eeprom_read(X24C0X *e);
+void eeprom_i2c_step(X24C0X *e, uint8_t scl, uint8_t sda_in);
+uint8_t eeprom_read(X24C0X *e);
 
 #endif

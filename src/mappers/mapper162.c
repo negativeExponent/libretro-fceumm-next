@@ -26,7 +26,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m162;
 
 static SFORMAT StateRegs[] = {
@@ -99,7 +99,7 @@ void Mapper162_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) : 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);

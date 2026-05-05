@@ -28,17 +28,17 @@ typedef enum __MMC3TYPE {
 } MMC3TYPE;
 
 typedef struct __MMC3 {
-	uint8 cmd;
-	uint8 opts;
-	uint8 mirr;
-	uint8 wram;
-	uint8 reg[8];
+	uint8_t cmd;
+	uint8_t opts;
+	uint8_t mirr;
+	uint8_t wram;
+	uint8_t reg[8];
 } MMC3;
 
 extern MMC3 mmc3;
 
-uint8 MMC3_GetPRGBank(int V);
-uint8 MMC3_GetCHRBank(int V);
+uint8_t MMC3_GetPRGBank(int V);
+uint8_t MMC3_GetCHRBank(int V);
 
 DECLFW(MMC3_CMDWrite); /* $ 0x8000 - 0xBFFF */
 DECLFW(MMC3_IRQWrite); /* $ 0xC000 - 0xFFFF */
@@ -53,13 +53,13 @@ void MMC3_IRQHBHook(void);
 int MMC3_WramIsWritable(void);
 void MMC3_Init(CartInfo *info, MMC3TYPE _type, int wram, int battery);
 
-void MMC3_SetConfig(uint8 clear, MMC3TYPE _type);
+void MMC3_SetConfig(uint8_t clear, MMC3TYPE _type);
 
 extern void (*MMC3_SyncPRG)(void);
 extern void (*MMC3_SyncCHR)(void);
 extern void (*MMC3_SyncMirror)(void);
 
-extern void (*MMC3_pwrap)(uint16 A, uint16 V);
-extern void (*MMC3_cwrap)(uint16 A, uint16 V);
+extern void (*MMC3_pwrap)(uint16_t A, uint16_t V);
+extern void (*MMC3_cwrap)(uint16_t A, uint16_t V);
 
 #endif /* _MMC3_H */

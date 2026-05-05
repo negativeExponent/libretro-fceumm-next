@@ -27,24 +27,24 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m344;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &m344.reg, 1, "EXPR" },
 	{ 0 } 
 };
 
-static uint8 prg_bank_order[2][4] = {
+static uint8_t prg_bank_order[2][4] = {
 	{ 0, 1, 2, 3 }, /* normal bank order */
 	{ 0, 3, 1, 2 } /* wrong bank order, added for compatibility */
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 base = prg_bank_order[(iNESCart.PRGCRC32 == 0xAB2ACA46)][m344.reg & 0x03] << 4;
-	uint16 mask = 0x0F;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t base = prg_bank_order[(iNESCart.PRGCRC32 == 0xAB2ACA46)][m344.reg & 0x03] << 4;
+	uint16_t mask = 0x0F;
 
 	if (m344.reg & 0x04) { /* NROM-256 */
 		V = (MMC3_GetPRGBank(0) & ~0x03) | ((A >> 13) & 0x03);
@@ -53,9 +53,9 @@ static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (m344.reg & 0x02) ? 0x7F : 0xFF;
-	uint16 base = (m344.reg & 0x03) << 7;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (m344.reg & 0x02) ? 0x7F : 0xFF;
+	uint16_t base = (m344.reg & 0x03) << 7;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

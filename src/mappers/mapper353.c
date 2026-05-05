@@ -28,7 +28,7 @@
 #include "fdssound.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m353;
 
 static SFORMAT StateRegs[] = {
@@ -36,9 +36,9 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 base = m353.reg << 5;
-	uint16 mask = 0x1F;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t base = m353.reg << 5;
+	uint16_t mask = 0x1F;
 
 	if (m353.reg == 2) {
 		base |= ((mmc3.reg[0] >> 3) & 0x10);
@@ -52,9 +52,9 @@ static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = 0x7F;
-	uint16 base = m353.reg << 7;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x7F;
+	uint16_t base = m353.reg << 7;
 
 	if ((m353.reg == 2) && (mmc3.reg[0] & 0x80)) {
 		setchr8r(0x10, 0);
@@ -82,7 +82,7 @@ static DECLFW(WriteReg) {
 		MMC3_SyncCHR();
 		MMC3_SyncMirror();
 	} else {
-		uint8 oldcmd = mmc3.cmd;
+		uint8_t oldcmd = mmc3.cmd;
 
 		switch (A & 0xE001) {
 		case 0x8000:
@@ -153,7 +153,7 @@ void Mapper353_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

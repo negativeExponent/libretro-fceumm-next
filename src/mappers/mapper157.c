@@ -26,14 +26,14 @@
 
 /* Datach Barcode Battler */
 
-static uint8 BarcodeData[256];
+static uint8_t BarcodeData[256];
 static int BarcodeReadPos;
 static int BarcodeCycleCount;
-static uint32 BarcodeOut;
+static uint32_t BarcodeOut;
 
 /* #define INTERL2OF5 */
 
-int FCEUI_DatachSet(uint8 *rcode) {
+int FCEUI_DatachSet(uint8_t *rcode) {
 	int prefix_parity_type[10][6] = {
 		{ 0, 0, 0, 0, 0, 0 }, { 0, 0, 1, 0, 1, 1 }, { 0, 0, 1, 1, 0, 1 }, { 0, 0, 1, 1, 1, 0 },
 		{ 0, 1, 0, 0, 1, 1 }, { 0, 1, 1, 0, 0, 1 }, { 0, 1, 1, 1, 0, 0 }, { 0, 1, 0, 1, 0, 1 },
@@ -54,9 +54,9 @@ int FCEUI_DatachSet(uint8 *rcode) {
 		{ 1, 0, 1, 1, 1, 0, 0 }, { 1, 0, 0, 1, 1, 1, 0 }, { 1, 0, 1, 0, 0, 0, 0 }, { 1, 0, 0, 0, 1, 0, 0 },
 		{ 1, 0, 0, 1, 0, 0, 0 }, { 1, 1, 1, 0, 1, 0, 0 }
 	};
-	uint8 code[13 + 1];
-	uint32 tmp_p = 0;
-	uint32 csum = 0;
+	uint8_t code[13 + 1];
+	uint32_t tmp_p = 0;
+	uint32_t csum = 0;
 	int i, j;
 	int len;
 
@@ -197,27 +197,27 @@ int FCEUI_DatachSet(uint8 *rcode) {
 }
 
 static struct {
-	uint8 epromLatch;
+	uint8_t epromLatch;
 	/* first 256K is internal m157.epromData data, 2nd 256 is for external m157.epromData if used.
  	 * Combined here for simplicity and frontend save compatibility */
-	uint8 epromData[512];
+	uint8_t epromData[512];
 } m157;
 
 static X24C0X internalEeprom = { 0 };
 static X24C0X extraEeprom = { 0 };
 
-static uint8 hasExternalEEPROM = FALSE;
+static uint8_t hasExternalEEPROM = FALSE;
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg16(A, V & 0x0F);
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr8(0);
 }
 
 static DECLFR(ReadEeprom) {
-	uint8 ret = 0x10;
+	uint8_t ret = 0x10;
 	ret &= eeprom_read(&internalEeprom);
 	if (hasExternalEEPROM) {
 		ret &= eeprom_read(&extraEeprom);

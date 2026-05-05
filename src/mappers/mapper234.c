@@ -22,7 +22,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[3];
+	uint8_t reg[3];
 } m234;
 
 static SFORMAT StateRegs[] = {
@@ -42,7 +42,7 @@ static void Sync(void) {
 }
 
 static DECLFR(ReadReg) {
-	uint8 ret = CartBR(A);
+	uint8_t ret = CartBR(A);
 
 	switch (A & 0xFFF8) {
 	case 0xFF80:

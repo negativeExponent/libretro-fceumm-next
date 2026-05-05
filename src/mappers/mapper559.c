@@ -26,8 +26,8 @@
 #include "vrc24.h"
 
 static struct {
-	uint8 nt[4];
-	uint8 prg;
+	uint8_t nt[4];
+	uint8_t prg;
 } m559;
 
 static SFORMAT StateRegs[] = {
@@ -36,7 +36,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	if (A == 0xC000) {
 		setprg8(A, m559.prg & 0x1F);
 	} else {
@@ -44,7 +44,7 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr1(A, V & 0x1FF);
 }
 

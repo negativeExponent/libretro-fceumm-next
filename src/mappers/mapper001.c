@@ -55,7 +55,7 @@ static int DetectMMC1WRAMSize(CartInfo *info, int *saveRAM) {
 	return workRAM;
 }
 
-static void SetPRGBank_mmc1(uint16 A, uint16 V) {
+static void SetPRGBank_mmc1(uint16_t A, uint16_t V) {
 	if (iNESCart.submapper == 5 || iNESCart.submapper == 7) {
 		setprg32(0x8000, 0);
 	} else {

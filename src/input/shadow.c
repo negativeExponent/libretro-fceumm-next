@@ -26,7 +26,7 @@
 
 #define ZD ZD[0]
 
-static void ZapperFrapper(uint8 * bg, uint8 * spr, uint32 linets, int final) {
+static void ZapperFrapper(uint8_t * bg, uint8_t * spr, uint32_t linets, int final) {
 	int xs, xe;
 	int zx, zy;
 
@@ -44,8 +44,8 @@ static void ZapperFrapper(uint8 * bg, uint8 * spr, uint32 linets, int final) {
 
 	if (scanline >= (zy - 4) && scanline <= (zy + 4)) {
 		while (xs < xe) {
-			uint8 a1, a2;
-			uint32 sum;
+			uint8_t a1, a2;
+			uint32_t sum;
 			if (xs <= (zx + 4) && xs >= (zx - 4)) {
 				a1 = bg[xs];
 				if (spr) {
@@ -59,7 +59,7 @@ static void ZapperFrapper(uint8 * bg, uint8 * spr, uint32 linets, int final) {
 
 				sum = palo[a1].r + palo[a1].g + palo[a1].b;
 				if (sum >= 100 * 3) {
-					ZD.zaphit = ((uint64)linets + (uint64)(xs + 16) * (isPAL ? 15 : 16)) / 48 + timestampbase;
+					ZD.zaphit = ((uint64_t)linets + (uint64_t)(xs + 16) * (isPAL ? 15 : 16)) / 48 + timestampbase;
 					goto endo;
 				}
 			}
@@ -83,10 +83,10 @@ static INLINE int CheckColor(void) {
 		int nowtime = scanline * 256 + g_rasterpos;
 
 		if (!block && mousetime < nowtime && mousetime >= nowtime - 384) {
-			extern uint8 *XBuf;
-			uint8 *pix = XBuf + (ZD.mzy << 8);
-			uint8 a1 = (pix[ZD.mzx]) & 63;
-			uint32 sum = palo[a1].r + palo[a1].g + palo[a1].b;
+			extern uint8_t *XBuf;
+			uint8_t *pix = XBuf + (ZD.mzy << 8);
+			uint8_t a1 = (pix[ZD.mzx]) & 63;
+			uint32_t sum = palo[a1].r + palo[a1].g + palo[a1].b;
 			/* return ZD.zaphit = sum != 0; */
 			ZD.zaphit = (sum >= 100 * 3) ? 1 : 0;
 		} else {
@@ -104,7 +104,7 @@ static INLINE int CheckColor(void) {
 }
 
 
-static uint8 ReadZapper(int w, uint8 ret) {
+static uint8_t ReadZapper(int w, uint8_t ret) {
 	if (w) {
 		ret &= ~0x18;
 		if (ZD.bogo)
@@ -122,13 +122,13 @@ static uint8 ReadZapper(int w, uint8 ret) {
 	return ret;
 }
 
-static void DrawZapper(uint8 * buf, int arg) {
+static void DrawZapper(uint8_t * buf, int arg) {
 	if (arg)
 		FCEU_DrawGunSight(buf, ZD.mzx, ZD.mzy);
 }
 
 static void UpdateZapper(void *data, int arg) {
-	uint32 *ptr = (uint32*)data;
+	uint32_t *ptr = (uint32_t*)data;
 
 	if (ZD.bogo)
 		ZD.bogo--;

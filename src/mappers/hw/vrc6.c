@@ -28,8 +28,8 @@
 
 VRC6 vrc6;
 
-void (*VRC6_pwrap)(uint16 A, uint16 V);
-void (*VRC6_cwrap)(uint16 A, uint16 V);
+void (*VRC6_pwrap)(uint16_t A, uint16_t V);
+void (*VRC6_cwrap)(uint16_t A, uint16_t V);
 
 static SFORMAT StateRegs[] = {
 	{ vrc6.prg, 2, "PRG" },
@@ -41,11 +41,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void GENPWRAP(uint16 A, uint16 V) {
+static void GENPWRAP(uint16_t A, uint16_t V) {
 	setprg8(A, V & 0x3F);
 }
 
-static void GENCWRAP(uint16 A, uint16 V) {
+static void GENCWRAP(uint16_t A, uint16_t V) {
 	setchr1(A, V & 0xFF);
 }
 
@@ -174,7 +174,7 @@ void VRC6_Restore(int version) {
 	VRC6_SyncMirror();
 }
 
-void VRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram) {
+void VRC6_Init(CartInfo *info, uint32_t A0, uint32_t A1, int wram) {
 	memset(&vrc6, 0, sizeof(vrc6));
 
 	VRC6_pwrap = GENPWRAP;
@@ -190,7 +190,7 @@ void VRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram) {
 			WRAMSIZE = 8192;
 		}
 		if (WRAMSIZE) {
-			WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+			WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 			SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 			AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 			if (info->battery) {
@@ -212,7 +212,7 @@ void VRC6_Init(CartInfo *info, uint32 A0, uint32 A1, int wram) {
 	VRC6Sound_AddStateInfo();
 }
 
-void VRC6_SetConfig(uint8 clear, int A0, int A1) {
+void VRC6_SetConfig(uint8_t clear, int A0, int A1) {
 	vrc6.A0 = A0;
 	vrc6.A1 = A1;
 	SetReadHandler(0x6000, 0x7FFF, CartBR);

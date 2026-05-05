@@ -33,7 +33,7 @@ void Mapper077_Init(CartInfo *info) {
 	Latch_Init(info, Sync, NULL, FALSE, TRUE);
 
 	CHRRAMSIZE = 6 * 1024;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 }

@@ -25,7 +25,7 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 bank = ((latch.addr >> 6) & 0x0E) | ((latch.addr >> 5) & 0x01);
+	uint8_t bank = ((latch.addr >> 6) & 0x0E) | ((latch.addr >> 5) & 0x01);
 
 	if (latch.addr & 0x40) {
 		setprg32(0x8000, bank >> 1);

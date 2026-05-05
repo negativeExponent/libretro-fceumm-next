@@ -63,22 +63,22 @@ extern INPUTCFC *FCEU_InitBarcodeWorld(void);
 extern INPUTCFC *FCEU_InitExcitingBoxing(void);
 
 typedef struct JOYPORT {
-	uint8 type;
-	uint8 attrib;
+	uint8_t type;
+	uint8_t attrib;
 	void *dataptr;
 	INPUTC *driver;
 } JOYPORT;
 
 typedef struct PORTFC {
-	uint8 type;
-	uint8 attrib;
+	uint8_t type;
+	uint8_t attrib;
 	void *dataptr;
 	INPUTCFC *driver;
 } PORTFC;
 
-static uint8 joy_readbit[2];
-static uint8 joy[4] = { 0, 0, 0, 0 };
-static uint8 LastStrobe;
+static uint8_t joy_readbit[2];
+static uint8_t joy[4] = { 0, 0, 0, 0 };
+static uint8_t LastStrobe;
 
 static int FourScoreAttached = FALSE; /* Set to 1 if NES-style four-player adapter is disabled. */
 
@@ -88,8 +88,8 @@ static PORTFC portFC;
 static INPUTC DummyJPort = { 0, 0, 0, 0, 0, 0 };
 
 static DECLFR(JPRead) {
-	uint8 ret               = 0;
-	static uint8 microphone = 0;
+	uint8_t ret               = 0;
+	static uint8_t microphone = 0;
 
 	if (joyport[A & 0x01].driver->Read) {
 		ret |= joyport[A & 0x01].driver->Read(A & 0x01);
@@ -157,17 +157,17 @@ static DECLFW(B4016) {
 /* This function is a quick hack to get the NSF player to use emulated gamepad
 	input.
 */
-uint8 FCEU_GetJoyJoy(void) {
+uint8_t FCEU_GetJoyJoy(void) {
 	return (joy[0] | joy[1] | joy[2] | joy[3]);
 }
 
 /* 4-player support for famicom expansion */
-static uint8 F4ReadBit[2];
+static uint8_t F4ReadBit[2];
 static void StrobeFami4(void) {
 	F4ReadBit[0] = F4ReadBit[1] = 0;
 }
 
-static uint8 ReadFami4(int w, uint8 ret) {
+static uint8_t ReadFami4(int w, uint8_t ret) {
 	ret &= 0x01;
 	ret |= ((joy[2 + w] >> (F4ReadBit[w])) & 0x01) << 1;
 
@@ -181,12 +181,12 @@ static uint8 ReadFami4(int w, uint8 ret) {
 }
 
 /* Hori 4 player driver for expansion port */
-static uint8 Hori4ReadBit[2];
+static uint8_t Hori4ReadBit[2];
 static void StrobeHori4(void) {
 	Hori4ReadBit[0] = Hori4ReadBit[1] = 0;
 }
 
-static uint8 ReadHori4(int w, uint8 ret) {
+static uint8_t ReadHori4(int w, uint8_t ret) {
 	ret &= 0x01;
 	if (Hori4ReadBit[w] < 8) {
 		ret |= ((joy[w] >> (Hori4ReadBit[w])) & 0x01) << 1;
@@ -206,8 +206,8 @@ static uint8 ReadHori4(int w, uint8 ret) {
 }
 
 /* VS. Unisystem inputs */
-static uint8 ReadGPVS(int w) {
-	uint8 ret = 0;
+static uint8_t ReadGPVS(int w) {
+	uint8_t ret = 0;
 
 	if (joy_readbit[w] >= 8) {
 		ret = 1;
@@ -222,8 +222,8 @@ static uint8 ReadGPVS(int w) {
 }
 
 /* standard gamepad inputs */
-static uint8 ReadGP(int w) {
-	uint8 ret = 0;
+static uint8_t ReadGP(int w) {
+	uint8_t ret = 0;
 
 	if (joy_readbit[w] >= 8) {
 		ret = ((joy[2 + w] >> (joy_readbit[w] & 0x07)) & 0x01);
@@ -250,13 +250,13 @@ static uint8 ReadGP(int w) {
 }
 
 static void UpdateGP(int w, void *data, int arg) {
-	uint32 *ptr = (uint32 *)data;
+	uint32_t *ptr = (uint32_t *)data;
 	if (!w) {
-		joy[0] = *(uint32 *)ptr;
-		joy[2] = *(uint32 *)ptr >> 16;
+		joy[0] = *(uint32_t *)ptr;
+		joy[2] = *(uint32_t *)ptr >> 16;
 	} else {
-		joy[1] = *(uint32 *)ptr >> 8;
-		joy[3] = *(uint32 *)ptr >> 24;
+		joy[1] = *(uint32_t *)ptr >> 8;
+		joy[3] = *(uint32_t *)ptr >> 24;
 	}
 }
 
@@ -270,7 +270,7 @@ static INPUTCFC FAMI4C = { ReadFami4, 0, StrobeFami4, 0, 0, 0 };
 static INPUTCFC HORI4C = { ReadHori4, 0, StrobeHori4, 0, 0, 0 };
 
 /**********************************************************************/
-void FCEU_DrawInput(uint8 *buf) {
+void FCEU_DrawInput(uint8_t *buf) {
 	int x;
 
 	for (x = 0; x < 2; x++) {
@@ -314,7 +314,7 @@ void FCEU_UpdateInput(void) {
 }
 
 static DECLFR(VSUNIRead0) {
-	uint8 ret = 0;
+	uint8_t ret = 0;
 
 	if (joyport[0].driver->Read) {
 		ret |= (joyport[0].driver->Read(0)) & 0x01;
@@ -336,7 +336,7 @@ static DECLFR(VSUNIRead0) {
 }
 
 static DECLFR(VSUNIRead1) {
-	uint8 ret = 0;
+	uint8_t ret = 0;
 
 	if (joyport[1].driver && joyport[1].driver->Read) {
 		ret |= (joyport[1].driver->Read(1)) & 0x01;
@@ -347,7 +347,7 @@ static DECLFR(VSUNIRead1) {
 	return (ret);
 }
 
-void InputScanlineHook(uint8 *bg, uint8 *spr, uint32 linets, int final) {
+void InputScanlineHook(uint8_t *bg, uint8_t *spr, uint32_t linets, int final) {
 	int x;
 
 	for (x = 0; x < 2; x++) {

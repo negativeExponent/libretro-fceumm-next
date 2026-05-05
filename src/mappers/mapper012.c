@@ -22,8 +22,8 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
-	uint8 dipsw;
+	uint8_t reg;
+	uint8_t dipsw;
 } m012;
 
 static SFORMAT StateRegs[] = {
@@ -31,8 +31,8 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetCHRBank_mmc3(uint16 A, uint16 V) {
-	uint16 base = m012.reg << ((A & 0x1000) ? 4 : 8);
+static void SetCHRBank_mmc3(uint16_t A, uint16_t V) {
+	uint16_t base = m012.reg << ((A & 0x1000) ? 4 : 8);
 
 	setchr1(A, (base & 0x100) | (V & 0xFF));
 }

@@ -22,8 +22,8 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
-	uint8 pad;
+	uint8_t reg;
+	uint8_t pad;
 } m597;
 
 static SFORMAT StateRegs[] = {
@@ -36,10 +36,10 @@ static DECLFR(ReadPad) {
 	return CartBR((A & ~0x0F) | (m597.pad & 0x0F));
 }
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = 0x0F;
-	uint16 base = m597.reg << 4;
-	uint16 bank = (A >> 13) & 0x03;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x0F;
+	uint16_t base = m597.reg << 4;
+	uint16_t bank = (A >> 13) & 0x03;
 
 	if (m597.reg & 0x04) {
 		base = base | (MMC3_GetPRGBank(0) & mask);
@@ -56,9 +56,9 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = m597.reg & 0x01;
-	uint16 base = (m597.reg & 0x02) ? 0x80 : 0;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = m597.reg & 0x01;
+	uint16_t base = (m597.reg & 0x02) ? 0x80 : 0;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

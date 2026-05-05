@@ -27,8 +27,8 @@
 #include "vrc24.h"
 
 static struct {
-	uint8 cmd;
-	uint8 reg[4];
+	uint8_t cmd;
+	uint8_t reg[4];
 } m556;
 
 static SFORMAT StateRegs[] = {
@@ -37,46 +37,46 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint32 GetPRGMask(void) {
+static uint32_t GetPRGMask(void) {
 	return (~m556.reg[3] & 0x3F);
 }
 
-static uint32 GetPRGBase(void) {
+static uint32_t GetPRGBase(void) {
 	return (((m556.reg[3] & 0x40) << 2) | m556.reg[1]);
 }
 
-static uint32 GetCHRMask(void) {
+static uint32_t GetCHRMask(void) {
 	return (0xFF >> (~m556.reg[2] & 0x0F));
 }
 
-static uint32 GetCHRBase(void) {
+static uint32_t GetCHRBase(void) {
 	return (((m556.reg[3] & 0x40) << 6) | ((m556.reg[2] & 0xF0) << 4) | m556.reg[0]);
 }
 
-static void SetPRG_mmc3(uint16 A, uint16 V) {
-	uint32 mask = GetPRGMask();
-	uint32 base = GetPRGBase();
+static void SetPRG_mmc3(uint16_t A, uint16_t V) {
+	uint32_t mask = GetPRGMask();
+	uint32_t base = GetPRGBase();
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR_mmc3(uint16 A, uint16 V) {
-	uint32 mask = GetCHRMask();
-	uint32 base = GetCHRBase();
+static void SetCHR_mmc3(uint16_t A, uint16_t V) {
+	uint32_t mask = GetCHRMask();
+	uint32_t base = GetCHRBase();
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void SetPRG_vrc4(uint16 A, uint16 V) {
-	uint32 mask = GetPRGMask();
-	uint32 base = GetPRGBase();
+static void SetPRG_vrc4(uint16_t A, uint16_t V) {
+	uint32_t mask = GetPRGMask();
+	uint32_t base = GetPRGBase();
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR_vrc4(uint16 A, uint16 V) {
-	uint32 mask = GetCHRMask();
-	uint32 base = GetCHRBase();
+static void SetCHR_vrc4(uint16_t A, uint16_t V) {
+	uint32_t mask = GetCHRMask();
+	uint32_t base = GetCHRBase();
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
@@ -167,7 +167,7 @@ void Mapper556_Init(CartInfo *info) {
 
 	WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (info->battery) {

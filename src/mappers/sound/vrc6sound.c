@@ -29,37 +29,37 @@ enum { SQUARE1, SQUARE2, SAW };
 
 typedef struct __VRC6SQUARE {
 	/* regs */
-	uint8 volume;
-	uint8 duty;
-	uint8 mode;
-	uint8 enabled;
-	uint16 freq;
+	uint8_t volume;
+	uint8_t duty;
+	uint8_t mode;
+	uint8_t enabled;
+	uint16_t freq;
 
 	/* timers */
-	uint8 dcount;
-	int32 vcount;
-	int32 cvbc;
+	uint8_t dcount;
+	int32_t vcount;
+	int32_t cvbc;
 } VRC6SQUARE;
 
 typedef struct __VRC6SAW {
 	/* regs */
-	uint8 accumrate;
-	uint8 enabled;
-	uint16 freq;
+	uint8_t accumrate;
+	uint8_t enabled;
+	uint16_t freq;
 
-	uint8 phaseacc;
+	uint8_t phaseacc;
 
 	/* timers */
-	uint8 dcount;
-	int32 vcount;
-	int32 cvbc;
+	uint8_t dcount;
+	int32_t vcount;
+	int32_t cvbc;
 } VRC6SAW;
 
 typedef struct __VRC6SOUND {
 	VRC6SQUARE square[2];
 	VRC6SAW saw;
-	uint8 haltsound;
-	uint8 freqshift;
+	uint8_t haltsound;
+	uint8_t freqshift;
 } VR6SOUND;
 
 static VR6SOUND VRC6Sound;
@@ -67,7 +67,7 @@ static VR6SOUND VRC6Sound;
 static void (*sfun[3])(void);
 
 static INLINE void DoSQV(VRC6SQUARE *channel) {
-	int32 start, end, V;
+	int32_t start, end, V;
 
 	start = channel->cvbc;
 	end = (SOUNDTS << 16) / soundtsinc;
@@ -77,8 +77,8 @@ static INLINE void DoSQV(VRC6SQUARE *channel) {
 	channel->cvbc = end;
 
 	if (!VRC6Sound.haltsound && channel->enabled) {
-		int32 amp = ((channel->volume << 8) * 6 / 8) >> 4;
-		int32 out = GetOutput(SND_VRC6, amp);
+		int32_t amp = ((channel->volume << 8) * 6 / 8) >> 4;
+		int32_t out = GetOutput(SND_VRC6, amp);
 
 		for (V = start; V < end; V++) {
 			channel->vcount -= nesincsize;
@@ -102,7 +102,7 @@ static void DoSQV2(void) {
 }
 
 static void DoSawV(void) {
-	int32 start, end, V;
+	int32_t start, end, V;
 
 	start = VRC6Sound.saw.cvbc;
 	end = (SOUNDTS << 16) / soundtsinc;
@@ -112,7 +112,7 @@ static void DoSawV(void) {
 	VRC6Sound.saw.cvbc = end;
 
 	if (VRC6Sound.saw.enabled) {
-		int32 out;
+		int32_t out;
 
 		for (V = start; V < end; V++) {
 			VRC6Sound.saw.vcount -= nesincsize;
@@ -133,13 +133,13 @@ static void DoSawV(void) {
 }
 
 static INLINE void DoSQVHQ(VRC6SQUARE *channel) {
-	int32 V;
+	int32_t V;
 
 	if (channel->enabled) {
-		int32 amp = (channel->volume << 8) * 6 / 8;
-		int32 out = GetOutput(SND_VRC6, amp);
+		int32_t amp = (channel->volume << 8) * 6 / 8;
+		int32_t out = GetOutput(SND_VRC6, amp);
 
-		for (V = channel->cvbc; V < (int32)SOUNDTS; V++) {
+		for (V = channel->cvbc; V < (int32_t)SOUNDTS; V++) {
 			channel->vcount--;
 			if (channel->vcount <= 0) {
 				channel->dcount++;
@@ -163,12 +163,12 @@ static void DoSQV2HQ(void) {
 }
 
 static void DoSawVHQ(void) {
-	int32 V;
+	int32_t V;
 
 	if (VRC6Sound.saw.enabled) {
-		int32 out = 0;
+		int32_t out = 0;
 
-		for (V = VRC6Sound.saw.cvbc; V < (int32)SOUNDTS; V++) {
+		for (V = VRC6Sound.saw.cvbc; V < (int32_t)SOUNDTS; V++) {
 			VRC6Sound.saw.vcount--;
 			while (VRC6Sound.saw.vcount <= 0) {
 				VRC6Sound.saw.dcount++;
@@ -202,13 +202,13 @@ static void VRC6RunSoundHQ(void) {
 	DoSawVHQ();
 }
 
-static void VRC6SyncHQ(int32 ts) {
+static void VRC6SyncHQ(int32_t ts) {
 	VRC6Sound.square[0].cvbc = ts;
 	VRC6Sound.square[1].cvbc = ts;
 	VRC6Sound.saw.cvbc = ts;
 }
 
-static void VRC6Square_Write(VRC6SQUARE *channel, uint8 reg, uint8 V) {
+static void VRC6Square_Write(VRC6SQUARE *channel, uint8_t reg, uint8_t V) {
 	switch (reg & 0x03) {
 	case 0:
 		channel->volume = V & 0x0F;

@@ -28,12 +28,12 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 mask = (iNESCart.submapper == 0) ? 0xFF : 0x7F;
-	uint8 prg = (latch.addr >> 2) & mask;
-	uint8 chr = 0;
-	uint8 mirrorV = (latch.addr & 0x01) ^ 1;
-	uint8 A14 = (latch.addr >> 1) & 0x01;
-	uint8 protected = (latch.addr & ((iNESCart.submapper == 0) ? 0x400 : 0x200)) != 0;
+	uint8_t mask = (iNESCart.submapper == 0) ? 0xFF : 0x7F;
+	uint8_t prg = (latch.addr >> 2) & mask;
+	uint8_t chr = 0;
+	uint8_t mirrorV = (latch.addr & 0x01) ^ 1;
+	uint8_t A14 = (latch.addr >> 1) & 0x01;
+	uint8_t protected = (latch.addr & ((iNESCart.submapper == 0) ? 0x400 : 0x200)) != 0;
 
 	/* FCEU_printf("%04x prg = %02x chr = %02x mirV = %d A14 = %d chrprot = %d\n", latch.addr, prg, chr, mirrorV, A14, protected); */
 

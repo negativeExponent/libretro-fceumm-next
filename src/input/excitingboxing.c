@@ -25,11 +25,11 @@
 Exciting Boxing
 */
 
-static uint8 EBVal = 0;
-static uint8 EBValR = 0;
-static uint8 EBSensor = 0;
+static uint8_t EBVal = 0;
+static uint8_t EBValR = 0;
+static uint8_t EBSensor = 0;
 
-static uint8 EB_Read(int w, uint8 ret) {
+static uint8_t EB_Read(int w, uint8_t ret) {
 	if (w) {
 		/* The first read returns the state of buttons 1 to 3,
 		the 2nd read gives buttons 4 to 6. The third read apparently returns a detection value ($14). */
@@ -54,12 +54,12 @@ static void EB_Strobe(void) {
 	EBValR = EBVal;
 }
 
-static void EB_Write(uint8 V) {
+static void EB_Write(uint8_t V) {
     EBSensor = (V & 0x02) >> 1;
 }
 
 static void EB_Update(void *data, int arg) {
-	EBVal = *(uint32*)data;
+	EBVal = *(uint32_t*)data;
 }
 
 static INPUTCFC ExcitingBoxing = { EB_Read, EB_Write, EB_Strobe, EB_Update, 0, 0 };

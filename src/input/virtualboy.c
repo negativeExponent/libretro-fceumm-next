@@ -17,11 +17,11 @@
 
 #include "share.h"
 
-static uint32 rsb[2];
-static uint32 rdata[2];
+static uint32_t rsb[2];
+static uint32_t rdata[2];
 
-static uint8 Read(int w) {
-	uint8 ret = 0;
+static uint8_t Read(int w) {
+	uint8_t ret = 0;
 	ret |= (rdata[w] >> rsb[w]) & 1;
 	if (rsb[w] >= 16) {
 		ret |= 0x1;
@@ -40,7 +40,7 @@ static void Update(int w, void *data, int arg) {
 	int x;
 	int ret = 0;
 	for (x = 0; x < 14; x++) {
-		ret |= (((*(uint32 *)data) >> x) & 1) << x;
+		ret |= (((*(uint32_t *)data) >> x) & 1) << x;
 	}
 	rdata[w] = ret;
 	/* fixed signature bit */

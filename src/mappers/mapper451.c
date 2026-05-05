@@ -27,11 +27,11 @@
 #include "flashrom.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m451;
 
-static uint8 *FLASHROM = NULL;
-static uint32 FLASHROM_size = 0;
+static uint8_t *FLASHROM = NULL;
+static uint32_t FLASHROM_size = 0;
 
 static SFORMAT StateRegs[] = {
 	{ &m451.reg, 1, "REGS" },
@@ -92,7 +92,7 @@ static void Close(void) {
 }
 
 void Mapper451_Init(CartInfo *info) {
-	uint32 w, r;
+	uint32_t w, r;
 
 	MMC3_Init(info, MMC3B, 0, 0);
 	info->Power = Power;
@@ -104,7 +104,7 @@ void Mapper451_Init(CartInfo *info) {
 
 	info->battery = 1;
 	FLASHROM_size = PRGsize[0];
-	FLASHROM = (uint8 *)FCEU_gmalloc(FLASHROM_size);
+	FLASHROM = (uint8_t *)FCEU_gmalloc(FLASHROM_size);
 	info->SaveGame[0] = FLASHROM;
 	info->SaveGameLen[0] = FLASHROM_size;
 	AddExState(FLASHROM, FLASHROM_size, 0, "FLAS");

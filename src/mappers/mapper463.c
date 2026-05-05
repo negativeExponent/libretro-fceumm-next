@@ -21,10 +21,10 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m463;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m463.reg, 4, "EXPR" },

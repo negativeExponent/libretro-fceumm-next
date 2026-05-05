@@ -29,24 +29,24 @@
 #include "mapper562.h"
 
 static struct {
-	uint8 mc1mode;
-	uint8 mc2mode;
-	uint8 tgdmode;
+	uint8_t mc1mode;
+	uint8_t mc2mode;
+	uint8_t tgdmode;
 
-	uint8 prg8K[4];
-	uint8 chr1K[8];
-	uint8 chr8k;
-	uint8 latch;
-	uint8 chrlock;
+	uint8_t prg8K[4];
+	uint8_t chr1K[8];
+	uint8_t chr8k;
+	uint8_t latch;
+	uint8_t chrlock;
 
-	uint8 fds_control;
-	int16 fds_IRQCount;
+	uint8_t fds_control;
+	int16_t fds_IRQCount;
 
-	uint16 tgd_IRQCount;
-	uint16 tgd_TargetCount;
+	uint16_t tgd_IRQCount;
+	uint16_t tgd_TargetCount;
 
-	uint8 lastCHRBank;
-	uint16 lastPPUAddr;
+	uint8_t lastCHRBank;
+	uint16_t lastPPUAddr;
 } m562;
 
 static writefunc writePPU2007;
@@ -75,7 +75,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void SyncPRG(void) {
-	uint8 prg_writable = !(m562.mc1mode & 0x02);
+	uint8_t prg_writable = !(m562.mc1mode & 0x02);
 
 	SetupCartPRGMapping(0, PRGptr[0], PRGsize[0], prg_writable);
 
@@ -128,7 +128,7 @@ static void SyncPRG(void) {
 }
 
 static void SyncCHR(void) {
-	uint8 chr_writable = !((m562.mc1mode & 0x80) || m562.chrlock);
+	uint8_t chr_writable = !((m562.mc1mode & 0x80) || m562.chrlock);
 
 	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], chr_writable);
 
@@ -167,7 +167,7 @@ static void SyncWRAM(void) {
 	setprg8r(0x10, 0x6000, 0);
 }
 
-extern uint32 RefreshAddr;
+extern uint32_t RefreshAddr;
 static DECLFW(WritePPU2007) {
 	if (!(RefreshAddr & 0x2000)) {
 		if ((m562.mc1mode >= 0xA0) && !(m562.mc1mode & 0x01)) {
@@ -316,7 +316,7 @@ static void CPUIRQHook(int a) {
 	}
 }
 
-static void PPUIRQHook(uint32 A) {
+static void PPUIRQHook(uint32_t A) {
 	if ((m562.lastPPUAddr != A) && ((A & 0x3000) != 0x2000)) {
 		m562.lastCHRBank = (A >> 13) & 0x07;
 	}
@@ -325,12 +325,12 @@ static void PPUIRQHook(uint32 A) {
 
 static void SetTrainer(void) {
 	if (ROM.misc.data && (ROM.misc.size >= 4)) {
-		uint16 trainerLoadAddr = 0x7000;
-		uint16 trainerInitAddr = 0x7003;
-		uint32 trainerSize = 512;
-		uint8 *trainerSource = ROM.misc.data;
-		uint8 *trainerData;
-		uint32 i;
+		uint16_t trainerLoadAddr = 0x7000;
+		uint16_t trainerInitAddr = 0x7003;
+		uint32_t trainerSize = 512;
+		uint8_t *trainerSource = ROM.misc.data;
+		uint8_t *trainerData;
+		uint32_t i;
 
 		if (ROM.misc.size != 512) {
 			trainerLoadAddr = (ROM.misc.data[1] << 8) | ROM.misc.data[0];
@@ -438,8 +438,8 @@ static void StateRestore(int version) {
 }
 
 void Mapper562_Init(CartInfo *info) {
-	uint32 wramsize = info->PRGRamSize + info->PRGRamSaveSize;
-	uint32 prgsize = ROM.prg.size;
+	uint32_t wramsize = info->PRGRamSize + info->PRGRamSaveSize;
+	uint32_t prgsize = ROM.prg.size;
 
 	info->Power = Power;
 	info->Reset = Reset;
@@ -451,7 +451,7 @@ void Mapper562_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = wramsize ? wramsize : 8192;
-	WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_malloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, TRUE);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

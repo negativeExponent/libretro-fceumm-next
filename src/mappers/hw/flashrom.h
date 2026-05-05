@@ -24,7 +24,7 @@
 DECLFW(FlashROM_Write);
 DECLFR(FlashROM_Read);
 
-void FlashROM_Init(uint8 *data, uint32 size, uint8 manufacter_id, uint8 model_id, uint32 sector_size, uint32 adr1, uint32 adr2);
+void FlashROM_Init(uint8_t *data, uint32_t size, uint8_t manufacter_id, uint8_t model_id, uint32_t sector_size, uint32_t adr1, uint32_t adr2);
 void FlashROM_CPUCyle(int a);
 
 #endif /* FLASHROM_H */

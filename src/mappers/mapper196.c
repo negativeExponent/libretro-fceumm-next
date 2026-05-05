@@ -37,7 +37,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m196;
 
 static SFORMAT StateRegs[] = {
@@ -45,7 +45,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	if (m196.reg[0]) {
 		setprg32(0x8000, m196.reg[1] >> 4);
 	} else {
@@ -60,7 +60,7 @@ static DECLFW(WriteNROM) {
 }
 
 static DECLFW(WriteASIC) {
-	uint8 A0;
+	uint8_t A0;
 	switch (iNESCart.submapper) {
 	case 1:
 		A0 = (A >> 1) & 0x01;

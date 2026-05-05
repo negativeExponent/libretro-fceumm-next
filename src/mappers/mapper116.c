@@ -44,9 +44,9 @@
 #define MAPPER_MMC1 0x02
 
 static struct {
-	uint8 mapper;
-	uint8 mode;
-	uint8 game;
+	uint8_t mapper;
+	uint8_t mode;
+	uint8_t game;
 } m116;
 
 static SFORMAT StateRegs[] = {
@@ -56,45 +56,45 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint32 GetPRGMask(void) {
+static uint32_t GetPRGMask(void) {
 	if (iNESCart.submapper != 3) {
 		return 0x3F;
 	}
 	return (m116.game ? 0x0F : 0x1F);
 }
 
-static uint32 GetPRGBase(void) {
+static uint32_t GetPRGBase(void) {
 	if (m116.game) {
 		return (m116.game + 1) * 0x10;
 	}
 	return 0;
 }
 
-static uint32 GetCHRMask(void) {
+static uint32_t GetCHRMask(void) {
 	return (m116.game ? 0x7F : 0xFF);
 }
 
-static uint32 GetCHRBase(void) {
+static uint32_t GetCHRBase(void) {
 	return (m116.game ? (m116.game + 1) * 0x80 : 0);
 }
 
-static void SetPRG_vrc2(uint16 A, uint16 V) {
+static void SetPRG_vrc2(uint16_t A, uint16_t V) {
 	setprg8(A, GetPRGBase() | (V & GetPRGMask()));
 }
 
-static void SetCHR_vrc2(uint16 A, uint16 V) {
+static void SetCHR_vrc2(uint16_t A, uint16_t V) {
 	setchr1(A, ((m116.mode << 6) & 0x100) | GetCHRBase() | (V & GetCHRMask()));
 }
 
-static void SetPRG_mmc3(uint16 A, uint16 V) {
+static void SetPRG_mmc3(uint16_t A, uint16_t V) {
 	setprg8(A, GetPRGBase() | (V & GetPRGMask()));
 }
 
-static void SetCHR_mmc3(uint16 A, uint16 V) {
+static void SetCHR_mmc3(uint16_t A, uint16_t V) {
 	setchr1(A, ((m116.mode << 6) & 0x100) | GetCHRBase() | (V & GetCHRMask()));
 }
 
-static void SetPRG_mmc1(uint16 A, uint16 V) {
+static void SetPRG_mmc1(uint16_t A, uint16_t V) {
 	if (iNESCart.submapper == 2) {
 		setprg16(A, V >> 1);
 	} else {
@@ -102,7 +102,7 @@ static void SetPRG_mmc1(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR_mmc1(uint16 A, uint16 V) {
+static void SetCHR_mmc1(uint16_t A, uint16_t V) {
 	setchr4(A, (GetCHRBase() >> 2) | (V & (GetCHRMask() >> 2)));
 }
 

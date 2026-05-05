@@ -29,7 +29,7 @@ static void Sync(void) {
 }
 
 static DECLFW(WriteLatch) {
-	uint16 newAddr = A & 0x0FFF;
+	uint16_t newAddr = A & 0x0FFF;
 
 	if (((A & 0xF000) == 0xF000) && (newAddr >= 0xF08) && (newAddr <= 0xF0F)) {
 		latch.addr = newAddr;

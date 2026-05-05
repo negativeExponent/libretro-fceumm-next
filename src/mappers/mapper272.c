@@ -29,15 +29,15 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg[2];
-	uint8 chr[8];
-	uint8 mirrorHV;
-	uint8 mirrorOneScreen;
-	uint8 IRQCount;
-	uint8 IRQa;
+	uint8_t prg[2];
+	uint8_t chr[8];
+	uint8_t mirrorHV;
+	uint8_t mirrorOneScreen;
+	uint8_t IRQCount;
+	uint8_t IRQa;
 } m272;
 
-static uint16 lastAddr;
+static uint16_t lastAddr;
 
 static SFORMAT StateRegs[] = {
 	{ m272.prg, 2, "PREG" },
@@ -127,7 +127,7 @@ static DECLFW(Write) {
 	}
 }
 
-static void PPUHook(uint32 A) {
+static void PPUHook(uint32_t A) {
 	if ((lastAddr & 0x2000) && !(A & 0x2000)) {
 		if (m272.IRQa) {
 			m272.IRQCount++;

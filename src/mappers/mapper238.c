@@ -29,10 +29,10 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m238;
 
-static const uint8 lut[4] = { 0x00, 0x02, 0x02, 0x03 };
+static const uint8_t lut[4] = { 0x00, 0x02, 0x02, 0x03 };
 
 static DECLFW(WriteProtection) {
 	m238.reg = lut[V & 0x03];

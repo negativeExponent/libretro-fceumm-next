@@ -25,7 +25,7 @@
 #include "latch.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m314;
 
 static SFORMAT StateRegs[] = {
@@ -34,7 +34,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint16 bank = ((m314.reg[0] << 7) & 0x80) | ((m314.reg[1] << 1) & 0x7E) | ((m314.reg[1] >> 6) & 0x01);
+	uint16_t bank = ((m314.reg[0] << 7) & 0x80) | ((m314.reg[1] << 1) & 0x7E) | ((m314.reg[1] >> 6) & 0x01);
 
 	if (m314.reg[0] & 0x80) { /* NROM mode */
 		if (m314.reg[1] & 0x80) {
@@ -52,7 +52,7 @@ static void Sync(void) {
 }
 
 static DECLFW(WriteReg) {
-	uint8 mask = ROM.chr.size ? 0x03 : 0x01;
+	uint8_t mask = ROM.chr.size ? 0x03 : 0x01;
 
 	m314.reg[A & mask] = V;
 	Sync();

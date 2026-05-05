@@ -25,7 +25,7 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 prg = latch.addr >> 2;
+	uint8_t prg = latch.addr >> 2;
 
 	if (latch.addr & 2) { /* NROM-128 */
 		setprg16(0x8000, prg);

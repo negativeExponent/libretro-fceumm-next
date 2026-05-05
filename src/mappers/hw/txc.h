@@ -22,16 +22,16 @@
 #define _TXC_H
 
 typedef struct __TXC {
-	uint8 accumulator;
-	uint8 inverter;
-	uint8 staging;
-	uint8 output;
-	uint8 increase;
-	uint8 invert;
-	uint8 A;
-	uint8 B;
-	uint8 X;
-	uint8 Y;
+	uint8_t accumulator;
+	uint8_t inverter;
+	uint8_t staging;
+	uint8_t output;
+	uint8_t increase;
+	uint8_t invert;
+	uint8_t A;
+	uint8_t B;
+	uint8_t X;
+	uint8_t Y;
 } TXC;
 
 extern TXC txc;

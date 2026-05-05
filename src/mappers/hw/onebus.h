@@ -23,23 +23,23 @@
 
 typedef struct __ONEBUS {
 	/* General Purpose Registers */
-	uint8 cpu41xx[0x0100], ppu20xx[0x100], apu40xx[0x40];
-	uint32 relative_8k;
+	uint8_t cpu41xx[0x0100], ppu20xx[0x100], apu40xx[0x40];
+	uint32_t relative_8k;
 
 	/* IRQ Registers */
-	uint8 IRQCount, IRQa, IRQReload;
+	uint8_t IRQCount, IRQa, IRQReload;
 
 	/* APU Registers */
-	uint8 pcm_enable, pcm_irq;
-	int16 pcm_addr, pcm_size, pcm_latch, pcm_clock;
+	uint8_t pcm_enable, pcm_irq;
+	int16_t pcm_addr, pcm_size, pcm_latch, pcm_clock;
 
 	struct {
-		uint32 size;
-		uint8 *data;
-		uint8 *low;
-		uint8 *high;
-		uint8 *low16;
-		uint8 *high16;
+		uint32_t size;
+		uint8_t *data;
+		uint8_t *low;
+		uint8_t *high;
+		uint8_t *low16;
+		uint8_t *high16;
 	} chr;
 } ONEBUS;
 
@@ -57,11 +57,11 @@ void OneBus_Power(void);
 void OneBus_Reset(void);
 void OneBus_Init(CartInfo *info, void (*proc)(void), int wram, int battery);
 
-void OneBus_SyncPRG(uint16 mmask, uint16 mblock);
-void OneBus_SyncCHR(uint16 mmask, uint16 mblock);
+void OneBus_SyncPRG(uint16_t mmask, uint16_t mblock);
+void OneBus_SyncCHR(uint16_t mmask, uint16_t mblock);
 void OneBus_SyncMirror(void);
-void OneBus_SyncPRG16(uint16 bank0, uint16 bank1, uint16 mmask, uint16 mblock);
+void OneBus_SyncPRG16(uint16_t bank0, uint16_t bank1, uint16_t mmask, uint16_t mblock);
 
-void OneBus_SetCHR(uint8 **banks, uint8_t *base, uint8 bit4pp, uint8 extended, uint16 EVA, uint16 mmask, uint16 mblock);
+void OneBus_SetCHR(uint8_t **banks, uint8_t *base, uint8_t bit4pp, uint8_t extended, uint16_t EVA, uint16_t mmask, uint16_t mblock);
 
 #endif /* _ONEBUS_H */

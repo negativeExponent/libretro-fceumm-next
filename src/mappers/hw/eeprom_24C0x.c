@@ -39,7 +39,7 @@ static INLINE void eeprom_24C0X_Stop(X24C0X *e) {
 	e->output = 0x10;
 }
 
-static INLINE void eeprom_24C01_Rise(X24C0X *e, uint8 bit) {
+static INLINE void eeprom_24C01_Rise(X24C0X *e, uint8_t bit) {
 	if (e->mode == MODE_ADDRESS) {
 		if (e->latch.bit < 7) {
 			e->latch.address &= ~(1U << e->latch.bit);
@@ -84,7 +84,7 @@ static INLINE void eeprom_24C01_Fall(X24C0X *e) {
 	}
 }
 
-static INLINE void eeprom_24C02_Rise(X24C0X *e, uint8 bit) {
+static INLINE void eeprom_24C02_Rise(X24C0X *e, uint8_t bit) {
 	if (e->mode == MODE_DATA && (e->latch.bit < 8)) {
 		e->latch.data &= ~(1U << (7 - e->latch.bit));
 		e->latch.data |= bit << (7 - e->latch.bit++);
@@ -150,7 +150,7 @@ static INLINE void eeprom_24C02_Fall(X24C0X *e) {
 	}
 }
 
-static INLINE void eeprom_24C01_step(X24C0X *e, uint8 scl, uint8 sda) {
+static INLINE void eeprom_24C01_step(X24C0X *e, uint8_t scl, uint8_t sda) {
 	if (e->line.scl && sda < e->line.sda) {
 		eeprom_24C01_Start(e);
 	} else if (e->line.scl && sda > e->line.sda) {
@@ -165,7 +165,7 @@ static INLINE void eeprom_24C01_step(X24C0X *e, uint8 scl, uint8 sda) {
 	e->line.sda = sda;
 }
 
-static INLINE void eeprom_24C02_step(X24C0X *e, uint8 scl, uint8 sda) {
+static INLINE void eeprom_24C02_step(X24C0X *e, uint8_t scl, uint8_t sda) {
 	if (e->line.scl && sda < e->line.sda) {
 		eeprom_24C02_Start(e);
 	} else if (e->line.scl && sda > e->line.sda) {
@@ -180,7 +180,7 @@ static INLINE void eeprom_24C02_step(X24C0X *e, uint8 scl, uint8 sda) {
 	e->line.sda = sda;
 }
 
-void eeprom_i2c_step(X24C0X *e, uint8 scl, uint8 sda) {
+void eeprom_i2c_step(X24C0X *e, uint8_t scl, uint8_t sda) {
 	if (e->model == EEPROM_24C01) {
 		eeprom_24C01_step(e, scl, sda);
 	} else {
@@ -188,12 +188,12 @@ void eeprom_i2c_step(X24C0X *e, uint8 scl, uint8 sda) {
 	}
 }
 
-uint8 eeprom_read(X24C0X *e) {
+uint8_t eeprom_read(X24C0X *e) {
 	return e->output;
 }
 
 /* Init EEPROM */
-void eeprom_init(X24C0X *e, uint8 model, uint8 *_rom) {
+void eeprom_init(X24C0X *e, uint8_t model, uint8_t *_rom) {
 	memset(e, 0, sizeof(*e));
 	e->mem = _rom;
 	e->model = model;
@@ -209,7 +209,7 @@ void eeprom_init(X24C0X *e, uint8 model, uint8 *_rom) {
 }
 
 void eeprom_AddStateInfo(X24C0X *e) {
-	uint8 is24C01 = (e->model == EEPROM_24C01);
+	uint8_t is24C01 = (e->model == EEPROM_24C01);
 
 	AddExState(&e->model,         1, 0, is24C01 ? "MDL0" : "MDL1");
 	AddExState(&e->mode,          1, 0, is24C01 ? "MOD0" : "MOD1");
@@ -226,10 +226,10 @@ void eeprom_AddStateInfo(X24C0X *e) {
 	AddExState(&e->rw,            1, 0, is24C01 ? "RW_0" : "RW_1");
 }
 
-void eeprom_24C01_init(X24C0X *e, uint8 *_rom) {
+void eeprom_24C01_init(X24C0X *e, uint8_t *_rom) {
 	eeprom_init(e, EEPROM_24C01, _rom);
 }
 
-void eeprom_24C02_init(X24C0X *e, uint8 *_rom) {
+void eeprom_24C02_init(X24C0X *e, uint8_t *_rom) {
 	eeprom_init(e, EEPROM_24C02, _rom);
 }

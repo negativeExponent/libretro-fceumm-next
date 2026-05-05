@@ -35,8 +35,8 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg;
-	uint32 IRQCount, IRQa;
+	uint8_t prg;
+	uint32_t IRQCount, IRQa;
 } m304;
 
 static SFORMAT StateRegs[] = {

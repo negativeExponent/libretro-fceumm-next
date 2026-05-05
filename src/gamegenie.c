@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include "fceu-types.h"
@@ -32,15 +33,15 @@ int geniestage = 0;
 readfunc *AReadG = NULL;
 writefunc *BWriteG = NULL;
 
-static uint8 *VPageG[8];
+static uint8_t *VPageG[8];
 static int modcon;
-static uint8 genieval[3];
-static uint8 geniech[3];
-static uint32 genieaddr[3];
-static uint8 *GENIEROM = 0;
+static uint8_t genieval[3];
+static uint8_t geniech[3];
+static uint32_t genieaddr[3];
+static uint8_t *GENIEROM = 0;
 static readfunc GenieBackup[3];
 
-extern uint8 **VPageR;
+extern uint8_t **VPageR;
 
 static void FlushGenieRW(void);
 
@@ -52,7 +53,7 @@ void FCEU_OpenGenie(void) {
 	if (!GENIEROM) {
 		char *fn;
 
-		if (!(GENIEROM = (uint8 *)FCEU_malloc(4096 + 1024))) {
+		if (!(GENIEROM = (uint8_t *)FCEU_malloc(4096 + 1024))) {
 			return;
 		}
 
@@ -142,7 +143,7 @@ static int AllocGenieRW(void) {
 }
 
 static void FlushGenieRW(void) {
-	int32 x;
+	int32_t x;
 
 	if (RWWrap) {
 		for (x = 0; x < 0x8000; x++) {
@@ -158,7 +159,7 @@ static void FlushGenieRW(void) {
 }
 
 static DECLFR(GenieFix1) {
-	uint8 r = GenieBackup[0](A);
+	uint8_t r = GenieBackup[0](A);
 
 	if ((modcon >> 1) & 1)	{ /* No check */
 		return genieval[0];
@@ -172,7 +173,7 @@ static DECLFR(GenieFix1) {
 }
 
 static DECLFR(GenieFix2) {
-	uint8 r = GenieBackup[1](A);
+	uint8_t r = GenieBackup[1](A);
 
 	if ((modcon >> 2) & 1)	{ /* No check */
 		return genieval[1];
@@ -186,7 +187,7 @@ static DECLFR(GenieFix2) {
 }
 
 static DECLFR(GenieFix3) {
-	uint8 r = GenieBackup[2](A);
+	uint8_t r = GenieBackup[2](A);
 
 	if ((modcon >> 3) & 1)	{ /* No check */
 		return genieval[2];
@@ -265,7 +266,7 @@ static DECLFW(GenieWrite) {
 }
 
 void FCEU_GeniePower(void) {
-	uint32 x;
+	uint32_t x;
 
 	if (!geniestage) {
 		return;

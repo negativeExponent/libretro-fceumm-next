@@ -35,9 +35,9 @@
 static void (*WSync)(void);
 
 static struct {
-	uint8 reg[2];
-	uint8 IRQa;
-	uint16 IRQCount;
+	uint8_t reg[2];
+	uint8_t IRQa;
+	uint16_t IRQCount;
 } m042;
 
 static SFORMAT StateRegs[] = {

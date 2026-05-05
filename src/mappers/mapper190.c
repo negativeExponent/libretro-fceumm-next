@@ -24,7 +24,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg, chr[4];
+	uint8_t prg, chr[4];
 } m190;
 
 static SFORMAT StateRegs[] =  {
@@ -87,7 +87,7 @@ void Mapper190_Init(CartInfo *info) {
 	GameStateRestore = StateRestore;
 	AddExState(StateRegs, ~0, 0, NULL);
 
-	WRAM = (uint8 *)FCEU_gmalloc(0x2000);
+	WRAM = (uint8_t *)FCEU_gmalloc(0x2000);
 	SetupCartPRGMapping(0x10, WRAM, 0x2000, 1);
 	AddExState(WRAM, 0x2000, 0, "WRAM");
 }

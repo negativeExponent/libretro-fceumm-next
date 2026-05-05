@@ -25,8 +25,8 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 cmd;
-	uint8 reg[4];
+	uint8_t cmd;
+	uint8_t reg[4];
 } m028;
 
 static SFORMAT StateRegs[] = {
@@ -35,13 +35,13 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint8 bank_size_masks[4] = { 0x01, 0x03, 0x07, 0x0F };
-static uint16 GetPRGBank(int V) {
-	uint16 cpu_a14 = V & 0x01;
-	uint16 outer_bank = m028.reg[3] << 1;
-	uint16 bank_mode = m028.reg[2] >> 2; /* discard mirroring bits */
-	uint16 current_bank = m028.reg[1];
-	uint16 bank_size_mask = 0;
+static uint8_t bank_size_masks[4] = { 0x01, 0x03, 0x07, 0x0F };
+static uint16_t GetPRGBank(int V) {
+	uint16_t cpu_a14 = V & 0x01;
+	uint16_t outer_bank = m028.reg[3] << 1;
+	uint16_t bank_mode = m028.reg[2] >> 2; /* discard mirroring bits */
+	uint16_t current_bank = m028.reg[1];
+	uint16_t bank_size_mask = 0;
 
 	if (((bank_mode ^ cpu_a14) & 0x03) == 0x02) { /* in UNROM fixed bank? */
 		bank_mode = 0; /* if so, treat as NROM */

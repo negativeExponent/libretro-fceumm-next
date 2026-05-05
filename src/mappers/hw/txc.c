@@ -71,7 +71,7 @@ static SFORMAT StateRegs[] = {
 };
 
 DECLFR(TXC_Read) {
-	uint8 ret = cpu.openbus;
+	uint8_t ret = cpu.openbus;
 	if ((A & 0x103) == 0x100) {
 		ret = ((txc.accumulator & 0x07) | ((txc.inverter ^ txc.invert) & ~0x07));
 		txc.Y = txc.X || ((ret & 0x10) != 0);

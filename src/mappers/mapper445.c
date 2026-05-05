@@ -30,7 +30,7 @@
 #define MAPPER_VRC4 0x10
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m445;
 
 static SFORMAT StateRegs[] = {
@@ -38,46 +38,46 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint8 GetPRGBase(void) {
+static uint8_t GetPRGBase(void) {
 	return m445.reg[0];
 }
 
-static uint8 GetPRGMask(void) {
+static uint8_t GetPRGMask(void) {
 	return ((0x7F >> (m445.reg[2] & 0x07)) & 0x1F);
 }
 
-static void SetPRG_mmc3(uint16 A, uint16 V) {
-	uint16 mask = GetPRGMask();
-	uint16 base = GetPRGBase();
+static void SetPRG_mmc3(uint16_t A, uint16_t V) {
+	uint16_t mask = GetPRGMask();
+	uint16_t base = GetPRGBase();
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetPRG_vrc4(uint16 A, uint16 V) {
-	uint16 mask = GetPRGMask();
-	uint16 base = GetPRGBase();
+static void SetPRG_vrc4(uint16_t A, uint16_t V) {
+	uint16_t mask = GetPRGMask();
+	uint16_t base = GetPRGBase();
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static uint8 GetCHRBase(void) {
+static uint8_t GetCHRBase(void) {
 	return m445.reg[1];
 }
 
-static uint8 GetCHRMask(void) {
+static uint8_t GetCHRMask(void) {
 	return ((0x3FF >> ((m445.reg[2] >> 3) & 0x07)) & 0xFF);
 }
 
-static void SetCHR_mmc3(uint16 A, uint16 V) {
-	uint16 mask = GetCHRMask();
-	uint16 base = GetCHRBase() << 3;
+static void SetCHR_mmc3(uint16_t A, uint16_t V) {
+	uint16_t mask = GetCHRMask();
+	uint16_t base = GetCHRBase() << 3;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR_vrc4(uint16 A, uint16 V) {
-	uint16 mask = GetCHRMask();
-	uint16 base = GetCHRBase() << 3;
+static void SetCHR_vrc4(uint16_t A, uint16_t V) {
+	uint16_t mask = GetCHRMask();
+	uint16_t base = GetCHRBase() << 3;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

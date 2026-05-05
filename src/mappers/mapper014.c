@@ -28,7 +28,7 @@
 #include "vrc24.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m014;
 
 static SFORMAT StateRegs[] = {
@@ -36,7 +36,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint8 GetChrBase(uint16 A) {
+static uint8_t GetChrBase(uint16_t A) {
 	if (A & 0x1000) {
 		if (A & 0x800) {
 			return ((m014.reg & 0x80) >> 7);
@@ -47,16 +47,16 @@ static uint8 GetChrBase(uint16 A) {
 	return ((m014.reg & 0x08) >> 3);
 }
 
-static void SetCHRBank_mmc3(uint16 A, uint16 V) {
-	uint16 mask = 0xFF;
-	uint16 base = GetChrBase(A) << 8;
+static void SetCHRBank_mmc3(uint16_t A, uint16_t V) {
+	uint16_t mask = 0xFF;
+	uint16_t base = GetChrBase(A) << 8;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHRBank_vrc24(uint16 A, uint16 V) {
-	uint16 mask = 0xFF;
-	uint16 base = GetChrBase(A) << 8;
+static void SetCHRBank_vrc24(uint16_t A, uint16_t V) {
+	uint16_t mask = 0xFF;
+	uint16_t base = GetChrBase(A) << 8;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

@@ -30,7 +30,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 latch[2];
+	uint8_t latch[2];
 } m165;
 
 static SFORMAT StateRegs[] = {
@@ -38,7 +38,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	if (V == 0) {
 		setchr4r(0x10, A, 0);
 	} else {
@@ -51,7 +51,7 @@ static void SyncCHR(void) {
 	SetCHR(0x1000, MMC3_GetCHRBank(m165.latch[1] ? 6 : 4));
 }
 
-static void PPUHook(uint32 A) {
+static void PPUHook(uint32_t A) {
 	if (A & 0x2000) {
 		return;
 	}
@@ -117,7 +117,7 @@ void Mapper165_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 4096;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

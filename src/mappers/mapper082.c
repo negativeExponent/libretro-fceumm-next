@@ -27,7 +27,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 chr[6], prg[3], protect[3], ctrl;
+	uint8_t chr[6], prg[3], protect[3], ctrl;
 } m082;
 
 static SFORMAT StateRegs[] = {
@@ -39,7 +39,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint8 GetPRGBank(uint8 V) {
+static uint8_t GetPRGBank(uint8_t V) {
 	if (iNESCart.mapper == 552) {
 		return (((V << 5) & 0x20) | /* A18 */
 		    ((V << 3) & 0x10) |     /* A17 */
@@ -61,7 +61,7 @@ static void SyncPRG(void) {
 }
 
 static void SyncCHR(void) {
-	uint16 swap = ((m082.ctrl & 2) << 11);
+	uint16_t swap = ((m082.ctrl & 2) << 11);
 
 	setchr2(0x0000 ^ swap, m082.chr[0] >> 1);
 	setchr2(0x0800 ^ swap, m082.chr[1] >> 1);
@@ -159,7 +159,7 @@ void Mapper082_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

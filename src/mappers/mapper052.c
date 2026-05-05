@@ -24,7 +24,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m052;
 
 static SFORMAT StateRegs[] = {
@@ -32,17 +32,17 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint8 mask = (m052.reg & 0x08) ? 0x0F : 0x1F;
-	uint8 base = (m052.reg << 4) & 0x70;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint8_t mask = (m052.reg & 0x08) ? 0x0F : 0x1F;
+	uint8_t base = (m052.reg << 4) & 0x70;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (m052.reg & 0x40) ? 0x7F : 0xFF;
-	uint16 base = (((m052.reg << 3) & 0x180) | ((m052.reg << 7) & 0x200));
-	uint8 chrram = CHRRAMSIZE &&
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (m052.reg & 0x40) ? 0x7F : 0xFF;
+	uint16_t base = (((m052.reg << 3) & 0x180) | ((m052.reg << 7) & 0x200));
+	uint8_t chrram = CHRRAMSIZE &&
 	               (((iNESCart.submapper == 13) && ((m052.reg & 0x03) == 0x03)) ||
                    ((iNESCart.submapper == 14) && (m052.reg & 0x20)));
 
@@ -86,7 +86,7 @@ static void Power(void) {
 }
 
 void Mapper052_Init(CartInfo *info) {
-	uint8 ws = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8;
+	uint8_t ws = info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) / 1024 : 8;
 
 	MMC3_Init(info, MMC3B, ws, info->battery);
 	MMC3_cwrap = SetCHR;
@@ -108,7 +108,7 @@ void Mapper052_Init(CartInfo *info) {
 
 	if (ROM.chr.size && iNESCart.CHRRamSize) {
 		CHRRAMSIZE = info->CHRRamSize ? info->CHRRamSize : 8192;
-		CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+		CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 		SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 		AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 	}

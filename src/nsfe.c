@@ -15,6 +15,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#include <stdio.h>
 #include <string.h>
 
 #include "fceu.h"
@@ -28,30 +29,30 @@
 #include "general.h"
 
 typedef struct {
-	uint8 LoadAddressLow;
-	uint8 LoadAddressHigh;
-	uint8 InitAddressLow;
-	uint8 InitAddressHigh;
-	uint8 PlayAddressLow;
-	uint8 PlayAddressHigh;
-	uint8 VideoSystem;
-	uint8 SoundChip;
-	uint8 TotalSongs;
-	uint8 StartingSong;
+	uint8_t LoadAddressLow;
+	uint8_t LoadAddressHigh;
+	uint8_t InitAddressLow;
+	uint8_t InitAddressHigh;
+	uint8_t PlayAddressLow;
+	uint8_t PlayAddressHigh;
+	uint8_t VideoSystem;
+	uint8_t SoundChip;
+	uint8_t TotalSongs;
+	uint8_t StartingSong;
 } NSFE_INFO;
 
 typedef struct {
-	uint32 info;
+	uint32_t info;
 	char ID[4];
 } NSFE_HEADER;
 
 static NSFE_HEADER nchead;
 
-static void GetString(FCEUFILE *fp, uint32 *chunk_size, uint8 *str) {
+static void GetString(FCEUFILE *fp, uint32_t *chunk_size, uint8_t *str) {
 	unsigned count = 0;
 
 	while (*chunk_size) {
-		uint8 c = FCEU_fgetc(fp);
+		uint8_t c = FCEU_fgetc(fp);
 
 		(*chunk_size)--;
 		if (!c) {
@@ -72,7 +73,7 @@ static void FreeNFSE(void) {
 	}
 }
 
-static uint8 nsfe_INFO(FCEUFILE *fp) {
+static uint8_t nsfe_INFO(FCEUFILE *fp) {
 	NSFE_INFO nsfe_info;
 
 	if (NSFInfo->TotalSongs) {
@@ -116,7 +117,7 @@ static uint8 nsfe_INFO(FCEUFILE *fp) {
 	return TRUE;
 }
 
-static uint8 nsfe_DATA(FCEUFILE *fp) {
+static uint8_t nsfe_DATA(FCEUFILE *fp) {
 	if (!NSFInfo->TotalSongs) {
 		FCEU_PrintError("NSFE chunk \"%.4s\" is out of order.\n", (char *)nchead.ID);
 		return FALSE;
@@ -130,7 +131,7 @@ static uint8 nsfe_DATA(FCEUFILE *fp) {
 	NSFInfo->NSFSize = nchead.info;
 	NSFInfo->NSFMaxBank = uppow2((NSFInfo->NSFSize + (NSFInfo->LoadAddr & 0xfff) + 0xfff) / 0x1000) - 1;
 
-	NSFInfo->NSFDATA = (uint8 *)FCEU_malloc((NSFInfo->NSFMaxBank + 1) * 4096);
+	NSFInfo->NSFDATA = (uint8_t *)FCEU_malloc((NSFInfo->NSFMaxBank + 1) * 4096);
 	if (!NSFInfo->NSFDATA) {
 		return FALSE;
 	}
@@ -145,8 +146,8 @@ static uint8 nsfe_DATA(FCEUFILE *fp) {
 	return TRUE;
 }
 
-static uint8 nsfe_BANK(FCEUFILE *fp) {
-	uint64 tr = (uint64)MIN((uint64)nchead.info, (uint64)8);
+static uint8_t nsfe_BANK(FCEUFILE *fp) {
+	uint64_t tr = (uint64_t)MIN((uint64_t)nchead.info, (uint64_t)8);
 
 	if (!FCEU_fread(NSFInfo->BankSwitch, 1, tr, fp) != 0) {
 		return FALSE;
@@ -156,7 +157,7 @@ static uint8 nsfe_BANK(FCEUFILE *fp) {
 	return TRUE;
 }
 
-static uint8 nsfe_NEND(FCEUFILE *fp) {
+static uint8_t nsfe_NEND(FCEUFILE *fp) {
 	if (nchead.info != 0) {
 		/* chunk size here can be anything */
 	} else if (!NSFInfo->NSFDATA) {
@@ -167,7 +168,7 @@ static uint8 nsfe_NEND(FCEUFILE *fp) {
 	return TRUE;
 }
 
-static uint8 nsfe_tlbl(FCEUFILE *fp) {
+static uint8_t nsfe_tlbl(FCEUFILE *fp) {
 	unsigned ws;
 
 	if (!NSFInfo->TotalSongs) {
@@ -176,35 +177,35 @@ static uint8 nsfe_tlbl(FCEUFILE *fp) {
 	}
 
 	for (ws = 0; ws < NSFInfo->TotalSongs && nchead.info > 0; ws++) {
-		GetString(fp, &nchead.info, (uint8 *)NSFInfo->SongNames[ws]);
+		GetString(fp, &nchead.info, (uint8_t *)NSFInfo->SongNames[ws]);
 	}
 
 	return TRUE;
 }
 
-static uint8 nsfe_auth(FCEUFILE *fp) {
+static uint8_t nsfe_auth(FCEUFILE *fp) {
 	unsigned count;
 
 	for (count = 0; count < 4 && nchead.info > 0; count++) {
 		switch (count) {
 		case 0:
-			GetString(fp, &nchead.info, (uint8 *)&NSFInfo->SongName);
+			GetString(fp, &nchead.info, (uint8_t *)&NSFInfo->SongName);
 			break;
 		case 1:
-			GetString(fp, &nchead.info, (uint8 *)&NSFInfo->Artist);
+			GetString(fp, &nchead.info, (uint8_t *)&NSFInfo->Artist);
 			break;
 		case 2:
-			GetString(fp, &nchead.info, (uint8 *)&NSFInfo->Copyright);
+			GetString(fp, &nchead.info, (uint8_t *)&NSFInfo->Copyright);
 			break;
 		case 3:
-			GetString(fp, &nchead.info, (uint8 *)&NSFInfo->Dumper);
+			GetString(fp, &nchead.info, (uint8_t *)&NSFInfo->Dumper);
 			break;
 		}
 	}
 	return TRUE;
 }
 
-static uint8 nsfe_UNUSED(FCEUFILE *fp) {
+static uint8_t nsfe_UNUSED(FCEUFILE *fp) {
 	/* unused chunk, just move our rom pointer at the end of chunk */
 	if (nchead.info) {
 		if (FCEU_fseek(fp, nchead.info, SEEK_CUR) != 0) {

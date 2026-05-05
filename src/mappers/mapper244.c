@@ -22,7 +22,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m244;
 
 static SFORMAT StateRegs[] = {
@@ -35,7 +35,7 @@ static void Sync(void) {
 	setchr8(m244.reg[1]);
 }
 
-static const uint8 chr_perm[8][8] = {
+static const uint8_t chr_perm[8][8] = {
 	{ 0, 1, 2, 3, 4, 5, 6, 7, },
 	{ 0, 2, 1, 3, 4, 6, 5, 7, },
 	{ 0, 1, 4, 5, 2, 3, 6, 7, },
@@ -46,7 +46,7 @@ static const uint8 chr_perm[8][8] = {
 	{ 7, 6, 5, 4, 3, 2, 1, 0, },
 };
 
-static const uint8 prg_perm[4][4] = {
+static const uint8_t prg_perm[4][4] = {
 	{ 0, 1, 2, 3, },
 	{ 3, 2, 1, 0, },
 	{ 0, 2, 1, 3, },

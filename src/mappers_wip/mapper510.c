@@ -22,8 +22,8 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
-	uint8 dipsw;
+	uint8_t reg;
+	uint8_t dipsw;
 } m510;
 
 static SFORMAT StateRegs[] = {
@@ -32,16 +32,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = (m510.reg & 0x20) ? 0x0F : 0x1F;
-	uint16 base = ((m510.reg & 0x08) ? 0x020 : 0x000) | ((m510.reg & 0x40) ? 0x010 : 0x000);
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = (m510.reg & 0x20) ? 0x0F : 0x1F;
+	uint16_t base = ((m510.reg & 0x08) ? 0x020 : 0x000) | ((m510.reg & 0x40) ? 0x010 : 0x000);
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (m510.reg & 0x01) ? 0xFF : 0x7F;
-	uint16 base = ((m510.reg & 0x04) ? 0x100 : 0x000) | ((m510.reg & 0x02) ? 0x080 : 0x000);
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (m510.reg & 0x01) ? 0xFF : 0x7F;
+	uint16_t base = ((m510.reg & 0x04) ? 0x100 : 0x000) | ((m510.reg & 0x02) ? 0x080 : 0x000);
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

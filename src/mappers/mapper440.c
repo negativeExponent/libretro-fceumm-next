@@ -24,17 +24,17 @@ static const uint8_t addr_order_lut[15] = {
     11, 10,  9,  8,  7,  6,  5,  4,  3,  2,  1,  0, 12, 13, 14
 };
 
-static const uint8 data_order_lut[15] = {
+static const uint8_t data_order_lut[15] = {
 	 7, 6, 5, 4, 3, 2, 1, 0
 };
 
-static const uint8 protect_lut[16] = {
+static const uint8_t protect_lut[16] = {
 	0x00, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
 };
 
 static struct {
-	uint8 reg[8];
-	uint8 extra;
+	uint8_t reg[8];
+	uint8_t extra;
 } m440;
 
 static SFORMAT StateRegs[] = {
@@ -71,11 +71,11 @@ static DECLFW(Write5000) {
 
 static DECLFR(ReadPRG) {
 	if (m440.reg[0] & 1) {
-		uint16 encAddr = A & 0x7FFF;
-		uint16 decAddr = 0;
-		uint8 encData = 0;
-		uint8 decData = 0;
-		uint8 bit;
+		uint16_t encAddr = A & 0x7FFF;
+		uint16_t decAddr = 0;
+		uint8_t encData = 0;
+		uint8_t decData = 0;
+		uint8_t bit;
 
 		for (bit = 0; bit < 15; bit++) {
 			decAddr |= (encAddr >> addr_order_lut[bit] & 0x01) << bit;
@@ -113,7 +113,7 @@ void Mapper440_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

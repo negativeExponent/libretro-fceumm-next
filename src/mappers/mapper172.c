@@ -28,7 +28,7 @@ static void Sync(void) {
 	setmirror((jv001.X & 1) ^ 1);
 }
 
-static uint8 GetVal(uint8 V) {
+static uint8_t GetVal(uint8_t V) {
 	return (((V << 5) & 0x20) | ((V << 3) & 0x10) | ((V << 1) & 0x08) | ((V >> 1) & 0x04) |
 	        ((V >> 3) & 0x02) | ((V >> 5) & 0x01));
 }

@@ -22,33 +22,33 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m114;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m114.reg, 4, "EXPR" },
 	{ 0 }
 };
 
-static const uint16 translateAddrLut[4][8] = {
+static const uint16_t translateAddrLut[4][8] = {
 	{ 0xA001, 0xA000, 0x8000, 0xC000, 0x8001, 0xC001, 0xE000, 0xE001 }, /* 0 The Lion King, Aladdin */
 	{ 0xA001, 0x8001, 0x8000, 0xC001, 0xA000, 0xC000, 0xE000, 0xE001 }, /* 1 Boogerman */
 	{ 0xC001, 0x8000, 0x8001, 0xA000, 0xA001, 0xE001, 0xE000, 0xC000 }, /* 2 2-in-1 The Lion King/Bomber Boy */
 	{ 0x8000, 0x8001, 0xA000, 0xA001, 0xC000, 0xC001, 0xE000, 0xE001 }  /* 3 */
 };
 
-static const uint8 translateDataLut[4][8] = {
+static const uint8_t translateDataLut[4][8] = {
 	{ 0, 3, 1, 5, 6, 7, 2, 4 }, /* 0 The Lion King, Aladdin */
 	{ 0, 2, 5, 3, 6, 1, 7, 4 }, /* 1 Boogerman */
 	{ 0, 6, 3, 7, 5, 2, 4, 1 }, /* 2 2-in-1 The Lion King/Bomber Boy */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 }  /* 3 */
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	if (m114.reg[0] & 0x80) {
-		uint16 bank = m114.reg[0] & 0x0F;
+		uint16_t bank = m114.reg[0] & 0x0F;
 		if (m114.reg[0] & 0x20) {
 			setprg32(0x8000, bank >> 1);
 		} else {
@@ -56,8 +56,8 @@ static void SetPRG(uint16 A, uint16 V) {
 			setprg16(0xC000, bank);
 		}
 	} else {
-		uint16 mask = 0x3F;
-		uint16 base = 0;
+		uint16_t mask = 0x3F;
+		uint16_t base = 0;
 		if (iNESCart.mapper == 182) {
 			mask = (m114.reg[1] & 0x20) ? 0x1F : 0x0F;
 			base = ((m114.reg[1] << 1) & 0x20) | ((m114.reg[1] << 3) & 0x10);
@@ -66,9 +66,9 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = 0xFF;
-	uint16 base = 0;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = 0xFF;
+	uint16_t base = 0;
 	if (iNESCart.mapper == 182) {
 		mask = (m114.reg[1] & 0x40) ? 0xFF : 0x7F;
 		base = ((m114.reg[1] << 4) & 0x100) | ((m114.reg[1] << 6) & 0x80);
@@ -93,8 +93,8 @@ static DECLFW(WriteReg) {
 }
 
 static DECLFW(WriteMMC3) {
-	uint16 addr = translateAddrLut[iNESCart.submapper & 0x03][((A >> 12) & 0x06) | (A & 0x01)];
-	uint8 value = V;
+	uint16_t addr = translateAddrLut[iNESCart.submapper & 0x03][((A >> 12) & 0x06) | (A & 0x01)];
+	uint8_t value = V;
 	if (addr == 0x8000) {
 		value = (V & 0xC0) | translateDataLut[iNESCart.submapper & 0x03][V & 0x07];
 	}

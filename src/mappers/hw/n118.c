@@ -24,8 +24,8 @@
 void (*N118_SyncPRG)(void);
 void (*N118_SyncCHR)(void);
 
-void (*N118_pwrap)(uint16 A, uint16 V);
-void (*N118_cwrap)(uint16 A, uint16 V);
+void (*N118_pwrap)(uint16_t A, uint16_t V);
+void (*N118_cwrap)(uint16_t A, uint16_t V);
 
 N118 n118;
 
@@ -35,11 +35,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void GENCWRAP(uint16 A, uint16 V) {
+static void GENCWRAP(uint16_t A, uint16_t V) {
 	setchr1(A, V & 0x3F);
 }
 
-static void GENPWRAP(uint16 A, uint16 V) {
+static void GENPWRAP(uint16_t A, uint16_t V) {
 	setprg8(A, V & 0x0F);
 }
 
@@ -110,7 +110,7 @@ void N118_Init(CartInfo *info, int wsize, int battery) {
 	WRAMSIZE = wsize * 1024;
 
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 

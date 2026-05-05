@@ -78,12 +78,12 @@ char *FCEU_MakeFName(int type, int id1, char *cd1) {
 	return (ret);
 }
 
-uint32 uppow2(uint32 n) {
+uint32_t uppow2(uint32_t n) {
 	int x;
 
 	for (x = 31; x >= 0; x--) {
 		if (n & (1 << x)) {
-			if ((uint32)(1 << x) != n) {
+			if ((uint32_t)(1 << x) != n) {
 				return (1 << (x + 1));
          }
 			break;

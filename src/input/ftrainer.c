@@ -27,17 +27,17 @@ enum FTRAINER {
 	FTRAINER_B = 1
 };
 
-static uint32 FTVal, FTValR;
+static uint32_t FTVal, FTValR;
 static enum FTRAINER side = FTRAINER_A;
 
-static uint8 FT_Read(int w, uint8 ret) {
+static uint8_t FT_Read(int w, uint8_t ret) {
 	if (w) {
 		ret |= FTValR;
 	}
 	return(ret);
 }
 
-static void FT_Write(uint8 V) {
+static void FT_Write(uint8_t V) {
 	FTValR = 0;
 
 	if (!(V & 0x1))
@@ -54,7 +54,7 @@ static void FT_Write(uint8 V) {
 }
 
 static void FT_Update(void *data, int arg) {
-	FTVal = *(uint32*)data;
+	FTVal = *(uint32_t*)data;
 }
 
 static INPUTCFC FamilyTrainer = { FT_Read, FT_Write, 0, FT_Update, 0, 0 };

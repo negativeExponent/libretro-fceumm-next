@@ -22,8 +22,8 @@
 #define _N118_H
 
 typedef struct __N118 {
-	uint8 reg[8];
-	uint8 cmd;
+	uint8_t reg[8];
+	uint8_t cmd;
 } N118;
 
 extern N118 n118;
@@ -38,7 +38,7 @@ void N118_Init(CartInfo *info, int wsize, int battery);
 extern void (*N118_SyncPRG)(void);
 extern void (*N118_SyncCHR)(void);
 
-extern void (*N118_pwrap)(uint16 A, uint16 V);
-extern void (*N118_cwrap)(uint16 A, uint16 V);
+extern void (*N118_pwrap)(uint16_t A, uint16_t V);
+extern void (*N118_cwrap)(uint16_t A, uint16_t V);
 
 #endif /* _N118_H */

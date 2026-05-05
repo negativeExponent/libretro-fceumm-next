@@ -22,7 +22,7 @@
 #include "mmc1.h"
 
 static struct {
-	uint32 count;
+	uint32_t count;
 } m105;
 
 static SFORMAT StateRegs[] = {
@@ -30,7 +30,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint32 count_target = 0x28000000;
+static uint32_t count_target = 0x28000000;
 
 static void CPUIRQHook(int a) {
 	while (a--) {
@@ -42,18 +42,18 @@ static void CPUIRQHook(int a) {
 				X6502_IRQBegin(FCEU_IQEXT);
 			}
 			if ((m105.count % 1789773) == 0) {
-				uint32 seconds = (count_target - m105.count) / 1789773;
+				uint32_t seconds = (count_target - m105.count) / 1789773;
 				FCEU_DispMessage(RETRO_LOG_INFO, 1000, "Time left: %02i:%02i\n", seconds / 60, seconds % 60);
 			}
 		}
 	}
 }
 
-static void SetCHRBank_mmc1(uint16 A, uint16 V) {
+static void SetCHRBank_mmc1(uint16_t A, uint16_t V) {
 	setchr8r(0, 0);
 }
 
-static void SetPRGBank_mmc1(uint16 A, uint16 V) {
+static void SetPRGBank_mmc1(uint16_t A, uint16_t V) {
 	if (mmc1.reg[1] & 0x08) {
 		setprg16(A, 8 | (V & 0x7));
 	} else {
@@ -62,12 +62,12 @@ static void SetPRGBank_mmc1(uint16 A, uint16 V) {
 }
 
 static void Power(void) {
-	count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
+	count_target = 0x20000000 | ((uint32_t)GameInfo->cspecial << 25);
 	MMC1_Power();
 }
 
 static void Reset(void) {
-	count_target = 0x20000000 | ((uint32)GameInfo->cspecial << 25);
+	count_target = 0x20000000 | ((uint32_t)GameInfo->cspecial << 25);
 	MMC1_Reset();
 }
 

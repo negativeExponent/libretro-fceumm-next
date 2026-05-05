@@ -22,8 +22,8 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
-	uint8 dipsw;
+	uint8_t reg;
+	uint8_t dipsw;
 } m490;
 
 static SFORMAT StateRegs[] = {
@@ -41,9 +41,9 @@ static void SyncPRG(void) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = 0xFF;
-	uint16 base = (m490.reg << 4);
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = 0xFF;
+	uint16_t base = (m490.reg << 4);
 
 	setchr1(A, ((base & ~mask) | (V & mask)));
 }

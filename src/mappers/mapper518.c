@@ -32,8 +32,8 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg, mode;
-	uint16 lastnt;
+	uint8_t prg, mode;
+	uint16_t lastnt;
 } m518;
 
 static SFORMAT StateRegs[] = {
@@ -85,10 +85,10 @@ static DECLFW(Write5000) {
 	}
 }
 
-static void PPUIRQHook(uint32 A) {
+static void PPUIRQHook(uint32_t A) {
 	if (m518.mode & 2) {
 		if ((A & 0x3000) == 0x2000) {
-			uint32 curnt = A & 0x800;
+			uint32_t curnt = A & 0x800;
 			if (curnt != m518.lastnt) {
 				setchr4(0x0000, curnt >> 11);
 				m518.lastnt = curnt;
@@ -124,7 +124,7 @@ void Mapper518_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = (info->iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) : 8192);
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

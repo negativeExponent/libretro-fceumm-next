@@ -78,7 +78,7 @@ static const struct retro_controller_info ports[6] = {
 #define MAX_BUTTONS   9
 #define TURBO_BUTTONS 2
 
-uint8 turbo_button_toggle[MAX_CONTROLLERS][TURBO_BUTTONS] = { { 0 } };
+uint8_t turbo_button_toggle[MAX_CONTROLLERS][TURBO_BUTTONS] = { { 0 } };
 
 typedef struct {
 	unsigned retro;
@@ -391,9 +391,9 @@ static const unsigned joypad_map[] = {
 	RETRO_DEVICE_ID_JOYPAD_R3,
 };
 
-static uint32 update_PowerPad(int w) {
+static uint32_t update_PowerPad(int w) {
 	int x;
-	uint32 r = 0;
+	uint32_t r = 0;
 
 	for (x = 0; x < 12; x++)
 		r |= input_cb(w, RETRO_DEVICE_JOYPAD, 0, joypad_map[x]) ? (1 << x) : 0;
@@ -409,7 +409,7 @@ static unsigned FTrainerButtons[12] = {
 
 static void update_FTrainer(void) {
 	int x;
-	uint32 r = 0;
+	uint32_t r = 0;
 
 	for (x = 0; x < 12; x++) {
 		r |= input_cb(4, RETRO_DEVICE_JOYPAD, 0, joypad_map[x]) ? (1 << x) : 0;
@@ -421,7 +421,7 @@ static void update_FTrainer(void) {
 
 static void update_PartyTap(void) {
 	int x;
-	uint32 r = 0;
+	uint32_t r = 0;
 
 	for (x = 0; x < 12; x++) {
 		r |= input_cb(4, RETRO_DEVICE_JOYPAD, 0, joypad_map[x]) ? (1 << x) : 0;
@@ -433,7 +433,7 @@ static void update_PartyTap(void) {
 
 static void update_ExcitingBoxing(void) {
 	int x;
-	uint8 r = 0;
+	uint8_t r = 0;
 
 	for (x = 0; x < 8; x++)
 		r |= input_cb(4, RETRO_DEVICE_JOYPAD, 0, joypad_map[x]) ? (1 << x) : 0;
@@ -505,7 +505,7 @@ static void update_Arkanoid(int port, enum RetroArkanoidInputModes mode, uint32_
 		_y = input_cb(port, RETRO_DEVICE_POINTER, 0, RETRO_DEVICE_ID_POINTER_Y);
 
 		if (_x != 0 || _y != 0) {
-			int32 raw = (_x + 0x7FFF) * NES_WIDTH / (0x7FFF * 2);
+			int32_t raw = (_x + 0x7FFF) * NES_WIDTH / (0x7FFF * 2);
 			if (nes_input.arkanoidMode == RetroArkanoidAbsMouse) {
 				/* remap so full screen movement ends up within the encoder range 0-240 */
 				/* game board: 176 wide */

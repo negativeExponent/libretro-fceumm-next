@@ -33,7 +33,7 @@
 #include "latch.h"
 
 static struct {
-	uint8 scratch[4];
+	uint8_t scratch[4];
 } m225;
 
 static SFORMAT StateRegs[] = {
@@ -42,10 +42,10 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 base = (latch.addr >> 8) & 0x40;
-	uint8 prg = (latch.addr >> 6) & 0x3F;
-	uint8 chr = latch.addr & 0x3F;
-	uint8 mirror = ((latch.addr >> 13) & 1) ^ 1;
+	uint8_t base = (latch.addr >> 8) & 0x40;
+	uint8_t prg = (latch.addr >> 6) & 0x3F;
+	uint8_t chr = latch.addr & 0x3F;
+	uint8_t mirror = ((latch.addr >> 13) & 1) ^ 1;
 
 	if (latch.addr & 0x1000) {
 		setprg16(0x8000, base | prg);

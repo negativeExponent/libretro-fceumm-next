@@ -22,11 +22,11 @@
 #include "mapinc.h"
 #include "vrc1.h"
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg8(A, V & 0x1F);
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr4(A, V & 0x1F);
 }
 

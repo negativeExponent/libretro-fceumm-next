@@ -21,7 +21,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m587;
 
 static SFORMAT StateRegs[] = {
@@ -50,7 +50,7 @@ static void Sync(void) {
 }
 
 static DECLFW(WriteReg) {
-	uint8 idx = (m587.reg[0] >> 7) & 0x01;
+	uint8_t idx = (m587.reg[0] >> 7) & 0x01;
 	m587.reg[idx] = V;
 	Sync();
 }

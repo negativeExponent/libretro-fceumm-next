@@ -26,13 +26,13 @@ typedef struct {
 	 * disables DMC DMA and WaveHi filling for these dummies
 	 * doesn't work with new PPU */
 	struct {
-		uint8 overclocked_state; /* ppu in overclock state? stops sound from running in overclocked state */
-		uint8 DMC_7bit_in_use; /* DMC in use */
-		uint16 vblank_scanlines;
-		uint16 postrender_scanlines;
+		uint8_t overclocked_state; /* ppu in overclock state? stops sound from running in overclocked state */
+		uint8_t DMC_7bit_in_use; /* DMC in use */
+		uint16_t vblank_scanlines;
+		uint16_t postrender_scanlines;
 	} overclock;
-	uint16 totalscanlines;
-	uint16 normal_scanlines;
+	uint16_t totalscanlines;
+	uint16_t normal_scanlines;
 } PPU_T;
 
 extern PPU_T ppu;
@@ -46,31 +46,31 @@ void FCEUPPU_LineUpdate(void);
 void FCEUPPU_SetVideoSystem(int w);
 
 extern void (*GameHBIRQHook)(void), (*GameHBIRQHook2)(void);
-extern void (*PPU_hook)(uint32 A);
+extern void (*PPU_hook)(uint32_t A);
 
 int newppu_get_scanline(void);
 int newppu_get_dot(void);
 void newppu_hacky_emergency_reset(void);
 
 /* For cart.c and banksw.h, mostly */
-extern uint8 NTARAM[0x1000], *vnapage[4];
-extern uint8 PPUNTARAM;
-extern uint8 PPUCHRRAM;
+extern uint8_t NTARAM[0x1000], *vnapage[4];
+extern uint8_t PPUNTARAM;
+extern uint8_t PPUCHRRAM;
 
 void FCEUPPU_SaveState(void);
 void FCEUPPU_LoadState(int version);
 
 extern int g_rasterpos;
 extern int scanline;
-extern uint8 PPU[4];
+extern uint8_t PPU[4];
 
 void PPU_ResetHooks(void);
-extern uint8 (*FFCEUX_PPURead)(uint32 A);
-extern void (*FFCEUX_PPUWrite)(uint32 A, uint8 V);
-extern uint8 FFCEUX_PPURead_Default(uint32 A);
-void FFCEUX_PPUWrite_Default(uint32 A, uint8 V);
+extern uint8_t (*FFCEUX_PPURead)(uint32_t A);
+extern void (*FFCEUX_PPUWrite)(uint32_t A, uint8_t V);
+extern uint8_t FFCEUX_PPURead_Default(uint32_t A);
+void FFCEUX_PPUWrite_Default(uint32_t A, uint8_t V);
 
-uint8* FCEUPPU_GetCHR(uint32 vadr, uint32 refreshaddr);
+uint8_t* FCEUPPU_GetCHR(uint32_t vadr, uint32_t refreshaddr);
 int FCEUPPU_GetAttr(int ntnum, int xt, int yt);
 void ppu_getScroll(int *xpos, int *ypos);
 
@@ -84,6 +84,6 @@ extern PPUPHASE ppuphase;
 #define BBANKS            MMC5BGVPage
 #define MMC5SPRVRAMADR(V) &MMC5SPRVPage[(V) >> 10][(V)]
 #define VRAMADR(V)        &VPage[(V) >> 10][(V)]
-uint8 *MMC5BGVRAMADR(uint32 A);
+uint8_t *MMC5BGVRAMADR(uint32_t A);
 
 #endif

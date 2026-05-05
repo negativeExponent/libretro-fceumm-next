@@ -24,8 +24,8 @@
 #include "fdssound.h"
 
 static struct {
-	uint8 prg;
-	uint8 mirror;
+	uint8_t prg;
+	uint8_t mirror;
 } m539;
 
 static SFORMAT StateRegs[] = {
@@ -115,7 +115,7 @@ void Mapper539_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, TRUE);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

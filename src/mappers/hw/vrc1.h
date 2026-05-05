@@ -22,13 +22,13 @@
 #define _VRC1_H
 
 typedef struct __VRC1 {
-	uint8 prg[3], chr[2], mode;
+	uint8_t prg[3], chr[2], mode;
 } VRC1;
 
 extern VRC1 vrc1;
 
-void VRC1_SetPRG_default(uint16 A, uint16 V);
-void VRC1_SetCHR_default(uint16 A, uint16 V);
+void VRC1_SetPRG_default(uint16_t A, uint16_t V);
+void VRC1_SetCHR_default(uint16_t A, uint16_t V);
 void VRC1_SyncPRG_default(void);
 void VRC1_SyncCHR_default(void);
 void VRC1_SyncMirror_default(void);
@@ -43,13 +43,13 @@ void VRC1_Power(void);
 void VRC1_StateRestore(int version);
 void VRC1_Init(CartInfo *info);
 
-void VRC1_SetConfig(uint8 clear);
+void VRC1_SetConfig(uint8_t clear);
 
 extern void (*VRC1_SyncPRG)(void);
 extern void (*VRC1_SyncCHR)(void);
 extern void (*VRC1_SyncMirror)(void);
 
-extern void (*VRC1_pwrap)(uint16 A, uint16 V);
-extern void (*VRC1_cwrap)(uint16 A, uint16 V);
+extern void (*VRC1_pwrap)(uint16_t A, uint16_t V);
+extern void (*VRC1_cwrap)(uint16_t A, uint16_t V);
 
 #endif /* _VRC1_H */

@@ -29,8 +29,8 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint16 mask = (latch.addr & 0x10) ? 0x07 : 0x0F;
-	uint16 base = latch.addr << 3;
+	uint16_t mask = (latch.addr & 0x10) ? 0x07 : 0x0F;
+	uint16_t base = latch.addr << 3;
 
 	setprg16(0x8000, base | (latch.data & mask));
 	setprg16(0xC000, base | (latch.data & mask) | ((~latch.addr >> 1) & 0x08) | 0x07);

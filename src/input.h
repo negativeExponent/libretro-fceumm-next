@@ -2,30 +2,30 @@
 #define _FCEU_INPUT_H
 
 typedef struct {
-	uint8 (*Read)(int w);
-	void (*Write)(uint8 v);
+	uint8_t (*Read)(int w);
+	void (*Write)(uint8_t v);
 	void (*Strobe)(int w);
 	void (*Update)(int w, void *data, int arg);
-	void (*SLHook)(int w, uint8 *bg, uint8 *spr, uint32 linets, int final);
-	void (*Draw)(int w, uint8 *buf, int arg);
+	void (*SLHook)(int w, uint8_t *bg, uint8_t *spr, uint32_t linets, int final);
+	void (*Draw)(int w, uint8_t *buf, int arg);
 } INPUTC;
 
 typedef struct {
-	uint8 (*Read)(int w, uint8 ret);
-	void (*Write)(uint8 v);
+	uint8_t (*Read)(int w, uint8_t ret);
+	void (*Write)(uint8_t v);
 	void (*Strobe)(void);
 	void (*Update)(void *data, int arg);
-	void (*SLHook)(uint8 *bg, uint8 *spr, uint32 linets, int final);
-	void (*Draw)(uint8 *buf, int arg);
+	void (*SLHook)(uint8_t *bg, uint8_t *spr, uint32_t linets, int final);
+	void (*Draw)(uint8_t *buf, int arg);
 } INPUTCFC;
 
-uint8 FCEU_GetJoyJoy(void);
+uint8_t FCEU_GetJoyJoy(void);
 
-void FCEU_DrawInput(uint8 *buf);
+void FCEU_DrawInput(uint8_t *buf);
 void FCEU_UpdateInput(void);
 void FCEUINPUT_Power(void);
 
-void InputScanlineHook(uint8 *bg, uint8 *spr, uint32 linets, int final);
+void InputScanlineHook(uint8_t *bg, uint8_t *spr, uint32_t linets, int final);
 
 void FCEU_DoSimpleCommand(int cmd);
 

@@ -22,7 +22,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m566;
 
 static SFORMAT StateRegs[] = {
@@ -30,23 +30,23 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = (m566.reg & 0x04) ? 0x0F : 0x1F;
-	uint16 base = ((m566.reg << 2) & 0x20) | ((m566.reg << 4) & 0x10) | ((m566.reg << 1) & 0xC0);
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = (m566.reg & 0x04) ? 0x0F : 0x1F;
+	uint16_t base = ((m566.reg << 2) & 0x20) | ((m566.reg << 4) & 0x10) | ((m566.reg << 1) & 0xC0);
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = m566.reg & 0x02 ? 0x7F : 0xFF;
-	uint16 base = m566.reg << 7 & 0x80 | m566.reg << 4 & 0x700;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = m566.reg & 0x02 ? 0x7F : 0xFF;
+	uint16_t base = m566.reg << 7 & 0x80 | m566.reg << 4 & 0x700;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static void SyncMirror(void) {
 	if (m566.reg & 0x80) {
-		uint8 mirr = MMC3_GetCHRBank(0) >> 7;
+		uint8_t mirr = MMC3_GetCHRBank(0) >> 7;
 		setmirror(MI_0 +  mirr);
 	} else {
 		setmirror((mmc3.mirr & 0x01) ^ 0x01);

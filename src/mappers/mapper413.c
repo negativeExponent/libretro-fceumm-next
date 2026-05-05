@@ -21,12 +21,12 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[4];
-	uint8 IRQCount;
-	uint8 IRQReload;
-	uint8 IRQa;
-	uint8 serialControl;
-	uint32 serialAddress;
+	uint8_t reg[4];
+	uint8_t IRQCount;
+	uint8_t IRQReload;
+	uint8_t IRQa;
+	uint8_t serialControl;
+	uint32_t serialAddress;
 } m413;
 
 static SFORMAT StateRegs[] = {
@@ -56,11 +56,11 @@ static void SyncWRAM(void) {
 	setprg8(0x6000, m413.reg[0]);
 }
 
-static uint64 lreset = 0;
+static uint64_t lreset = 0;
 
 static DECLFR(ReadPCM) {
-	uint8 ret = ROM.misc.data[m413.serialAddress & (ROM.misc.size - 1)];
-	uint64 ts = timestampbase + timestamp;
+	uint8_t ret = ROM.misc.data[m413.serialAddress & (ROM.misc.size - 1)];
+	uint64_t ts = timestampbase + timestamp;
 
 	if ((ts >= lreset) && (ts < (lreset + 6))) {
 		return ret;
@@ -99,7 +99,7 @@ static DECLFW(WriteSerialControl) {
 }
 
 static DECLFW(WriteReg) {
-	uint8 index = V >> 6;
+	uint8_t index = V >> 6;
 	m413.reg[index] = V;
 	switch (index) {
 	case 0:

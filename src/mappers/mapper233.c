@@ -30,7 +30,7 @@
 #include "latch.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m233;
 
 static SFORMAT StateRegs[] = {
@@ -39,7 +39,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 bank = (m233.reg << 5) | (latch.data & 0x1F);
+	uint8_t bank = (m233.reg << 5) | (latch.data & 0x1F);
 
 	if (latch.data & 0x20) {
 		setprg16(0x8000, bank);

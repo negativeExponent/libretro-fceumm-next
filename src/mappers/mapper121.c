@@ -30,11 +30,11 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 prg[3];
-	uint8 reg;
-	uint8 readIndex;
-	uint8 protIndex;
-	uint8 protLatch;
+	uint8_t prg[3];
+	uint8_t reg;
+	uint8_t readIndex;
+	uint8_t protIndex;
+	uint8_t protLatch;
 } m121;
 
 static SFORMAT StateRegs[] = {
@@ -46,9 +46,9 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint8 mask = 0x1F;
-	uint8 base = ((m121.reg & 0x80) >> 2);
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint8_t mask = 0x1F;
+	uint8_t base = ((m121.reg & 0x80) >> 2);
 
 	if (m121.protIndex & 0x20) {
 		if ((A > 0x8000)) {
@@ -60,16 +60,16 @@ static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, base | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	if (ROM.prg.size > SIZE_256K) {
 		setchr1(A, ((m121.reg & 0x80) << 1) | V);
 	} else {
-		uint16 base = ((A >> 4) & 0x100);
+		uint16_t base = ((A >> 4) & 0x100);
 		setchr1(A, base | V);
 	}
 }
 
-static const uint8 prot_array[] = { 0x83, 0x83, 0x42, 0x00, 0x00, 0x02, 0x02, 0x03 };
+static const uint8_t prot_array[] = { 0x83, 0x83, 0x42, 0x00, 0x00, 0x02, 0x02, 0x03 };
 static DECLFR(ReadProtection) {
 	return prot_array[m121.readIndex];
 }

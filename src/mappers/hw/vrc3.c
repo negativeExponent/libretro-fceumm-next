@@ -30,8 +30,8 @@ VRC3 vrc3;
 void (*VRC3_SyncPRG)(void);
 void (*VRC3_SyncCHR)(void);
 
-void (*VRC3_pwrap)(uint16 A, uint16 V);
-void (*VRC3_cwrap)(uint16 V);
+void (*VRC3_pwrap)(uint16_t A, uint16_t V);
+void (*VRC3_cwrap)(uint16_t V);
 
 static SFORMAT StateRegs[] = {
 	{ &vrc3.prg, 1, "PREG" },
@@ -43,11 +43,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-void VRC3_SetPRG_default(uint16 A, uint16 V) {
+void VRC3_SetPRG_default(uint16_t A, uint16_t V) {
 	setprg16(A, V);
 }
 
-void VRC3_SetCHR_default(uint16 V) {
+void VRC3_SetCHR_default(uint16_t V) {
 	setchr8(V);
 }
 
@@ -101,11 +101,11 @@ DECLFW(VRC3_WriteReg) {
 }
 
 void VRC3_CPUIRQHook(int a) {
-	int32 i;
+	int32_t i;
 
 	if (vrc3.IRQa) {
 		for (i = 0; i < a; i++) {
-			uint32 IRQCountMask = vrc3.IRQm ? 0xFF : 0xFFFF;
+			uint32_t IRQCountMask = vrc3.IRQm ? 0xFF : 0xFFFF;
 			if ((vrc3.IRQCount & IRQCountMask) == IRQCountMask) {
 				vrc3.IRQCount = vrc3.IRQLatch;
 				X6502_IRQBegin(FCEU_IQEXT);
@@ -149,7 +149,7 @@ void VRC3_Init(CartInfo *info) {
 	GameStateRestore = VRC3_StateRestore;
 }
 
-void VRC3_SetConfig(uint8 clear) {
+void VRC3_SetConfig(uint8_t clear) {
 	SetReadHandler (0x6000, 0xFFFF, CartBR);
 	SetWriteHandler(0x6000, 0x7FFF, CartBW);
 	SetWriteHandler(0x8000, 0xFFFF, VRC3_WriteReg);

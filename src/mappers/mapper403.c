@@ -29,7 +29,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[3];
+	uint8_t reg[3];
 } m403;
 
 static SFORMAT StateRegs[] = {
@@ -38,7 +38,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 bank = m403.reg[0] >> 1;
+	uint8_t bank = m403.reg[0] >> 1;
 
 	if (m403.reg[2] & 0x01) { /* NROM-128 */
 		setprg16(0x8000, bank);

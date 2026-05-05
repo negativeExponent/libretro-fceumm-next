@@ -21,14 +21,14 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static const uint8 dipswlut[5] = {
+static const uint8_t dipswlut[5] = {
 	0, 0x10, 0x30, 0x70, 0xF0
 };
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static void Sync(void) {
-	uint8 bank = latch.addr >> 1;
+	uint8_t bank = latch.addr >> 1;
 
 	if (!(latch.addr & 0x100) && (latch.addr & dipswlut[dipsw])) {
 		unsetcpu16(0xC000);

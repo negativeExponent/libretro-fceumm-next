@@ -40,10 +40,10 @@
 
 static X24C0X *eeprom = NULL;
 
-static uint8 FCGType = FCG_TYPE_Unknown;
+static uint8_t FCGType = FCG_TYPE_Unknown;
 
-void (*FCG_pwrap)(uint16 A, uint16 V);
-void (*FCG_cwrap)(uint16 A, uint16 V);
+void (*FCG_pwrap)(uint16_t A, uint16_t V);
+void (*FCG_cwrap)(uint16_t A, uint16_t V);
 
 static FCG fcg;
 
@@ -58,11 +58,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void FCG_SetPRG_default(uint16 A, uint16 V) {
+static void FCG_SetPRG_default(uint16_t A, uint16_t V) {
 	setprg16(A, V & 0x0F);
 }
 
-static void FCG_SetCHR_default(uint16 A, uint16 V) {
+static void FCG_SetCHR_default(uint16_t A, uint16_t V) {
 	setchr1(A, V);
 }
 
@@ -220,7 +220,7 @@ void FCG_Power(void) {
 		FCG_Write);
 }
 
-void FCG_Init(CartInfo *info, uint8 _FCGType) {
+void FCG_Init(CartInfo *info, uint8_t _FCGType) {
 	FCG_pwrap = FCG_SetPRG_default;
 	FCG_cwrap = FCG_SetCHR_default;
 	FCGType = _FCGType;

@@ -28,11 +28,11 @@
 #include "eeprom_93Cx6.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m558;
 
-static uint8 haveEEPROM;
-static uint8 eeprom_data[512];
+static uint8_t haveEEPROM;
+static uint8_t eeprom_data[512];
 
 static SFORMAT StateRegs[] = {
 	{ m558.reg, 4, "REGS" },
@@ -123,7 +123,7 @@ void Mapper558_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = info->PRGRamSize + (info->PRGRamSaveSize & ~0x7FF);
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);

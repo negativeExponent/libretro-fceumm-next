@@ -22,17 +22,17 @@
 #define _MMC2_H
 
 typedef struct __MMC2 {
-	uint8 prg;
-	uint8 chr[4];
-	uint8 latch[2];
-	uint8 mirr;
+	uint8_t prg;
+	uint8_t chr[4];
+	uint8_t latch[2];
+	uint8_t mirr;
 } MMC2;
 
 extern MMC2 mmc2;
 
 DECLFW(MMC2_Write);
 
-void MMC2_PPUHook(uint32 A);
+void MMC2_PPUHook(uint32_t A);
 
 void MMC2_Power(void);
 void MMC2_Close(void);
@@ -40,16 +40,16 @@ void MMC2_Reset(void);
 void MMC2_Restore(int version);
 void MMC2_Init(CartInfo *info, int wram, int battery);
 
-void MMC2_SetConfig(uint8 clear);
+void MMC2_SetConfig(uint8_t clear);
 
-void MMC2_SetPRG_default(uint16 A, uint16 V);
-void MMC2_SetCHR_default(uint16 A, uint16 V);
+void MMC2_SetPRG_default(uint16_t A, uint16_t V);
+void MMC2_SetCHR_default(uint16_t A, uint16_t V);
 
 void MMC2_SyncPRG(void);
 void MMC2_SyncCHR(void);
 void MMC2_SyncMirror(void);
 
-extern void (*MMC2_pwrap)(uint16 A, uint16 V);
-extern void (*MMC2_cwrap)(uint16 A, uint16 V);
+extern void (*MMC2_pwrap)(uint16_t A, uint16_t V);
+extern void (*MMC2_cwrap)(uint16_t A, uint16_t V);
 
 #endif /* _MMC2_H */

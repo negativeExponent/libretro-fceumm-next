@@ -27,10 +27,10 @@
 static void RenderSoundHQ(void);
 static void RenderSound(void);
 
-static const int32 mod_bias_tab[8] = { 0, 1, 2, 4, 0, -4, -2, -1 };
+static const int32_t mod_bias_tab[8] = { 0, 1, 2, 4, 0, -4, -2, -1 };
 
 static FDSSOUND fdso = { 0 };
-static int32 FBC = 0;
+static int32_t FBC = 0;
 
 void FDSSound_AddStateInfo(void) {
 	AddExState(&fdso.sample_out_cache, 4, 0, "FDSO");
@@ -224,12 +224,12 @@ static void FDSDoEnv(void) {
 	FDSEnvStep(&fdso.EnvUnits[EMOD]);
 }
 
-static INLINE int32 sign_x_to_s32(int n, int32 v) {
-	return ((int32)((uint32)v << (32 - n)) >> (32 - n));
+static INLINE int32_t sign_x_to_s32(int n, int32_t v) {
+	return ((int32_t)((uint32_t)v << (32 - n)) >> (32 - n));
 }
 
 static void FDSModUpdateOutput(void) {
-	int32 temp =
+	int32_t temp =
 	    sign_x_to_s32(11, fdso.sweep_bias) *
 	    ((fdso.EnvUnits[EMOD].volume > 0x20) ? 0x20 : fdso.EnvUnits[EMOD].volume);
 	if (temp & 0x0F0) {
@@ -254,13 +254,13 @@ static void FDSModUpdateOutput(void) {
 }
 
 static int FDSDoModulator(void) {
-	uint32 prev_mod_pos = fdso.mod_pos;
+	uint32_t prev_mod_pos = fdso.mod_pos;
 
 	if (!fdso.mod_disabled) {
-		uint32 overflow_mask = 0x3F << fdso.mod_overflow_shift;
+		uint32_t overflow_mask = 0x3F << fdso.mod_overflow_shift;
 		fdso.mod_pos += fdso.mod_freq;
 		if ((fdso.mod_pos & overflow_mask) != (prev_mod_pos & overflow_mask)) {
-			const int32 mw = fdso.mwave[((fdso.mod_pos >> fdso.mod_pos_shift) & 0x1F)];
+			const int32_t mw = fdso.mwave[((fdso.mod_pos >> fdso.mod_pos_shift) & 0x1F)];
 
 			fdso.sweep_bias = (fdso.sweep_bias + mw) & 0x7FF;
 			if (mw == 0x10) {
@@ -273,10 +273,10 @@ static int FDSDoModulator(void) {
 }
 
 static INLINE void FDSDoCarrier(void) {
-	int32 cur_cwave_freq = (int32)(fdso.cwave_freq << 6);
+	int32_t cur_cwave_freq = (int32_t)(fdso.cwave_freq << 6);
 
 	if (!fdso.mod_disabled) {
-		cur_cwave_freq += (int32)fdso.cwave_freq * fdso.mod_output;
+		cur_cwave_freq += (int32_t)fdso.cwave_freq * fdso.mod_output;
 		if (cur_cwave_freq < 0) {
 			cur_cwave_freq = 0;
 		}
@@ -302,20 +302,20 @@ static void FDSClockUnits(void) {
 	}
 }
 
-static int32 FDSDoSound(void) {
-	uint32 prev_cwave_pos = fdso.cwave_pos;
+static int32_t FDSDoSound(void) {
+	uint32_t prev_cwave_pos = fdso.cwave_pos;
 
 	if (FSettings.soundq >= 1) {
 		FDSClockUnits();
 	} else {
 		fdso.count += fdso.cycles;
-		if (fdso.count >= ((int64)1 << 40)) {
-			fdso.count -= (int64)1 << 40;
+		if (fdso.count >= ((int64_t)1 << 40)) {
+			fdso.count -= (int64_t)1 << 40;
 			FDSClockUnits();
 		}
 
 		while (fdso.count >= 32768) {
-			fdso.count -= (int64)1 << 40;
+			fdso.count -= (int64_t)1 << 40;
 			FDSClockUnits();
 		}
 	}
@@ -328,22 +328,22 @@ static int32 FDSDoSound(void) {
 			(1U << 16) / 4, /* divisor 4 */
 			(1U << 16) / 5  /* divisor 5 */
 		};
-		int32 k = fdso.EnvUnits[EVOL].volume;
-		int32 idx = fdso.master_control & 0x03;
-		int32 sample;
+		int32_t k = fdso.EnvUnits[EVOL].volume;
+		int32_t idx = fdso.master_control & 0x03;
+		int32_t sample;
 		if (k > 0x20) {
 			k = 0x20;
 		}
 		sample = fdso.cwave[(fdso.cwave_pos >> fdso.cwave_pos_shift) & 0x3F] * k * 4;
 		/* fast divide replacement */
-		sample = (int32)(sample * fds_div_lut[idx]) >> 16;
+		sample = (int32_t)(sample * fds_div_lut[idx]) >> 16;
 		fdso.sample_out_cache = GetOutput(SND_FDS, sample);
 	}
 }
 
 static void RenderSound(void) {
-	int32 end, start;
-	int32 x;
+	int32_t end, start;
+	int32_t x;
 
 	start = FBC;
 	end = (SOUNDTS << 16) / soundtsinc;
@@ -353,7 +353,7 @@ static void RenderSound(void) {
 	FBC = end;
 
 	for (x = start; x < end; x++) {
-		uint32 t;
+		uint32_t t;
 		FDSDoSound();
 		t = fdso.sample_out_cache;
 		t += t >> 1;
@@ -363,10 +363,10 @@ static void RenderSound(void) {
 }
 
 static void RenderSoundHQ(void) {
-	uint32 x;
+	uint32_t x;
 
 	for (x = FBC; x < SOUNDTS; x++) {
-		uint32 t;
+		uint32_t t;
 		FDSDoSound();
 		t = fdso.sample_out_cache;
 		t += t >> 1;
@@ -375,7 +375,7 @@ static void RenderSoundHQ(void) {
 	FBC = SOUNDTS;
 }
 
-static void HQSync(int32 ts) {
+static void HQSync(int32_t ts) {
 	FBC = ts;
 }
 
@@ -392,13 +392,13 @@ void FDSSound_SC(void) {
 
 	if (FSettings.SndRate) {
 		if (FSettings.soundq >= 1) {
-			fdso.cycles = (int64)1 << 39;
+			fdso.cycles = (int64_t)1 << 39;
 			fdso.cwave_pos_shift = 22;
 			fdso.mod_pos_shift = 17;
 			fdso.mod_overflow_shift = 12;
 			fdso.env_count_mul = 8;
 		} else {
-			fdso.cycles = ((int64)1 << 40) * FDSClock;
+			fdso.cycles = ((int64_t)1 << 40) * FDSClock;
 			fdso.cycles /= FSettings.SndRate * 16;
 			fdso.cwave_pos_shift = 21;
 			fdso.mod_pos_shift = 16;

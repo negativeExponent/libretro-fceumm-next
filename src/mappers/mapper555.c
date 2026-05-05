@@ -31,10 +31,10 @@
 #define TARGET_COUNT 0x20000000
 
 static struct {
-	uint8 reg[2];
-	uint8 count_expired;
-	uint32 count;
-	uint32 count_target;
+	uint8_t reg[2];
+	uint8_t count_expired;
+	uint32_t count;
+	uint32_t count_target;
 } m555;
 
 static SFORMAT StateRegs[] = {
@@ -44,15 +44,15 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = ((m555.reg[0] << 3) & 0x18) | 0x07;
-	uint16 base = ((m555.reg[0] << 3) & 0x20);
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = ((m555.reg[0] << 3) & 0x18) | 0x07;
+	uint16_t base = ((m555.reg[0] << 3) & 0x20);
 
 	setprg8(A, base | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 base = (m555.reg[0] << 5) & 0x80;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t base = (m555.reg[0] << 5) & 0x80;
 
 	if ((m555.reg[0] & 0x06) == 0x02) {
 		if (V & 0x40) {
@@ -92,7 +92,7 @@ static void CPUIRQHook(int a) {
 				m555.count_expired = TRUE;
 			}
 			if ((m555.count % 1789773) == 0) {
-				uint32 seconds = (m555.count_target - m555.count) / 1789773;
+				uint32_t seconds = (m555.count_target - m555.count) / 1789773;
 				FCEU_DispMessage(RETRO_LOG_INFO, 1000, "Time left: %02i:%02i\n", seconds / 60, seconds % 60);
 			}
 		}
@@ -101,13 +101,13 @@ static void CPUIRQHook(int a) {
 
 static void Reset(void) {
 	memset(&m555, 0, sizeof(m555));
-	m555.count_target = TARGET_COUNT | ((uint32)GameInfo->cspecial << 25);
+	m555.count_target = TARGET_COUNT | ((uint32_t)GameInfo->cspecial << 25);
 	MMC3_Reset();
 }
 
 static void Power(void) {
 	memset(&m555, 0, sizeof(m555));
-	m555.count_target = TARGET_COUNT | ((uint32)GameInfo->cspecial << 25);
+	m555.count_target = TARGET_COUNT | ((uint32_t)GameInfo->cspecial << 25);
 	MMC3_Power();
 
 	SetReadHandler(0x5000, 0x5FFF, Read5000);
@@ -128,12 +128,12 @@ void Mapper555_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 16 * 1024;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, TRUE);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
 	CHRRAMSIZE = 8 * 1024;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, TRUE);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

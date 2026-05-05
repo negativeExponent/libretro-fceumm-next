@@ -27,7 +27,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m521;
 
 static SFORMAT StateRegs[] = {

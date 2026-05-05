@@ -22,19 +22,19 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m037;
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = (m037.reg << 1) | 0x07;
-	uint16 base = ((m037.reg << 2) & 0x10) | (((m037.reg & 0x03) == 0x03) ? 0x08 : 0);
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = (m037.reg << 1) | 0x07;
+	uint16_t base = ((m037.reg << 2) & 0x10) | (((m037.reg & 0x03) == 0x03) ? 0x08 : 0);
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = 0x7F;
-	uint16 base = (m037.reg << 5) & 0x80;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x7F;
+	uint16_t base = (m037.reg << 5) & 0x80;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

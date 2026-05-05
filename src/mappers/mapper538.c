@@ -29,7 +29,7 @@
 #include "fdssound.h"
 
 /* this code emulates rom dump with wrong bank order */
-static uint8 prg_order_lut[16] = {
+static uint8_t prg_order_lut[16] = {
     0, 1, 2, 1, 3, 1, 4, 1,
     5, 5, 1, 1, 6, 6, 7, 7
 };

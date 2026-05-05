@@ -26,7 +26,7 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 mirr = (latch.addr & ((PRGsize[0] & 0x40000) ? 0x800 : 0x200)) ? MI_H : MI_V;
+	uint8_t mirr = (latch.addr & ((PRGsize[0] & 0x40000) ? 0x800 : 0x200)) ? MI_H : MI_V;
 
 	setprg32(0x8000, latch.addr >> 8);
 	setchr8(latch.addr >> 8);

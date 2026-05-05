@@ -22,10 +22,10 @@
 #define _MMC4_H
 
 typedef struct __MMC4 {
-	uint8 prg;
-	uint8 chr[4];
-	uint8 latch[2];
-	uint8 mirr;
+	uint8_t prg;
+	uint8_t chr[4];
+	uint8_t latch[2];
+	uint8_t mirr;
 } MMC4;
 
 extern MMC4 mmc4;
@@ -38,13 +38,13 @@ void MMC4_Reset(void);
 void MMC4_Restore(int version);
 void MMC4_Init(CartInfo *info, int wram, int battery);
 
-void MMC4_SetConfig(uint8 clear);
+void MMC4_SetConfig(uint8_t clear);
 
 void MMC4_SyncPRG(void);
 void MMC4_SyncCHR(void);
 void MMC4_SyncMirror(void);
 
-extern void (*MMC4_pwrap)(uint16 A, uint16 V);
-extern void (*MMC4_cwrap)(uint16 A, uint16 V);
+extern void (*MMC4_pwrap)(uint16_t A, uint16_t V);
+extern void (*MMC4_cwrap)(uint16_t A, uint16_t V);
 
 #endif /* _MMC4_H */

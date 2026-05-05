@@ -22,15 +22,15 @@
 #define _VRC3_H
 
  typedef struct __VRC3 {
-	uint8 prg;
-	uint8 IRQx; /* autoenable */
-	uint8 IRQm; /* mode */
-	uint8 IRQa;
-	uint16 IRQLatch, IRQCount;
+	uint8_t prg;
+	uint8_t IRQx; /* autoenable */
+	uint8_t IRQm; /* mode */
+	uint8_t IRQa;
+	uint16_t IRQLatch, IRQCount;
 } VRC3;
 
-void VRC3_SetPRG_default(uint16 A, uint16 V);
-void VRC3_SetCHR_default(uint16 V);
+void VRC3_SetPRG_default(uint16_t A, uint16_t V);
+void VRC3_SetCHR_default(uint16_t V);
 void VRC3_SyncPRG_default(void);
 void VRC3_SyncCHR_default(void);
 
@@ -42,14 +42,14 @@ void VRC3_Power(void);
 void VRC3_StateRestore(int version);
 void VRC3_Init(CartInfo *info);
 
-void VRC3_SetConfig(uint8 clear);
+void VRC3_SetConfig(uint8_t clear);
 
 extern VRC3 vrc3;
 
 extern void (*VRC3_SyncPRG)(void);
 extern void (*VRC3_SyncCHR)(void);
 
-extern void (*VRC3_pwrap)(uint16 A, uint16 V);
-extern void (*VRC3_cwrap)(uint16 V);
+extern void (*VRC3_pwrap)(uint16_t A, uint16_t V);
+extern void (*VRC3_cwrap)(uint16_t V);
 
 #endif /* _VRC3_H */

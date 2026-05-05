@@ -41,22 +41,22 @@ typedef enum __VRC24TYPE {
 } VRC24TYPE;
 
 typedef struct __VRC24 {
-	uint8 prg[2];
-	uint16 chr[8];
-	uint8 cmd;
-	uint8 mirr;
-	uint8 wire; /* VRC2 $6000-$6FFF microwire interface */
+	uint8_t prg[2];
+	uint16_t chr[8];
+	uint8_t cmd;
+	uint8_t mirr;
+	uint8_t wire; /* VRC2 $6000-$6FFF microwire interface */
 
 	/* not normally added to state */
-	uint8 type;
-	uint16 A0;
-	uint16 A1;
+	uint8_t type;
+	uint16_t A0;
+	uint16_t A1;
 } VRC24;
 
 extern VRC24 vrc24;
 
-uint16 VRC24_GetPRGBank(int bank);
-uint16 VRC24_GetCHRBank(int bank);
+uint16_t VRC24_GetPRGBank(int bank);
+uint16_t VRC24_GetCHRBank(int bank);
 
 void VRC24_SyncPRG_default(void);
 void VRC24_SyncCHR_default(void);
@@ -71,9 +71,9 @@ void VRC24_Reset(void);
 void VRC24_Power(void);
 void VRC24_Close(void);
 
-void VRC24_Init(CartInfo *info, VRC24TYPE vrc4, uint32 A0, uint32 A1, int wram, int irqRepeated);
-void VRC2_SetConfig(uint8 clear, uint32 _A0, uint32 _A1);
-void VRC4_SetConfig(uint8 clear, uint32 _A0, uint32 _A1, int irqRepeated);
+void VRC24_Init(CartInfo *info, VRC24TYPE vrc4, uint32_t A0, uint32_t A1, int wram, int irqRepeated);
+void VRC2_SetConfig(uint8_t clear, uint32_t _A0, uint32_t _A1);
+void VRC4_SetConfig(uint8_t clear, uint32_t _A0, uint32_t _A1, int irqRepeated);
 
 extern void (*VRC24_SyncPRG)(void);
 extern void (*VRC24_SyncCHR)(void);
@@ -83,8 +83,8 @@ extern void (*VRC24_SyncMirror)(void);
 /* callback function on writes */
 extern void (*VRC24_SyncWires)(void);
 
-extern void (*VRC24_pwrap)(uint16 A, uint16 V);
-extern void (*VRC24_cwrap)(uint16 A, uint16 V);
+extern void (*VRC24_pwrap)(uint16_t A, uint16_t V);
+extern void (*VRC24_cwrap)(uint16_t A, uint16_t V);
 
 /* VRC4 External Select, e.g. $9000 port 3 */
 extern DECLFW((*VRC24_WriteExtSelect));

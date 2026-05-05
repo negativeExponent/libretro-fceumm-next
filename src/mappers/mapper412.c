@@ -29,22 +29,22 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m412;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateReg[] = {
 	{ m412.reg, 4, "EXPR" },
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = 0x3F & ~(((m412.reg[1] << 4) & 0x20) | (m412.reg[1] & 0x10));
-	uint16 base = ((m412.reg[1] << 3) & 0x20) | ((m412.reg[1] >> 2) & 0x10);
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x3F & ~(((m412.reg[1] << 4) & 0x20) | (m412.reg[1] & 0x10));
+	uint16_t base = ((m412.reg[1] << 3) & 0x20) | ((m412.reg[1] >> 2) & 0x10);
 
 	if (m412.reg[2] & 0x02) {
-		uint16 bank = m412.reg[2] >> 3;
+		uint16_t bank = m412.reg[2] >> 3;
 
 		if (m412.reg[2] & 0x04) {
 			setprg32(0x8000, bank >> 1);
@@ -59,9 +59,9 @@ static void SetPRG(uint16 A, uint16 V) {
 	mmc3.wram = 0x80;
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (m412.reg[1] & 0x20) ? 0x7F : 0xFF;
-	uint16 base = ((m412.reg[1] << 5) & 0x100) | (m412.reg[1] & 0x80);
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (m412.reg[1] & 0x20) ? 0x7F : 0xFF;
+	uint16_t base = ((m412.reg[1] << 5) & 0x100) | (m412.reg[1] & 0x80);
 
 	if (m412.reg[2] & 0x02) {
 		setchr8(m412.reg[0] >> 2);

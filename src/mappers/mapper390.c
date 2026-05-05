@@ -25,10 +25,10 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m390;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m390.reg, 2, "REGS" },
@@ -61,7 +61,7 @@ static void SyncMirror(void){
 }
 
 static DECLFR(ReadDIP) {
-	uint8 ret = CartBR(A);
+	uint8_t ret = CartBR(A);
 	if ((m390.reg[1] & 0x30) == 0x10)
 		ret |= dipsw;
 	return ret;

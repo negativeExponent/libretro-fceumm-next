@@ -21,7 +21,7 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], iNESCart.iNES2 ? FALSE : TRUE);
 	if (iNESCart.iNES2 && ((V & ~0x01) == 0x08)) { /* Di 4 Ci - Ji Qi Ren Dai Zhan (As).nes, Ji Jia Zhan Shi (As).nes */
 		setchr1r(0x10, A, V & 0x01);
@@ -35,7 +35,7 @@ void Mapper074_Init(CartInfo *info) {
 	MMC3_cwrap = SetCHR;
 
 	CHRRAMSIZE = 2048;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

@@ -31,7 +31,7 @@ static void Sync(void) {
 }
 
 static DECLFW(WriteLatch) {
-	uint8 reg = CartBR(A);
+	uint8_t reg = CartBR(A);
 	latch.data = (reg & 0x01) | (V & reg & ~0x01);
 	Sync();
 }

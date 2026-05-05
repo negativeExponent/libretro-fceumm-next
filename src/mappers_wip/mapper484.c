@@ -22,7 +22,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m484;
 
 static SFORMAT StateRegs[] = {
@@ -30,9 +30,9 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = ((m484.reg & 0x80) ? 0x1F : 0x3F);
-	uint16 base = ((m484.reg << 5) & 0x20);
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = ((m484.reg & 0x80) ? 0x1F : 0x3F);
+	uint16_t base = ((m484.reg << 5) & 0x20);
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
@@ -51,7 +51,7 @@ static void Power(void) {
 }
 
 void Mapper484_Init(CartInfo *info) {
-	uint16 ws = 8;
+	uint16_t ws = 8;
 	if (info->iNES2) {
 		ws = (info->PRGRamSize + info->PRGRamSaveSize);
 		ws /= 1024;

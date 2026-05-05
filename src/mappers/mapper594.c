@@ -24,30 +24,30 @@
 #include "msm6585.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m594;
 
 static FIFO fifo;
 static MSM6585 adpcm;
-static int32 cvbc = 0;
+static int32_t cvbc = 0;
 
 static SFORMAT StateRegs[] = {
 	{ m594.reg, 4, "EXPR" },
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = 0x3F;
-	uint16 base = (m594.reg[2] & 0x40 ? 0x0C0 : 0x000) |
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x3F;
+	uint16_t base = (m594.reg[2] & 0x40 ? 0x0C0 : 0x000) |
 	              (m594.reg[2] & 0x80 ? 0x100 : 0x000);
 	
 	setprg8(A, (base & ~mask) | (V & mask));
 	setprg8(0x6000, base | m594.reg[0]);
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = m594.reg[2] & 0xC0 ? 0x0FF : 0x1FF;
-	uint16 base = (m594.reg[2] & 0x40 ? 0x200 : 0x000) |
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = m594.reg[2] & 0xC0 ? 0x0FF : 0x1FF;
+	uint16_t base = (m594.reg[2] & 0x40 ? 0x200 : 0x000) |
 	              (m594.reg[2] & 0x80 ? 0x300 : 0x000);
 
 	V |= ((A >> 4) & 0x100);
@@ -109,7 +109,7 @@ static void mapperSound_fillBufferLow(int count) {
 }
 
 static void mapperSound_fillBufferHigh() {
-	uint32 V;
+	uint32_t V;
 	for (V = cvbc; V < SOUNDTS; V++) {
 		MSM6585_run(&adpcm);
 		WaveHi[V] += MSM6585_getOutput(&adpcm) * 8 + 16384;
@@ -117,7 +117,7 @@ static void mapperSound_fillBufferHigh() {
 	cvbc = SOUNDTS;
 }
 
-static void mapperSound_setSoundOffset(int32 ts) {
+static void mapperSound_setSoundOffset(int32_t ts) {
 	cvbc = ts;
 }
 

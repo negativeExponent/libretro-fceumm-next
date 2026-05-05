@@ -22,7 +22,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m232;
 
 static SFORMAT StateRegs[] = {
@@ -31,7 +31,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 base = (m232.reg[0] >> 1) & 0x0C;
+	uint8_t base = (m232.reg[0] >> 1) & 0x0C;
 
 	if (iNESCart.submapper == 1) {
 		base = ((base << 1) & 0x08) | ((base >> 1) & 0x04);

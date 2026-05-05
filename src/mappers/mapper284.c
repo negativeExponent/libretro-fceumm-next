@@ -26,18 +26,18 @@
 #include "dripsound.h"
 
 static struct {
-	uint8 extattrib[2][1024];
-	uint8 jumper;
-	uint8 control;
-	uint8 prg;
-	uint8 chr[4];
-	uint8 IRQa;
-	uint8 IRQLatch;
-	int16 IRQCount;
-	uint16 lastAddr;
+	uint8_t extattrib[2][1024];
+	uint8_t jumper;
+	uint8_t control;
+	uint8_t prg;
+	uint8_t chr[4];
+	uint8_t IRQa;
+	uint8_t IRQLatch;
+	int16_t IRQCount;
+	uint16_t lastAddr;
 } m284;
 
-static uint8 DRIPHack = FALSE;
+static uint8_t DRIPHack = FALSE;
 
 static SFORMAT StateRegs[] = {
 	{ &m284.jumper, 1, "JUMP" },
@@ -149,18 +149,18 @@ static DECLFW(WriteL) {
 }
 
 static DECLFW(WriteH) {
-	uint8 idx = (A & 0x400) >> 10;
+	uint8_t idx = (A & 0x400) >> 10;
 	m284.extattrib[idx][A & 0x3FF] = V & 0x03;
 }
 
-static uint8 newppu_PPUNMTRead(uint32 A) {
+static uint8_t newppu_PPUNMTRead(uint32_t A) {
 	if ((A > 0x2000) && (A < 0x3F00)) {
 		if (m284.control & 0x04) {
 			if ((A & 0x3FF) < 0x3C0) {
 				m284.lastAddr = A & 0x3FF;
 			} else {
-				const uint8 ext_attrib[4] = { 0x00, 0x55, 0xAA, 0xFF };
-				uint8 bank = 0;
+				const uint8_t ext_attrib[4] = { 0x00, 0x55, 0xAA, 0xFF };
+				uint8_t bank = 0;
 
 				A &= 0x0FFF;
 

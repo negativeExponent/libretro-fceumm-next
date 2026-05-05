@@ -22,10 +22,10 @@
 #include "share.h"
 
 static int seq, ptr, bit, cnt, have;
-static uint8 bdata[20];
+static uint8_t bdata[20];
 
 
-static uint8 Read(int w, uint8 ret) {
+static uint8_t Read(int w, uint8_t ret) {
 	if (w && have) {
 		switch (seq) {
 		case 0: seq++; ptr = 0; ret |= 0x4; break;
@@ -43,15 +43,15 @@ static uint8 Read(int w, uint8 ret) {
 	return(ret);
 }
 
-static void Write(uint8 V) {
+static void Write(uint8_t V) {
 }
 
 static void Update(void *data, int arg) {
-	if (*(uint8*)data) {
-		*(uint8*)data = 0;
+	if (*(uint8_t*)data) {
+		*(uint8_t*)data = 0;
 		seq = ptr = 0;
 		have = 1;
-		strcpy((char*)bdata, (const char*)((uint8*)data + 1));
+		strcpy((char*)bdata, (const char*)((uint8_t*)data + 1));
 		memcpy((char*)&bdata[13], "SUNSOFT", 7);
 	}
 }

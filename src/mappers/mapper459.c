@@ -27,9 +27,9 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 prg = latch.addr >> 4;
-	uint8 chr = ((latch.addr >> 4) & 0x08) | ((latch.addr >> 2) & 0x04) | (latch.addr & 0x03);
-	uint8 mirr = ((latch.addr >> 8) & 0x01) ^ 0x01;
+	uint8_t prg = latch.addr >> 4;
+	uint8_t chr = ((latch.addr >> 4) & 0x08) | ((latch.addr >> 2) & 0x04) | (latch.addr & 0x03);
+	uint8_t mirr = ((latch.addr >> 8) & 0x01) ^ 0x01;
 
 	if (latch.addr & 0x04) {
 		setprg32(0x8000, prg >> 1);

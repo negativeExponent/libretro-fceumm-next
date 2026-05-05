@@ -28,10 +28,10 @@ Gimmi a Break - Shijou Saikyou no Quiz OuKetteisen 2
 Project Q
 */
 
-static uint8 PTVal, PTValR;
+static uint8_t PTVal, PTValR;
 static int readcount = 0;
 
-static uint8 PT_Read(int w, uint8 ret) {
+static uint8_t PT_Read(int w, uint8_t ret) {
 	if (w) {
 		/* The first read returns the state of buttons 1 to 3,
 		the 2nd read gives buttons 4 to 6. The third read apparently returns a detection value ($14). */
@@ -52,11 +52,11 @@ static void PT_Strobe(void) {
 	PTValR = PTVal;
 }
 
-static void PT_Write(uint8 V) {
+static void PT_Write(uint8_t V) {
 }
 
 static void PT_Update(void *data, int arg) {
-	PTVal = *(uint8*)data;
+	PTVal = *(uint8_t*)data;
 }
 
 static INPUTCFC PartyTap = { PT_Read, PT_Write, PT_Strobe, PT_Update, 0, 0 };

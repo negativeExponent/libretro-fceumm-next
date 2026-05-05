@@ -27,7 +27,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m335;
 
 static SFORMAT StateRegs[] = {
@@ -36,7 +36,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint16 prg = (m335.reg[1] << 1) | ((m335.reg[1] >> 3) & 0x01);
+	uint16_t prg = (m335.reg[1] << 1) | ((m335.reg[1] >> 3) & 0x01);
 
 	if (m335.reg[1] & 0x10) {
 		setprg16(0x8000, prg);

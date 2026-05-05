@@ -27,7 +27,7 @@
 #include "latch.h"
 
 static struct {
-	uint8 scratch[4];
+	uint8_t scratch[4];
 } m519;
 
 static SFORMAT StateRegs[] = {
@@ -35,7 +35,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static void Sync(void) {
 	if (latch.addr & 0x80) {

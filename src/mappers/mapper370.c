@@ -26,26 +26,26 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m370;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &m370.reg, 1, "EXPR" },
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = m370.reg & 0x20 ? 0x0F : 0x1F;
-	uint16 base = m370.reg << 1;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = m370.reg & 0x20 ? 0x0F : 0x1F;
+	uint16_t base = m370.reg << 1;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (m370.reg & 0x04) ? 0xFF : 0x7F;
-	uint16 base = m370.reg << 7;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (m370.reg & 0x04) ? 0xFF : 0x7F;
+	uint16_t base = m370.reg << 7;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
@@ -74,7 +74,7 @@ static DECLFW(WriteReg) {
 }
 
 static DECLFW(WriteMMC3) {
-	uint8 oldcmd = mmc3.cmd;
+	uint8_t oldcmd = mmc3.cmd;
 
 	switch (A & 0xE001) {
 	case 0x8000:

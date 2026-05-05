@@ -31,7 +31,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m333;
 
 static SFORMAT StateRegs[] = {
@@ -39,9 +39,9 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRGBank(uint16 A, uint16 V) {
-	uint16 base = m333.reg << 2;
-	uint16 mask = 0x0F;
+static void SetPRGBank(uint16_t A, uint16_t V) {
+	uint16_t base = m333.reg << 2;
+	uint16_t mask = 0x0F;
 
 	if (m333.reg & 0x10) { /* MMC3 mode */
 		setprg8(A, (base & ~mask) | (V & mask));
@@ -50,9 +50,9 @@ static void SetPRGBank(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHRBank(uint16 A, uint16 V) {
-	uint16 base = m333.reg << 5;
-	uint16 mask = 0x7F;
+static void SetCHRBank(uint16_t A, uint16_t V) {
+	uint16_t base = m333.reg << 5;
+	uint16_t mask = 0x7F;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

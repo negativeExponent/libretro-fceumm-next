@@ -25,9 +25,9 @@
 #include "mmc1.h"
 
 static struct {
-	uint8 reg;
-	uint8 bits;
-	uint8 shift;
+	uint8_t reg;
+	uint8_t bits;
+	uint8_t shift;
 } m543;
 
 static SFORMAT StateRegs[] = {
@@ -37,16 +37,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg16(A, (m543.reg << 4) | (V & 0x0F));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr4(A, (V & 0x07));
 }
 
 static void SyncWRAM(void) {
-	uint32 wramBank;
+	uint32_t wramBank;
 
 	if (m543.reg & 0x02) {
 		wramBank = 0x04 | ((m543.reg >> 1) & 0x02) | (m543.reg & 0x01);

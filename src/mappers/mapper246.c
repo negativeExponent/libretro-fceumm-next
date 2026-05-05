@@ -22,8 +22,8 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg[4];
-	uint8 chr[4];
+	uint8_t prg[4];
+	uint8_t chr[4];
 } m246;
 
 static SFORMAT StateRegs[] = {
@@ -66,7 +66,7 @@ static DECLFW(Write6) {
 }
 
 static DECLFR(ReadF) {
-	uint8 ret = CartBR(A);
+	uint8_t ret = CartBR(A);
 
 	if ((A & 0xFFE4) == 0xFFE4) {
 		size_t prgOffset = (((m246.prg[3] | 0x10) << 13) | (A & 0x1FFF));
@@ -111,7 +111,7 @@ void Mapper246_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 2048;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

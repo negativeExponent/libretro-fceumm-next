@@ -29,8 +29,8 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[3];
-	uint8 ppuchrbus;
+	uint8_t reg[3];
+	uint8_t ppuchrbus;
 } m331;
 
 static SFORMAT StateRegs[] = {
@@ -86,8 +86,8 @@ static void StateRestore(int version) {
 	Sync();
 }
 
-static void PPUHook(uint32 A) {
-	uint8 bank = (A & 0x1000) >> 12;
+static void PPUHook(uint32_t A) {
+	uint8_t bank = (A & 0x1000) >> 12;
 
 	if ((m331.ppuchrbus != bank) && !(A & 0x2000)) {
 		m331.ppuchrbus = bank;

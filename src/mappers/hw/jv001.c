@@ -70,7 +70,7 @@ static SFORMAT StateRegs[] = {
 };
 
 DECLFR(JV001_Read) {
-	uint8 ret = cpu.openbus;
+	uint8_t ret = cpu.openbus;
 	if ((A & 0x103) == 0x100) {
 		ret = ((jv001.accumulator & 0x0F) | ((jv001.inverter ^ jv001.invert) & ~0x0F));
 		WSync();

@@ -30,10 +30,10 @@
 #include "latch.h"
 
 static struct {
-	int32 adc_data;
-	int32 adc_high;
-	int32 adc_low;
-	uint8 adc_state;
+	int32_t adc_data;
+	int32_t adc_high;
+	int32_t adc_low;
+	uint8_t adc_state;
 } m517;
 
 static SFORMAT StateRegs[] = {
@@ -51,7 +51,7 @@ static void Sync(void) {
 }
 
 static DECLFR(Read6000) {
-	uint8 result = 0;
+	uint8_t result = 0;
 	if (A == 0x6000) {
 		switch (m517.adc_state) {
 		case 0:

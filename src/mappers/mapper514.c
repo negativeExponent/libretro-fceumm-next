@@ -23,7 +23,7 @@
 #include "latch.h"
 
 static struct {
-	uint8 lastnt;
+	uint8_t lastnt;
 } m514;
 
 static SFORMAT StateRegs[] = {
@@ -39,10 +39,10 @@ static void Sync(void) {
 	setmirror(((latch.data >> 6) & 0x01) ^ 0x01);
 }
 
-static void PPUIRQHook(uint32 A) {
+static void PPUIRQHook(uint32_t A) {
 	if ((A & 0x3000) == 0x2000) {
-		uint32 mask = (latch.data & 0x40) ? 0x02 : 0x01;
-		uint32 bank = A >> 10;
+		uint32_t mask = (latch.data & 0x40) ? 0x02 : 0x01;
+		uint32_t bank = A >> 10;
 		if ((latch.data & 0x80) && (bank & mask)) {
 			setchr4(0, 1);
 			m514.lastnt = 1;
@@ -75,7 +75,7 @@ void Mapper514_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, TRUE);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

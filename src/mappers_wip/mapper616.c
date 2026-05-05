@@ -22,7 +22,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m616;
 
 static SFORMAT StateRegs[] = {
@@ -30,16 +30,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = 0x0F;
-	uint16 base = m616.reg << 4;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x0F;
+	uint16_t base = m616.reg << 4;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = 0x7F;
-	uint16 base = m616.reg << 7;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x7F;
+	uint16_t base = m616.reg << 7;
 
 	if (m616.reg & 4) {
 		setchr8r(0x10, 0);
@@ -72,7 +72,7 @@ void Mapper616_Init(CartInfo *info) {
 	MMC3_cwrap = SetCHR;
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

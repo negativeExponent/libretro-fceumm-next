@@ -29,18 +29,18 @@
 #define IRQ_MODE_CPU 1
 
 static struct {
-	uint8 prg[4], chr[8];
-	uint8 cmd, mirror;
-	uint8 IRQa;
-	uint8 IRQPrescaler;
-	uint8 IRQCount;
-	uint8 IRQLatch;
-	uint8 IRQLatchExtra;
-	uint8 IRQMode;
-	uint8 IRQA12;
-	uint8 IRQFilter;
-	uint8 IRQDelay;
-	uint8 IRQReload;
+	uint8_t prg[4], chr[8];
+	uint8_t cmd, mirror;
+	uint8_t IRQa;
+	uint8_t IRQPrescaler;
+	uint8_t IRQCount;
+	uint8_t IRQLatch;
+	uint8_t IRQLatchExtra;
+	uint8_t IRQMode;
+	uint8_t IRQA12;
+	uint8_t IRQFilter;
+	uint8_t IRQDelay;
+	uint8_t IRQReload;
 } m064;
 
 static SFORMAT StateRegs[] = {
@@ -104,7 +104,7 @@ static void newppu_CPUIRQHook(int a) {
 	}
 }
 
-static void newppu_PPUHook(uint32 A) {
+static void newppu_PPUHook(uint32_t A) {
 	m064.IRQA12 = (A & 0x1000) >> 12;
 }
 
@@ -132,7 +132,7 @@ static void HBIRQHook(void) {
 }
 
 static void SyncPRG(void) {
-	uint16 pswap = (m064.cmd << 8) & 0x4000;
+	uint16_t pswap = (m064.cmd << 8) & 0x4000;
 
 	setprg8(0x8000 ^ pswap, m064.prg[0]);
 	setprg8(0xA000,         m064.prg[1]);
@@ -141,7 +141,7 @@ static void SyncPRG(void) {
 }
 
 static void SyncCHR(void) {
-	uint16 cswap = (m064.cmd << 5) & 0x1000;
+	uint16_t cswap = (m064.cmd << 5) & 0x1000;
 
 	if (m064.cmd & 0x20) {
 		setchr1(0x0000 ^ cswap, m064.chr[0]);
@@ -194,7 +194,7 @@ static void CheckPPUMode(void) {
 }
 
 static DECLFW(WriteReg) {
-	uint8 index;
+	uint8_t index;
 
 	CheckPPUMode();
 

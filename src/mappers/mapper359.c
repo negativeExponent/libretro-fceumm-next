@@ -27,17 +27,17 @@
 #include "fdssound.h"
 
 static struct {
-	uint8 prg[4];
-	uint8 chr[8];
-	uint8 reg[4];
+	uint8_t prg[4];
+	uint8_t chr[8];
+	uint8_t reg[4];
 
-	uint8 IRQReload;
-	uint8 IRQa;
-	uint8 IRQPA12;
-	uint8 IRQAutoEnable;
-	uint8 IRQLatch;
-	uint8 IRQCount;
-	int16 IRQCount16;
+	uint8_t IRQReload;
+	uint8_t IRQa;
+	uint8_t IRQPA12;
+	uint8_t IRQAutoEnable;
+	uint8_t IRQLatch;
+	uint8_t IRQCount;
+	int16_t IRQCount16;
 } m359;
 
 static SFORMAT StateRegs[] = {
@@ -55,9 +55,9 @@ static SFORMAT StateRegs[] = {
 };
 
 static void SyncPRG(void) {
-	uint8 maskLut[] = { 0x3F, 0x1F, 0x2F, 0x0F };
-	uint16 mask = maskLut[m359.reg[1] & 0x03];
-	uint16 base = (m359.reg[0] & 0x38) << 1;
+	uint8_t maskLut[] = { 0x3F, 0x1F, 0x2F, 0x0F };
+	uint16_t mask = maskLut[m359.reg[1] & 0x03];
+	uint16_t base = (m359.reg[0] & 0x38) << 1;
 
 	setprg8(0x6000, base | (m359.prg[3] & mask));
 	setprg8(0x8000, base | (m359.prg[0] & mask));
@@ -76,8 +76,8 @@ static void SyncCHR(void) {
 			setchr2(0x1000, m359.chr[6]);
 			setchr2(0x1800, m359.chr[7]);
 		} else {
-			uint16 mask = (m359.reg[1] & 0x40) ? 0xFF : 0x7F;
-			uint16 base = (m359.reg[3] << 7);
+			uint16_t mask = (m359.reg[1] & 0x40) ? 0xFF : 0x7F;
+			uint16_t base = (m359.reg[3] << 7);
 			int i;
 
 			for (i = 0; i < 8; i++) {

@@ -22,7 +22,7 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint16 bank = latch.addr >> 4;
+	uint16_t bank = latch.addr >> 4;
 
 	if (latch.addr & 0x100) {
 		setprg16(0x8000, bank);

@@ -26,7 +26,7 @@
 #define MAPPER_MMC1 0
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m613;
 
 static SFORMAT StateRegs[] = {
@@ -34,16 +34,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG_mmc3(uint16 A, uint16 V) {
-	uint16 mask = 0x0F;
-	uint16 base = m613.reg << 4;
+static void SetPRG_mmc3(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x0F;
+	uint16_t base = m613.reg << 4;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR_mmc3(uint16 A, uint16 V) {
-	uint16 mask = 0x7F;
-	uint16 base = m613.reg << 7;
+static void SetCHR_mmc3(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x7F;
+	uint16_t base = m613.reg << 7;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
@@ -52,16 +52,16 @@ static void SetMirror_mmc3(void) {
 	setmirror((mmc3.mirr & 0x01) ^ 0x01);
 }
 
-static void SetPRG_mmc1(uint16 A, uint16 V) {
-	uint16 mask = 0x07;
-	uint16 base = m613.reg << 3;
+static void SetPRG_mmc1(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x07;
+	uint16_t base = m613.reg << 3;
 
 	setprg16(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR_mmc1(uint16 A, uint16 V) {
-	uint16 mask = 0x1F;
-	uint16 base = m613.reg << 5;
+static void SetCHR_mmc1(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x1F;
+	uint16_t base = m613.reg << 5;
 
 	setchr4(A, (base & ~mask) | (V & mask));
 }

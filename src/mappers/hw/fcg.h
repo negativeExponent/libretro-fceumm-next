@@ -34,13 +34,13 @@ typedef enum __FCGEepromTypes {
 } FCGEepromTypes;
 
 typedef struct __FCG {
-	uint8 prg;
-	uint8 chr[8];
-	uint8 mirror;
-	uint8 wramEnabled;
-	uint8 IRQa;
-	int16 IRQCount;
-	int16 IRQLatch;
+	uint8_t prg;
+	uint8_t chr[8];
+	uint8_t mirror;
+	uint8_t wramEnabled;
+	uint8_t IRQa;
+	int16_t IRQCount;
+	int16_t IRQLatch;
 } FCG;
 
 DECLFW(FCG_Write);
@@ -49,7 +49,7 @@ void FCG_Power(void);
 void FCG_CPUIRQHook(int a);
 void FCG_Reset(void);
 
-void FCG_Init(CartInfo *info, uint8 _FCGType);
+void FCG_Init(CartInfo *info, uint8_t _FCGType);
 void FCG_SetEeprom(X24C0X *e);
 
 void FCG_SyncPRG(void);
@@ -60,7 +60,7 @@ void FCG_SyncWRAM(void);
 DECLFR(FCG_Read);
 DECLFW(FCG_Write);
 
-extern void (*FCG_pwrap)(uint16 A, uint16 V);
-extern void (*FCG_cwrap)(uint16 A, uint16 V);
+extern void (*FCG_pwrap)(uint16_t A, uint16_t V);
+extern void (*FCG_cwrap)(uint16_t A, uint16_t V);
 
 #endif /* _FCG_H */

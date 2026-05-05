@@ -30,7 +30,7 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &dipsw, 1, "DPSW" },
@@ -38,9 +38,9 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 bank = (latch.data & 0x07);
-	uint8 base = ((latch.addr << 3) & 0x20) | (latch.data & 0x18);
-	uint8 A14 = (latch.data >> 6) & 0x01;
+	uint8_t bank = (latch.data & 0x07);
+	uint8_t base = ((latch.addr << 3) & 0x20) | (latch.data & 0x18);
+	uint8_t A14 = (latch.data >> 6) & 0x01;
 
 	setprg16(0x8000, base | (bank & ~A14));
 	if (latch.data & 0x80) {

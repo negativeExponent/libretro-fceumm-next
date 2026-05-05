@@ -25,10 +25,10 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg;
-	uint8 protect;
-	uint8 IRQa;
-	uint16 IRQCount;
+	uint8_t reg;
+	uint8_t protect;
+	uint8_t IRQa;
+	uint16_t IRQCount;
 } m168;
 
 static SFORMAT StateRegs[] = {
@@ -100,7 +100,7 @@ void Mapper168_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8 * 8192;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 }

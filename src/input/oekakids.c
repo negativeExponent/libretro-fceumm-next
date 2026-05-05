@@ -21,20 +21,20 @@
 #include <string.h>
 #include "share.h"
 
-static uint8 OKValR, LastWR;
-static uint32 OKData;
-static uint32 OKX, OKY, OKB;
+static uint8_t OKValR, LastWR;
+static uint32_t OKData;
+static uint32_t OKX, OKY, OKB;
 
-static uint8 OK_Read(int w, uint8 ret) {
+static uint8_t OK_Read(int w, uint8_t ret) {
 	if (w) {
 		ret |= OKValR;
 	}
 	return(ret);
 }
 
-static void OK_Write(uint8 V) {
+static void OK_Write(uint8_t V) {
 	if (!(V & 0x1)) {
-		int32 vx, vy;
+		int32_t vx, vy;
 
 		OKValR = OKData = 0;
 
@@ -65,12 +65,12 @@ static void OK_Write(uint8 V) {
 }
 
 static void OK_Update(void *data, int arg) {
-	OKX = ((uint32*)data)[0];
-	OKY = ((uint32*)data)[1];
-	OKB = ((uint32*)data)[2];
+	OKX = ((uint32_t*)data)[0];
+	OKY = ((uint32_t*)data)[1];
+	OKB = ((uint32_t*)data)[2];
 }
 
-static void DrawOeka(uint8 * buf, int arg) {
+static void DrawOeka(uint8_t * buf, int arg) {
 	if (arg && OKY < 44)
 		FCEU_DrawCursor(buf, OKX, OKY);
 }

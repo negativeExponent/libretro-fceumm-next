@@ -26,12 +26,12 @@
 #define CHIP_FLASH 0x11
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m595;
 
-static uint8 flash_save;
-static uint8 *flash_data;
-static uint32 flashrom_len;
+static uint8_t flash_save;
+static uint8_t *flash_data;
+static uint32_t flashrom_len;
 
 
 static SFORMAT StateRegs[] = {
@@ -98,15 +98,15 @@ void Mapper595_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_malloc(WRAMSIZE);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	SetupCartPRGMapping(CHIP_WRAM, WRAM, WRAMSIZE, TRUE);
 
 	if (flash_save) {
-		uint32 i, ssize;
+		uint32_t i, ssize;
 		/* Allocate memory for flash */
 		ssize = ROM.prg.size;
-		flash_data = (uint8 *)FCEU_gmalloc(ssize);
+		flash_data = (uint8_t *)FCEU_gmalloc(ssize);
 		/* Copy ROM to flash data */
 		for (i = 0; i < ssize; i++) {
 			flash_data[i] = ROM.prg.data[i % ssize];

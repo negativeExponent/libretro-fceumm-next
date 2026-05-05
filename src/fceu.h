@@ -15,14 +15,14 @@ extern int fceuindbg;
 extern int newppu;
 void ResetGameLoaded(void);
 
-#define DECLFR(x) uint8 x(uint16 A)
-#define DECLFW(x) void x(uint16 A, uint8 V)
+#define DECLFR(x) uint8_t x(uint16_t A)
+#define DECLFW(x) void x(uint16_t A, uint8_t V)
 
-void FCEU_MemoryRand(uint8 *ptr, uint32 size);
-void SetReadHandler(uint16 start, uint16 end, readfunc func);
-void SetWriteHandler(uint16 start, uint16 end, writefunc func);
-writefunc GetWriteHandler(uint16 a);
-readfunc GetReadHandler(uint16 a);
+void FCEU_MemoryRand(uint8_t *ptr, uint32_t size);
+void SetReadHandler(uint16_t start, uint16_t end, readfunc func);
+void SetWriteHandler(uint16_t start, uint16_t end, writefunc func);
+writefunc GetWriteHandler(uint16_t a);
+readfunc GetReadHandler(uint16_t a);
 
 void FCEU_ResetVidSys(void);
 
@@ -30,24 +30,24 @@ void ResetMapping(void);
 void ResetNES(void);
 void PowerNES(void);
 
-extern uint64 timestampbase;
-extern uint32 MMC5HackVROMMask;
-extern uint8 *MMC5HackExNTARAMPtr;
-extern uint8 MMC5Hack;
-extern uint8 *MMC5HackVROMPTR;
-extern uint8 MMC5HackCHRMode;
-extern uint8 MMC5HackSPMode;
-extern uint8 MMC50x5130;
-extern uint8 MMC5HackSPScroll;
-extern uint8 MMC5HackSPPage;
+extern uint64_t timestampbase;
+extern uint32_t MMC5HackVROMMask;
+extern uint8_t *MMC5HackExNTARAMPtr;
+extern uint8_t MMC5Hack;
+extern uint8_t *MMC5HackVROMPTR;
+extern uint8_t MMC5HackCHRMode;
+extern uint8_t MMC5HackSPMode;
+extern uint8_t MMC50x5130;
+extern uint8_t MMC5HackSPScroll;
+extern uint8_t MMC5HackSPPage;
 
-extern uint8 PEC586Hack;
+extern uint8_t PEC586Hack;
 
-extern uint8 QTAIHack;
-extern uint8 qtaintramreg;
-extern uint8 QTAINTRAM[0x800];
+extern uint8_t QTAIHack;
+extern uint8_t qtaintramreg;
+extern uint8_t QTAINTRAM[0x800];
 
-extern uint8 *RAM;
+extern uint8_t *RAM;
 
 extern readfunc ARead[0x10000];
 extern writefunc BWrite[0x10000];
@@ -62,8 +62,8 @@ extern void (*GameStateRestore)(int version);
 #include "git.h"
 extern FCEUGI *GameInfo;
 
-extern uint8 isPAL;
-extern uint8 isDendy;
+extern uint8_t isPAL;
+extern uint8_t isDendy;
 
 #include "driver.h"
 
@@ -115,8 +115,8 @@ void FCEU_PrintDebug(char *format, ...); /* debug level messages */
 void FCEU_printf(char *format, ...);     /* normal messages */
 void FCEU_TogglePPU(void);
 
-void SetNESDeemph_OldHacky(uint8 d, int force);
-void DrawTextTrans(uint8 *dest, uint32 width, uint8 *textmsg, uint8 fgcolor);
+void SetNESDeemph_OldHacky(uint8_t d, int force);
+void DrawTextTrans(uint8_t *dest, uint32_t width, uint8_t *textmsg, uint8_t fgcolor);
 void FCEU_PutImage(void);
 #ifdef FRAMESKIP
 void FCEU_PutImageDummy(void);

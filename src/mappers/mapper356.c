@@ -26,8 +26,8 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[4];
-	uint8 cmd;
+	uint8_t reg[4];
+	uint8_t cmd;
 } m356;
 
 static SFORMAT StateRegs[] = {
@@ -36,17 +36,17 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = ~m356.reg[3] & 0x3F;
-	uint16 base = ((m356.reg[2] << 2) & 0x300) | m356.reg[1];
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = ~m356.reg[3] & 0x3F;
+	uint16_t base = ((m356.reg[2] << 2) & 0x300) | m356.reg[1];
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	if (m356.reg[2] & 0x20) {
-		uint16 mask = 0xFF >> (~m356.reg[2] & 0xF);
-		uint16 base = ((m356.reg[2] << 4) & 0xF00) | m356.reg[0];
+		uint16_t mask = 0xFF >> (~m356.reg[2] & 0xF);
+		uint16_t base = ((m356.reg[2] << 4) & 0xF00) | m356.reg[0];
 
 		setchr1(A, (base & ~mask) | (V & mask));
 	} else {
@@ -95,7 +95,7 @@ void Mapper356_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

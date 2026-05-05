@@ -24,8 +24,8 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 cmd;
-	uint8 reg[8];
+	uint8_t cmd;
+	uint8_t reg[8];
 } m137_alt;
 
 static SFORMAT StateRegs[] = {
@@ -34,7 +34,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SyncMirror(uint8 mirr) {
+static void SyncMirror(uint8_t mirr) {
 	switch (mirr & 3) {
 	case 0: setmirror(MI_V); break;
 	case 1: setmirror(MI_H); break;

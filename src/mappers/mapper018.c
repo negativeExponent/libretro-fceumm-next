@@ -25,9 +25,9 @@
 #include "mapinc.h"
 
 static struct  {
-	uint8 prg[4], chr[8];
-	uint8 IRQa, mirr;
-	int32 IRQCount, IRQLatch;
+	uint8_t prg[4], chr[8];
+	uint8_t IRQa, mirr;
+	int32_t IRQCount, IRQLatch;
 } m018;
 
 static SFORMAT StateRegs[] = {
@@ -91,7 +91,7 @@ static DECLFW(WriteWRAM) {
 }
 
 static DECLFW(WritePrg) {
-	uint8 index = ((A >> 1) & 1) | ((A - 0x8000) >> 11);
+	uint8_t index = ((A >> 1) & 1) | ((A - 0x8000) >> 11);
 
 	if (A & 0x01) {
 		m018.prg[index] = (m018.prg[index] & 0x0F) | (V << 4);
@@ -102,7 +102,7 @@ static DECLFW(WritePrg) {
 }
 
 static DECLFW(WriteChr) {
-	uint8 index = ((A >> 1) & 1) | ((A - 0xA000) >> 11);
+	uint8_t index = ((A >> 1) & 1) | ((A - 0xA000) >> 11);
 
 	if (A & 0x01) {
 		m018.chr[index] = (m018.chr[index] & 0x0F) | (V << 4);
@@ -173,7 +173,7 @@ static void Power(void) {
 
 static void CPUCycle(int a) {
 	if (m018.IRQa & 0x01) {
-		uint16 mask = 0xFFFF;
+		uint16_t mask = 0xFFFF;
 
 		if (m018.IRQa & 0x08) {
 			mask = 0x000F;
@@ -208,7 +208,7 @@ void Mapper018_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {

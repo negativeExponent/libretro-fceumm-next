@@ -22,11 +22,11 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[4];
-	uint8 cmd;
+	uint8_t reg[4];
+	uint8_t cmd;
 } m045;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m045.reg, 4, "EXPR" },
@@ -34,7 +34,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	/* Some multicarts select between five different menus by connecting one of the higher address lines to PRG /CE.
 	The menu code selects between menus by checking which of the higher address lines disables PRG-ROM when set. */
 	if (dipsw &&
@@ -44,16 +44,16 @@ static void SetPRG(uint16 A, uint16 V) {
 	     dipsw == 4 && m045.reg[2] & 0x20)) {
 		unsetcpu8(A);
 	} else {
-		uint32 mask = ~m045.reg[3] & 0x3F;
-		uint32 base = ((m045.reg[2] << 2) & 0x300) | m045.reg[1];
+		uint32_t mask = ~m045.reg[3] & 0x3F;
+		uint32_t base = ((m045.reg[2] << 2) & 0x300) | m045.reg[1];
 		setprg8(A, (base & ~mask) | (V & mask));
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	if (ROM.chr.size || (iNESCart.CHRRamSize > 8192)) {
-		uint32 mask = 0xFF >> (~m045.reg[2] & 0x0F);
-		uint32 base = ((m045.reg[2] << 4) & 0xF00) | m045.reg[0];
+		uint32_t mask = 0xFF >> (~m045.reg[2] & 0x0F);
+		uint32_t base = ((m045.reg[2] << 4) & 0xF00) | m045.reg[0];
 
 		setchr1(A, (base & ~mask) | (V & mask));
 	} else {
@@ -64,7 +64,7 @@ static void SetCHR(uint16 A, uint16 V) {
 
 static DECLFR(ReadDIP) {
 	/* Solder pad for 超强年度新卡 15-in-1 (New Years 15-in-1 cartridge )*/
-	uint32 addr = 1 << (dipsw + 4);
+	uint32_t addr = 1 << (dipsw + 4);
 
 	if (A & (addr | (addr - 1))) {
 		return 0x01;

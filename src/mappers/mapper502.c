@@ -27,7 +27,7 @@
 #include "latch.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m502;
 
 static SFORMAT StateRegs[] = {
@@ -36,7 +36,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 mask = (8 << ((m502.reg[1] >> 4) & 0x03)) - 1;
+	uint8_t mask = (8 << ((m502.reg[1] >> 4) & 0x03)) - 1;
 
 	setprg4(0x7000, 0);
 	if (m502.reg[1] & 0x06) {

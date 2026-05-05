@@ -52,11 +52,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-void OneBus_SyncPRG(uint16 mmask, uint16 mblock) {
-	uint8 mode = onebus.cpu41xx[0x0B] & 0x07;
-	uint16 mask = (mode == 7) ? 0xFF : (0x3F >> mode);
-	uint16 block = (((onebus.cpu41xx[0] & 0xF0) << 4) | onebus.cpu41xx[0x0A]) & ~mask;
-	uint16 pswap = (onebus.cpu41xx[0x05] & 0x40) << 8;
+void OneBus_SyncPRG(uint16_t mmask, uint16_t mblock) {
+	uint8_t mode = onebus.cpu41xx[0x0B] & 0x07;
+	uint16_t mask = (mode == 7) ? 0xFF : (0x3F >> mode);
+	uint16_t block = (((onebus.cpu41xx[0] & 0xF0) << 4) | onebus.cpu41xx[0x0A]) & ~mask;
+	uint16_t pswap = (onebus.cpu41xx[0x05] & 0x40) << 8;
 
 	setprg8(0x8000 ^ pswap, mblock | (((block | (onebus.cpu41xx[0x07] & mask)) + onebus.relative_8k) & mmask));
 	setprg8(0xA000,         mblock | (((block | (onebus.cpu41xx[0x08] & mask)) + onebus.relative_8k) & mmask));
@@ -70,10 +70,10 @@ void OneBus_SyncPRG(uint16 mmask, uint16 mblock) {
 	}
 }
 
-void OneBus_SyncPRG16(uint16 bank0, uint16 bank1, uint16 mmask, uint16 mblock) {
-	uint8 mode = onebus.cpu41xx[0x0B] & 0x07;
-	uint16 mask = (mode == 7) ? 0xFF : (0x3F >> mode);
-	uint16 block = (((onebus.cpu41xx[0] & 0xF0) << 4) | onebus.cpu41xx[0x0A]) & ~mask;
+void OneBus_SyncPRG16(uint16_t bank0, uint16_t bank1, uint16_t mmask, uint16_t mblock) {
+	uint8_t mode = onebus.cpu41xx[0x0B] & 0x07;
+	uint16_t mask = (mode == 7) ? 0xFF : (0x3F >> mode);
+	uint16_t block = (((onebus.cpu41xx[0] & 0xF0) << 4) | onebus.cpu41xx[0x0A]) & ~mask;
 
 	setprg8(0x8000, mblock | ((block | (((bank0 << 1) | 0) & mask)) & mmask));
 	setprg8(0xA000, mblock | ((block | (((bank0 << 1) | 1) & mask)) & mmask));
@@ -87,14 +87,14 @@ void OneBus_SyncPRG16(uint16 bank0, uint16 bank1, uint16 mmask, uint16 mblock) {
 	}
 }
 
-void OneBus_SetCHR(uint8 **banks, uint8_t *base, uint8 bit4pp, uint8 extended, uint16 EVA, uint16 mmask, uint16 mblock) {
+void OneBus_SetCHR(uint8_t **banks, uint8_t *base, uint8_t bit4pp, uint8_t extended, uint16_t EVA, uint16_t mmask, uint16_t mblock) {
 	static const uint8_t chr_mask_lut[8] = { 0xFF, 0x7F, 0x3F, 0xFF, 0x1F, 0x0F, 0x07, 0x7F };
-	uint16 mask = chr_mask_lut[onebus.ppu20xx[0x1A] & 0x07];
-	uint16 block = (onebus.ppu20xx[0x1A] & 0xF8) & ~mask;
-	uint16 cswap = (onebus.cpu41xx[0x05] & 0x80) ? 4 : 0;
+	uint16_t mask = chr_mask_lut[onebus.ppu20xx[0x1A] & 0x07];
+	uint16_t block = (onebus.ppu20xx[0x1A] & 0xF8) & ~mask;
+	uint16_t cswap = (onebus.cpu41xx[0x05] & 0x80) ? 4 : 0;
 
-	uint32 chrMask = onebus.chr.size - 1;
-	uint16 relative = onebus.relative_8k << 3;
+	uint32_t chrMask = onebus.chr.size - 1;
+	uint16_t relative = onebus.relative_8k << 3;
 
 	if (bit4pp) {
 		relative >>= 1;
@@ -131,8 +131,8 @@ void OneBus_SetCHR(uint8 **banks, uint8_t *base, uint8 bit4pp, uint8 extended, u
 	}
 }
 
-extern uint8 **VPageR;
-void OneBus_SyncCHR(uint16 mmask, uint16 mblock) {
+extern uint8_t **VPageR;
+void OneBus_SyncCHR(uint16_t mmask, uint16_t mblock) {
 #define BK16EN  (onebus.ppu20xx[0x10] & 0x02)
 #define SP16EN  (onebus.ppu20xx[0x10] & 0x04)
 #define SPEXTEN (onebus.ppu20xx[0x10] & 0x08)
@@ -169,7 +169,7 @@ DECLFW(OneBus_WritePPU20XX) {
 
 /* read $4000 - $403F */
 DECLFR(OneBus_ReadAPU40XX) {
-	uint8 result = defapuread[A & 0x003F](A);
+	uint8_t result = defapuread[A & 0x003F](A);
 	/*	FCEU_printf("read %04x, %02x\n",A,result); */
 	switch (A & 0x3F) {
 	case 0x15:
@@ -295,7 +295,7 @@ DECLFW(OneBus_WriteMMC3) {
 			OneBus_WriteCPU41XX(0x4105, V & ~0x20);
 			break;
 		case 0x8001: {
-			uint8 reg = onebus.cpu41xx[0x05] & 7;
+			uint8_t reg = onebus.cpu41xx[0x05] & 7;
 			switch (reg) {
 			case 0:
 			case 1:
@@ -334,7 +334,7 @@ DECLFW(OneBus_WriteMMC3) {
 }
 
 static void OneBus_IRQHook(void) {
-	uint32 count = onebus.IRQCount;
+	uint32_t count = onebus.IRQCount;
 	if (!count || onebus.IRQReload) {
 		onebus.IRQCount = onebus.cpu41xx[0x01];
 		onebus.IRQReload = 0;
@@ -359,8 +359,8 @@ static void OneBus_CpuHook(int a) {
 				onebus.pcm_enable = 0;
 				X6502_IRQBegin(FCEU_IQEXT);
 			} else {
-				uint16 addr = onebus.pcm_addr | ((onebus.apu40xx[0x30] ^ 3) << 14);
-				uint8 raw_pcm = ARead[addr](addr) >> 1;
+				uint16_t addr = onebus.pcm_addr | ((onebus.apu40xx[0x30] ^ 3) << 14);
+				uint8_t raw_pcm = ARead[addr](addr) >> 1;
 				defapuwrite[0x11](0x4011, raw_pcm);
 				onebus.pcm_addr++;
 				onebus.pcm_addr &= 0x7FFF;
@@ -370,7 +370,7 @@ static void OneBus_CpuHook(int a) {
 }
 
 void OneBus_Power(void) {
-	uint32 i;
+	uint32_t i;
 
 	for (i = 0; i < 64; i++) {
 		defapuread[i] = GetReadHandler(0x4000 | i);
@@ -462,7 +462,7 @@ static void OneBus_Close(void) {
 }
 
 void OneBus_Init(CartInfo *info, void (*proc)(void), int wram, int battery) {
-	uint32 i;
+	uint32_t i;
 
 	WSync = proc;
 
@@ -482,11 +482,11 @@ void OneBus_Init(CartInfo *info, void (*proc)(void), int wram, int battery) {
 		onebus.chr.size = 1 << ssize;
 	}
 
-	onebus.chr.low = (uint8 *)FCEU_malloc(onebus.chr.size >> 1);
-	onebus.chr.high = (uint8 *)FCEU_malloc(onebus.chr.size >> 1);
+	onebus.chr.low = (uint8_t *)FCEU_malloc(onebus.chr.size >> 1);
+	onebus.chr.high = (uint8_t *)FCEU_malloc(onebus.chr.size >> 1);
 	if ((iNESCart.ConsoleType == CONSOLE_VT09) || (iNESCart.ConsoleType == CONSOLE_VT369)) {
-		onebus.chr.low16 = (uint8 *)FCEU_malloc(onebus.chr.size >> 1);
-		onebus.chr.high16 = (uint8 *)FCEU_malloc(onebus.chr.size >> 1);
+		onebus.chr.low16 = (uint8_t *)FCEU_malloc(onebus.chr.size >> 1);
+		onebus.chr.high16 = (uint8_t *)FCEU_malloc(onebus.chr.size >> 1);
 	}
 
 	for (i = 0; i < onebus.chr.size; i++) {
@@ -513,7 +513,7 @@ void OneBus_Init(CartInfo *info, void (*proc)(void), int wram, int battery) {
 
 	if (wram) {
 		WRAMSIZE = wram * 1024;
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (battery) {

@@ -28,7 +28,7 @@
 
 #include "memalign.h"
 
-void *FCEU_amalloc(uint32 size) {
+void *FCEU_amalloc(uint32_t size) {
 	void *ret = memalign_alloc(256, size);
 	if (!ret) {
 		FCEU_PrintError("Error allocating memory!  Doing a hard exit.");
@@ -37,17 +37,17 @@ void *FCEU_amalloc(uint32 size) {
 	return ret;
 }
 
-void *FCEU_gmalloc(uint32 size) {
+void *FCEU_gmalloc(uint32_t size) {
 	void *ret = malloc(size);
 	if (!ret) {
 		FCEU_PrintError("Error allocating memory!  Doing a hard exit.");
 		exit(1);
 	}
-	FCEU_MemoryRand((uint8 *)ret, size);
+	FCEU_MemoryRand((uint8_t *)ret, size);
 	return ret;
 }
 
-void *FCEU_malloc(uint32 size) {
+void *FCEU_malloc(uint32_t size) {
 	void *ret = (void *)malloc(size);
 
 	if (!ret) {

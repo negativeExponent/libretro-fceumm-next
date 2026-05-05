@@ -23,8 +23,8 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[2];
-	uint8 extMode;
+	uint8_t reg[2];
+	uint8_t extMode;
 } m219;
 
 static SFORMAT StateRegs[] = {
@@ -33,16 +33,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = (m219.reg[0] & 0x40) ? 0x0F : 0x1F;
-	uint16 base = (m219.reg[1] & 0x20) | ((m219.reg[0] << 4) & 0x10);
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = (m219.reg[0] & 0x40) ? 0x0F : 0x1F;
+	uint16_t base = (m219.reg[1] & 0x20) | ((m219.reg[0] << 4) & 0x10);
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (m219.reg[0] & 0x80) ? 0x7F : 0xFF;
-	uint16 base = ((m219.reg[1] << 3) & 0x100) | ((m219.reg[0] << 4) & 0x80);
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (m219.reg[0] & 0x80) ? 0x7F : 0xFF;
+	uint16_t base = ((m219.reg[1] << 3) & 0x100) | ((m219.reg[0] << 4) & 0x80);
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
@@ -67,7 +67,7 @@ static DECLFW(WriteASIC) {
 			break;
 		}
 		if ((mmc3.cmd >= 0x08) && (mmc3.cmd <= 0x1F)) { /* Scrambled CHR register */
-			uint8 index = (mmc3.cmd - 8) >> 2;
+			uint8_t index = (mmc3.cmd - 8) >> 2;
 
 			if (mmc3.cmd & 0x01) { /* LSB nibble */
 				mmc3.reg[index] &= ~0x0F;

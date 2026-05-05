@@ -24,11 +24,11 @@
 
 /* TODO: Mic emulation */
 static struct {
-	uint8 adc_data;
+	uint8_t adc_data;
 } m515;
 
 static void Sync(void) {
-	uint32 prg = latch.data & 0x3F;
+	uint32_t prg = latch.data & 0x3F;
 
 	if (latch.data & 0x80) {
 		/* select internal ROM bank located at last 1MiB of PRG-ROM */
@@ -43,7 +43,7 @@ static void Sync(void) {
 static DECLFR(ReadMic) {
 	A &= 0x03;
 	if (A == 3) {
-		uint8 ret = m515.adc_data & 0x80;
+		uint8_t ret = m515.adc_data & 0x80;
 		m515.adc_data <<= 1;
 		return ret;
 	}

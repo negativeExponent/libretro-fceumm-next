@@ -41,7 +41,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[8];
+	uint8_t reg[8];
 } m215;
 
 static SFORMAT StateRegs[] = {
@@ -49,9 +49,9 @@ static SFORMAT StateRegs[] = {
 	{ 0 },
 };
 
-static void SetPRGBank_mmc3(uint16 A, uint16 V) {
-	uint16 mask = (m215.reg[0] & 0x40) ? 0x0F : 0x1F;
-	uint16 base = ((m215.reg[1] << 4) & 0x80) | ((m215.reg[1] << 5) & 0x60) | (m215.reg[1] & 0x10);
+static void SetPRGBank_mmc3(uint16_t A, uint16_t V) {
+	uint16_t mask = (m215.reg[0] & 0x40) ? 0x0F : 0x1F;
+	uint16_t base = ((m215.reg[1] << 4) & 0x80) | ((m215.reg[1] << 5) & 0x60) | (m215.reg[1] & 0x10);
 
 	/* if (dipsw) {
 		if (dipsw & 0x01) {
@@ -62,17 +62,17 @@ static void SetPRGBank_mmc3(uint16 A, uint16 V) {
 	} */
 
 	if (m215.reg[0] & 0x80) { /* NROM */
-		uint16 A14 = (m215.reg[0] >> 4) & 0x02;
-		uint16 tmpmask = (A14 | 0x01);
+		uint16_t A14 = (m215.reg[0] >> 4) & 0x02;
+		uint16_t tmpmask = (A14 | 0x01);
 		V = (((m215.reg[0] & 0x0F) << 1) & ~tmpmask) | ((A >> 13) & tmpmask);
 	}
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHRBank_mmc3(uint16 A, uint16 V) {
-	uint16 mask = (m215.reg[0] & 0x40) ? 0x7F : 0xFF;
-	uint16 base = ((m215.reg[1] << 2) & 0x80) |
+static void SetCHRBank_mmc3(uint16_t A, uint16_t V) {
+	uint16_t mask = (m215.reg[0] & 0x40) ? 0x7F : 0xFF;
+	uint16_t base = ((m215.reg[1] << 2) & 0x80) |
 	    (m215.reg[1] << ((iNESCart.submapper == 1) ? 7 : 6) & 0x700);
 
 	/* if (dipsw) {
@@ -84,7 +84,7 @@ static void SetCHRBank_mmc3(uint16 A, uint16 V) {
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static const uint8 protarray[8][8] = {
+static const uint8_t protarray[8][8] = {
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }, /* 0 Super Hang-On               */
 	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00 }, /* 1 Monkey King                 */
 	{ 0x00, 0x00, 0x00, 0x00, 0x03, 0x04, 0x00, 0x00 }, /* 2 Super Hang-On/Monkey King   */
@@ -105,7 +105,7 @@ static DECLFW(WriteReg) {
 	MMC3_SyncCHR();
 }
 
-static const uint8 regperm[8][8] = {
+static const uint8_t regperm[8][8] = {
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0, 2, 6, 1, 7, 3, 4, 5 },
 	{ 0, 5, 4, 1, 7, 2, 6, 3 }, /* unused */
@@ -116,7 +116,7 @@ static const uint8 regperm[8][8] = {
 	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* empty */
 };
 
-static const uint16 adrperm[8][8] = {
+static const uint16_t adrperm[8][8] = {
 	{ 0x8000, 0x8001, 0xA000, 0xA001, 0xC000, 0xC001, 0xE000, 0xE001 },
 	{ 0xA001, 0xA000, 0x8000, 0xC000, 0x8001, 0xC001, 0xE000, 0xE001 },
 	{ 0x8000, 0x8001, 0xA000, 0xA001, 0xC000, 0xC001, 0xE000, 0xE001 }, /* unused */

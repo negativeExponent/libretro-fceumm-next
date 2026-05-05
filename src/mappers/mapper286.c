@@ -22,12 +22,12 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg[4];
-	uint8 chr[4];
-	uint8 mirror;
+	uint8_t prg[4];
+	uint8_t chr[4];
+	uint8_t mirror;
 } m286;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m286.prg, 4, "PREG" },

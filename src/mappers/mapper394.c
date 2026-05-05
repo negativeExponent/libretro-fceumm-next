@@ -27,7 +27,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m394;
 
 static SFORMAT StateRegs[] = {
@@ -35,45 +35,45 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint32 PRGBase(void) {
+static uint32_t PRGBase(void) {
 	return ((m394.reg[1] << 5) & 0x060) | ((m394.reg[3] << 1) & 0x010);
 }
 
-static uint32 CHRBase(void) {
+static uint32_t CHRBase(void) {
 	return ((m394.reg[1] << 8) & 0x200) | ((m394.reg[1] << 6) & 0x100) | ((m394.reg[3] << 1) & 0x080);
 }
 
-static uint32 PRGBank_JY(uint32 V) {
-	uint8 base = PRGBase();
+static uint32_t PRGBank_JY(uint32_t V) {
+	uint8_t base = PRGBase();
 
 	return (base | (V & 0x1F));
 }
 
-static uint32 CHRBank_JY(uint32 V) {
-	uint16 base = CHRBase();
+static uint32_t CHRBank_JY(uint32_t V) {
+	uint16_t base = CHRBase();
 
 	return (base | (V & 0x0FF));
 }
 
-static void SetPRG_jy(uint16 A, uint32 V) {
+static void SetPRG_jy(uint16_t A, uint32_t V) {
 	setprg8(A, PRGBank_JY(V));
 }
 
-static void SetCHR_jy(uint16 A, uint32 V) {
+static void SetCHR_jy(uint16_t A, uint32_t V) {
 	setchr1(A, CHRBank_JY(V));
 }
 
-static void SetWRAM_jy(uint16 A, uint32 V) {
+static void SetWRAM_jy(uint16_t A, uint32_t V) {
 	setprg8(A, PRGBank_JY(V));
 }
 
-static void SetMirror_jy(uint16 A, uint32 V) {
+static void SetMirror_jy(uint16_t A, uint32_t V) {
 	setntamem(CHRptr[0] + 0x400 * (CHRBank_JY(V) & CHRmask1[0]), 0, A);
 }
 
-static void SetPRG_mmc3(uint16 A, uint16 V) {
-	uint8 mask = (m394.reg[3] & 0x10) ? 0x1F : 0x0F;
-	uint8 base = PRGBase();
+static void SetPRG_mmc3(uint16_t A, uint16_t V) {
+	uint8_t mask = (m394.reg[3] & 0x10) ? 0x1F : 0x0F;
+	uint8_t base = PRGBase();
 
 	if (m394.reg[1] & 0x08) {
 		setprg8(A, base | (V & mask));
@@ -82,9 +82,9 @@ static void SetPRG_mmc3(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR_mmc3(uint16 A, uint16 V) {
-	uint16 mask = (m394.reg[3] & 0x80) ? 0xFF : 0x7F;
-	uint16 base = CHRBase();
+static void SetCHR_mmc3(uint16_t A, uint16_t V) {
+	uint16_t mask = (m394.reg[3] & 0x80) ? 0xFF : 0x7F;
+	uint16_t base = CHRBase();
 
 	if (iNESCart.submapper != 1) {
 		base = (((m394.reg[1] << 8) & 0x300) | ((m394.reg[3] << 1) & 0x080));
@@ -94,7 +94,7 @@ static void SetCHR_mmc3(uint16 A, uint16 V) {
 }
 
 static DECLFW(WriteReg) {
-	uint8 oldMode = m394.reg[1];
+	uint8_t oldMode = m394.reg[1];
 
 	A &= 3;
 	m394.reg[A] = V;

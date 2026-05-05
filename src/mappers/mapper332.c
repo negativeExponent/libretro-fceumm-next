@@ -27,10 +27,10 @@
 #include "latch.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m332;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m332.reg, 2, "REGS" },
@@ -38,9 +38,9 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint32 prg = ((m332.reg[0] >> 3) & 0x08) | (m332.reg[0] & 0x07);
-	uint32 chr = ((m332.reg[0] >> 3) & 0x08) | (m332.reg[1] & 0x07);
-	uint32 mask = (m332.reg[1] & 0x10) ? 0 : (m332.reg[1] & 0x20) ? 1 : 3;
+	uint32_t prg = ((m332.reg[0] >> 3) & 0x08) | (m332.reg[0] & 0x07);
+	uint32_t chr = ((m332.reg[0] >> 3) & 0x08) | (m332.reg[1] & 0x07);
+	uint32_t mask = (m332.reg[1] & 0x10) ? 0 : (m332.reg[1] & 0x20) ? 1 : 3;
 
 	if (m332.reg[0] & 0x08) {
 		setprg16(0x8000, prg);

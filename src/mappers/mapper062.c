@@ -23,10 +23,10 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 prg = (latch.addr & 0x40) | ((latch.addr >> 8) & 0x3F);
-	uint8 chr = ((latch.addr & 0x1F) << 2) | (latch.data & 0x03);
-	uint8 mirrorV = ((latch.addr >> 7) & 1) ^ 1;
-	uint8 A14 = (latch.addr & 0x20) == 0;
+	uint8_t prg = (latch.addr & 0x40) | ((latch.addr >> 8) & 0x3F);
+	uint8_t chr = ((latch.addr & 0x1F) << 2) | (latch.data & 0x03);
+	uint8_t mirrorV = ((latch.addr >> 7) & 1) ^ 1;
+	uint8_t A14 = (latch.addr & 0x20) == 0;
 
 	/* FCEU_printf("%04x prg = %02x chr = %02x mirV = %d A14 = %d\n", latch.addr, prg, chr, mirrorV, A14); */
 

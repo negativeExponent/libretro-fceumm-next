@@ -26,12 +26,12 @@
 /* size of non-battery-backed portion of WRAM */
 /* serves as starting offset for actual save ram from total wram size */
 /* returns 0 if entire work ram is battery backed ram */
-static uint32 NONSaveRAMSIZE = 0;
+static uint32_t NONSaveRAMSIZE = 0;
 
 static MMC1TYPE type = MMC1B;
 
-void (*MMC1_pwrap)(uint16 A, uint16 V);
-void (*MMC1_cwrap)(uint16 A, uint16 V);
+void (*MMC1_pwrap)(uint16_t A, uint16_t V);
+void (*MMC1_cwrap)(uint16_t A, uint16_t V);
 
 void (*MMC1_SyncPRG)(void);
 void (*MMC1_SyncCHR)(void);
@@ -40,9 +40,9 @@ void (*MMC1_SyncWRAM)(void);
 
 MMC1 mmc1;
 
-uint32 MMC1_GetPRGBank(int index) {
-	uint32 bank;
-	uint8 prg = mmc1.reg[3];
+uint32_t MMC1_GetPRGBank(int index) {
+	uint32_t bank;
+	uint8_t prg = mmc1.reg[3];
 
 	switch (mmc1.reg[0] & 0xC) {
 	case 0xC:
@@ -65,7 +65,7 @@ uint32 MMC1_GetPRGBank(int index) {
 	return (bank & 0x0F);
 }
 
-uint32 MMC1_GetCHRBank(int index) {
+uint32_t MMC1_GetCHRBank(int index) {
 	if (mmc1.reg[0] & 0x10) {
 		return (mmc1.reg[1 + index]);
 	}
@@ -73,7 +73,7 @@ uint32 MMC1_GetCHRBank(int index) {
 	return ((mmc1.reg[1] & ~1) | index);
 }
 
-uint8 MMC1_WRAMEnabled(void) {
+uint8_t MMC1_WRAMEnabled(void) {
 	if ((mmc1.reg[3] & 0x10) && (type == MMC1B)) {
 		return FALSE;
 	}
@@ -81,11 +81,11 @@ uint8 MMC1_WRAMEnabled(void) {
 	return TRUE;
 }
 
-void MMC1_pwrap_default(uint16 A, uint16 V) {
+void MMC1_pwrap_default(uint16_t A, uint16_t V) {
 	setprg16(A, V & 0x0F);
 }
 
-void MMC1_cwrap_default(uint16 A, uint16 V) {
+void MMC1_cwrap_default(uint16_t A, uint16_t V) {
 	setchr4(A, V & 0x1F);
 }
 
@@ -124,7 +124,7 @@ void MMC1_SyncMirror_default(void) {
 	}
 }
 
-static uint64 lreset;
+static uint64_t lreset;
 DECLFW(MMC1_Write) {
 	int n = (A >> 13) - 4;
 
@@ -232,7 +232,7 @@ void MMC1_Init(CartInfo *info, MMC1TYPE _type, int wram, int saveram) {
 	type = _type;
 
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (saveram) {
@@ -262,7 +262,7 @@ DECLFW(MMC1_writeWRAM) {
 	}
 }
 
-void MMC1_SetConfig(uint8 clear, MMC1TYPE _type) {
+void MMC1_SetConfig(uint8_t clear, MMC1TYPE _type) {
 	type = _type;
 	SetReadHandler (0x6000, 0x7FFF, MMC1_readWRAM);
 	SetWriteHandler(0x6000, 0x7FFF, MMC1_writeWRAM);

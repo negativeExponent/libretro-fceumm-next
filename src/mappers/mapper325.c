@@ -25,11 +25,11 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void SetPRGBank(uint16 A, uint16 V) {
+static void SetPRGBank(uint16_t A, uint16_t V) {
 	setprg8(A, (V & 0xF3) | ((V & 0x04) << 1) | ((V & 0x08) >> 1));
 }
 
-static void SetCHRBank(uint16 A, uint16 V) {
+static void SetCHRBank(uint16_t A, uint16_t V) {
 	setchr1(A, (V & 0xDD) | ((V & 0x02) << 4) | ((V & 0x20) >> 4));
 }
 

@@ -45,7 +45,7 @@
 #include "ines-correct.h"
 
 struct console_type {
-	uint8 id;
+	uint8_t id;
 	char *name;
 };
 
@@ -70,7 +70,7 @@ static const struct console_type console_types_str[] = {
 };
 
 struct input_type {
-	uint8 id;
+	uint8_t id;
 	char *name;
 };
 
@@ -206,12 +206,12 @@ static void iNESGI(int h) {
 }
 
 struct CRCMATCH {
-	uint32 crc;
+	uint32_t crc;
 	char *name;
 };
 
 struct INPSEL {
-	uint32 crc32;
+	uint32_t crc32;
 	int input1;
 	int input2;
 	int inputfc;
@@ -304,7 +304,7 @@ static void SetInput(CartInfo *info) {
 }
 
 struct INPSEL_NES20 {
-	uint8 id;
+	uint8_t id;
 	int input1;
 	int input2;
 	int inputfc;
@@ -314,7 +314,7 @@ struct INPSEL_NES20 {
 * Function to set input controllers based on NES 2.0 header
 */
 
-static void SetInputNes20(uint8 input_id) {
+static void SetInputNes20(uint8_t input_id) {
 	static struct INPSEL_NES20 inpsel_nes20[] =
 	{
 		{ 0x01,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_UNSET		}, /* Standard NES/Famicom controllers */
@@ -370,17 +370,17 @@ static void SetInputNes20(uint8 input_id) {
 #define INESB_HACKED     4
 
 struct BADINF {
-	uint64 md5partial;
-	uint8 *name;
-	uint32 type;
+	uint64_t md5partial;
+	uint8_t *name;
+	uint32_t type;
 };
 
 static struct BADINF BadROMImages[] = {
 #include "ines-bad.h"
 };
 
-static void CheckBad(uint64 md5partial) {
-	int32 x = 0;
+static void CheckBad(uint64_t md5partial) {
+	int32_t x = 0;
 	while (BadROMImages[x].name) {
 		if (BadROMImages[x].md5partial == md5partial) {
 			FCEU_PrintError("The copy game you have loaded, \"%s\", is bad, and will not work properly in FCE Ultra.",
@@ -406,8 +406,8 @@ const char *tv_region_str[] = {
 	"Dendy",
 };
 
-static void CheckHInfo(CartInfo *info, uint64 partialmd5) {
-	int32 tofix = 0;
+static void CheckHInfo(CartInfo *info, uint64_t partialmd5) {
+	int32_t tofix = 0;
 	int x = 0;
 
 	CheckBad(partialmd5);
@@ -535,13 +535,13 @@ static void CheckHInfo(CartInfo *info, uint64 partialmd5) {
 }
 
 typedef struct {
-	int32 mapper;
+	int32_t mapper;
 	void (*init)(CartInfo *);
 } NewMI;
 
 typedef struct {
-	uint8 *name;
-	int32 number;
+	uint8_t *name;
+	int32_t number;
 	void (*init)(CartInfo *);
 } BMAPPINGLocal;
 
@@ -1155,13 +1155,13 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 	iNES_HEADER header;
 
 	struct md5_context md5;
-	uint64 partialmd5 = 0;
+	uint64_t partialmd5 = 0;
 
 	char *mappername  = NULL;
-	uint32 mappertest = 0;
+	uint32_t mappertest = 0;
 
-	uint64 filesize = FCEU_fgetsize(fp) - NES_HEADER_SIZE; /* size of file excluding header */
-	uint64 romSize  = 0; /* size of PRG + CHR rom */
+	uint64_t filesize = FCEU_fgetsize(fp) - NES_HEADER_SIZE; /* size of file excluding header */
+	uint64_t romSize  = 0; /* size of PRG + CHR rom */
 
 	int x;
 
@@ -1202,7 +1202,7 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 	iNESCart.trainer     = (header.ROM_type & 0x04) != 0;
 	iNESCart.ConsoleType = header.ROM_type2 & 0x03;
 	if (iNESCart.iNES2) {
-		uint8 value;
+		uint8_t value;
 
 		iNESCart.mapper |= ((header.ROM_type3 & 0x0F) << 8);
 		iNESCart.submapper = (header.ROM_type3 >> 4);
@@ -1346,7 +1346,7 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 	/* Trainer */
 	if (iNESCart.trainer) {
 		ROM.misc.size = NES_TRAINER_SIZE;
-		ROM.misc.data = (uint8 *)FCEU_gmalloc(ROM.misc.size);
+		ROM.misc.data = (uint8_t *)FCEU_gmalloc(ROM.misc.size);
 		FCEU_fread(ROM.misc.data, ROM.misc.size, 1, fp);
 		filesize -= ROM.misc.size;
 	}
@@ -1366,7 +1366,7 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 		}
 	}
 
-	if (!(ROM.prg.data = (uint8 *)FCEU_malloc(uppow2(ROM.prg.size)))) {
+	if (!(ROM.prg.data = (uint8_t *)FCEU_malloc(uppow2(ROM.prg.size)))) {
 		Cleanup();
 		return 0;
 	}
@@ -1374,7 +1374,7 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 	FCEU_fread(ROM.prg.data, 1, ROM.prg.size, fp);
 
 	if (ROM.chr.size) {
-		if (!(ROM.chr.data = (uint8 *)FCEU_malloc(uppow2(ROM.chr.size)))) {
+		if (!(ROM.chr.data = (uint8_t *)FCEU_malloc(uppow2(ROM.chr.size)))) {
 			Cleanup();
 			return 0;
 		}
@@ -1384,7 +1384,7 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 
 	if (iNESCart.MiscRoms) {
 		ROM.misc.size = filesize - romSize;
-		if (!(ROM.misc.data = (uint8 *)FCEU_malloc(ROM.misc.size))) {
+		if (!(ROM.misc.data = (uint8_t *)FCEU_malloc(ROM.misc.size))) {
 			Cleanup();
 			return 0;
 		}
@@ -1404,7 +1404,7 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 	md5_finish(&md5, iNESCart.MD5);
 	memcpy(&GameInfo->MD5, &iNESCart.MD5, sizeof(iNESCart.MD5));
 	for (x = 0; x < 8; x++) {
-		partialmd5 |= (uint64)iNESCart.MD5[7 - x] << (x * 8);
+		partialmd5 |= (uint64_t)iNESCart.MD5[7 - x] << (x * 8);
 	}
 
 	mappername = "Not Listed";
@@ -1569,7 +1569,7 @@ static int iNES_Init(int num) {
 				if (CHRRAMSIZE) { /* TODO: CHR-RAM are sometimes handled in mappers e.g. MMC1 using submapper 1/2/4
 					                     and CHR-RAM can be zero here */
 					if (CHRRAMSIZE < 8192) CHRRAMSIZE = 8192; /* set a bare minimum if provided size is lower than 8K */
-					if ((CHRRAM = (uint8 *)FCEU_malloc(CHRRAMSIZE)) == NULL) {
+					if ((CHRRAM = (uint8_t *)FCEU_malloc(CHRRAMSIZE)) == NULL) {
 						return 0;
 					}
 					SetupCartCHRMapping(0, CHRRAM, CHRRAMSIZE, 1);

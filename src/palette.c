@@ -34,9 +34,9 @@ static void WritePalette(void);
 
 pal palo[PALETTE_ARRAY_SIZE]; /* global pointer for current active palette */
 
-static const uint16 rtmul[8] = { 32768 * 1.000, 32768 * 1.239, 32768 * 0.794, 32768 * 1.019, 32768 * 0.905, 32768 * 1.023, 32768 * 0.741, 32768 * 0.750 };
-static const uint16 gtmul[8] = { 32768 * 1.000, 32768 * 0.915, 32768 * 1.086, 32768 * 0.980, 32768 * 1.026, 32768 * 0.908, 32768 * 0.987, 32768 * 0.750 };
-static const uint16 btmul[8] = { 32768 * 1.000, 32768 * 0.743, 32768 * 0.882, 32768 * 0.653, 32768 * 1.277, 32768 * 0.979, 32768 * 0.101, 32768 * 0.750 };
+static const uint16_t rtmul[8] = { 32768 * 1.000, 32768 * 1.239, 32768 * 0.794, 32768 * 1.019, 32768 * 0.905, 32768 * 1.023, 32768 * 0.741, 32768 * 0.750 };
+static const uint16_t gtmul[8] = { 32768 * 1.000, 32768 * 0.915, 32768 * 1.086, 32768 * 0.980, 32768 * 1.026, 32768 * 0.908, 32768 * 0.987, 32768 * 0.750 };
+static const uint16_t btmul[8] = { 32768 * 1.000, 32768 * 0.743, 32768 * 0.882, 32768 * 0.653, 32768 * 1.277, 32768 * 0.979, 32768 * 0.101, 32768 * 0.750 };
 
 static void WritePalette(void) {
 	int x;
@@ -90,7 +90,7 @@ static void GenerateEmphasis(pal out[512], const pal base[64]) {
 }
 
 void FCEU_SetPaletteUser(const pal *palette, const unsigned nEntries) {
-	uint32 x;
+	uint32_t x;
 
 	for (x = 0; x < nEntries; x++) {
 		palo[x].r = palette[x].r;
@@ -117,9 +117,9 @@ void FCEU_SetPalette(void) {
 	}
 }
 
-static uint8 lastd = 0;
-void SetNESDeemph_OldHacky(uint8 d, int force) {
-	uint32 r, g, b;
+static uint8_t lastd = 0;
+void SetNESDeemph_OldHacky(uint8_t d, int force) {
+	uint32_t r, g, b;
 	int x;
 
 	/* If it's not forced(only forced when the palette changes),
@@ -133,9 +133,9 @@ void SetNESDeemph_OldHacky(uint8 d, int force) {
 		b = btmul[7];
 
 		for (x = 0; x < 0x40; x++) {
-			uint32 m = (palo[x].r * r) >> 15;
-			uint32 n = (palo[x].g * g) >> 15;
-			uint32 o = (palo[x].b * b) >> 15;
+			uint32_t m = (palo[x].r * r) >> 15;
+			uint32_t n = (palo[x].g * g) >> 15;
+			uint32_t o = (palo[x].b * b) >> 15;
 			if(m > 0xff) m = 0xff;
 			if(n > 0xff) n = 0xff;
 			if(o > 0xff) o = 0xff;
@@ -150,9 +150,9 @@ void SetNESDeemph_OldHacky(uint8 d, int force) {
 	b = btmul[d];
 
 	for (x = 0; x < 0x40; x++) {
-		uint32 m = (palo[x].r * r) >> 15;
-		uint32 n = (palo[x].g * g) >> 15;
-		uint32 o = (palo[x].b * b) >> 15;
+		uint32_t m = (palo[x].r * r) >> 15;
+		uint32_t n = (palo[x].g * g) >> 15;
+		uint32_t o = (palo[x].b * b) >> 15;
 		if(m > 0xff) m = 0xff;
 		if(n > 0xff) n = 0xff;
 		if(o > 0xff) o = 0xff;

@@ -29,7 +29,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m322;
 
 static SFORMAT StateRegs[] = {
@@ -37,16 +37,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static uint16 GetOuterBank(void) {
+static uint16_t GetOuterBank(void) {
 	return ((m322.reg >> 4) & 0x04) | ((m322.reg >> 3) & 0x03);
 }
 
-static void SetPRGBank(uint16 A, uint16 V) {
-	uint16 base = GetOuterBank() << 4;
-	uint16 mask = (m322.reg & 0x80) ? 0x1F : 0x0F;
+static void SetPRGBank(uint16_t A, uint16_t V) {
+	uint16_t base = GetOuterBank() << 4;
+	uint16_t mask = (m322.reg & 0x80) ? 0x1F : 0x0F;
 
 	if (!(m322.reg & 0x20)) {
-		uint16 bank = (base >> 1) | (m322.reg & 0x07);
+		uint16_t bank = (base >> 1) | (m322.reg & 0x07);
 
 		if (m322.reg & 0x03) {
 			setprg32(0x8000, bank >> 1);
@@ -59,9 +59,9 @@ static void SetPRGBank(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHRBank(uint16 A, uint16 V) {
-	uint16 base = GetOuterBank() << 7;
-	uint16 mask = (m322.reg & 0x80) ? 0xFF : 0x7F;
+static void SetCHRBank(uint16_t A, uint16_t V) {
+	uint16_t base = GetOuterBank() << 7;
+	uint16_t mask = (m322.reg & 0x80) ? 0xFF : 0x7F;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }

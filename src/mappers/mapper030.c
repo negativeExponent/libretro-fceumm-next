@@ -41,8 +41,8 @@
 #define ROM_CHIP   0x00
 #define FLASH_CHIP 0x10
 
-static uint8 flash_save;
-static uint8 *flash_data;
+static uint8_t flash_save;
+static uint8_t *flash_data;
 
 static void Sync(void) {
 	int chip = flash_save ? FLASH_CHIP : ROM_CHIP;
@@ -117,10 +117,10 @@ void Mapper030_Init(CartInfo *info) {
 	info->Close = Close;
 
 	if (flash_save) {
-		uint32 i, ssize;
+		uint32_t i, ssize;
 		/* Allocate memory for flash */
 		ssize = PRGsize[0];
-		flash_data = (uint8 *)FCEU_gmalloc(ssize);
+		flash_data = (uint8_t *)FCEU_gmalloc(ssize);
 		/* Copy ROM to flash data */
 		for (i = 0; i < ssize; i++) {
 			flash_data[i] = PRGptr[ROM_CHIP][i % ssize];

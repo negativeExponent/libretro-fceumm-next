@@ -5,7 +5,7 @@
 #include "cart.h"
 
 struct CHINF {
-	uint32 crc32;
+	uint32_t crc32;
 	int mapper;
 	int submapper;
 	int mirror;

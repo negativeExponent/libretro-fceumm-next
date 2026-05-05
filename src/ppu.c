@@ -47,18 +47,18 @@
 static void FetchSpriteData(void);
 static void RefreshLine(int lastpixel);
 static void RefreshSprites(void);
-static void CopySprites(uint8 *target);
+static void CopySprites(uint8_t *target);
 
 static void Fixit1(void);
-static uint32 ppulut1[256];
-static uint32 ppulut2[256];
-static uint32 ppulut3[128];
+static uint32_t ppulut1[256];
+static uint32_t ppulut2[256];
+static uint32_t ppulut3[128];
 
 static bool new_ppu_reset = FALSE;
 
-static uint8 bitrev[256];
+static uint8_t bitrev[256];
 
-static uint8 bitrev_init(void) {
+static uint8_t bitrev_init(void) {
 	int bits = 8;
 	int n = 1 << 8;
 
@@ -81,19 +81,19 @@ static uint8 bitrev_init(void) {
 }
 
 typedef struct PPUSTATUS {
-	int32 sl;
-	int32 cycle, end_cycle;
+	int32_t sl;
+	int32_t cycle, end_cycle;
 } PPUSTATUS;
 
 typedef struct SPRITE_READ {
-	int32 num;
-	int32 count;
-	int32 fetch;
-	int32 found;
-	int32 found_pos[8];
-	int32 ret;
-	int32 last;
-	int32 mode;
+	int32_t num;
+	int32_t count;
+	int32_t fetch;
+	int32_t found;
+	int32_t found_pos[8];
+	int32_t ret;
+	int32_t last;
+	int32_t mode;
 } SPRITE_READ;
 
 static void spr_read_reset(SPRITE_READ *spr) {
@@ -120,26 +120,26 @@ PPUPHASE ppuphase;
 SPRITE_READ spr_read;
 
 /* definitely needs to be savestated */
-uint8 idleSynch = 1;
+uint8_t idleSynch = 1;
 
 /* uses the internal counters concept at http://nesdev.icequake.net/PPU%20addressing.txt */
 typedef struct PPUREGS {
 	/* normal clocked regs. as the game can interfere with these at any time, they need to be savestated */
-	uint32 fv;	/* 3 */
-	uint32 v;	/* 1 */
-	uint32 h;	/* 1 */
-	uint32 vt;	/* 5 */
-	uint32 ht;	/* 5 */
+	uint32_t fv;	/* 3 */
+	uint32_t v;	/* 1 */
+	uint32_t h;	/* 1 */
+	uint32_t vt;	/* 5 */
+	uint32_t ht;	/* 5 */
 
 	/* temp unlatched regs (need savestating, can be written to at any time) */
-	uint32 _fv, _v, _h, _vt, _ht;
+	uint32_t _fv, _v, _h, _vt, _ht;
 
 	/* other regs that need savestating */
-	uint32 fh;	/* 3 (horz scroll) */
-	uint32 s;	/* 1 ($2000 bit 4: "Background pattern table address (0: $0000; 1: $1000)") */
+	uint32_t fh;	/* 3 (horz scroll) */
+	uint32_t s;	/* 1 ($2000 bit 4: "Background pattern table address (0: $0000; 1: $1000)") */
 
 	/* other regs that don't need saving */
-	uint32 par;	/* 8 (sort of a hack, just stored in here, but not managed by this system) */
+	uint32_t par;	/* 8 (sort of a hack, just stored in here, but not managed by this system) */
 
 	/* cached state data. these are always reset at the beginning of a frame and don't need saving */
 	/* but just to be safe, we're gonna save it */
@@ -200,11 +200,11 @@ static void newppu_regs_increment_vs(PPUREGS *reg) {
 	reg->v &= 1;
 }
 
-static uint32 newppu_regs_get_ntread(PPUREGS *reg) {
+static uint32_t newppu_regs_get_ntread(PPUREGS *reg) {
 	return 0x2000 | (reg->v << 0xB) | (reg->h << 0xA) | (reg->vt << 5) | reg->ht;
 }
 
-static uint32 newppu_regs_get_2007access(PPUREGS *reg) {
+static uint32_t newppu_regs_get_2007access(PPUREGS *reg) {
 	return ((reg->fv & 3) << 0xC) | (reg->v << 0xB) | (reg->h << 0xA) | (reg->vt << 5) | reg->ht;
 }
 
@@ -215,13 +215,13 @@ static uint32 newppu_regs_get_2007access(PPUREGS *reg) {
  * apply to the data read from the attribute data (a is always 0). This is why
  * you only see bits 0 and 1 used off the read attribute data in the diagram.
  */
-static uint32 newppu_regs_get_atread(PPUREGS *reg) {
+static uint32_t newppu_regs_get_atread(PPUREGS *reg) {
 	return 0x2000 | (reg->v << 0xB) | (reg->h << 0xA) | 0x3C0 | ((reg->vt & 0x1C) << 1) |
 	       ((reg->ht & 0x1C) >> 2);
 }
 
 /* address line 3 relates to the pattern table fetch occuring (the PPU always makes them in pairs). */
-static uint32 newppu_regs_get_ptread(PPUREGS *reg) {
+static uint32_t newppu_regs_get_ptread(PPUREGS *reg) {
 	return (reg->s << 0xC) | (reg->par << 0x4) | reg->fv;
 }
 
@@ -314,61 +314,61 @@ static void makeppulut(void) {
 	}
 }
 
-static uint8 ppudead = 1;
-static uint8 kook = 0;
+static uint8_t ppudead = 1;
+static uint8_t kook = 0;
 int fceuindbg = 0;
 int paldeemphswap;
 
-uint8 gNoBGFillColor = 0xFF;
+uint8_t gNoBGFillColor = 0xFF;
 
-uint8 MMC5Hack = FALSE;
-uint32 MMC5HackVROMMask = 0;
-uint8 *MMC5HackExNTARAMPtr = 0;
-uint8 *MMC5HackVROMPTR = 0;
-uint8 MMC5HackCHRMode = 0;
-uint8 MMC5HackSPMode = 0;
-uint8 MMC50x5130 = 0;
-uint8 MMC5HackSPScroll = 0;
-uint8 MMC5HackSPPage = 0;
+uint8_t MMC5Hack = FALSE;
+uint32_t MMC5HackVROMMask = 0;
+uint8_t *MMC5HackExNTARAMPtr = 0;
+uint8_t *MMC5HackVROMPTR = 0;
+uint8_t MMC5HackCHRMode = 0;
+uint8_t MMC5HackSPMode = 0;
+uint8_t MMC50x5130 = 0;
+uint8_t MMC5HackSPScroll = 0;
+uint8_t MMC5HackSPPage = 0;
 
-uint8 PEC586Hack = 0;
+uint8_t PEC586Hack = 0;
 
-uint8 QTAIHack = FALSE;
-uint8 qtaintramreg = 0;
-uint8 QTAINTRAM[0x800];
+uint8_t QTAIHack = FALSE;
+uint8_t qtaintramreg = 0;
+uint8_t QTAINTRAM[0x800];
 
-uint8 VRAMBuffer = 0, PPUGenLatch = 0;
-uint8 *vnapage[4];
-uint8 PPUNTARAM = 0;
-uint8 PPUCHRRAM = 0;
+uint8_t VRAMBuffer = 0, PPUGenLatch = 0;
+uint8_t *vnapage[4];
+uint8_t PPUNTARAM = 0;
+uint8_t PPUCHRRAM = 0;
 
 /* Color deemphasis emulation.  Joy... */
-static uint8 deemp = 0;
+static uint8_t deemp = 0;
 static int deempcnt[8];
 
 void (*GameHBIRQHook)(void), (*GameHBIRQHook2)(void);
-void (*PPU_hook)(uint32 A);
+void (*PPU_hook)(uint32_t A);
 
-uint8 vtoggle = 0;
-uint8 XOffset = 0;
+uint8_t vtoggle = 0;
+uint8_t XOffset = 0;
 
-uint32 TempAddr = 0, RefreshAddr = 0, NTRefreshAddr = 0;
+uint32_t TempAddr = 0, RefreshAddr = 0, NTRefreshAddr = 0;
 
 static int maxsprites = 8;
 
 /* scanline is equal to the current visible scanline we're on. */
 int scanline;
 int g_rasterpos;
-static uint32 scanlines_per_frame;
+static uint32_t scanlines_per_frame;
 PPU_T ppu;
 
-uint8 PPU[4];
-uint8 PPUSPL;
-uint8 NTARAM[0x1000], PALRAM[0x20], SPRAM[0x100], SPRBUF[0x100];
-uint8 UPALRAM[0x03];/* for 0x4/0x8/0xC addresses in palette, the ones in
+uint8_t PPU[4];
+uint8_t PPUSPL;
+uint8_t NTARAM[0x1000], PALRAM[0x20], SPRAM[0x100], SPRBUF[0x100];
+uint8_t UPALRAM[0x03];/* for 0x4/0x8/0xC addresses in palette, the ones in
 					 * 0x20 are 0 to not break fceu rendering.
 					 */
-static uint8 READPAL_MOTHEROFALL(uint32 A)
+static uint8_t READPAL_MOTHEROFALL(uint32_t A)
 {
 	if(!(A & 3)) {
 		if(!(A & 0xC))
@@ -385,10 +385,10 @@ static uint8 READPAL_MOTHEROFALL(uint32 A)
  * mostly involving mmc5.
  * this might be incomplete.
  */
-uint8* FCEUPPU_GetCHR(uint32 vadr, uint32 refreshaddr) {
+uint8_t* FCEUPPU_GetCHR(uint32_t vadr, uint32_t refreshaddr) {
 	if (MMC5Hack) {
 		if (MMC5HackCHRMode == 1) {
-			uint8 *C = MMC5HackVROMPTR;
+			uint8_t *C = MMC5HackVROMPTR;
 			C += (((MMC5HackExNTARAMPtr[refreshaddr & 0x3ff]) & 0x3f & MMC5HackVROMMask) << 12) + (vadr & 0xfff);
 			C += (MMC50x5130 & 0x3) << 18;	/* 11-jun-2009 for kuja_killer */
 			return C;
@@ -413,8 +413,8 @@ int FCEUPPU_GetAttr(int ntnum, int xt, int yt) {
 }
 
 /* new ppu----- */
-INLINE void FFCEUX_PPUWrite_Default(uint32 A, uint8 V) {
-	uint32 tmp = A;
+INLINE void FFCEUX_PPUWrite_Default(uint32_t A, uint8_t V) {
+	uint32_t tmp = A;
 
 	if (PPU_hook) PPU_hook(A);
 
@@ -441,8 +441,8 @@ INLINE void FFCEUX_PPUWrite_Default(uint32 A, uint8 V) {
 	}
 }
 
-uint8 FFCEUX_PPURead_Default(uint32 A) {
-	uint32 tmp = A;
+uint8_t FFCEUX_PPURead_Default(uint32_t A) {
+	uint32_t tmp = A;
 
 	if (PPU_hook) PPU_hook(A);
 
@@ -451,7 +451,7 @@ uint8 FFCEUX_PPURead_Default(uint32 A) {
 	} else if (tmp < 0x3F00) {
 		return vnapage[(tmp >> 10) & 0x3][tmp & 0x3FF];
 	} else {
-		uint8 ret;
+		uint8_t ret;
 		if (!(tmp & 3)) {
 			if (!(tmp & 0xC))
 				ret = READPAL(0x00);
@@ -463,8 +463,8 @@ uint8 FFCEUX_PPURead_Default(uint32 A) {
 	}
 }
 
-uint8 (*FFCEUX_PPURead)(uint32 A) = 0;
-void (*FFCEUX_PPUWrite)(uint32 A, uint8 V) = 0;
+uint8_t (*FFCEUX_PPURead)(uint32_t A) = 0;
+void (*FFCEUX_PPUWrite)(uint32_t A, uint8_t V) = 0;
 
 #define CALL_PPUREAD(A) (FFCEUX_PPURead(A))
 
@@ -475,7 +475,7 @@ int newppu = 0;
 /* --------------- */
 
 static DECLFR(A2002) {
-	uint8 ret;
+	uint8_t ret;
 
 	if (newppu) {
 		/* once we thought we clear latches here, but that caused midframe glitches.
@@ -502,7 +502,7 @@ static DECLFR(A2002) {
 
 #define GETLASTPIXEL (isPAL ? ((timestamp * 48 - linestartts) / 15) : ((timestamp * 48 - linestartts) >> 4))
 
-static uint8 *Pline, *Plinef;
+static uint8_t *Pline, *Plinef;
 static int firsttile;
 static int linestartts;
 
@@ -651,8 +651,8 @@ static DECLFR(A200x) {	/* Not correct for $2004 reads. */
 }
 
 static DECLFR(A2007) {
-	uint8 ret;
-	uint32 tmp = RefreshAddr & 0x3FFF;
+	uint8_t ret;
+	uint32_t tmp = RefreshAddr & 0x3FFF;
 
 	if (newppu) {
 		ret = VRAMBuffer;
@@ -726,7 +726,7 @@ static DECLFR(A2007) {
 	#endif
 	{
 		if ((ScreenON || SpriteON) && (scanline < 240)) {
-			uint32 rad = RefreshAddr;
+			uint32_t rad = RefreshAddr;
 			if ((rad & 0x7000) == 0x7000) {
 				rad ^= 0x7000;
 				if ((rad & 0x3E0) == 0x3A0)
@@ -811,7 +811,7 @@ static DECLFW(B2004) {
 }
 
 static DECLFW(B2005) {
-	uint32 tmp = TempAddr;
+	uint32_t tmp = TempAddr;
 	FCEUPPU_LineUpdate();
 	PPUGenLatch = V;
 	if (!vtoggle) {
@@ -865,7 +865,7 @@ static DECLFW(B2006) {
 }
 
 static DECLFW(B2007) {
-	uint32 tmp = RefreshAddr & 0x3FFF;
+	uint32_t tmp = RefreshAddr & 0x3FFF;
 
 	if (newppu) {
 		PPUGenLatch = V;
@@ -906,7 +906,7 @@ static DECLFW(B2007) {
 }
 
 static DECLFW(B4014) {
-	uint32 t = V << 8;
+	uint32_t t = V << 8;
 	int x;
 
 	for (x = 0; x < 256; x++)
@@ -915,12 +915,12 @@ static DECLFW(B4014) {
 
 #define GETLASTPIXEL (isPAL ? ((timestamp * 48 - linestartts) / 15) : ((timestamp * 48 - linestartts) >> 4))
 
-static uint8 *Pline, *Plinef;
+static uint8_t *Pline, *Plinef;
 static int firsttile;
 static int linestartts;
 static int tofix = 0;
 
-static void ResetRL(uint8 *target) {
+static void ResetRL(uint8_t *target) {
 	memset(target, 0xFF, 256);
 	InputScanlineHook(0, 0, 0, 0);
 	Plinef = target;
@@ -932,7 +932,7 @@ static void ResetRL(uint8 *target) {
 	tofix = 1;
 }
 
-static uint8 sprlinebuf[256 + 8];
+static uint8_t sprlinebuf[256 + 8];
 
 void FCEUPPU_LineUpdate(void) {
 	if (newppu) {
@@ -970,8 +970,8 @@ static void EndRL(void) {
 	Pline = 0;
 }
 
-static int32 sphitx;
-static uint8 sphitdata;
+static int32_t sphitx;
+static uint8_t sphitdata;
 
 static void CheckSpriteHit(int p) {
 	int l = p - 16;
@@ -995,15 +995,15 @@ static int spork = 0;
 
 /* lasttile is really "second to last tile." */
 static void RefreshLine(int lastpixel) {
-	static uint32 pshift[2];
-	static uint32 atlatch;
-	uint32 smorkus = RefreshAddr;
+	static uint32_t pshift[2];
+	static uint32_t atlatch;
+	uint32_t smorkus = RefreshAddr;
 
 	#define RefreshAddr smorkus
-	uint32 vofs;
+	uint32_t vofs;
 	int X1;
 
-	uint8 *P = Pline;
+	uint8_t *P = Pline;
 	int lasttile = lastpixel >> 3;
 	int numtiles;
 	static int norecurse = 0;	/* Yeah, recursion would be bad.
@@ -1034,7 +1034,7 @@ static void RefreshLine(int lastpixel) {
 		vofs = ((PPU[0] & 0x10) << 8) | ((RefreshAddr >> 12) & 7);
 
 	if (!ScreenON && !SpriteON) {
-		uint32 tem;
+		uint32_t tem;
 		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
 		tem |= 0x40404040;
 		FCEU_dwmemset32(Pline, tem, numtiles * 8);
@@ -1148,14 +1148,14 @@ static void RefreshLine(int lastpixel) {
 
 	RefreshAddr = smorkus;
 	if (firsttile <= 2 && 2 < lasttile && !BGLeft8ON) {
-		uint32 tem;
+		uint32_t tem;
 		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
 		tem |= 0x40404040;
-		*(uint32*)Plinef = *(uint32*)(Plinef + 4) = tem;
+		*(uint32_t*)Plinef = *(uint32_t*)(Plinef + 4) = tem;
 	}
 
 	if (!ScreenON) {
-		uint32 tem;
+		uint32_t tem;
 		int tstart, tcount;
 		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
 		tem |= 0x40404040;
@@ -1187,7 +1187,7 @@ static void RefreshLine(int lastpixel) {
 
 static INLINE void Fixit2(void) {
 	if (ScreenON || SpriteON) {
-		uint32 rad = RefreshAddr;
+		uint32_t rad = RefreshAddr;
 		rad &= 0xFBE0;
 		rad |= TempAddr & 0x041f;
 		RefreshAddr = rad;
@@ -1196,7 +1196,7 @@ static INLINE void Fixit2(void) {
 
 static void Fixit1(void) {
 	if (ScreenON || SpriteON) {
-		uint32 rad = RefreshAddr;
+		uint32_t rad = RefreshAddr;
 
 		if ((rad & 0x7000) == 0x7000) {
 			rad ^= 0x7000;
@@ -1216,8 +1216,8 @@ void MMC5_hb(int);		/* Ugh ugh ugh. */
 static void DoLine(void)
 {
 	int x, colour_emphasis;
-	uint8 *target = NULL;
-	uint8 *dtarget = NULL;
+	uint8_t *target = NULL;
+	uint8_t *dtarget = NULL;
 
 	if (scanline >= 240 && scanline != ppu.totalscanlines)
 	{
@@ -1236,7 +1236,7 @@ static void DoLine(void)
 	EndRL();
 
 	if (!show_background) {/* User asked to not display background data. */
-		uint32 tem;
+		uint32_t tem;
 		tem = READPAL(0) | (READPAL(0) << 8) | (READPAL(0) << 16) | (READPAL(0) << 24);
 		tem |= 0x40404040;
 		FCEU_dwmemset32(target, tem, 256);
@@ -1248,23 +1248,23 @@ static void DoLine(void)
 	if (ScreenON || SpriteON) {	/* Yes, very el-cheapo. */
 		if (PPU[1] & 0x01) {
 			for (x = 63; x >= 0; x--)
-				*(uint32*)&target[x << 2] = (*(uint32*)&target[x << 2]) & 0x30303030;
+				*(uint32_t*)&target[x << 2] = (*(uint32_t*)&target[x << 2]) & 0x30303030;
 		}
 	}
 	if ((PPU[1] >> 5) == 0x7) {
 		for (x = 63; x >= 0; x--)
-			*(uint32*)&target[x << 2] = ((*(uint32*)&target[x << 2]) & 0x3f3f3f3f) | 0xc0c0c0c0;
+			*(uint32_t*)&target[x << 2] = ((*(uint32_t*)&target[x << 2]) & 0x3f3f3f3f) | 0xc0c0c0c0;
 	} else if (PPU[1] & 0xE0)
 		for (x = 63; x >= 0; x--)
-			*(uint32*)&target[x << 2] = (*(uint32*)&target[x << 2]) | 0x40404040;
+			*(uint32_t*)&target[x << 2] = (*(uint32_t*)&target[x << 2]) | 0x40404040;
 	else
 		for (x = 63; x >= 0; x--)
-			*(uint32*)&target[x << 2] = ((*(uint32*)&target[x << 2]) & 0x3f3f3f3f) | 0x80808080;
+			*(uint32_t*)&target[x << 2] = ((*(uint32_t*)&target[x << 2]) & 0x3f3f3f3f) | 0x80808080;
 
 	/* write the actual colour emphasis */
 	colour_emphasis = ((PPU[1] >> 5) << 24) | ((PPU[1] >> 5) << 16) | ((PPU[1] >> 5) << 8) | ((PPU[1] >> 5) << 0);
 	for (x = 63; x >= 0; x--)
-		*(uint32*)&dtarget[x << 2] = colour_emphasis;
+		*(uint32_t*)&dtarget[x << 2] = colour_emphasis;
 
     sphitx = 0x100;
 
@@ -1303,45 +1303,45 @@ static void DoLine(void)
 #define SP_BACK 0x20
 
 typedef struct {
-	uint8 y, no, atr, x;
+	uint8_t y, no, atr, x;
 } SPR;
 
 typedef struct {
-	uint8 ca[2], atr, x;
+	uint8_t ca[2], atr, x;
 } SPRB;
 
 void FCEUI_DisableSpriteLimitation(int a) {
 	maxsprites = a ? 64 : 8;
 }
 
-static uint8 numsprites, SpriteBlurp;
+static uint8_t numsprites, SpriteBlurp;
 static void FetchSpriteData(void) {
-	uint8 ns, sb;
+	uint8_t ns, sb;
 	SPR *spr;
-	uint8 H;
+	uint8_t H;
 	int n;
 	int vofs;
-	uint8 P0 = PPU[0];
+	uint8_t P0 = PPU[0];
 
 	spr = (SPR*)SPRAM;
 	H = 8;
 
 	ns = sb = 0;
 
-	vofs = (uint32)(P0 & 0x8 & (((P0 & 0x20) ^ 0x20) >> 2)) << 9;
+	vofs = (uint32_t)(P0 & 0x8 & (((P0 & 0x20) ^ 0x20) >> 2)) << 9;
 	H += (P0 & 0x20) >> 2;
 
 	if (!PPU_hook)
 		for (n = 63; n >= 0; n--, spr++) {
-			if ((uint32)(scanline - spr->y) >= H) continue;
+			if ((uint32_t)(scanline - spr->y) >= H) continue;
 			if (ns < maxsprites) {
 				if (n == 63) sb = 1;
 
 				{
 					SPRB dst;
-					uint8 *C;
+					uint8_t *C;
 					int t;
-					uint32 vadr;
+					uint32_t vadr;
 
 					t = (int)scanline - (spr->y);
 
@@ -1371,7 +1371,7 @@ static void FetchSpriteData(void) {
 					dst.x = spr->x;
 					dst.atr = spr->atr;
 
-					*(uint32*)&SPRBUF[ns << 2] = *(uint32*)&dst;
+					*(uint32_t*)&SPRBUF[ns << 2] = *(uint32_t*)&dst;
 				}
 
 				ns++;
@@ -1382,16 +1382,16 @@ static void FetchSpriteData(void) {
 		}
 	else
 		for (n = 63; n >= 0; n--, spr++) {
-			if ((uint32)(scanline - spr->y) >= H) continue;
+			if ((uint32_t)(scanline - spr->y) >= H) continue;
 
 			if (ns < maxsprites) {
 				if (n == 63) sb = 1;
 
 				{
 					SPRB dst;
-					uint8 *C;
+					uint8_t *C;
 					int t;
-					uint32 vadr;
+					uint32_t vadr;
 
 					t = (int)scanline - (spr->y);
 
@@ -1424,7 +1424,7 @@ static void FetchSpriteData(void) {
 					dst.atr = spr->atr;
 
 
-					*(uint32*)&SPRBUF[ns << 2] = *(uint32*)&dst;
+					*(uint32_t*)&SPRBUF[ns << 2] = *(uint32_t*)&dst;
 				}
 
 				ns++;
@@ -1458,11 +1458,11 @@ static void RefreshSprites(void) {
 	spr = (SPRB*)SPRBUF + numsprites;
 
 	for (n = numsprites; n >= 0; n--, spr--) {
-		uint32 pixdata;
-		uint8 J, atr;
+		uint32_t pixdata;
+		uint8_t J, atr;
 
 		int x = spr->x;
-		uint8 *C;
+		uint8_t *C;
 		int VB;
 
 		pixdata = ppulut1[spr->ca[0]] | ppulut2[spr->ca[1]];
@@ -1562,9 +1562,9 @@ static void RefreshSprites(void) {
 	spork = 1;
 }
 
-static void CopySprites(uint8 *target) {
-	uint8 n = SpriteLeft8ON ? 0 : 8;
-	uint8 *P = target;
+static void CopySprites(uint8_t *target) {
+	uint8_t n = SpriteLeft8ON ? 0 : 8;
+	uint8_t *P = target;
 
 	if (!spork) return;
 	spork = 0;
@@ -1575,7 +1575,7 @@ static void CopySprites(uint8 *target) {
 
    do
 	{
-		uint32 t = *(uint32*)(sprlinebuf + n);
+		uint32_t t = *(uint32_t*)(sprlinebuf + n);
 
 		if (t != 0x80808080) {
 			#ifdef MSB_FIRST
@@ -1840,7 +1840,7 @@ int FCEUPPU_Loop(int skip) {
 	}
 }
 
-static uint16 TempAddrT, RefreshAddrT;
+static uint16_t TempAddrT, RefreshAddrT;
 
 void FCEUPPU_LoadState(int version) {
 	TempAddr = TempAddrT;
@@ -1919,8 +1919,8 @@ static void runppu(int x) {
 
 /* todo - consider making this a 3 or 4 slot fifo to keep from touching so much memory */
 typedef struct BGData {
-	uint8 nt, pecnt, at, pt[2], qtnt;
-	uint8 ppu1[8];
+	uint8_t nt, pecnt, at, pt[2], qtnt;
+	uint8_t ppu1[8];
 } BGData;
 
 BGData bgmain[34]; /* one at the end is junk, it can never be rendered */
@@ -1977,7 +1977,7 @@ static INLINE void BGData_Read(BGData *bg) {
 		bg->ppu1[7] = PPU[1];
 		runppu(1);
 	} else if (QTAIHack && (bg->qtnt & 0x40)) {
-		uint32 vadr = (ROM.chr.size == (128 * 1024)) ? ((RefreshAddr & 0x00007) << 1) | ((RefreshAddr & 0x00010) >> 4) | ((RefreshAddr & 0x3FFE0) >> 1) : RefreshAddr;
+		uint32_t vadr = (ROM.chr.size == (128 * 1024)) ? ((RefreshAddr & 0x00007) << 1) | ((RefreshAddr & 0x00010) >> 4) | ((RefreshAddr & 0x3FFE0) >> 1) : RefreshAddr;
 		bg->pt[0] = ROM.chr.data[vadr];
 		bg->ppu1[4] = PPU[1];
 		runppu(1);
@@ -2053,7 +2053,7 @@ int FCEUX_PPU_Loop(int skip) {
 		int dot, S, sl;
 		int sltodo = isPAL ? 70 : 20;
 
-		static uint8 oams[2][64][8];/* [7] turned to [8] for faster indexing */
+		static uint8_t oams[2][64][8];/* [7] turned to [8] for faster indexing */
 		static int oamcounts[2] = { 0, 0 };
 		static int oamslot = 0;
 		static int oamcount;
@@ -2144,7 +2144,7 @@ int FCEUX_PPU_Loop(int skip) {
 			 * two of those tiles were read in the last scanline.
 			 */
 			for (xt = 0; xt < 32; xt++) {
-				const uint8 blank = (gNoBGFillColor == 0xFF) ? READPAL(0) : gNoBGFillColor;
+				const uint8_t blank = (gNoBGFillColor == 0xFF) ? READPAL(0) : gNoBGFillColor;
 				
 				BGData_Read(&bgmain[xt + 2]);
 
@@ -2155,10 +2155,10 @@ int FCEUX_PPU_Loop(int skip) {
 					int xp;
 					int xstart = xt << 3;
 
-					uint8 *const target = XBuf + (yp << 8) + xstart;
-					uint8 *const dtarget = XDBuf + (yp << 8) + xstart;
-					uint8 *ptr = target;
-					uint8 *dptr = dtarget;
+					uint8_t *const target = XBuf + (yp << 8) + xstart;
+					uint8_t *const dtarget = XDBuf + (yp << 8) + xstart;
+					uint8_t *ptr = target;
+					uint8_t *dptr = dtarget;
 					int rasterpos = xstart;
 
 					/* check all the conditions that can cause things to render in these 8px */
@@ -2175,8 +2175,8 @@ int FCEUX_PPU_Loop(int skip) {
 						const int bgpx = bgpos & 7;
 						const int bgtile = bgpos >> 3;
 
-						uint8 pixel = 0;
-						uint8 pixelcolor = blank;
+						uint8_t pixel = 0;
+						uint8_t pixelcolor = blank;
 
 						bool havepixel = FALSE;
 						int s1;
@@ -2195,7 +2195,7 @@ int FCEUX_PPU_Loop(int skip) {
 
 						/* generate the BG data */
 						if (renderbgnow) {
-							uint8* pt = bgmain[bgtile].pt;
+							uint8_t* pt = bgmain[bgtile].pt;
 							pixel = ((pt[0] >> (7 - bgpx)) & 1) | (((pt[1] >> (7 - bgpx)) & 1) << 1) | bgmain[bgtile].at;
 						}
 						if (show_background)
@@ -2204,13 +2204,13 @@ int FCEUX_PPU_Loop(int skip) {
 						/* look for a sprite to be drawn */
 						havepixel = FALSE;
 						for (s1 = 0; s1 < oamcount; s1++) {
-							uint8* oam = oams[renderslot][s1];
+							uint8_t* oam = oams[renderslot][s1];
 							int x = oam[3];
 							if (rasterpos >= x && rasterpos < x + 8) {
 								/* build the pixel.
 								 * fetch the LSB of the patterns
 								 */
-								uint8 spixel = oam[4] & 1;
+								uint8_t spixel = oam[4] & 1;
 								spixel |= (oam[5] & 1) << 1;
 
 								/* shift down the patterns so the next pixel is in the LSB */
@@ -2275,7 +2275,7 @@ int FCEUX_PPU_Loop(int skip) {
 			oamcount = 0;
 			spriteHeight = Sprite16 ? 16 : 8;
 			for (i = 0; i < 64; i++) {
-				uint8* spr = SPRAM + i * 4;
+				uint8_t* spr = SPRAM + i * 4;
 
 				oams[scanslot][oamcount][7] = 0;
 				if (yp >= spr[0] && yp < spr[0] + spriteHeight) {
@@ -2297,7 +2297,7 @@ int FCEUX_PPU_Loop(int skip) {
 					/* note that we stuff the oam index into [6].
 					 * i need to turn this into a struct so we can have fewer magic numbers
 					 */
-					oams[scanslot][oamcount][6] = (uint8)i;
+					oams[scanslot][oamcount][6] = (uint8_t)i;
 					oamcount++;
 				}
 			}
@@ -2327,12 +2327,12 @@ int FCEUX_PPU_Loop(int skip) {
 				 */
 				const bool realSprite = (s < 8);
 
-				uint8* const oam = oams[scanslot][s];
-				uint32 line = yp - oam[0];
+				uint8_t* const oam = oams[scanslot][s];
+				uint32_t line = yp - oam[0];
 
-				uint32 patternNumber = oam[1];
-				uint32 patternAddress;
-				uint8 chr_l, chr_h; /* for bitrev */
+				uint32_t patternNumber = oam[1];
+				uint32_t patternAddress;
+				uint8_t chr_l, chr_h; /* for bitrev */
 
 				int garbage_todo;
 
@@ -2352,7 +2352,7 @@ int FCEUX_PPU_Loop(int skip) {
 
 				/* 8x16 sprite handling: */
 				if (Sprite16) {
-					uint32 bank = (patternNumber & 1) << 12;
+					uint32_t bank = (patternNumber & 1) << 12;
 					patternNumber = patternNumber & ~1;
 					patternNumber |= (line >> 3);
 					patternAddress = (patternNumber << 4) | bank;

@@ -22,8 +22,8 @@
 #define _FCEU_LATCH_H
 
 typedef struct __LATCH {
-	uint16 addr;
-	uint8 data;
+	uint16_t addr;
+	uint8_t data;
 } LATCH;
 
 extern LATCH latch;
@@ -34,7 +34,7 @@ void Latch_Power(void);
 void Latch_Close(void);
 void Latch_RegReset(void);
 
-void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint8 wram, uint8 busc);
-void Latch_SetConfig(uint8 clear, void(*sync)());
+void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint8_t wram, uint8_t busc);
+void Latch_SetConfig(uint8_t clear, void(*sync)());
 
 #endif /* _FCEU_LATCH_H */

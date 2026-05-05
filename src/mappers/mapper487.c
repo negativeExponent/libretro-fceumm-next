@@ -30,7 +30,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m487;
 
 static SFORMAT StateRegs[] = {
@@ -39,7 +39,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 prg, chr;
+	uint8_t prg, chr;
 
 	if (m487.reg[1] & 0x40) {
 		prg = (m487.reg[1] & 0x3E) | ((m487.reg[0] >> 3) & 0x01);

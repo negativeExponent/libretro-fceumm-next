@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <stdio.h>
 #include  <string.h>
 #include  <stdlib.h>
 #include  <stdarg.h>
@@ -47,7 +48,7 @@
 #include  "vsuni.h"
 #include  "gamegenie.h"
 
-uint64 timestampbase;
+uint64_t timestampbase;
 
 FCEUGI *GameInfo = NULL;
 void (*GameInterface)(int h);
@@ -63,7 +64,7 @@ static DECLFR(ANull) {
 	return (cpu.openbus);
 }
 
-readfunc GetReadHandler(uint16 a) {
+readfunc GetReadHandler(uint16_t a) {
 	if (a >= 0x8000 && RWWrap) {
 		return AReadG[a - 0x8000];
 	} else {
@@ -71,8 +72,8 @@ readfunc GetReadHandler(uint16 a) {
 	}
 }
 
-void SetReadHandler(uint16 start, uint16 end, readfunc func) {
-	int32 x;
+void SetReadHandler(uint16_t start, uint16_t end, readfunc func) {
+	int32_t x;
 
 	if (!func) {
 		func = ANull;
@@ -93,7 +94,7 @@ void SetReadHandler(uint16 start, uint16 end, readfunc func) {
 	}
 }
 
-writefunc GetWriteHandler(uint16 a) {
+writefunc GetWriteHandler(uint16_t a) {
 	if (RWWrap && a >= 0x8000) {
 		return BWriteG[a - 0x8000];
 	} else {
@@ -101,8 +102,8 @@ writefunc GetWriteHandler(uint16 a) {
 	}
 }
 
-void SetWriteHandler(uint16 start, uint16 end, writefunc func) {
-	int32 x;
+void SetWriteHandler(uint16_t start, uint16_t end, writefunc func) {
+	int32_t x;
 
 	if (!func) {
 		func = BNull;
@@ -123,13 +124,13 @@ void SetWriteHandler(uint16 start, uint16 end, writefunc func) {
 	}
 }
 
-uint8 *RAM;
+uint8_t *RAM;
 
-uint8 isPAL = FALSE;
-uint8 isDendy = FALSE;
+uint8_t isPAL = FALSE;
+uint8_t isDendy = FALSE;
 
 static int AllocBuffers(void) {
-	RAM = (uint8 *)FCEU_malloc(RAM_SIZE);
+	RAM = (uint8_t *)FCEU_malloc(RAM_SIZE);
 	if (!RAM) {
 		return FALSE;
 	}
@@ -220,7 +221,7 @@ void ResetGameLoaded(void) {
 }
 
 static int FCEU_GetFileType(FCEUFILE *fp) {
-	uint8 header[66];
+	uint8_t header[66];
 
 	FCEU_fread(header, 1, 66, fp);
 	FCEU_fseek(fp, 0, SEEK_SET);
@@ -388,7 +389,7 @@ void FCEUI_Kill(void) {
 }
 
 void FDSFrameCycle(void);
-void FCEUI_Emulate(uint8 **pXBuf, uint8 **pXDBuf, int32 **SoundBuf, int32 *SoundBufSize, int skip) {
+void FCEUI_Emulate(uint8_t **pXBuf, uint8_t **pXDBuf, int32_t **SoundBuf, int32_t *SoundBufSize, int skip) {
 	int ssize;
 
 	FCEU_UpdateInput();
@@ -430,21 +431,21 @@ void ResetNES(void) {
 static int ram_init_seed = 0;
 
 FCEU_MAYBE_UNUSED
-static uint64 splitmix64(uint32 input) {
-	uint64 z = (input + 0x9e3779b97f4a7c15);
+static uint64_t splitmix64(uint32_t input) {
+	uint64_t z = (input + 0x9e3779b97f4a7c15);
 	z        = (z ^ (z >> 30)) * 0xbf58476d1ce4e5b9;
 	z        = (z ^ (z >> 27)) * 0x94d049bb133111eb;
 	return z ^ (z >> 31);
 }
 
-static INLINE uint64 xoroshiro128plus_rotl(const uint64 x, int k) {
+static INLINE uint64_t xoroshiro128plus_rotl(const uint64_t x, int k) {
 	return (x << k) | (x >> (64 - k));
 }
 
-static uint64 xoroshiro128plus_s[2];
-static void xoroshiro128plus_seed(uint32 input) {
+static uint64_t xoroshiro128plus_s[2];
+static void xoroshiro128plus_seed(uint32_t input) {
 	/* http://xoroshiro.di.unimi.it/splitmix64.c */
-	uint64 x, z;
+	uint64_t x, z;
 
 	x = input;
 	z = (x += 0x9e3779b97f4a7c15);
@@ -461,10 +462,10 @@ static void xoroshiro128plus_seed(uint32 input) {
 }
 
 /* http://vigna.di.unimi.it/xorshift/xoroshiro128plus.c */
-static uint64 xoroshiro128plus_next(void) {
-	const uint64 s0     = xoroshiro128plus_s[0];
-	uint64 s1           = xoroshiro128plus_s[1];
-	const uint64 result = s0 + s1;
+static uint64_t xoroshiro128plus_next(void) {
+	const uint64_t s0     = xoroshiro128plus_s[0];
+	uint64_t s1           = xoroshiro128plus_s[1];
+	const uint64_t result = s0 + s1;
 
 	s1 ^= s0;
 	xoroshiro128plus_s[0] = xoroshiro128plus_rotl(s0, 55) ^ s1 ^ (s1 << 14); /* a, b */
@@ -473,7 +474,7 @@ static uint64 xoroshiro128plus_next(void) {
 	return result;
 }
 
-void FCEU_MemoryRand(uint8 *ptr, uint32 size) {
+void FCEU_MemoryRand(uint8_t *ptr, uint32_t size) {
 	int x = 0;
 
 	if (!ptr || !size) {
@@ -493,7 +494,7 @@ void FCEU_MemoryRand(uint8 *ptr, uint32 size) {
 		break;
 	case 2:
 		for (x = 0; x < (int)size; x++) {
-			ptr[x] = (uint8)(xoroshiro128plus_next() & 0xFF);
+			ptr[x] = (uint8_t)(xoroshiro128plus_next() & 0xFF);
 		}
 		break;
 	}
@@ -505,7 +506,7 @@ void PowerNES(void) {
 	}
 
 	/* reseed random, unless we're in a movie */
-	ram_init_seed = rand() ^ (uint32)xoroshiro128plus_next();
+	ram_init_seed = rand() ^ (uint32_t)xoroshiro128plus_next();
 
 	/* always reseed the PRNG with the current seed, for deterministic results (for that seed) */
 	xoroshiro128plus_seed(ram_init_seed);
@@ -667,7 +668,7 @@ void FCEUI_SetGameGenie(int a) {
 	FSettings.GameGenie = a ? TRUE : FALSE;
 }
 
-int32 FCEUI_GetDesiredFPS(void) {
+int32_t FCEUI_GetDesiredFPS(void) {
 	if (isPAL || isDendy) {
 		return (838977920); /* ~50.007 */
 	}

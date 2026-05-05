@@ -24,7 +24,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m293;
 
 static SFORMAT StateRegs[] = {
@@ -33,9 +33,9 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 mode = ((m293.reg[0] >> 2) & 0x02) | ((m293.reg[1] >> 6) & 0x01);
-	uint8 base = ((m293.reg[1] << 5) & 0x20) | ((m293.reg[1] >> 1) & 0x18);
-	uint8 bank = (base | (m293.reg[0] & 0x07));
+	uint8_t mode = ((m293.reg[0] >> 2) & 0x02) | ((m293.reg[1] >> 6) & 0x01);
+	uint8_t base = ((m293.reg[1] << 5) & 0x20) | ((m293.reg[1] >> 1) & 0x18);
+	uint8_t bank = (base | (m293.reg[0] & 0x07));
 
 	switch (mode) {
 	case 0: /* UNROM */

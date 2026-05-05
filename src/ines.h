@@ -24,18 +24,18 @@
 
 typedef struct {
 	char ID[4];					/* NES^Z */
-	uint8 ROM_size;				/* prg page count (16K) */
-	uint8 VROM_size;			/* chr page count (8K) */
-	uint8 ROM_type;				/* byte6 */
-	uint8 ROM_type2;			/* byte7 */
-	uint8 ROM_type3;			/* byte8 */
-	uint8 upper_PRG_CHR_size;	/* byte9 */
-	uint8 PRGRAM_size;			/* byte10 */
-	uint8 CHRRAM_size;			/* byte11 */
-	uint8 Region;				/* byte12 */
-	uint8 VS_hardware;			/* byte13 */
-	uint8 MiscRoms;				/* byte14 */
-	uint8 ExpDevice;			/* byte15 */
+	uint8_t ROM_size;				/* prg page count (16K) */
+	uint8_t VROM_size;			/* chr page count (8K) */
+	uint8_t ROM_type;				/* byte6 */
+	uint8_t ROM_type2;			/* byte7 */
+	uint8_t ROM_type3;			/* byte8 */
+	uint8_t upper_PRG_CHR_size;	/* byte9 */
+	uint8_t PRGRAM_size;			/* byte10 */
+	uint8_t CHRRAM_size;			/* byte11 */
+	uint8_t Region;				/* byte12 */
+	uint8_t VS_hardware;			/* byte13 */
+	uint8_t MiscRoms;				/* byte14 */
+	uint8_t ExpDevice;			/* byte15 */
 } iNES_HEADER;
 
 void Mapper000_Init(CartInfo *);

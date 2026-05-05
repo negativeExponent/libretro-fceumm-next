@@ -28,8 +28,8 @@
 #include "fdssound.h"
 
 static struct {
-	uint8 prg, mirror;
-	int32 IRQa, IRQCount, IRQLatch;
+	uint8_t prg, mirror;
+	int32_t IRQa, IRQCount, IRQLatch;
 } m303;
 
 static SFORMAT StateRegs[] = {
@@ -52,7 +52,7 @@ static void SyncMirror(void) {
 
 static DECLFR(ReadStatus) {
 	/* Identical to their respective equivalents on the Famicom Disk System. */
-	uint8 ret = (cpu.IRQlow & FCEU_IQEXT) ? 1 : 0;
+	uint8_t ret = (cpu.IRQlow & FCEU_IQEXT) ? 1 : 0;
 	X6502_IRQEnd(FCEU_IQEXT);
 	return ret;
 }
@@ -138,7 +138,7 @@ void Mapper303_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

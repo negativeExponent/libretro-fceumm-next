@@ -36,20 +36,20 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[8];
+	uint8_t reg[8];
 } m268;
 
-static void SetPRGBank_mmc3(uint16 A, uint16 V) {
-	uint8 chip = 0;
-	uint8 maskGnrom = 0;
-	uint8 gnromMode = (m268.reg[3] & 0x10) != 0;
-	uint16 maskMmc3 = (gnromMode ? 0x00 : 0x0F) /* PRG A13-A16 */
+static void SetPRGBank_mmc3(uint16_t A, uint16_t V) {
+	uint8_t chip = 0;
+	uint8_t maskGnrom = 0;
+	uint8_t gnromMode = (m268.reg[3] & 0x10) != 0;
+	uint16_t maskMmc3 = (gnromMode ? 0x00 : 0x0F) /* PRG A13-A16 */
 	    | ((~m268.reg[0] >> 2) & 0x10)          /* PRG A17     */
 	    | ((~m268.reg[1] >> 2) & 0x20)          /* PRG A18     */
 	    | ((m268.reg[1] >> 0) & 0x40)           /* PRG A19     */
 	    | ((m268.reg[1] << 2) & 0x80)           /* PRG A20     */
 	    ;
-	uint16 base = 0;
+	uint16_t base = 0;
 
 	switch (iNESCart.submapper & ~1) {
 	default: /* Original implementation */
@@ -111,11 +111,11 @@ static void SetPRGBank_mmc3(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHRBank_mmc3(uint16 A, uint16 V) {
-	uint16 base = ((m268.reg[0] << 4) & 0x380) | ((m268.reg[2] << 3) & 0x078);
-	uint8 gnromMode = (m268.reg[3] & 0x10) != 0;
-	uint8 maskMmc3 = (gnromMode ? 0x00 : ((m268.reg[0] & 0x80) ? 0x7F : 0xFF));
-	uint8 maskGnrom = (gnromMode ? 0x07 : 0x00);
+static void SetCHRBank_mmc3(uint16_t A, uint16_t V) {
+	uint16_t base = ((m268.reg[0] << 4) & 0x380) | ((m268.reg[2] << 3) & 0x078);
+	uint8_t gnromMode = (m268.reg[3] & 0x10) != 0;
+	uint8_t maskMmc3 = (gnromMode ? 0x00 : ((m268.reg[0] & 0x80) ? 0x7F : 0xFF));
+	uint8_t maskGnrom = (gnromMode ? 0x07 : 0x00);
 
 	/* CHR-RAM write protect on submapper 8/9) */
 	if ((iNESCart.submapper & ~1) == 8) {
@@ -134,7 +134,7 @@ static void SetCHRBank_mmc3(uint16 A, uint16 V) {
 
 	if (m268.reg[3] & 0x40) {
 		/* incomplete MMC4-like weird mode */
-		uint16 cswap = (mmc3.cmd & 0x80) << 5;
+		uint16_t cswap = (mmc3.cmd & 0x80) << 5;
 
 		setchr1(0x0000 ^ cswap, ((base & ~(maskMmc3 | maskGnrom)) | (mmc3.reg[0] & maskMmc3) | (0 & maskGnrom)));
 		setchr1(0x0400 ^ cswap, ((base & ~(maskMmc3 | maskGnrom)) | (0 & maskMmc3) | (1 & maskGnrom)));
@@ -173,7 +173,7 @@ static DECLFW(WriteWRAM) {
 }
 
 static DECLFW(WriteReg) {
-	uint8 index = A & 0x07;
+	uint8_t index = A & 0x07;
 
 	if (A >= 0x6000) {
 		WriteWRAM(A, V);
@@ -199,8 +199,8 @@ static void Reset(void) {
 }
 
 static void Power(void) {
-	uint16 startAddr = (iNESCart.submapper & 0x01) ? 0x5000 : 0x6000;
-	uint16 endAddr = (iNESCart.submapper & 0x01) ? 0x5FFF : 0x7FFF;
+	uint16_t startAddr = (iNESCart.submapper & 0x01) ? 0x5000 : 0x6000;
+	uint16_t endAddr = (iNESCart.submapper & 0x01) ? 0x5FFF : 0x7FFF;
 
 	memset(&m268, 0, sizeof(m268));
 	MMC3_Power();
@@ -230,7 +230,7 @@ static void Common_Init(CartInfo *info) {
 	if (ROM.chr.size) {
 		CHRRAMSIZE = info->CHRRamSize + info->CHRRamSaveSize;
 		if (CHRRAMSIZE) {
-			CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+			CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 			SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 			AddExState(CHRRAM, CHRRAMSIZE, 0, "CRAM");
 		}

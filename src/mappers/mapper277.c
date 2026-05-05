@@ -23,7 +23,7 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint8 prg = latch.data & 0x0F;
+	uint8_t prg = latch.data & 0x0F;
 
 	if (latch.data & 0x08) {
 		if (latch.data & 0x01) {

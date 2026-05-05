@@ -30,8 +30,8 @@
 #include "vrc24.h"
 
 static struct {
-	uint8 IRQCountHigh, IRQa;
-	uint16 IRQCountLow;
+	uint8_t IRQCountHigh, IRQa;
+	uint16_t IRQCountLow;
 } m308;
 
 static SFORMAT StateRegs[] = {
@@ -58,7 +58,7 @@ static DECLFW(WriteIRQ) {
 }
 
 static void CPUIRQHook(int a) {
-	uint16 prev, curr;
+	uint16_t prev, curr;
 
 	if (m308.IRQa) {
 		prev = m308.IRQCountLow & 0x0FFF;

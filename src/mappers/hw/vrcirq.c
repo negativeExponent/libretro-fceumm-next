@@ -21,11 +21,11 @@
 #include "mapinc.h"
 #include "vrcirq.h"
 
-static int16 IRQPrescaler;
-static uint8 IRQCount, IRQLatch, IRQd, IRQa, IRQm, IRQr;
+static int16_t IRQPrescaler;
+static uint8_t IRQCount, IRQLatch, IRQd, IRQa, IRQm, IRQr;
 
-static uint8 IRQScanPos;
-static uint8 IRQScanLut[3] = { 113, 113, 112 };
+static uint8_t IRQScanPos;
+static uint8_t IRQScanLut[3] = { 113, 113, 112 };
 
 SFORMAT VRCIRQ_StateRegs[] = {
 	{ &IRQPrescaler, 2, "PREC" },
@@ -71,11 +71,11 @@ void VRCIRQ_CPUHook(int a) {
 	}
 }
 
-void VRCIRQ_Latch(uint8 V) {
+void VRCIRQ_Latch(uint8_t V) {
 	IRQLatch = V;
 }
 
-void VRCIRQ_LatchNibble(uint8 V, uint8 highBit) {
+void VRCIRQ_LatchNibble(uint8_t V, uint8_t highBit) {
 	if (highBit) {
 		IRQLatch &= 0x0F;
 		IRQLatch |= V << 4;
@@ -85,7 +85,7 @@ void VRCIRQ_LatchNibble(uint8 V, uint8 highBit) {
 	}
 }
 
-void VRCIRQ_Control(uint8 V) {
+void VRCIRQ_Control(uint8_t V) {
 	IRQd = (V & 0x01) == 0x01;
 	IRQa = (V & 0x02) == 0x02;
 	IRQm = (V & 0x04) == 0x04;

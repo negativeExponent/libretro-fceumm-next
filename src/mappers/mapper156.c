@@ -28,8 +28,8 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg, mirror;
-	uint16 chr[8];
+	uint8_t prg, mirror;
+	uint16_t chr[8];
 } m156;
 
 static SFORMAT StateRegs[] = {
@@ -76,9 +76,9 @@ static DECLFW(WriteReg) {
 	case 0xC004:
 	case 0xC008:
 	case 0xC00C: {
-		uint8 index = ((A >> 1) & 0x04) | (A & 0x03); /* [0–3] + 0x04 if A is 0xC008 or 0xC00C */
-		uint16 mask = (A & 0x04) ? 0x00FF : 0xFF00;
-		uint16 value = (A & 0x04) ? (V << 8) : V;
+		uint8_t index = ((A >> 1) & 0x04) | (A & 0x03); /* [0–3] + 0x04 if A is 0xC008 or 0xC00C */
+		uint16_t mask = (A & 0x04) ? 0x00FF : 0xFF00;
+		uint16_t value = (A & 0x04) ? (V << 8) : V;
 
 		m156.chr[index] = (m156.chr[index] & mask) | value;
 		SyncCHR();
@@ -133,7 +133,7 @@ void Mapper156_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

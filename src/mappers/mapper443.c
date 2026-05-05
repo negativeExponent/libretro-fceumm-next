@@ -25,22 +25,22 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m443;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &m443.reg, 1, "EXPR" },
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint8 mask = 0x0F;
-	uint8 base = ((m443.reg << 4) & 0x20) | (m443.reg & 0x10);
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint8_t mask = 0x0F;
+	uint8_t base = ((m443.reg << 4) & 0x20) | (m443.reg & 0x10);
 
 	if (m443.reg & 0x04) { /* NROM */
-		uint16 bank = (base & ~mask) | (mmc3.reg[6] & mask);
+		uint16_t bank = (base & ~mask) | (mmc3.reg[6] & mask);
 		if (m443.reg & 0x08) { /* NROM-128 */
 			setprg16(0x8000, bank >> 1);
 			setprg16(0xC000, bank >> 1);
@@ -52,7 +52,7 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr1(A, ((m443.reg << 8) & ~0xFF) | (V & 0xFF));
 }
 

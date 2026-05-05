@@ -40,44 +40,44 @@ enum {
 };
 
 typedef struct __FDSENVUNIT {
-	uint8 speed;
-	uint8 volume;  /* Current volumes. */
-	uint8 control; /* $4080/$4084 with low 6bits masked */
-	int32 counter; /**/
+	uint8_t speed;
+	uint8_t volume;  /* Current volumes. */
+	uint8_t control; /* $4080/$4084 with low 6bits masked */
+	int32_t counter; /**/
 } FDSENVUNIT;
 
 typedef struct __FDSSOUND {
-	int64 cycles; /* fds cycles to run */
-	int64 count;  /* current cycle count */
+	int64_t cycles; /* fds cycles to run */
+	int64_t count;  /* current cycle count */
 
 	FDSENVUNIT EnvUnits[2];
 
-	int32 env_divider; /* Main envelope clock divider. */
+	int32_t env_divider; /* Main envelope clock divider. */
 
-	uint16 cwave_freq;   /* $4082 and lower 4 bits of $4083 */
-	uint32 cwave_pos;    /* main phase */
-	uint8 cwave_control; /* $4083 with low 6bits masked */
+	uint16_t cwave_freq;   /* $4082 and lower 4 bits of $4083 */
+	uint32_t cwave_pos;    /* main phase */
+	uint8_t cwave_control; /* $4083 with low 6bits masked */
 
-	uint16 mod_freq;   /* $4086 and lower 4 bits of $4087 */
-	uint32 mod_pos;    /* Should be named "mwave_pos", but "mod_pos" distinguishes it more. */
-	uint8 mod_disabled; /* $4087 bit7 */
+	uint16_t mod_freq;   /* $4086 and lower 4 bits of $4087 */
+	uint32_t mod_pos;    /* Should be named "mwave_pos", but "mod_pos" distinguishes it more. */
+	uint8_t mod_disabled; /* $4087 bit7 */
 
-	uint8 master_control;   /* $4089 with lower 6 bits masked */
-	uint8 master_env_speed; /* Master envelope speed controller($408A). */
+	uint8_t master_control;   /* $4089 with lower 6 bits masked */
+	uint8_t master_env_speed; /* Master envelope speed controller($408A). */
 
-	int32 mwave[0x20]; /* Modulation waveform.  Stored in expanded(after LUT) */
+	int32_t mwave[0x20]; /* Modulation waveform.  Stored in expanded(after LUT) */
 	                   /* form. Set to 0x10 if the original value is */
 	                   /* 0x4(reset sweep bias accumulator). */
-	uint8 cwave[0x40]; /* Game-defined waveform(carrier) */
-	uint32 sweep_bias;
+	uint8_t cwave[0x40]; /* Game-defined waveform(carrier) */
+	uint32_t sweep_bias;
 
-	int32 mod_output;  /* output from modulation engine */
-	int32 sample_out_cache; /* holds the last output from wave carrier */
+	int32_t mod_output;  /* output from modulation engine */
+	int32_t sample_out_cache; /* holds the last output from wave carrier */
 
-	uint8 cwave_pos_shift;
-	uint8 env_count_mul;
-	uint8 mod_pos_shift;
-	uint8 mod_overflow_shift;
+	uint8_t cwave_pos_shift;
+	uint8_t env_count_mul;
+	uint8_t mod_pos_shift;
+	uint8_t mod_overflow_shift;
 } FDSSOUND;
 
 DECLFR(FDSWaveRead);

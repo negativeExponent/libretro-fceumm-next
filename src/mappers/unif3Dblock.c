@@ -23,10 +23,10 @@
 
 #include "mapinc.h"
 
-static uint8 reg[4], IRQa;
-static int16 IRQCount, IRQPause;
+static uint8_t reg[4], IRQa;
+static int16_t IRQCount, IRQPause;
 
-static int16 Count = 0x0000;
+static int16_t Count = 0x0000;
 
 static SFORMAT StateRegs[] = {
 	{ reg, 4, "REGS" },

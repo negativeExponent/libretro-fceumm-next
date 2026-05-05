@@ -24,10 +24,10 @@
 #include "latch.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m319;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m319.reg, 2, "REG" },
@@ -35,7 +35,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint16 bank, mask;
+	uint16_t bank, mask;
 
 	if (iNESCart.CRC32 == 0xE5B9AB1F || iNESCart.PRGCRC32 == 0xC25FD362) {
 		/* The publicly-available UNIF (UNL-HP898F) ROM file of Prima Soft 9999999-in-1 has

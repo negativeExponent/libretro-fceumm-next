@@ -27,7 +27,7 @@
 #include "vrcirq.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m528;
 
 static SFORMAT StateRegs[] = {
@@ -35,23 +35,23 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 base = m528.reg;
-	uint16 mask = base | 0x0F;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t base = m528.reg;
+	uint16_t mask = base | 0x0F;
 
 	setprg8(A, base + (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = 0xFF;
-	uint16 base = m528.reg << 4;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = 0xFF;
+	uint16_t base = m528.reg << 4;
 
 	setchr1(A, (base | (V & mask)));
 }
 
 static void SycnWRAM(void) {
-	uint16 base = m528.reg;
-	uint16 mask = base | 0x0F;
+	uint16_t base = m528.reg;
+	uint16_t mask = base | 0x0F;
 
 	if (fme7.prg[0] == 1) {
 		setprg8r(0x10, 0x6000, 0);

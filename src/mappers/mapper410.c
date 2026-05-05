@@ -29,8 +29,8 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[4];
-	uint8 cmd;
+	uint8_t reg[4];
+	uint8_t cmd;
 } m410;
 
 static SFORMAT StateRegs[] = {
@@ -39,17 +39,17 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = ~m410.reg[3] & 0x3F;
-	uint16 base = ((m410.reg[2] << 2) & 0x300) | m410.reg[1];
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = ~m410.reg[3] & 0x3F;
+	uint16_t base = ((m410.reg[2] << 2) & 0x300) | m410.reg[1];
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	if (!(m410.reg[2] & 0x40)) {
-		uint16 mask = 0xFF >> (~m410.reg[2] & 0x0F);
-		uint16 base = ((m410.reg[2] << 4) & 0xF00) | m410.reg[0];
+		uint16_t mask = 0xFF >> (~m410.reg[2] & 0x0F);
+		uint16_t base = ((m410.reg[2] << 4) & 0xF00) | m410.reg[0];
 
 		setchr1(A, (base & ~mask) | (V & mask));
 	} else {
@@ -87,7 +87,7 @@ void Mapper410_Init(CartInfo *info) {
 	info->Power = Power;
 	AddExState(StateRegs, ~0, 0, NULL);
 
-	CHRRAM = (uint8 *)FCEU_gmalloc(8192);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(8192);
 	SetupCartCHRMapping(0x10, CHRRAM, 8192, 1);
 	AddExState(CHRRAM, 8192, 0, "CRAM");
 }

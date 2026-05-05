@@ -25,11 +25,11 @@
 #include "mapinc.h"
 #include "vrc3.h"
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg16(A, V & 0xFF);
 }
 
-static void SetCHR(uint16 V) {
+static void SetCHR(uint16_t V) {
 	setchr8(V & 0xFF);
 }
 
@@ -39,7 +39,7 @@ void Mapper073_Init(CartInfo *info) {
 	VRC3_cwrap = SetCHR;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

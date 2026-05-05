@@ -24,10 +24,10 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m360;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &m360.reg, 1, "REGS" },
@@ -44,7 +44,7 @@ static void Sync(void) {
 		setprg8(0xC000, 0x40);
 		setprg8(0xE000, 0x40);
 	} else {
-		uint8 bank = m360.reg & 0x1F;
+		uint8_t bank = m360.reg & 0x1F;
 		/* dip 0 and 1 is the same game SMB) */
 		if (bank < 2) {
 			setprg32(0x8000, bank >> 1);

@@ -1,7 +1,8 @@
+#include <stdio.h>
 #include "fceu-types.h"
 
-uint8 *WRAM = NULL;
-uint8 *CHRRAM = NULL;
+uint8_t *WRAM = NULL;
+uint8_t *CHRRAM = NULL;
 
-uint32 WRAMSIZE = 0;
-uint32 CHRRAMSIZE = 0;
+uint32_t WRAMSIZE = 0;
+uint32_t CHRRAMSIZE = 0;

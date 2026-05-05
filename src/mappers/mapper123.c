@@ -25,7 +25,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m123;
 
 static SFORMAT StateRegs[] = {
@@ -33,9 +33,9 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	if (m123.reg & 0x40) {
-		uint8 bank = ((m123.reg & 0x28) >> 2) | (m123.reg & 0x05);
+		uint8_t bank = ((m123.reg & 0x28) >> 2) | (m123.reg & 0x05);
 
 		if (m123.reg & 2) {
 			setprg32(0x8000, bank >> 1);
@@ -56,7 +56,7 @@ static DECLFW(WriteReg) {
 }
 
 static DECLFW(WriteMMC3) {
-	static const uint8 m114_perm[8] = { 0, 3, 1, 5, 6, 7, 2, 4 };
+	static const uint8_t m114_perm[8] = { 0, 3, 1, 5, 6, 7, 2, 4 };
 
 	if (!(A & 0x01)) {
 		V = (V & 0xC0) | m114_perm[V & 0x07];

@@ -25,9 +25,9 @@
 #include "share.h"
 
 static int readbit;
-static int32 readdata;
+static int32_t readdata;
 
-static uint8 Read(int w, uint8 ret) {
+static uint8_t Read(int w, uint8_t ret) {
 	if (!w) {
 		if (readbit < 24) {
 			ret |= ((readdata >> readbit) & 1) << 1;
@@ -43,7 +43,7 @@ static void Strobe(void) {
 }
 
 static void Update(void *data, int arg) {
-	readdata = *(uint32 *)data;
+	readdata = *(uint32_t *)data;
 }
 
 static INPUTCFC FamiNetSys = { Read, 0, Strobe, Update, 0, 0 };

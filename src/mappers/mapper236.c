@@ -22,10 +22,10 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m236;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m236.reg, 2, "REGS" },
@@ -33,8 +33,8 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 prg;
-	uint8 chr;
+	uint8_t prg;
+	uint8_t chr;
 
 	if (ROM.chr.size) {
 		prg = m236.reg[1] & 0x0F;

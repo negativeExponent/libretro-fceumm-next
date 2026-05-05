@@ -23,11 +23,11 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reset_flag = 0x07;
-static uint8 reg;
+static uint8_t reset_flag = 0x07;
+static uint8_t reg;
 
-static void BMCT2271CW(uint16 A, uint16 V) {
-	uint32 va = V;
+static void BMCT2271CW(uint16_t A, uint16_t V) {
+	uint32_t va = V;
 	if (reg & 0x20) {
 		va |= 0x200;
 		va |= (reg & 0x10) << 4;
@@ -38,8 +38,8 @@ static void BMCT2271CW(uint16 A, uint16 V) {
 	setchr1(A, va);
 }
 
-static void BMCT2271PW(uint16 A, uint16 V) {
-	uint32 va = V & 0x3F;
+static void BMCT2271PW(uint16_t A, uint16_t V) {
+	uint32_t va = V & 0x3F;
 	if (reg & 0x20) {
 		va &= 0x1F;
 		va |= 0x40;
@@ -77,7 +77,7 @@ static DECLFW(BMCT2271LoWrite) {
 }
 
 static DECLFR(BMCT2271HiRead) {
-	uint32 av = A;
+	uint32_t av = A;
 	if (reg & 0x40) {
 		av = (av & 0xFFF0) | reset_flag;
 	}

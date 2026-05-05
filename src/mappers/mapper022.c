@@ -21,7 +21,7 @@
 #include "mapinc.h"
 #include "vrc24.h"
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr1(A, V >> 1);
 }
 

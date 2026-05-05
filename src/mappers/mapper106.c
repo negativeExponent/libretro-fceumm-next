@@ -22,9 +22,9 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg[4], chr[8];
-	uint8 mirror, IRQa;
-	uint32 IRQCount;
+	uint8_t prg[4], chr[8];
+	uint8_t mirror, IRQa;
+	uint32_t IRQCount;
 } m106;
 
 static SFORMAT StateRegs[] = {
@@ -135,7 +135,7 @@ void Mapper106_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 }

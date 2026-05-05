@@ -29,7 +29,7 @@
 #include "mapinc.h"
 #include "onebus.h"
 
-static const uint8 cpuMangle[16][4] = {
+static const uint8_t cpuMangle[16][4] = {
 	{ 0, 1, 2, 3 }, /* Submapper 0: Normal                                  */
 	{ 0, 1, 2, 3 }, /* Submapper 1: Waixing VT03                            */
 	{ 1, 0, 2, 3 }, /* Submapper 2: Trump Grand                             */
@@ -48,7 +48,7 @@ static const uint8 cpuMangle[16][4] = {
 	{ 0, 1, 2, 3 } /* Submapper F: Jungletac (CPU opcode encryption only)  */
 };
 
-static const uint8 ppuMangle[16][6] = {
+static const uint8_t ppuMangle[16][6] = {
 	{ 0, 1, 2, 3, 4, 5 }, /* Submapper 0: Normal                                  */
 	{ 1, 0, 5, 4, 3, 2 }, /* Submapper 1: Waixing VT03                            */
 	{ 0, 1, 2, 3, 4, 5 }, /* Submapper 2: Trump Grand                             */
@@ -67,7 +67,7 @@ static const uint8 ppuMangle[16][6] = {
 	{ 0, 1, 2, 3, 4, 5 } /* Submapper F: Jungletac (CPU opcode encryption only)  */
 };
 
-static const uint8 mmc3Mangle[16][8] = {
+static const uint8_t mmc3Mangle[16][8] = {
 	{ 0, 1, 2, 3, 4, 5, 6, 7 }, /* Submapper 0: Normal                                 */
 	{ 5, 4, 3, 2, 1, 0, 6, 7 }, /* Submapper 1: Waixing VT03                           */
 	{ 0, 1, 2, 3, 4, 5, 7, 6 }, /* Submapper 2: Trump Grand                            */
@@ -86,7 +86,7 @@ static const uint8 mmc3Mangle[16][8] = {
 	{ 0, 1, 2, 3, 4, 5, 6, 7 } /* Submapper F: Jungletac (CPU opcode encryption only) */
 };
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static void Sync(void) {
 	OneBus_SyncPRG(0x0FFF, 0);
@@ -100,7 +100,7 @@ static DECLFW(WritePPU201X) {
 }
 
 static DECLFR(ReadCPU4017) {
-	uint8 ret = OneBus_ReadAPU40XX(A);
+	uint8_t ret = OneBus_ReadAPU40XX(A);
 	switch (A & 0x3F) {
 	case 0x17:
 		if (onebus.cpu41xx[0x0B] == 0x14) {
@@ -124,7 +124,7 @@ static DECLFW(WriteMMC3) {
 	OneBus_WriteMMC3(A, V);
 }
 
-static uint8 OpcodeCallback(uint8 opcode) {
+static uint8_t OpcodeCallback(uint8_t opcode) {
 	if (iNESCart.submapper == 14 && onebus.cpu41xx[0x1C] & 0x40) {
 		return (((opcode << 1) & 0x80) | ((opcode >> 1) & 0x40) | (opcode & 0x3F));
 	}
@@ -161,7 +161,7 @@ void Mapper256_Init(CartInfo *info) {
 	}
 
 	if (!info->iNES2) {
-		iNESCart.submapper = (((*(uint32 *)&(info->MD5)) == 0x305fcdc3) || ((*(uint32 *)&(info->MD5)) == 0x6abfce8e)) ? 2 : 0; /* PowerJoy Supermax Carts */
+		iNESCart.submapper = (((*(uint32_t *)&(info->MD5)) == 0x305fcdc3) || ((*(uint32_t *)&(info->MD5)) == 0x6abfce8e)) ? 2 : 0; /* PowerJoy Supermax Carts */
 	}
 
 	OneBus_Init(info, Sync, ws, info->battery);

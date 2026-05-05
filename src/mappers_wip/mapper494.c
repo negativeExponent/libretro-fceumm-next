@@ -22,7 +22,7 @@
 #include "latch.h"
 
 static struct {
-	uint8 dipsw;
+	uint8_t dipsw;
 } m494;
 
 static SFORMAT StateRegs[] = {
@@ -31,9 +31,9 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync() {
-	uint16 bank = latch.addr >> 2;
-	uint8 rd = (!(latch.addr & 0x100) && ((latch.addr & 0x01) & (m494.dipsw & 0x01))) ? FALSE : TRUE;
-	uint8 wr = 0;
+	uint16_t bank = latch.addr >> 2;
+	uint8_t rd = (!(latch.addr & 0x100) && ((latch.addr & 0x01) & (m494.dipsw & 0x01))) ? FALSE : TRUE;
+	uint8_t wr = 0;
 
 	if (latch.addr & 0x100) {
 		if (latch.addr & 0x001) {

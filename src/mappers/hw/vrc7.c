@@ -24,13 +24,13 @@
 #include "vrc7sound.h"
 #include "vrc7.h"
 
-static uint32 vrc7_A0;
+static uint32_t vrc7_A0;
 
 VRC7 vrc7;
 
-void (*VRC7_pwrap)(uint16 A, uint16 V);
-void (*VRC7_cwrap)(uint16 A, uint16 V);
-void (*VRC7_mwrap)(uint8 V);
+void (*VRC7_pwrap)(uint16_t A, uint16_t V);
+void (*VRC7_cwrap)(uint16_t A, uint16_t V);
+void (*VRC7_mwrap)(uint8_t V);
 
 static SFORMAT StateRegs[] = {
 	{ vrc7.prg, 3, "PREG" },
@@ -40,15 +40,15 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void GENPWRAP(uint16 A, uint16 V) {
+static void GENPWRAP(uint16_t A, uint16_t V) {
 	setprg8(A, V & 0x3F);
 }
 
-static void GENCWRAP(uint16 A, uint16 V) {
+static void GENCWRAP(uint16_t A, uint16_t V) {
 	setchr1(A, V & 0xFF);
 }
 
-static void GENMWRAP(uint8 V) {
+static void GENMWRAP(uint8_t V) {
 	vrc7.mirr = V;
 
 	switch (vrc7.mirr & 3) {
@@ -169,7 +169,7 @@ static void StateRestore(int version) {
 	VRC7_SyncCHR();
 }
 
-void VRC7_Init(CartInfo *info, uint32 A0) {
+void VRC7_Init(CartInfo *info, uint32_t A0) {
 	VRC7_pwrap = GENPWRAP;
 	VRC7_cwrap = GENCWRAP;
 	VRC7_mwrap = GENMWRAP;
@@ -177,7 +177,7 @@ void VRC7_Init(CartInfo *info, uint32 A0) {
 	vrc7_A0 = A0;
 
 	WRAMSIZE = 8192;
-	WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+	WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 	SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 	AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	if (info->battery) {
@@ -198,7 +198,7 @@ void VRC7_Init(CartInfo *info, uint32 A0) {
 	VRC7Sound_AddStateInfo();
 }
 
-void VRC7_SetConfig(uint8 clear, int A0) {
+void VRC7_SetConfig(uint8_t clear, int A0) {
 	vrc7_A0 = A0;
 	MapIRQHook = VRCIRQ_CPUHook;
 	VRCIRQ_Init(TRUE);

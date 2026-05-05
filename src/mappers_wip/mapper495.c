@@ -21,9 +21,9 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 prg[3];
-	uint8 chr[4];
-	uint8 latch[2];
+	uint8_t prg[3];
+	uint8_t chr[4];
+	uint8_t latch[2];
 } m495;
 
 static SFORMAT StateRegs[] = {
@@ -46,7 +46,7 @@ static void SyncCHR(void) {
 }
 
 static void SyncMirror(void) {
-	uint8 mirr = m495.chr[m495.latch[0]] >> 6;
+	uint8_t mirr = m495.chr[m495.latch[0]] >> 6;
 	switch (mirr) {
 	case 0: setmirrorw(0, 0, 0, 1); break;
 	case 1: setmirror(MI_H); break;
@@ -55,7 +55,7 @@ static void SyncMirror(void) {
 	}
 }
 
-static void PPUHook(uint32 A) {
+static void PPUHook(uint32_t A) {
 	if ((A & 0x2FF0) == 0xFD0 || (A & 0x2FF0) == 0xFE0) {
 		m495.latch[(A >> 12) & 0x01] = ((A & 0x20) ? 0 : 1);
 		SyncCHR();

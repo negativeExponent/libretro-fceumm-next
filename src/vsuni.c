@@ -32,7 +32,7 @@
 typedef struct {
 	char *name;
 	int gameid;
-	uint64 md5partial;
+	uint64_t md5partial;
 	int mapper;
 	int mirroring;
 	int ppu;
@@ -43,7 +43,7 @@ typedef struct {
 
 VSUNISYSTEM vsuni_system;
 
-static uint8 DIPS = 0;
+static uint8_t DIPS = 0;
 
 void FCEUI_VSUniToggleDIPView(void) {
 	DIPS = !DIPS;
@@ -58,11 +58,11 @@ void FCEUI_VSUniSetDIP(int w, int state) {
 		FCEUI_VSUniToggleDIP(w);
 }
 
-uint8 FCEUI_VSUniGetDIPs(void) {
+uint8_t FCEUI_VSUniGetDIPs(void) {
 	return(vsuni_system.vsdip);
 }
 
-static uint8 secdata[2][32] = {
+static uint8_t secdata[2][32] = {
 	{
 		/* TKO Boxing */
 		0xff, 0xbf, 0xb7, 0x97, 0x97, 0x17, 0x57, 0x4f,
@@ -79,7 +79,7 @@ static uint8 secdata[2][32] = {
 	}
 };
 
-static uint8 VSindex;
+static uint8_t VSindex;
 
 static DECLFR(VSSecRead) {
 	if ((vsuni_system.type == VS_TYPE_TKO) || (vsuni_system.type == VS_TYPE_RBI)) {
@@ -127,9 +127,9 @@ static DECLFW(rc2c05_B2000_2001) {
 	OldWritePPU[A & 1](A, V);
 }
 
-void FCEU_VSUniSwap(uint8 *j0, uint8 *j1) {
-	uint8 t0 = *j0;
-	uint8 t1 = *j1;
+void FCEU_VSUniSwap(uint8_t *j0, uint8_t *j1) {
+	uint8_t t0 = *j0;
+	uint8_t t1 = *j1;
 
 	if (vsuni_system.ioption & IOPTION_SWAPDIRAB) {
 		/* Swap controllers 1 and 2 expect Select/start buttons */
@@ -334,7 +334,7 @@ VSUNIENTRY VSUniGames[] =
 	{ 0 }
 };
 
-void FCEU_VSUniCheck(uint64 md5partial, int *MapperNo, int *Mirroring) {
+void FCEU_VSUniCheck(uint64_t md5partial, int *MapperNo, int *Mirroring) {
 	VSUNIENTRY *vs = VSUniGames;
 	char name[100];
 
@@ -428,28 +428,28 @@ void FCEU_VSUniCheck(uint64 md5partial, int *MapperNo, int *Mirroring) {
 	}
 }
 
-void FCEU_VSUniDraw(uint8 *target) {
-	uint32 *dest;
+void FCEU_VSUniDraw(uint8_t *target) {
+	uint32_t *dest;
 	int y, x;
 
 	if (!DIPS) return;
 
-	dest = (uint32*)(target + 256 * 12 + 164);
+	dest = (uint32_t*)(target + 256 * 12 + 164);
 	for (y = 24; y; y--, dest += (256 - 72) >> 2) {
 		for (x = 72 >> 2; x; x--, dest++)
 			*dest = 0;
 	}
 
-	dest = (uint32*)(target + 256 * (12 + 4) + 164 + 6);
+	dest = (uint32_t*)(target + 256 * (12 + 4) + 164 + 6);
 	for (y = 16; y; y--, dest += (256 >> 2) - 16)
 		for (x = 8; x; x--) {
 			*dest = 0x01010101;
 			dest += 2;
 		}
 
-	dest = (uint32*)(target + 256 * (12 + 4) + 164 + 6);
+	dest = (uint32_t*)(target + 256 * (12 + 4) + 164 + 6);
 	for (x = 0; x < 8; x++, dest += 2) {
-		uint32 *da = dest + (256 >> 2);
+		uint32_t *da = dest + (256 >> 2);
 
 		if (!((vsuni_system.vsdip >> x) & 1))
 			da += (256 >> 2) * 10;

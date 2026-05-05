@@ -30,25 +30,25 @@
  */
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m260;
 
-static uint32 dipsw;
+static uint32_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m260.reg, 4, "REGS" },
 	{ 0 }
 };
 
-static void SetPRGBank_mmc3(uint16 A, uint16 V) {
-	uint8 base = m260.reg[1] & 0x3F;
+static void SetPRGBank_mmc3(uint16_t A, uint16_t V) {
+	uint8_t base = m260.reg[1] & 0x3F;
 
 	switch (m260.reg[0] & 0x07) {
 	case 0:
 	case 1:
 	case 2:
 	case 3: {
-		uint8 mask = 0x1F >> ((m260.reg[0] >> 1) & 0x01);
+		uint8_t mask = 0x1F >> ((m260.reg[0] >> 1) & 0x01);
 
 		base <<= 1;
 		setprg8(A, (base & ~mask) | (V & mask));
@@ -70,16 +70,16 @@ static void SetPRGBank_mmc3(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHRBank_mmc3(uint16 A, uint16 V) {
-	uint16 base = m260.reg[2] & 0x7F;
-	uint8 mode = m260.reg[0] & 0x07;
+static void SetCHRBank_mmc3(uint16_t A, uint16_t V) {
+	uint16_t base = m260.reg[2] & 0x7F;
+	uint8_t mode = m260.reg[0] & 0x07;
 
 	switch (m260.reg[0] & 0x07) {
 	case 0:
 	case 1:
 	case 2:
 	case 3: {
-		uint16 mask = 0xFF >> (m260.reg[0] & 0x01);
+		uint16_t mask = 0xFF >> (m260.reg[0] & 0x01);
 
 		base <<= 3;
 		setchr1(A, (base & ~mask) | (V & mask));
@@ -91,7 +91,7 @@ static void SetCHRBank_mmc3(uint16 A, uint16 V) {
 		break;
 	case 6:
 	case 7: {
-		uint16 mask = (m260.reg[0] & 0x01) ? 0x03 : 0x01;
+		uint16_t mask = (m260.reg[0] & 0x01) ? 0x03 : 0x01;
 
 		setchr8((base & ~mask) | (m260.reg[3] & mask));
 		break;

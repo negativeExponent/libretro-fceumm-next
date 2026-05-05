@@ -23,8 +23,8 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 cmd;
-	uint8 reg[8];
+	uint8_t cmd;
+	uint8_t reg[8];
 } m141;
 
 static SFORMAT StateRegs[] = {
@@ -41,7 +41,7 @@ static void SyncCHR(void) {
 	if (!ROM.chr.size) {
 		setchr8(0);
 	} else {
-		uint16 base = m141.reg[4] << 3;
+		uint16_t base = m141.reg[4] << 3;
 
 		setchr2(0x0000, ((base | (m141.reg[(m141.reg[7] & 0x01) ? 0 : 0] & 0x07)) << 1) | 0);
 		setchr2(0x0800, ((base | (m141.reg[(m141.reg[7] & 0x01) ? 0 : 1] & 0x07)) << 1) | 1);

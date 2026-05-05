@@ -24,7 +24,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m053;
 
 static SFORMAT StateRegs[] = {
@@ -82,8 +82,8 @@ void Mapper053_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	if (ssize == SIZE_2M) { /* Supervision 16-in-1 */
-		uint8 *newPRG = (uint8 *)FCEU_malloc(ssize);
-		uint8 *misc = (uint8 *)FCEU_malloc(SIZE_32K);
+		uint8_t *newPRG = (uint8_t *)FCEU_malloc(ssize);
+		uint8_t *misc = (uint8_t *)FCEU_malloc(SIZE_32K);
 
 		memcpy(misc, ROM.prg.data, SIZE_32K);
 		memcpy(newPRG, ROM.prg.data + SIZE_32K, ssize);

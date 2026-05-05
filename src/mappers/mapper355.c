@@ -24,10 +24,10 @@
 #include "hw/pic16c5x.h"
 
 static struct {
-	uint16 address;
+	uint16_t address;
 } m355;
 
-static uint8 *eprom = NULL;
+static uint8_t *eprom = NULL;
 
 static SFORMAT StateRegs[] = {
 	{ &m355.address, 2, "PICA" },

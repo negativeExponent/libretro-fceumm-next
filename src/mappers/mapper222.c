@@ -31,10 +31,10 @@
 enum { IRQ_LOAD_MODE = 0, IRQ_CLOCK_MODE };
 
 static struct {
-	uint8 IRQPrescaler;
-	uint8 IRQMode;
-	uint8 IRQCount[2];
-	uint8 IRQPending;
+	uint8_t IRQPrescaler;
+	uint8_t IRQMode;
+	uint8_t IRQCount[2];
+	uint8_t IRQPending;
 } m222;
 
 static SFORMAT StateRegs[] = {
@@ -46,11 +46,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRGBank(uint16 A, uint16 V) {
+static void SetPRGBank(uint16_t A, uint16_t V) {
 	setprg8(A, V & 0x1F);
 }
 
-static void SetCHRBank(uint16 A, uint16 V) {
+static void SetCHRBank(uint16_t A, uint16_t V) {
 	setchr1(A, V & 0xFFF);
 }
 
@@ -82,7 +82,7 @@ static DECLFW(WriteIRQ) {
 
 static void CPUIRQHook(int a) {
 	while (a--) {
-		uint8 prevPrescaler = m222.IRQPrescaler;
+		uint8_t prevPrescaler = m222.IRQPrescaler;
 		if (m222.IRQPending) {
 			m222.IRQPrescaler = 0;
 		} else {

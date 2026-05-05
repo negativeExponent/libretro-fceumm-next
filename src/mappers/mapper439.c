@@ -26,7 +26,7 @@
 #include "latch.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m439;
 
 static SFORMAT StateRegs[] = {
@@ -35,8 +35,8 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 mask = ((~m439.reg[1] >> 1) & 0x38) | 0x07;
-	uint8 base = m439.reg[0] >> 1;
+	uint8_t mask = ((~m439.reg[1] >> 1) & 0x38) | 0x07;
+	uint8_t base = m439.reg[0] >> 1;
 
 	setprg16(0x8000, (base & ~mask) | (latch.data & mask));
 	setprg16(0xC000, (base & ~mask) | (0x3F & mask));
@@ -51,7 +51,7 @@ static DECLFW(WriteReg) {
 
 static DECLFW(WriteLatch) {
 	/* mask to protect mirroring and A19-A17 on latch from being updated depending on $6001 m439.reg */
-	uint8 mask = (m439.reg[1] & 0x80) | ((m439.reg[1] >> 1) & 0x38);
+	uint8_t mask = (m439.reg[1] & 0x80) | ((m439.reg[1] >> 1) & 0x38);
 	Latch_Write(A, (V & ~mask) | (latch.data & mask));
 }
 

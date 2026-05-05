@@ -21,7 +21,7 @@
 #include "mapinc.h"
 #include "n118.h"
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg8(A, V & 0x0F);
 }
 

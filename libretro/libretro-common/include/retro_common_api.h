@@ -96,7 +96,7 @@ typedef int ssize_t;
 #endif
 #else
 /* C++11 says this one isn't needed, but apparently (some versions of) mingw require it anyways */
-/* https://stackoverflow.com/questions/8132399/how-to-printf-uint64-t-fails-with-spurious-trailing-in-format */
+/* https://stackoverflow.com/questions/8132399/how-to-printf-uint64_t-t-fails-with-spurious-trailing-in-format */
 /* https://github.com/libretro/RetroArch/issues/6009 */
 #ifndef __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS 1

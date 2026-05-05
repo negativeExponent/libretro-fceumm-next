@@ -29,8 +29,8 @@
 #include "vrc24.h"
 
 static struct {
-	uint8 IRQa;
-	uint16 IRQCount;
+	uint8_t IRQa;
+	uint16_t IRQCount;
 } m524;
 
 static SFORMAT StateRegs[] = {

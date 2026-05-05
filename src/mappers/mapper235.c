@@ -24,7 +24,7 @@
 #include "latch.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m235;
 
 static SFORMAT StateRegs[] = {
@@ -39,8 +39,8 @@ static void Sync(void) {
 		setchr8(0);
 		setmirror(MI_V);
 	} else {
-		uint16 bank = (((latch.addr >> 3) & 0x60) | (latch.addr & 0x1F));
-		uint8 rd = bank < PRG_BANK_COUNT(16);
+		uint16_t bank = (((latch.addr >> 3) & 0x60) | (latch.addr & 0x1F));
+		uint8_t rd = bank < PRG_BANK_COUNT(16);
 
 		if (bank >= PRG_BANK_COUNT(16)) {
 			unsetcpu32(0x8000);

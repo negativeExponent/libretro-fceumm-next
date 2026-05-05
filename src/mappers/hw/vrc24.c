@@ -49,14 +49,14 @@ void (*VRC24_SyncCHR)(void);
 void (*VRC24_SyncMirror)(void);
 void (*VRC24_SyncWires)(void);
 
-void (*VRC24_pwrap)(uint16 A, uint16 V);
-void (*VRC24_cwrap)(uint16 A, uint16 V);
+void (*VRC24_pwrap)(uint16_t A, uint16_t V);
+void (*VRC24_cwrap)(uint16_t A, uint16_t V);
 
 DECLFW((*VRC24_WriteExtSelect));
 
 VRC24 vrc24;
 
-static uint8 lastPRGBank;
+static uint8_t lastPRGBank;
 
 static SFORMAT StateRegs[] = {
 	{ vrc24.prg, 2, "PREG" },
@@ -68,7 +68,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-uint16 VRC24_GetPRGBank(int bank) {
+uint16_t VRC24_GetPRGBank(int bank) {
 	if ((vrc24.cmd & 0x02) && (!(bank & 0x01))) {
 		bank ^= 0x02;
 	}
@@ -78,7 +78,7 @@ uint16 VRC24_GetPRGBank(int bank) {
 	return (vrc24.prg[bank & 0x01]);
 }
 
-static void GENPWRAP(uint16 A, uint16 V) {
+static void GENPWRAP(uint16_t A, uint16_t V) {
 	setprg8(A, V & PRGMASK_DEFAULT);
 }
 
@@ -89,11 +89,11 @@ void VRC24_SyncPRG_default(void) {
 	VRC24_pwrap(0xE000, VRC24_GetPRGBank(3));
 }
 
-uint16 VRC24_GetCHRBank(int bank) {
+uint16_t VRC24_GetCHRBank(int bank) {
 	return vrc24.chr[bank];
 }
 
-static void GENCWRAP(uint16 A, uint16 V) {
+static void GENCWRAP(uint16_t A, uint16_t V) {
 	setchr1(A, V & CHRMASK_DEFAULT);
 }
 
@@ -140,7 +140,7 @@ DECLFW(VRC24_WriteWRAM) {
 }
 
 DECLFW(VRC24_Write) {
-	uint8 index, mask;
+	uint8_t index, mask;
 
 	switch (A & 0xF000) {
 	case 0x8000:
@@ -264,7 +264,7 @@ static void StateRestore(int version) {
 void VRC24_Close(void) {
 }
 
-void VRC24_Init(CartInfo *info, VRC24TYPE _vrc4, uint32 _A0, uint32 _A1, int wram, int irqRepeated) {
+void VRC24_Init(CartInfo *info, VRC24TYPE _vrc4, uint32_t _A0, uint32_t _A1, int wram, int irqRepeated) {
 	VRC24_SyncPRG = VRC24_SyncPRG_default;
 	VRC24_SyncCHR = VRC24_SyncCHR_default;
 	VRC24_SyncMirror = VRC24_SyncMirror_default;
@@ -283,7 +283,7 @@ void VRC24_Init(CartInfo *info, VRC24TYPE _vrc4, uint32 _A0, uint32 _A1, int wra
 		WRAMSIZE = iNESCart.iNES2 ? (info->PRGRamSize + info->PRGRamSaveSize) : 8192;
 
 		if (WRAMSIZE) {
-			WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+			WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 			SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 			AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 
@@ -307,7 +307,7 @@ void VRC24_Init(CartInfo *info, VRC24TYPE _vrc4, uint32 _A0, uint32 _A1, int wra
 	}
 }
 
-void VRC2_SetConfig(uint8 clear, uint32 _A0, uint32 _A1) {
+void VRC2_SetConfig(uint8_t clear, uint32_t _A0, uint32_t _A1) {
 	vrc24.A0 = _A0;
 	vrc24.A1 = _A1;
 	vrc24.type = VRC24_VRC2;
@@ -324,7 +324,7 @@ void VRC2_SetConfig(uint8 clear, uint32 _A0, uint32 _A1) {
 	}
 }
 
-void VRC4_SetConfig(uint8 clear, uint32 _A0, uint32 _A1, int irqRepeated) {
+void VRC4_SetConfig(uint8_t clear, uint32_t _A0, uint32_t _A1, int irqRepeated) {
 	vrc24.A0 = _A0;
 	vrc24.A1 = _A1;
 	vrc24.type = VRC24_VRC4;

@@ -55,52 +55,52 @@
 #define C_FLAG  0x01
 
 typedef struct __X6502 {
-	int32 tcount;		/* Temporary cycle counter */
-	uint16 PC;			/* I'll change this to uint32 later... */
+	int32_t tcount;		/* Temporary cycle counter */
+	uint16_t PC;			/* I'll change this to uint32_t later... */
 						/* I'll need to AND PC after increments to 0xFFFF */
 						/* when I do, though.  Perhaps an IPC() macro? */
-	uint16 newPC;       /* used to override PC after at power on */
-	uint8 A, X, Y, S, P, mooPI;
-	uint8 jammed;
+	uint16_t newPC;       /* used to override PC after at power on */
+	uint8_t A, X, Y, S, P, mooPI;
+	uint8_t jammed;
 
-	int32 count;
-	uint32 IRQlow;		/* Simulated IRQ pin held low(or is it high?).
+	int32_t count;
+	uint32_t IRQlow;		/* Simulated IRQ pin held low(or is it high?).
 						And other junk hooked on for speed reasons.*/
-	uint8 openbus;			/* Data bus "cache" for reads from certain areas */
+	uint8_t openbus;			/* Data bus "cache" for reads from certain areas */
 
-	uint16 opcode_PC;
-	int32 opcode_cycles;
-	uint8 opcode;
-	uint8 (*encryptOpcodeCB)(uint8 opcode);
+	uint16_t opcode_PC;
+	int32_t opcode_cycles;
+	uint8_t opcode;
+	uint8_t (*encryptOpcodeCB)(uint8_t opcode);
 
 	#ifdef FCEUDEF_DEBUGGER
 	int preexec;		/* Pre-exec'ing for debug breakpoints. */
 	void (*CPUHook)(struct __X6502 *);
-	uint8 (*ReadHook)(struct __X6502 *, uint32);
-	void (*WriteHook)(struct __X6502 *, uint32, uint8);
+	uint8_t (*ReadHook)(struct __X6502 *, uint32_t);
+	void (*WriteHook)(struct __X6502 *, uint32_t, uint8_t);
 	#endif
 } X6502;
 
 #ifdef FCEUDEF_DEBUGGER
 void X6502_Debug(void (*CPUHook)(X6502 *),
-				 uint8 (*ReadHook)(X6502 *, uint32),
-				 void (*WriteHook)(X6502 *, uint32, uint8));
+				 uint8_t (*ReadHook)(X6502 *, uint32_t),
+				 void (*WriteHook)(X6502 *, uint32_t, uint8_t));
 
 #endif
 
-extern uint32 timestamp;
-extern uint32 sound_timestamp;
+extern uint32_t timestamp;
+extern uint32_t sound_timestamp;
 extern X6502 cpu;
 
 extern void (*MapIRQHook)(int a);
 
-void X6502_Run(int32 cycles);
+void X6502_Run(int32_t cycles);
 
 void X6502_Init(void);
 void X6502_Reset(void);
 void X6502_Power(void);
-void X6502_SetNewPC(uint16 newPC);
-void X6502_SetOpcodeEncryptCB(uint8 (*callback)(uint8 opcode));
+void X6502_SetNewPC(uint16_t newPC);
+void X6502_SetOpcodeEncryptCB(uint8_t (*callback)(uint8_t opcode));
 
 void TriggerNMI(void);
 void TriggerNMI2(void);

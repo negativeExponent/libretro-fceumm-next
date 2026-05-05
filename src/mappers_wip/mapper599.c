@@ -22,7 +22,7 @@
 #include "latch.h"
 
 static struct {
-	uint8 pad;
+	uint8_t pad;
 } m599;
 
 static SFORMAT StateRegs[] = {
@@ -31,7 +31,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint16 prgMask, prgBase;
+	uint16_t prgMask, prgBase;
 
 	if (PRG_BANK_COUNT(16) >= 32) {
 		prgMask = (latch.addr & 0x400) ? 0x07 : 0x1F;
@@ -89,7 +89,7 @@ void Mapper599_Init(CartInfo *info) {
 	info->Reset = Latch_RegReset;
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

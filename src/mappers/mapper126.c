@@ -28,21 +28,21 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m126;
 
-static uint8 dipsw;
-static uint8 oldump = FALSE;
+static uint8_t dipsw;
+static uint8_t oldump = FALSE;
 
 static SFORMAT StateRegs[] = {
 	{ m126.reg, 4, "EXPR" },
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint8 reg0 = m126.reg[0] ^ (oldump ? 0 : 0x20);
-	uint16 mask = (reg0 & 0x40) ? 0x0F : 0x1F;
-	uint16 base = (((reg0 << 4) & 0x70) | ((reg0 << 3) & 0x180)) & ~mask;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint8_t reg0 = m126.reg[0] ^ (oldump ? 0 : 0x20);
+	uint16_t mask = (reg0 & 0x40) ? 0x0F : 0x1F;
+	uint16_t base = (((reg0 << 4) & 0x70) | ((reg0 << 3) & 0x180)) & ~mask;
 
 	switch (iNESCart.submapper) {
 	case 1:
@@ -54,7 +54,7 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 
 	if (m126.reg[3] & 0x08) {
-		uint8 b = (A >> 13) & 0x03;
+		uint8_t b = (A >> 13) & 0x03;
 		V = MMC3_GetPRGBank(b & (((m126.reg[3] & 0x0D) == 0x0D) ? 0x02 : ((m126.reg[3] & 0x01) ? 0 : 0x03)));
 		switch (m126.reg[3] & 0x03) {
 		case 0:
@@ -88,10 +88,10 @@ static void SetPRG(uint16 A, uint16 V) {
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint8 reg0 = m126.reg[0] ^ (oldump ? 0 : 0x20);
-	uint16 mask = (reg0 & 0x80) ? 0x7F : 0xFF;
-	uint16 base = (reg0 << 4) & 0x380;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint8_t reg0 = m126.reg[0] ^ (oldump ? 0 : 0x20);
+	uint16_t mask = (reg0 & 0x80) ? 0x7F : 0xFF;
+	uint16_t base = (reg0 << 4) & 0x380;
 
 	if (iNESCart.mapper == 126) {
 		base = ((reg0 << 4) & 0x080) | ((reg0 << 3) & 0x100) | ((reg0 << 5) & 0x200);
@@ -137,7 +137,7 @@ static DECLFR(ReadDIP) {
 static DECLFW(WriteReg) {
 	CartBW(A, V);
 	if ((A & 0x03) == 0x02) {
-		const uint8 mask = 0xFF & (~((m126.reg[2] & 0x80) ? 0xF0 : 0x00)) & (~(((m126.reg[2]) >> 3) & 0x0E));
+		const uint8_t mask = 0xFF & (~((m126.reg[2] & 0x80) ? 0xF0 : 0x00)) & (~(((m126.reg[2]) >> 3) & 0x0E));
 		m126.reg[2] = (m126.reg[2] & ~mask) | (V & mask);
 		MMC3_SyncCHR();
 	} else {
@@ -185,7 +185,7 @@ static void Power(void) {
 }
 
 static void InitCommon(CartInfo *info) {
-	uint8 ws = 8;
+	uint8_t ws = 8;
 	if (info->iNES2) {
 		ws = (info->PRGRamSize + info->PRGRamSaveSize) / 1024;
 	}

@@ -22,7 +22,7 @@
 #include "mmc1.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m546;
 
 static SFORMAT StateRegs[] = {
@@ -30,7 +30,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	if (m546.reg & 0x10) {
 		setprg16(A, 0x10 | (V & 0x0F));
 	} else {
@@ -43,8 +43,8 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint8 writable = (m546.reg & 0x80) ? FALSE : TRUE;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint8_t writable = (m546.reg & 0x80) ? FALSE : TRUE;
 	SetupCartCHRMapping(0, CHRptr[0], CHRsize[0], writable);
 	setchr8(0);
 }

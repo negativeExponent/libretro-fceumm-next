@@ -21,7 +21,7 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	if ((V & ~0x01) == 0x00) { /* Dai-2-Ji - Super Robot Taisen (As).nes */
 		setchr1r(0x10, A, V & 0x01);
 	} else {
@@ -34,7 +34,7 @@ void Mapper194_Init(CartInfo *info) {
 	MMC3_cwrap = SetCHR;
 
 	CHRRAMSIZE = 2048;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

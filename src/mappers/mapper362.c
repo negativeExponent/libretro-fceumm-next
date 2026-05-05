@@ -26,8 +26,8 @@
 #include "vrc24.h"
 
 static struct {
-	uint8 game;
-	uint8 ppuchrbus;
+	uint8_t game;
+	uint8_t ppuchrbus;
 } m362;
 
 static SFORMAT StateRegs[] = {
@@ -36,16 +36,16 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 base = (m362.game == 0) ? (vrc24.chr[m362.ppuchrbus] >> 3) : 0x40;
-	uint16 mask = 0x0F;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t base = (m362.game == 0) ? (vrc24.chr[m362.ppuchrbus] >> 3) : 0x40;
+	uint16_t mask = 0x0F;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 base = (m362.game == 0) ? vrc24.chr[m362.ppuchrbus] : 0x200;
-	uint16 mask = (m362.game == 0) ? 0x7F : 0x1FF;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t base = (m362.game == 0) ? vrc24.chr[m362.ppuchrbus] : 0x200;
+	uint16_t mask = (m362.game == 0) ? 0x7F : 0x1FF;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
@@ -59,8 +59,8 @@ static DECLFW(WriteCHR) {
 	}
 }
 
-static void HBIRQHook(uint32 A) {
-	uint8 bank = (A & 0x1FFF) >> 10;
+static void HBIRQHook(uint32_t A) {
+	uint8_t bank = (A & 0x1FFF) >> 10;
 	if ((m362.game == 0) && (m362.ppuchrbus != bank) && ((A & 0x3000) != 0x2000)) {
 		m362.ppuchrbus = bank;
 		VRC24_SyncCHR();

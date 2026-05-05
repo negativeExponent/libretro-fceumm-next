@@ -22,9 +22,9 @@
 #include "latch.h"
 
 static struct {
-	uint8 smb2j_reg;
-	uint8 IRQa;
-	uint16 IRQCount;
+	uint8_t smb2j_reg;
+	uint8_t IRQa;
+	uint16_t IRQCount;
 } m416;
 
 static SFORMAT StateRegs[] = {
@@ -35,7 +35,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 bank = ((latch.data >> 1) & 0x04) | ((latch.data >> 6) & 0x02) | ((latch.data >> 5) & 0x01);
+	uint8_t bank = ((latch.data >> 1) & 0x04) | ((latch.data >> 6) & 0x02) | ((latch.data >> 5) & 0x01);
 
 	setprg8(0x6000, 0x07);
 	if (latch.data & 0x08) {

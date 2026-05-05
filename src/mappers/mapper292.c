@@ -32,9 +32,9 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[3];
-	uint8 reglatch[2];
-	uint8 cpuLatch;
+	uint8_t reg[3];
+	uint8_t reglatch[2];
+	uint8_t cpuLatch;
 } m292;
 
 static writefunc cpuwrite[0x10000];
@@ -46,7 +46,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg8(A, V);
 }
 

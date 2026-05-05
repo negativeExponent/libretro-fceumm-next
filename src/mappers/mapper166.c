@@ -22,7 +22,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m166;
 
 static SFORMAT StateRegs[] = {
@@ -31,8 +31,8 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint16 base = ((m166.reg[0] ^ m166.reg[1]) & 0x10) << 1;
-	uint16 bank = (m166.reg[2] ^ m166.reg[3]) & 0x1f;
+	uint16_t base = ((m166.reg[0] ^ m166.reg[1]) & 0x10) << 1;
+	uint16_t bank = (m166.reg[2] ^ m166.reg[3]) & 0x1f;
 
 	if (m166.reg[1] & 0x08) {
 		bank &= 0xFE;
@@ -82,7 +82,7 @@ void Mapper166_Init(CartInfo *info) {
 		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
 	}
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_malloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		FCEU_CheatAddRAM(WRAMSIZE >> 10, 0x6000, WRAM);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");

@@ -55,9 +55,9 @@
 #define GREEN_EXPAND 2
 #define BLUE_EXPAND  3
 #define BUILD_PIXEL(R, G, B) (((int)((R)&0x1f) << RED_SHIFT) | ((int)((G)&0x3f) << GREEN_SHIFT) | ((int)((B)&0x1f) << BLUE_SHIFT))
-typedef uint16 Bpp_t;
+typedef uint16_t Bpp_t;
 #elif defined(FRONTEND_SUPPORTS_ABGR1555) /* PS2 */
-typedef uint16 Bpp_t;
+typedef uint16_t Bpp_t;
 #define RED_SHIFT    0
 #define GREEN_SHIFT  5
 #define BLUE_SHIFT   10
@@ -68,9 +68,9 @@ typedef uint16 Bpp_t;
 #define GREEN_MASK   0x3E0
 #define BLUE_MASK    0x7C00
 #define BUILD_PIXEL(R, G, B) (((int)((R)&0x1f) << RED_SHIFT) | ((int)((G)&0x3f) << GREEN_SHIFT) | ((int)((B)&0x1f) << BLUE_SHIFT))
-typedef uint16 Bpp_t;
+typedef uint16_t Bpp_t;
 #elif defined(FRONTEND_SUPPORTS_RGB565)
-typedef uint16 Bpp_t;
+typedef uint16_t Bpp_t;
 #define RED_SHIFT    11
 #define GREEN_SHIFT  5
 #define BLUE_SHIFT   0
@@ -82,7 +82,7 @@ typedef uint16 Bpp_t;
 #define BLUE_MASK    0x1f
 #define BUILD_PIXEL(R, G, B) (((int)((R)&0x1f) << RED_SHIFT) | ((int)((G)&0x3f) << GREEN_SHIFT) | ((int)((B)&0x1f) << BLUE_SHIFT))
 #elif defined(FRONTEND_SUPPORTS_ARGB888)
-typedef uint32 Bpp_t;
+typedef uint32_t Bpp_t;
 #define RED_SHIFT    16
 #define GREEN_SHIFT  8
 #define BLUE_SHIFT   0
@@ -92,7 +92,7 @@ typedef uint32 Bpp_t;
 #define ALPHA_SHIFT 24
 #define BUILD_PIXEL(R, G, B) (((int)(R) << RED_SHIFT) | ((int)(G) << GREEN_SHIFT) | ((int)(B) << BLUE_SHIFT))
 #else
-typedef uint16 Bpp_t;
+typedef uint16_t Bpp_t;
 #define RED_SHIFT    10
 #define GREEN_SHIFT  5
 #define BLUE_SHIFT   0
@@ -143,31 +143,31 @@ static unsigned libretro_msg_interface_version  = 0;
 
 const size_t PPU_BIT = 1ULL << 31ULL;
 
-static uint8 opt_region              = 0;
+static uint8_t opt_region              = 0;
 static bool opt_showAdvSoundOptions  = true;
 static bool opt_showAdvSystemOptions = true;
 
 #if defined(PSP) || defined(PS2)
-static __attribute__((aligned(32))) uint32 retro_palette[1024];
+static __attribute__((aligned(32))) uint32_t retro_palette[1024];
 #else
-static uint32 retro_palette[1024];
+static uint32_t retro_palette[1024];
 #endif
 #if defined(PSP) || defined(PS2)
 /* not used because of hw buffers? */
-/* static uint8* fceu_video_out; */
+/* static uint8_t* fceu_video_out; */
 #else
 static Bpp_t *fceu_video_out;
 #endif
 
 /* Some timing-related variables. */
-static uint8 sndquality;
+static uint8_t sndquality;
 
-static uint32 current_palette = 0;
+static uint32_t current_palette = 0;
 static unsigned serialize_size;
 
 /* extern forward decls.*/
-extern uint8 PALRAM[0x20];
-extern uint8 SPRAM[0x100];
+extern uint8_t PALRAM[0x20];
+extern uint8_t SPRAM[0x100];
 
 /* emulator-specific callback functions */
 const char *GetKeyboard(void);
@@ -175,7 +175,7 @@ const char *GetKeyboard(void) {
 	return "";
 }
 
-void FCEUD_SetPalette(int index, uint8 r, uint8 g, uint8 b) {
+void FCEUD_SetPalette(int index, uint8_t r, uint8_t g, uint8_t b) {
 	unsigned index_to_write = index;
 #if defined(PS2)
 	/* Index correction for PS2 GS */
@@ -251,7 +251,7 @@ void FCEUD_DispMessage(enum retro_log_level level, unsigned duration, const char
 
 /*palette for FCEU*/
 struct {
-	uint8  exist;
+	uint8_t  exist;
 	size_t nEntries;
 	pal    *data;
 } palette_game;
@@ -270,7 +270,7 @@ static unsigned palette_switch_counter                 = 0;
 struct retro_core_option_value *palette_opt_values     = NULL;
 static const char *palette_labels[PALETTE_TOTAL_COUNT] = { 0 };
 
-static uint32 palette_switch_get_current_index(void) {
+static uint32_t palette_switch_get_current_index(void) {
 	if (current_palette < PALETTE_COUNT)
 		return current_palette + 1;
 
@@ -380,7 +380,7 @@ static void palette_switch_deinit(void) {
 	palette_opt_values             = NULL;
 }
 
-static void palette_switch_set_index(uint32 palette_index) {
+static void palette_switch_set_index(uint32_t palette_index) {
 	struct retro_variable var = { 0 };
 
 	if (palette_index >= PALETTE_TOTAL_COUNT)
@@ -408,7 +408,7 @@ static enum stereo_filter_type current_stereo_filter = STEREO_FILTER_NULL;
 
 #define STEREO_FILTER_DELAY_MS_DEFAULT 15.0f
 typedef struct {
-	int32 *samples;
+	int32_t *samples;
 	size_t samples_size;
 	size_t samples_pos;
 	size_t delay_count;
@@ -416,33 +416,33 @@ typedef struct {
 static stereo_filter_delay_t stereo_filter_delay;
 static float stereo_filter_delay_ms = STEREO_FILTER_DELAY_MS_DEFAULT;
 
-static void stereo_filter_apply_null(int32 *sound_buffer, size_t size) {
+static void stereo_filter_apply_null(int32_t *sound_buffer, size_t size) {
 	size_t i;
 	/* Each element of sound_buffer is a 16 bit mono sample
 	 * stored in a 32 bit value. We convert this to stereo
 	 * by copying the mono sample to both the high and low
 	 * 16 bit regions of the value and casting sound_buffer
-	 * to int16 when uploading to the frontend */
+	 * to int16_t when uploading to the frontend */
 	for (i = 0; i < size; i++) {
 		sound_buffer[i] = (sound_buffer[i] << 16) | (sound_buffer[i] & 0xFFFF);
 	}
 }
 
-static void stereo_filter_apply_delay(int32 *sound_buffer, size_t size) {
+static void stereo_filter_apply_delay(int32_t *sound_buffer, size_t size) {
 	size_t delay_capacity = stereo_filter_delay.samples_size - stereo_filter_delay.samples_pos;
 	size_t i;
 
 	/* Copy current samples into the delay buffer
 	 * (resizing if required) */
 	if (delay_capacity < size) {
-		int32 *tmp_buffer = NULL;
+		int32_t *tmp_buffer = NULL;
 		size_t tmp_buffer_size;
 
 		tmp_buffer_size = stereo_filter_delay.samples_size + (size - delay_capacity);
 		tmp_buffer_size = (tmp_buffer_size << 1) - (tmp_buffer_size >> 1);
-		tmp_buffer      = (int32 *)malloc(tmp_buffer_size * sizeof(int32));
+		tmp_buffer      = (int32_t *)malloc(tmp_buffer_size * sizeof(int32_t));
 
-		memcpy(tmp_buffer, stereo_filter_delay.samples, stereo_filter_delay.samples_pos * sizeof(int32));
+		memcpy(tmp_buffer, stereo_filter_delay.samples, stereo_filter_delay.samples_pos * sizeof(int32_t));
 
 		free(stereo_filter_delay.samples);
 
@@ -477,7 +477,7 @@ static void stereo_filter_apply_delay(int32 *sound_buffer, size_t size) {
 		 * by copying the mono sample to the high (left channel)
 		 * 16 bit region and the delayed sample to the low
 		 * (right channel) region, casting sound_buffer
-		 * to int16 when uploading to the frontend */
+		 * to int16_t when uploading to the frontend */
 		for (i = size - samples_to_mix; i < size; i++) {
 			sound_buffer[i] = (sound_buffer[i] << 16) | (stereo_filter_delay.samples[delay_index++] & 0xFFFF);
 		}
@@ -485,7 +485,7 @@ static void stereo_filter_apply_delay(int32 *sound_buffer, size_t size) {
 		/* Remove the mixed samples from the delay buffer */
 		memmove(stereo_filter_delay.samples,
 			stereo_filter_delay.samples + samples_to_mix,
-		    (stereo_filter_delay.samples_pos - samples_to_mix) * sizeof(int32));
+		    (stereo_filter_delay.samples_pos - samples_to_mix) * sizeof(int32_t));
 		stereo_filter_delay.samples_pos -= samples_to_mix;
 	} else {
 		/* Otherwise apply the regular 'null' filter */
@@ -495,7 +495,7 @@ static void stereo_filter_apply_delay(int32 *sound_buffer, size_t size) {
 	}
 }
 
-static void (*stereo_filter_apply)(int32 *sound_buffer, size_t size) = stereo_filter_apply_null;
+static void (*stereo_filter_apply)(int32_t *sound_buffer, size_t size) = stereo_filter_apply_null;
 
 static void stereo_filter_deinit_delay(void) {
 	if (stereo_filter_delay.samples) {
@@ -519,7 +519,7 @@ static void stereo_filter_init_delay(void) {
 	 * the samples buffer during runtime */
 	initial_samples_size = stereo_filter_delay.delay_count + (size_t)((float)FSettings.SndRate / NES_TARGET_FPS) + 1;
 
-	stereo_filter_delay.samples      = (int32 *)malloc(initial_samples_size * sizeof(int32));
+	stereo_filter_delay.samples      = (int32_t *)malloc(initial_samples_size * sizeof(int32_t));
 	stereo_filter_delay.samples_size = initial_samples_size;
 	stereo_filter_delay.samples_pos  = 0;
 
@@ -802,7 +802,7 @@ static double get_aspect_ratio(void) {
 }
 
 static void load_custom_palette_from_file(void) {
-	uint8 ptmp[64 * 8 * 3];
+	uint8_t ptmp[64 * 8 * 3];
 	RFILE *fp = NULL;
 	char *fn = NULL;
 
@@ -1309,7 +1309,7 @@ static void check_variables(bool startup) {
 	var.key = "fceumm_next_region";
 
 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
-		uint8 oldval = opt_region;
+		uint8_t oldval = opt_region;
 		if (!strcmp(var.value, "Auto")) {
 			opt_region = 0;
 		} else if (!strcmp(var.value, "NTSC")) {
@@ -1328,7 +1328,7 @@ static void check_variables(bool startup) {
 	var.key = "fceumm_next_sndquality";
 
 	if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value) {
-		uint8 oldval = sndquality;
+		uint8_t oldval = sndquality;
 		if (!strcmp(var.value, "Low")) {
 			sndquality = 0;
 		} else if (!strcmp(var.value, "High")) {
@@ -1473,7 +1473,7 @@ void input_palette_switch(bool palette_next, bool palette_prev) {
 }
 
 #if defined(PSP)
-static void retro_run_blit_psp(uint8 *gfx) {
+static void retro_run_blit_psp(uint8_t *gfx) {
 	static unsigned int __attribute__((aligned(16))) d_list[32];
 	void *texture_vram_p = NULL;
 
@@ -1516,12 +1516,12 @@ static void retro_run_blit_psp(uint8 *gfx) {
 }
 #elif defined(PS2)
 
-static void retro_run_blit_ps2(uint8 *gfx) {
+static void retro_run_blit_ps2(uint8_t *gfx) {
 	unsigned width  = 256;
 	unsigned height = 240;
 	unsigned pitch  = 512;
 
-	uint32 *buf = (uint32 *)RETRO_HW_FRAME_BUFFER_VALID;
+	uint32_t *buf = (uint32_t *)RETRO_HW_FRAME_BUFFER_VALID;
 
 	if (!ps2) {
 		if (!environ_cb(RETRO_ENVIRONMENT_GET_HW_RENDER_INTERFACE, (void **)&ps2) || !ps2) {
@@ -1551,7 +1551,7 @@ static void retro_run_blit_ps2(uint8 *gfx) {
 }
 #else
 #if defined(HAVE_NTSC_FILTER)
-static void retro_run_blit_ntsc(uint8 *gfx, uint8 *emp) {
+static void retro_run_blit_ntsc(uint8_t *gfx, uint8_t *emp) {
 	static unsigned burst_count = 0;
 	static unsigned burst_phase = 0;
 	double div = 1.5f;
@@ -1572,8 +1572,8 @@ static void retro_run_blit_ntsc(uint8 *gfx, uint8 *emp) {
 }
 #endif /* HAVE_NTSC_FILTER */
 
-static INLINE int get_pixel_color(const uint8 *in, const uint8 *inD) {
-	uint8 pixel = *in, deemp = *inD;
+static INLINE int get_pixel_color(const uint8_t *in, const uint8_t *inD) {
+	uint8_t pixel = *in, deemp = *inD;
 	int color = retro_palette[pixel];
 
 	if (deemp) {
@@ -1584,14 +1584,14 @@ static INLINE int get_pixel_color(const uint8 *in, const uint8 *inD) {
 	return color;
 }
 
-static void retro_run_blit(uint8 *gfx, uint8 *emp) {
+static void retro_run_blit(uint8_t *gfx, uint8_t *emp) {
 	int width  = NES_WIDTH - overscan_left - overscan_right;
 	int height = NES_HEIGHT - overscan_top - overscan_bottom;
 	int x = 0, y = 0;
 
 	Bpp_t *out_scanline      = fceu_video_out;
-	const uint8 *in_scanline = gfx + overscan_left + overscan_top * NES_WIDTH;
-	const uint8 *in_emp      = emp + overscan_left + overscan_top * NES_WIDTH;
+	const uint8_t *in_scanline = gfx + overscan_left + overscan_top * NES_WIDTH;
+	const uint8_t *in_emp      = emp + overscan_left + overscan_top * NES_WIDTH;
 
 	for (y = height; --y >= 0; out_scanline += width, in_scanline += NES_WIDTH, in_emp += NES_WIDTH) {
 		for (x = 0; x < width; x++) {
@@ -1617,7 +1617,7 @@ static bool checkGG(char c) {
 
 static bool GGisvalid(const char *code) {
 	size_t len = strlen(code);
-	uint32 i;
+	uint32_t i;
 
 	if (len != 6 && len != 8) {
 		return false;
@@ -1768,10 +1768,10 @@ void retro_reset(void) {
 }
 
 void retro_run(void) {
-	uint8 *gfx;
-	uint8 *emp;
-	int32 *sound;
-	int32 ssize;
+	uint8_t *gfx;
+	uint8_t *emp;
+	int32_t *sound;
+	int32_t ssize;
 	bool updated = false;
 
 	poll_cb();
@@ -1799,13 +1799,13 @@ void retro_run(void) {
 #endif
 
 	stereo_filter_apply(sound, ssize);
-	audio_batch_cb((const int16 *)sound, ssize);
+	audio_batch_cb((const int16_t *)sound, ssize);
 }
 
 size_t retro_serialize_size(void) {
 	if (serialize_size == 0) {
 		/* Something arbitrarily big.*/
-		uint8 *buffer = (uint8 *)malloc(1000000);
+		uint8_t *buffer = (uint8_t *)malloc(1000000);
 		memstream_set_buffer(buffer, 1000000);
 
 		FCEUSS_Save_Mem();
@@ -1827,7 +1827,7 @@ bool retro_serialize(void *data, size_t size) {
 		return false;
 	}
 
-	memstream_set_buffer((uint8 *)data, size);
+	memstream_set_buffer((uint8_t *)data, size);
 	FCEUSS_Save_Mem();
 	return true;
 }
@@ -1843,7 +1843,7 @@ bool retro_unserialize(const void *data, size_t size) {
 		return false;
 	}
 
-	memstream_set_buffer((uint8 *)data, size);
+	memstream_set_buffer((uint8_t *)data, size);
 	FCEUSS_Load_Mem();
 	return true;
 }
@@ -1856,8 +1856,8 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code) {
 	char name[256];
 	char temp[256];
 	char *codepart;
-	uint16 a;
-	uint8 v;
+	uint16_t a;
+	uint8_t v;
 	int c;
 	int type = 1;
 
@@ -1918,7 +1918,7 @@ static void check_system_specs(void) {
 
 static void init_blit_buffer(void) {
 #if defined(_3DS)
-	fceu_video_out = (uint16 *)linearMemAlign(256 * 240 * sizeof(uint16), 128);
+	fceu_video_out = (uint16_t *)linearMemAlign(256 * 240 * sizeof(uint16_t), 128);
 #elif !defined(PS2) && !defined(PSP) /* PS2 targets uses hw buffers for video */
 #if defined(HAVE_NTSC_FILTER)
 #define FB_WIDTH  NTSC_WIDTH
@@ -2021,7 +2021,7 @@ bool retro_load_game(const struct retro_game_info *info) {
 	enum retro_pixel_format rgb565;
 
 	struct retro_game_info_ext *info_ext = NULL;
-	const uint8 *content_data          = NULL;
+	const uint8_t *content_data          = NULL;
 	size_t content_size                  = 0;
 	char content_path[2048]              = { 0 };
 
@@ -2043,7 +2043,7 @@ bool retro_load_game(const struct retro_game_info *info) {
 
 	/* Attempt to fetch extended game info */
 	if (environ_cb(RETRO_ENVIRONMENT_GET_GAME_INFO_EXT, &info_ext) && info_ext) {
-		content_data = (const uint8 *)info_ext->data;
+		content_data = (const uint8_t *)info_ext->data;
 		content_size = info_ext->size;
 
 		if (info_ext->file_in_archive) {

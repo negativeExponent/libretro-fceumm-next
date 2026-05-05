@@ -21,7 +21,7 @@
 #include "mapinc.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m476;
 
 static readfunc cpuread4016 = NULL;
@@ -44,7 +44,7 @@ static void Sync(void) {
 
 static DECLFR(ReadJoypadReg) {
 	int i;
-	uint8 result = 0x40;
+	uint8_t result = 0x40;
 
 	GetWriteHandler(0x4016)(0x4016, 1);
 	GetWriteHandler(0x4016)(0x4016, 0);

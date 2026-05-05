@@ -25,21 +25,21 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m262;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &m262.reg, 1, "REGS" },
 	{ 0 }
 };
 
-static void SetCHRBank_mmc3(uint16 A, uint16 V) {
+static void SetCHRBank_mmc3(uint16_t A, uint16_t V) {
 	if (m262.reg & 0x40) {
 		setchr8r(0x10, 0);
 	} else {
-		uint16 base = ((m262.reg << 5) << (A >> 11) & 0x100);
+		uint16_t base = ((m262.reg << 5) << (A >> 11) & 0x100);
 		setchr1(A, base | V);
 	}
 }
@@ -83,7 +83,7 @@ void Mapper262_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

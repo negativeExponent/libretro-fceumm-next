@@ -11,7 +11,7 @@
 #define PAL_RP2C03         5
 
 typedef struct {
-	uint8 r, g, b;
+	uint8_t r, g, b;
 } pal;
 
 extern pal palo[PALETTE_ARRAY_SIZE];

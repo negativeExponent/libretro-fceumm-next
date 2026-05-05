@@ -29,9 +29,9 @@
 #include "ks202.h"
 
 static struct {
-	uint8 prg[4];
-	uint8 chr[8];
-	uint8 mirror;
+	uint8_t prg[4];
+	uint8_t chr[8];
+	uint8_t mirror;
 } m056;
 
 static SFORMAT StateRegs[] = {

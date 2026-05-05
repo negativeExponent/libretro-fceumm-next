@@ -27,7 +27,7 @@
 #include "mmc1.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m498;
 
 static SFORMAT StateRegs[] = {
@@ -35,9 +35,9 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = 0x07;
-	uint16 base = m498.reg;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x07;
+	uint16_t base = m498.reg;
 
 	setprg16(A, (base & ~mask) | (V & mask));
 }
@@ -46,7 +46,7 @@ static void SyncPRG(void) {
 	if (m498.reg & 0x20) {
 		MMC1_SyncPRG_default();
 	} else {
-		uint16 bank = m498.reg;
+		uint16_t bank = m498.reg;
 		if (m498.reg & 0x04) {
 			setprg32(0x8000, bank >> 1);
 		} else {
@@ -56,9 +56,9 @@ static void SyncPRG(void) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = 0x1F;
-	uint16 base = (m498.reg << 2);
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = 0x1F;
+	uint16_t base = (m498.reg << 2);
 
 	setchr4(A, (base & ~mask) | (V & mask));
 }

@@ -31,10 +31,10 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg;
+	uint8_t reg;
 } m205;
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ &m205.reg, 1, "REGS" },
@@ -42,22 +42,22 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask = (m205.reg & 0x02) ? 0x0F : 0x1F;
-	uint16 base = m205.reg << 4;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask = (m205.reg & 0x02) ? 0x0F : 0x1F;
+	uint16_t base = m205.reg << 4;
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask = (m205.reg & 0x02) ? 0x7F : 0xFF;
-	uint16 base = m205.reg << 7;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask = (m205.reg & 0x02) ? 0x7F : 0xFF;
+	uint16_t base = m205.reg << 7;
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
 static DECLFW(WriteReg) {
-	uint8 latch = (iNESCart.mapper == 367) ? (A & 0xFF) : V;
+	uint8_t latch = (iNESCart.mapper == 367) ? (A & 0xFF) : V;
 	CartBW(A, V);
 	m205.reg = latch;
 	if ((V & 0x01) && dipsw) {

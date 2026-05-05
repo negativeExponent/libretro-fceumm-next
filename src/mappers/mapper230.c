@@ -27,7 +27,7 @@
 #include "latch.h"
 
 static struct {
-	uint8 mode;
+	uint8_t mode;
 } m230;
 
 static SFORMAT StateRegs[] = {
@@ -41,7 +41,7 @@ static void Sync(void) {
 		setprg16(0xC000, 0x07);
 		setmirror(MI_V);
 	} else { /* multicart m230.mode */
-		uint8 bank = 0x08 + (latch.data & 0x1F);
+		uint8_t bank = 0x08 + (latch.data & 0x1F);
 
 		if (latch.data & 0x20) {
 			setprg16(0x8000, bank);

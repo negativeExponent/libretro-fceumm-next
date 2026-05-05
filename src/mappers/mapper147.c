@@ -32,7 +32,7 @@ static DECLFW(WriteReg) {
 }
 
 static DECLFR(ReadReg) {
-	uint8 ret = JV001_Read(A);
+	uint8_t ret = JV001_Read(A);
 	return ((ret << 2) | ((ret >> 6) & 0x03));
 }
 

@@ -22,7 +22,7 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m480;
 
 static SFORMAT StateRegs[] = {
@@ -30,8 +30,8 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint16 mask;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint16_t mask;
 
 	switch (iNESCart.submapper) {
 	case 1:
@@ -55,8 +55,8 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
-	uint16 mask;
+static void SetCHR(uint16_t A, uint16_t V) {
+	uint16_t mask;
 
 	switch (iNESCart.submapper) {
 	case 1:
@@ -116,7 +116,7 @@ static void Reset(void) {
 }
 
 void Mapper480_Init(CartInfo *info) {
-	uint16 ws = 8;
+	uint16_t ws = 8;
 	if (info->iNES2) {
 		ws = (info->PRGRamSize + info->PRGRamSaveSize);
 		ws /= 1024;
@@ -129,7 +129,7 @@ void Mapper480_Init(CartInfo *info) {
 	AddExState(StateRegs, ~0, 0, NULL);
 	if (info->submapper == 1) {
 		CHRRAMSIZE = 8192;
-		CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+		CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 		SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, TRUE);
 		AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 	}

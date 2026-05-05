@@ -28,20 +28,20 @@
 #include "mmc3.h"
 
 static struct {
-	uint8 reg[4];
-	uint8 cmd;
+	uint8_t reg[4];
+	uint8_t cmd;
 } m269;
 
-static void SetCHRBank(uint16 A, uint16 V) {
-	uint16 mask = 0xFF >> (~m269.reg[2] & 0xF);
-	uint16 base = ((m269.reg[3] << 6) & 0x1000) | ((m269.reg[2] << 4) & 0xF00) | m269.reg[0];
+static void SetCHRBank(uint16_t A, uint16_t V) {
+	uint16_t mask = 0xFF >> (~m269.reg[2] & 0xF);
+	uint16_t base = ((m269.reg[3] << 6) & 0x1000) | ((m269.reg[2] << 4) & 0xF00) | m269.reg[0];
 
 	setchr1(A, (base & ~mask) | (V & mask));
 }
 
-static void SetPRGBank(uint16 A, uint16 V) {
-	uint16 mask = ~m269.reg[3] & 0x3F;
-	uint16 base = ((m269.reg[3] << 2) & 0x100) | m269.reg[1];
+static void SetPRGBank(uint16_t A, uint16_t V) {
+	uint16_t mask = ~m269.reg[3] & 0x3F;
+	uint16_t base = ((m269.reg[3] << 2) & 0x100) | m269.reg[1];
 
 	setprg8(A, (base & ~mask) | (V & mask));
 }
@@ -68,7 +68,7 @@ static void Power(void) {
 	SetWriteHandler(0x5000, 0x5FFF, WriteReg);
 }
 
-static uint8 unscrambleCHR(uint8 data) {
+static uint8_t unscrambleCHR(uint8_t data) {
 	return (((data & 0x01) << 6)
 		| ((data & 0x02) << 3)
 		| ((data & 0x04) << 0)
@@ -93,7 +93,7 @@ void Mapper269_Init(CartInfo *info) {
 		if (CHRRAM) {
 			free(CHRRAM);
 		}
-		CHRRAM = (uint8 *)FCEU_malloc(PRGsize[0]);
+		CHRRAM = (uint8_t *)FCEU_malloc(PRGsize[0]);
 		ROM.chr.data = CHRRAM;
 		SetupCartCHRMapping(0, ROM.chr.data, PRGsize[0], 0);
 		/* unscramble CHR data from PRG */

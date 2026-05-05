@@ -25,10 +25,10 @@
 #include "mmc3.h"
 #include "flashrom.h"
 
-static uint8 *FLASHROM_data = NULL;
-static uint32 FLASHROM_size = 0;
+static uint8_t *FLASHROM_data = NULL;
+static uint32_t FLASHROM_size = 0;
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg8r(0x10, A, V & 0x3F);
 }
 
@@ -61,7 +61,7 @@ static void Close(void) {
 }
 
 void Mapper406_Init(CartInfo *info) {
-	uint32 w, r, id;
+	uint32_t w, r, id;
 
 	MMC3_Init(info, MMC3B, 0, 0);
 	info->Power = Power;
@@ -71,7 +71,7 @@ void Mapper406_Init(CartInfo *info) {
 
 	info->battery = 1;
 	FLASHROM_size = PRGsize[0];
-	FLASHROM_data = (uint8 *)FCEU_gmalloc(FLASHROM_size);
+	FLASHROM_data = (uint8_t *)FCEU_gmalloc(FLASHROM_size);
 	info->SaveGame[0] = FLASHROM_data;
 	info->SaveGameLen[0] = FLASHROM_size;
 	AddExState(FLASHROM_data, FLASHROM_size, 0, "FROM");

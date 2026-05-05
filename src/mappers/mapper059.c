@@ -24,13 +24,13 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static void Sync(void) {
-	uint8 prg = (latch.addr & 0x70) >> 4;
-	uint8 chr = latch.addr & 0x07;
-	uint8 mirrorV = ((latch.addr & 0x08) >> 3) ^ 0x01;
-	uint8 A14 = (latch.addr & 0x80) == 0;
+	uint8_t prg = (latch.addr & 0x70) >> 4;
+	uint8_t chr = latch.addr & 0x07;
+	uint8_t mirrorV = ((latch.addr & 0x08) >> 3) ^ 0x01;
+	uint8_t A14 = (latch.addr & 0x80) == 0;
 
 	setprg16(0x8000, prg & ~A14);
 	setprg16(0xC000, prg | A14);

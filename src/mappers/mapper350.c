@@ -28,7 +28,7 @@
 #include "latch.h"
 
 static struct {
-	uint8 reg[2];
+	uint8_t reg[2];
 } m350;
 
 static SFORMAT StateRegs[] = {
@@ -37,7 +37,7 @@ static SFORMAT StateRegs[] = {
 };
 
 static void Sync(void) {
-	uint8 bank = (m350.reg[0] & 0x18) | (m350.reg[1] & 0x07);
+	uint8_t bank = (m350.reg[0] & 0x18) | (m350.reg[1] & 0x07);
 
 	setprg8(0x6000, 1);
 	if (m350.reg[0] & 0x40) { /* UNROM */

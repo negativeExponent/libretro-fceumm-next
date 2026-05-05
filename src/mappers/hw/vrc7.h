@@ -22,9 +22,9 @@
 #define _VRC7_H
 
 typedef struct __VRC7 {
-	uint8 prg[4];
-	uint8 chr[8];
-	uint8 mirr;
+	uint8_t prg[4];
+	uint8_t chr[8];
+	uint8_t mirr;
 } VRC7;
 
 extern VRC7 vrc7;
@@ -34,15 +34,15 @@ DECLFW(VRC7_Write);
 void VRC7_Power(void);
 void VRC7_Close(void);
 
-void VRC7_Init(CartInfo *info, uint32 A0);
+void VRC7_Init(CartInfo *info, uint32_t A0);
 
-void VRC7_SetConfig(uint8 clear, int A0);
+void VRC7_SetConfig(uint8_t clear, int A0);
 
 void VRC7_SyncPRG(void);
 void VRC7_SyncCHR(void);
 
-extern void (*VRC7_pwrap)(uint16 A, uint16 V);
-extern void (*VRC7_cwrap)(uint16 A, uint16 V);
-extern void (*VRC7_mwrap)(uint8 V);
+extern void (*VRC7_pwrap)(uint16_t A, uint16_t V);
+extern void (*VRC7_cwrap)(uint16_t A, uint16_t V);
+extern void (*VRC7_mwrap)(uint8_t V);
 
 #endif /* _VRC7_H */

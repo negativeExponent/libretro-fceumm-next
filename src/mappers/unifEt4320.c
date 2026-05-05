@@ -47,17 +47,17 @@ Example Game:
 #include "mapinc.h"
 #include "mmc3.h"
 
-static uint8 reg;
+static uint8_t reg;
 
-static void BMC810131C_PW(uint16 A, uint16 V) {
-	uint16 mask = (reg & 0x08) ? 0x1F : 0x0F;
-	uint16 base = (reg << 4) & 0x70;
+static void BMC810131C_PW(uint16_t A, uint16_t V) {
+	uint16_t mask = (reg & 0x08) ? 0x1F : 0x0F;
+	uint16_t base = (reg << 4) & 0x70;
 
 	setprg8(A, (base | (V & mask)));
 }
 
-static void BMC810131C_CW(uint16 A, uint16 V) {
-	uint16 base = (reg << 7) & 0x380;
+static void BMC810131C_CW(uint16_t A, uint16_t V) {
+	uint16_t base = (reg << 7) & 0x380;
 
 	if (reg & 0x10) {
 		setchr1r(0x10, A, V);
@@ -148,7 +148,7 @@ void BMC810131C_Init(CartInfo *info) {
 	AddExState(&reg, 1, 0, "EXPR");
 
 	CHRRAMSIZE = 8192;
-	CHRRAM = (uint8 *)FCEU_gmalloc(CHRRAMSIZE);
+	CHRRAM = (uint8_t *)FCEU_gmalloc(CHRRAMSIZE);
 	SetupCartCHRMapping(0x10, CHRRAM, CHRRAMSIZE, 1);
 	AddExState(CHRRAM, CHRRAMSIZE, 0, "CHRR");
 }

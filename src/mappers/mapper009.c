@@ -22,11 +22,11 @@
 #include "mapinc.h"
 #include "mmc2.h"
 
-static void SetPRGBank_mmc2(uint16 A, uint16 V) {
+static void SetPRGBank_mmc2(uint16_t A, uint16_t V) {
 	setprg8(A, V & 0x0F);
 }
 
-static void SetCHRBank_mmc2(uint16 A, uint16 V) {
+static void SetCHRBank_mmc2(uint16_t A, uint16_t V) {
 	setchr4(A, V & 0x1F);
 }
 

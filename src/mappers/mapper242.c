@@ -22,14 +22,14 @@
 #include "mapinc.h"
 #include "latch.h"
 
-static uint8 dipsw;
+static uint8_t dipsw;
 
 static void Sync(void) {
-	uint32 prg = (latch.addr >> 2) & 0x1F;
-	uint32 cpuA14 = latch.addr & 0x01;
-	uint32 nrom = (latch.addr >> 7) & 0x01;
-	uint32 unrom = (latch.addr >> 9) & 0x01;
-	uint32 hasTwoChips = (ROM.prg.size & 0x20000) && (ROM.prg.size > 0x20000);
+	uint32_t prg = (latch.addr >> 2) & 0x1F;
+	uint32_t cpuA14 = latch.addr & 0x01;
+	uint32_t nrom = (latch.addr >> 7) & 0x01;
+	uint32_t unrom = (latch.addr >> 9) & 0x01;
+	uint32_t hasTwoChips = (ROM.prg.size & 0x20000) && (ROM.prg.size > 0x20000);
 
 	if (hasTwoChips) {
 		if (latch.addr & 0x600) { /* First chip */

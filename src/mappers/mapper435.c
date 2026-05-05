@@ -23,7 +23,7 @@
 #include "latch.h"
 
 static void Sync(void) {
-	uint16 prg = ((latch.addr >> 4) & 0x40) | ((latch.addr >> 3) & 0x20) | ((latch.addr >> 2) & 0x1F);
+	uint16_t prg = ((latch.addr >> 4) & 0x40) | ((latch.addr >> 3) & 0x20) | ((latch.addr >> 2) & 0x1F);
 
 	if (latch.addr & 0x200) {
 		if (latch.addr & 0x001) {

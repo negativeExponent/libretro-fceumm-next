@@ -23,10 +23,10 @@
 
 static struct {
 	struct {
-		uint8 enabled;
-		uint8 counter;
-		uint8 prescaler;
-		uint8 mask;
+		uint8_t enabled;
+		uint8_t counter;
+		uint8_t prescaler;
+		uint8_t mask;
 	} irq;
 } m273;
 
@@ -38,11 +38,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg8(A, (V & 0x1F));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr1(A, (V & 0x1FF));
 }
 

@@ -35,8 +35,8 @@
 #include "vsuni.h"
 #include "ppu.h"
 
-uint8 *XBuf = NULL;
-uint8 *XDBuf = NULL;
+uint8_t *XBuf = NULL;
+uint8_t *XDBuf = NULL;
 
 void FCEU_KillVirtualVideo(void)
 {
@@ -54,9 +54,9 @@ int FCEU_InitVirtualVideo(void)
 
    /* 256 bytes per scanline, * 240 scanline maximum, +8 for alignment, */
    if (!XBuf)
-      XBuf = (uint8*)FCEU_amalloc(256 * 256);
+      XBuf = (uint8_t*)FCEU_amalloc(256 * 256);
    if (!XDBuf)
-      XDBuf = (uint8*)FCEU_amalloc(256 * 256);
+      XDBuf = (uint8_t*)FCEU_amalloc(256 * 256);
 
    if (!XBuf || !XDBuf)
       return 0;

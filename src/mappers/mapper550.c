@@ -24,8 +24,8 @@
 #include "mmc1.h"
 
 static struct {
-	uint8 latch;
-	uint8 reg;
+	uint8_t latch;
+	uint8_t reg;
 } m550;
 
 static SFORMAT StateRegs[] = {
@@ -34,7 +34,7 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	if ((m550.reg & 0x06) == 0x06) {
 		setprg16(A, (m550.reg << 2) | (V & 0x07));
 	} else {
@@ -42,7 +42,7 @@ static void SetPRG(uint16 A, uint16 V) {
 	}
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	if ((m550.reg & 0x06) == 0x06) {
 		setchr4(A, ((m550.reg << 2) & 0x18) | (V & 0x07));
 	} else {

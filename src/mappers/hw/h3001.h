@@ -22,15 +22,15 @@
 #define _H3001_H
 
 typedef struct __H3001 {
-	uint8 prg[2], chr[8], mirror, cmd;
-	uint8 IRQa;
-	int16 IRQCount, IRQLatch;
+	uint8_t prg[2], chr[8], mirror, cmd;
+	uint8_t IRQa;
+	int16_t IRQCount, IRQLatch;
 } H3001;
 
 extern H3001 h3001;
 
-void H3001_SetPRG_default(uint16 A, uint16 V);
-void H3001_SetCHR_default(uint16 A, uint16 V);
+void H3001_SetPRG_default(uint16_t A, uint16_t V);
+void H3001_SetCHR_default(uint16_t A, uint16_t V);
 void H3001_SyncPRG_default(void);
 void H3001_SyncCHR_default(void);
 void H3001_SyncMirror_default(void);
@@ -41,15 +41,15 @@ void H3001_Power(void);
 void H3001_StateRestore(int version);
 void H3001_Init(CartInfo *info);
 
-void H3001_SetConfig(uint8 clear);
+void H3001_SetConfig(uint8_t clear);
 
 DECLFW(H3001_WritePRG);
 DECLFW(H3001_WriteMisc);
 DECLFW(H3001_WriteCHR);
 DECLFW(H3001_Write);
 
-extern void (*H3001_pwrap)(uint16 A, uint16 V);
-extern void (*H3001_cwrap)(uint16 A, uint16 V);
+extern void (*H3001_pwrap)(uint16_t A, uint16_t V);
+extern void (*H3001_cwrap)(uint16_t A, uint16_t V);
 
 extern void (*H3001_SyncPRG)(void);
 extern void (*H3001_SyncCHR)(void);

@@ -31,7 +31,7 @@
 #include "fcg.h"
 
  static struct {
-	uint8 reg;
+	uint8_t reg;
 } m153;
 
 static SFORMAT StateRegs[] = {
@@ -39,11 +39,11 @@ static SFORMAT StateRegs[] = {
 	{ 0 }
 };
 
-static void SetPRG(uint16 A, uint16 V) {
+static void SetPRG(uint16_t A, uint16_t V) {
 	setprg16(A, (m153.reg << 4) | (V & 0x0F));
 }
 
-static void SetCHR(uint16 A, uint16 V) {
+static void SetCHR(uint16_t A, uint16_t V) {
 	setchr8(0);
 }
 
@@ -77,7 +77,7 @@ void Mapper153_Init(CartInfo *info) {
 		WRAMSIZE = info->PRGRamSize + info->PRGRamSaveSize;
 	}
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_gmalloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_gmalloc(WRAMSIZE);
 		SetupCartPRGMapping(0x10, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (info->battery) {

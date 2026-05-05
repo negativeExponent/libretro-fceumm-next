@@ -1,22 +1,22 @@
-uint8 *C;
-uint8 cc;
-uint32 vadr;
+uint8_t *C;
+uint8_t cc;
+uint32_t vadr;
 #ifdef PPU_VRC5FETCH
-uint8 tmpd;
+uint8_t tmpd;
 #endif
 
 #ifndef PPUT_MMC5SP
-	FCEU_MAYBE_UNUSED uint8 zz;
+	FCEU_MAYBE_UNUSED uint8_t zz;
 #else
-	uint8 xs, ys;
+	uint8_t xs, ys;
 	xs = X1;
 	ys = ((scanline >> 3) + MMC5HackSPScroll) & 0x1F;
 	if (ys >= 0x1E) ys -= 0x1E;
 #endif
 
 if (X1 >= 2) {
-	uint8 *S = PALRAM;
-	uint32 pixdata;
+	uint8_t *S = PALRAM;
+	uint32_t pixdata;
 
 	pixdata = ppulut1[(pshift[0] >> (8 - XOffset)) & 0xFF] | ppulut2[(pshift[1] >> (8 - XOffset)) & 0xFF];
 

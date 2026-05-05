@@ -28,7 +28,7 @@
 #include "fdssound.h"
 
 static struct {
-	uint8 reg[4];
+	uint8_t reg[4];
 } m305;
 
 static SFORMAT StateRegs[] = {

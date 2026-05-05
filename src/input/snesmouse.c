@@ -22,16 +22,16 @@
 
 typedef struct {
 	bool strobe;
-	uint32 latch; /* latched data (read when strobe goes high to low) */
-	uint32 sensitivity; /* reading while strobe is high cycles sensitivity 0,1,2 */
-	int32 dx, dy; /* relative position to communicate */
-	int32 mb; /* current buttons */
+	uint32_t latch; /* latched data (read when strobe goes high to low) */
+	uint32_t sensitivity; /* reading while strobe is high cycles sensitivity 0,1,2 */
+	int32_t dx, dy; /* relative position to communicate */
+	int32_t mb; /* current buttons */
 } SNES_MOUSE;
 
 static SNES_MOUSE SNESMouse;
 
-static uint8 ReadSNESMouse(int w) {
-	uint8 result;
+static uint8_t ReadSNESMouse(int w) {
+	uint8_t result;
 
 	if (SNESMouse.strobe) {
 		SNESMouse.sensitivity += 1;
@@ -45,11 +45,11 @@ static uint8 ReadSNESMouse(int w) {
 	return result;
 }
 
-static void WriteSNESMouse(uint8 v) {
-	uint8 byte0;
-	uint8 byte1;
-	uint8 byte2;
-	uint8 byte3;
+static void WriteSNESMouse(uint8_t v) {
+	uint8_t byte0;
+	uint8_t byte1;
+	uint8_t byte2;
+	uint8_t byte3;
 	bool strobing = (v & 1);
 
 	if (SNESMouse.strobe && !strobing) {
@@ -82,8 +82,8 @@ static void WriteSNESMouse(uint8 v) {
 		byte1 = 0x1 | /* signature */
 		    ((SNESMouse.sensitivity & 3) << 4) | /* sensitivity */
 		    ((SNESMouse.mb & 3) << 6); /* buttons */
-		byte2 = (uint8)(dy) | (sy ? 0x80 : 0x00);
-		byte3 = (uint8)(dx) | (sx ? 0x80 : 0x00);
+		byte2 = (uint8_t)(dy) | (sy ? 0x80 : 0x00);
+		byte3 = (uint8_t)(dx) | (sx ? 0x80 : 0x00);
 
 		SNESMouse.latch = (byte0 << 24) | (byte1 << 16) | (byte2 << 8) | (byte3 << 0);
 	}
@@ -92,7 +92,7 @@ static void WriteSNESMouse(uint8 v) {
 }
 
 static void UpdateSNESMouse(int w, void *data, int arg) {
-	int32 *ptr = (int32 *)data;
+	int32_t *ptr = (int32_t *)data;
 
 	SNESMouse.dx += ptr[0];
 	ptr[0] = 0;

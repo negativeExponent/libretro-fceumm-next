@@ -23,10 +23,10 @@
 #include "mmc5sound.h"
 
 typedef struct __MMC5PCM {
-	uint8 rawdata;
-	uint8 control;
+	uint8_t rawdata;
+	uint8_t control;
 	struct {
-		int32 cvbc;
+		int32_t cvbc;
 	} timer;
 } MMC5PCM;
 
@@ -40,11 +40,11 @@ static MMC5SOUND MMC5Sound;
 static void (*sfun)(SquareUnit *s);
 static void (*psfun)(void);
 
-uint8 isMMC5Audio = FALSE;
+uint8_t isMMC5Audio = FALSE;
 
 static void Do5PCM(void) {
-	int32 V;
-	int32 start, end;
+	int32_t V;
+	int32_t start, end;
 
 	start = MMC5Sound.pcm.timer.cvbc;
 	end = (SOUNDTS << 16) / soundtsinc;
@@ -54,7 +54,7 @@ static void Do5PCM(void) {
 	MMC5Sound.pcm.timer.cvbc = end;
 
 	if (!(MMC5Sound.pcm.control & 0x40) && MMC5Sound.pcm.rawdata) {
-		int32 amp = GetOutput(SND_MMC5, MMC5Sound.pcm.rawdata << 1);
+		int32_t amp = GetOutput(SND_MMC5, MMC5Sound.pcm.rawdata << 1);
 
 		for (V = start; V < end; V++) {
 			Wave[V >> 4] += amp;
@@ -63,10 +63,10 @@ static void Do5PCM(void) {
 }
 
 static void Do5PCMHQ(void) {
-	uint32 V;
+	uint32_t V;
 
 	if (!(MMC5Sound.pcm.control & 0x40) && MMC5Sound.pcm.rawdata) {
-		int32 amp = GetOutput(SND_MMC5, MMC5Sound.pcm.rawdata << 5);
+		int32_t amp = GetOutput(SND_MMC5, MMC5Sound.pcm.rawdata << 5);
 
 		for (V = MMC5Sound.pcm.timer.cvbc; V < SOUNDTS; V++) {
 			WaveHi[V] += amp;
@@ -75,7 +75,7 @@ static void Do5PCMHQ(void) {
 	MMC5Sound.pcm.timer.cvbc = SOUNDTS;
 }
 
-static INLINE int32 SquareOutput(SquareUnit *s) {
+static INLINE int32_t SquareOutput(SquareUnit *s) {
 	if (!s->length.counter) {
 		return 0; /* silence */
 	}
@@ -86,8 +86,8 @@ static INLINE int32 SquareOutput(SquareUnit *s) {
 }
 
 static void Do5SQHQ(SquareUnit *s) {
-	uint32 V, amp, wl;
-	const uint8 *dutyTbl = &SquareWaveTable[0][s->duty][0];
+	uint32_t V, amp, wl;
+	const uint8_t *dutyTbl = &SquareWaveTable[0][s->duty][0];
 
 	amp = GetOutput(SND_MMC5, SquareOutput(s) << 8);
 	wl = (s->timer.period + 1) * 2;
@@ -105,9 +105,9 @@ static void Do5SQHQ(SquareUnit *s) {
 }
 
 static void Do5SQ(SquareUnit *s) {
-	int32 V, amp, wl;
-	const uint8 *dutyTbl = &SquareWaveTable[0][s->duty][0];
-	int32 start, end;
+	int32_t V, amp, wl;
+	const uint8_t *dutyTbl = &SquareWaveTable[0][s->duty][0];
+	int32_t start, end;
 
 	amp = GetOutput(SND_MMC5, SquareOutput(s) << 4);
 	wl = (s->timer.period + 1) * 2;
@@ -136,7 +136,7 @@ static void MMC5RunSoundHQ(void) {
 	Do5PCMHQ();
 }
 
-static void MMC5HiSync(int32 ts) {
+static void MMC5HiSync(int32_t ts) {
 	MMC5Sound.square[0].timer.cvbc = ts;
 	MMC5Sound.square[1].timer.cvbc = ts;
 	MMC5Sound.pcm.timer.cvbc = ts;
@@ -151,7 +151,7 @@ static void MMC5RunSound(int Count) {
 	MMC5Sound.pcm.timer.cvbc = Count;
 }
 
-static void MMC5Square_Write(SquareUnit *s, uint8 reg, uint8 V) {
+static void MMC5Square_Write(SquareUnit *s, uint8_t reg, uint8_t V) {
 	switch (reg) {
 	case 0:
 		s->envelope.speed = V & 0x0F;
@@ -188,7 +188,7 @@ static void MMC5Square_Write(SquareUnit *s, uint8 reg, uint8 V) {
 }
 
 DECLFR(MMC5Sound_ReadStatus) {
-	uint8 ret = 0;
+	uint8_t ret = 0;
 	if (MMC5Sound.square[0].length.counter) {
 		ret |= 0x01;
 	}

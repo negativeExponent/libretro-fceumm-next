@@ -21,8 +21,8 @@
 #include "mapinc.h"
 #include "mmc3.h"
 
-static void SetPRG(uint16 A, uint16 V) {
-	uint8 mask = (V >= 0x40) ? 0x4F : 0xFF;
+static void SetPRG(uint16_t A, uint16_t V) {
+	uint8_t mask = (V >= 0x40) ? 0x4F : 0xFF;
 
 	setprg8(A, V & mask);
 }

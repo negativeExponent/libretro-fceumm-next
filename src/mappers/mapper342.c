@@ -106,159 +106,159 @@
 #define FLASH_CHIP		  0x11
 #define CFI_CHIP		  0x13
 
-static uint32 CHR_SIZE = 0;
-static uint8 *SAVE_FLASH = NULL;
-static uint8 *CFI = NULL;
+static uint32_t CHR_SIZE = 0;
+static uint8_t *SAVE_FLASH = NULL;
+static uint8_t *CFI = NULL;
 
 static struct {
-	uint8 mapper;
-	uint8 flags;
-	uint8 lockout;
-	uint8 fourscreen;
-	uint8 mirroring;
-	uint8 map_rom_on_6000;
+	uint8_t mapper;
+	uint8_t flags;
+	uint8_t lockout;
+	uint8_t fourscreen;
+	uint8_t mirroring;
+	uint8_t map_rom_on_6000;
 
-	uint8 sram_enabled;
-	uint8 sram_page;
+	uint8_t sram_enabled;
+	uint8_t sram_page;
 
-	uint32 prg_base;
-	uint32 prg_mask;
-	uint8 prg_mode;
-	uint8 prg_bank_6000;
-	uint8 prg_bank_a;
-	uint8 prg_bank_b;
-	uint8 prg_bank_c;
-	uint8 prg_bank_d;
+	uint32_t prg_base;
+	uint32_t prg_mask;
+	uint8_t prg_mode;
+	uint8_t prg_bank_6000;
+	uint8_t prg_bank_a;
+	uint8_t prg_bank_b;
+	uint8_t prg_bank_c;
+	uint8_t prg_bank_d;
 
-	uint32 prg_bank_6000_mapped;
-	uint32 prg_bank_a_mapped;
-	uint32 prg_bank_b_mapped;
-	uint32 prg_bank_c_mapped;
-	uint32 prg_bank_d_mapped;
+	uint32_t prg_bank_6000_mapped;
+	uint32_t prg_bank_a_mapped;
+	uint32_t prg_bank_b_mapped;
+	uint32_t prg_bank_c_mapped;
+	uint32_t prg_bank_d_mapped;
 
-	uint16 chr_bank_a;
-	uint16 chr_bank_b;
-	uint16 chr_bank_c;
-	uint16 chr_bank_d;
-	uint16 chr_bank_e;
-	uint16 chr_bank_f;
-	uint16 chr_bank_g;
-	uint16 chr_bank_h;
-	uint8 can_write_chr;
-	uint32 chr_mask;
-	uint8 chr_mode;
+	uint16_t chr_bank_a;
+	uint16_t chr_bank_b;
+	uint16_t chr_bank_c;
+	uint16_t chr_bank_d;
+	uint16_t chr_bank_e;
+	uint16_t chr_bank_f;
+	uint16_t chr_bank_g;
+	uint16_t chr_bank_h;
+	uint8_t can_write_chr;
+	uint32_t chr_mask;
+	uint8_t chr_mode;
 
-	uint8 TKSMIR[8];
+	uint8_t TKSMIR[8];
 
-	uint8 can_write_flash;
-	uint8 flash_state;
-	uint16 flash_buffer_a[10];
-	uint8 flash_buffer_v[10];
-	uint8 cfi_mode;
+	uint8_t can_write_flash;
+	uint8_t flash_state;
+	uint16_t flash_buffer_a[10];
+	uint8_t flash_buffer_v[10];
+	uint8_t cfi_mode;
 
 	/* for MMC1 */
 	struct {
-		uint64 lreset;
-		uint8 load_register;
+		uint64_t lreset;
+		uint8_t load_register;
 	} mmc1;
 	/* for MMC2/MMC4 */
 	struct {
-		uint8 latch0;
-		uint8 latch1;
+		uint8_t latch0;
+		uint8_t latch1;
 	} mmc2and4;
 	/* for MMC3 */
 	struct {
-		uint8 internal;
+		uint8_t internal;
 		/* for MMC3 scanline-based interrupts, counts A12 rises after long A12 falls */
-		uint8 irq_enabled;
-		uint8 irq_latch;
-		uint8 irq_counter;
-		uint8 irq_reload;
+		uint8_t irq_enabled;
+		uint8_t irq_latch;
+		uint8_t irq_counter;
+		uint8_t irq_reload;
 	} mmc3;
 	/* for MMC5 scanline-based interrupts, counts dummy PPU reads */
 	struct {
-		uint8 irq_enabled;
-		uint8 irq_line;
-		uint8 irq_out;
+		uint8_t irq_enabled;
+		uint8_t irq_line;
+		uint8_t irq_out;
 	} mmc5;
 	/* for VRC3 CPU-based interrupts */
 	struct {
-		uint16 irq_value;
-		uint8 irq_control;
-		uint16 irq_latch;
+		uint16_t irq_value;
+		uint8_t irq_control;
+		uint16_t irq_latch;
 	} vrc3;
 	/* for VRC4 CPU-based interrupts */
 	struct {
-		uint8 irq_value;
-		uint8 irq_control;
-		uint8 irq_latch;
-		uint8 irq_prescaler;
-		uint8 irq_prescaler_counter;
+		uint8_t irq_value;
+		uint8_t irq_control;
+		uint8_t irq_latch;
+		uint8_t irq_prescaler;
+		uint8_t irq_prescaler_counter;
 	} vrc4;
 	/* for mapper #69 */
 	struct {
-		uint8 internal;
+		uint8_t internal;
 		/* for Sunsoft FME-7 */
-		uint8 irq_enabled;
-		uint8 counter_enabled;
-		uint16 irq_value;
+		uint8_t irq_enabled;
+		uint8_t counter_enabled;
+		uint16_t irq_value;
 	} mapper69;
 	/* for mapper #112 */
 	struct {
-		uint8 internal;
+		uint8_t internal;
 	} mapper112;
 	/* for mapper #163 */
 	struct {
-		uint8 latch;
-		uint8 r0;
-		uint8 r1;
-		uint8 r2;
-		uint8 r3;
-		uint8 r4;
-		uint8 r5;
+		uint8_t latch;
+		uint8_t r0;
+		uint8_t r1;
+		uint8_t r2;
+		uint8_t r3;
+		uint8_t r4;
+		uint8_t r5;
 	} mapper163;
 	/* For mapper #90 */
 	struct {
-		uint8 xor ;
-		uint8 mul1;
-		uint8 mul2;
+		uint8_t xor ;
+		uint8_t mul1;
+		uint8_t mul2;
 	} mapper90;
 	/* for mapper #18 */
 	struct {
-		uint16 irq_value;
-		uint8 irq_control;
-		uint16 irq_latch;
+		uint16_t irq_value;
+		uint8_t irq_control;
+		uint16_t irq_latch;
 	} mapper18;
 	/* for mapper #65 */
 	struct {
-		uint8 irq_enabled;
-		uint16 irq_value;
-		uint16 irq_latch;
+		uint8_t irq_enabled;
+		uint16_t irq_value;
+		uint16_t irq_latch;
 	} mapper65;
 	/* for mapper #42 (only Baby Mario) */
 	struct {
-		uint8 irq_enabled;
-		uint16 irq_value;
+		uint8_t irq_enabled;
+		uint16_t irq_value;
 	} mapper42;
 	/* for mapper #83 */
 	struct {
-		uint8 irq_enabled_latch;
-		uint8 irq_enabled;
-		uint16 irq_counter;
+		uint8_t irq_enabled_latch;
+		uint8_t irq_enabled;
+		uint16_t irq_counter;
 	} mapper83;
 	/* for mapper #67 */
 	struct {
-		uint8 irq_enabled;
-		uint8 irq_latch;
-		uint16 irq_counter;
+		uint8_t irq_enabled;
+		uint8_t irq_latch;
+		uint16_t irq_counter;
 	} mapper67;
 } m342;
 
-static uint8 show_error_log = 0;
-static uint8 vrc24_compatibility = 0;
+static uint8_t show_error_log = 0;
+static uint8_t vrc24_compatibility = 0;
 
 /* Micron 4-gbit memory CFI data */
-static const uint8 cfi_data[] = {
+static const uint8_t cfi_data[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x51, 0x52, 0x59, 0x02, 0x00, 0x40, 0x00, 0x00,
@@ -277,16 +277,16 @@ static const uint8 cfi_data[] = {
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 };
 
-static INLINE uint32 PRGBank8_mapped(uint8 bank) {
+static INLINE uint32_t PRGBank8_mapped(uint8_t bank) {
 	return ((m342.prg_base << 1) | (bank & ((~(m342.prg_mask << 1) & 0xFE) | 1)));
 }
 
-static INLINE uint8 isFlash(uint32 mapped) {
+static INLINE uint8_t isFlash(uint32_t mapped) {
 	return (SAVE_FLASH != NULL && m342.prg_bank_a_mapped >= 0x20000 - SAVE_FLASH_SIZE / 1024 / 8);
 }
 
 static void SyncPRG(void) {
-	uint8 REG_A_CHIP, REG_B_CHIP, REG_C_CHIP, REG_D_CHIP;
+	uint8_t REG_A_CHIP, REG_B_CHIP, REG_C_CHIP, REG_D_CHIP;
 
 	m342.prg_bank_6000_mapped = PRGBank8_mapped(m342.prg_bank_6000);
 	m342.prg_bank_a_mapped = PRGBank8_mapped(m342.prg_bank_a);
@@ -341,7 +341,7 @@ static void SyncPRG(void) {
 
 static void SyncCHR(void) {
 	/* calculate CHR shift */
-	uint8 chr_shift = ((m342.mapper == 24) && (m342.flags & 0x02)) ? 1 : 0;
+	uint8_t chr_shift = ((m342.mapper == 24) && (m342.flags & 0x02)) ? 1 : 0;
 
 	/* enable or disable writes to CHR RAM, setup CHR mask */
 	SetupCartCHRMapping(0, ROM.chr.data, ((((~m342.chr_mask & 0x3F) + 1) * 0x2000 - 1) & (CHR_SIZE - 1)) + 1, m342.can_write_chr);
@@ -469,8 +469,8 @@ static DECLFW(COOLGIRL_Flash_Write) {
 			(m342.flash_buffer_a[4] == 0x0555) && (m342.flash_buffer_v[4] == 0x55) &&
 			(m342.flash_buffer_v[5] == 0x30)) {
 			int sector = m342.prg_bank_a_mapped * 0x2000 / FLASH_SECTOR_SIZE;
-			uint32 sector_address = sector * FLASH_SECTOR_SIZE;
-			uint32 i;
+			uint32_t sector_address = sector * FLASH_SECTOR_SIZE;
+			uint32_t i;
 			for (i = sector_address; i < sector_address + FLASH_SECTOR_SIZE; i++) {
 				SAVE_FLASH[i % SAVE_FLASH_SIZE] = 0xFF;
 			}
@@ -484,7 +484,7 @@ static DECLFW(COOLGIRL_Flash_Write) {
 			(m342.flash_buffer_a[1] == 0x0555) && (m342.flash_buffer_v[1] == 0x55) &&
 			(m342.flash_buffer_a[2] == 0x0AAA) && (m342.flash_buffer_v[2] == 0xA0)) {
 			/*int sector = m342.prg_bank_a_mapped * 0x2000 / FLASH_SECTOR_SIZE; */
-			uint32 flash_addr = m342.prg_bank_a_mapped * 0x2000 + (A % 0x8000);
+			uint32_t flash_addr = m342.prg_bank_a_mapped * 0x2000 + (A % 0x8000);
 			if (SAVE_FLASH[flash_addr % SAVE_FLASH_SIZE] != 0xFF) {
 				if (!(show_error_log & 2)) {
 					FCEU_PrintError("Error: can't write to 0x%08x, flash sector is not erased.\n", flash_addr);
@@ -1411,9 +1411,9 @@ static DECLFW(Write4F) {
 		flag1 - divides CHR bank select by two (m342.mapper #22, VRC2a)
 		*/
 		if (m342.mapper == 24) {
-			uint8 vrc_2b_hi = 0;
-			uint8 vrc_2b_low = 0;
-			uint8 vrc_2b_addr = 0;
+			uint8_t vrc_2b_hi = 0;
+			uint8_t vrc_2b_low = 0;
+			uint8_t vrc_2b_addr = 0;
 
 			if (vrc24_compatibility) {
 				/* Compatibility code - for rom variants using the older firmware */
@@ -1546,7 +1546,7 @@ static DECLFW(Write4F) {
 
 		/* Mapper #69 - Sunsoft FME-7 */
 		if (m342.mapper == 25) {
-			uint8 reg = (A & 0x6000) >> 13;
+			uint8_t reg = (A & 0x6000) >> 13;
 			if (reg == 0) {
 				m342.mapper69.internal = (m342.mapper69.internal & 0xF0) | (V & 0x0F);
 			}
@@ -1860,8 +1860,8 @@ static DECLFR(Read47) {
 	/* MMC5 */
 	if (m342.mapper == 15) {
 		if (A == 0x5204) {
-			uint8 ppuon = (PPU[1] & 0x18);
-			uint8 ret = (m342.mmc5.irq_out << 7) | (!ppuon || ((scanline + 1) >= 241) ? 0 : 0x40);
+			uint8_t ppuon = (PPU[1] & 0x18);
+			uint8_t ret = (m342.mmc5.irq_out << 7) | (!ppuon || ((scanline + 1) >= 241) ? 0 : 0x40);
 			X6502_IRQEnd(FCEU_IQEXT);
 			m342.mmc5.irq_out = 0;
 			return ret;
@@ -1966,7 +1966,7 @@ static void CPUIRQHook(int a) {
 
 		/* Mapper #18 */
 		if (m342.mapper18.irq_control & 0x01) {
-			uint8 carry = (m342.mapper18.irq_value & 0x0F) - 1;
+			uint8_t carry = (m342.mapper18.irq_value & 0x0F) - 1;
 			m342.mapper18.irq_value = (m342.mapper18.irq_value & 0xFFF0) | (carry & 0x0F);
 			carry = (carry >> 4) & 0x01;
 			if (!(m342.mapper18.irq_control & 0x08)) {
@@ -2031,7 +2031,7 @@ static void CPUIRQHook(int a) {
 	}
 }
 
-static void PPUHook(uint32 A) {
+static void PPUHook(uint32_t A) {
 	/* For TxROM */
 	if ((m342.mapper == 20) && (m342.flags & 0x01)) {
 		setmirror(MI_0 + (m342.TKSMIR[(A & 0x1FFF) >> 10] >> 7));
@@ -2121,7 +2121,7 @@ void Mapper342_Init(CartInfo *info) {
 	WRAMSIZE = (info->PRGRamSize + info->PRGRamSaveSize) ? (info->PRGRamSize + info->PRGRamSaveSize) : (32 * 1024);
 
 	if (WRAMSIZE) {
-		WRAM = (uint8 *)FCEU_malloc(WRAMSIZE);
+		WRAM = (uint8_t *)FCEU_malloc(WRAMSIZE);
 		SetupCartPRGMapping(WRAM_CHIP, WRAM, WRAMSIZE, 1);
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 		if (info->battery) {
@@ -2131,13 +2131,13 @@ void Mapper342_Init(CartInfo *info) {
 	}
 
 	if (info->battery) {
-		SAVE_FLASH = (uint8 *)FCEU_malloc(SAVE_FLASH_SIZE);
+		SAVE_FLASH = (uint8_t *)FCEU_malloc(SAVE_FLASH_SIZE);
 		SetupCartPRGMapping(FLASH_CHIP, SAVE_FLASH, SAVE_FLASH_SIZE, 1);
 		info->SaveGame[1] = SAVE_FLASH;
 		info->SaveGameLen[1] = SAVE_FLASH_SIZE;
 	}
 
-	CFI = (uint8 *)FCEU_malloc(sizeof(cfi_data) * 2);
+	CFI = (uint8_t *)FCEU_malloc(sizeof(cfi_data) * 2);
 	for (i = 0; i < (int)sizeof(cfi_data); i++) {
 		CFI[i * 2] = CFI[i * 2 + 1] = cfi_data[i];
 	}
