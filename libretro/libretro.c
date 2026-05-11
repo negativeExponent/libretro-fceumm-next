@@ -1704,7 +1704,7 @@ void retro_deinit(void) {
 	linearFree(fceu_video_out);
 #elif !defined(PS2) && !defined(PSP)
 	if (fceu_video_out) {
-		FCEU_afree(fceu_video_out);
+		FCEU_free(fceu_video_out);
 	}
 	fceu_video_out = NULL;
 #endif
@@ -1927,7 +1927,7 @@ static void init_blit_buffer(void) {
 #define FB_WIDTH  NES_WIDTH
 #define FB_HEIGHT NES_HEIGHT
 #endif
-	fceu_video_out = (Bpp_t *)FCEU_amalloc(FB_WIDTH * FB_HEIGHT * sizeof(Bpp_t));
+	fceu_video_out = (Bpp_t *)FCEU_malloc(FB_WIDTH * FB_HEIGHT * sizeof(Bpp_t));
 #endif /* !PS2 */
 }
 
@@ -2127,7 +2127,7 @@ void retro_unload_game(void) {
 	}
 #elif !defined(PS2) && !defined(PSP)
 	if (fceu_video_out) {
-		FCEU_afree(fceu_video_out);
+		FCEU_free(fceu_video_out);
 	}
 	fceu_video_out = NULL;
 #endif

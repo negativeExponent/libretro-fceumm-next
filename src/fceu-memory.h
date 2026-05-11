@@ -47,18 +47,12 @@
  */
 #define FCEU_dwmemset32(d, c, n) { int _x; for (_x = n - 4; _x >= 0; _x -= 4) *(uint32_t*)& (d)[_x] = c; }
 
-/* returns an aligned buffer  */
-void *FCEU_amalloc(uint32_t size);
-
 /* returns a buffer initialized to 0 */
 void *FCEU_malloc(uint32_t size);
 
 /* returns a buffer with initialization based on FCEU_MemoryRand() */
 /* Used by mappers for wram, chr ram, etc */
 void *FCEU_gmalloc(uint32_t size);
-
-/* free memory allocated by FCEU_amalloc */
-void FCEU_afree(void *ptr);
 
 /* free memory allocated by FCEU_gmalloc */
 void FCEU_gfree(void *ptr);

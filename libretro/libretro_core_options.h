@@ -189,13 +189,32 @@ struct retro_core_option_v2_definition option_defs[] = {
       NULL,
       "video",
       {
-         { "0",  "0px" },
-         { "4",  "4px" },
-         { "8",  "8px" },
-         { "12", "12px" },
-         { "16", "16px" },
-         { "20", "20px" },
-         { "24", "24px" },
+         { "0",  NULL },
+         { "1",  NULL },
+         { "2",  NULL },
+         { "3",  NULL },
+         { "4",  NULL },
+         { "5",  NULL },
+         { "6",  NULL },
+         { "7",  NULL },
+         { "8",  NULL },
+         { "9",  NULL },
+         { "10",  NULL },
+         { "11",  NULL },
+         { "12",  NULL },
+         { "13",  NULL },
+         { "14",  NULL },
+         { "15",  NULL },
+         { "16",  NULL },
+         { "17",  NULL },
+         { "18",  NULL },
+         { "19",  NULL },
+         { "20",  NULL },
+         { "21",  NULL },
+         { "22",  NULL },
+         { "23",  NULL },
+         { "24",  NULL },
+         
          { NULL, NULL },
       },
       "0",
@@ -208,13 +227,31 @@ struct retro_core_option_v2_definition option_defs[] = {
       NULL,
       "video",
       {
-         { "0",  "0px" },
-         { "4",  "4px" },
-         { "8",  "8px" },
-         { "12", "12px" },
-         { "16", "16px" },
-         { "20", "20px" },
-         { "24", "24px" },
+         { "0",  NULL },
+         { "1",  NULL },
+         { "2",  NULL },
+         { "3",  NULL },
+         { "4",  NULL },
+         { "5",  NULL },
+         { "6",  NULL },
+         { "7",  NULL },
+         { "8",  NULL },
+         { "9",  NULL },
+         { "10",  NULL },
+         { "11",  NULL },
+         { "12",  NULL },
+         { "13",  NULL },
+         { "14",  NULL },
+         { "15",  NULL },
+         { "16",  NULL },
+         { "17",  NULL },
+         { "18",  NULL },
+         { "19",  NULL },
+         { "20",  NULL },
+         { "21",  NULL },
+         { "22",  NULL },
+         { "23",  NULL },
+         { "24",  NULL },
          { NULL, NULL },
       },
       "0",
@@ -227,13 +264,31 @@ struct retro_core_option_v2_definition option_defs[] = {
       NULL,
       "video",
       {
-         { "0",  "0px" },
-         { "4",  "4px" },
-         { "8",  "8px" },
-         { "12", "12px" },
-         { "16", "16px" },
-         { "20", "20px" },
-         { "24", "24px" },
+         { "0",  NULL },
+         { "1",  NULL },
+         { "2",  NULL },
+         { "3",  NULL },
+         { "4",  NULL },
+         { "5",  NULL },
+         { "6",  NULL },
+         { "7",  NULL },
+         { "8",  NULL },
+         { "9",  NULL },
+         { "10",  NULL },
+         { "11",  NULL },
+         { "12",  NULL },
+         { "13",  NULL },
+         { "14",  NULL },
+         { "15",  NULL },
+         { "16",  NULL },
+         { "17",  NULL },
+         { "18",  NULL },
+         { "19",  NULL },
+         { "20",  NULL },
+         { "21",  NULL },
+         { "22",  NULL },
+         { "23",  NULL },
+         { "24",  NULL },
          { NULL, NULL },
       },
       "8",
@@ -246,13 +301,31 @@ struct retro_core_option_v2_definition option_defs[] = {
       NULL,
       "video",
       {
-         { "0",  "0px" },
-         { "4",  "4px" },
-         { "8",  "8px" },
-         { "12", "12px" },
-         { "16", "16px" },
-         { "20", "20px" },
-         { "24", "24px" },
+         { "0",  NULL },
+         { "1",  NULL },
+         { "2",  NULL },
+         { "3",  NULL },
+         { "4",  NULL },
+         { "5",  NULL },
+         { "6",  NULL },
+         { "7",  NULL },
+         { "8",  NULL },
+         { "9",  NULL },
+         { "10",  NULL },
+         { "11",  NULL },
+         { "12",  NULL },
+         { "13",  NULL },
+         { "14",  NULL },
+         { "15",  NULL },
+         { "16",  NULL },
+         { "17",  NULL },
+         { "18",  NULL },
+         { "19",  NULL },
+         { "20",  NULL },
+         { "21",  NULL },
+         { "22",  NULL },
+         { "23",  NULL },
+         { "24",  NULL },
          { NULL, NULL },
       },
       "8",
@@ -1399,8 +1472,8 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb,
 
             /* Skip options that are irrelevant when using the
              * old style core options interface */
-            if ((strcmp(key, "fceumm_next_show_adv_system_options") == 0) ||
-                (strcmp(key, "fceumm_next_advance_sound_options") == 0))
+            if ((strcmp(key, "fceumm_show_adv_system_options") == 0) ||
+                (strcmp(key, "fceumm_advance_sound_options") == 0))
                continue;
 
             if (desc)
@@ -1427,6 +1500,7 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb,
                /* Build values string */
                if (num_values > 0)
                {
+                  size_t pos;
                   buf_len += num_values - 1;
                   buf_len += strlen(desc);
 
@@ -1434,19 +1508,24 @@ static INLINE void libretro_set_core_options(retro_environment_t environ_cb,
                   if (!values_buf[i])
                      goto error;
 
-                  strcpy(values_buf[i], desc);
-                  strcat(values_buf[i], "; ");
+                  /* strlcpy at offset is used in place of strcat:
+                   * strlcpy returns the source length (which equals
+                   * what was written when buf_len is sized exactly),
+                   * letting us track position without rescanning the
+                   * buffer with strlen on each append. */
+                  pos  = strlcpy(values_buf[i],         desc,                            buf_len);
+                  if (pos < buf_len) pos += strlcpy(values_buf[i] + pos, "; ",                            buf_len - pos);
 
                   /* Default value goes first */
-                  strcat(values_buf[i], values[default_index].value);
+                  if (pos < buf_len) pos += strlcpy(values_buf[i] + pos, values[default_index].value,     buf_len - pos);
 
                   /* Add remaining values */
                   for (j = 0; j < num_values; j++)
                   {
                      if (j != default_index)
                      {
-                        strcat(values_buf[i], "|");
-                        strcat(values_buf[i], values[j].value);
+                        if (pos < buf_len) pos += strlcpy(values_buf[i] + pos, "|",                       buf_len - pos);
+                        if (pos < buf_len) pos += strlcpy(values_buf[i] + pos, values[j].value,           buf_len - pos);
                      }
                   }
                }

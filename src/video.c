@@ -41,10 +41,10 @@ uint8_t *XDBuf = NULL;
 void FCEU_KillVirtualVideo(void)
 {
 	if (XBuf)
-		FCEU_afree(XBuf);
+		FCEU_free(XBuf);
    XBuf = NULL;
    if (XDBuf)
-		FCEU_afree(XDBuf);
+		FCEU_free(XDBuf);
    XDBuf = NULL;
 }
 
@@ -54,9 +54,9 @@ int FCEU_InitVirtualVideo(void)
 
    /* 256 bytes per scanline, * 240 scanline maximum, +8 for alignment, */
    if (!XBuf)
-      XBuf = (uint8_t*)FCEU_amalloc(256 * 256);
+      XBuf = (uint8_t*)FCEU_malloc(256 * 256);
    if (!XDBuf)
-      XDBuf = (uint8_t*)FCEU_amalloc(256 * 256);
+      XDBuf = (uint8_t*)FCEU_malloc(256 * 256);
 
    if (!XBuf || !XDBuf)
       return 0;
