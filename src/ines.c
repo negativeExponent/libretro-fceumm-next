@@ -218,151 +218,128 @@ struct INPSEL {
 };
 
 static void SetInput(CartInfo *info) {
-	static struct INPSEL inpsel_nes10[] = {
-		{ 0x19b0a9f1, SI_GAMEPAD, SI_ZAPPER, SIFC_NONE }, /* 6-in-1 (MGC-023)(Unl)[!] */
-		{ 0x29de87af, SI_GAMEPAD, SI_GAMEPAD, SIFC_FTRAINERB }, /* Aerobics Studio */
-		{ 0xd89e5a67, SI_UNSET, SI_UNSET, SIFC_ARKANOID }, /* Arkanoid (J) */
-		{ 0x0f141525, SI_UNSET, SI_UNSET, SIFC_ARKANOID }, /* Arkanoid 2(J) */
-		{ 0x32fb0583, SI_UNSET, SI_ARKANOID, SIFC_NONE }, /* Arkanoid(NES) */
-		{ 0x60ad090a, SI_GAMEPAD, SI_GAMEPAD, SIFC_FTRAINERA }, /* Athletic World */
-		{ 0x48ca0ee1, SI_GAMEPAD, SI_GAMEPAD, SIFC_BWORLD }, /* Barcode World */
-		{ 0x4318a2f8, SI_UNSET, SI_ZAPPER, SIFC_NONE }, /* Barker Bill's Trick Shooting */
-		{ 0x6cca1c1f, SI_GAMEPAD, SI_GAMEPAD, SIFC_FTRAINERB }, /* Dai Undoukai */
-		{ 0x24598791, SI_UNSET, SI_ZAPPER, SIFC_NONE }, /* Duck Hunt */
-		{ 0xd5d6eac4, SI_UNSET, SI_UNSET, SIFC_SUBORKB }, /* Edu (As) */
-		{ 0xe9a7fe9e, SI_UNSET, SI_MOUSE, SIFC_NONE }, /* Educational Computer 2000 */
-		{ 0x8f7b1669, SI_UNSET, SI_UNSET, SIFC_SUBORKB }, /* FP BASIC 3.3 by maxzhou88 */
-		{ 0xf7606810, SI_UNSET, SI_UNSET, SIFC_FKB }, /* Family BASIC 2.0A */
-		{ 0x895037bc, SI_UNSET, SI_UNSET, SIFC_FKB }, /* Family BASIC 2.1a */
-		{ 0xb2530afc, SI_UNSET, SI_UNSET, SIFC_FKB }, /* Family BASIC 3.0 */
-		{ 0xea90f3e2, SI_GAMEPAD, SI_GAMEPAD, SIFC_FTRAINERB }, /* Family Trainer:  Running Stadium */
-		{ 0xbba58be5, SI_GAMEPAD, SI_GAMEPAD, SIFC_FTRAINERB }, /* Family Trainer: Manhattan Police */
-		{ 0x3e58a87e, SI_UNSET, SI_ZAPPER, SIFC_NONE }, /* Freedom Force */
-		{ 0xd9f45be9, SI_GAMEPAD, SI_GAMEPAD, SIFC_PARTYTAP }, /* Gimme a Break ... */
-		{ 0x1545bd13, SI_GAMEPAD, SI_GAMEPAD, SIFC_PARTYTAP }, /* Gimme a Break ... 2 */
-		{ 0x4e959173, SI_UNSET, SI_ZAPPER, SIFC_NONE }, /* Gotcha! - The Sport! */
-		{ 0xbeb8ab01, SI_UNSET, SI_ZAPPER, SIFC_NONE }, /* Gumshoe */
-		{ 0xff24d794, SI_UNSET, SI_ZAPPER, SIFC_NONE }, /* Hogan's Alley */
-		{ 0x21f85681, SI_GAMEPAD, SI_GAMEPAD, SIFC_HYPERSHOT }, /* Hyper Olympic (Gentei Ban) */
-		{ 0x980be936, SI_GAMEPAD, SI_GAMEPAD, SIFC_HYPERSHOT }, /* Hyper Olympic */
-		{ 0x915a53a7, SI_GAMEPAD, SI_GAMEPAD, SIFC_HYPERSHOT }, /* Hyper Sports */
-		{ 0x9fae4d46, SI_GAMEPAD, SI_GAMEPAD, SIFC_MAHJONG }, /* Ide Yousuke Meijin no Jissen Mahjong */
-		{ 0x7b44fb2a, SI_GAMEPAD, SI_GAMEPAD, SIFC_MAHJONG }, /* Ide Yousuke Meijin no Jissen Mahjong 2 */
-		{ 0x2f128512, SI_GAMEPAD, SI_GAMEPAD, SIFC_FTRAINERA }, /* Jogging Race */
-		{ 0xbb33196f, SI_UNSET, SI_UNSET, SIFC_FKB }, /* Keyboard Transformer */
-		{ 0x8587ee00, SI_UNSET, SI_UNSET, SIFC_FKB }, /* Keyboard Transformer */
-		{ 0x543ab532, SI_UNSET, SI_UNSET, SIFC_SUBORKB }, /* LIKO Color Lines */
-		{ 0x368c19a8, SI_UNSET, SI_UNSET, SIFC_SUBORKB }, /* LIKO Study Cartridge */
-		{ 0x5ee6008e, SI_UNSET, SI_ZAPPER, SIFC_NONE }, /* Mechanized Attack */
-		{ 0x370ceb65, SI_GAMEPAD, SI_GAMEPAD, SIFC_FTRAINERB }, /* Meiro Dai Sakusen */
-		{ 0x3a1694f9, SI_GAMEPAD, SI_GAMEPAD, SIFC_4PLAYER }, /* Nekketsu Kakutou Densetsu */
-		{ 0x9d048ea4, SI_GAMEPAD, SI_GAMEPAD, SIFC_OEKAKIDS }, /* Oeka Kids */
-		{ 0x2a6559a1, SI_UNSET, SI_ZAPPER, SIFC_NONE }, /* Operation Wolf (J) */
-		{ 0xedc3662b, SI_UNSET, SI_ZAPPER, SIFC_NONE }, /* Operation Wolf */
-		{ 0x912989dc, SI_UNSET, SI_UNSET, SIFC_FKB }, /* Playbox BASIC */
-		{ 0x9044550e, SI_GAMEPAD, SI_GAMEPAD, SIFC_FTRAINERA }, /* Rairai Kyonshizu */
-		{ 0xea90f3e2, SI_GAMEPAD, SI_GAMEPAD, SIFC_FTRAINERB }, /* Running Stadium */
-		{ 0x851eb9be, SI_GAMEPAD, SI_ZAPPER, SIFC_NONE }, /* Shooting Range */
-		{ 0x6435c095, SI_GAMEPAD, SI_POWERPADB, SIFC_UNSET }, /* Short Order/Eggsplode */
-		{ 0xc043a8df, SI_UNSET, SI_MOUSE, SIFC_NONE }, /* Shu Qi Yu - Shu Xue Xiao Zhuan Yuan (Ch) */
-		{ 0x2cf5db05, SI_UNSET, SI_MOUSE, SIFC_NONE }, /* Shu Qi Yu - Zhi Li Xiao Zhuan Yuan (Ch) */
-		{ 0xad9c63e2, SI_GAMEPAD, SI_UNSET, SIFC_SHADOW }, /* Space Shadow */
-		{ 0x61d86167, SI_GAMEPAD, SI_POWERPADB, SIFC_UNSET }, /* Street Cop */
-		{ 0xabb2f974, SI_UNSET, SI_UNSET, SIFC_SUBORKB }, /* Study and Game 32-in-1 */
-		{ 0x41ef9ac4, SI_UNSET, SI_UNSET, SIFC_SUBORKB }, /* Subor */
-		{ 0x8b265862, SI_UNSET, SI_UNSET, SIFC_SUBORKB }, /* Subor */
-		{ 0x82f1fb96, SI_UNSET, SI_UNSET, SIFC_SUBORKB }, /* Subor 1.0 Russian */
-		{ 0x9f8f200a, SI_GAMEPAD, SI_GAMEPAD, SIFC_FTRAINERA }, /* Super Mogura Tataki!! - Pokkun Moguraa */
-		{ 0xd74b2719, SI_GAMEPAD, SI_POWERPADB, SIFC_UNSET }, /* Super Team Games */
-		{ 0x74bea652, SI_GAMEPAD, SI_ZAPPER, SIFC_NONE }, /* Supergun 3-in-1 */
-		{ 0x5e073a1b, SI_UNSET, SI_UNSET, SIFC_SUBORKB }, /* Supor English (Chinese) */
-		{ 0x589b6b0d, SI_UNSET, SI_UNSET, SIFC_SUBORKB }, /* SuporV20 */
-		{ 0x41401c6d, SI_UNSET, SI_UNSET, SIFC_SUBORKB }, /* SuporV40 */
-		{ 0x23d17f5e, SI_GAMEPAD, SI_ZAPPER, SIFC_NONE }, /* The Lone Ranger */
-		{ 0xc3c0811d, SI_GAMEPAD, SI_GAMEPAD, SIFC_OEKAKIDS }, /* The two "Oeka Kids" games */
-		{ 0xde8fd935, SI_UNSET, SI_ZAPPER, SIFC_NONE }, /* To the Earth */
-		{ 0x47232739, SI_GAMEPAD, SI_GAMEPAD, SIFC_TOPRIDER }, /* Top Rider */
-		{ 0x8a12a7d9, SI_GAMEPAD, SI_GAMEPAD, SIFC_FTRAINERB }, /* Totsugeki Fuuun Takeshi Jou */
-		{ 0xb8b9aca3, SI_UNSET, SI_ZAPPER, SIFC_NONE }, /* Wild Gunman */
-		{ 0x5112dc21, SI_UNSET, SI_ZAPPER, SIFC_NONE }, /* Wild Gunman */
-		{ 0xaf4010ea, SI_GAMEPAD, SI_POWERPADB, SIFC_UNSET }, /* World Class Track Meet */
-		{ 0xb3cc4d26, SI_GAMEPAD, SI_UNSET, SIFC_SHADOW }, /* 2-in-1 Uzi Lightgun (MGC-002) */
+	static struct INPSEL moo[] = {
+		{ 0x19b0a9f1,	SI_GAMEPAD,		SI_ZAPPER,		SIFC_NONE		},	/* 6-in-1 (MGC-023)(Unl)[!] */
+		{ 0x29de87af,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERB	},	/* Aerobics Studio */
+		{ 0xd89e5a67,	SI_UNSET,		SI_UNSET,		SIFC_ARKANOID	},	/* Arkanoid (J) */
+		{ 0x0f141525,	SI_UNSET,		SI_UNSET,		SIFC_ARKANOID	},	/* Arkanoid 2(J) */
+		{ 0x32fb0583,	SI_UNSET,		SI_ARKANOID,	SIFC_NONE		},	/* Arkanoid(NES) */
+		{ 0x60ad090a,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERA	},	/* Athletic World */
+		{ 0x48ca0ee1,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_BWORLD		},	/* Barcode World */
+		{ 0x4318a2f8,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Barker Bill's Trick Shooting */
+		{ 0x6cca1c1f,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERB	},	/* Dai Undoukai */
+		{ 0x24598791,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Duck Hunt */
+		{ 0xd5d6eac4,	SI_UNSET,		SI_UNSET,		SIFC_SUBORKB	},	/* Edu (As) */
+		{ 0xe9a7fe9e,	SI_UNSET,		SI_MOUSE,		SIFC_NONE		},	/* Educational Computer 2000 */
+		{ 0x8f7b1669,	SI_UNSET,		SI_UNSET,		SIFC_SUBORKB	},	/* FP BASIC 3.3 by maxzhou88 */
+		{ 0xf7606810,	SI_UNSET,		SI_UNSET,		SIFC_FKB		},	/* Family BASIC 2.0A */
+		{ 0x895037bc,	SI_UNSET,		SI_UNSET,		SIFC_FKB		},	/* Family BASIC 2.1a */
+		{ 0xb2530afc,	SI_UNSET,		SI_UNSET,		SIFC_FKB		},	/* Family BASIC 3.0 */
+		{ 0xea90f3e2,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERB	},	/* Family Trainer:  Running Stadium */
+		{ 0xbba58be5,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERB	},	/* Family Trainer: Manhattan Police */
+		{ 0x3e58a87e,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Freedom Force */
+		{ 0xd9f45be9,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_QUIZKING	},	/* Gimme a Break ... */
+		{ 0x1545bd13,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_QUIZKING	},	/* Gimme a Break ... 2 */
+		{ 0x4e959173,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Gotcha! - The Sport! */
+		{ 0xbeb8ab01,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Gumshoe */
+		{ 0xff24d794,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Hogan's Alley */
+		{ 0x21f85681,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_HYPERSHOT	},	/* Hyper Olympic (Gentei Ban) */
+		{ 0x980be936,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_HYPERSHOT	},	/* Hyper Olympic */
+		{ 0x915a53a7,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_HYPERSHOT	},	/* Hyper Sports */
+		{ 0x9fae4d46,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_MAHJONG	},	/* Ide Yousuke Meijin no Jissen Mahjong */
+		{ 0x7b44fb2a,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_MAHJONG	},	/* Ide Yousuke Meijin no Jissen Mahjong 2 */
+		{ 0x2f128512,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERA	},	/* Jogging Race */
+		{ 0xbb33196f,	SI_UNSET,		SI_UNSET,		SIFC_FKB		},	/* Keyboard Transformer */
+		{ 0x8587ee00,	SI_UNSET,		SI_UNSET,		SIFC_FKB		},	/* Keyboard Transformer */
+		{ 0x543ab532,	SI_UNSET,		SI_UNSET,		SIFC_SUBORKB	},	/* LIKO Color Lines */
+		{ 0x368c19a8,	SI_UNSET,		SI_UNSET,		SIFC_SUBORKB	},	/* LIKO Study Cartridge */
+		{ 0x5ee6008e,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Mechanized Attack */
+		{ 0x370ceb65,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERB	},	/* Meiro Dai Sakusen */
+		{ 0x3a1694f9,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_4PLAYER	},	/* Nekketsu Kakutou Densetsu */
+		{ 0x9d048ea4,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_OEKAKIDS	},	/* Oeka Kids */
+		{ 0x2a6559a1,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Operation Wolf (J) */
+		{ 0xedc3662b,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Operation Wolf */
+		{ 0x912989dc,	SI_UNSET,		SI_UNSET,		SIFC_FKB		},	/* Playbox BASIC */
+		{ 0x9044550e,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERA	},	/* Rairai Kyonshizu */
+		{ 0xea90f3e2,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERB	},	/* Running Stadium */
+		{ 0x851eb9be,	SI_GAMEPAD,		SI_ZAPPER,		SIFC_NONE		},	/* Shooting Range */
+		{ 0x6435c095,	SI_GAMEPAD,		SI_POWERPADB,	SIFC_UNSET		},	/* Short Order/Eggsplode */
+		{ 0xc043a8df,	SI_UNSET,		SI_MOUSE,		SIFC_NONE		},	/* Shu Qi Yu - Shu Xue Xiao Zhuan Yuan (Ch) */
+		{ 0x2cf5db05,	SI_UNSET,		SI_MOUSE,		SIFC_NONE		},	/* Shu Qi Yu - Zhi Li Xiao Zhuan Yuan (Ch) */
+		{ 0xad9c63e2,	SI_GAMEPAD,		SI_UNSET,		SIFC_SHADOW		},	/* Space Shadow */
+		{ 0x61d86167,	SI_GAMEPAD,		SI_POWERPADB,	SIFC_UNSET		},	/* Street Cop */
+		{ 0xabb2f974,	SI_UNSET,		SI_UNSET,		SIFC_SUBORKB	},	/* Study and Game 32-in-1 */
+		{ 0x41ef9ac4,	SI_UNSET,		SI_UNSET,		SIFC_SUBORKB	},	/* Subor */
+		{ 0x8b265862,	SI_UNSET,		SI_UNSET,		SIFC_SUBORKB	},	/* Subor */
+		{ 0x82f1fb96,	SI_UNSET,		SI_UNSET,		SIFC_SUBORKB	},	/* Subor 1.0 Russian */
+		{ 0x9f8f200a,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERA	},	/* Super Mogura Tataki!! - Pokkun Moguraa */
+		{ 0xd74b2719,	SI_GAMEPAD,		SI_POWERPADB,	SIFC_UNSET		},	/* Super Team Games */
+		{ 0x74bea652,	SI_GAMEPAD,		SI_ZAPPER,		SIFC_NONE		},	/* Supergun 3-in-1 */
+		{ 0x5e073a1b,	SI_UNSET,		SI_UNSET,		SIFC_SUBORKB	},	/* Supor English (Chinese) */
+		{ 0x589b6b0d,	SI_UNSET,		SI_UNSET,		SIFC_SUBORKB	},	/* SuporV20 */
+		{ 0x41401c6d,	SI_UNSET,		SI_UNSET,		SIFC_SUBORKB	},	/* SuporV40 */
+		{ 0x23d17f5e,	SI_GAMEPAD,		SI_ZAPPER,		SIFC_NONE		},	/* The Lone Ranger */
+		{ 0xc3c0811d,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_OEKAKIDS	},	/* The two "Oeka Kids" games */
+		{ 0xde8fd935,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* To the Earth */
+		{ 0x47232739,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_TOPRIDER	},	/* Top Rider */
+		{ 0x8a12a7d9,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_FTRAINERB	},	/* Totsugeki Fuuun Takeshi Jou */
+		{ 0xb8b9aca3,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Wild Gunman */
+		{ 0x5112dc21,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		},	/* Wild Gunman */
+		{ 0xaf4010ea,	SI_GAMEPAD,		SI_POWERPADB,	SIFC_UNSET		},	/* World Class Track Meet */
+		{ 0xb3cc4d26,	SI_GAMEPAD,		SI_UNSET,		SIFC_SHADOW		},	/* 2-in-1 Uzi Lightgun (MGC-002) */
 
-		{ 0x00000000, SI_UNSET, SI_UNSET, SIFC_UNSET }
+		{ 0x00000000,	SI_UNSET,		SI_UNSET,		SIFC_UNSET		}
 	};
-	int x = 0;
 
-	while (inpsel_nes10[x].input1 >= 0 || inpsel_nes10[x].input2 >= 0 || inpsel_nes10[x].inputfc >= 0) {
-		if (inpsel_nes10[x].crc32 == info->CRC32) {
-			GameInfo->input[0] = inpsel_nes10[x].input1;
-			GameInfo->input[1] = inpsel_nes10[x].input2;
-			GameInfo->inputfc  = inpsel_nes10[x].inputfc;
-			break;
-		}
-		x++;
+	int x = 0;
+	switch(info->InputTypes) {
+		case 0x01: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_UNSET;     break; /* Standard NES/Famicom controllers */
+		case 0x02: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_NONE;      break; /* NES Four Score/Satellite with two additional standard controllers */
+		case 0x03: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_4PLAYER;   break; /* Famicom Four Players Adapter with two additional standard controllers using the "simple" protocol */
+		case 0x04: GameInfo->input[0] = SI_GAMEPAD, GameInfo->input[1] = SI_GAMEPAD,   GameInfo->inputfc = SIFC_NONE;      break; /* Vs. System (1P via $4016) */
+		case 0x05: GameInfo->input[0] = SI_GAMEPAD, GameInfo->input[1] = SI_GAMEPAD,   GameInfo->inputfc = SIFC_NONE;      break; /* Vs. System (1P via $4017) */
+		case 0x07: GameInfo->input[0] = SI_ZAPPER,  GameInfo->input[1] = SI_NONE,      GameInfo->inputfc = SIFC_NONE;      break; /* Vs. Zapper */
+		case 0x08: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_ZAPPER;    GameInfo->inputfc = SIFC_NONE;      break; /* Zapper ($4017) */
+		case 0x0A: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_SHADOW;    break; /* Bandai Hyper Shot Lightgun */
+		case 0x0B: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_POWERPADB; GameInfo->inputfc = SIFC_NONE;      break; /* Power Pad Side A */
+		case 0x0C: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_POWERPADB; GameInfo->inputfc = SIFC_NONE;      break; /* Power Pad Side B */
+		case 0x0D: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_FTRAINERA; break; /* Family Trainer Side A */
+		case 0x0E: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_FTRAINERB; break; /* Family Trainer Side B */
+		case 0x0F: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_ARKANOID;  GameInfo->inputfc = SIFC_NONE;      break; /* Arkanoid Paddle (NES) */
+		case 0x10: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_ARKANOID;  break; /* Arkanoid Paddle (Famicom) */
+		case 0x12: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_HYPERSHOT; break; /* Konami Hyper Shot Controller */
+		case 0x14: GameInfo->input[0] = SI_GAMEPAD, GameInfo->input[1] = SI_UNSET,     GameInfo->inputfc = SIFC_EXCITINGBOXING; break; /* Exciting Boxing Punching Bag */
+		case 0x15: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_MAHJONG;   break; /* Jissen Mahjong Controller */
+		case 0x16: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_QUIZKING;  break; /* Quiz Kung */
+		case 0x17: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_OEKAKIDS;  break; /* Oeka Kids Tablet */
+		case 0x18: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_BWORLD;    break; /* Sunsoft Barcode Battler */
+		case 0x1A: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_FTRAINERA; break;
+		case 0x1B: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_TOPRIDER;  break; /* Top Rider (Inflatable Bicycle) */
+		case 0x23: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_FKB;       break; /* Family BASIC Keyboard plus Famicom Data Recorder */
+		case 0x24: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_PEC586KB;  break; /* Dongda PEC-586 Keyboard */
+		case 0x26: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_SUBORKB;   break; /* Subor Keyboard plus mouse (3x8-bit protocol) */
+		case 0x27: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_MOUSE;     GameInfo->inputfc = SIFC_SUBORKB;   break; /* Subor Keyboard plus mouse (3x8-bit protocol) */
+		case 0x28: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_SUBORKB;   break; /* Subor Keyboard plus mouse (24-bit protocol) */
+		case 0x2A: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_ZAPPER;    GameInfo->inputfc = SIFC_NONE;      break; /* Emulate "multicart" simply as "Zapper" */
+		case 0x29: GameInfo->input[0] = SI_UNSET;   GameInfo->input[1] = SI_SNES_MOUSE,GameInfo->inputfc = SIFC_UNSET;     break; /* SNES Mouse */
+		case 0x36: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_SUBORKB;   break;
+		case 0x40: GameInfo->input[0] = SI_GAMEPAD; GameInfo->input[1] = SI_GAMEPAD;   GameInfo->inputfc = SIFC_SUBORKB;   break;
+		default:
+			while (moo[x].input1 >= 0 || moo[x].input2 >= 0 || moo[x].inputfc >= 0) {
+				if (moo[x].crc32 == iNESCart.CRC32) {
+					GameInfo->input[0] = moo[x].input1;
+					GameInfo->input[1] = moo[x].input2;
+					GameInfo->inputfc = moo[x].inputfc;
+					break;
+				}
+				x++;
+			}
 	}
-}
-
-struct INPSEL_NES20 {
-	uint8_t id;
-	int input1;
-	int input2;
-	int inputfc;
-};
-
-/*
-* Function to set input controllers based on NES 2.0 header
-*/
-
-static void SetInputNes20(uint8_t input_id) {
-	static struct INPSEL_NES20 inpsel_nes20[] =
-	{
-		{ 0x01,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_UNSET		}, /* Standard NES/Famicom controllers */
-		{ 0x02,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_NONE		}, /* NES Four Score/Satellite with two additional standard controllers */
-		{ 0x03,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_4PLAYER	}, /* Famicom Four Players Adapter with two additional standard controllers using the "simple" protocol */
-		{ 0x04,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_NONE		}, /* Vs. System (1P via $4016) */
-		{ 0x05,	SI_GAMEPAD,		SI_GAMEPAD,		SIFC_NONE		}, /* Vs. System (1P via $4017) */
-		{ 0x07,	SI_ZAPPER,		SI_NONE,		SIFC_NONE		}, /* Vs. Zapper */
-		{ 0x08,	SI_UNSET,		SI_ZAPPER,		SIFC_NONE		}, /* Zapper ($4017) */
-		{ 0x0A,	SI_UNSET,		SI_UNSET,		SIFC_SHADOW		}, /* Bandai Hyper Shot Lightgun */
-		{ 0x0B,	SI_UNSET,		SI_POWERPADA,	SIFC_UNSET		}, /* Power Pad Side A */
-		{ 0x0C,	SI_UNSET,		SI_POWERPADB,	SIFC_UNSET		}, /* Power Pad Side B */
-		{ 0x0D,	SI_UNSET,		SI_UNSET,		SIFC_FTRAINERA	}, /* Family Trainer Side A */
-		{ 0x0E,	SI_UNSET,		SI_UNSET,		SIFC_FTRAINERB	}, /* Family Trainer Side B */
-		{ 0x0F,	SI_UNSET,		SI_ARKANOID,	SIFC_UNSET		}, /* Arkanoid Paddle (NES) */
-		{ 0x10,	SI_UNSET,		SI_UNSET,		SIFC_ARKANOID	}, /* Arkanoid Paddle (Famicom) */
-		{ 0x12,	SI_UNSET,		SI_UNSET,		SIFC_HYPERSHOT	}, /* Konami Hyper Shot Controller */
-		{ 0x14, SI_GAMEPAD,		SI_UNSET,		SIFC_EXCITINGBOXING }, /* Exciting Boxing Punching Bag */
-		{ 0x15,	SI_UNSET,		SI_UNSET,		SIFC_MAHJONG	}, /* Jissen Mahjong Controller */
-		{ 0x17,	SI_UNSET,		SI_UNSET,		SIFC_OEKAKIDS	}, /* Oeka Kids Tablet */
-		{ 0x18,	SI_UNSET,		SI_UNSET,		SIFC_BWORLD		}, /* Sunsoft Barcode Battler */
-		{ 0x1B,	SI_UNSET,		SI_UNSET,		SIFC_TOPRIDER	}, /* Top Rider (Inflatable Bicycle) */
-		{ 0x23,	SI_UNSET,		SI_UNSET,		SIFC_FKB		}, /* Family BASIC Keyboard plus Famicom Data Recorder */
-		{ 0x24,	SI_UNSET,		SI_UNSET,		SIFC_PEC586KB	}, /* Dongda PEC-586 Keyboard */
-		{ 0x26,	SI_UNSET,		SI_UNSET,		SIFC_SUBORKB	}, /* Subor Keyboard */
-		/* { 0x27,	SI_UNSET,		SI_MOUSE,		SIFC_SUBORKB	}, */ /* Subor Keyboard plus mouse (3x8-bit protocol) */
-		{ 0x28,	SI_UNSET,		SI_MOUSE,		SIFC_SUBORKB	}, /* Subor Keyboard plus mouse (24-bit protocol) */
-		{ 0x29,	SI_UNSET,		SI_SNES_MOUSE,	SIFC_UNSET		}, /* SNES Mouse */
-		{ 0x00,	SI_UNSET,		SI_UNSET,		SIFC_UNSET		}
-	};
-
-	int x = 0;
-
 	/* four score adaptor */
 	/*if (device == 0x02)
-		eoptions |= 32768;*/
-	if (input_id == 0x05)
+	    eoptions |= 32768;*/
+	if (info->InputTypes == 0x05)
 		vsuni_system.ioption |= IOPTION_SWAPDIRAB;
-
-	while (inpsel_nes20[x].id) {
-		if (inpsel_nes20[x].id == input_id) {
-			GameInfo->input[0] = inpsel_nes20[x].input1;
-			GameInfo->input[1] = inpsel_nes20[x].input2;
-			GameInfo->inputfc  = inpsel_nes20[x].inputfc;
-			break;
-		}
-		x++;
-	}
 }
 
 #define INESB_INCOMPLETE 1
@@ -1487,7 +1464,7 @@ int iNESLoad(const char *name, FCEUFILE *fp) {
 	SetupCartPRGMapping(0, ROM.prg.data, uppow2(ROM.prg.size), 0);
 
 	SetInput(&iNESCart);
-	if (iNESCart.iNES2) SetInputNes20(iNESCart.InputTypes);
+
 	CheckHInfo(&iNESCart, partialmd5);
 	FCEU_VSUniCheck(partialmd5, &iNESCart.mapper, &iNESCart.mirror);
 
