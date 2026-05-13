@@ -20,6 +20,8 @@
 
 #include <string.h>
 
+#include <compat/strl.h>
+
 #include "fceu-types.h"
 #include "x6502.h"
 #include "fceu.h"
@@ -386,7 +388,7 @@ void FCEU_VSUniCheck(uint64_t md5partial, int *MapperNo, int *Mirroring) {
 				GameInfo->input[1] = SI_GAMEPAD;
 			}
 
-			strcpy(name, vs->name);
+			strlcpy(name, vs->name, sizeof(name));
 
 			if (tofix) {
 				FCEU_PrintError(" Incorrect VS-Uni header information!\n");

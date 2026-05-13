@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <file/file_path.h>
+#include <compat/strl.h>
 
 #include "fceu-types.h"
 #include "fceu.h"
@@ -209,12 +210,12 @@ static uint8_t unif_NAME(FCEUFILE *fp) {
 	}
 
 	namebuf[index] = 0;
-	FCEU_printf(" Name: %s\n", namebuf);
-
 	if (!GameInfo->name) {
-		GameInfo->name = FCEU_malloc(strlen(namebuf) + 1);
-		strcpy((char *)GameInfo->name, namebuf);
+		size_t n = strlen(namebuf) + 1;
+		GameInfo->name = FCEU_malloc(n);
+		strlcpy((char *)GameInfo->name, namebuf, n);
 	}
+	FCEU_printf(" Name: %s\n", GameInfo->name);
 	return (1);
 }
 

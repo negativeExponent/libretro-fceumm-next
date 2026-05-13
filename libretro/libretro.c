@@ -4,6 +4,8 @@
 #include <stdarg.h>
 #include <ctype.h>
 
+#include <compat/strl.h>
+
 #ifdef _MSC_VER
 #include <compat/msvc.h>
 #endif
@@ -1865,8 +1867,8 @@ void retro_cheat_set(unsigned index, bool enabled, const char *code) {
 		return;
 	}
 
-	sprintf(name, "N/A");
-	strcpy(temp, code);
+	strlcpy(name, "N/A", sizeof(name));
+	strlcpy(temp, code, sizeof(temp));
 	codepart = strtok(temp, "+,;._ ");
 
 	while (codepart) {

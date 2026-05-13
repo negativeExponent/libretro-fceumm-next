@@ -23,6 +23,8 @@
 #include <string.h>
 #include <math.h>
 
+#include <compat/strl.h>
+
 #include "fceu-types.h"
 #include "x6502.h"
 #include "fceu.h"
@@ -166,9 +168,9 @@ static int LoadNSF(FCEUFILE *fp) {
 	/* NULL-terminate strings just in case. */
 	NSFHeader.GameName[31] = NSFHeader.Artist[31] = NSFHeader.Copyright[31] = 0;
 
-	sprintf((char *)NSFInfo->SongName,  "%s", (const char *)NSFHeader.GameName);
-	sprintf((char *)NSFInfo->Artist,    "%s", (const char *)NSFHeader.Artist);
-	sprintf((char *)NSFInfo->Copyright, "%s", (const char *)NSFHeader.Copyright);
+	snprintf((char *)NSFInfo->SongName,  sizeof(NSFInfo->SongName),  "%s", (const char *)NSFHeader.GameName);
+	snprintf((char *)NSFInfo->Artist,    sizeof(NSFInfo->Artist),    "%s", (const char *)NSFHeader.Artist);
+	snprintf((char *)NSFInfo->Copyright, sizeof(NSFInfo->Copyright), "%s", (const char *)NSFHeader.Copyright);
 
 	NSFInfo->LoadAddr = NSFHeader.LoadAddressLow | (NSFHeader.LoadAddressHigh << 8);
 	NSFInfo->InitAddr = NSFHeader.InitAddressLow | (NSFHeader.InitAddressHigh << 8);
@@ -785,7 +787,7 @@ void DrawNSF(uint8_t *target) {
 	} else  {
 		DrawTextTrans(target + 70 * 256 + 4 + (((31 - strlen("Song:")) << 2)), 256, (uint8_t *)"Song:", textColor);
 	}
-	sprintf(snbuf, "<%d/%d>", NSFInfo->CurrentSong + 1, NSFInfo->TotalSongs);
+	snprintf(snbuf, sizeof(snbuf), "<%d/%d>", NSFInfo->CurrentSong + 1, NSFInfo->TotalSongs);
 	DrawTextTrans(target + 82 * 256 + 4 + (((31 - strlen(snbuf)) << 2)), 256, (uint8_t *)snbuf, textColor);
 }
 
@@ -852,8 +854,8 @@ int FCEUI_NSFChange(int amount) {
 
 /* Returns total songs */
 int FCEUI_NSFGetInfo(uint8_t *name, uint8_t *artist, uint8_t *copyright, int maxlen) {
-	strncpy((char *)name, (const char *)NSFInfo->SongName, (size_t)maxlen);
-	strncpy((char *)artist, (const char *)NSFInfo->Artist, (size_t)maxlen);
-	strncpy((char *)copyright, (const char *)NSFInfo->Copyright, (size_t)maxlen);
+	strlcpy((char *)name, (const char *)NSFInfo->SongName, (size_t)maxlen);
+	strlcpy((char *)artist, (const char *)NSFInfo->Artist, (size_t)maxlen);
+	strlcpy((char *)copyright, (const char *)NSFInfo->Copyright, (size_t)maxlen);
 	return (NSFInfo->TotalSongs);
 }

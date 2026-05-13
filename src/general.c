@@ -22,6 +22,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include <compat/strl.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifdef _WIN32
@@ -45,13 +47,13 @@
 static char BaseDirectory[2048] = { 0 };
 
 void FCEUI_SetBaseDirectory(const char *dir) {
-	strncpy(BaseDirectory, dir, 2047);
-	BaseDirectory[2047] = 0;
+	strlcpy(BaseDirectory, dir, sizeof(BaseDirectory));
 }
 
 char *FCEU_MakeFName(int type, int id1, char *cd1) {
 	char tmp[4096 + 512] = { 0 }; /* +512 for no reason :D */
 	char *ret = 0;
+	size_t len;
 
 	switch (type) {
 	case FCEUMKF_GGROM:
@@ -72,8 +74,10 @@ char *FCEU_MakeFName(int type, int id1, char *cd1) {
 
 	FCEU_printf(" FCEU_MakeFName: %s\n", tmp);
 
-	ret = (char *)FCEU_malloc(strlen(tmp) * sizeof(char) + 1);
-	strcpy(ret, tmp);
+	len = strlen(tmp) + 1;
+	ret = (char *)malloc(len);
+	if (!ret) return NULL;
+	strlcpy(ret, tmp, len);
 
 	return (ret);
 }
