@@ -449,3 +449,15 @@ void SetupCartMirroring(int m, int hard, uint8_t *extra) {
 	}
 	mirrorhard = hard;
 }
+
+uint32_t GetWRAMSize(const CartInfo *info, uint32_t default_size) {
+	if (info->iNES2)
+		return (uint32_t)(info->PRGRamSize + info->PRGRamSaveSize);
+	return info->battery ? SIZE_8K : default_size;
+}
+
+uint32_t GetCHRRAMSize(const CartInfo *info, uint32_t default_size) {
+	if (info->iNES2)
+		return (uint32_t)(info->CHRRamSize + info->CHRRamSaveSize);
+	return default_size;
+}

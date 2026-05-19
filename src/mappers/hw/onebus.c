@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007-2010 CaH4e3
- *  Copyright (C) 2025 negativeExponent
+ *  Copyright (C) 2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,10 +45,10 @@ static SFORMAT StateRegs[] = {
 	{ &onebus.IRQa, 1, "IRQA" },
 	{ &onebus.pcm_enable, 1, "PCME" },
 	{ &onebus.pcm_irq, 1, "PCMI" },
-	{ &onebus.pcm_addr, 2, "PCMA" },
-	{ &onebus.pcm_size, 2, "PCMS" },
-	{ &onebus.pcm_latch, 2, "PCML" },
-	{ &onebus.pcm_clock, 2, "PCMC" },
+	{ &onebus.pcm_addr, 2 | FCEUSTATE_RLSB, "PCMA" },
+	{ &onebus.pcm_size, 2 | FCEUSTATE_RLSB, "PCMS" },
+	{ &onebus.pcm_latch, 2 | FCEUSTATE_RLSB, "PCML" },
+	{ &onebus.pcm_clock, 2 | FCEUSTATE_RLSB, "PCMC" },
 	{ 0 }
 };
 

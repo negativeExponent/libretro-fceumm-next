@@ -160,4 +160,7 @@ extern uint32_t WRAMSIZE;
 
 extern romData_t ROM;
 
+/* */
+uint32_t GetWRAMSize(const CartInfo *info, uint32_t default_size);
+uint32_t GetCHRRAMSize(const CartInfo *info, uint32_t default_size);
 #endif

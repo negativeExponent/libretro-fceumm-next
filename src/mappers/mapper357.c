@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -38,7 +38,7 @@ static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
 	{ m357.reg, 4, "REG" },
-	{ &m357.IRQCount, 2, "IRQC" },
+	{ &m357.IRQCount, 2 | FCEUSTATE_RLSB, "IRQC" },
 	{ &m357.IRQa, 1, "IRQA" },
 	{ 0 }
 };

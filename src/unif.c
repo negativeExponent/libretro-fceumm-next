@@ -41,6 +41,7 @@
 #include "input.h"
 #include "md5.h"
 #include "crc32.h"
+#include "cartram.h"
 
 #include "string/stdstring.h"
 
@@ -110,16 +111,7 @@ static void FreeUNIF(void) {
 		FCEU_free(ROM.chr.data);
 		ROM.chr.data = 0;
 	}
-	if (WRAM) {
-		FCEU_free(WRAM);
-		WRAM = NULL;
-		WRAMSIZE = 0;
-	}
-	if (CHRRAM) {
-		FCEU_free(CHRRAM);
-		CHRRAM = NULL;
-		CHRRAMSIZE = 0;
-	}
+	CartRAM_Close();
 }
 
 static void ResetUNIF(void) {

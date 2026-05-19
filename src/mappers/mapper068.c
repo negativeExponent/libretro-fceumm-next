@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
- *  Copyright (C) 2023-2025 negativeExponent
+ *  Copyright (C) 2023-2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -47,7 +47,7 @@ static SFORMAT StateRegs[] = {
 	{ &m068.mirror, 1, "MIRR" },
 	{ &m068.prg, 1, "PREG" },
 	{ &m068.access, 1, "ACCS" },
-	{ &m068.timer, 4, "TIMR" },
+	{ &m068.timer, 4 | FCEUSTATE_RLSB, "TIMR" },
 	{ 0 }
 };
 

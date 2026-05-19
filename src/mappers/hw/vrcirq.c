@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ static uint8_t IRQScanPos;
 static uint8_t IRQScanLut[3] = { 113, 113, 112 };
 
 SFORMAT VRCIRQ_StateRegs[] = {
-	{ &IRQPrescaler, 2, "PREC" },
+	{ &IRQPrescaler, 2 | FCEUSTATE_RLSB, "PREC" },
 	{ &IRQCount, 1, "IRQC" },
 	{ &IRQLatch, 1, "IRQL" },
 	{ &IRQd, 1, "IRQD" },

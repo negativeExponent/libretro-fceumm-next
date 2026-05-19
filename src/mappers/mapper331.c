@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2009 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ static struct {
 
 static SFORMAT StateRegs[] = {
 	{ m331.reg, 3, "REGS" },
-	{ &m331.ppuchrbus, 3, "PPUC" },
+	{ &m331.ppuchrbus, 1, "PPUC" },
 	{ 0 }
 };
 

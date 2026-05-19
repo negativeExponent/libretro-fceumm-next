@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2009 CaH4e3
- *  Copyright (C) 2023-2025 negativeExponent
+ *  Copyright (C) 2023-2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,14 @@ static struct {
 } m156;
 
 static SFORMAT StateRegs[] = {
-	{ m156.chr, 16, "CREG" },
+	{ &m156.chr[0], 2 | FCEUSTATE_RLSB, "CRE0" },
+	{ &m156.chr[1], 2 | FCEUSTATE_RLSB, "CRE1" },
+	{ &m156.chr[2], 2 | FCEUSTATE_RLSB, "CRE2" },
+	{ &m156.chr[3], 2 | FCEUSTATE_RLSB, "CRE3" },
+	{ &m156.chr[4], 2 | FCEUSTATE_RLSB, "CRE4" },
+	{ &m156.chr[5], 2 | FCEUSTATE_RLSB, "CRE5" },
+	{ &m156.chr[6], 2 | FCEUSTATE_RLSB, "CRE6" },
+	{ &m156.chr[7], 2 | FCEUSTATE_RLSB, "CRE7" },
 	{ &m156.prg, 1, "PREG" },
 	{ &m156.mirror, 1, "MIRR" },
 	{ 0 }

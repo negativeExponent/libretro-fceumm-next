@@ -3,7 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
  *  Copyright (C) 2011 FCEUX team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,8 +53,8 @@ static SFORMAT StateRegs[] = {
 	{ &fcg.mirror, 1, "MIRR" },
 	{ &fcg.wramEnabled, 1, "WREN" },
 	{ &fcg.IRQa, 1, "IRQA" },
-	{ &fcg.IRQCount, 2, "IRQC" },
-	{ &fcg.IRQLatch, 2, "IRQL" }, /* need for Famicom Jump II - Saikyou no 7 Nin (J) [!] */
+	{ &fcg.IRQCount, 2 | FCEUSTATE_RLSB, "IRQC" },
+	{ &fcg.IRQLatch, 2 | FCEUSTATE_RLSB, "IRQL" }, /* need for Famicom Jump II - Saikyou no 7 Nin (J) [!] */
 	{ 0 }
 };
 

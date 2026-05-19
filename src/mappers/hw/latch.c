@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,12 @@ static void (*WSync)(void);
 static readfunc defread;
 
 LATCH latch;
+
+static SFORMAT StateRegs[] = {
+	{ &latch.addr, 2 | FCEUSTATE_RLSB, "ADDR" },
+	{ &latch.data, 1, "DATA" },
+	{ 0 }
+};
 
 DECLFW(Latch_Write) {
 	/*	FCEU_printf("bs %04x %02x\n",A,V); */
@@ -86,8 +92,7 @@ void Latch_Init(CartInfo *info, void (*proc)(void), readfunc func, uint8_t wram,
 		}
 		AddExState(WRAM, WRAMSIZE, 0, "WRAM");
 	}
-	AddExState(&latch.addr, 2, 0, "ADDR");
-	AddExState(&latch.data, 1, 0, "DATA");
+	AddExState(StateRegs, ~0, 0, NULL);
 }
 
 void Latch_SetConfig(uint8_t clear, void (*sync)(void)) {

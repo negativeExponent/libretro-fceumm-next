@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2025 negativeExponent
+ *  Copyright (C) 2023-2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,9 +37,9 @@ static struct {
 } m517;
 
 static SFORMAT StateRegs[] = {
-	{ &m517.adc_data, sizeof(m517.adc_data), "DATA" },
-	{ &m517.adc_high, sizeof(m517.adc_high), "DTHI" },
-	{ &m517.adc_low, sizeof(m517.adc_low), "DTLO" },
+	{ &m517.adc_data, sizeof(m517.adc_data) | FCEUSTATE_RLSB, "DATA" },
+	{ &m517.adc_high, sizeof(m517.adc_high) | FCEUSTATE_RLSB, "DTHI" },
+	{ &m517.adc_low, sizeof(m517.adc_low) | FCEUSTATE_RLSB, "DTLO" },
 	{ &m517.adc_state, sizeof(m517.adc_state), "STAT" },
 	{ 0 }
 };

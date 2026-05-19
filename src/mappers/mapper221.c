@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,8 @@ static struct {
 } m221;
 
 static SFORMAT StateRegs[] = {
-	{ m221.reg, 4, "REGS" },
+	{ &m221.reg[0], 2 | FCEUSTATE_RLSB, "REG0" },
+	{ &m221.reg[1], 2 | FCEUSTATE_RLSB, "REG1" },
 	{ 0 }
 };
 

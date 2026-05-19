@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,7 +50,7 @@ static SFORMAT StateRegs[] = {
 	{ &m359.IRQAutoEnable, 1, "IRQe" },
 	{ &m359.IRQLatch, 1, "IRQL" },
 	{ &m359.IRQCount, 1, "IRQC" },
-	{ &m359.IRQCount16, 2, "IQ16" },
+	{ &m359.IRQCount16, 2 | FCEUSTATE_RLSB, "IQ16" },
 	{ 0 }
 };
 

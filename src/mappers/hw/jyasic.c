@@ -4,7 +4,7 @@
  *  Copyright (C) 2002 Xodnizel
  *  Copyright (C) 2005 CaH4e3
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,8 +43,18 @@ static SFORMAT JYASIC_StateRegs[] = {
 	{ jyasic.prg, 4, "PRGB" },
 	{ jyasic.mul, 2, "MUL" },
 	{ jyasic.latch, 2, "CLTC" },
-	{ jyasic.chr, 16, "CHRB" },
-	{ jyasic.nt, 8, "NMS0" },
+	{ &jyasic.chr[0], 2 | FCEUSTATE_RLSB, "JCH0" },
+	{ &jyasic.chr[1], 2 | FCEUSTATE_RLSB, "JCH1" },
+	{ &jyasic.chr[2], 2 | FCEUSTATE_RLSB, "JCH2" },
+	{ &jyasic.chr[3], 2 | FCEUSTATE_RLSB, "JCH3"},
+	{ &jyasic.chr[4], 2 | FCEUSTATE_RLSB, "JCH4" },
+	{ &jyasic.chr[5], 2 | FCEUSTATE_RLSB, "JCH5" },
+	{ &jyasic.chr[6], 2 | FCEUSTATE_RLSB, "JCH6" },
+	{ &jyasic.chr[7], 2 | FCEUSTATE_RLSB, "JCH7" },
+	{ &jyasic.nt[0], 2 | FCEUSTATE_RLSB, "JNT0" },
+	{ &jyasic.nt[1], 2 | FCEUSTATE_RLSB, "JNT1" },
+	{ &jyasic.nt[2], 2 | FCEUSTATE_RLSB, "JNT2" },
+	{ &jyasic.nt[3], 2 | FCEUSTATE_RLSB, "JNT3" },
 	{ &jyasic.adder, 1, "ADDE" },
 	{ &jyasic.test, 1, "REGI" },
 	{ &jyasic.irq.control, 1, "IRQM" },

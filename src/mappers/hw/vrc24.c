@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -60,7 +60,14 @@ static uint8_t lastPRGBank;
 
 static SFORMAT StateRegs[] = {
 	{ vrc24.prg, 2, "PREG" },
-	{ vrc24.chr, 16, "CREG" },
+	{ &vrc24.chr[0], 2 | FCEUSTATE_RLSB, "VCR0" },
+	{ &vrc24.chr[1], 2 | FCEUSTATE_RLSB, "VCR1" },
+	{ &vrc24.chr[2], 2 | FCEUSTATE_RLSB, "VCR2" },
+	{ &vrc24.chr[3], 2 | FCEUSTATE_RLSB, "VCR3" },
+	{ &vrc24.chr[4], 2 | FCEUSTATE_RLSB, "VCR4" },
+	{ &vrc24.chr[5], 2 | FCEUSTATE_RLSB, "VCR5" },
+	{ &vrc24.chr[6], 2 | FCEUSTATE_RLSB, "VCR6" },
+	{ &vrc24.chr[7], 2 | FCEUSTATE_RLSB, "VCR7" },
 	{ &vrc24.cmd, 1, "CMDR" },
 	{ &vrc24.mirr, 1, "MIRR" },
 	{ &vrc24.wire, 1, "MWIR" },

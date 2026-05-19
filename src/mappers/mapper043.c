@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2006 CaH4e3
- *  Copyright (C) 2023-2025 negativeExponent
+ *  Copyright (C) 2023-2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ static int prgBankOrder[8] = { 4, 3, 4, 4, 4, 7, 5, 6 };
 static uint8_t dipsw;
 
 static SFORMAT StateRegs[] = {
-	{ &m043.IRQCount, 2, "IRQC" },
+	{ &m043.IRQCount, 2 | FCEUSTATE_RLSB, "IRQC" },
 	{ &m043.IRQa, 1, "IRQA" },
 	{ &m043.reg, 1, "REGS" },
 	{ 0 }

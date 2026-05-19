@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ static int32_t time_out;
 
 static SFORMAT FlashStateRegs[] = {
 	{ &flash_state, 1, "STAT" },
-	{ &time_out, 4, "TIME" },
+	{ &time_out, 4 | FCEUSTATE_RLSB, "TIME" },
 	{ 0 }
 };
 

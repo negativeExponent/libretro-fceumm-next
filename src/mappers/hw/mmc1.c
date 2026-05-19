@@ -3,7 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 1998 BERO
  *  Copyright (C) 2002 Xodnizel
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +39,13 @@ void (*MMC1_SyncMirror)(void);
 void (*MMC1_SyncWRAM)(void);
 
 MMC1 mmc1;
+
+static SFORMAT StateRegs[] = {
+	{ mmc1.reg, 4, "DREG" },
+	{ &mmc1.buffer, 1, "BFFR" },
+	{ &mmc1.shift, 1, "BFRS" },
+	{ 0 }
+};
 
 uint32_t MMC1_GetPRGBank(int index) {
 	uint32_t bank;
@@ -241,12 +248,10 @@ void MMC1_Init(CartInfo *info, MMC1TYPE _type, int wram, int saveram) {
 		}
 	}
 
-	AddExState(mmc1.reg, 4, 0, "DREG");
-
 	info->Power = MMC1_Power;
 	GameStateRestore = MMC1_Restore;
-	AddExState(&mmc1.buffer, 1, 0, "BFFR");
-	AddExState(&mmc1.shift, 1, 0, "BFRS");
+
+	AddExState(StateRegs, ~0, 0, NULL);
 }
 
 DECLFR(MMC1_readWRAM) {

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -283,71 +283,65 @@ void N163Sound_ESI(uint8_t *ptr) {
 }
 
 void N163Sound_AddStateInfo(void) {
-	AddExState(N163Sound.internalRAM, 0x80, 0, "N163Sound.internalRAM");
-	AddExState(&N163Sound.cvcb, 4, 0, "BC00");
+	AddExState(&N163Sound.internalRAM, 0x80 | FCEUSTATE_INDIRECT, 0, "N163Sound.internalRAM");
+	AddExState(&N163Sound.cvcb, 4, 1, "BC00");
 	AddExState(&N163Sound.soundAddr, 1, 0, "INDX");
 	AddExState(&N163Sound.autoIncrement, 1, 0, "INCR");
 
-	AddExState(&N163Sound.channel[0].vcount, 4, 0, "C0VC");
-	AddExState(&N163Sound.channel[0].PlayIndex, 4, 0, "C0PI");
-	AddExState(&N163Sound.channel[0].output, 2, 0, "C0OP");
+	AddExState(&N163Sound.channel[0].vcount, 4, 1, "C0VC");
+	AddExState(&N163Sound.channel[0].PlayIndex, 4, 1, "C0PI");
+	AddExState(&N163Sound.channel[0].output, 2, 1, "C0OP");
 
-	AddExState(&N163Sound.channel[1].vcount, 4, 0, "C1VC");
-	AddExState(&N163Sound.channel[1].PlayIndex, 4, 0, "C1PI");
-	AddExState(&N163Sound.channel[1].output, 2, 0, "C1OP");
+	AddExState(&N163Sound.channel[1].vcount, 4, 1, "C1VC");
+	AddExState(&N163Sound.channel[1].PlayIndex, 4, 1, "C1PI");
+	AddExState(&N163Sound.channel[1].output, 2, 1, "C1OP");
 
-	AddExState(&N163Sound.channel[2].vcount, 4, 0, "C2VC");
-	AddExState(&N163Sound.channel[2].PlayIndex, 4, 0, "C2PI");
-	AddExState(&N163Sound.channel[2].output, 2, 0, "C2OP");
+	AddExState(&N163Sound.channel[2].vcount, 4, 1, "C2VC");
+	AddExState(&N163Sound.channel[2].PlayIndex, 4, 1, "C2PI");
+	AddExState(&N163Sound.channel[2].output, 2, 1, "C2OP");
 
-	AddExState(&N163Sound.channel[3].vcount, 4, 0, "C3VC");
-	AddExState(&N163Sound.channel[3].PlayIndex, 4, 0, "C3PI");
-	AddExState(&N163Sound.channel[3].output, 2, 0, "C3OP");
+	AddExState(&N163Sound.channel[3].vcount, 4, 1, "C3VC");
+	AddExState(&N163Sound.channel[3].PlayIndex, 4, 1, "C3PI");
+	AddExState(&N163Sound.channel[3].output, 2, 1, "C3OP");
 
-	AddExState(&N163Sound.channel[4].vcount, 4, 0, "C4VC");
-	AddExState(&N163Sound.channel[4].PlayIndex, 4, 0, "C4PI");
-	AddExState(&N163Sound.channel[4].output, 2, 0, "C4OP");
+	AddExState(&N163Sound.channel[4].vcount, 4, 1, "C4VC");
+	AddExState(&N163Sound.channel[4].PlayIndex, 4, 1, "C4PI");
+	AddExState(&N163Sound.channel[4].output, 2, 1, "C4OP");
 
-	AddExState(&N163Sound.channel[5].vcount, 4, 0, "C5VC");
-	AddExState(&N163Sound.channel[5].PlayIndex, 4, 0, "C5PI");
-	AddExState(&N163Sound.channel[5].output, 2, 0, "C5OP");
+	AddExState(&N163Sound.channel[5].vcount, 4, 1, "C5VC");
+	AddExState(&N163Sound.channel[5].PlayIndex, 4, 1, "C5PI");
+	AddExState(&N163Sound.channel[5].output, 2, 1, "C5OP");
 
-	AddExState(&N163Sound.channel[6].vcount, 4, 0, "C6VC");
-	AddExState(&N163Sound.channel[6].PlayIndex, 4, 0, "C6PI");
-	AddExState(&N163Sound.channel[6].output, 2, 0, "C6OP");
+	AddExState(&N163Sound.channel[6].vcount, 4, 1, "C6VC");
+	AddExState(&N163Sound.channel[6].PlayIndex, 4, 1, "C6PI");
+	AddExState(&N163Sound.channel[6].output, 2, 1, "C6OP");
 
-	AddExState(&N163Sound.channel[7].vcount, 4, 0, "C7VC");
-	AddExState(&N163Sound.channel[7].PlayIndex, 4, 0, "C7PI");
-	AddExState(&N163Sound.channel[7].output, 2, 0, "C7OP");
+	AddExState(&N163Sound.channel[7].vcount, 4, 1, "C7VC");
+	AddExState(&N163Sound.channel[7].PlayIndex, 4, 1, "C7PI");
+	AddExState(&N163Sound.channel[7].output, 2, 1, "C7OP");
 }
 
 #else /* OLD N163 SOUND CODE */
-static uint8_t N163Sound.soundAddr = 0;
-static uint8_t *N163Sound.internalRAM;
+static uint8_t dopol = 0;
+static uint8_t *IRAM;
 
 static uint32_t FreqCache[8];
 static uint32_t EnvCache[8];
 static uint32_t LengthCache[8];
 
-static void SyncCache(int a, int V) {
+static void FixCache(int a, int V) {
 	int w = (a >> 3) & 0x7;
 	switch (a & 0x07) {
-	case 0x00:
-		FreqCache[w] &= ~0x000000FF;
-		FreqCache[w] |= V;
-		break;
-	case 0x02:
-		FreqCache[w] &= ~0x0000FF00;
-		FreqCache[w] |= V << 8;
-		break;
+	case 0x00: FreqCache[w] &= ~0x000000FF; FreqCache[w] |= V; break;
+	case 0x02: FreqCache[w] &= ~0x0000FF00; FreqCache[w] |= V << 8; break;
 	case 0x04:
-		FreqCache[w] &= ~0x00030000;
-		FreqCache[w] |= (V & 3) << 16;
+		FreqCache[w] &= ~0x00030000; FreqCache[w] |= (V & 3) << 16;
+		/* something wrong here http://www.romhacking.net/forum/index.php?topic=21907.msg306903#msg306903 */
+		/* LengthCache[w] = (8 - ((V >> 2) & 7)) << 2; */
+		/* fix be like in https://github.com/SourMesen/Mesen/blob/cda0a0bdcb5525480784f4b8c71de6fc7273b570/Core/Namco163Audio.h#L61 */
 		LengthCache[w] = 256 - (V & 0xFC);
 		break;
-	case 0x07:
-		EnvCache[w] = (double)(V & 0xF) * 576716;
-		break;
+	case 0x07: EnvCache[w] = (double)(V & 0xF) * 576716; break;
 	}
 }
 
@@ -357,7 +351,7 @@ static void DoNamcoSound(int32_t *Wave, int Count);
 static void DoNamcoSoundHQ(void);
 static void SyncHQ(int32_t ts);
 
-static int N163Sound.dwave = 0;
+static int dwave = 0;
 
 static void NamcoSoundHack(void) {
 	int32_t z, a;
@@ -366,55 +360,53 @@ static void NamcoSoundHack(void) {
 		return;
 	}
 	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
-	a = z - N163Sound.dwave;
-	if (a)
-		DoNamcoSound(&Wave[N163Sound.dwave], a);
-	N163Sound.dwave += a;
+	a = z - dwave;
+	if (a) DoNamcoSound(&Wave[dwave], a);
+	dwave += a;
 }
 
 static void NamcoSound(int Count) {
 	int32_t z, a;
 	z = ((SOUNDTS << 16) / soundtsinc) >> 4;
-	a = z - N163Sound.dwave;
-	if (a)
-		DoNamcoSound(&Wave[N163Sound.dwave], a);
-	N163Sound.dwave = 0;
+	a = z - dwave;
+	if (a) DoNamcoSound(&Wave[dwave], a);
+	dwave = 0;
 }
 
 static uint32_t PlayIndex[8];
 static int32_t vcount[8];
-static int32_t N163Sound.cvcb;
+static int32_t CVBC;
 
-#define TOINDEX (16 + 1)
+#define TOINDEX        (16 + 1)
 
 static void SyncHQ(int32_t ts) {
-	N163Sound.cvcb = ts;
+	CVBC = ts;
 }
 
 /* Things to do:
-    1        Read freq low
-    2        Read freq mid
-    3        Read freq high
-    4        Read envelope
-    ...?
+	1        Read freq low
+	2        Read freq mid
+	3        Read freq high
+	4        Read envelope
+	...?
 */
 
 static INLINE uint32_t FetchDuff(uint32_t P, uint32_t envelope) {
 	uint32_t duff;
-	duff = N163Sound.internalRAM[((N163Sound.internalRAM[0x46 + (P << 3)] + (PlayIndex[P] >> TOINDEX)) & 0xFF) >> 1];
-	if ((N163Sound.internalRAM[0x46 + (P << 3)] + (PlayIndex[P] >> TOINDEX)) & 1)
+	duff = IRAM[((IRAM[0x46 + (P << 3)] + (PlayIndex[P] >> TOINDEX)) & 0xFF) >> 1];
+	if ((IRAM[0x46 + (P << 3)] + (PlayIndex[P] >> TOINDEX)) & 1)
 		duff >>= 4;
 	duff &= 0xF;
 	duff = (duff * envelope) >> 16;
-	return (duff);
+	return(duff);
 }
 
 static void DoNamcoSoundHQ(void) {
 	int32_t P, V;
-	int32_t cyclesuck = (((N163Sound.internalRAM[0x7F] >> 4) & 7) + 1) * 15;
+	int32_t cyclesuck = (((IRAM[0x7F] >> 4) & 7) + 1) * 15;
 
-	for (P = 7; P >= (7 - ((N163Sound.internalRAM[0x7F] >> 4) & 7)); P--) {
-		if ((N163Sound.internalRAM[0x44 + (P << 3)] & 0xE0) && (N163Sound.internalRAM[0x47 + (P << 3)] & 0xF)) {
+	for (P = 7; P >= (7 - ((IRAM[0x7F] >> 4) & 7)); P--) {
+		if ((IRAM[0x44 + (P << 3)] & 0xE0) && (IRAM[0x47 + (P << 3)] & 0xF)) {
 			uint32_t freq;
 			int32_t vco;
 			uint32_t duff2, lengo, envelope;
@@ -425,12 +417,11 @@ static void DoNamcoSoundHQ(void) {
 			lengo = LengthCache[P];
 
 			duff2 = FetchDuff(P, envelope);
-			for (V = N163Sound.cvcb << 1; V < (int)SOUNDTS << 1; V++) {
+			for (V = CVBC << 1; V < (int)SOUNDTS << 1; V++) {
 				WaveHi[V >> 1] += duff2;
 				if (!vco) {
 					PlayIndex[P] += freq;
-					while ((PlayIndex[P] >> TOINDEX) >= lengo)
-						PlayIndex[P] -= lengo << TOINDEX;
+					while ((PlayIndex[P] >> TOINDEX) >= lengo) PlayIndex[P] -= lengo << TOINDEX;
 					duff2 = FetchDuff(P, envelope);
 					vco = cyclesuck;
 				}
@@ -439,13 +430,14 @@ static void DoNamcoSoundHQ(void) {
 			vcount[P] = vco;
 		}
 	}
-	N163Sound.cvcb = SOUNDTS;
+	CVBC = SOUNDTS;
 }
 
-static void DoNamcoSound(int32_t *Wave, int Count) {
+
+static void DoNamcoSound(int32_t *WaveBuf, int Count) {
 	int P, V;
-	for (P = 7; P >= 7 - ((N163Sound.internalRAM[0x7F] >> 4) & 7); P--) {
-		if ((N163Sound.internalRAM[0x44 + (P << 3)] & 0xE0) && (N163Sound.internalRAM[0x47 + (P << 3)] & 0xF)) {
+	for (P = 7; P >= 7 - ((IRAM[0x7F] >> 4) & 7); P--) {
+		if ((IRAM[0x44 + (P << 3)] & 0xE0) && (IRAM[0x47 + (P << 3)] & 0xF)) {
 			int32_t inc;
 			uint32_t freq;
 			int32_t vco;
@@ -456,17 +448,20 @@ static void DoNamcoSound(int32_t *Wave, int Count) {
 			envelope = EnvCache[P];
 			lengo = LengthCache[P];
 
-			if (!freq) { /*printf("Ack");*/
+			if (!freq)
 				continue;
-			}
 
 			{
-				int c = ((N163Sound.internalRAM[0x7F] >> 4) & 7) + 1;
-				inc = (long double)(FSettings.SndRate << 15) / ((long double)freq * 21477272 / ((long double)0x400000 * c * 45));
+				int c = ((IRAM[0x7F] >> 4) & 7) + 1;
+				/* Use double rather than long double for cross-platform
+				 * FP determinism (long double is 80-bit on x87, 64-bit
+				 * with SSE math, 128-bit elsewhere - the truncated
+				 * int32 result varies). */
+				inc = (int32_t)((double)(FSettings.SndRate << 15) / ((double)freq * 21477272.0 / ((double)0x400000 * c * 45)));
 			}
 
-			duff = N163Sound.internalRAM[(((N163Sound.internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
-			if ((N163Sound.internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
+			duff = IRAM[(((IRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
+			if ((IRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
 				duff >>= 4;
 			duff &= 0xF;
 			duff2 = (duff * envelope) >> 19;
@@ -476,13 +471,13 @@ static void DoNamcoSound(int32_t *Wave, int Count) {
 					if (PlayIndex[P] >= lengo)
 						PlayIndex[P] = 0;
 					vco -= inc;
-					duff = N163Sound.internalRAM[(((N163Sound.internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
-					if ((N163Sound.internalRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
+					duff = IRAM[(((IRAM[0x46 + (P << 3)] + PlayIndex[P]) & 0xFF) >> 1)];
+					if ((IRAM[0x46 + (P << 3)] + PlayIndex[P]) & 1)
 						duff >>= 4;
 					duff &= 0xF;
 					duff2 = (duff * envelope) >> 19;
 				}
-				Wave[V >> 4] += duff2;
+				WaveBuf[V >> 4] += duff2;
 				vco += 0x8000;
 			}
 			vcount[P] = vco;
@@ -491,33 +486,31 @@ static void DoNamcoSound(int32_t *Wave, int Count) {
 }
 
 DECLFR(N163Sound_Read) {
-	uint8_t ret = N163Sound.internalRAM[N163Sound.soundAddr & 0x7f];
-
-	/* Maybe I should call DoNamcoSound() here? */
-	if (!fceuindbg)
-		if (N163Sound.soundAddr & 0x80)
-			N163Sound.soundAddr = (N163Sound.soundAddr & 0x80) | ((N163Sound.soundAddr + 1) & 0x7f);
+	uint8_t ret = IRAM[dopol & 0x7f];
+	/* Maybe I should call NamcoSoundHack() here? */
+	if (dopol & 0x80)
+		dopol = (dopol & 0x80) | ((dopol + 1) & 0x7f);
 	return ret;
 }
 
 DECLFW(N163Sound_Write) {
-	switch (A & 0xF800) {
+	switch (A) {
 	case 0x4800:
-		if (N163Sound.soundAddr & 0x40) {
+		if (dopol & 0x40) {
 			if (FSettings.SndRate) {
 				NamcoSoundHack();
 				GameExpSound[SND_N163 - 6].Fill = NamcoSound;
 				GameExpSound[SND_N163 - 6].HiFill = DoNamcoSoundHQ;
 				GameExpSound[SND_N163 - 6].HiSync = SyncHQ;
 			}
-			SyncCache(N163Sound.soundAddr, V);
+			FixCache(dopol, V);
 		}
-		N163Sound.internalRAM[N163Sound.soundAddr & 0x7f] = V;
-		if (N163Sound.soundAddr & 0x80)
-			N163Sound.soundAddr = (N163Sound.soundAddr & 0x80) | ((N163Sound.soundAddr + 1) & 0x7f);
+		IRAM[dopol & 0x7f] = V;
+		if (dopol & 0x80)
+			dopol = (dopol & 0x80) | ((dopol + 1) & 0x7f);
 		break;
-	case 0xF800:
-		N163Sound.soundAddr = V;
+	case 0xf800:
+		dopol = V;
 		break;
 	}
 }
@@ -526,16 +519,46 @@ static void M19SC(void) {
 	if (FSettings.SndRate) {
 		memset(vcount, 0, sizeof(vcount));
 		memset(PlayIndex, 0, sizeof(PlayIndex));
-		N163Sound.cvcb = 0;
+		CVBC = 0;
 	}
 }
 
 void N163Sound_ESI(uint8_t *ptr) {
-	N163Sound.internalRAM = ptr;
+	int i;
+
+	IRAM = ptr;
+	memset(FreqCache, 0, sizeof(FreqCache));
+	memset(EnvCache, 0, sizeof(EnvCache));
+	memset(LengthCache, 0, sizeof(LengthCache));
+	for (i = 0x40; i < 0x80; i++) {
+		FixCache(i, IRAM[i]);
+	}
 	GameExpSound[SND_N163 - 6].RChange = M19SC;
 	M19SC();
 }
 
+static SFORMAT N163_SStateRegs[] = {
+	{ &PlayIndex[0], 4 | FCEUSTATE_RLSB, "IDX0" },
+	{ &PlayIndex[1], 4 | FCEUSTATE_RLSB, "IDX1" },
+	{ &PlayIndex[2], 4 | FCEUSTATE_RLSB, "IDX2" },
+	{ &PlayIndex[3], 4 | FCEUSTATE_RLSB, "IDX3" },
+	{ &PlayIndex[4], 4 | FCEUSTATE_RLSB, "IDX4" },
+	{ &PlayIndex[5], 4 | FCEUSTATE_RLSB, "IDX5" },
+	{ &PlayIndex[6], 4 | FCEUSTATE_RLSB, "IDX6" },
+	{ &PlayIndex[7], 4 | FCEUSTATE_RLSB, "IDX7" },
+	{ &vcount[0], 4 | FCEUSTATE_RLSB, "VCT0" },
+	{ &vcount[1], 4 | FCEUSTATE_RLSB, "VCT1" },
+	{ &vcount[2], 4 | FCEUSTATE_RLSB, "VCT2" },
+	{ &vcount[3], 4 | FCEUSTATE_RLSB, "VCT3" },
+	{ &vcount[4], 4 | FCEUSTATE_RLSB, "VCT4" },
+	{ &vcount[5], 4 | FCEUSTATE_RLSB, "VCT5" },
+	{ &vcount[6], 4 | FCEUSTATE_RLSB, "VCT6" },
+	{ &vcount[7], 4 | FCEUSTATE_RLSB, "VCT7" },
+	{ &CVBC, 4 | FCEUSTATE_RLSB, "BC01" },
+	{ 0 }
+};
+
 void N163Sound_AddStateInfo(void) {
+	AddExState( N163_SStateRegs, ~0, 0, 0);
 }
 #endif

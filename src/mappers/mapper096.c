@@ -4,7 +4,7 @@
  *  Copyright (C) 1998 BERO
  *  Copyright (C) 2002 Xodnizel
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2025 negativeExponent
+ *  Copyright (C) 2023-2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ static struct {
 
 static SFORMAT StateRegs[] = {
 	{ &m096.latch, 1, "LATC" },
-	{ &m096.lastPPUAddr, 2, "LADR" },
+	{ &m096.lastPPUAddr, 2 | FCEUSTATE_RLSB, "LADR" },
 	{ 0 }
 };
 

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2022 Cluster
- *  Copyright (C) 2025 negativeExponent
+ *  Copyright (C) 2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -2104,7 +2104,8 @@ static void StateRestore(int version) {
 	m342.mmc1.lreset = 0;
 }
 
-#define ExState(var, varname) AddExState(&var, sizeof(var), 0, varname)
+#define ExState(var, varname)   AddExState(&var, sizeof(var), 0, varname)
+#define ExStateLE(var, varname) AddExState(&var, sizeof(var) | FCEUSTATE_RLSB, 0, varname)
 
 void Mapper342_Init(CartInfo *info) {
 	int i;
@@ -2191,29 +2192,29 @@ void Mapper342_Init(CartInfo *info) {
 	ExState(m342.lockout, "LOCK");
 
 	ExState(m342.prg_base, "PBAS");
-	ExState(m342.prg_mask, "PMSK");
+	ExStateLE(m342.prg_mask, "PMSK");
 	ExState(m342.prg_mode, "PMOD");
 	ExState(m342.prg_bank_6000, "P6BN");
 	ExState(m342.prg_bank_a, "PABN");
 	ExState(m342.prg_bank_b, "PBBN");
 	ExState(m342.prg_bank_c, "PCBN");
 	ExState(m342.prg_bank_d, "PDBN");
-	ExState(m342.prg_bank_6000_mapped, "P6BM");
-	ExState(m342.prg_bank_a_mapped, "PABM");
-	ExState(m342.prg_bank_b_mapped, "PBBM");
-	ExState(m342.prg_bank_c_mapped, "PCBM");
-	ExState(m342.prg_bank_d_mapped, "PDBM");
+	ExStateLE(m342.prg_bank_6000_mapped, "P6BM");
+	ExStateLE(m342.prg_bank_a_mapped, "PABM");
+	ExStateLE(m342.prg_bank_b_mapped, "PBBM");
+	ExStateLE(m342.prg_bank_c_mapped, "PCBM");
+	ExStateLE(m342.prg_bank_d_mapped, "PDBM");
 
-	ExState(m342.chr_mask, "CMSK");
+	ExStateLE(m342.chr_mask, "CMSK");
 	ExState(m342.chr_mode, "CMOD");
-	ExState(m342.chr_bank_a, "CABN");
-	ExState(m342.chr_bank_b, "CBBN");
-	ExState(m342.chr_bank_c, "CCBN");
-	ExState(m342.chr_bank_d, "CDBN");
-	ExState(m342.chr_bank_e, "CEBN");
-	ExState(m342.chr_bank_f, "CFBN");
-	ExState(m342.chr_bank_g, "CGBN");
-	ExState(m342.chr_bank_h, "CHBN");
+	ExStateLE(m342.chr_bank_a, "CABN");
+	ExStateLE(m342.chr_bank_b, "CBBN");
+	ExStateLE(m342.chr_bank_c, "CCBN");
+	ExStateLE(m342.chr_bank_d, "CDBN");
+	ExStateLE(m342.chr_bank_e, "CEBN");
+	ExStateLE(m342.chr_bank_f, "CFBN");
+	ExStateLE(m342.chr_bank_g, "CGBN");
+	ExStateLE(m342.chr_bank_h, "CHBN");
 
 	ExState(m342.mmc2and4.latch0, "PPU0");
 	ExState(m342.mmc2and4.latch1, "PPU1");
@@ -2250,12 +2251,12 @@ void Mapper342_Init(CartInfo *info) {
 	ExState(m342.mapper18.irq_latch, "18IL");
 
 	ExState(m342.mapper65.irq_enabled, "65IE");
-	ExState(m342.mapper65.irq_value, "65IV");
-	ExState(m342.mapper65.irq_latch, "65IL");
+	ExStateLE(m342.mapper65.irq_value, "65IV");
+	ExStateLE(m342.mapper65.irq_latch, "65IL");
 
 	ExState(m342.mapper69.irq_enabled, "69IE");
 	ExState(m342.mapper69.counter_enabled, "69CE");
-	ExState(m342.mapper69.irq_value, "69IV");
+	ExStateLE(m342.mapper69.irq_value, "69IV");
 
 	ExState(m342.vrc4.irq_value, "V4IV");
 	ExState(m342.vrc4.irq_control, "V4IC");
@@ -2263,25 +2264,34 @@ void Mapper342_Init(CartInfo *info) {
 	ExState(m342.vrc4.irq_prescaler, "V4PP");
 	ExState(m342.vrc4.irq_prescaler_counter, "V4PC");
 
-	ExState(m342.vrc3.irq_value, "V3IV");
+	ExStateLE(m342.vrc3.irq_value, "V3IV");
 	ExState(m342.vrc3.irq_control, "V3IC");
-	ExState(m342.vrc3.irq_latch, "V3IL");
+	ExStateLE(m342.vrc3.irq_latch, "V3IL");
 
 	ExState(m342.mapper42.irq_enabled, "42IE");
-	ExState(m342.mapper42.irq_value, "42IV");
+	ExStateLE(m342.mapper42.irq_value, "42IV");
 
 	ExState(m342.mapper83.irq_enabled_latch, "M83L");
 	ExState(m342.mapper83.irq_enabled, "M83I");
-	ExState(m342.mapper83.irq_counter, "M83C");
+	ExStateLE(m342.mapper83.irq_counter, "M83C");
 
 	ExState(m342.mapper90.xor, "90XR");
 
 	ExState(m342.mapper67.irq_enabled, "67IE");
 	ExState(m342.mapper67.irq_latch, "67IL");
-	ExState(m342.mapper67.irq_counter, "67IC");
+	ExStateLE(m342.mapper67.irq_counter, "67IC");
 
 	ExState(m342.flash_state, "FLST");
-	ExState(m342.flash_buffer_a, "FLBA");
+	ExStateLE(m342.flash_buffer_a[0], "FLB0");
+	ExStateLE(m342.flash_buffer_a[1], "FLB1");
+	ExStateLE(m342.flash_buffer_a[2], "FLB2");
+	ExStateLE(m342.flash_buffer_a[3], "FLB3");
+	ExStateLE(m342.flash_buffer_a[4], "FLB4");
+	ExStateLE(m342.flash_buffer_a[5], "FLB5");
+	ExStateLE(m342.flash_buffer_a[6], "FLB6");
+	ExStateLE(m342.flash_buffer_a[7], "FLB7");
+	ExStateLE(m342.flash_buffer_a[8], "FLB8");
+	ExStateLE(m342.flash_buffer_a[9], "FLB9");
 	ExState(m342.flash_buffer_v, "FLBV");
 
 	ExState(m342.cfi_mode, "CFIM");

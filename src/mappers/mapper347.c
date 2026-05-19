@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2025 negativeExponent
+ *  Copyright (C) 2023-2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,7 +81,9 @@ static uint8_t old_rombank = FALSE;
 
 static SFORMAT StateRegs[] = {
 	{ m347.reg, 2, "REGS" },
-	{ m347.pageOffset, sizeof(m347.pageOffset), "OFFS" },
+	{ &m347.pageOffset[0], sizeof(m347.pageOffset[0]) | FCEUSTATE_RLSB, "OPG0" },
+	{ &m347.pageOffset[1], sizeof(m347.pageOffset[1]) | FCEUSTATE_RLSB, "OPG1" },
+	{ &m347.pageOffset[2], sizeof(m347.pageOffset[2]) | FCEUSTATE_RLSB, "OPG2" },
 	{ 0 }
 };
 

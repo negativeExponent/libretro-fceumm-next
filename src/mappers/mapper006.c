@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2012 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,10 +61,10 @@ static SFORMAT StateRegs[] = {
 	{ &m006.chrlock, 1, "CHRL" },
 
 	{ &m006.smc_IRQa, 1, "IRQA" },
-	{ &m006.smc_IRQCount, sizeof(m006.smc_IRQCount), "IRQC" },
+	{ &m006.smc_IRQCount, sizeof(m006.smc_IRQCount) | FCEUSTATE_RLSB, "IRQC" },
 
 	{ &m006.fds_control, 1, "FDSI" },
-	{ &m006.fds_IRQCount, sizeof(m006.fds_IRQCount), "FDSC" },
+	{ &m006.fds_IRQCount, sizeof(m006.fds_IRQCount) | FCEUSTATE_RLSB, "FDSC" },
 
 	{ 0 }
 };

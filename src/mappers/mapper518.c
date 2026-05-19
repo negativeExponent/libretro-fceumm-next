@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
- *  Copyright (C) 2023-2025 negativeExponent
+ *  Copyright (C) 2023-2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ static struct {
 static SFORMAT StateRegs[] = {
 	{ &m518.prg, 1, "REGS" },
 	{ &m518.mode, 1, "MODE" },
-	{ &m518.lastnt, 2, "LSNT" },
+	{ &m518.lastnt, 2 | FCEUSTATE_RLSB, "LSNT" },
 	{ 0 }
 };
 

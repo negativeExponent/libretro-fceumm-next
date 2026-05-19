@@ -2,7 +2,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,9 +24,7 @@
 #include "mapinc.h"
 #include "s5bsound.h"
 
-#if 0 /* remove comment to use old S5B emulation */
-#define USE_OLD_SB5
-#endif
+/* #define USE_OLD_SB5 */
 
 #ifndef USE_OLD_SB5
 #define USE_EMU2149
@@ -97,8 +95,8 @@ void S5BSound_ESI(void) {
 		return;
 	}
 
-	GameExpSound[SND_S5B - 6].RChange = S5BSound_SC;
-	GameExpSound[SND_S5B - 6].Kill = S5BSound_KILL;
+    GameExpSound[SND_S5B - 6].RChange = S5BSound_SC;
+    GameExpSound[SND_S5B - 6].Kill = S5BSound_KILL;
 
 	S5BSound_SC();
 }
@@ -111,10 +109,14 @@ void S5BSound_AddStateInfo(void) {
 	/* Sound states */
 	AddExState(psg_chip->reg, sizeof(psg_chip->reg), 0, "REG");
 
-	AddExState(psg_chip->count, sizeof(psg_chip->count), 0, "PCNT");
+	AddExState(&psg_chip->count[0], sizeof(psg_chip->count[0]), 1, "PCN0");
+	AddExState(&psg_chip->count[1], sizeof(psg_chip->count[1]), 1, "PCN1");
+	AddExState(&psg_chip->count[2], sizeof(psg_chip->count[2]), 1, "PCN2");
 	AddExState(psg_chip->volume, sizeof(psg_chip->volume), 0, "PVOL");
 	AddExState(psg_chip->edge, sizeof(psg_chip->edge), 0, "EDGE");
-	AddExState(psg_chip->freq, sizeof(psg_chip->freq), 0, "FREQ");
+	AddExState(&psg_chip->freq[0], sizeof(psg_chip->freq[0]), 1, "FRQ0");
+	AddExState(&psg_chip->freq[1], sizeof(psg_chip->freq[1]), 1, "FRQ1");
+	AddExState(&psg_chip->freq[2], sizeof(psg_chip->freq[2]), 1, "FRQ2");
 	AddExState(psg_chip->tmask, sizeof(psg_chip->tmask), 0, "TMSK");
 	AddExState(psg_chip->nmask, sizeof(psg_chip->nmask), 0, "NMSK");
 
@@ -127,10 +129,10 @@ void S5BSound_AddStateInfo(void) {
 	AddExState(&psg_chip->env_hold, sizeof(psg_chip->env_hold), 0, "HOLD");
 	AddExState(&psg_chip->env_pause, sizeof(psg_chip->env_pause), 0, "PAUS");
 
-	AddExState(&psg_chip->env_freq, sizeof(psg_chip->env_freq), 0, "EFRQ");
-	AddExState(&psg_chip->env_count, sizeof(psg_chip->env_count), 0, "ECNT");
+	AddExState(&psg_chip->env_freq, sizeof(psg_chip->env_freq), 1, "EFRQ");
+	AddExState(&psg_chip->env_count, sizeof(psg_chip->env_count), 1, "ECNT");
 
-	AddExState(&psg_chip->noise_seed, sizeof(psg_chip->noise_seed), 0, "NSED");
+	AddExState(&psg_chip->noise_seed, sizeof(psg_chip->noise_seed), 1, "NSED");
 	AddExState(&psg_chip->noise_scaler, sizeof(psg_chip->noise_scaler), 0, "NSCL");
 	AddExState(&psg_chip->noise_count, sizeof(psg_chip->noise_count), 0, "NCNT");
 	AddExState(&psg_chip->noise_freq, sizeof(psg_chip->noise_freq), 0, "NFRQ");
@@ -317,8 +319,8 @@ void S5BSound_ESI(void) {
 void S5BSound_AddStateInfo(void) {
 	AddExState(&sndcmd, 1, 0, "SCMD");
 	AddExState(sreg, 14, 0, "SREG");
-	AddExState(dcount, 12, 0, "DCNT");
-	AddExState(vcount, 12, 0, "VCNT");
-	AddExState(CAYBC, 12, 0, "BC00");
+	AddExState(dcount, 12, 1, "DCNT");
+	AddExState(vcount, 12, 1, "VCNT");
+	AddExState(CAYBC, 12, 1, "BC00");
 }
 #endif

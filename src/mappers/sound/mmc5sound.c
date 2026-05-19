@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -319,8 +319,8 @@ void MMC5SoundFrameTick(void) {
 	ClockEnvelope(&MMC5Sound.square[1].envelope);
 }
 
-#define RLSB FCEUSTATE_RLSB
-#define state_var(var, varname) AddExState( &var, sizeof(var) | RLSB, 0, varname)
+#define state_var_le(var, varname) AddExState( &var, sizeof(var), 1, varname)
+#define state_var(var, varname) AddExState( &var, sizeof(var), 0, varname)
 
 void MMC5Sound_AddStateInfo(void) {
 	state_var(MMC5Sound.square[0].length.halt, "M0LH");
@@ -334,10 +334,10 @@ void MMC5Sound_AddStateInfo(void) {
 	state_var(MMC5Sound.square[0].envelope.reload, "M0RL");
 	state_var(MMC5Sound.square[0].envelope.speed, "M0SP");
 
-	state_var(MMC5Sound.square[0].timer.counter, "M0TC");
-	state_var(MMC5Sound.square[0].timer.count2, "M0T2");
-	state_var(MMC5Sound.square[0].timer.period, "M0PD");
-	state_var(MMC5Sound.square[0].timer.cvbc, "M0BC");
+	state_var_le(MMC5Sound.square[0].timer.counter, "M0TC");
+	state_var_le(MMC5Sound.square[0].timer.count2, "M0T2");
+	state_var_le(MMC5Sound.square[0].timer.period, "M0PD");
+	state_var_le(MMC5Sound.square[0].timer.cvbc, "M0BC");
 
 	state_var(MMC5Sound.square[0].duty, "M0DT");
 	state_var(MMC5Sound.square[0].step, "M0ST");
@@ -353,15 +353,15 @@ void MMC5Sound_AddStateInfo(void) {
 	state_var(MMC5Sound.square[1].envelope.reload, "M1RL");
 	state_var(MMC5Sound.square[1].envelope.speed, "M1SP");
 
-	state_var(MMC5Sound.square[1].timer.counter, "M1TC");
-	state_var(MMC5Sound.square[1].timer.count2, "M1T2");
-	state_var(MMC5Sound.square[1].timer.period, "M1PD");
-	state_var(MMC5Sound.square[1].timer.cvbc, "M1BC");
+	state_var_le(MMC5Sound.square[1].timer.counter, "M1TC");
+	state_var_le(MMC5Sound.square[1].timer.count2, "M1T2");
+	state_var_le(MMC5Sound.square[1].timer.period, "M1PD");
+	state_var_le(MMC5Sound.square[1].timer.cvbc, "M1BC");
 
 	state_var(MMC5Sound.square[1].duty, "M1DT");
 	state_var(MMC5Sound.square[1].step, "M1ST");
 
 	state_var(MMC5Sound.pcm.control, "PCTL");
 	state_var(MMC5Sound.pcm.rawdata, "PRAW");
-	state_var(MMC5Sound.pcm.timer.cvbc, "PCBC");
+	state_var_le(MMC5Sound.pcm.timer.cvbc, "PCBC");
 }

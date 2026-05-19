@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ static FDSSOUND fdso = { 0 };
 static int32_t FBC = 0;
 
 void FDSSound_AddStateInfo(void) {
-	AddExState(&fdso.sample_out_cache, 4, 0, "FDSO");
+	AddExState(&fdso.sample_out_cache, 4, 1, "FDSO");
 
 	AddExState(&fdso.EnvUnits[EVOL].speed, 1, 0, "SPD0");
 	AddExState(&fdso.EnvUnits[EVOL].control, 1, 0, "CTL0");
@@ -46,18 +46,18 @@ void FDSSound_AddStateInfo(void) {
 	AddExState(&fdso.EnvUnits[EMOD].counter, 4, 1, "CNT1");
 
 	AddExState(fdso.cwave, 64, 0, "WAVE");
-	AddExState(fdso.mwave, 32, 0, "MWAV");
+	AddExState(fdso.mwave, 32, 1, "MWAV");
 
-	AddExState(&fdso.cwave_freq, 2, 0, "WFRQ");
-	AddExState(&fdso.cwave_pos, 4, 0, "WPOS");
+	AddExState(&fdso.cwave_freq, 2, 1, "WFRQ");
+	AddExState(&fdso.cwave_pos, 4, 1, "WPOS");
 	AddExState(&fdso.cwave_control, 1, 0, "WCTL");
 
-	AddExState(&fdso.mod_freq, 2, 0, "MFRQ");
-	AddExState(&fdso.mod_pos, 4, 0, "MPOS");
+	AddExState(&fdso.mod_freq, 2, 1, "MFRQ");
+	AddExState(&fdso.mod_pos, 4, 1, "MPOS");
 	AddExState(&fdso.mod_disabled, 1, 0, "MDIS");
-	AddExState(&fdso.mod_output, 4, 0, "MCRM");
+	AddExState(&fdso.mod_output, 4, 1, "MCRM");
 
-	AddExState(&fdso.sweep_bias, 4, 0, "SWBS");
+	AddExState(&fdso.sweep_bias, 4, 1, "SWBS");
 
 	AddExState(&fdso.master_control, 1, 0, "MCTL");
 	AddExState(&fdso.master_env_speed, 1, 0, "MSPD");

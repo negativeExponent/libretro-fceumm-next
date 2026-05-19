@@ -34,8 +34,8 @@ void FIFO_init (FIFO *fifo, size_t newCapacity) {
 
 void FIFO_AddStateInfo(FIFO *fifo) {
 	AddExState(fifo->data, fifo->capacity, 0, "FIFD");
-	AddExState(&fifo->front, 2 | FCEUSTATE_RLSB, 0, "FIFF");
-	AddExState(&fifo->back, 2 | FCEUSTATE_RLSB, 0, "FIFB");
+	AddExState(&fifo->front, 2, 1, "FIFF");
+	AddExState(&fifo->back, 2, 1, "FIFB");
 }
 
 void FIFO_close (FIFO *fifo) {

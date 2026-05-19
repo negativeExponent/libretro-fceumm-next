@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2020
- *  Copyright (C) 2023-2025 negativeExponent
+ *  Copyright (C) 2023-2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,8 +39,9 @@ static struct {
 
 static SFORMAT StateRegs[] = {
 	{ m555.reg, 2, "EXPR" },
-	{ &m555.count, 2, "CNTR" },
-	{ &m555.count_expired, 2, "CNTE" },
+	{ &m555.count, 4 | FCEUSTATE_RLSB, "CNTR" },
+	{ &m555.count_target, 4 | FCEUSTATE_RLSB, "CNTR" },
+	{ &m555.count_expired, 1, "CNTE" },
 	{ 0 }
 };
 

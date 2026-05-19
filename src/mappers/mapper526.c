@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ static struct {
 static SFORMAT StateRegs[] = {
 	{ m526.prg, 4, "PREG" },
 	{ m526.chr, 8, "CREG" },
-	{ &m526.IRQCount, 4, "IRQC" },
+	{ &m526.IRQCount, 4 | FCEUSTATE_RLSB, "IRQC" },
 	{ 0 }
 };
 

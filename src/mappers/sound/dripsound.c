@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -226,20 +226,20 @@ void DRIPSound_AddStateInfo(void) {
 	AddExState(&drip[0].writePos, 1, 0, "WRP0");
 	AddExState(&drip[0].bufferFull, 1, 0, "FUL0");
 	AddExState(&drip[0].bufferEmpty, 1, 0, "EMT0");
-	AddExState(&drip[0].freq, 2, 0, "FRQ0");
+	AddExState(&drip[0].freq, 2, TRUE, "FRQ0");
 	AddExState(&drip[0].volume, 1, 0, "VOL0");
-	AddExState(&drip[0].timer, 4, 0, "TIM0");
-	AddExState(&drip[0].out, 2, 0, "POS0");
+	AddExState(&drip[0].timer, 4, TRUE, "TIM0");
+	AddExState(&drip[0].out, 2, TRUE, "POS0");
 
 	AddExState(drip[1].buffer, 256, 0, "FF01");
 	AddExState(&drip[1].readPos, 1, 0, "RDP1");
 	AddExState(&drip[1].writePos, 1, 0, "WRP1");
 	AddExState(&drip[1].bufferFull, 1, 0, "FUL1");
 	AddExState(&drip[1].bufferEmpty, 1, 0, "EMT1");
-	AddExState(&drip[1].freq, 2, 0, "FRQ1");
+	AddExState(&drip[1].freq, 2, TRUE, "FRQ1");
 	AddExState(&drip[1].volume, 1, 0, "VOL1");
-	AddExState(&drip[1].timer, 4, 0, "TIM1");
-	AddExState(&drip[1].out, 2, 0, "POS1");
+	AddExState(&drip[1].timer, 4, TRUE, "TIM1");
+	AddExState(&drip[1].out, 2, TRUE, "POS1");
 
-	AddExState(&cvbc, 4, 0, "CVBC");
+	AddExState(&cvbc, 4, TRUE, "CVBC");
 }

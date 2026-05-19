@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2009 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -324,27 +324,27 @@ void VRC6Sound_AddStateInfo(void) {
 
 	AddExState(&VRC6Sound.square[0].enabled, 1, 0, "S0EN");
 	AddExState(&VRC6Sound.square[0].volume, 1, 0, "S0VL");
-	AddExState(&VRC6Sound.square[0].freq, 2, 0, "S0FQ");
+	AddExState(&VRC6Sound.square[0].freq, 2, 1, "S0FQ");
 	AddExState(&VRC6Sound.square[0].duty, 1, 0, "S0DT");
 	AddExState(&VRC6Sound.square[0].mode, 1, 0, "S0MD");
 	AddExState(&VRC6Sound.square[0].dcount, 1, 0, "S0DC");
-	AddExState(&VRC6Sound.square[0].vcount, 4, 0, "S0VC");
-	AddExState(&VRC6Sound.square[0].cvbc, 4, 0, "S0BC");
+	AddExState(&VRC6Sound.square[0].vcount, 4, 1, "S0VC");
+	AddExState(&VRC6Sound.square[0].cvbc, 4, 1, "S0BC");
 
 	AddExState(&VRC6Sound.square[1].enabled, 1, 0, "S1EN");
 	AddExState(&VRC6Sound.square[1].volume, 1, 0, "S1VL");
-	AddExState(&VRC6Sound.square[1].freq, 2, 0, "S1FQ");
+	AddExState(&VRC6Sound.square[1].freq, 2, 1, "S1FQ");
 	AddExState(&VRC6Sound.square[1].duty, 1, 0, "S1DT");
 	AddExState(&VRC6Sound.square[1].mode, 1, 0, "S1MD");
 	AddExState(&VRC6Sound.square[1].dcount, 1, 0, "S1DC");
-	AddExState(&VRC6Sound.square[1].vcount, 4, 0, "S1VC");
-	AddExState(&VRC6Sound.square[1].cvbc, 4, 0, "S1BC");
+	AddExState(&VRC6Sound.square[1].vcount, 4, 1, "S1VC");
+	AddExState(&VRC6Sound.square[1].cvbc, 4, 1, "S1BC");
 
 	AddExState(&VRC6Sound.saw.enabled, 1, 0, "SWEN");
 	AddExState(&VRC6Sound.saw.accumrate, 1, 0, "SWAR");
 	AddExState(&VRC6Sound.saw.phaseacc, 1, 0, "SWAC");
-	AddExState(&VRC6Sound.saw.freq, 2, 0, "SWFR");
+	AddExState(&VRC6Sound.saw.freq, 2, 1, "SWFR");
 	AddExState(&VRC6Sound.saw.dcount, 1, 0, "SWDC");
-	AddExState(&VRC6Sound.saw.vcount, 4, 0, "SWVC");
-	AddExState(&VRC6Sound.saw.cvbc, 4, 0, "SWBC");
+	AddExState(&VRC6Sound.saw.vcount, 4, 1, "SWVC");
+	AddExState(&VRC6Sound.saw.cvbc, 4, 1, "SWBC");
 }

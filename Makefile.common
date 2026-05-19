@@ -71,6 +71,7 @@ endif
 
 SOURCES_C += \
 	$(SOURCE_DIR)/cart.c \
+	$(SOURCE_DIR)/cartram.c \
 	$(SOURCE_DIR)/cheat.c \
 	$(SOURCE_DIR)/crc32.c \
 	$(SOURCE_DIR)/drawing.c \
@@ -83,7 +84,6 @@ SOURCES_C += \
 	$(SOURCE_DIR)/gamegenie.c \
 	$(SOURCE_DIR)/general.c \
 	$(SOURCE_DIR)/input.c \
-	$(SOURCE_DIR)/mappers.c \
 	$(SOURCE_DIR)/md5.c \
 	$(SOURCE_DIR)/nsf.c \
 	$(SOURCE_DIR)/nsfe.c \

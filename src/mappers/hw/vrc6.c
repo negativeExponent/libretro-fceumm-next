@@ -35,8 +35,8 @@ static SFORMAT StateRegs[] = {
 	{ vrc6.prg, 2, "PRG" },
 	{ vrc6.chr, 8, "CHR" },
 	{ &vrc6.mirr, 1, "MIRR" },
-	{ &vrc6.A0, 2, "V6A0" },
-	{ &vrc6.A1, 2, "V6A1" },
+	{ &vrc6.A0, 2 | FCEUSTATE_RLSB, "V6A0" },
+	{ &vrc6.A1, 2 | FCEUSTATE_RLSB, "V6A1" },
 
 	{ 0 }
 };

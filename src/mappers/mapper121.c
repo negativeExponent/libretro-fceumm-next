@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2007-2008 Mad Dumper, CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@ static struct {
 
 static SFORMAT StateRegs[] = {
 	{ m121.prg, 3, "PREG" },
-	{ &m121.reg, 2, "REGS" },
+	{ &m121.reg, 1, "REGS" },
 	{ &m121.readIndex, 1, "PRRD" },
 	{ &m121.protIndex, 1, "PRID" },
 	{ &m121.protLatch, 1, "PRLT" },

@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -137,12 +137,12 @@ void VRC7Sound_AddStateInfo(void) {
 	}
 
 	/* Sound states */
-	AddExState(&chip->clk, sizeof(chip->clk), 0, "CLK7");
-	AddExState(&chip->rate, sizeof(chip->rate), 0, "RATE");
+	AddExState(&chip->clk, sizeof(chip->clk), 1, "CLK7");
+	AddExState(&chip->rate, sizeof(chip->rate), 1, "RATE");
 
 	AddExState(&chip->chip_type, sizeof(chip->chip_type), 0, "CHIP");
 
-	AddExState(&chip->adr, sizeof(chip->adr), 0, "ADR7");
+	AddExState(&chip->adr, sizeof(chip->adr), 1, "ADR7");
 
 	AddExState(&chip->inp_step, sizeof(chip->inp_step), 0, "ISTP");
 	AddExState(&chip->out_step, sizeof(chip->out_step), 0, "OSTP");
@@ -150,20 +150,20 @@ void VRC7Sound_AddStateInfo(void) {
 
 	AddExState(chip->reg, sizeof(chip->reg), 0, "REG7");
 	AddExState(&chip->test_flag, sizeof(chip->test_flag), 0, "TFLG");
-	AddExState(&chip->slot_key_status, sizeof(chip->slot_key_status), 0, "SKST");
+	AddExState(&chip->slot_key_status, sizeof(chip->slot_key_status), 1, "SKST");
 	AddExState(&chip->rhythm_mode, sizeof(chip->rhythm_mode), 0, "RMOD");
 
-	AddExState(&chip->eg_counter, sizeof(chip->eg_counter), 0, "ECTR");
+	AddExState(&chip->eg_counter, sizeof(chip->eg_counter), 1, "ECTR");
 
-	AddExState(&chip->pm_phase, sizeof(chip->pm_phase), 0, "PMPH");
-	AddExState(&chip->am_phase, sizeof(chip->am_phase), 0, "AMPH");
+	AddExState(&chip->pm_phase, sizeof(chip->pm_phase), 1, "PMPH");
+	AddExState(&chip->am_phase, sizeof(chip->am_phase), 1, "AMPH");
 
 	AddExState(&chip->lfo_am, sizeof(chip->lfo_am), 0, "LFO7");
 
-	AddExState(&chip->noise, sizeof(chip->noise), 0, "NOIS");
+	AddExState(&chip->noise, sizeof(chip->noise), 1, "NOIS");
 	AddExState(&chip->short_noise, sizeof(chip->short_noise), 0, "SNOS");
 
-	AddExState(chip->patch_number, sizeof(chip->patch_number), 0, "PTNM");
+	AddExState(chip->patch_number, sizeof(chip->patch_number), 1, "PTNM");
 
 	/* VRC7 only uses 12 slots */
 	AddExState(&chip->slot[0], sizeof(chip->slot[0]), 0, "SL00");
@@ -187,10 +187,10 @@ void VRC7Sound_AddStateInfo(void) {
 	AddExState(&chip->slot[16], sizeof(chip->slot[16]), 0, "SL16");
 	AddExState(&chip->slot[17], sizeof(chip->slot[17]), 0, "SL17");
 
-	AddExState(&chip->mask, sizeof(chip->mask), 0, "MASK");
+	AddExState(&chip->mask, sizeof(chip->mask), 1, "MASK");
 
-	AddExState(chip->ch_out, sizeof(chip->ch_out), 0, "CHOU");
-	AddExState(chip->mix_out, sizeof(chip->mix_out), 0, "MIXO");
+	AddExState(&chip->ch_out, sizeof(chip->ch_out), 1, "CHOU");
+	AddExState(&chip->mix_out, sizeof(chip->mix_out), 1, "MIXO");
 
 	/* custom patches */
 	AddExState(&chip->patch[0], sizeof(chip->patch[0]), 0, "PAT0");

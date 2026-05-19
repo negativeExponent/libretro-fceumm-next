@@ -4,7 +4,7 @@
  *  Copyright (C) 1998 BERO
  *  Copyright (C) 2003 Xodnizel
  *  Mapper 12 code Copyright (C) 2003 CaH4e3
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

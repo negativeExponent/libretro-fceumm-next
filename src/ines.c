@@ -41,6 +41,7 @@
 #include "state.h"
 #include "unif.h"
 #include "vsuni.h"
+#include "cartram.h"
 
 #include "ines-correct.h"
 
@@ -180,14 +181,7 @@ static void Cleanup(void) {
 		FCEU_free(ROM.misc.data);
 		ROM.misc.data = NULL;
 	}
-	if (WRAM) {
-		FCEU_free(WRAM);
-		WRAM = NULL;
-	}
-	if (CHRRAM) {
-		FCEU_free(CHRRAM);
-		CHRRAM = NULL;
-	}
+	CartRAM_Close();
 }
 
 static void iNESGI(int h) {

@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2002 Xodnizel
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -87,7 +87,18 @@ MMC5 mmc5;
 
 static SFORMAT MMC5_StateRegs[] = {
 	{ mmc5.prg, 5, "PREG" },
-	{ mmc5.chr, 24, "CREG" },
+	{ &mmc5.chr[0], 2 | FCEUSTATE_RLSB, "M5C0" },
+	{ &mmc5.chr[1], 2 | FCEUSTATE_RLSB, "M5C1" },
+	{ &mmc5.chr[2], 2 | FCEUSTATE_RLSB, "M5C2" },
+	{ &mmc5.chr[3], 2 | FCEUSTATE_RLSB, "M5C3" },
+	{ &mmc5.chr[4], 2 | FCEUSTATE_RLSB, "M5C4" },
+	{ &mmc5.chr[5], 2 | FCEUSTATE_RLSB, "M5C5" },
+	{ &mmc5.chr[6], 2 | FCEUSTATE_RLSB, "M5C6" },
+	{ &mmc5.chr[7], 2 | FCEUSTATE_RLSB, "M5C7" },
+	{ &mmc5.chr[8], 2 | FCEUSTATE_RLSB, "M5C8" },
+	{ &mmc5.chr[9], 2 | FCEUSTATE_RLSB, "M5C9" },
+	{ &mmc5.chr[10], 2 | FCEUSTATE_RLSB, "M5CA" },
+	{ &mmc5.chr[11], 2 | FCEUSTATE_RLSB, "M5CB" },
 	{ mmc5.wramProtect, 2, "WRMK" },
 	{ mmc5.mul, 2, "MUL0" },
 

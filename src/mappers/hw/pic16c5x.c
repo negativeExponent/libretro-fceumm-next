@@ -91,17 +91,17 @@ static uint16_t m_opcode;
 static uint8_t m_internalram[128];
 static uint8_t *m_rom;
 
-static int m_icount;
-static int m_picmodel;
-static int m_delay_timer;
+static int32_t m_icount;
+static int32_t m_picmodel;
+static int32_t m_delay_timer;
 static uint16_t m_temp_config;
-static int m_rtcc;
+static int32_t m_rtcc;
 static uint8_t m_count_pending; /* boolean type */
 static int8_t m_old_data;
 static uint8_t m_picRAMmask;
 static uint16_t m_picROMmask;
-static int m_inst_cycles;
-static int m_clock2cycle;
+static int32_t m_inst_cycles;
+static int32_t m_clock2cycle;
 
 /*address_space *m_program;
 memory_access_cache<1, -1, ENDIANNESS_LITTLE> *m_cache;
@@ -977,25 +977,25 @@ void pic16c5x_run(void)
 void AddExState(void *v, uint32_t s, int type, char *desc);
 
 void pic16c5x_add_statesinfo(void) {
-	AddExState(&m_PC, sizeof(m_PC), 0, "PC00");
-	AddExState(&m_PREVPC, sizeof(m_PREVPC), 0, "PRPC");
+	AddExState(&m_PC, sizeof(m_PC), TRUE, "PC00");
+	AddExState(&m_PREVPC, sizeof(m_PREVPC), TRUE, "PRPC");
 	AddExState(&m_W, sizeof(m_W), 0, "W000");
 	AddExState(&m_OPTION, sizeof(m_OPTION), 0, "OPT0");
-	AddExState(&m_CONFIG, sizeof(m_CONFIG), 0, "CONF");
+	AddExState(&m_CONFIG, sizeof(m_CONFIG), TRUE, "CONF");
 	AddExState(&m_ALU, sizeof(m_ALU), 0, "ALU");
 	AddExState(&m_WDT, sizeof(m_WDT), 0, "WDT");
 	AddExState(&m_TRISA, sizeof(m_TRISA), 0, "TRSA");
 	AddExState(&m_TRISB, sizeof(m_TRISB), 0, "TRSB");
 	AddExState(&m_TRISC, sizeof(m_TRISC), 0, "TRSC");
-	AddExState(&m_STACK[0], sizeof(m_STACK[0]), 0, "STC0");
-	AddExState(&m_STACK[1], sizeof(m_STACK[1]), 0, "STC1");
-	AddExState(&m_prescaler, sizeof(m_prescaler), 0, "PSCL");
-	AddExState(&m_opcode, sizeof(m_opcode), 0, "OPS0");
-	AddExState(m_internalram, sizeof(m_internalram), 0, "IRAM");
-	AddExState(&m_icount, sizeof(m_icount), 0, "ICNT");
-	AddExState(&m_delay_timer, sizeof(m_delay_timer), 0, "DTIM");
-	AddExState(&m_rtcc, sizeof(m_rtcc), 0, "RTCC");
+	AddExState(&m_STACK[0], sizeof(m_STACK[0]), TRUE, "STC0");
+	AddExState(&m_STACK[1], sizeof(m_STACK[1]), TRUE, "STC1");
+	AddExState(&m_prescaler, sizeof(m_prescaler), TRUE, "PSCL");
+	AddExState(&m_opcode, sizeof(m_opcode), TRUE, "OPS0");
+	AddExState(&m_internalram, sizeof(m_internalram), 0, "IRAM");
+	AddExState(&m_icount, sizeof(m_icount), TRUE, "ICNT");
+	AddExState(&m_delay_timer, sizeof(m_delay_timer), TRUE, "DTIM");
+	AddExState(&m_rtcc, sizeof(m_rtcc), TRUE, "RTCC");
 	AddExState(&m_count_pending, sizeof(m_count_pending), 0, "CNTP");
-	AddExState(&m_inst_cycles, sizeof(m_inst_cycles), 0, "ICYC");
-	AddExState(&m_clock2cycle, sizeof(m_clock2cycle), 0, "CL2C");
+	AddExState(&m_inst_cycles, sizeof(m_inst_cycles), TRUE, "ICYC");
+	AddExState(&m_clock2cycle, sizeof(m_clock2cycle), TRUE, "CL2C");
 }

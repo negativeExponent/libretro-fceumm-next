@@ -2,7 +2,7 @@
  *
  * Copyright notice for this file:
  *  Copyright (C) 2009 CaH4e3
- *  Copyright (C) 2025 negativeExponent
+ *  Copyright (C) 2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ static SFORMAT StateRegs[] = {
 	{ &m168.reg, 1, "REGS" },
 	{ &m168.protect, 1, "CHRP" },
 	{ &m168.IRQa, 1, "IRQA" },
-	{ &m168.IRQCount, 2, "IRQC" },
+	{ &m168.IRQCount, 2 | FCEUSTATE_RLSB, "IRQC" },
 	{ 0 }
 };
 

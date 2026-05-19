@@ -42,7 +42,7 @@
 #include "video.h"
 #include "gamegenie.h"
 
-#define SFMDATA_SIZE 128
+#define SFMDATA_SIZE 256
 
 /* Convenience aliases for the SFORMAT 's' field bit layout. The
  * encoding is documented in state.h. */
@@ -436,10 +436,11 @@ void AddExState(void *v, uint32_t s, int type, char *desc)
 	 * overwriting the previous one with the terminator. */
    if (SFEXINDEX >= (int)(sizeof(SFMDATA) / sizeof(SFMDATA[0])) - 1) {
 	   static int warned = 0;
+      SFEXINDEX++;
 	   if (!warned) {
 		   FCEU_PrintError(
-			   " SFMDATA[] full; some state entries dropped (\"%s\").\n",
-			   desc ? desc : "?");
+			   " SFMDATA[] full (SFEXINDEX = %d); some state entries dropped (\"%s\").\n",
+			   SFEXINDEX, desc ? desc : "?");
 		   warned = 1;
 	   }
 	   return;

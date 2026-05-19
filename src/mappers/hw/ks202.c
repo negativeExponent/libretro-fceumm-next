@@ -3,7 +3,7 @@
  * Copyright notice for this file:
  *  Copyright (C) 2007 CaH4e3
  *  Copyright (C) 2019 Libretro Team
- *  Copyright (C) 2023-2024 negativeExponent
+ *  Copyright (C) 2023-2024-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ static SFORMAT StateRegs[] = {
 	{ &ks202.cmd, 1, "CMD" },
 	{ ks202.reg, 8, "REGS" },
 	{ &IRQa, 1, "IRQA" },
-	{ &IRQCount, 4, "IRQC" },
+	{ &IRQCount, 4 | FCEUSTATE_RLSB, "IRQC" },
 	{ 0 }
 };
 

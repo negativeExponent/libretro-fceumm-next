@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- *  Copyright (C) 2022-2025 negativeExponent
+ *  Copyright (C) 2022-2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,7 +30,7 @@ static struct {
 static SFORMAT StateRegs[] = {
 	{ &m416.smb2j_reg, 1, "SMB2" },
 	{ &m416.IRQa, 1, "IRQA" },
-	{ &m416.IRQCount, 2, "IRQC" },
+	{ &m416.IRQCount, 2 | FCEUSTATE_RLSB, "IRQC" },
 	{ 0 }
 };
 

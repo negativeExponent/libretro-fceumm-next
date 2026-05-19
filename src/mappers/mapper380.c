@@ -1,7 +1,7 @@
 /* FCEUmm - NES/Famicom Emulator
  *
  * Copyright notice for this file:
- * Copyright (C) 2023-2025 negativeExponent
+ * Copyright (C) 2023-2025-2026 negativeExponent
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -29,7 +29,7 @@ static uint32_t temp;
 
 static SFORMAT StateRegs[] = {
 	{ &dipsw, 4, "DPSW" },
-	{ &temp, 4, "TEMP" },
+	{ &temp, 4 | FCEUSTATE_RLSB, "TEMP" },
 	{ 0 }
 };
 
